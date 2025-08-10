@@ -1,0 +1,314 @@
+name: Strategic Narrative Intelligence - CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  # Environment variables for CI/CD
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+  REDIS_VERSION: '7'
+
+jobs:
+  # ============================================================================
+  # TESTING AND QUALITY ASSURANCE
+  # ============================================================================
+  
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_DB: test_narrative_intelligence
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r etl_pipeline/requirements.txt
+        pip install -r narrative_intelligence/requirements.txt
+        pip install pytest pytest-asyncio pytest-cov httpx
+    
+    - name: Set up test environment
+      run: |
+        cp .env.example .env
+        echo "ENVIRONMENT=test" >> .env
+        echo "DB_HOST=localhost" >> .env
+        echo "DB_PASSWORD=test_password" >> .env
+        echo "REDIS_HOST=localhost" >> .env
+    
+    - name: Run database migrations
+      run: |
+        cd etl_pipeline
+        python -c "
+        import asyncio
+        from core.database import create_tables
+        asyncio.run(create_tables())
+        "
+    
+    - name: Run backend tests
+      run: |
+        cd etl_pipeline
+        python -m pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./etl_pipeline/coverage.xml
+        flags: backend
+        name: backend-coverage
+
+  test-ml-pipeline:
+    name: ML Pipeline Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r narrative_intelligence/requirements.txt
+        pip install pytest pytest-cov numpy pandas scikit-learn
+    
+    - name: Run ML pipeline tests
+      run: |
+        cd narrative_intelligence
+        python -m pytest tests/ -v --cov=. --cov-report=xml
+    
+    - name: Upload ML coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./narrative_intelligence/coverage.xml
+        flags: ml-pipeline
+        name: ml-coverage
+
+  lint-and-security:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 mypy bandit safety
+    
+    - name: Run Black (code formatting)
+      run: |
+        black --check --diff etl_pipeline/ narrative_intelligence/
+    
+    - name: Run isort (import sorting)
+      run: |
+        isort --check-only --diff etl_pipeline/ narrative_intelligence/
+    
+    - name: Run Flake8 (linting)
+      run: |
+        flake8 etl_pipeline/ narrative_intelligence/ --max-line-length=88 --extend-ignore=E203,W503
+    
+    - name: Run MyPy (type checking)
+      run: |
+        mypy etl_pipeline/ --ignore-missing-imports
+        mypy narrative_intelligence/ --ignore-missing-imports
+    
+    - name: Run Bandit (security linting)
+      run: |
+        bandit -r etl_pipeline/ narrative_intelligence/ -f json -o bandit-report.json
+    
+    - name: Run Safety (dependency security check)
+      run: |
+        safety check --json --output safety-report.json
+      continue-on-error: true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  # ============================================================================
+  # BUILD AND DEPLOYMENT
+  # ============================================================================
+  
+  build-api:
+    name: Build API Docker Image
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-ml-pipeline, lint-and-security]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: your-dockerhub-username/strategic-narrative-api
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./etl_pipeline
+        file: ./etl_pipeline/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-api]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to Render (Staging)
+      run: |
+        echo "Deploying to staging environment..."
+        # Add your staging deployment commands here
+        # This could be Render, Railway, or other platforms
+    
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests against staging..."
+        # Add health check and basic API tests here
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-api]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to Production
+      run: |
+        echo "Deploying to production environment..."
+        # Add your production deployment commands here
+    
+    - name: Run production health checks
+      run: |
+        echo "Running production health checks..."
+        # Add comprehensive health checks here
+    
+    - name: Notify team
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+  # ============================================================================
+  # SCHEDULED JOBS
+  # ============================================================================
+  
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+# ============================================================================
+# WORKFLOW TRIGGERS FOR SCHEDULED TASKS
+# ============================================================================
+
+# Uncomment to enable scheduled security scans
+# on:
+#   schedule:
+#     - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
