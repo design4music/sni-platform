@@ -35,13 +35,14 @@ def get_recent_articles(conn, hours_back=72):
     """Get articles from the last N hours with their keywords."""
     cur = conn.cursor()
     try:
-        # Get articles with their keywords
+        # Get articles with their keywords (English-only for MVP)
         query = """
             SELECT 
                 a.id,
                 a.title,
                 a.content,
                 a.published_at,
+                a.language,
                 COALESCE(
                     array_agg(DISTINCT k.keyword) FILTER (WHERE k.keyword IS NOT NULL), 
                     ARRAY[]::text[]
@@ -49,8 +50,9 @@ def get_recent_articles(conn, hours_back=72):
             FROM articles a
             LEFT JOIN article_keywords ak ON a.id = ak.article_id
             LEFT JOIN keywords k ON ak.keyword_id = k.id
-            WHERE a.published_at >= %s
-            GROUP BY a.id, a.title, a.content, a.published_at
+            WHERE a.published_at >= %s 
+              AND (a.language = 'en' OR a.language IS NULL)
+            GROUP BY a.id, a.title, a.content, a.published_at, a.language
             ORDER BY a.published_at DESC
         """
 
@@ -58,7 +60,7 @@ def get_recent_articles(conn, hours_back=72):
         cur.execute(query, (cutoff_time,))
 
         articles = cur.fetchall()
-        logger.info(f"Found {len(articles)} articles from last {hours_back} hours")
+        logger.info(f"Found {len(articles)} English articles from last {hours_back} hours")
         return articles
 
     finally:
@@ -201,7 +203,7 @@ def main():
             all_mappings = []
             processed_count = 0
 
-            for article_id, title, content, published_at, keywords in articles:
+            for article_id, title, content, published_at, language, keywords in articles:
                 if keywords:  # Only process articles with keywords
                     topic_matches = match_article_to_topics(
                         conn, article_id, title, content, keywords, topics, aliases
