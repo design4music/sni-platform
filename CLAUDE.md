@@ -109,11 +109,27 @@ Central configuration for keyword canonicalization:
 
 ## ML Pipeline: CLUST-1 System
 
-4-stage clustering pipeline:
-1. **Seed**: Identify high-overlap keyword pairs
-2. **Densify**: Build dense clusters from seeds  
-3. **Refine**: Merge overlapping clusters
+**SOLIDIFIED PIPELINE (v1.0)**
+- **Default Mode**: STRICT (quality-focused, precision over coverage)
+- **Triads**: DISABLED by default (--use_triads 0)
+- **Recall Mode**: DISABLED by default (use --profile recall to enable)
+
+**Strict Mode Configuration:**
+- Cosine thresholds: seed/densify=0.86, orphan=0.89
+- Consolidation: cos=0.90, wj=0.55, time=0.50
+- Hub tokens: Top-12 most frequent terms filtered out
+- Min shared keywords: 2 for clustering
+
+**4-stage clustering pipeline:**
+1. **Seed**: Identify high-overlap keyword pairs (triads OFF)
+2. **Densify**: Build dense clusters from seeds with strict thresholds
+3. **Consolidate**: Merge overlapping clusters with multiple criteria
 4. **Persist**: Save to database with metadata
+
+**Performance Targets (Strict Mode):**
+- Strategic filtering: 35-45% (current: ~41%)
+- Clustering success: 35-55% (current: ~34%)
+- Quality over quantity approach
 
 Uses canonicalized vocabulary from `article_core_keywords` table.
 

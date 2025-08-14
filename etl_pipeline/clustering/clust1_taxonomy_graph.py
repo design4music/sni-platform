@@ -13,6 +13,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import combinations
 
+import numpy as np
 import psycopg2
 from psycopg2.extras import execute_batch
 
@@ -38,6 +39,196 @@ def generate_topic_key(topic_combo):
     """Generate deterministic hash key for topic combination."""
     sorted_combo = "::".join(sorted(topic_combo))
     return hashlib.sha1(sorted_combo.encode()).hexdigest()
+
+
+def pick_keys(core_tokens, countries, event_set):
+    """Pick gpe_key and event_key for recall mode clustering."""
+    # gpe_key: top-2 countries (sorted)
+    g = sorted(list(countries))[:2]
+    gpe_key = tuple(g) if g else tuple()
+
+    # event_key: pick the first event token present, fallback to None
+    ev = None
+    for t in core_tokens:
+        if t in event_set:
+            ev = t
+            break
+
+    return gpe_key, ev
+
+
+def get_event_tokens(conn, days=30):
+    """Load event tokens from materialized view."""
+    cur = conn.cursor()
+    try:
+        # Try event_tokens_30d first, fallback to 14d
+        try:
+            cur.execute(f"SELECT token FROM event_tokens_{days}d")
+        except Exception as e:
+            logger.warning(
+                f"event_tokens_{days}d not found ({e}), trying event_tokens_14d"
+            )
+            try:
+                cur.execute("SELECT token FROM event_tokens_14d")
+            except Exception:
+                # Fallback to predefined event tokens
+                logger.warning("No event_tokens views found, using predefined list")
+                return {
+                    "tariffs",
+                    "sanctions",
+                    "ceasefire",
+                    "election",
+                    "referendum",
+                    "missile",
+                    "drone",
+                    "oil",
+                    "gas",
+                    "war",
+                    "peace",
+                    "treaty",
+                    "summit",
+                    "meeting",
+                    "talks",
+                    "negotiations",
+                    "conflict",
+                }
+
+        return {row[0] for row in cur.fetchall()}
+    finally:
+        cur.close()
+
+
+def get_countries_from_tokens(tokens):
+    """Extract country names from token list (comprehensive GPE detection)."""
+    # Expanded country and region names for better recall
+    countries = {
+        "united states",
+        "usa",
+        "america",
+        "china",
+        "russia",
+        "ukraine",
+        "israel",
+        "iran",
+        "india",
+        "germany",
+        "france",
+        "united kingdom",
+        "uk",
+        "britain",
+        "japan",
+        "south korea",
+        "north korea",
+        "brazil",
+        "turkey",
+        "egypt",
+        "saudi arabia",
+        "australia",
+        "canada",
+        "mexico",
+        "italy",
+        "spain",
+        "poland",
+        "netherlands",
+        "belgium",
+        "sweden",
+        "norway",
+        "denmark",
+        "syria",
+        "iraq",
+        "afghanistan",
+        "pakistan",
+        "bangladesh",
+        "philippines",
+        "indonesia",
+        "malaysia",
+        "singapore",
+        "thailand",
+        "vietnam",
+        "taiwan",
+        "hong kong",
+        "lebanon",
+        "jordan",
+        "yemen",
+        "oman",
+        "qatar",
+        "kuwait",
+        "uae",
+        "south africa",
+        "nigeria",
+        "kenya",
+        "ethiopia",
+        "ghana",
+        "morocco",
+        "algeria",
+        "libya",
+        "tunisia",
+        "greece",
+        "portugal",
+        "czech republic",
+        "hungary",
+        "romania",
+        "bulgaria",
+        "croatia",
+        "serbia",
+        "bosnia",
+        "albania",
+        "slovenia",
+        "slovakia",
+        "estonia",
+        "latvia",
+        "lithuania",
+        "finland",
+        "iceland",
+        "ireland",
+        "scotland",
+        "wales",
+        "england",
+        # Regions and cities that indicate geographic context
+        "europe",
+        "asia",
+        "africa",
+        "middle east",
+        "eurasia",
+        "balkans",
+        "moscow",
+        "beijing",
+        "tokyo",
+        "london",
+        "paris",
+        "berlin",
+        "washington",
+        "kyiv",
+        "tel aviv",
+        "jerusalem",
+        "tehran",
+        "seoul",
+        "new delhi",
+        "mumbai",
+        "dubai",
+        # Alaska as special case
+        "alaska",
+        "greenland",
+        "siberia",
+        "crimea",
+        "gaza",
+        "west bank",
+        "golan heights",
+    }
+
+    found_countries = set()
+    for token in tokens:
+        token_lower = token.lower().strip()
+        if token_lower in countries:
+            found_countries.add(token_lower)
+        # Also check if token contains country name
+        elif any(country in token_lower for country in countries if len(country) > 3):
+            for country in countries:
+                if len(country) > 3 and country in token_lower:
+                    found_countries.add(country)
+                    break
+
+    return found_countries
 
 
 def get_articles_with_core_keywords(conn, hours_back=72, lang=None):
@@ -122,13 +313,68 @@ def get_articles_with_topics(conn, hours_back=72, lang=None):
         cur.close()
 
 
-def stage_seed(conn, hours_back=72, lang=None):
+def load_triad_pairs(conn, hub_tokens):
+    """Preload triad pairs once at seed init - drop-in enhancement for better seed detection."""
+    cur = conn.cursor()
+    try:
+        # Check if anchor_triads_30d materialized view exists
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1 FROM pg_matviews 
+                WHERE matviewname = 'anchor_triads_30d'
+            )
+        """
+        )
+        if not cur.fetchone()[0]:
+            logger.warning(
+                "anchor_triads_30d table not found, skipping triad enhancement"
+            )
+            return set()
+
+        cur.execute("SELECT t1, t2, t3 FROM anchor_triads_30d")
+        triad_pairs = set()
+
+        for row in cur.fetchall():
+            t1, t2, t3 = row[0], row[1], row[2]
+            # Generate all pairs from each triad, excluding hubs
+            for a, b in ((t1, t2), (t1, t3), (t2, t3)):
+                if a not in hub_tokens and b not in hub_tokens:
+                    triad_pairs.add(tuple(sorted((a, b))))
+
+        return triad_pairs
+    finally:
+        cur.close()
+
+
+def triad_seed_ok(article_tokens, hub_tokens, triad_pairs):
+    """Tiny helper: check if any 2-of-3 triad pattern is present in article tokens."""
+    if not triad_pairs:
+        return False
+
+    # Exclude hub tokens for cleaner matching
+    toks = [t for t in article_tokens if t not in hub_tokens]
+
+    # Check all pairs of non-hub tokens against triad pairs
+    for i in range(len(toks)):
+        for j in range(i + 1, len(toks)):
+            if tuple(sorted((toks[i], toks[j]))) in triad_pairs:
+                return True
+    return False
+
+
+def stage_seed(conn, hours_back=72, lang=None, profile="strict", use_triads=0):
     """Stage 1: Create seed clusters based on core keyword combinations."""
     logger.info(
-        "Starting seed stage (window: {}h, lang: {}) - USING CORE KEYWORDS".format(
-            hours_back, lang
+        "Starting seed stage (window: {}h, lang: {}, profile: {}) - USING CORE KEYWORDS".format(
+            hours_back, lang, profile
         )
     )
+
+    if profile == "recall":
+        return stage_seed_recall(conn, hours_back, lang)
+
+    # Continue with strict mode below
 
     articles = get_articles_with_core_keywords(conn, hours_back, lang)
     if not articles:
@@ -161,8 +407,8 @@ def stage_seed(conn, hours_back=72, lang=None):
 
         # Load anchored-rare pairs for special seeding
         anchored_pairs_query = """
-            SELECT tok_a, tok_b, co_doc FROM pairs30
-            WHERE co_doc >= 5
+            SELECT t1, t2, co_doc FROM anchor_pairs_30d
+            WHERE co_doc >= 4
         """
         cur.execute(anchored_pairs_query)
         anchored_pairs = {}
@@ -175,6 +421,16 @@ def stage_seed(conn, hours_back=72, lang=None):
         )
     finally:
         cur.close()
+
+    # Preload triad pairs for enhanced seed detection (drop-in enhancement)
+    if use_triads:
+        triad_pairs = load_triad_pairs(conn, hub_tokens)
+        logger.info(
+            f"Loaded {len(triad_pairs)} triad pairs for enhanced seed detection"
+        )
+    else:
+        triad_pairs = {}
+        logger.info("Triad seeding disabled (--use_triads 0)")
 
     for (
         article_id,
@@ -251,7 +507,7 @@ def stage_seed(conn, hours_back=72, lang=None):
                             }
                         )
 
-    # Filter seeds: size >= 3 and >= 2 unique sources
+    # Filter seeds: size >= 3 and >= 2 unique sources (base rule)
     seeds = {}
     for topic_key, members in keyword_combos.items():
         if len(members) >= 3:
@@ -267,9 +523,191 @@ def stage_seed(conn, hours_back=72, lang=None):
                     "lang": lang,
                 }
 
-    logger.info("Created {} seed clusters".format(len(seeds)))
+    base_seeds = len(seeds)
+
+    # Enhanced triad seeding: create single-article seeds for strong triad patterns
+    if triad_pairs:
+        processed_articles = set()
+        # Get all articles already in seeds
+        for seed_data in seeds.values():
+            for member in seed_data["members"]:
+                processed_articles.add(member["article_id"])
+
+        # Check remaining articles for triad patterns
+        triad_seeds_added = 0
+        for (
+            article_id,
+            title,
+            published_at,
+            source_name,
+            language,
+            core_keywords,
+            scores,
+        ) in articles:
+            if article_id in processed_articles:
+                continue  # Already in a seed cluster
+
+            # Extract top keywords for triad check
+            valid_keywords = []
+            for i in range(min(3, len(core_keywords))):
+                if scores[i] > 0:
+                    keyword = core_keywords[i]
+                    cluster = normalizer.get_concept_cluster(keyword)
+                    valid_keywords.append(cluster)
+
+            # Check if article has triad pattern
+            if triad_seed_ok(valid_keywords, hub_tokens, triad_pairs):
+                # Create single-article seed with triad pattern
+                topic_key = f"triad_{article_id}"
+                seeds[topic_key] = {
+                    "members": [
+                        {
+                            "article_id": article_id,
+                            "title": title,
+                            "published_at": published_at,
+                            "source_name": source_name,
+                            "language": language,
+                            "keywords": valid_keywords[:3],  # Top 3 keywords
+                            "combo_size": len(valid_keywords),
+                        }
+                    ],
+                    "size": 1,
+                    "sources": {source_name},
+                    "keywords": valid_keywords[:3],
+                    "lang": lang,
+                    "triad_seed": True,  # Mark as triad-based seed
+                }
+                triad_seeds_added += 1
+
+        if triad_seeds_added > 0:
+            logger.info(
+                f"Added {triad_seeds_added} triad-pattern seeds to {base_seeds} base seeds"
+            )
+
+    logger.info(
+        "Created {} seed clusters ({} base + {} triad)".format(
+            len(seeds), base_seeds, len(seeds) - base_seeds
+        )
+    )
 
     # Store seeds temporarily (in-memory for this MVP)
+    return seeds
+
+
+def stage_seed_recall(conn, hours_back=72, lang=None):
+    """Recall mode seeding with gpe_key + event_key binning."""
+    logger.info(f"Starting recall mode seeding (window: {hours_back}h, lang: {lang})")
+
+    articles = get_articles_with_core_keywords(conn, hours_back, lang)
+    if not articles:
+        logger.warning("No articles with core keywords found")
+        return {}
+
+    # Load event tokens and countries
+    event_set = get_event_tokens(conn, 30)
+    logger.info(f"Loaded {len(event_set)} event tokens")
+
+    # Load anchor pairs for alternative seeding
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT t1, t2, co_doc FROM anchor_pairs_30d WHERE co_doc >= 4")
+        anchored_pairs = {}
+        for tok_a, tok_b, co_doc in cur.fetchall():
+            anchored_pairs[(tok_a, tok_b)] = co_doc
+            anchored_pairs[(tok_b, tok_a)] = co_doc
+    finally:
+        cur.close()
+
+    # Build bins based on gpe_key + event_key
+    bins = defaultdict(list)
+
+    for (
+        article_id,
+        title,
+        published_at,
+        source_name,
+        language,
+        core_keywords,
+        scores,
+    ) in articles:
+        # Extract core tokens and countries
+        core_tokens = set(core_keywords[:5])  # Top 5 keywords
+        countries = get_countries_from_tokens(core_tokens)
+
+        # Pick keys for this article
+        gpe_key, event_key = pick_keys(core_tokens, countries, event_set)
+
+        # Create bin identifier
+        bin_id = (gpe_key, event_key)
+
+        # Alternative seeding: anchor_pair + (>=1 country or >=1 org)
+        has_anchor_pair = False
+        for tok_a in core_tokens:
+            for tok_b in core_tokens:
+                if tok_a < tok_b and (tok_a, tok_b) in anchored_pairs:
+                    has_anchor_pair = True
+                    break
+            if has_anchor_pair:
+                break
+
+        # Much more permissive seeding for recall mode:
+        # 1. Any geographic context (country/region)
+        # 2. Any event context
+        # 3. Anchor pair + any entity
+        # 4. Fallback: top 2 keywords if no other context
+        should_seed = False
+
+        if gpe_key:  # Any geographic context
+            should_seed = True
+        elif event_key:  # Any event context
+            should_seed = True
+        elif has_anchor_pair:  # Any anchor pair
+            should_seed = True
+            bin_id = f"anchor_{article_id}"
+        else:
+            # Fallback: create bin from top 2 keywords for broader coverage
+            if len(core_tokens) >= 2:
+                top_2_keywords = sorted(list(core_tokens))[:2]
+                bin_id = f"keywords_{'_'.join(top_2_keywords)}"
+                should_seed = True
+
+        if should_seed:
+            bins[bin_id].append(
+                {
+                    "article_id": article_id,
+                    "title": title,
+                    "published_at": published_at,
+                    "source_name": source_name,
+                    "language": language,
+                    "keywords": list(core_tokens),
+                    "gpe_key": gpe_key,
+                    "event_key": event_key,
+                    "countries": countries,
+                }
+            )
+
+    # Convert bins to seeds (recall mode: meaningful clusters only)
+    seeds = {}
+    for bin_id, members in bins.items():
+        if (
+            len(members) >= 2
+        ):  # Recall mode: still need meaningful clusters (min 2 articles)
+            unique_sources = set(m["source_name"] for m in members)
+            # Recall mode: min sources 1 (but mark single-source clusters)
+
+            seeds[str(bin_id)] = {
+                "members": members,
+                "size": len(members),
+                "sources": unique_sources,
+                "keywords": members[0]["keywords"],
+                "lang": lang,
+                "gpe_key": members[0]["gpe_key"],
+                "event_key": members[0]["event_key"],
+                "source_diversity": len(unique_sources),  # Mark for CLUST-2
+                "recall_seed": True,
+            }
+
+    logger.info(f"Created {len(seeds)} recall mode seed clusters")
     return seeds
 
 
@@ -368,9 +806,15 @@ def find_similar_articles(
         cur.close()
 
 
-def stage_densify(conn, seeds, hours_back=72, lang=None, cos_threshold=0.82):
+def stage_densify(
+    conn, seeds, hours_back=72, lang=None, cos_threshold=0.82, profile="strict"
+):
     """Stage 2: Densify clusters by adding similar articles with hub-suppression."""
-    logger.info("Starting densify stage (cos_threshold: {})".format(cos_threshold))
+    logger.info(
+        "Starting densify stage (cos_threshold: {}, profile: {})".format(
+            cos_threshold, profile
+        )
+    )
 
     if not seeds:
         logger.warning("No seeds to densify")
@@ -384,6 +828,9 @@ def stage_densify(conn, seeds, hours_back=72, lang=None, cos_threshold=0.82):
         logger.info(f"Loaded {len(hub_tokens)} hub tokens for densify stage")
     finally:
         cur.close()
+
+    if profile == "recall":
+        return stage_densify_recall(conn, seeds, hours_back, lang, hub_tokens)
 
     densified_seeds = {}
 
@@ -463,10 +910,12 @@ def stage_densify(conn, seeds, hours_back=72, lang=None, cos_threshold=0.82):
                         )
                         max_similarity = max(max_similarity, similarity)
 
-                        if max_similarity >= 0.88:  # Gentler threshold for recall
+                        if (
+                            max_similarity >= 0.86
+                        ):  # Even gentler threshold for recall boost
                             break
 
-                    if max_similarity >= 0.88:
+                    if max_similarity >= 0.86:
                         should_add = True
                         reason = f"shared_nonhub_1+cos_{max_similarity:.3f}"
 
@@ -510,113 +959,530 @@ def stage_densify(conn, seeds, hours_back=72, lang=None, cos_threshold=0.82):
     return densified_seeds
 
 
-def stage_consolidate(conn, seeds):
-    """Stage 2.5: Consolidate overlapping clusters using connected components."""
-    logger.info("Starting consolidate stage with connected components")
+def stage_densify_recall(conn, seeds, hours_back=72, lang=None, hub_tokens=None):
+    """Recall mode densify with looser similarity thresholds."""
+    logger.info("Starting recall mode densify")
 
-    if not seeds or len(seeds) < 2:
-        logger.info("Insufficient clusters for consolidation")
+    if not seeds:
         return seeds
 
-    # First persist temp clusters to compute overlaps
-    temp_cluster_data = []
-    temp_member_data = []
-    cluster_id_map = {}
+    densified_seeds = {}
 
-    for i, (topic_key, seed_data) in enumerate(seeds.items()):
-        temp_cluster_id = f"temp_{i}"
-        cluster_id_map[topic_key] = temp_cluster_id
+    for topic_key, seed_data in seeds.items():
+        logger.debug(f"Densifying recall seed {topic_key} (size: {seed_data['size']})")
 
-        temp_cluster_data.append(
-            (temp_cluster_id, seed_data["keywords"], seed_data["size"])
-        )
+        seed_member_ids = [m["article_id"] for m in seed_data["members"]]
+        seed_gpe_key = seed_data.get("gpe_key", tuple())
+        seed_event_key = seed_data.get("event_key")
+        seed_keywords = set(seed_data["keywords"])
 
-        for member in seed_data["members"]:
-            temp_member_data.append((temp_cluster_id, member["article_id"]))
+        # Find candidate articles for densification
+        cur = conn.cursor()
+        try:
+            lang_filter = "AND a.language = %s" if lang else ""
+            query_params = [
+                datetime.now() - timedelta(hours=hours_back),
+                tuple(seed_member_ids),
+            ]
+            if lang:
+                query_params.append(lang)
+
+            query = f"""
+                SELECT 
+                    a.id, a.title, a.published_at, a.source_name, a.language,
+                    array_agg(ck.token ORDER BY ck.score DESC) as keywords,
+                    array_agg(ck.score ORDER BY ck.score DESC) as scores
+                FROM articles a
+                JOIN article_core_keywords ck ON a.id = ck.article_id
+                WHERE a.published_at >= %s
+                AND a.id NOT IN %s
+                {lang_filter}
+                GROUP BY a.id, a.title, a.published_at, a.source_name, a.language
+                HAVING COUNT(ck.token) >= 3
+            """
+
+            cur.execute(query, query_params)
+            candidates = cur.fetchall()
+
+            added_members = []
+            event_set = get_event_tokens(conn, 30)
+
+            for (
+                candidate_id,
+                title,
+                published_at,
+                source_name,
+                language,
+                keywords,
+                scores,
+            ) in candidates:
+                candidate_keywords = set(keywords[:5])  # Top 5 keywords
+                candidate_countries = get_countries_from_tokens(candidate_keywords)
+                candidate_gpe_key, candidate_event_key = pick_keys(
+                    candidate_keywords, candidate_countries, event_set
+                )
+
+                should_add = False
+                reason = ""
+
+                # Recall rule 1: same gpe_key and same event_key
+                if (
+                    seed_gpe_key
+                    and candidate_gpe_key == seed_gpe_key
+                    and seed_event_key
+                    and candidate_event_key == seed_event_key
+                ):
+                    should_add = True
+                    reason = "same_gpe_event"
+
+                # Recall rule 2: same gpe_key and title cosine >= 0.65 (much lower for recall)
+                elif seed_gpe_key and candidate_gpe_key == seed_gpe_key:
+                    # Check title cosine similarity
+                    max_title_similarity = 0.0
+                    for seed_member_id in seed_member_ids[:3]:
+                        similarity = get_cosine_similarity(
+                            conn, candidate_id, seed_member_id
+                        )
+                        max_title_similarity = max(max_title_similarity, similarity)
+                        if max_title_similarity >= 0.65:
+                            break
+
+                    if max_title_similarity >= 0.65:
+                        should_add = True
+                        reason = f"same_gpe_title_cos_{max_title_similarity:.3f}"
+
+                # Recall rule 3: shares >=1 non-hub token with anchor set and cosine >= 0.60 (very low for recall)
+                if not should_add:
+                    shared_tokens = seed_keywords.intersection(candidate_keywords)
+                    shared_nonhub = len(
+                        [
+                            tok
+                            for tok in shared_tokens
+                            if tok not in (hub_tokens or set())
+                        ]
+                    )
+
+                    if shared_nonhub >= 1:
+                        max_similarity = 0.0
+                        for seed_member_id in seed_member_ids[:3]:
+                            similarity = get_cosine_similarity(
+                                conn, candidate_id, seed_member_id
+                            )
+                            max_similarity = max(max_similarity, similarity)
+                            if max_similarity >= 0.60:
+                                break
+
+                        if max_similarity >= 0.60:
+                            should_add = True
+                            reason = f"shared_nonhub_{shared_nonhub}_cos_{max_similarity:.3f}"
+
+                if should_add:
+                    added_members.append(
+                        {
+                            "article_id": candidate_id,
+                            "title": title,
+                            "published_at": published_at,
+                            "source_name": source_name,
+                            "language": language,
+                            "keywords": keywords,
+                            "reason": reason,
+                            "gpe_key": candidate_gpe_key,
+                            "event_key": candidate_event_key,
+                        }
+                    )
+
+            # Update seed with new members
+            all_members = seed_data["members"] + added_members
+            densified_seeds[topic_key] = {
+                **seed_data,
+                "members": all_members,
+                "size": len(all_members),
+                "added_count": len(added_members),
+            }
+
+            if added_members:
+                logger.debug(
+                    f"Added {len(added_members)} members to recall seed {topic_key}"
+                )
+
+        finally:
+            cur.close()
+
+    total_added = sum(s.get("added_count", 0) for s in densified_seeds.values())
+    logger.info(
+        f"Recall densify complete. Added {total_added} articles across {len(densified_seeds)} seeds"
+    )
+
+    return densified_seeds
+
+
+def compute_cluster_features(conn, seed_data):
+    """Compute advanced features for cluster merge comparison."""
+    try:
+        # Extract basic info
+        members = seed_data["members"]
+
+        logger.debug(f"Computing features for {len(members)} members")
+
+        # Compute centroid from article keywords
+        centroid = compute_cluster_centroid(conn, members)
+        logger.debug(f"Computed centroid with {len(centroid)} keywords")
+
+        # Extract non-hub anchors (top strategic keywords excluding hubs)
+        anchors_nonhub = get_cluster_anchors_nonhub(conn, members)
+        logger.debug(f"Computed {len(anchors_nonhub)} anchor keywords")
+
+        # Extract countries mentioned
+        country_set = get_cluster_countries(conn, members)
+        logger.debug(f"Found {len(country_set)} countries")
+
+        # Compute time span (earliest to latest article)
+        time_span = compute_cluster_time_span(members)
+        logger.debug(f"Computed time span: {time_span}")
+
+        return {
+            "centroid": centroid,
+            "anchors_nonhub": anchors_nonhub,
+            "country_set": country_set,
+            "time_span": time_span,
+            "size": len(members),
+        }
+    except Exception as e:
+        logger.error(f"Error in compute_cluster_features: {e}")
+        logger.error(f"Seed data keys: {list(seed_data.keys())}")
+        logger.error(f"Members type: {type(seed_data.get('members', 'missing'))}")
+        if "members" in seed_data and seed_data["members"]:
+            logger.error(f"First member keys: {list(seed_data['members'][0].keys())}")
+        raise
+
+
+def compute_cluster_centroid(conn, members):
+    """Compute centroid vector from article keyword embeddings."""
+
+    if not members:
+        return {}  # Empty centroid
+
+    article_ids = [member["article_id"] for member in members]
 
     cur = conn.cursor()
     try:
-        # Create temp tables
-        cur.execute("DROP TABLE IF EXISTS temp_clusters")
-        cur.execute("DROP TABLE IF EXISTS temp_cluster_members")
-
+        # Get keyword vectors for articles (simplified - use keyword text frequency)
+        format_strings = ",".join(["%s"] * len(article_ids))
         cur.execute(
-            """
-            CREATE TEMP TABLE temp_clusters (
-                cluster_id VARCHAR PRIMARY KEY,
-                keywords TEXT[],
-                size INTEGER
-            )
-        """
+            f"""
+            SELECT k.keyword, COUNT(*) as freq, AVG(ak.strategic_score) as avg_score
+            FROM article_keywords ak
+            JOIN keywords k ON ak.keyword_id = k.id
+            WHERE ak.article_id IN ({format_strings})
+            GROUP BY k.keyword
+            ORDER BY avg_score DESC, freq DESC
+            LIMIT 50
+        """,
+            article_ids,
         )
 
-        cur.execute(
-            """
-            CREATE TEMP TABLE temp_cluster_members (
-                cluster_id VARCHAR,
-                article_id VARCHAR
-            )
-        """
-        )
+        keyword_data = cur.fetchall()
 
-        # Insert temp data
-        from psycopg2.extras import execute_batch
+        # Create simple centroid from top keywords (bag of words approach)
+        centroid = {}
+        for keyword, freq, score in keyword_data:
+            centroid[keyword] = float(freq) * float(score)
 
-        execute_batch(
-            cur, "INSERT INTO temp_clusters VALUES (%s, %s, %s)", temp_cluster_data
-        )
-        execute_batch(
-            cur, "INSERT INTO temp_cluster_members VALUES (%s, %s)", temp_member_data
-        )
-
-        # Compute overlaps using the provided SQL
-        overlap_query = """
-            CREATE TEMP TABLE cl_overlap AS
-            SELECT a.cluster_id AS c1, b.cluster_id AS c2,
-                   COUNT(*)::int AS inter,
-                   ca.size AS size1, cb.size AS size2
-            FROM temp_cluster_members a
-            JOIN temp_cluster_members b
-              ON a.article_id=b.article_id AND a.cluster_id < b.cluster_id
-            JOIN temp_clusters ca ON ca.cluster_id=a.cluster_id
-            JOIN temp_clusters cb ON cb.cluster_id=b.cluster_id
-            GROUP BY a.cluster_id, b.cluster_id, ca.size, cb.size
-        """
-        cur.execute(overlap_query)
-
-        # Get pairs to merge
-        merge_query = """
-            SELECT c1, c2
-            FROM (
-              SELECT c1, c2,
-                     inter::float / (size1 + size2 - inter) AS jaccard,
-                     (inter = size1) AS a_subset_b,
-                     (inter = size2) AS b_subset_a
-              FROM cl_overlap
-            ) x
-            WHERE jaccard >= 0.60 OR a_subset_b OR b_subset_a
-        """
-        cur.execute(merge_query)
-        merge_pairs = cur.fetchall()
-
-        logger.info(f"Found {len(merge_pairs)} cluster pairs to merge")
-
-        # Apply union-find to get connected components
-        consolidated_seeds = apply_union_find(conn, seeds, merge_pairs, cluster_id_map)
-
-        logger.info(
-            f"Consolidated {len(seeds)} clusters into {len(consolidated_seeds)} components"
-        )
-        return consolidated_seeds
+        return centroid
 
     finally:
         cur.close()
 
 
-def apply_union_find(conn, seeds, merge_pairs, cluster_id_map):
-    """Apply union-find algorithm to merge connected cluster components."""
-    # Reverse mapping from temp_id to topic_key
-    id_to_key = {v: k for k, v in cluster_id_map.items()}
+def get_cluster_anchors_nonhub(conn, members, limit=10):
+    """Get top strategic keywords excluding hub terms."""
+    if not members:
+        return set()
+
+    article_ids = [member["article_id"] for member in members]
+
+    cur = conn.cursor()
+    try:
+        # Get hub tokens to exclude (check if table exists first)
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables 
+                WHERE table_name = 'keyword_hubs_30d'
+            )
+        """
+        )
+        if cur.fetchone()[0]:
+            cur.execute("SELECT tok FROM keyword_hubs_30d")
+            hub_tokens = set(row[0] for row in cur.fetchall())
+        else:
+            hub_tokens = set()
+
+        # Get top non-hub keywords
+        format_strings = ",".join(["%s"] * len(article_ids))
+
+        if hub_tokens:
+            cur.execute(
+                f"""
+                SELECT k.keyword, AVG(ak.strategic_score) as avg_score, COUNT(*) as freq
+                FROM article_keywords ak
+                JOIN keywords k ON ak.keyword_id = k.id
+                WHERE ak.article_id IN ({format_strings})
+                AND k.keyword NOT IN %s
+                GROUP BY k.keyword
+                ORDER BY avg_score DESC, freq DESC
+                LIMIT %s
+            """,
+                article_ids + [tuple(hub_tokens), limit],
+            )
+        else:
+            cur.execute(
+                f"""
+                SELECT k.keyword, AVG(ak.strategic_score) as avg_score, COUNT(*) as freq
+                FROM article_keywords ak
+                JOIN keywords k ON ak.keyword_id = k.id
+                WHERE ak.article_id IN ({format_strings})
+                GROUP BY k.keyword
+                ORDER BY avg_score DESC, freq DESC
+                LIMIT %s
+            """,
+                article_ids + [limit],
+            )
+
+        anchors = set(row[0] for row in cur.fetchall())
+        return anchors
+
+    finally:
+        cur.close()
+
+
+def get_cluster_countries(conn, members):
+    """Extract country/geopolitical entities mentioned in cluster."""
+    if not members:
+        return set()
+
+    article_ids = [member["article_id"] for member in members]
+    logger.debug(f"Looking for countries in {len(article_ids)} articles")
+
+    cur = conn.cursor()
+    try:
+        format_strings = ",".join(["%s"] * len(article_ids))
+        cur.execute(
+            f"""
+            SELECT DISTINCT k.keyword
+            FROM article_keywords ak
+            JOIN keywords k ON ak.keyword_id = k.id
+            WHERE ak.article_id IN ({format_strings})
+            AND k.keyword_type IN ('entity')
+            AND (
+                k.keyword ILIKE '%china%' OR k.keyword ILIKE '%usa%' OR k.keyword ILIKE '%russia%' 
+                OR k.keyword ILIKE '%ukraine%' OR k.keyword ILIKE '%israel%' OR k.keyword ILIKE '%iran%'
+                OR k.keyword ILIKE '%india%' OR k.keyword ILIKE '%japan%' OR k.keyword ILIKE '%germany%'
+                OR k.keyword ILIKE '%france%' OR k.keyword ILIKE '%britain%' OR k.keyword ILIKE '%turkey%'
+            )
+        """,
+            article_ids,
+        )
+
+        results = cur.fetchall()
+        logger.debug(f"Found {len(results)} country keywords")
+
+        countries = set()
+        for row in results:
+            if row and len(row) > 0 and row[0]:  # Defensive check for None values
+                try:
+                    countries.add(row[0].lower())
+                except (AttributeError, IndexError):
+                    continue  # Skip invalid entries
+
+        return countries
+
+    except Exception as e:
+        logger.error(f"Error in get_cluster_countries: {e}")
+        return set()
+    finally:
+        cur.close()
+
+
+def compute_cluster_time_span(members):
+    """Compute time span of cluster articles."""
+    if not members:
+        return {"start": None, "end": None, "hours": 0}
+
+    timestamps = []
+    for member in members:
+        # Members might have different field names for timestamp
+        timestamp = None
+        for field in ["published_at", "created_at", "timestamp"]:
+            if field in member:
+                timestamp = member[field]
+                break
+
+        if timestamp:
+            timestamps.append(timestamp)
+
+    if not timestamps:
+        return {"start": None, "end": None, "hours": 0}
+
+    try:
+        start_time = min(timestamps)
+        end_time = max(timestamps)
+        hours_span = (end_time - start_time).total_seconds() / 3600
+
+        return {"start": start_time, "end": end_time, "hours": hours_span}
+    except Exception as e:
+        logger.error(f"Error computing time span: {e}")
+        return {"start": None, "end": None, "hours": 0}
+
+
+def compute_cosine_similarity(features1, features2):
+    """Compute cosine similarity between cluster centroids."""
+
+    centroid1 = features1["centroid"]
+    centroid2 = features2["centroid"]
+
+    if not centroid1 or not centroid2:
+        return 0.0
+
+    # Convert to common keyword space
+    all_keywords = set(centroid1.keys()) | set(centroid2.keys())
+
+    if not all_keywords:
+        return 0.0
+
+    vec1 = np.array([centroid1.get(kw, 0) for kw in all_keywords])
+    vec2 = np.array([centroid2.get(kw, 0) for kw in all_keywords])
+
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+
+    return np.dot(vec1, vec2) / (norm1 * norm2)
+
+
+def compute_weighted_jaccard(features1, features2):
+    """Compute weighted Jaccard similarity between anchor keywords."""
+    anchors1 = features1["anchors_nonhub"]
+    anchors2 = features2["anchors_nonhub"]
+
+    if not anchors1 or not anchors2:
+        return 0.0
+
+    intersection = len(anchors1 & anchors2)
+    union = len(anchors1 | anchors2)
+
+    if union == 0:
+        return 0.0
+
+    # Weight by cluster sizes
+    size1 = features1["size"]
+    size2 = features2["size"]
+    weight = min(size1, size2) / max(size1, size2)
+
+    return (intersection / union) * weight
+
+
+def compute_time_overlap(features1, features2):
+    """Compute time overlap between cluster time spans."""
+    span1 = features1["time_span"]
+    span2 = features2["time_span"]
+
+    if not span1["start"] or not span1["end"] or not span2["start"] or not span2["end"]:
+        return 0.0
+
+    # Find overlap period
+    overlap_start = max(span1["start"], span2["start"])
+    overlap_end = min(span1["end"], span2["end"])
+
+    if overlap_start >= overlap_end:
+        return 0.0  # No overlap
+
+    overlap_hours = (overlap_end - overlap_start).total_seconds() / 3600
+
+    # Normalize by smaller span
+    min_span_hours = min(span1["hours"], span2["hours"])
+
+    if min_span_hours == 0:
+        return 1.0 if overlap_hours > 0 else 0.0
+
+    return min(overlap_hours / min_span_hours, 1.0)
+
+
+def stage_consolidate(conn, seeds, merge_cos=0.90, merge_wj=0.55, merge_time=0.50):
+    """Stage 2.5: Consolidate overlapping clusters using cosine similarity, weighted Jaccard, and time overlap."""
+    logger.info(
+        f"Starting consolidate stage with merge thresholds: cos={merge_cos}, wj={merge_wj}, time={merge_time}"
+    )
+
+    if not seeds or len(seeds) < 2:
+        logger.info("Insufficient clusters for consolidation")
+        return seeds
+
+    # Compute cluster features for merge comparison
+    cluster_features = {}
+    for topic_key, seed_data in seeds.items():
+        try:
+            cluster_features[topic_key] = compute_cluster_features(conn, seed_data)
+            logger.debug(f"Computed features for cluster {topic_key[:8]}...")
+        except Exception as e:
+            logger.error(f"Failed to compute features for cluster {topic_key}: {e}")
+            raise
+
+    # Find merge candidates using advanced similarity metrics
+    merge_pairs = []
+    cluster_keys = list(seeds.keys())
+
+    for i, key1 in enumerate(cluster_keys):
+        for key2 in cluster_keys[i + 1 :]:
+            # Calculate similarities
+            cos_sim = compute_cosine_similarity(
+                cluster_features[key1], cluster_features[key2]
+            )
+            wj_sim = compute_weighted_jaccard(
+                cluster_features[key1], cluster_features[key2]
+            )
+            time_overlap = compute_time_overlap(
+                cluster_features[key1], cluster_features[key2]
+            )
+
+            # Apply merge rule: accept if >=2 hold
+            conditions = [
+                cos_sim >= merge_cos,
+                wj_sim >= merge_wj,
+                time_overlap >= merge_time,
+            ]
+
+            if sum(conditions) >= 2:
+                merge_pairs.append(
+                    (
+                        key1,
+                        key2,
+                        {
+                            "cos_sim": cos_sim,
+                            "wj_sim": wj_sim,
+                            "time_overlap": time_overlap,
+                            "conditions_met": sum(conditions),
+                        },
+                    )
+                )
+
+    logger.info(
+        f"Found {len(merge_pairs)} cluster pairs meeting merge criteria (>=2 conditions)"
+    )
+
+    # Apply union-find to get connected components
+    consolidated_seeds = apply_advanced_union_find(conn, seeds, merge_pairs)
+
+    logger.info(
+        f"Consolidated {len(seeds)} clusters into {len(consolidated_seeds)} components"
+    )
+    return consolidated_seeds
+
+
+def apply_advanced_union_find(conn, seeds, merge_pairs):
+    """Apply union-find algorithm to merge connected cluster components with advanced similarity."""
 
     # Union-Find data structure
     parent = {}
@@ -644,11 +1510,12 @@ def apply_union_find(conn, seeds, merge_pairs, cluster_id_map):
     for topic_key in seeds.keys():
         find(topic_key)
 
-    # Union overlapping clusters
-    for temp_c1, temp_c2 in merge_pairs:
-        if temp_c1 in id_to_key and temp_c2 in id_to_key:
-            key1, key2 = id_to_key[temp_c1], id_to_key[temp_c2]
-            union(key1, key2)
+    # Union clusters based on merge pairs
+    for key1, key2, similarity_metrics in merge_pairs:
+        union(key1, key2)
+        logger.info(
+            f"Unioning clusters {key1[:8]}...{key2[:8]} - cos={similarity_metrics['cos_sim']:.3f}, wj={similarity_metrics['wj_sim']:.3f}, time={similarity_metrics['time_overlap']:.3f}"
+        )
 
     # Group clusters by component
     components = {}
@@ -676,7 +1543,7 @@ def apply_union_find(conn, seeds, merge_pairs, cluster_id_map):
             consolidated[single_key] = single_data
         else:
             # Multiple clusters - merge them
-            merged_key = f"merged_{root}"
+            merged_key = f"consolidated_{root[:8]}"
             merged_members = []
             merged_keywords = set()
             merged_sources = set()
@@ -689,7 +1556,8 @@ def apply_union_find(conn, seeds, merge_pairs, cluster_id_map):
                     if article_id not in seen_articles:
                         merged_members.append(member)
                         seen_articles.add(article_id)
-                        merged_sources.add(member["source_name"])
+                        if "source_name" in member:
+                            merged_sources.add(member["source_name"])
 
                 # Combine keywords
                 if "keywords" in seeds[key]:
@@ -697,23 +1565,25 @@ def apply_union_find(conn, seeds, merge_pairs, cluster_id_map):
 
             # Generate TF-IDF label for merged cluster
             try:
-                label = generate_tfidf_label(conn, merged_members, merged_keywords)
+                label = generate_tfidf_label(
+                    conn, merged_members, list(merged_keywords)
+                )
             except Exception as e:
                 logger.error(f"Error generating label for merged cluster: {e}")
-                label = f"merged_{merged_key[:8]}"
+                label = f"consolidated_{merged_key[-8:]}"
 
             consolidated[merged_key] = {
                 "members": merged_members,
                 "size": len(merged_members),
-                "sources": merged_sources,
+                "sources": list(merged_sources),
                 "keywords": list(merged_keywords),
                 "label": label,
-                "lang": seeds[cluster_keys[0]].get("lang"),
+                "lang": seeds[cluster_keys[0]].get("lang", "EN"),
                 "merged_from": cluster_keys,
             }
 
             logger.info(
-                f"Merged clusters {cluster_keys} into {merged_key} with {len(merged_members)} articles"
+                f"Consolidated {len(cluster_keys)} clusters into {merged_key} with {len(merged_members)} articles"
             )
 
     return consolidated
@@ -1132,7 +2002,7 @@ def main():
         "--window", type=int, default=72, help="Time window in hours (default: 72)"
     )
     parser.add_argument(
-        "--lang", type=str, default="en", help="Language filter (default: en for MVP)"
+        "--lang", type=str, default="EN", help="Language filter (default: EN for MVP)"
     )
     parser.add_argument(
         "--cos",
@@ -1145,6 +2015,36 @@ def main():
         type=int,
         default=80,
         help="Minimum size for refine stage (default: 80)",
+    )
+    parser.add_argument(
+        "--merge-cos",
+        type=float,
+        default=0.90,
+        help="Cosine similarity threshold for consolidate merge (default: 0.90)",
+    )
+    parser.add_argument(
+        "--merge-wj",
+        type=float,
+        default=0.55,
+        help="Weighted Jaccard threshold for consolidate merge (default: 0.55)",
+    )
+    parser.add_argument(
+        "--merge-time",
+        type=float,
+        default=0.50,
+        help="Time overlap threshold for consolidate merge (default: 0.50)",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=["strict", "recall"],
+        default="strict",
+        help="Clustering profile: strict (default) for precision, recall for coverage",
+    )
+    parser.add_argument(
+        "--use_triads",
+        type=int,
+        default=0,
+        help="Enable triad-based seed enhancement (0=off, 1=on, default: 0)",
     )
 
     args = parser.parse_args()
@@ -1160,36 +2060,56 @@ def main():
 
         try:
             if args.stage == "seed":
-                seeds = stage_seed(conn, args.window, args.lang)
+                seeds = stage_seed(
+                    conn, args.window, args.lang, args.profile, args.use_triads
+                )
                 logger.info("Seed stage completed with {} seeds".format(len(seeds)))
                 # Store seeds in a simple way for MVP (could use Redis/file for production)
 
             elif args.stage == "densify":
                 # For MVP, re-run seed stage then densify
-                seeds = stage_seed(conn, args.window, args.lang)
+                seeds = stage_seed(
+                    conn, args.window, args.lang, args.profile, args.use_triads
+                )
                 if seeds:
-                    seeds = stage_densify(conn, seeds, args.window, args.lang, args.cos)
+                    seeds = stage_densify(
+                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                    )
                 logger.info("Densify stage completed")
 
             elif args.stage == "consolidate":
-                seeds = stage_seed(conn, args.window, args.lang)
+                seeds = stage_seed(
+                    conn, args.window, args.lang, args.profile, args.use_triads
+                )
                 if seeds:
-                    seeds = stage_densify(conn, seeds, args.window, args.lang, args.cos)
-                    seeds = stage_consolidate(conn, seeds)
+                    seeds = stage_densify(
+                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                    )
+                    seeds = stage_consolidate(
+                        conn, seeds, args.merge_cos, args.merge_wj, args.merge_time
+                    )
                 logger.info("Consolidate stage completed")
 
             elif args.stage == "refine":
-                seeds = stage_seed(conn, args.window, args.lang)
+                seeds = stage_seed(
+                    conn, args.window, args.lang, args.profile, args.use_triads
+                )
                 if seeds:
-                    seeds = stage_densify(conn, seeds, args.window, args.lang, args.cos)
+                    seeds = stage_densify(
+                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                    )
                     seeds = stage_consolidate(conn, seeds)
                     seeds = stage_refine(conn, seeds, args.min_size)
                 logger.info("Refine stage completed")
 
             elif args.stage == "persist":
-                seeds = stage_seed(conn, args.window, args.lang)
+                seeds = stage_seed(
+                    conn, args.window, args.lang, args.profile, args.use_triads
+                )
                 if seeds:
-                    seeds = stage_densify(conn, seeds, args.window, args.lang, args.cos)
+                    seeds = stage_densify(
+                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                    )
                     seeds = stage_consolidate(conn, seeds)
                     seeds = stage_refine(conn, seeds, args.min_size)
                     stage_persist(conn, seeds)
