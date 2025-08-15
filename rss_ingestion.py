@@ -11,12 +11,13 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import feedparser
 import requests
+from bs4 import BeautifulSoup
 from dateutil import parser as date_parser
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -166,6 +167,142 @@ class ProductionRSSIngestion:
             },
         ]
 
+    def _get_last_ingestion_timestamp(self) -> Optional[datetime]:
+        """Get timestamp of last successful ingestion"""
+        try:
+            with get_db_session() as session:
+                result = session.execute(
+                    text(
+                        """
+                    SELECT MAX(created_at) 
+                    FROM articles 
+                    WHERE created_at IS NOT NULL
+                """
+                    )
+                )
+                last_timestamp = result.fetchone()[0]
+                return last_timestamp
+        except Exception as e:
+            logger.warning(f"Could not get last ingestion timestamp: {e}")
+            return None
+
+    def _save_ingestion_timestamp(self, timestamp: datetime):
+        """Save successful ingestion completion timestamp"""
+        try:
+            with get_db_session() as session:
+                # Use a simple table or just track in logs for now
+                # Could create an ingestion_log table if needed
+                logger.info(f"Ingestion completed at: {timestamp}")
+        except Exception as e:
+            logger.warning(f"Could not save ingestion timestamp: {e}")
+
+    def _should_process_article(
+        self, published_at: datetime, last_ingestion: Optional[datetime]
+    ) -> bool:
+        """Check if article should be processed based on publish time"""
+        if not last_ingestion:
+            return True  # First run, process everything
+
+        # Add small buffer (5 minutes) to avoid missing articles due to timing
+        buffer_minutes = 5
+        cutoff_time = last_ingestion - timedelta(minutes=buffer_minutes)
+
+        return published_at > cutoff_time
+
+    async def run_incremental_ingestion(
+        self, limit_per_feed: int = 25
+    ) -> Dict[str, int]:
+        """
+        Run incremental RSS ingestion (only new articles since last run)
+
+        Args:
+            limit_per_feed: Maximum articles per feed
+
+        Returns:
+            Dictionary with ingestion statistics
+        """
+        logger.info("Starting incremental RSS ingestion")
+        start_time = time.time()
+
+        try:
+            # Initialize database
+            initialize_database(self.config.database)
+            logger.info("Database initialized successfully")
+
+            # Get last ingestion timestamp
+            last_ingestion = self._get_last_ingestion_timestamp()
+            if last_ingestion:
+                logger.info(f"Last ingestion: {last_ingestion}")
+            else:
+                logger.info("No previous ingestion found - processing all articles")
+
+            # Process feeds by priority
+            feeds_by_priority = {}
+            for feed in self.feeds_config:
+                priority = feed.get("priority", 3)
+                if priority not in feeds_by_priority:
+                    feeds_by_priority[priority] = []
+                feeds_by_priority[priority].append(feed)
+
+            stats = {
+                "total_feeds": len(self.feeds_config),
+                "successful_feeds": 0,
+                "failed_feeds": 0,
+                "total_articles": 0,
+                "new_articles": 0,
+                "duplicate_articles": 0,
+                "skipped_old_articles": 0,
+                "errors": [],
+                "last_ingestion": (
+                    last_ingestion.isoformat() if last_ingestion else None
+                ),
+            }
+
+            # Process by priority (1 = highest, 3 = lowest)
+            for priority in sorted(feeds_by_priority.keys()):
+                logger.info(
+                    f"Processing priority {priority} feeds ({len(feeds_by_priority[priority])} feeds)"
+                )
+
+                for feed_data in feeds_by_priority[priority]:
+                    try:
+                        feed_stats = await self._process_single_feed_incremental(
+                            feed_data, limit_per_feed, last_ingestion
+                        )
+                        stats["successful_feeds"] += 1
+                        stats["total_articles"] += feed_stats["total_articles"]
+                        stats["new_articles"] += feed_stats["new_articles"]
+                        stats["duplicate_articles"] += feed_stats["duplicate_articles"]
+                        stats["skipped_old_articles"] += feed_stats[
+                            "skipped_old_articles"
+                        ]
+
+                        logger.info(
+                            f"[OK] {feed_data['name']}: {feed_stats['new_articles']} new, {feed_stats['skipped_old_articles']} skipped (old)"
+                        )
+
+                    except Exception as e:
+                        stats["failed_feeds"] += 1
+                        error_msg = f"Failed to process {feed_data['name']}: {str(e)}"
+                        stats["errors"].append(error_msg)
+                        logger.error(error_msg, exc_info=True)
+
+            # Save completion timestamp
+            completion_time = datetime.utcnow()
+            self._save_ingestion_timestamp(completion_time)
+
+            duration = time.time() - start_time
+            logger.info(f"Incremental ingestion completed in {duration:.2f}s")
+            logger.info(
+                f"Summary: {stats['new_articles']} new articles, {stats['skipped_old_articles']} skipped from {stats['successful_feeds']}/{stats['total_feeds']} feeds"
+            )
+
+            return stats
+
+        except Exception as e:
+            logger.error(f"Incremental RSS ingestion failed: {e}", exc_info=True)
+            raise
+
     async def run_ingestion(self, limit_per_feed: int = 25) -> Dict[str, int]:
         """
         Run production RSS ingestion
@@ -293,6 +430,95 @@ class ProductionRSSIngestion:
 
         raise Exception(f"All {self.max_retries} attempts failed for {feed_name}")
 
+    async def _process_single_feed_incremental(
+        self, feed_data: Dict, limit: int, last_ingestion: Optional[datetime]
+    ) -> Dict[str, int]:
+        """Process a single RSS feed with incremental logic"""
+        feed_name = feed_data["name"]
+        feed_url = feed_data["url"]
+
+        for attempt in range(self.max_retries):
+            try:
+                logger.debug(
+                    f"Processing {feed_name} incrementally (attempt {attempt + 1})"
+                )
+
+                # Parse RSS feed with timeout
+                feed = feedparser.parse(feed_url)
+
+                if not feed.entries:
+                    logger.warning(f"No entries found in {feed_name}")
+                    return {
+                        "total_articles": 0,
+                        "new_articles": 0,
+                        "duplicate_articles": 0,
+                        "skipped_old_articles": 0,
+                    }
+
+                # Create or get feed in database
+                feed_id = await self._get_or_create_feed(feed_name, feed_url)
+
+                # Process entries with incremental logic
+                stats = {
+                    "total_articles": 0,
+                    "new_articles": 0,
+                    "duplicate_articles": 0,
+                    "skipped_old_articles": 0,
+                }
+
+                for entry in feed.entries[:limit]:
+                    try:
+                        stats["total_articles"] += 1
+
+                        # Check if article is new enough to process
+                        published_at = self._extract_published_date(entry)
+                        if not self._should_process_article(
+                            published_at, last_ingestion
+                        ):
+                            stats["skipped_old_articles"] += 1
+                            continue
+
+                        # Try to save the article
+                        if await self._save_article(entry, feed_id, feed_name):
+                            stats["new_articles"] += 1
+                        else:
+                            stats["duplicate_articles"] += 1
+
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to process article from {feed_name}: {e}"
+                        )
+
+                return stats
+
+            except Exception as e:
+                if attempt < self.max_retries - 1:
+                    logger.warning(
+                        f"Attempt {attempt + 1} failed for {feed_name}: {e}. Retrying in {self.retry_delay}s..."
+                    )
+                    await asyncio.sleep(self.retry_delay)
+                else:
+                    raise
+
+        raise Exception(f"All {self.max_retries} attempts failed for {feed_name}")
+
+    def _extract_published_date(self, entry) -> datetime:
+        """Extract published date from RSS entry (extracted from _save_article for reuse)"""
+        # Parse published date with multiple fallbacks
+        published_at = datetime.utcnow()
+        if hasattr(entry, "published_parsed") and entry.published_parsed:
+            try:
+                published_at = datetime(*entry.published_parsed[:6])
+            except (TypeError, ValueError):
+                pass
+        elif hasattr(entry, "published") and entry.published:
+            try:
+                published_at = date_parser.parse(entry.published).replace(tzinfo=None)
+            except (ValueError, TypeError):
+                pass
+
+        return published_at
+
     async def _get_or_create_feed(self, name: str, url: str) -> str:
         """Get existing feed or create new one"""
         try:
@@ -334,6 +560,31 @@ class ProductionRSSIngestion:
             logger.error(f"Database error creating feed {name}: {e}")
             raise
 
+    def _clean_html_text(self, text: str) -> str:
+        """Clean HTML tags and normalize text"""
+        if not text:
+            return ""
+
+        try:
+            # Parse HTML and extract text
+            soup = BeautifulSoup(text, "html.parser")
+            cleaned_text = soup.get_text(separator=" ", strip=True)
+
+            # Normalize whitespace
+            import re
+
+            cleaned_text = re.sub(r"\s+", " ", cleaned_text)
+
+            return cleaned_text.strip()
+        except Exception:
+            # Fallback: basic HTML tag removal
+            import re
+
+            cleaned = re.sub(r"<[^>]+>", " ", text)
+            cleaned = re.sub(r"&[a-zA-Z0-9#]+;", " ", cleaned)
+            cleaned = re.sub(r"\s+", " ", cleaned)
+            return cleaned.strip()
+
     async def _save_article(self, entry, feed_id: str, source_name: str) -> bool:
         """Save single article to database with comprehensive error handling"""
         try:
@@ -361,14 +612,20 @@ class ProductionRSSIngestion:
                     except (ValueError, TypeError):
                         pass
 
-                # Prepare article data with validation
-                title = getattr(entry, "title", "Untitled")[:500]  # Limit title length
-                content = getattr(entry, "summary", "")[:10000]  # Limit content length
+                # Prepare article data with validation and HTML cleaning
+                raw_title = getattr(entry, "title", "Untitled")
+                raw_content = getattr(entry, "summary", "")
                 url = getattr(entry, "link", "")[:500]  # Limit URL length
 
                 if not url:
                     logger.warning(f"Skipping article without URL from {source_name}")
                     return False
+
+                # Clean HTML from title and content
+                title = self._clean_html_text(raw_title)[:500]  # Limit title length
+                content = self._clean_html_text(raw_content)[
+                    :10000
+                ]  # Limit content length
 
                 # Create article
                 article_id = str(uuid.uuid4())
@@ -417,6 +674,12 @@ async def main():
     parser.add_argument("--config", type=str, help="RSS feeds configuration file")
     parser.add_argument("--limit", type=int, default=25, help="Articles per feed limit")
     parser.add_argument(
+        "--incremental",
+        "-i",
+        action="store_true",
+        help="Run incremental ingestion (only new articles since last run)",
+    )
+    parser.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose logging"
     )
 
@@ -427,13 +690,25 @@ async def main():
 
     try:
         ingestion = ProductionRSSIngestion(args.config)
-        stats = await ingestion.run_ingestion(args.limit)
 
-        print(f"\n=== Production RSS Ingestion Complete ===")
+        # Choose ingestion mode
+        if args.incremental:
+            stats = await ingestion.run_incremental_ingestion(args.limit)
+            mode_name = "Incremental RSS Ingestion"
+        else:
+            stats = await ingestion.run_ingestion(args.limit)
+            mode_name = "Production RSS Ingestion"
+
+        print(f"\n=== {mode_name} Complete ===")
         print(f"Feeds processed: {stats['successful_feeds']}/{stats['total_feeds']}")
         print(f"Articles processed: {stats['total_articles']}")
         print(f"New articles: {stats['new_articles']}")
         print(f"Duplicates skipped: {stats['duplicate_articles']}")
+
+        if args.incremental and "skipped_old_articles" in stats:
+            print(f"Skipped old articles: {stats['skipped_old_articles']}")
+            if stats.get("last_ingestion"):
+                print(f"Last ingestion was: {stats['last_ingestion']}")
 
         if stats["errors"]:
             print(f"Errors: {len(stats['errors'])}")

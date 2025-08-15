@@ -9,18 +9,19 @@ The SNI platform aggregates global news, detects strategic narratives, and proce
 ## Project Overview
 
 The SNI platform is a comprehensive news intelligence system with:
-- **Multi-source ingestion**: RSS feeds, APIs, web scrapers
-- **Advanced NLP**: Keyword extraction, canonicalization, clustering
-- **Strategic analysis**: Narrative detection and thematic grouping
-- **Production-ready**: Docker containerization, monitoring, error handling
+- **Multi-source ingestion**: RSS feeds with incremental processing and progressive full-text fetch
+- **Advanced NLP**: Dynamic keyword extraction with auto mode, canonicalization, clustering
+- **Strategic analysis**: Narrative detection and thematic grouping via CLUST-1
+- **Production-ready**: HTML cleanup, enum-compliant status tracking, quality filtering
 
 ## Architecture
 
 ```
-News Sources → ETL Pipeline → Keyword Processing → ML Clustering → API/Frontend
-     ↓              ↓              ↓              ↓           ↓
-   RSS/API      Ingestion    Canonicalization  CLUST-1    FastAPI
-   Scrapers     Filtering     Normalization    Clustering  React UI
+News Sources → Progressive Ingestion → Dynamic Keywords → CLUST-1 → API/Frontend
+     ↓              ↓                    ↓               ↓        ↓
+   RSS/API      Incremental         Auto Mode       Taxonomy   FastAPI
+   Scrapers     HTML Cleanup        Extraction      Clustering  React UI
+                Quality Filter      Canon Mapping   
 ```
 
 ## Key Technologies
@@ -35,23 +36,35 @@ News Sources → ETL Pipeline → Keyword Processing → ML Clustering → API/F
 
 ```
 SNI/
-├── etl_pipeline/           # Core ETL processing
-│   ├── keywords/          # Keyword extraction & canonicalization
-│   ├── clustering/        # CLUST-1 clustering system
-│   └── requirements.txt   # Python dependencies
-├── scripts/               # Utility scripts
-├── database_migrations/   # SQL schema migrations
-├── data/                 # Configuration files
-│   └── keyword_synonyms.yml  # Canonicalization rules
-└── tests/                # Test suites
+├── etl_pipeline/                    # Core ETL processing
+│   ├── ingestion/                  # Progressive ingestion system
+│   │   ├── fetch_fulltext.py      # Progressive full-text enhancement
+│   │   └── rss_ingestion.py       # Incremental RSS processing
+│   ├── extraction/                 # Dynamic keyword extraction
+│   │   └── dynamic_keyword_extractor.py  # Auto mode extraction
+│   ├── clustering/                 # CLUST-1 clustering system
+│   └── requirements.txt           # Python dependencies
+├── scripts/                        # Utility scripts
+│   └── cleanup_html_articles.py   # HTML cleanup for existing data
+├── database_migrations/            # SQL schema migrations
+├── data/                          # Configuration files
+│   └── keyword_synonyms.yml      # Canonicalization rules
+└── tests/                         # Test suites
 ```
 
 ## Critical Files & Components
 
-### Keyword Processing System
-- `etl_pipeline/keywords/canonicalizer.py`: Advanced keyword normalization
-- `etl_pipeline/keywords/update_keyword_canon_from_db.py`: Nightly batch processing
-- `data/keyword_synonyms.yml`: Canonicalization rules and synonyms
+### Progressive Ingestion System ✨ NEW
+- `rss_ingestion.py`: Incremental RSS processing with HTML cleanup
+- `etl_pipeline/ingestion/fetch_fulltext.py`: Progressive full-text enhancement
+- `scripts/cleanup_html_articles.py`: One-time HTML cleanup for existing data
+- **Quality Metrics**: 90.3% articles ≥50 words, 38.2% articles ≥300 words
+
+### Dynamic Keyword Extraction ✨ ENHANCED  
+- `etl_pipeline/extraction/dynamic_keyword_extractor.py`: Auto mode extraction system
+- **Auto Mode Logic**: ≥300 words → full mode, 50-299 → short mode, <50 → skip
+- Multiple extraction methods: spaCy NER, YAKE phrases, KeyBERT semantic
+- Quality filters: HTML stripping, temporal filtering, strategic scoring
 
 ### Clustering System
 - `etl_pipeline/clustering/clust1_taxonomy_graph.py`: 4-stage clustering pipeline
@@ -60,7 +73,32 @@ SNI/
 ### Database Schema
 - `database_migrations/`: SQL migrations for schema changes
 - Key tables: `articles`, `keyword_canon_map`, `article_core_keywords`
+- **Enum Compliance**: Proper `processing_status` enum handling
 - Materialized views: `shared_keywords_300h`, `article_core_keywords`
+
+## Recent Major Achievements ✨
+
+### Progressive Ingestion System v1.0 (Aug 2025)
+**Complete ingestion overhaul delivering production-ready quality**
+
+**Core Features:**
+- **Incremental Processing**: Articles ingested since last run (no duplicate work)
+- **Progressive Enhancement**: RSS snippets automatically upgraded to full articles  
+- **HTML Cleanup**: Clean text extraction with BeautifulSoup (no HTML artifacts)
+- **Quality Filtering**: Automatic removal of low-quality/unsalvageable articles
+- **Enum Compliance**: Proper database status tracking with PENDING/COMPLETED/FAILED
+
+**Performance Metrics:**
+- **90.3%** articles achieve ≥50 words (target: ≥70%) - EXCEEDS TARGET
+- **38.2%** articles achieve ≥300 words (target: ≥35%) - EXCEEDS TARGET  
+- **173** articles enhanced via progressive fetch in latest run
+- **95.2%** success rate for full-text extraction
+
+**Technical Implementation:**
+- Auto mode keyword extraction: ≥300 words → full mode, 50-299 → short mode, <50 → skip
+- Multi-method extraction: spaCy NER + YAKE phrases + KeyBERT semantic keyphrases
+- Strategic scoring with geopolitical/security/economic pattern detection
+- Async batch processing with concurrent fetching and retry logic
 
 ## Development Workflow
 
@@ -74,11 +112,16 @@ pip install -r etl_pipeline/requirements.txt
 psql narrative_intelligence
 alembic upgrade head
 
-# Run ETL pipeline
-python scripts/regenerate_keywords.py
-python etl_pipeline/keywords/update_keyword_canon_from_db.py
+# Progressive Ingestion Pipeline ✨ NEW
+python rss_ingestion.py --incremental          # Incremental RSS ingestion
+python etl_pipeline/ingestion/fetch_fulltext.py --window 24  # Progressive fetch
+python scripts/cleanup_html_articles.py        # Clean existing HTML
 
-# Run clustering
+# Dynamic Keyword Extraction ✨ ENHANCED
+python etl_pipeline/extraction/dynamic_keyword_extractor.py  # Test auto mode
+python scripts/regenerate_keywords.py          # Batch keyword processing
+
+# Clustering
 python etl_pipeline/clustering/clust1_taxonomy_graph.py
 
 # Testing

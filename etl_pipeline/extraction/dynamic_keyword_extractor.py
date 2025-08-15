@@ -31,6 +31,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class ExtractedKeyword:
     """Single extracted keyword with metadata"""
+
     text: str
     keyword_type: str  # 'entity', 'phrase', 'keyphrase'
     entity_label: Optional[str] = None
@@ -42,6 +43,7 @@ class ExtractedKeyword:
 @dataclass
 class ArticleKeywordResult:
     """Complete keyword extraction result for an article"""
+
     article_id: str
     keywords: List[ExtractedKeyword]
     overall_strategic_score: float
@@ -89,73 +91,148 @@ class DynamicKeywordExtractor:
     def _load_filter_lists(self):
         """Load whitelist and stopword files"""
         data_dir = Path(__file__).parent.parent.parent / "data"
-        
+
         # Load phrase whitelist
         phrase_file = data_dir / "phrase_whitelist.txt"
         self.phrase_whitelist = set()
         if phrase_file.exists():
-            with open(phrase_file, 'r', encoding='utf-8') as f:
+            with open(phrase_file, "r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
-                    if line and not line.startswith('#'):
+                    if line and not line.startswith("#"):
                         self.phrase_whitelist.add(line.lower())
-        
+
         # Load keyword whitelist
         keyword_file = data_dir / "keyword_whitelist.txt"
         self.keyword_whitelist = set()
         if keyword_file.exists():
-            with open(keyword_file, 'r', encoding='utf-8') as f:
+            with open(keyword_file, "r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
-                    if line and not line.startswith('#'):
+                    if line and not line.startswith("#"):
                         self.keyword_whitelist.add(line.lower())
 
         # Stopwords and noise patterns
         self.stop_words_en = {
-            'today', 'yesterday', 'tomorrow', 'daily', 'annually', 'annual',
-            'earlier', 'recently', 'months', 'years', 'decades', 'summertime',
-            'weekend', 'weekday', 'weekdays', 'weekends',
+            "today",
+            "yesterday",
+            "tomorrow",
+            "daily",
+            "annually",
+            "annual",
+            "earlier",
+            "recently",
+            "months",
+            "years",
+            "decades",
+            "summertime",
+            "weekend",
+            "weekday",
+            "weekdays",
+            "weekends",
             # Written-out numbers and ordinals
-            'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
-            'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 
-            'eighteen', 'nineteen', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy',
-            'eighty', 'ninety', 'hundred', 'thousand', 'million', 'billion',
-            'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 
-            'ninth', 'tenth', 'eleventh', 'twelfth'
+            "one",
+            "two",
+            "three",
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine",
+            "ten",
+            "eleven",
+            "twelve",
+            "thirteen",
+            "fourteen",
+            "fifteen",
+            "sixteen",
+            "seventeen",
+            "eighteen",
+            "nineteen",
+            "twenty",
+            "thirty",
+            "forty",
+            "fifty",
+            "sixty",
+            "seventy",
+            "eighty",
+            "ninety",
+            "hundred",
+            "thousand",
+            "million",
+            "billion",
+            "first",
+            "second",
+            "third",
+            "fourth",
+            "fifth",
+            "sixth",
+            "seventh",
+            "eighth",
+            "ninth",
+            "tenth",
+            "eleventh",
+            "twelfth",
         }
 
         self.stop_phrases_en = {
-            'continue reading', 'live blog', 'breaking news', 'live updates',
-            'as it happens', 'watch', 'listen', 'newsletter', 'subscribe',
-            'click here', 'read more', 'learn more'
+            "continue reading",
+            "live blog",
+            "breaking news",
+            "live updates",
+            "as it happens",
+            "watch",
+            "listen",
+            "newsletter",
+            "subscribe",
+            "click here",
+            "read more",
+            "learn more",
         }
 
         # Regex patterns for temporal and noise filtering
         self.stop_regex_patterns = [
-            r'\b(last|this|next)\s+(week|month|year|weekend|summer|winter|spring|fall|autumn)\b',
-            r'\b\d+-day(s)?\b',
-            r'\b\d+-month(s)?\b', 
-            r'\b\d+-year(s)?\b',
-            r'\bthis\s+(week|month|year|summer)\b'
+            r"\b(last|this|next)\s+(week|month|year|weekend|summer|winter|spring|fall|autumn)\b",
+            r"\b\d+-day(s)?\b",
+            r"\b\d+-month(s)?\b",
+            r"\b\d+-year(s)?\b",
+            r"\bthis\s+(week|month|year|summer)\b",
         ]
 
         # Keep patterns (signal)
         self.keep_patterns = [
-            r'^G\d{1,2}$',  # G7, G20
-            r'^COP\d{2}$',  # COP28, COP29
-            r'^[A-Za-z]{1,4}-?\d+[A-Za-z]*$',  # F-16, A320neo, H5N1
-            r'^\d+[A-Za-z]+$',  # 737MAX, 5G
-            r'^[A-Z]{1,3}\d{2,4}$',  # MH17, PS752
-            r'^\d{1,2}/\d{1,2}$'  # 9/11, 7/7
+            r"^G\d{1,2}$",  # G7, G20
+            r"^COP\d{2}$",  # COP28, COP29
+            r"^[A-Za-z]{1,4}-?\d+[A-Za-z]*$",  # F-16, A320neo, H5N1
+            r"^\d+[A-Za-z]+$",  # 737MAX, 5G
+            r"^[A-Z]{1,3}\d{2,4}$",  # MH17, PS752
+            r"^\d{1,2}/\d{1,2}$",  # 9/11, 7/7
         ]
 
         # Weekdays and months for filtering
         self.weekdays_en = {
-            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
         }
         self.months_en = {
-            'january', 'february', 'march', 'april', 'may', 'june',
-            'july', 'august', 'september', 'october', 'november', 'december'
+            "january",
+            "february",
+            "march",
+            "april",
+            "may",
+            "june",
+            "july",
+            "august",
+            "september",
+            "october",
+            "november",
+            "december",
         }
 
     def _initialize_models(self):
@@ -166,7 +243,9 @@ class DynamicKeywordExtractor:
                 self.nlp_model = spacy.load("en_core_web_sm")
                 self.logger.info("SpaCy English model loaded")
             except OSError:
-                self.logger.error("SpaCy model not found. Install: python -m spacy download en_core_web_sm")
+                self.logger.error(
+                    "SpaCy model not found. Install: python -m spacy download en_core_web_sm"
+                )
                 raise
 
             # YAKE for language-agnostic phrase extraction
@@ -197,31 +276,70 @@ class DynamicKeywordExtractor:
         content: str,
         summary: Optional[str] = None,
         language: str = "en",
+        mode: str = "auto",
+        word_count: Optional[int] = None,
     ) -> ArticleKeywordResult:
-        """Extract keywords with improved quality filtering"""
-        
+        """Extract keywords with unified auto mode strategy"""
+
         filter_stats = {
-            'kept_keywords': 0,
-            'dropped_html': 0,
-            'dropped_temporal': 0,
-            'dropped_boilerplate': 0,
-            'dropped_numbers': 0,
-            'kept_whitelist': 0,
-            'kept_patterns': 0,
-            'skipped_non_english': 0
+            "kept_keywords": 0,
+            "dropped_html": 0,
+            "dropped_temporal": 0,
+            "dropped_boilerplate": 0,
+            "dropped_numbers": 0,
+            "kept_whitelist": 0,
+            "kept_patterns": 0,
+            "skipped_non_english": 0,
+            "extraction_mode": mode,
+            "word_count_input": word_count,
         }
-        
+
         # English-only filter for MVP
-        if language != "en":
-            filter_stats['skipped_non_english'] = 1
-            self.logger.debug(f"Skipped non-English article {article_id} (language: {language})")
+        if language.lower() not in ["en", "english"]:
+            filter_stats["skipped_non_english"] = 1
+            self.logger.debug(
+                f"Skipped non-English article {article_id} (language: {language})"
+            )
             return ArticleKeywordResult(
                 article_id=article_id,
                 keywords=[],
                 overall_strategic_score=0.0,
                 extraction_timestamp=datetime.utcnow(),
-                filter_stats=filter_stats
+                filter_stats=filter_stats,
             )
+
+        # AUTO MODE: Choose extraction strategy based on word_count
+        if mode == "auto":
+            # Calculate word_count if not provided
+            if word_count is None:
+                combined_text = f"{title} {content or ''} {summary or ''}"
+                word_count = len(combined_text.split())
+                filter_stats["word_count_calculated"] = word_count
+
+            # Auto mode decision logic
+            if word_count >= 300:
+                mode = "full"
+                filter_stats["auto_mode_chosen"] = "full"
+            elif word_count >= 50:
+                mode = "short"
+                filter_stats["auto_mode_chosen"] = "short"
+            else:
+                # Check if summary is substantial enough to use
+                if summary and len(summary.split()) >= 50:
+                    mode = "short"
+                    filter_stats["auto_mode_chosen"] = "short_summary"
+                else:
+                    filter_stats["auto_mode_chosen"] = "skip"
+                    self.logger.debug(
+                        f"Skipped low-content article {article_id} ({word_count} words)"
+                    )
+                    return ArticleKeywordResult(
+                        article_id=article_id,
+                        keywords=[],
+                        overall_strategic_score=0.0,
+                        extraction_timestamp=datetime.utcnow(),
+                        filter_stats=filter_stats,
+                    )
 
         try:
             # 1. HTML stripping
@@ -229,17 +347,57 @@ class DynamicKeywordExtractor:
             clean_content = self._strip_html(content) if content else ""
             clean_summary = self._strip_html(summary) if summary else ""
 
-            # Combine text for processing
-            text_parts = [clean_title]
-            if clean_summary:
-                text_parts.append(clean_summary)
-            if clean_content:
-                content_excerpt = clean_content[:3000] if len(clean_content) > 3000 else clean_content
-                text_parts.append(content_excerpt)
+            # 2. MODE-SPECIFIC TEXT PREPARATION
+            if mode == "full":
+                # Full mode: use title + summary + full content (up to 3000 chars)
+                text_parts = [clean_title]
+                if clean_summary:
+                    text_parts.append(clean_summary)
+                if clean_content:
+                    content_excerpt = (
+                        clean_content[:3000]
+                        if len(clean_content) > 3000
+                        else clean_content
+                    )
+                    text_parts.append(content_excerpt)
+                combined_text = " ".join(text_parts)
+                filter_stats["text_source"] = "title_summary_content"
 
-            combined_text = " ".join(text_parts)
+            elif mode == "short":
+                # Short mode: use title + summary/content (prefer summary)
+                text_parts = [clean_title]
+                if clean_summary and len(clean_summary.split()) >= 20:
+                    text_parts.append(clean_summary)
+                    filter_stats["text_source"] = "title_summary"
+                elif clean_content:
+                    # Use first 500 chars of content if no good summary
+                    content_excerpt = (
+                        clean_content[:500]
+                        if len(clean_content) > 500
+                        else clean_content
+                    )
+                    text_parts.append(content_excerpt)
+                    filter_stats["text_source"] = "title_content_excerpt"
+                else:
+                    filter_stats["text_source"] = "title_only"
+                combined_text = " ".join(text_parts)
 
-            # 2. Extract using multiple methods
+            else:
+                # Fallback to original behavior
+                text_parts = [clean_title]
+                if clean_summary:
+                    text_parts.append(clean_summary)
+                if clean_content:
+                    content_excerpt = (
+                        clean_content[:3000]
+                        if len(clean_content) > 3000
+                        else clean_content
+                    )
+                    text_parts.append(content_excerpt)
+                combined_text = " ".join(text_parts)
+                filter_stats["text_source"] = "combined_fallback"
+
+            # 3. Extract using multiple methods
             all_keywords = []
 
             # Entity extraction with improved classification
@@ -271,20 +429,20 @@ class DynamicKeywordExtractor:
             # 6. Calculate overall strategic score
             overall_score = self._calculate_overall_strategic_score(final_keywords)
 
-            filter_stats['kept_keywords'] = len(final_keywords)
+            filter_stats["kept_keywords"] = len(final_keywords)
 
             result = ArticleKeywordResult(
                 article_id=article_id,
-                keywords=final_keywords[:self.max_keywords],
+                keywords=final_keywords[: self.max_keywords],
                 overall_strategic_score=overall_score,
                 extraction_timestamp=datetime.utcnow(),
-                filter_stats=filter_stats
+                filter_stats=filter_stats,
             )
 
             self.logger.debug(
                 "Keywords extracted with quality filters",
                 article_id=article_id,
-                **filter_stats
+                **filter_stats,
             )
 
             return result
@@ -301,28 +459,28 @@ class DynamicKeywordExtractor:
                 keywords=[],
                 overall_strategic_score=0.0,
                 extraction_timestamp=datetime.utcnow(),
-                filter_stats=filter_stats
+                filter_stats=filter_stats,
             )
 
     def _strip_html(self, text: str) -> str:
         """Strip HTML tags and entities from text"""
         if not text:
             return ""
-        
+
         try:
             # Use BeautifulSoup to properly handle HTML
-            soup = BeautifulSoup(text, 'html.parser')
-            cleaned = soup.get_text(separator=' ')
-            
+            soup = BeautifulSoup(text, "html.parser")
+            cleaned = soup.get_text(separator=" ")
+
             # Clean up extra whitespace
-            cleaned = re.sub(r'\s+', ' ', cleaned)
+            cleaned = re.sub(r"\s+", " ", cleaned)
             return cleaned.strip()
-            
+
         except Exception:
             # Fallback: basic regex HTML removal
-            cleaned = re.sub(r'<[^>]+>', ' ', text)
-            cleaned = re.sub(r'&[a-zA-Z0-9#]+;', ' ', cleaned)
-            cleaned = re.sub(r'\s+', ' ', cleaned)
+            cleaned = re.sub(r"<[^>]+>", " ", text)
+            cleaned = re.sub(r"&[a-zA-Z0-9#]+;", " ", cleaned)
+            cleaned = re.sub(r"\s+", " ", cleaned)
             return cleaned.strip()
 
     def _extract_entities_improved(self, text: str) -> List[ExtractedKeyword]:
@@ -341,8 +499,10 @@ class DynamicKeywordExtractor:
                     continue
 
                 # Improved entity classification
-                entity_label = self._improve_entity_classification(cleaned_text, ent.label_)
-                
+                entity_label = self._improve_entity_classification(
+                    cleaned_text, ent.label_
+                )
+
                 keyword = ExtractedKeyword(
                     text=cleaned_text,
                     keyword_type="entity",
@@ -360,19 +520,19 @@ class DynamicKeywordExtractor:
     def _improve_entity_classification(self, text: str, original_label: str) -> str:
         """Improve entity classification based on context"""
         text_lower = text.lower()
-        
+
         # Fix common misclassifications
-        known_people = {'trump', 'biden', 'putin', 'xi jinping', 'macron', 'merkel'}
-        known_orgs = {'nato', 'eu', 'un', 'who', 'imf', 'world bank', 'federal reserve'}
-        known_places = {'ben gurion', 'heathrow', 'jfk airport'}
-        
+        known_people = {"trump", "biden", "putin", "xi jinping", "macron", "merkel"}
+        known_orgs = {"nato", "eu", "un", "who", "imf", "world bank", "federal reserve"}
+        known_places = {"ben gurion", "heathrow", "jfk airport"}
+
         if any(person in text_lower for person in known_people):
             return "PERSON"
         elif any(org in text_lower for org in known_orgs):
             return "ORG"
         elif any(place in text_lower for place in known_places):
             return "FAC"  # Facility for airports
-        
+
         # Keep original if no improvement found
         return original_label
 
@@ -434,75 +594,85 @@ class DynamicKeywordExtractor:
         self, keywords: List[ExtractedKeyword], full_text: str, stats: Dict[str, int]
     ) -> List[ExtractedKeyword]:
         """Apply quality filters to remove noise and preserve signals"""
-        
+
         filtered = []
-        
+
         # Build phrase context from title + summary for whitelist checking
         title_summary_text = full_text[:400].lower()  # First 400 chars
-        
+
         for keyword in keywords:
             text_lower = keyword.text.lower().strip()
-            
+
             # Always keep whitelisted terms
             if text_lower in self.keyword_whitelist:
                 filtered.append(keyword)
-                stats['kept_whitelist'] += 1
+                stats["kept_whitelist"] += 1
                 continue
-            
+
             # Check if part of whitelisted phrase
-            if any(phrase in title_summary_text for phrase in self.phrase_whitelist if text_lower in phrase):
+            if any(
+                phrase in title_summary_text
+                for phrase in self.phrase_whitelist
+                if text_lower in phrase
+            ):
                 filtered.append(keyword)
-                stats['kept_whitelist'] += 1
+                stats["kept_whitelist"] += 1
                 continue
-            
+
             # Keep patterns that match signal rules
-            if any(re.match(pattern, text_lower, re.IGNORECASE) for pattern in self.keep_patterns):
+            if any(
+                re.match(pattern, text_lower, re.IGNORECASE)
+                for pattern in self.keep_patterns
+            ):
                 filtered.append(keyword)
-                stats['kept_patterns'] += 1
+                stats["kept_patterns"] += 1
                 continue
-            
+
             # Filter noise patterns
             should_drop = False
-            
+
             # Drop pure numbers and ordinals
-            if re.match(r'^\d+$', text_lower):  # Pure numbers
+            if re.match(r"^\d+$", text_lower):  # Pure numbers
                 should_drop = True
-                stats['dropped_numbers'] += 1
-            elif re.match(r'^\d{4}$', text_lower):  # Years
+                stats["dropped_numbers"] += 1
+            elif re.match(r"^\d{4}$", text_lower):  # Years
                 should_drop = True
-                stats['dropped_numbers'] += 1
-            elif re.match(r'^\d+(st|nd|rd|th)$', text_lower):  # Ordinals
+                stats["dropped_numbers"] += 1
+            elif re.match(r"^\d+(st|nd|rd|th)$", text_lower):  # Ordinals
                 should_drop = True
-                stats['dropped_numbers'] += 1
-            
+                stats["dropped_numbers"] += 1
+
             # Drop temporal words
             elif text_lower in self.stop_words_en:
                 should_drop = True
-                stats['dropped_temporal'] += 1
+                stats["dropped_temporal"] += 1
             elif text_lower in self.weekdays_en or text_lower in self.months_en:
                 should_drop = True
-                stats['dropped_temporal'] += 1
-            
+                stats["dropped_temporal"] += 1
+
             # Drop boilerplate phrases
             elif text_lower in self.stop_phrases_en:
                 should_drop = True
-                stats['dropped_boilerplate'] += 1
-            
+                stats["dropped_boilerplate"] += 1
+
             # Drop temporal regex patterns
-            elif any(re.search(pattern, text_lower, re.IGNORECASE) for pattern in self.stop_regex_patterns):
+            elif any(
+                re.search(pattern, text_lower, re.IGNORECASE)
+                for pattern in self.stop_regex_patterns
+            ):
                 should_drop = True
-                stats['dropped_temporal'] += 1
-            
+                stats["dropped_temporal"] += 1
+
             if not should_drop:
                 filtered.append(keyword)
-        
+
         return filtered
 
     def _calculate_strategic_scores(
         self, keywords: List[ExtractedKeyword], full_text: str
     ) -> List[ExtractedKeyword]:
         """Calculate strategic scores dynamically"""
-        
+
         for keyword in keywords:
             strategic_score = 0.0
 
@@ -512,7 +682,9 @@ class DynamicKeywordExtractor:
                 strategic_score += entity_weight * 0.4
 
             # Text position importance
-            position_boost = self._calculate_position_importance(keyword.text, full_text)
+            position_boost = self._calculate_position_importance(
+                keyword.text, full_text
+            )
             strategic_score += position_boost * 0.3
 
             # Extraction confidence
@@ -527,7 +699,9 @@ class DynamicKeywordExtractor:
 
         return keywords
 
-    def _calculate_position_importance(self, keyword_text: str, full_text: str) -> float:
+    def _calculate_position_importance(
+        self, keyword_text: str, full_text: str
+    ) -> float:
         """Calculate importance based on position in text"""
         keyword_lower = keyword_text.lower()
         full_lower = full_text.lower()
@@ -566,9 +740,11 @@ class DynamicKeywordExtractor:
         else:
             return 0.0
 
-    def _deduplicate_and_rank(self, keywords: List[ExtractedKeyword]) -> List[ExtractedKeyword]:
+    def _deduplicate_and_rank(
+        self, keywords: List[ExtractedKeyword]
+    ) -> List[ExtractedKeyword]:
         """Remove duplicates and rank by strategic score"""
-        
+
         # Group by normalized text
         keyword_groups = defaultdict(list)
         for keyword in keywords:
@@ -586,7 +762,9 @@ class DynamicKeywordExtractor:
         deduplicated.sort(key=lambda k: k.strategic_score, reverse=True)
         return deduplicated
 
-    def _calculate_overall_strategic_score(self, keywords: List[ExtractedKeyword]) -> float:
+    def _calculate_overall_strategic_score(
+        self, keywords: List[ExtractedKeyword]
+    ) -> float:
         """Calculate overall strategic relevance for the article"""
         if not keywords:
             return 0.0
@@ -608,15 +786,15 @@ class DynamicKeywordExtractor:
     def _clean_keyword_text(self, text: str) -> str:
         """Clean and normalize keyword text"""
         # Strip HTML artifacts
-        cleaned = re.sub(r'[<>]', ' ', text)
-        cleaned = re.sub(r'\d+(\.\d+)?(em|px|%);?', ' ', cleaned)  # CSS values
-        cleaned = re.sub(r'(div|span|class|style|href)', ' ', cleaned)  # HTML terms
-        
+        cleaned = re.sub(r"[<>]", " ", text)
+        cleaned = re.sub(r"\d+(\.\d+)?(em|px|%);?", " ", cleaned)  # CSS values
+        cleaned = re.sub(r"(div|span|class|style|href)", " ", cleaned)  # HTML terms
+
         # Remove extra whitespace
-        cleaned = re.sub(r'\s+', ' ', cleaned.strip())
+        cleaned = re.sub(r"\s+", " ", cleaned.strip())
 
         # Remove surrounding punctuation
-        cleaned = re.sub(r'^[^\w]+|[^\w]+$', '', cleaned)
+        cleaned = re.sub(r"^[^\w]+|[^\w]+$", "", cleaned)
 
         # Normalize case (lowercase for processing)
         cleaned = cleaned.lower()
@@ -631,12 +809,16 @@ class DynamicKeywordExtractor:
 # Global singleton extractor to avoid reloading models
 _global_extractor = None
 
-def get_singleton_extractor(config: Optional[Dict[str, Any]] = None) -> DynamicKeywordExtractor:
+
+def get_singleton_extractor(
+    config: Optional[Dict[str, Any]] = None,
+) -> DynamicKeywordExtractor:
     """Get or create singleton extractor to reuse models"""
     global _global_extractor
     if _global_extractor is None:
         _global_extractor = DynamicKeywordExtractor(config)
     return _global_extractor
+
 
 # Factory function for external use
 def extract_dynamic_keywords(
@@ -645,11 +827,15 @@ def extract_dynamic_keywords(
     content: str,
     summary: Optional[str] = None,
     language: str = "en",
+    mode: str = "auto",
+    word_count: Optional[int] = None,
     config: Optional[Dict[str, Any]] = None,
 ) -> ArticleKeywordResult:
-    """Extract keywords with improved quality filtering using singleton extractor"""
+    """Extract keywords with unified auto mode using singleton extractor"""
     extractor = get_singleton_extractor(config)
-    return extractor.extract_keywords(article_id, title, content, summary, language)
+    return extractor.extract_keywords(
+        article_id, title, content, summary, language, mode, word_count
+    )
 
 
 if __name__ == "__main__":
@@ -661,16 +847,16 @@ if __name__ == "__main__":
     <span class="highlight">Continue reading for live updates.</span>
     </p></div>
     """
-    
+
     print("=== Improved Keyword Extraction Test ===")
     result = extract_dynamic_keywords(
-        "test_001", 
-        "Trump Meets Xi at Mar-a-Lago Summit", 
-        test_content
+        "test_001", "Trump Meets Xi at Mar-a-Lago Summit", test_content
     )
-    
+
     print(f"Strategic Score: {result.overall_strategic_score:.3f}")
     print(f"Filter Stats: {result.filter_stats}")
     print("Top Keywords:")
     for keyword in result.keywords[:10]:
-        print(f"  {keyword.text} ({keyword.keyword_type}, {keyword.strategic_score:.3f})")
+        print(
+            f"  {keyword.text} ({keyword.keyword_type}, {keyword.strategic_score:.3f})"
+        )

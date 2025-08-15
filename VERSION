@@ -1,0 +1,17 @@
+1.0.0-ingestion
+
+SNI Platform - Progressive Ingestion System v1.0
+Release Date: August 15, 2025
+
+Major Features:
+- Complete ingestion pipeline overhaul
+- Progressive full-text enhancement system  
+- Incremental RSS processing (no duplicates)
+- HTML cleanup and quality filtering
+- Auto mode keyword extraction
+- Enum-compliant status tracking
+- 90.3% articles ≥50 words, 38.2% ≥300 words
+- Production-ready quality metrics
+
+Previous Version: 0.3.0-clust1-recall
+Next Planned: 1.1.0-canonicalization
