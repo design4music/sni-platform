@@ -98,6 +98,92 @@ def get_event_tokens(conn, days=30):
         cur.close()
 
 
+def load_hub_tokens(conn):
+    """Load hub tokens from keyword_hubs_30d materialized view."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT tok FROM keyword_hubs_30d")
+        return {row[0] for row in cur.fetchall()}
+    except Exception as e:
+        logger.warning(f"Failed to load hub tokens: {e}")
+        return set()
+    finally:
+        cur.close()
+
+
+def load_event_anchored_triads(conn):
+    """Load event-anchored triads from materialized view."""
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT hub1, hub2, event_tok, co_doc FROM event_anchored_triads_30d"
+        )
+        triads = {}
+        for hub1, hub2, event_tok, co_doc in cur.fetchall():
+            triads[(hub1, hub2, event_tok)] = co_doc
+        logger.info(f"Loaded {len(triads)} event-anchored triads")
+        return triads
+    except Exception as e:
+        logger.warning(f"Failed to load event-anchored triads: {e}")
+        return {}
+    finally:
+        cur.close()
+
+
+def load_country_tokens(conn):
+    """Load country tokens from ref_countries table."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT country_name FROM ref_countries")
+        countries = {row[0].lower() for row in cur.fetchall()}
+        # Add common country aliases
+        country_aliases = {
+            "united states": {"usa", "america", "us"},
+            "united kingdom": {"uk", "britain"},
+            "russia": {"russian federation"},
+            "china": {"prc"},
+        }
+        for country, aliases in country_aliases.items():
+            if country in countries:
+                countries.update(aliases)
+        return countries
+    except Exception as e:
+        logger.warning(f"Failed to load country tokens: {e}")
+        # Fallback to basic set
+        return {
+            "united states",
+            "usa",
+            "china",
+            "russia",
+            "ukraine",
+            "israel",
+            "iran",
+            "india",
+            "germany",
+            "france",
+            "uk",
+            "britain",
+        }
+    finally:
+        cur.close()
+
+
+def matches_event_anchored_triad(article_tokens, triads_dict, hubs_set, events_set):
+    """Check if article tokens match any event-anchored triad pattern."""
+    article_hubs = [token for token in article_tokens if token in hubs_set]
+    article_events = [token for token in article_tokens if token in events_set]
+
+    if len(article_hubs) >= 2 and len(article_events) >= 1:
+        # Check all hub pairs with each event
+        for i in range(len(article_hubs)):
+            for j in range(i + 1, len(article_hubs)):
+                hub1, hub2 = sorted([article_hubs[i], article_hubs[j]])
+                for event in article_events:
+                    if (hub1, hub2, event) in triads_dict:
+                        return True, (hub1, hub2, event)
+    return False, None
+
+
 def get_countries_from_tokens(tokens):
     """Extract country names from token list (comprehensive GPE detection)."""
     # Expanded country and region names for better recall
@@ -363,11 +449,19 @@ def triad_seed_ok(article_tokens, hub_tokens, triad_pairs):
     return False
 
 
-def stage_seed(conn, hours_back=72, lang=None, profile="strict", use_triads=0):
+def stage_seed(
+    conn,
+    hours_back=72,
+    lang=None,
+    profile="strict",
+    use_triads=0,
+    use_hub_assist=0,
+    **kwargs,
+):
     """Stage 1: Create seed clusters based on core keyword combinations."""
     logger.info(
-        "Starting seed stage (window: {}h, lang: {}, profile: {}) - USING CORE KEYWORDS".format(
-            hours_back, lang, profile
+        "Starting seed stage (window: {}h, lang: {}, profile: {}, hub_assist: {}) - USING CORE KEYWORDS".format(
+            hours_back, lang, profile, use_hub_assist
         )
     )
 
@@ -584,9 +678,99 @@ def stage_seed(conn, hours_back=72, lang=None, profile="strict", use_triads=0):
                 f"Added {triad_seeds_added} triad-pattern seeds to {base_seeds} base seeds"
             )
 
+    # Phase A: Hub-assisted seeding (event-anchored triads)
+    hub_assist_seeds_added = 0
+    if use_hub_assist:
+        # Load Phase A data
+        hub_tokens_set = load_hub_tokens(conn)
+        event_tokens_set = get_event_tokens(conn, 30)
+        event_triads = load_event_anchored_triads(conn)
+
+        logger.info(
+            f"Phase A: Loaded {len(hub_tokens_set)} hubs, {len(event_tokens_set)} events, {len(event_triads)} triads"
+        )
+
+        # Get articles already processed
+        processed_articles = set()
+        for seed_data in seeds.values():
+            for member in seed_data["members"]:
+                processed_articles.add(member["article_id"])
+
+        # Check remaining articles for event-anchored triad patterns
+        for (
+            article_id,
+            title,
+            published_at,
+            source_name,
+            language,
+            core_keywords,
+            scores,
+        ) in articles:
+            if article_id in processed_articles:
+                continue
+
+            # Extract valid keywords
+            valid_keywords = []
+            for i in range(
+                min(8, len(core_keywords))
+            ):  # Look at top 8 for more coverage
+                if scores[i] > 0:
+                    keyword = core_keywords[i]
+                    cluster = normalizer.get_concept_cluster(keyword)
+                    valid_keywords.append(cluster)
+
+            # Check for event-anchored triad match
+            matches_triad, triad_info = matches_event_anchored_triad(
+                valid_keywords, event_triads, hub_tokens_set, event_tokens_set
+            )
+
+            if matches_triad:
+                # Create seed cluster for this triad pattern
+                hub1, hub2, event = triad_info
+                topic_key = f"triad_{hub1}_{hub2}_{event}_{article_id}"
+
+                seeds[topic_key] = {
+                    "members": [
+                        {
+                            "article_id": article_id,
+                            "title": title,
+                            "published_at": published_at,
+                            "source_name": source_name,
+                            "language": language,
+                            "keywords": valid_keywords,
+                            "seed_type": "event_triad",
+                        }
+                    ],
+                    "size": 1,
+                    "sources": {source_name},
+                    "keywords": [hub1, hub2, event],
+                    "lang": lang,
+                    "triad_pattern": (hub1, hub2, event),
+                }
+                processed_articles.add(article_id)
+                hub_assist_seeds_added += 1
+
+        if hub_assist_seeds_added > 0:
+            logger.info(
+                f"Phase A: Added {hub_assist_seeds_added} event-anchored triad seeds"
+            )
+
+    # Phase A: Enhanced logging with detailed counters
+    triad_seeds = len(seeds) - base_seeds - hub_assist_seeds_added
+    logger.info("=== PHASE A SEED STAGE SUMMARY ===")
+    logger.info(f"Total seeds created: {len(seeds)}")
+    logger.info(f"  Base (strict) seeds: {base_seeds}")
+    logger.info(f"  Legacy triad seeds: {triad_seeds}")
+    logger.info(f"  Hub-assist triad seeds: {hub_assist_seeds_added}")
+
+    if use_hub_assist:
+        logger.info(f"Hub-assist mode: ENABLED (+{hub_assist_seeds_added} seeds)")
+    else:
+        logger.info("Hub-assist mode: DISABLED (production default)")
+
     logger.info(
-        "Created {} seed clusters ({} base + {} triad)".format(
-            len(seeds), base_seeds, len(seeds) - base_seeds
+        "Created {} seed clusters ({} base + {} triad + {} hub-assist)".format(
+            len(seeds), base_seeds, triad_seeds, hub_assist_seeds_added
         )
     )
 
@@ -807,12 +991,20 @@ def find_similar_articles(
 
 
 def stage_densify(
-    conn, seeds, hours_back=72, lang=None, cos_threshold=0.82, profile="strict"
+    conn,
+    seeds,
+    hours_back=72,
+    lang=None,
+    cos_threshold=0.82,
+    profile="strict",
+    use_hub_assist=0,
+    hub_pair_cos=0.90,
+    **kwargs,
 ):
     """Stage 2: Densify clusters by adding similar articles with hub-suppression."""
     logger.info(
-        "Starting densify stage (cos_threshold: {}, profile: {})".format(
-            cos_threshold, profile
+        "Starting densify stage (cos_threshold: {}, profile: {}, hub_assist: {})".format(
+            cos_threshold, profile, use_hub_assist
         )
     )
 
@@ -919,6 +1111,40 @@ def stage_densify(
                         should_add = True
                         reason = f"shared_nonhub_1+cos_{max_similarity:.3f}"
 
+                # Phase A: Hub-pair admission rule (when hub assist enabled)
+                if not should_add and use_hub_assist:
+                    # Check if candidate shares 2+ hubs with seed
+                    candidate_hubs = [
+                        tok for tok in candidate_keywords if tok in hub_tokens
+                    ]
+                    seed_hubs = [tok for tok in seed_keywords if tok in hub_tokens]
+                    shared_hubs = set(candidate_hubs).intersection(set(seed_hubs))
+
+                    if len(shared_hubs) >= 2:
+                        # Check if same country set (1-2 countries)
+                        candidate_countries = get_countries_from_tokens(
+                            candidate_keywords
+                        )
+                        seed_countries = get_countries_from_tokens(seed_keywords)
+
+                        if (
+                            candidate_countries == seed_countries
+                            and len(candidate_countries) <= 2
+                        ):
+                            # Check cosine similarity with hub_pair_cos threshold
+                            max_similarity = 0.0
+                            for seed_member_id in seed_member_ids[:3]:
+                                similarity = get_cosine_similarity(
+                                    conn, candidate_id, seed_member_id
+                                )
+                                max_similarity = max(max_similarity, similarity)
+                                if max_similarity >= hub_pair_cos:
+                                    break
+
+                            if max_similarity >= hub_pair_cos:
+                                should_add = True
+                                reason = f"hub_pair_{len(shared_hubs)}+cos_{max_similarity:.3f}"
+
                 if should_add:
                     added_members.append(
                         {
@@ -950,6 +1176,34 @@ def stage_densify(
             cur.close()
 
     total_added = sum(s.get("added_count", 0) for s in densified_seeds.values())
+
+    # Phase A: Enhanced logging with admission type breakdown
+    strict_admits = 0
+    hub_pair_admits = 0
+
+    for seed_data in densified_seeds.values():
+        for member in seed_data.get("members", []):
+            if "reason" in member:
+                if member["reason"].startswith("hub_pair_"):
+                    hub_pair_admits += 1
+                else:
+                    strict_admits += 1
+
+    logger.info("=== PHASE A DENSIFY STAGE SUMMARY ===")
+    logger.info(f"Total articles added: {total_added}")
+    logger.info(f"  Strict admissions: {strict_admits}")
+    logger.info(f"  Hub-pair admissions: {hub_pair_admits}")
+
+    if use_hub_assist:
+        if hub_pair_admits > 0:
+            logger.info(
+                f"Hub-assist admissions: {hub_pair_admits} (+{hub_pair_admits/max(1,total_added)*100:.1f}% boost)"
+            )
+        else:
+            logger.info("Hub-assist: No additional admissions found")
+    else:
+        logger.info("Hub-assist mode: DISABLED")
+
     logger.info(
         "Densify complete. Added {} articles across {} seeds".format(
             total_added, len(densified_seeds)
@@ -1888,9 +2142,9 @@ def compute_cluster_cohesion(members):
     return max(0.0, min(1.0, cohesion))
 
 
-def stage_persist(conn, seeds):
+def stage_persist(conn, seeds, macro_enable=1):
     """Stage 4: Persist clusters to database."""
-    logger.info("Starting persist stage")
+    logger.info(f"Starting persist stage (macro_enable: {macro_enable})")
 
     if not seeds:
         logger.warning("No seeds to persist")
@@ -1920,6 +2174,32 @@ def stage_persist(conn, seeds):
             # Compute cohesion
             cohesion = compute_cluster_cohesion(members)
 
+            # Phase A: Simple macro classification rule
+            cluster_type = "final"  # Default
+            if macro_enable:
+                # Load hub tokens and event tokens for classification
+                cur_temp = conn.cursor()
+                try:
+                    cur_temp.execute("SELECT tok FROM keyword_hubs_30d")
+                    hub_tokens = {row[0] for row in cur_temp.fetchall()}
+
+                    cur_temp.execute("SELECT token FROM event_tokens_30d")
+                    event_tokens = {row[0] for row in cur_temp.fetchall()}
+                finally:
+                    cur_temp.close()
+
+                # Get cluster keywords (anchors)
+                cluster_keywords = set(seed_data.get("keywords", []))
+
+                # Simple rule: mark as macro if no non-hub anchors OR no event anchors
+                non_hub_anchors = [
+                    kw for kw in cluster_keywords if kw not in hub_tokens
+                ]
+                event_anchors = [kw for kw in cluster_keywords if kw in event_tokens]
+
+                if not non_hub_anchors or not event_anchors:
+                    cluster_type = "macro"
+
             # Create cluster record
             cluster_rows.append(
                 (
@@ -1930,6 +2210,7 @@ def stage_persist(conn, seeds):
                     time_window,
                     len(members),
                     cohesion,
+                    cluster_type,
                 )
             )
 
@@ -1945,8 +2226,8 @@ def stage_persist(conn, seeds):
 
         # Insert clusters
         insert_cluster_sql = """
-            INSERT INTO article_clusters (topic_key, top_topics, label, lang, time_window, size, cohesion)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO article_clusters (topic_key, top_topics, label, lang, time_window, size, cohesion, cluster_type)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         execute_batch(cur, insert_cluster_sql, cluster_rows)
 
@@ -1975,6 +2256,30 @@ def stage_persist(conn, seeds):
             VALUES (%s, %s, %s)
         """
         execute_batch(cur, insert_member_sql, updated_member_rows)
+
+        # Phase A: Enhanced logging with cluster type breakdown
+        final_clusters = sum(1 for row in cluster_rows if row[7] == "final")
+        macro_clusters = sum(1 for row in cluster_rows if row[7] == "macro")
+
+        logger.info("=== PHASE A PERSIST STAGE SUMMARY ===")
+        logger.info(f"Total clusters persisted: {len(cluster_rows)}")
+        logger.info(f"  Final clusters: {final_clusters}")
+        logger.info(f"  Macro clusters: {macro_clusters}")
+
+        if macro_enable:
+            if macro_clusters > 0:
+                macro_pct = (macro_clusters / len(cluster_rows)) * 100
+                logger.info(
+                    f"Macro classification: {macro_clusters} clusters ({macro_pct:.1f}%)"
+                )
+                if macro_pct > 20:
+                    logger.warning(
+                        f"High macro percentage: {macro_pct:.1f}% > 20% target"
+                    )
+            else:
+                logger.info("Macro classification: All clusters are final type")
+        else:
+            logger.info("Macro classification: DISABLED")
 
         logger.info(
             "Persisted {} clusters with {} total members".format(
@@ -2047,6 +2352,50 @@ def main():
         help="Enable triad-based seed enhancement (0=off, 1=on, default: 0)",
     )
 
+    # Phase A: Hub-assisted rules and macro clustering flags
+    parser.add_argument(
+        "--use_hub_assist",
+        type=int,
+        default=0,
+        help="Enable hub-assisted clustering rules (0=off, 1=on, default: 0)",
+    )
+    parser.add_argument(
+        "--macro_enable",
+        type=int,
+        default=1,
+        help="Enable macro cluster classification (0=off, 1=on, default: 1)",
+    )
+    parser.add_argument(
+        "--hub_pair_cos",
+        type=float,
+        default=0.90,
+        help="Cosine threshold for hub-pair admission (default: 0.90)",
+    )
+    parser.add_argument(
+        "--hub_plus_one_cos",
+        type=float,
+        default=0.85,
+        help="Cosine threshold for hub+1 admission (default: 0.85)",
+    )
+    parser.add_argument(
+        "--hub_only_cap",
+        type=float,
+        default=0.40,
+        help="Max proportion of hub-only admissions per cluster (default: 0.40)",
+    )
+    parser.add_argument(
+        "--triad_codoc_min",
+        type=int,
+        default=3,
+        help="Minimum co-occurrence for triad patterns (default: 3)",
+    )
+    parser.add_argument(
+        "--triad_pmi_min",
+        type=float,
+        default=2.5,
+        help="Minimum PMI score for triad patterns (default: 2.5)",
+    )
+
     args = parser.parse_args()
 
     logger.info(
@@ -2061,7 +2410,12 @@ def main():
         try:
             if args.stage == "seed":
                 seeds = stage_seed(
-                    conn, args.window, args.lang, args.profile, args.use_triads
+                    conn,
+                    args.window,
+                    args.lang,
+                    args.profile,
+                    args.use_triads,
+                    args.use_hub_assist,
                 )
                 logger.info("Seed stage completed with {} seeds".format(len(seeds)))
                 # Store seeds in a simple way for MVP (could use Redis/file for production)
@@ -2069,21 +2423,45 @@ def main():
             elif args.stage == "densify":
                 # For MVP, re-run seed stage then densify
                 seeds = stage_seed(
-                    conn, args.window, args.lang, args.profile, args.use_triads
+                    conn,
+                    args.window,
+                    args.lang,
+                    args.profile,
+                    args.use_triads,
+                    args.use_hub_assist,
                 )
                 if seeds:
                     seeds = stage_densify(
-                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                        conn,
+                        seeds,
+                        args.window,
+                        args.lang,
+                        args.cos,
+                        args.profile,
+                        args.use_hub_assist,
+                        args.hub_pair_cos,
                     )
                 logger.info("Densify stage completed")
 
             elif args.stage == "consolidate":
                 seeds = stage_seed(
-                    conn, args.window, args.lang, args.profile, args.use_triads
+                    conn,
+                    args.window,
+                    args.lang,
+                    args.profile,
+                    args.use_triads,
+                    args.use_hub_assist,
                 )
                 if seeds:
                     seeds = stage_densify(
-                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                        conn,
+                        seeds,
+                        args.window,
+                        args.lang,
+                        args.cos,
+                        args.profile,
+                        args.use_hub_assist,
+                        args.hub_pair_cos,
                     )
                     seeds = stage_consolidate(
                         conn, seeds, args.merge_cos, args.merge_wj, args.merge_time
@@ -2092,11 +2470,23 @@ def main():
 
             elif args.stage == "refine":
                 seeds = stage_seed(
-                    conn, args.window, args.lang, args.profile, args.use_triads
+                    conn,
+                    args.window,
+                    args.lang,
+                    args.profile,
+                    args.use_triads,
+                    args.use_hub_assist,
                 )
                 if seeds:
                     seeds = stage_densify(
-                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                        conn,
+                        seeds,
+                        args.window,
+                        args.lang,
+                        args.cos,
+                        args.profile,
+                        args.use_hub_assist,
+                        args.hub_pair_cos,
                     )
                     seeds = stage_consolidate(conn, seeds)
                     seeds = stage_refine(conn, seeds, args.min_size)
@@ -2104,15 +2494,27 @@ def main():
 
             elif args.stage == "persist":
                 seeds = stage_seed(
-                    conn, args.window, args.lang, args.profile, args.use_triads
+                    conn,
+                    args.window,
+                    args.lang,
+                    args.profile,
+                    args.use_triads,
+                    args.use_hub_assist,
                 )
                 if seeds:
                     seeds = stage_densify(
-                        conn, seeds, args.window, args.lang, args.cos, args.profile
+                        conn,
+                        seeds,
+                        args.window,
+                        args.lang,
+                        args.cos,
+                        args.profile,
+                        args.use_hub_assist,
+                        args.hub_pair_cos,
                     )
                     seeds = stage_consolidate(conn, seeds)
                     seeds = stage_refine(conn, seeds, args.min_size)
-                    stage_persist(conn, seeds)
+                    stage_persist(conn, seeds, args.macro_enable)
                 conn.commit()
                 logger.info("Persist stage completed")
 
