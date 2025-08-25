@@ -1,0 +1,12 @@
+{
+  "ok": false,
+  "count": null,
+  "sql": "SELECT COUNT(*)::int AS count FROM article_clusters;",
+  "error": "'db_query' command is not available in this environment; unable to execute the SQL query.",
+  "hints": [
+    "Ensure DATABASE_URL is set in .env and accessible",
+    "Provide a db_query tool/command, or use: psql \"$DATABASE_URL\" -Atc 'SELECT COUNT(*)::int AS count FROM article_clusters;'",
+    "Alternatively, add a small Python script using psycopg to run the query"
+  ],
+  "timestamp": "2025-08-14T00:00:00Z"
+}

@@ -205,8 +205,8 @@ Keywords: {keywords_str}"""
                     """
                 SELECT a.title, a.content
                 FROM articles a
-                JOIN article_clusters ac ON a.id = ac.article_id
-                WHERE ac.cluster_id = :cluster_id
+                JOIN article_cluster_members acm ON a.id = acm.article_id
+                WHERE acm.cluster_id = :cluster_id
                 ORDER BY a.published_at DESC
                 LIMIT :limit
             """
@@ -291,8 +291,8 @@ Article Context:
                         """
                     SELECT a.id, a.title, a.summary, a.content, a.url, a.published_at
                     FROM articles a
-                    JOIN article_clusters ac ON a.id = ac.article_id
-                    WHERE ac.cluster_id = :cluster_id
+                    JOIN article_cluster_members acm ON a.id = acm.article_id
+                    WHERE acm.cluster_id = :cluster_id
                     ORDER BY a.published_at DESC
                     LIMIT :limit
                 """
@@ -327,7 +327,7 @@ Article Context:
 
             # Create digest JSON
             digest = {
-                "cluster_id": cluster_id,
+                "cluster_id": str(cluster_id),  # Convert UUID to string
                 "cluster_label": cluster_label,
                 "cluster_keywords": cluster_keywords,
                 "articles": digest_articles,
@@ -591,11 +591,25 @@ Generate parent and child narrative candidates following the specified format.""
 
         print(f"Found {len(clusters)} clusters to process")
 
-        # Module 1: Strategic Pre-Filtering
-        strategic_clusters = await self.strategic_pre_filtering(clusters)
-
-        if not strategic_clusters:
-            return self._generate_processing_summary()
+        # SKIP Module 1: Strategic Pre-Filtering (as requested)
+        # Mark all clusters as strategic for processing
+        print("=== SKIPPING Module 1: Strategic Pre-Filtering ===")
+        strategic_clusters = clusters
+        for cluster in strategic_clusters:
+            cluster_id = cluster["cluster_id"]
+            with get_db_session() as session:
+                session.execute(
+                    text(
+                        """
+                    UPDATE article_clusters 
+                    SET strategic_status = 'strategic'
+                    WHERE cluster_id = :cluster_id
+                """
+                    ),
+                    {"cluster_id": cluster_id},
+                )
+                session.commit()
+        self.stats["strategic_count"] = len(strategic_clusters)
 
         # Module 2: Digest Assembly
         clusters_with_digests = await self.digest_assembly(strategic_clusters)
@@ -619,10 +633,10 @@ Generate parent and child narrative candidates following the specified format.""
         with get_db_session() as session:
             query = text(
                 """
-                SELECT cluster_id, cluster_label, cluster_keywords, cluster_size
+                SELECT cluster_id, label, top_topics, size
                 FROM article_clusters 
                 WHERE strategic_status = 'pending'
-                ORDER BY cluster_size DESC
+                ORDER BY size DESC
             """
             )
 
@@ -633,10 +647,17 @@ Generate parent and child narrative candidates following the specified format.""
 
             clusters = []
             for row in result.fetchall():
+                # Generate label from top_topics if label is None
+                cluster_label = (
+                    row[1]
+                    if row[1]
+                    else " ".join(row[2][:3]) if row[2] else "Unlabeled Cluster"
+                )
+
                 clusters.append(
                     {
                         "cluster_id": row[0],
-                        "cluster_label": row[1],
+                        "cluster_label": cluster_label,
                         "cluster_keywords": row[2] if row[2] else [],
                     }
                 )

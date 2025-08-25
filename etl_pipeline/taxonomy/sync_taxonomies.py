@@ -166,85 +166,87 @@ def sync_mappings(conn, mappings_data):
 def parse_iptc_mediatopic(filepath):
     """Parse IPTC Media Topics JSON-LD file."""
     logger.info(f"Parsing IPTC Media Topics from {filepath}")
-    
+
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
-        
-        if 'conceptSet' not in data:
+
+        if "conceptSet" not in data:
             logger.error("No conceptSet found in IPTC file")
             return [], []
-        
-        concepts = data['conceptSet']
+
+        concepts = data["conceptSet"]
         logger.info(f"Found {len(concepts)} IPTC concepts")
-        
+
         topics = []
         aliases = []
-        
+
         # Build URI to concept mapping for parent resolution
-        uri_to_concept = {c['uri']: c for c in concepts}
-        
+        uri_to_concept = {c["uri"]: c for c in concepts}
+
         for concept in concepts:
             # Extract topic ID from URI (last path segment)
-            uri = concept['uri']
-            topic_id = uri.split('/')[-1]
-            
+            uri = concept["uri"]
+            topic_id = uri.split("/")[-1]
+
             # Get preferred label in English
-            pref_labels = concept.get('prefLabel', {})
-            name = pref_labels.get('en-GB') or pref_labels.get('en-US') or topic_id
-            
+            pref_labels = concept.get("prefLabel", {})
+            name = pref_labels.get("en-GB") or pref_labels.get("en-US") or topic_id
+
             # Get broader concept (parent)
-            broader = concept.get('broader', [])
+            broader = concept.get("broader", [])
             parent_id = None
             if broader:
                 # broader is a list of URIs
                 parent_uri = broader[0] if isinstance(broader, list) else broader
-                parent_id = parent_uri.split('/')[-1]
-            
+                parent_id = parent_uri.split("/")[-1]
+
             # Compute path from hierarchy
             path = []
             current_uri = uri
             visited = set()
-            
+
             while current_uri and current_uri not in visited:
                 visited.add(current_uri)
                 current_concept = uri_to_concept.get(current_uri)
                 if not current_concept:
                     break
-                
-                current_name = current_concept.get('prefLabel', {}).get('en-GB', '')
+
+                current_name = current_concept.get("prefLabel", {}).get("en-GB", "")
                 if current_name and current_uri != uri:  # Don't include self
                     path.insert(0, current_name)
-                
+
                 # Move to parent
-                current_broader = current_concept.get('broader', [])
+                current_broader = current_concept.get("broader", [])
                 if current_broader:
-                    current_uri = current_broader[0] if isinstance(current_broader, list) else current_broader
+                    current_uri = (
+                        current_broader[0]
+                        if isinstance(current_broader, list)
+                        else current_broader
+                    )
                 else:
                     break
-            
+
             # Create topic entry
             topic_entry = {
                 "topic_id": f"iptc:{topic_id}",
                 "name": name,
                 "source": "IPTC",
                 "parent_id": f"iptc:{parent_id}" if parent_id else None,
-                "path": path
+                "path": path,
             }
             topics.append(topic_entry)
-            
+
             # Create aliases for all languages
             for lang, label in pref_labels.items():
                 if label and label.strip():
-                    aliases.append({
-                        "topic_id": f"iptc:{topic_id}",
-                        "alias": label,
-                        "lang": lang
-                    })
-        
+                    aliases.append(
+                        {"topic_id": f"iptc:{topic_id}", "alias": label, "lang": lang}
+                    )
+
         logger.info(f"Parsed {len(topics)} topics and {len(aliases)} aliases from IPTC")
         return topics, aliases
-        
+
     except Exception as e:
         logger.error(f"Failed to parse IPTC file: {e}")
         return [], []
@@ -257,7 +259,7 @@ def main():
     # Define data file paths
     data_dir = Path(__file__).parent.parent.parent / "data"
     iptc_mediatopic_file = data_dir / "iptc_mediatopic.json"
-    iptc_topics_file = data_dir / "iptc_topics.json" 
+    iptc_topics_file = data_dir / "iptc_topics.json"
     iptc_aliases_file = data_dir / "iptc_aliases.json"
     gdelt_themes_file = data_dir / "gdelt_themes.json"
 
@@ -270,7 +272,7 @@ def main():
             if iptc_mediatopic_file.exists():
                 logger.info("Processing IPTC Media Topics JSON-LD file")
                 iptc_topics, iptc_aliases = parse_iptc_mediatopic(iptc_mediatopic_file)
-                
+
                 if iptc_topics:
                     sync_topics(conn, iptc_topics, "IPTC")
                     sync_aliases(conn, iptc_aliases)
@@ -280,19 +282,21 @@ def main():
                 logger.info("Loading legacy IPTC files")
                 iptc_topics = load_json_file(iptc_topics_file)
                 iptc_aliases = load_json_file(iptc_aliases_file)
-                
+
                 sync_topics(conn, iptc_topics, "IPTC")
                 sync_aliases(conn, iptc_aliases)
 
             # Load GDELT data
             gdelt_data = load_json_file(gdelt_themes_file)
             gdelt_topics = (
-                gdelt_data.get("topics", []) if isinstance(gdelt_data, dict) else gdelt_data
+                gdelt_data.get("topics", [])
+                if isinstance(gdelt_data, dict)
+                else gdelt_data
             )
             gdelt_aliases = (
                 gdelt_data.get("aliases", []) if isinstance(gdelt_data, dict) else []
             )
-            
+
             if gdelt_topics:
                 sync_topics(conn, gdelt_topics, "GDELT")
                 sync_aliases(conn, gdelt_aliases)

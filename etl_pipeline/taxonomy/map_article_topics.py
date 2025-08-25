@@ -60,7 +60,9 @@ def get_recent_articles(conn, hours_back=72):
         cur.execute(query, (cutoff_time,))
 
         articles = cur.fetchall()
-        logger.info(f"Found {len(articles)} English articles from last {hours_back} hours")
+        logger.info(
+            f"Found {len(articles)} English articles from last {hours_back} hours"
+        )
         return articles
 
     finally:
@@ -203,7 +205,14 @@ def main():
             all_mappings = []
             processed_count = 0
 
-            for article_id, title, content, published_at, language, keywords in articles:
+            for (
+                article_id,
+                title,
+                content,
+                published_at,
+                language,
+                keywords,
+            ) in articles:
                 if keywords:  # Only process articles with keywords
                     topic_matches = match_article_to_topics(
                         conn, article_id, title, content, keywords, topics, aliases

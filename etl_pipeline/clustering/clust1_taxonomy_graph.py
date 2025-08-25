@@ -111,30 +111,79 @@ def load_hub_tokens(conn):
         cur.close()
 
 
-def load_event_anchored_triads(conn):
+def load_event_anchored_triads(conn, use_clean_events=0):
     """Load event-anchored triads from materialized view."""
     cur = conn.cursor()
     try:
-        cur.execute(
-            "SELECT hub1, hub2, event_tok, co_doc FROM event_anchored_triads_30d"
+        # Choose triads table based on clean events flag
+        table = (
+            "event_anchored_triads_clean_30d"
+            if use_clean_events
+            else "event_anchored_triads_30d"
         )
+
+        cur.execute(f"SELECT hub1, hub2, event_tok, co_doc FROM {table}")
         triads = {}
         for hub1, hub2, event_tok, co_doc in cur.fetchall():
             triads[(hub1, hub2, event_tok)] = co_doc
-        logger.info(f"Loaded {len(triads)} event-anchored triads")
+
+        event_type = "clean" if use_clean_events else "original"
+        logger.info(f"Loaded {len(triads)} event-anchored triads ({event_type} events)")
         return triads
     except Exception as e:
-        logger.warning(f"Failed to load event-anchored triads: {e}")
-        return {}
+        # Fallback to original triads if clean version fails
+        if use_clean_events:
+            logger.warning(
+                f"Failed to load clean triads ({e}), falling back to original"
+            )
+            return load_event_anchored_triads(conn, use_clean_events=0)
+        else:
+            logger.warning(f"Failed to load event-anchored triads: {e}")
+            return {}
     finally:
         cur.close()
+
+
+def load_event_signals(conn):
+    """Load event signals (tokens + bigrams) from materialized view."""
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT signal FROM event_signals_30d")
+        signals = {row[0] for row in cur.fetchall()}
+        logger.info(f"Loaded {len(signals)} event signals")
+        return signals
+    except Exception as e:
+        logger.warning(f"Failed to load event signals: {e}")
+        return set()
+    finally:
+        cur.close()
+
+
+def has_event_signal(article_keywords, article_title, event_signals):
+    """Check if article has any event signal (token or title bigram)."""
+    # Check keywords for event tokens
+    for keyword in article_keywords:
+        if keyword in event_signals:
+            return True
+
+    # Check title for event bigrams
+    if article_title:
+        title_clean = article_title.lower()
+        # Generate bigrams from title
+        words = title_clean.split()
+        for i in range(len(words) - 1):
+            bigram = f"{words[i]} {words[i+1]}"
+            if bigram in event_signals:
+                return True
+
+    return False
 
 
 def load_country_tokens(conn):
     """Load country tokens from ref_countries table."""
     cur = conn.cursor()
     try:
-        cur.execute("SELECT country_name FROM ref_countries")
+        cur.execute("SELECT name FROM ref_countries")
         countries = {row[0].lower() for row in cur.fetchall()}
         # Add common country aliases
         country_aliases = {
@@ -681,13 +730,16 @@ def stage_seed(
     # Phase A: Hub-assisted seeding (event-anchored triads)
     hub_assist_seeds_added = 0
     if use_hub_assist:
-        # Load Phase A data
+        # Load Phase A data with event signals
         hub_tokens_set = load_hub_tokens(conn)
         event_tokens_set = get_event_tokens(conn, 30)
-        event_triads = load_event_anchored_triads(conn)
+        event_triads = load_event_anchored_triads(
+            conn, kwargs.get("use_clean_events", 0)
+        )
+        event_signals = load_event_signals(conn)
 
         logger.info(
-            f"Phase A: Loaded {len(hub_tokens_set)} hubs, {len(event_tokens_set)} events, {len(event_triads)} triads"
+            f"Phase A: Loaded {len(hub_tokens_set)} hubs, {len(event_tokens_set)} events, {len(event_triads)} triads, {len(event_signals)} signals"
         )
 
         # Get articles already processed
@@ -718,6 +770,12 @@ def stage_seed(
                     keyword = core_keywords[i]
                     cluster = normalizer.get_concept_cluster(keyword)
                     valid_keywords.append(cluster)
+
+            # Gate by event signal presence - require article to have event signal
+            has_signal = has_event_signal(valid_keywords, title, event_signals)
+
+            if not has_signal:
+                continue  # Skip articles without event signals for hub-assist
 
             # Check for event-anchored triad match
             matches_triad, triad_info = matches_event_anchored_triad(
@@ -1012,7 +1070,7 @@ def stage_densify(
         logger.warning("No seeds to densify")
         return seeds
 
-    # Load hub tokens for densify logic
+    # Load hub tokens and event signals for densify logic
     cur = conn.cursor()
     try:
         cur.execute("SELECT tok FROM keyword_hubs_30d")
@@ -1020,6 +1078,11 @@ def stage_densify(
         logger.info(f"Loaded {len(hub_tokens)} hub tokens for densify stage")
     finally:
         cur.close()
+
+    # Load event signals for hub-assist gating
+    event_signals = set()
+    if use_hub_assist:
+        event_signals = load_event_signals(conn)
 
     if profile == "recall":
         return stage_densify_recall(conn, seeds, hours_back, lang, hub_tokens)
@@ -1113,6 +1176,14 @@ def stage_densify(
 
                 # Phase A: Hub-pair admission rule (when hub assist enabled)
                 if not should_add and use_hub_assist:
+                    # Gate by event signal presence - require candidate to have event signal
+                    candidate_has_signal = has_event_signal(
+                        candidate_keywords, title, event_signals
+                    )
+
+                    if not candidate_has_signal:
+                        continue  # Skip candidates without event signals for hub-assist
+
                     # Check if candidate shares 2+ hubs with seed
                     candidate_hubs = [
                         tok for tok in candidate_keywords if tok in hub_tokens
@@ -2174,30 +2245,29 @@ def stage_persist(conn, seeds, macro_enable=1):
             # Compute cohesion
             cohesion = compute_cluster_cohesion(members)
 
-            # Phase A: Simple macro classification rule
+            # Phase A: Enhanced macro classification rule using event signals
             cluster_type = "final"  # Default
             if macro_enable:
-                # Load hub tokens and event tokens for classification
+                # Load event signals for classification
                 cur_temp = conn.cursor()
                 try:
-                    cur_temp.execute("SELECT tok FROM keyword_hubs_30d")
-                    hub_tokens = {row[0] for row in cur_temp.fetchall()}
-
-                    cur_temp.execute("SELECT token FROM event_tokens_30d")
-                    event_tokens = {row[0] for row in cur_temp.fetchall()}
+                    cur_temp.execute("SELECT signal FROM event_signals_30d")
+                    event_signals = {row[0] for row in cur_temp.fetchall()}
                 finally:
                     cur_temp.close()
 
-                # Get cluster keywords (anchors)
-                cluster_keywords = set(seed_data.get("keywords", []))
+                # Check if any member has an event signal
+                has_event_signal_member = False
+                for member in members:
+                    member_keywords = member.get("keywords", [])
+                    member_title = member.get("title", "")
 
-                # Simple rule: mark as macro if no non-hub anchors OR no event anchors
-                non_hub_anchors = [
-                    kw for kw in cluster_keywords if kw not in hub_tokens
-                ]
-                event_anchors = [kw for kw in cluster_keywords if kw in event_tokens]
+                    if has_event_signal(member_keywords, member_title, event_signals):
+                        has_event_signal_member = True
+                        break
 
-                if not non_hub_anchors or not event_anchors:
+                # New rule: mark as macro if NO member has an event signal
+                if not has_event_signal_member:
                     cluster_type = "macro"
 
             # Create cluster record
@@ -2380,8 +2450,8 @@ def main():
     parser.add_argument(
         "--hub_only_cap",
         type=float,
-        default=0.40,
-        help="Max proportion of hub-only admissions per cluster (default: 0.40)",
+        default=0.25,
+        help="Max proportion of hub-only admissions per cluster (default: 0.25)",
     )
     parser.add_argument(
         "--triad_codoc_min",
@@ -2394,6 +2464,12 @@ def main():
         type=float,
         default=2.5,
         help="Minimum PMI score for triad patterns (default: 2.5)",
+    )
+    parser.add_argument(
+        "--use_clean_events",
+        type=int,
+        default=0,
+        help="Use clean filtered event tokens for A/B testing (0=original, 1=clean, default: 0)",
     )
 
     args = parser.parse_args()
@@ -2416,6 +2492,7 @@ def main():
                     args.profile,
                     args.use_triads,
                     args.use_hub_assist,
+                    use_clean_events=args.use_clean_events,
                 )
                 logger.info("Seed stage completed with {} seeds".format(len(seeds)))
                 # Store seeds in a simple way for MVP (could use Redis/file for production)
@@ -2429,6 +2506,7 @@ def main():
                     args.profile,
                     args.use_triads,
                     args.use_hub_assist,
+                    use_clean_events=args.use_clean_events,
                 )
                 if seeds:
                     seeds = stage_densify(
@@ -2451,6 +2529,7 @@ def main():
                     args.profile,
                     args.use_triads,
                     args.use_hub_assist,
+                    use_clean_events=args.use_clean_events,
                 )
                 if seeds:
                     seeds = stage_densify(
@@ -2476,6 +2555,7 @@ def main():
                     args.profile,
                     args.use_triads,
                     args.use_hub_assist,
+                    use_clean_events=args.use_clean_events,
                 )
                 if seeds:
                     seeds = stage_densify(
@@ -2500,6 +2580,7 @@ def main():
                     args.profile,
                     args.use_triads,
                     args.use_hub_assist,
+                    use_clean_events=args.use_clean_events,
                 )
                 if seeds:
                     seeds = stage_densify(
