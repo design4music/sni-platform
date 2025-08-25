@@ -2,10 +2,8 @@
 RSS Feed Ingestion Implementation
 """
 
-import asyncio
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, Optional
-from xml.etree import ElementTree as ET
 
 import aiohttp
 import feedparser

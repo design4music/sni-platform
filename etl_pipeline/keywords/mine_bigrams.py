@@ -6,30 +6,26 @@ Mines stable title bigrams using PMI (Pointwise Mutual Information) scoring.
 
 import argparse
 import logging
-import os
 import re
-from collections import Counter, defaultdict
+import sys
+from collections import Counter
 from datetime import datetime, timedelta
 from math import log2
+from pathlib import Path
 
-import psycopg2
 from psycopg2.extras import execute_batch
+
+# Add project root to path for centralized config
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import centralized database connection
+from etl_pipeline.core.config import get_db_connection
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-
-def get_db_connection():
-    """Get database connection using environment variables."""
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        database=os.getenv("DB_NAME", "narrative_intelligence"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "postgres"),
-    )
 
 
 def parse_time_window(window_str):

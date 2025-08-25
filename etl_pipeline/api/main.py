@@ -5,8 +5,6 @@ This module provides REST API endpoints for pipeline management,
 real-time data access, and monitoring integration.
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -27,7 +25,7 @@ from ..core.database.models import (Article, ContentCategory, EntityMention,
 from ..core.exceptions import APIError, ValidationError
 from ..core.monitoring import AlertManager, MetricsCollector
 from ..core.tasks import (celery_app, check_celery_health, get_active_tasks,
-                          health_check, ingest_feed, run_daily_pipeline,
+                          ingest_feed, run_daily_pipeline,
                           trending_analysis)
 
 logger = structlog.get_logger(__name__)
@@ -255,7 +253,7 @@ async def status_endpoint(user: dict = Depends(get_current_user)):
             )
 
             # Get active feeds count
-            active_feeds = db.query(NewsFeed).filter(NewsFeed.is_active == True).count()
+            active_feeds = db.query(NewsFeed).filter(NewsFeed.is_active).count()
 
             # Get recent articles count
             recent_articles = (
@@ -476,7 +474,7 @@ async def get_feeds(
             query = db.query(NewsFeed)
 
             if active_only:
-                query = query.filter(NewsFeed.is_active == True)
+                query = query.filter(NewsFeed.is_active)
 
             feeds = query.order_by(NewsFeed.priority, NewsFeed.name).all()
 

@@ -6,21 +6,18 @@ ingestion, processing, ML integration, and monitoring tasks.
 """
 
 import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import structlog
-from celery import chain, chord, group
+from celery import group
 
 from ..config import get_config
 from ..database import get_db_session
 from ..database.models import (Article, DataQualityReport, NewsFeed,
                                PipelineRun, ProcessingStatus, TrendingTopic)
-from ..exceptions import (IngestionError, PipelineError, ProcessingError,
-                          TaskError, ValidationError)
+from ..exceptions import (IngestionError, PipelineError, TaskError)
 from ..ingestion import FeedIngestor
-from ..monitoring import MetricsCollector
 from ..processing import ContentProcessor
 from .celery_app import ETLTask, celery_app
 
@@ -199,7 +196,7 @@ def create_ingestion_job():
 
     # Get active feeds
     with get_db_session() as db:
-        feeds = db.query(NewsFeed).filter(NewsFeed.is_active == True).all()
+        feeds = db.query(NewsFeed).filter(NewsFeed.is_active).all()
         feed_configs = []
 
         for feed in feeds:
@@ -576,7 +573,7 @@ def health_check(self) -> Dict[str, Any]:
         # Check active feeds
         with get_db_session() as db:
             active_feeds_count = (
-                db.query(NewsFeed).filter(NewsFeed.is_active == True).count()
+                db.query(NewsFeed).filter(NewsFeed.is_active).count()
             )
             health_status["checks"]["active_feeds"] = active_feeds_count
 
@@ -846,7 +843,7 @@ def generate_quality_report(self) -> Dict[str, Any]:
 
             # Active feeds
             report_data["active_feeds"] = (
-                db.query(NewsFeed).filter(NewsFeed.is_active == True).count()
+                db.query(NewsFeed).filter(NewsFeed.is_active).count()
             )
 
             # Create quality report record

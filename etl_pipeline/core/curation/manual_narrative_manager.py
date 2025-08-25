@@ -9,12 +9,11 @@ Integrates with existing pipeline while providing editorial workflow management.
 
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from etl_pipeline.core.database import get_db_session

@@ -9,13 +9,12 @@ Handles daily ingestion, frequency updates, trend detection, and cleanup.
 
 import asyncio
 import uuid
-from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import structlog
-from sqlalchemy import func, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..core.database import get_db_session

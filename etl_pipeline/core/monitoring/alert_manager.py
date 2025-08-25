@@ -5,7 +5,6 @@ This module provides comprehensive alerting capabilities with multiple
 notification channels, alert routing, and intelligent alert suppression.
 """
 
-import asyncio
 import json
 import smtplib
 from collections import defaultdict, deque
@@ -20,7 +19,6 @@ import aiohttp
 import structlog
 
 from ..config import AlertingConfig
-from ..database import get_db_session
 from ..exceptions import AlertingError
 
 logger = structlog.get_logger(__name__)

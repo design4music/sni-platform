@@ -8,9 +8,6 @@ import argparse
 import logging
 import os
 import subprocess
-import sys
-import time
-from datetime import datetime
 
 # Setup logging
 logging.basicConfig(
@@ -126,7 +123,7 @@ def main():
         if not args.skip_refresh:
             logger.info("Step 1: Refreshing materialized views...")
             refresh_result = subprocess.run(
-                ["python", "scripts/refresh_event_signals_pipeline.py"],
+                ["python", "etl_pipeline/clustering/clust0_refresh_event_signals.py"],
                 cwd=os.path.dirname(os.path.dirname(__file__)),
             )
 

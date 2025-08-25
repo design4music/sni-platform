@@ -4,7 +4,6 @@ Apply batch-aware library fix to address unfair token frequency calculations.
 This script executes the SQL updates and reruns CLUST-1 pipeline.
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path

@@ -12,10 +12,17 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import combinations
+from pathlib import Path
 
 import numpy as np
-import psycopg2
 from psycopg2.extras import execute_batch
+
+# Add project root to path for centralized config
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import centralized database connection
+from etl_pipeline.core.config import get_db_connection
 
 # Setup logging
 logging.basicConfig(
@@ -24,15 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_db_connection():
-    """Get database connection using environment variables."""
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        database=os.getenv("DB_NAME", "narrative_intelligence"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", ""),
-    )
+# Database connection now uses centralized system
 
 
 def generate_topic_key(topic_combo):

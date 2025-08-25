@@ -9,7 +9,6 @@ import logging
 import os
 import subprocess
 import sys
-from datetime import datetime
 
 import psycopg2
 
@@ -307,7 +306,7 @@ def main():
             f"  Clean triads: {baseline['clean_triads']:,} ({baseline['triad_retention_pct']}% retention)"
         )
 
-        print(f"\nClustering Results:")
+        print("\nClustering Results:")
         print(
             f"{'Test':<40} {'Clusters':<10} {'Final':<8} {'Macro':<8} {'Macro%':<8} {'Entropy':<8} {'Avg Size':<10}"
         )
@@ -322,8 +321,8 @@ def main():
             )
 
         # Acceptance criteria check
-        print(f"\nAcceptance Criteria Analysis:")
-        print(f"Target: +3-8pp clustering rate, entropy ≤2.40, macro rate ≤20%")
+        print("\nAcceptance Criteria Analysis:")
+        print("Target: +3-8pp clustering rate, entropy ≤2.40, macro rate ≤20%")
 
         if len(results) >= 3:
             baseline_result = list(results.values())[0]
@@ -346,10 +345,10 @@ def main():
 
             if clean_macro <= 20 and clean_result.get("entropy", 0) <= 2.40:
                 print(
-                    f"\n✅ ACCEPTANCE CRITERIA MET - Ready for production A/B testing"
+                    "\n✅ ACCEPTANCE CRITERIA MET - Ready for production A/B testing"
                 )
             else:
-                print(f"\n❌ Acceptance criteria not met - Further filtering needed")
+                print("\n❌ Acceptance criteria not met - Further filtering needed")
 
     except Exception as e:
         logger.error(f"A/B testing failed: {e}")

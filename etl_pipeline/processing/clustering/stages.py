@@ -2,17 +2,14 @@
 Implementation of the 4 clustering stages
 """
 
-import asyncio
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import structlog
 from sklearn.cluster import DBSCAN, AgglomerativeClustering
-from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 
 from .base import (BaseClusteringStage, ClusterInfo, ClusteringResult,

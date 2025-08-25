@@ -106,7 +106,7 @@ class DatabaseManager:
         ):
             """Log query execution time"""
             if hasattr(context, "_query_start_time"):
-                total_time = logger.info(
+                logger.info(
                     "Query completed", execution_time="<calculated>"
                 )
                 # In real implementation, calculate actual time

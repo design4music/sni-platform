@@ -10,7 +10,6 @@ import sys
 from datetime import datetime, timedelta
 
 import psycopg2
-from psycopg2.extras import execute_batch
 
 # Add the ETL pipeline to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "etl_pipeline"))

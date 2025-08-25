@@ -10,12 +10,11 @@ These tasks are designed to run on a schedule or be triggered manually.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import structlog
-from celery import Task
 
-from ...clustering import (ClusteringOrchestrator, run_clust1_clustering,
+from ...clustering import (run_clust1_clustering,
                            run_clustering_workflow)
 from .celery_app import ETLTask, celery_app
 

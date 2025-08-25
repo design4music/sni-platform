@@ -71,7 +71,7 @@ def download_iptc_taxonomy(format_type="rdf"):
                     data = response.json()
                     return data, url
                 except json.JSONDecodeError:
-                    logger.warning(f"Response not valid JSON, trying as text")
+                    logger.warning("Response not valid JSON, trying as text")
                     return response.text, url
 
             else:
@@ -296,10 +296,10 @@ def main():
     for topic in sports_topics[:10]:  # Show first 10
         logger.info(f"  - {topic['topic_id']}: {topic['name']}")
 
-    print(f"\nFiles created:")
+    print("\nFiles created:")
     print(f"  Topics: {topics_file}")
     print(f"  Aliases: {aliases_file}")
-    print(f"\nNext step: Run sync_taxonomies.py to load into database")
+    print("\nNext step: Run sync_taxonomies.py to load into database")
 
 
 if __name__ == "__main__":

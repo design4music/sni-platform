@@ -6,9 +6,8 @@ with multilingual support, content filtering, and ML integration.
 """
 
 import asyncio
-import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -422,7 +421,7 @@ class PipelineOrchestrator:
 
     async def _get_active_feeds(self) -> List[Dict[str, Any]]:
         """Get list of active news feeds from configuration"""
-        with get_db_session() as db:
+        with get_db_session():
             # This would fetch from database or config
             # For now, return configured feeds
             return self.config.feeds.active_feeds

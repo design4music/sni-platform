@@ -15,19 +15,16 @@ Key Features:
 - Automatic narrative updates and creation
 """
 
-import asyncio
-import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 import numpy as np
 import structlog
 from sklearn.metrics.pairwise import cosine_similarity
 
 from ..core.database import get_db_session
-from ..core.database.models import (Article, ArticleCluster, EntityMention,
-                                    NarrativeArticleAssociation,
+from ..core.database.models import (NarrativeArticleAssociation,
                                     NarrativeMetrics, NarrativeNSF1)
 
 # from .clust1_thematic_grouping import ClusteringResult  # ARCHIVED

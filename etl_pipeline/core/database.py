@@ -3,9 +3,8 @@ Database models and connection management for the ETL pipeline
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
 
 from config.settings import settings
 from pgvector.sqlalchemy import Vector

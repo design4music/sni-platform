@@ -5,16 +5,13 @@ This module handles ingestion from multiple news sources including RSS feeds,
 REST APIs, and web scrapers with comprehensive error handling and retry logic.
 """
 
-import asyncio
 import hashlib
 import re
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
-import aiofiles
 import aiohttp
 import feedparser
 import structlog
@@ -25,7 +22,7 @@ from ..config import IngestionConfig
 from ..database import get_db_session
 from ..database.models import (Article, FeedMetrics, FeedType, NewsFeed,
                                ProcessingStatus)
-from ..exceptions import ContentError, FeedError, IngestionError
+from ..exceptions import FeedError, IngestionError
 from ..monitoring import MetricsCollector
 
 logger = structlog.get_logger(__name__)
@@ -160,7 +157,7 @@ class FeedIngestor:
                         feed, None, success=False, error=str(exc)
                     )
 
-            error_result = IngestionResult(
+            IngestionResult(
                 feed_id=feed_id,
                 success=False,
                 articles_count=0,

@@ -11,7 +11,6 @@ Run this once to fix existing articles, then new ingestion will be clean.
 import os
 import re
 import sys
-from typing import Optional
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -126,7 +125,7 @@ def cleanup_html_articles(window_hours: int = 168) -> dict:
         # Commit all changes
         session.commit()
 
-    print(f"\nHTML cleanup completed!")
+    print("\nHTML cleanup completed!")
     print(f"Articles found with HTML: {stats['articles_found']}")
     print(f"Articles cleaned: {stats['articles_cleaned']}")
     print(f"Errors: {stats['errors']}")

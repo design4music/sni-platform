@@ -8,7 +8,6 @@ variable support, validation, and type safety.
 import json
 import os
 from dataclasses import dataclass, field
-from datetime import time
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -61,6 +60,21 @@ class DatabaseConfig:
             admin_password=os.getenv("DB_ADMIN_PASSWORD"),
             echo_sql=os.getenv("DB_ECHO_SQL", "false").lower() == "true",
         )
+
+    @property
+    def connection_url(self) -> str:
+        """Get database connection URL for SQLAlchemy"""
+        return f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+    def get_connection_params(self) -> dict:
+        """Get connection parameters for psycopg2"""
+        return {
+            "host": self.host,
+            "port": self.port,
+            "database": self.database,
+            "user": self.username,
+            "password": self.password,
+        }
 
 
 @dataclass
@@ -485,9 +499,23 @@ def set_config(config: Config):
 def load_config_from_file(file_path: str) -> Config:
     """Load configuration from JSON file"""
     with open(file_path, "r") as f:
-        config_dict = json.load(f)
+        json.load(f)
 
     # Create config from dictionary
     # This would need custom deserialization logic
     # For now, we'll use environment variables
     return Config.from_env()
+
+
+def get_db_connection():
+    """Get database connection using centralized configuration
+
+    This is the SINGLE POINT for all database connections in the pipeline.
+    All scripts should use this function instead of hardcoded connections.
+    """
+    import psycopg2
+
+    config = get_config()
+    db_params = config.database.get_connection_params()
+
+    return psycopg2.connect(**db_params)

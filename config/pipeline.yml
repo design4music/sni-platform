@@ -1,95 +1,69 @@
 ---
 # Strategic Narrative Intelligence (SNI) Pipeline Configuration
-# Centralized window and parameter management for all pipeline stages
+# Stage-specific windows matching operational requirements
 
-# Environment configuration
-environment: development
+global:
+  timezone: "UTC"
 
-# =============================================================================
-# PIPELINE STAGE WINDOWS
-# =============================================================================
-
-# Ingestion stages
 ingestion:
-  # Incremental RSS processing - always use latest
-  rss_incremental: true
-  # Full-text enhancement window (0 = all pending articles)
-  fulltext_window_hours: 0
+  incremental_buffer_minutes: 5     # safety buffer for RSS processing
 
-# Keyword extraction
+fetch_fulltext:
+  pending_only: true                # process all pending; no window
+
 keywords:
-  # Time window for processing articles 
-  window_hours: 72
-  # Processing mode: auto, short, full
-  mode: auto
+  window_hours: 72                  # re-extract for items updated in last N hours
+  mode: auto                        # extraction mode: auto, short, full
 
-# CLUST-0: Event signals and materialized views
-clust0:
-  # Refreshes materialized views (no window needed)
-  refresh_views: true
+library:                            # drives CLUST-0 library & hubs
+  lib_window_days: 30               # stable vocabulary window (was 30d)
+  hubs_top_n: 12
+  df_min: 2
 
-# CLUST-1: Taxonomy-aware clustering  
+strategic_filter:
+  strategic_window_hours: 300       # candidate window (was 300h)
+
 clust1:
-  # Time window for article processing
-  window_hours: 72
-  # Clustering profile: strict, balanced, recall
-  profile: strict
-  # Hub-assisted clustering
+  window_hours: 72                  # the "current run" span
   use_hub_assist: true
-  # Hub pair cosine threshold 
   hub_pair_cos: 0.90
-  # Macro classification enable
-  macro_enable: true
+  densify_cosine: 0.86
+  orphan_cosine: 0.89
+  seed_min_size: 3
+  seed_min_sources: 2
 
-# CLUST-2: Interpretive narrative clustering
 clust2:
-  # Maximum narratives to generate
-  limit: 10
+  input_min_cluster_size: 4         # conservative gates
+  input_min_sources: 3
+  window_hours: 72                  # typically same as CLUST-1
+  limit: 10                         # maximum narratives to generate
 
-# CLUST-3: Narrative consolidation
 clust3:
-  # Candidate window for consolidation (converted to days: hours/24)
-  candidate_window_hours: 72
-  # Library window for existing narratives
-  library_days: 90
-  # Cosine similarity minimum threshold
+  candidate_window_hours: 72        # only *process* raw narratives from last N hours
   similarity_threshold: 0.82
-  # Token Jaccard minimum threshold  
-  jaccard_threshold: 0.40
+  conflict_threshold: 0.90
+  # IMPORTANT: comparison library = ALL historical consolidated narratives (no window)
 
-# =============================================================================
-# GENERATION PIPELINE 
-# =============================================================================
-
-# GEN-1: Card generation
 gen1:
   enabled: true
-  limit: 10
+  limit: 10                         # maximum narratives to process
 
-# GEN-2: Enrichment  
 gen2:
   enabled: true
-  limit: 10
+  limit: 10                         # maximum narratives to process
 
-# GEN-3: RAI overlay
 gen3:
   enabled: true
-  limit: 10
-
-# =============================================================================
-# PUBLISHER CONFIGURATION
-# =============================================================================
+  limit: 10                         # maximum narratives to process
+  rai:
+    enabled: true
+    timeout_sec: 30
 
 publisher:
-  # Evidence window (days)
-  evidence_days: 7
-  # Parent narrative window (days)  
-  parent_days: 14
-  # Minimum articles required
+  evidence_days: 7                  # its own "window"
+  parent_days: 14                   # its own "window"
   min_articles: 4
-  # Minimum sources required
   min_sources: 3
-  # Maximum entropy threshold
   entropy_max: 2.40
 
 # =============================================================================
@@ -99,19 +73,23 @@ publisher:
 environments:
   
   production:
+    # Shorter windows for production efficiency
     keywords:
       window_hours: 48
+    strategic_filter:
+      strategic_window_hours: 240   # 10 days
     clust1:
       window_hours: 48
-      profile: strict
     clust2:
-      limit: 5
+      window_hours: 48
+    clust3:
+      candidate_window_hours: 48
     gen1:
-      limit: 5
+      enabled: true
     gen2:
-      limit: 5  
+      enabled: true
     gen3:
-      limit: 5
+      enabled: true
     publisher:
       evidence_days: 14
       parent_days: 21
@@ -120,25 +98,31 @@ environments:
       entropy_max: 2.20
       
   staging:
+    # Balanced settings for testing
     keywords:
       window_hours: 96
+    strategic_filter:
+      strategic_window_hours: 360   # 15 days
     clust1:
       window_hours: 96
-      profile: balanced
     clust2:
-      limit: 15
+      window_hours: 96
+    clust3:
+      candidate_window_hours: 96
     publisher:
       evidence_days: 5
       parent_days: 10
       
   development:
+    # Longer windows for development/testing
     keywords:
-      window_hours: 168  # 7 days
+      window_hours: 168             # 7 days
+    strategic_filter:
+      strategic_window_hours: 480   # 20 days
     clust1:
       window_hours: 168
-      profile: recall
     clust2:
-      limit: 20
+      window_hours: 168
     clust3:
       candidate_window_hours: 168
     publisher:

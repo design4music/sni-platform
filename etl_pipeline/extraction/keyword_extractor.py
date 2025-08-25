@@ -7,12 +7,10 @@ Replaces semantic clustering with dynamic keyword extraction system.
 Provides entity extraction, key phrase extraction, and strategic scoring.
 """
 
-import logging
-import math
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import spacy
 import structlog

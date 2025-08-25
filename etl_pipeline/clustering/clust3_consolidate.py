@@ -29,11 +29,13 @@ import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -455,16 +457,24 @@ async def main():
         description="CLUST-3 Narrative Consolidation & Archival"
     )
     parser.add_argument(
+        "--cos-min",
         "--similarity-threshold",
         type=float,
         default=0.85,
         help="Similarity threshold for consolidation (default: 0.85)",
     )
     parser.add_argument(
+        "--window-days",
         "--lookback-days",
         type=int,
         default=30,
         help="Days to look back for candidates (default: 30)",
+    )
+    parser.add_argument(
+        "--conflict-threshold",
+        type=float,
+        default=0.90,
+        help="Conflict threshold for consolidation (default: 0.90)",
     )
     parser.add_argument(
         "--dry-run",
@@ -482,8 +492,8 @@ async def main():
 
     try:
         consolidator = CLUST3NarrativeConsolidation(
-            similarity_threshold=args.similarity_threshold,
-            lookback_days=args.lookback_days,
+            similarity_threshold=args.cos_min,
+            lookback_days=args.window_days,
         )
 
         if args.dry_run:
@@ -493,7 +503,7 @@ async def main():
 
         results = await consolidator.run_consolidation()
 
-        print(f"\n=== CLUST-3 Consolidation Results ===")
+        print("\n=== CLUST-3 Consolidation Results ===")
         print(f"Status: {results['status']}")
 
         if results["status"] == "success":
@@ -504,7 +514,7 @@ async def main():
 
             if "final_stats" in results:
                 stats = results["final_stats"]
-                print(f"\nFinal narrative counts:")
+                print("\nFinal narrative counts:")
                 for stage, count in stats.items():
                     print(f"  {stage}: {count}")
         else:

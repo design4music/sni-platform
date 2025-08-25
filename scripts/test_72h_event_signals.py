@@ -10,7 +10,6 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
 
 import psycopg2
 
@@ -238,7 +237,7 @@ def main():
 
         # Print comparison report
         print("\n" + "=" * 80)
-        print(f"72H WINDOW TEST RESULTS: Event Signals Enhancement")
+        print("72H WINDOW TEST RESULTS: Event Signals Enhancement")
         print("=" * 80)
 
         if len(results) >= 2:
@@ -248,7 +247,7 @@ def main():
             print(f"\nBaseline Data ({args.window}h window):")
             print(f"  Strategic candidates: {control['strategic_candidates']:,}")
 
-            print(f"\nClustering Results:")
+            print("\nClustering Results:")
             print(f"{'Metric':<25} {'Control':<15} {'Treatment':<15} {'Delta':<15}")
             print("-" * 70)
 
@@ -277,8 +276,8 @@ def main():
                 )
 
             # Acceptance criteria check
-            print(f"\nAcceptance Criteria Analysis:")
-            print(f"Target: +3-8pp clustering rate, entropy ≤2.40, macro ≤20-30%")
+            print("\nAcceptance Criteria Analysis:")
+            print("Target: +3-8pp clustering rate, entropy ≤2.40, macro ≤20-30%")
 
             clustering_boost = treatment["clustered_pct"] - control["clustered_pct"]
             entropy_ok = treatment["final_entropy"] <= 2.40
@@ -296,10 +295,10 @@ def main():
 
             if clustering_boost >= 3 and entropy_ok and macro_ok:
                 print(
-                    f"\n✅ ACCEPTANCE CRITERIA MET - Event signals enhancement working!"
+                    "\n✅ ACCEPTANCE CRITERIA MET - Event signals enhancement working!"
                 )
             else:
-                print(f"\n❌ Acceptance criteria not yet met - Need further refinement")
+                print("\n❌ Acceptance criteria not yet met - Need further refinement")
 
     except Exception as e:
         logger.error(f"Testing failed: {e}")

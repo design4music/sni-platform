@@ -125,7 +125,7 @@ def main():
     if theme_count:
         logger.info(f"SUCCESS: Converted {theme_count} GDELT themes")
         print(f"Output file: {json_file}")
-        print(f"Next step: Run sync_taxonomies.py to load into database")
+        print("Next step: Run sync_taxonomies.py to load into database")
     else:
         logger.error("Failed to convert GDELT themes")
         sys.exit(1)

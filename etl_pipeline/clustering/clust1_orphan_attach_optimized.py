@@ -6,14 +6,21 @@ Optimized version with batching, pre-computed embeddings, and performance improv
 
 import argparse
 import logging
-import os
+import sys
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
-import psycopg2
 from sentence_transformers import SentenceTransformer
+
+# Add project root to path for centralized config
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import centralized database connection
+from etl_pipeline.core.config import get_db_connection
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -21,15 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def get_db_connection():
-    """Get database connection using environment variables."""
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        database=os.getenv("DB_NAME", "narrative_intelligence"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "postgres"),
-    )
+# Database connection now uses centralized system
 
 
 def load_sentence_transformer():

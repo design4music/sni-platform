@@ -12,22 +12,17 @@ import csv
 import logging
 import re
 import sys
-import time
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from urllib.parse import urlparse
 
 import feedparser
 import requests
-from sqlalchemy import text
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
 from etl_pipeline.core.config import get_config
-from etl_pipeline.core.database import get_db_session, initialize_database
 
 # Configure logging
 logging.basicConfig(
@@ -316,7 +311,7 @@ async def main():
             return 0
 
         if args.test:
-            results = await loader.test_feeds(
+            await loader.test_feeds(
                 limit_feeds=args.limit_feeds, limit_articles=args.limit_articles
             )
             print("Test completed successfully")

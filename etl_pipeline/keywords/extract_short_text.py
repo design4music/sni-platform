@@ -22,9 +22,15 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import psycopg2
 import spacy
 from psycopg2.extras import execute_values
+
+# Add project root to path for centralized config
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import centralized database connection
+from etl_pipeline.core.config import get_db_connection
 
 sys.path.append(str(Path(__file__).parent))
 from canonicalizer import get_canonicalizer
@@ -117,13 +123,7 @@ class ShortTextExtractor:
 
     def connect_db(self):
         """Connect to database"""
-        return psycopg2.connect(
-            host="localhost",
-            port=5432,
-            database="narrative_intelligence",
-            user="postgres",
-            password="postgres",
-        )
+        return get_db_connection()
 
     def get_target_articles(self, conn) -> List[Tuple]:
         """Get articles ≤500 chars from last 300h that don't have keywords"""

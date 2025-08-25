@@ -17,11 +17,17 @@ import sys
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Set, Tuple
 
-import psycopg2
 import spacy
 from psycopg2.extras import execute_values
+
+# Add project root to path for centralized config
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+# Import centralized database connection
+from etl_pipeline.core.config import get_db_connection
 
 # Import components
 sys.path.append(str(Path(__file__).parent))
@@ -68,14 +74,8 @@ class UnifiedKeywordExtractor:
         logger.info("Unified keyword extractor initialized")
 
     def get_db_connection(self):
-        """Get database connection"""
-        return psycopg2.connect(
-            host="localhost",
-            port="5432",
-            database="narrative_intelligence",
-            user="postgres",
-            password="postgres",
-        )
+        """Get database connection using centralized configuration"""
+        return get_db_connection()
 
     def get_full_extractor(self):
         """Lazy load the full extractor"""
@@ -499,7 +499,7 @@ class UnifiedKeywordExtractor:
             # Upsert all keywords
             total_inserted = self.upsert_keywords(conn, all_keywords_data)
 
-            logger.info(f"Unified extraction completed:")
+            logger.info("Unified extraction completed:")
             logger.info(f"  Short mode processed: {short_processed} articles")
             logger.info(f"  Full mode processed: {full_processed} articles")
             logger.info(f"  Total keywords inserted: {total_inserted}")

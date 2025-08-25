@@ -11,13 +11,12 @@ Improvements:
 5. Signal preservation (geopolitical phrases, codes)
 """
 
-import logging
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import spacy
 import structlog

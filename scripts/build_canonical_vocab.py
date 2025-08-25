@@ -292,7 +292,7 @@ def main():
 
         try:
             # Step 1: Build canonical mappings cache
-            vocab_size = build_canonical_mappings(conn)
+            build_canonical_mappings(conn)
 
             # Step 2: Compute document frequencies
             article_tokens, doc_freq, valid_tokens = compute_document_frequencies(conn)

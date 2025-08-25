@@ -19,8 +19,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from etl_pipeline.core.pipeline_config import (get, get_window_config,
-                                               get_windows_summary)
+from etl_pipeline.core.pipeline_config import get, get_windows_summary
 
 
 def display_pipeline_configuration(verbose=True):
@@ -37,26 +36,29 @@ def display_pipeline_configuration(verbose=True):
 
     print(f"Environment: {summary.get('environment', 'unknown')}")
     print()
-    print("STAGE WINDOWS:")
+    print("STAGE WINDOWS (matching operational spec):")
     print(f"  Keywords:          {summary.get('keywords_window_hours', 'N/A')}h")
+    print(f"  Library (vocab):   {summary.get('library_lib_window_days', 'N/A')} days")
+    print(
+        f"  Strategic Filter:  {summary.get('strategic_filter_window_hours', 'N/A')}h"
+    )
     print(f"  CLUST-1:          {summary.get('clust1_window_hours', 'N/A')}h")
     print(f"  CLUST-2:          {summary.get('clust2_window_hours', 'N/A')}h")
-    print(f"  CLUST-3:          {summary.get('clust3_candidate_window_hours', 'N/A')}h")
-    print(f"  Library:          {summary.get('library_lib_window_days', 'N/A')} days")
-    print(f"  Strategic Filter: {summary.get('strategic_filter_window_hours', 'N/A')}h")
+    print(
+        f"  CLUST-3:          {summary.get('clust3_candidate_window_hours', 'N/A')}h (candidates only)"
+    )
     print(f"  Publisher Evidence: {summary.get('publisher_evidence_days', 'N/A')} days")
-    print(f"  Publisher Parent: {summary.get('publisher_parent_days', 'N/A')} days")
+    print(f"  Publisher Parent:  {summary.get('publisher_parent_days', 'N/A')} days")
     print()
-    print("STAGE LIMITS:")
-    print(f"  CLUST-2:          {get('clust2.limit', 10)} narratives")
+    print("GENERATION PIPELINE:")
     print(
-        f"  GEN-1:            {get('gen1.limit', 10)} limit ({'enabled' if get('gen1.enabled', True) else 'disabled'})"
+        f"  GEN-1:            {'enabled' if get('gen1.enabled', True) else 'disabled'}"
     )
     print(
-        f"  GEN-2:            {get('gen2.limit', 10)} limit ({'enabled' if get('gen2.enabled', True) else 'disabled'})"
+        f"  GEN-2:            {'enabled' if get('gen2.enabled', True) else 'disabled'}"
     )
     print(
-        f"  GEN-3:            {get('gen3.limit', 10)} limit ({'enabled' if get('gen3.enabled', True) else 'disabled'})"
+        f"  GEN-3:            {'enabled' if get('gen3.enabled', True) else 'disabled'} (RAI: {'enabled' if get('gen3.rai.enabled', True) else 'disabled'})"
     )
     print()
 
@@ -77,7 +79,10 @@ def load_dotenv():
 def get_pipeline_steps():
     """Generate pipeline steps using centralized configuration"""
     return [
-        ("RSS_INGESTION", "python rss_ingestion.py --incremental"),
+        (
+            "RSS_INGESTION",
+            "python etl_pipeline/ingestion/rss_ingestion.py --incremental",
+        ),
         (
             "FULLTEXT_ENHANCEMENT",
             "python etl_pipeline/ingestion/fetch_fulltext.py --window 0",
@@ -90,7 +95,10 @@ def get_pipeline_steps():
             "CANONICALIZATION",
             "python etl_pipeline/keywords/update_keyword_canon_from_db.py",
         ),
-        ("CLUST0_REFRESH", "python scripts/refresh_event_signals_pipeline.py"),
+        (
+            "CLUST0_REFRESH",
+            "python etl_pipeline/clustering/clust0_refresh_event_signals.py",
+        ),
         (
             "CLUST1_CLUSTERING",
             f"python etl_pipeline/clustering/clust1_taxonomy_graph.py --mode pipeline --window {get('clust1.window_hours', 72)} --profile {get('clust1.profile', 'strict')} --use_hub_assist {int(get('clust1.use_hub_assist', True))} --hub_pair_cos {get('clust1.hub_pair_cos', 0.90)} --macro_enable 1",
@@ -101,7 +109,7 @@ def get_pipeline_steps():
         ),
         (
             "CLUST3_CONSOLIDATION",
-            f"python etl_pipeline/clust3_consolidate.py --window-days {get('clust3.candidate_window_hours', 72) // 24} --library-days {get('clust3.library_days', 90)} --cos-min {get('clust3.similarity_threshold', 0.82)} --tok-jacc-min {get('clust3.jaccard_threshold', 0.40)}",
+            f"python etl_pipeline/clustering/clust3_consolidate.py --window-days {get('clust3.candidate_window_hours', 72) // 24} --cos-min {get('clust3.similarity_threshold', 0.82)} --conflict-threshold {get('clust3.conflict_threshold', 0.90)}",
         ),
         (
             "GEN1_CARD_GENERATION",
