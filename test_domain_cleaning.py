@@ -65,6 +65,86 @@ def test_paragraph_cleaning():
     return success
 
 
+async def test_trafilatura_extraction():
+    """Test trafilatura extraction"""
+    print("\nTesting Trafilatura Extraction")
+    print("=" * 35)
+
+    fetcher = ProgressiveFullTextFetcher()
+
+    # Sample HTML that trafilatura should handle well
+    test_html = """
+    <html>
+    <head>
+        <title>Test News Article</title>
+    </head>
+    <body>
+        <nav>Navigation menu</nav>
+        <header>Site header</header>
+        <main>
+            <article>
+                <h1>Breaking News: Important Event</h1>
+                <p>This is the first paragraph of important news content that should be extracted by trafilatura.</p>
+                <p>This is a second paragraph with more detailed information about the event.</p>
+                <p>Third paragraph continues the story with additional context and quotes from sources.</p>
+            </article>
+        </main>
+        <aside>Advertisement content</aside>
+        <footer>Site footer</footer>
+    </body>
+    </html>
+    """
+
+    extracted = fetcher._extract_with_trafilatura(test_html, "https://example.com/article.html")
+    
+    success = False
+    if extracted:
+        # Check if extracted content contains main article text
+        if "first paragraph of important news" in extracted and "second paragraph" in extracted:
+            success = True
+            print(f"Trafilatura extraction: PASS")
+            print(f"Extracted {len(extracted)} characters")
+            print(f"Preview: {extracted[:150]}...")
+        else:
+            print(f"Trafilatura extraction: FAIL - Wrong content")
+            print(f"Got: {extracted[:200]}...")
+    else:
+        print("Trafilatura extraction: FAIL - No content extracted")
+
+    return success
+
+def test_structural_post_filter():
+    """Test structural post-filtering"""
+    print("\nTesting Structural Post-Filter")
+    print("=" * 32)
+
+    fetcher = ProgressiveFullTextFetcher()
+
+    # Test content with issues that should be filtered
+    test_content = """Line 1 with normal content about news events.
+
+Line 1 with normal content about news events.
+
+Another line with <a href="#">lots of links</a> and <a href="#">more links</a> that should be filtered.
+
+Normal content line that should be kept.
+
+Normal content line that should be kept.
+
+Final good content that provides value."""
+
+    filtered = fetcher._apply_structural_post_filter(test_content)
+    
+    # Should remove duplicate lines and high-link-density lines
+    lines = filtered.split('\n\n')
+    
+    success = len(lines) < 6  # Should be fewer lines after filtering
+    print(f"Structural filter: {'PASS' if success else 'FAIL'}")
+    print(f"Original lines: 7, Filtered lines: {len(lines)}")
+    print(f"Filtered content preview: {filtered[:200]}...")
+    
+    return success
+
 async def test_amp_detection():
     """Test AMP URL detection"""
     print("\nTesting AMP Detection")
@@ -102,18 +182,26 @@ async def test_amp_detection():
 async def run_all_tests():
     """Run complete domain-agnostic extraction test suite"""
     print("=" * 60)
-    print("DOMAIN-AGNOSTIC EXTRACTION TEST SUITE")
+    print("TRAFILATURA + DOMAIN-AGNOSTIC EXTRACTION TEST SUITE")
     print("=" * 60)
 
     test_results = []
 
-    # Test 1: Paragraph cleaning
-    result1 = test_paragraph_cleaning()
-    test_results.append(("Paragraph Cleaning", result1))
+    # Test 1: Trafilatura extraction
+    result1 = await test_trafilatura_extraction()
+    test_results.append(("Trafilatura Extraction", result1))
 
-    # Test 2: AMP detection
-    result2 = await test_amp_detection()
-    test_results.append(("AMP Detection", result2))
+    # Test 2: Structural post-filter
+    result2 = test_structural_post_filter()
+    test_results.append(("Structural Post-Filter", result2))
+
+    # Test 3: Paragraph cleaning (fallback)
+    result3 = test_paragraph_cleaning()
+    test_results.append(("Paragraph Cleaning", result3))
+
+    # Test 4: AMP detection
+    result4 = await test_amp_detection()
+    test_results.append(("AMP Detection", result4))
 
     # Summary
     passed = sum(1 for _, result in test_results if result)
@@ -131,7 +219,7 @@ async def run_all_tests():
     print(f"Success Rate: {(passed/total)*100:.1f}%")
 
     if passed == total:
-        print("\nDOMAIN-AGNOSTIC EXTRACTION READY!")
+        print("\nTRAFILATURA + DOMAIN-AGNOSTIC EXTRACTION READY!")
         return True
     else:
         print(f"\n{total-passed} test(s) need attention.")

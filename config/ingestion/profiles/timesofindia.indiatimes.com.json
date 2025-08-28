@@ -1,0 +1,21 @@
+{
+  "main_selector": ".ga-headlines, .Normal, .clearfix, article, [data-articlebody]",
+  "remove_selectors": [
+    ".ad-container",
+    ".advertisement", 
+    ".social-share",
+    ".related-articles",
+    ".breadcrumb",
+    ".tags",
+    ".author-info",
+    ".more-news",
+    ".widget",
+    ".sidebar",
+    "nav",
+    "header",
+    "footer",
+    ".comments",
+    ".newsletter-signup"
+  ],
+  "notes": "Times of India has complex layouts with many ads and related content blocks. Main content is often in .ga-headlines or .Normal classes."
+}

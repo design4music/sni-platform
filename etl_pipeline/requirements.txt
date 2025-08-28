@@ -76,6 +76,9 @@ isort==5.12.0
 flake8==6.1.0
 mypy==1.7.1
 
+# Content extraction and processing
+trafilatura>=1.8.0
+
 # Additional utilities
 python-json-logger==2.0.7
 typing-extensions==4.8.0

@@ -24,6 +24,7 @@ from urllib.parse import urljoin
 import aiohttp
 import structlog
 import tldextract
+import trafilatura
 import yaml
 from bs4 import BeautifulSoup
 from sqlalchemy import text
@@ -122,6 +123,26 @@ class ProgressiveFullTextFetcher:
             "limits": {"max_content_chars": 50000, "max_paragraphs": 100},
         }
 
+    def _load_domain_profile(self, domain: str) -> Optional[dict]:
+        """Load domain-specific extraction profile if available"""
+        try:
+            profile_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "config",
+                "ingestion", 
+                "profiles",
+                f"{domain}.json"
+            )
+            if os.path.exists(profile_path):
+                with open(profile_path, "r", encoding="utf-8") as f:
+                    profile = yaml.safe_load(f)
+                logger.debug(f"Loaded domain profile for {domain}")
+                return profile
+            return None
+        except Exception as e:
+            logger.warning(f"Failed to load domain profile for {domain}: {e}")
+            return None
+
     async def fetch_progressive_fulltext(self, window_hours: int = 72) -> dict:
         """
         Main progressive fetch workflow
@@ -193,8 +214,10 @@ class ProgressiveFullTextFetcher:
                 FROM articles
                 WHERE language = 'EN'
                   {time_filter}
-                  AND processing_status IS NULL
-                  AND CHAR_LENGTH(content) BETWEEN 50 AND 1000
+                  AND (
+                    processing_status IS NULL 
+                    OR CHAR_LENGTH(content) BETWEEN 50 AND 1500
+                  )
                   AND url IS NOT NULL
                 ORDER BY created_at DESC
                 LIMIT 1000
@@ -531,33 +554,139 @@ class ProgressiveFullTextFetcher:
 
         return best_run
 
+    def _apply_structural_post_filter(self, text: str) -> str:
+        """Apply structural post-filtering to extracted content"""
+        if not text:
+            return text
+            
+        # Split into lines for processing
+        lines = text.split('\n')
+        filtered_lines = []
+        seen_lines = set()
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Normalize whitespace
+            line = re.sub(r'\s+', ' ', line)
+            
+            # Compute link density for this line (paragraph)
+            soup_line = BeautifulSoup(f"<p>{line}</p>", "html.parser")
+            links = soup_line.find_all("a")
+            if links:
+                link_text_len = sum(len(link.get_text()) for link in links)
+                total_text_len = len(line)
+                link_density = link_text_len / total_text_len if total_text_len > 0 else 0
+                
+                # Drop high-link-density blocks
+                if link_density > 0.5:  # More aggressive than paragraph cleaning
+                    continue
+            
+            # Collapse repeated identical lines
+            line_hash = hashlib.md5(line.lower().encode()).hexdigest()
+            if line_hash in seen_lines:
+                continue
+            seen_lines.add(line_hash)
+            
+            filtered_lines.append(line)
+        
+        # Join with double newlines and final normalization
+        result = '\n\n'.join(filtered_lines)
+        result = re.sub(r'\n{3,}', '\n\n', result)  # Limit paragraph breaks
+        
+        return result.strip()
+
+    def _extract_with_trafilatura(self, html_content: str, url: str) -> Optional[str]:
+        """Extract content using trafilatura with precision settings"""
+        try:
+            # Extract with trafilatura using precision-focused settings
+            extracted = trafilatura.extract(
+                html_content,
+                url=url,
+                favor_precision=True,
+                include_links=False,
+                include_images=False,
+                output_format="txt"
+            )
+            
+            if extracted and len(extracted.strip()) > 100:  # Minimum viable content
+                logger.debug(f"Trafilatura extracted {len(extracted)} chars for {url}")
+                return extracted
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Trafilatura extraction failed for {url}: {e}")
+            return None
+
+    def _extract_with_profile(self, html_content: str, profile: dict) -> Optional[str]:
+        """Extract content using domain-specific profile selectors"""
+        try:
+            soup = BeautifulSoup(html_content, "html.parser")
+            
+            # Remove unwanted selectors first
+            for selector in profile.get("remove_selectors", []):
+                for element in soup.select(selector):
+                    element.decompose()
+            
+            # Extract main content
+            main_selector = profile.get("main_selector")
+            if main_selector:
+                main_element = soup.select_one(main_selector)
+                if main_element:
+                    content = main_element.get_text(" ", strip=True)
+                    if content and len(content) > 100:
+                        logger.debug(f"Profile extraction got {len(content)} chars")
+                        return content
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Profile extraction failed: {e}")
+            return None
+
     async def _extract_article_content(
         self, html_content: str, url: str = None
     ) -> Optional[str]:
-        """Extract article content using domain-agnostic extractor stack"""
+        """Extract article content using trafilatura-first hierarchy with fallbacks"""
         try:
             if not html_content or not url:
                 return None
 
-            # Parse page title for scoring
-            soup = BeautifulSoup(html_content, "html.parser")
-            title_tag = soup.find("title")
-            page_title = title_tag.get_text().strip() if title_tag else ""
-
-            # STEP 1: Check if this domain benefits from AMP-first approach
-            domain = (
-                tldextract.extract(url).domain + "." + tldextract.extract(url).suffix
-            )
-            try_amp_first = domain in self.cleaning_config.get("amp_first_hints", [])
-
+            # Get domain for profile lookup
+            domain = tldextract.extract(url).domain + "." + tldextract.extract(url).suffix
+            
+            # STEP 1: Check for domain-specific profile
+            profile = self._load_domain_profile(domain)
+            if profile:
+                logger.debug(f"Using domain profile for {domain}")
+                extracted = self._extract_with_profile(html_content, profile)
+                if extracted:
+                    # Apply structural post-filter
+                    content = self._apply_structural_post_filter(extracted)
+                    if content and len(content) > 100:
+                        logger.debug(f"Profile extraction: {len(content)} chars for {url}")
+                        return content
+            
+            # STEP 2: Try Trafilatura first
+            extracted = self._extract_with_trafilatura(html_content, url)
+            if extracted:
+                # Apply structural post-filter
+                content = self._apply_structural_post_filter(extracted)
+                if content and len(content) > 100:
+                    logger.debug(f"Trafilatura extraction: {len(content)} chars for {url}")
+                    return content
+            
+            # STEP 3: Fallback to existing domain-agnostic method
+            logger.debug(f"Falling back to custom extraction for {url}")
+            
+            # Try AMP version if domain is in hints
             final_html = html_content
             final_url = url
-
-            # STEP 2: Try AMP version if enabled and hinted
-            if try_amp_first and self.cleaning_config.get("amp", {}).get(
-                "enabled", True
-            ):
-
+            
+            try_amp_first = domain in self.cleaning_config.get("amp_first_hints", [])
+            if try_amp_first and self.cleaning_config.get("amp", {}).get("enabled", True):
                 self.stats["amp_attempts"] += 1
                 amp_url = await self._find_amp_url(html_content, url)
                 if amp_url:
@@ -568,56 +697,41 @@ class ProgressiveFullTextFetcher:
                         self.stats["amp_success"] += 1
                         logger.debug(f"Using AMP version: {amp_url}")
 
-            # STEP 3: Extract paragraphs from HTML (AMP or original)
+            # Extract using existing paragraph-based method
             soup = BeautifulSoup(final_html, "html.parser")
+            title_tag = soup.find("title")
+            page_title = title_tag.get_text().strip() if title_tag else ""
+            
             raw_paragraphs = self._extract_paragraphs(soup)
-
             if not raw_paragraphs:
                 logger.debug(f"No paragraphs extracted from {final_url}")
                 return None
 
-            # STEP 4: Clean paragraphs with generic filters
-            cleaned_paragraphs = self._clean_paragraphs(
-                raw_paragraphs, page_title, final_url
-            )
-
+            cleaned_paragraphs = self._clean_paragraphs(raw_paragraphs, page_title, final_url)
             if not cleaned_paragraphs:
                 logger.debug(f"No paragraphs survived cleaning for {final_url}")
                 return None
 
-            # STEP 5: Select best contiguous content run
-            final_paragraphs = self._select_best_content_run(
-                cleaned_paragraphs, page_title
-            )
-
+            final_paragraphs = self._select_best_content_run(cleaned_paragraphs, page_title)
             if not final_paragraphs:
                 logger.debug(f"No content run selected for {final_url}")
                 return None
 
-            # STEP 6: Join and finalize content
-            content = "\n\n".join(final_paragraphs)
-
-            # Apply final limits and normalization
-            max_chars = self.cleaning_config.get("limits", {}).get(
-                "max_content_chars", 50000
-            )
+            # Join and apply structural post-filter
+            raw_content = "\n\n".join(final_paragraphs)
+            content = self._apply_structural_post_filter(raw_content)
+            
+            # Apply final limits
+            max_chars = self.cleaning_config.get("limits", {}).get("max_content_chars", 50000)
             if len(content) > max_chars:
                 content = content[:max_chars]
 
-            # Final whitespace normalization
-            content = re.sub(r"\n{3,}", "\n\n", content)  # Limit paragraph breaks
-            content = re.sub(r" +", " ", content)  # Normalize spaces
-            content = content.strip()
-
-            logger.debug(
-                f"Extracted {len(content)} chars from {len(final_paragraphs)} paragraphs for {final_url}"
-            )
-            return content if content else None
+            logger.debug(f"Fallback extraction: {len(content)} chars for {url}")
+            return content if content and len(content) > 100 else None
 
         except Exception as e:
             logger.error(f"Content extraction failed for {url}: {e}")
             import traceback
-
             logger.error(f"Traceback: {traceback.format_exc()}")
             return None
 
