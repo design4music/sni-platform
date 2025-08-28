@@ -11,15 +11,20 @@ Fetches full article content for likely snippets using existing schema:
 
 import argparse
 import asyncio
+import hashlib
 # Add project root to path
 import os
 import re
 import sys
 import time
+import unicodedata
 from typing import List, Optional, Tuple
+from urllib.parse import urljoin
 
 import aiohttp
 import structlog
+import tldextract
+import yaml
 from bs4 import BeautifulSoup
 from sqlalchemy import text
 
@@ -40,10 +45,13 @@ class ProgressiveFullTextFetcher:
         self.config = get_config()
         initialize_database(self.config.database)
 
+        # Load cleaning configuration
+        self.cleaning_config = self._load_cleaning_config()
+
         # Fetching configuration
         self.timeout = 30
         self.max_retries = 2
-        self.user_agent = "Strategic-Narrative-Intelligence/1.0"
+        self.user_agent = "Strategic-Narrative-Intelligence/2.0"
 
         # Processing stats
         self.stats = {
@@ -54,6 +62,64 @@ class ProgressiveFullTextFetcher:
             "full_paywall": 0,
             "full_error": 0,
             "deleted_low_quality": 0,
+            # New cleaning stats
+            "amp_attempts": 0,
+            "amp_success": 0,
+            "raw_paragraphs": 0,
+            "dropped_by_cookie": 0,
+            "dropped_by_menu": 0,
+            "dropped_by_promo": 0,
+            "dropped_by_timestamp": 0,
+            "dropped_by_link_density": 0,
+            "dropped_by_uppercase": 0,
+            "final_paragraphs": 0,
+        }
+
+    def _load_cleaning_config(self) -> dict:
+        """Load cleaning configuration from YAML file"""
+        try:
+            config_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "config",
+                "ingestion",
+                "cleaning.yml",
+            )
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+            logger.info(f"Loaded cleaning config from {config_path}")
+            return config
+        except Exception as e:
+            logger.warning(f"Failed to load cleaning config: {e}, using defaults")
+            return self._get_default_cleaning_config()
+
+    def _get_default_cleaning_config(self) -> dict:
+        """Fallback cleaning configuration if YAML file not available"""
+        return {
+            "amp_first_hints": [
+                "indiatimes.com",
+                "newsus.cgtn.com",
+                "dw.com",
+                "presstv.ir",
+            ],
+            "min_par_chars": 25,
+            "max_link_density": 0.4,
+            "max_upper_ratio": 0.7,
+            "menu_upper_ratio": 0.6,
+            "menu_min_tokens": 8,
+            "min_contiguous_run_chars": 600,
+            "stop_phrases": [
+                "privacy policy",
+                "cookie policy",
+                "terms of use",
+                "subscribe",
+            ],
+            "menu_keywords": ["world", "politics", "economy", "business", "sports"],
+            "regexes": {
+                "timestamp_line": r"^(updated|last\s+updated|published)\s*[-–—:]?.*$",
+                "first_line_url": r"^\s*https?://\S+\s*$",
+                "also_read": r"^(also\s+read|read\s+more)\b.*",
+            },
+            "limits": {"max_content_chars": 50000, "max_paragraphs": 100},
         }
 
     async def fetch_progressive_fulltext(self, window_hours: int = 72) -> dict:
@@ -127,8 +193,8 @@ class ProgressiveFullTextFetcher:
                 FROM articles
                 WHERE language = 'EN'
                   {time_filter}
-                  AND (word_count IS NULL OR word_count < 50)
-                  AND (ingestion_status IS NULL OR ingestion_status = 'PENDING')
+                  AND processing_status IS NULL
+                  AND CHAR_LENGTH(content) BETWEEN 50 AND 1000
                   AND url IS NOT NULL
                 ORDER BY created_at DESC
                 LIMIT 1000
@@ -160,7 +226,9 @@ class ProgressiveFullTextFetcher:
                     async with session.get(url, headers=headers) as response:
                         if response.status == 200:
                             html_content = await response.text()
-                            extracted_text = self._extract_article_content(html_content)
+                            extracted_text = await self._extract_article_content(
+                                html_content, url
+                            )
 
                             if extracted_text:
                                 status = self._classify_extraction_result(
@@ -206,91 +274,352 @@ class ProgressiveFullTextFetcher:
 
                 await asyncio.sleep(2**attempt)  # Exponential backoff
 
-    def _extract_article_content(self, html_content: str) -> Optional[str]:
-        """Extract article content from HTML"""
-
+    async def _find_amp_url(self, html_content: str, base_url: str) -> Optional[str]:
+        """Find AMP version URL if available"""
         try:
             soup = BeautifulSoup(html_content, "html.parser")
-
-            # Remove unwanted elements
-            for tag in soup(
-                ["script", "style", "nav", "header", "footer", "aside", "advertisement"]
-            ):
-                tag.decompose()
-
-            # Try multiple content extraction strategies
-            content_selectors = [
-                "article",
-                '[role="main"]',
-                ".article-content",
-                ".post-content",
-                ".entry-content",
-                ".content",
-                ".story-body",
-                ".article-body",
-                "main",
-            ]
-
-            # Strategy 1: Try semantic selectors
-            for selector in content_selectors:
-                content_element = soup.select_one(selector)
-                if content_element:
-                    text = content_element.get_text(separator=" ", strip=True)
-                    if len(text.split()) >= 100:  # Minimum viable article length
-                        return self._clean_extracted_text(text)
-
-            # Strategy 2: Fallback to body with paragraph filtering
-            paragraphs = soup.find_all("p")
-            if paragraphs:
-                paragraph_texts = []
-                for p in paragraphs:
-                    text = p.get_text(strip=True)
-                    if len(text) > 30:  # Filter very short paragraphs
-                        paragraph_texts.append(text)
-
-                if paragraph_texts:
-                    full_text = " ".join(paragraph_texts)
-                    if len(full_text.split()) >= 50:
-                        return self._clean_extracted_text(full_text)
-
-            # Strategy 3: Final fallback to body text
-            body = soup.find("body")
-            if body:
-                text = body.get_text(separator=" ", strip=True)
-                if len(text.split()) >= 50:
-                    return self._clean_extracted_text(text)
-
+            amp_link = soup.find("link", rel="amphtml")
+            if amp_link and amp_link.get("href"):
+                amp_url = urljoin(base_url, amp_link["href"])
+                logger.debug(f"Found AMP URL: {amp_url}")
+                return amp_url
             return None
-
         except Exception as e:
-            logger.error(f"HTML extraction failed: {e}")
+            logger.debug(f"AMP URL detection failed: {e}")
             return None
 
-    def _clean_extracted_text(self, text: str) -> str:
-        """Clean extracted text"""
+    async def _fetch_url(self, url: str) -> Optional[str]:
+        """Fetch content from URL with proper headers"""
+        try:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=self.timeout)
+            ) as session:
+                headers = {
+                    "User-Agent": self.user_agent,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Accept-Encoding": "gzip, deflate",
+                    "Connection": "keep-alive",
+                }
+                async with session.get(url, headers=headers) as response:
+                    if response.status == 200:
+                        return await response.text()
+            return None
+        except Exception as e:
+            logger.debug(f"Failed to fetch {url}: {e}")
+            return None
 
-        # Remove excessive whitespace
-        text = re.sub(r"\s+", " ", text)
+    def _extract_paragraphs(self, soup: BeautifulSoup) -> List[str]:
+        """Extract all paragraph-like content from HTML"""
+        if not soup:
+            return []
 
-        # Remove common boilerplate patterns
-        boilerplate_patterns = [
-            r"Subscribe to our newsletter.*?$",
-            r"Sign up for.*?$",
-            r"Follow us on.*?$",
-            r"Copyright.*?$",
-            r"All rights reserved.*?$",
-            r"Click here.*?$",
-            r"Read more.*?$",
-            r"Advertisement\s*$",
+        # Remove unwanted elements completely
+        for tag in soup(
+            ["script", "style", "nav", "header", "footer", "aside", "form"]
+        ):
+            tag.decompose()
+
+        # Collect text from paragraph-like elements
+        paragraphs = []
+
+        # Try structured content first
+        for selector in [
+            "article",
+            '[role="main"]',
+            "main",
+            ".content",
+            ".article-content",
+        ]:
+            container = soup.select_one(selector)
+            if container:
+                # Get paragraphs from this container
+                for p in container.find_all(["p", "h1", "h2", "h3", "div"]):
+                    text = p.get_text(" ", strip=True)
+                    if text and len(text) > 10:  # Basic length filter
+                        paragraphs.append(text)
+                if paragraphs:
+                    break
+
+        # Fallback: get all paragraphs from body
+        if not paragraphs:
+            for p in soup.find_all(["p", "h1", "h2", "h3"]):
+                text = p.get_text(" ", strip=True)
+                if text and len(text) > 10:
+                    paragraphs.append(text)
+
+        return paragraphs[
+            : self.cleaning_config.get("limits", {}).get("max_paragraphs", 100)
         ]
 
-        for pattern in boilerplate_patterns:
-            text = re.sub(pattern, "", text, flags=re.IGNORECASE | re.MULTILINE)
+    def _clean_paragraphs(
+        self, paragraphs: List[str], page_title: str = "", url: str = ""
+    ) -> List[str]:
+        """Apply generic paragraph-level cleaning filters"""
+        if not paragraphs:
+            return []
 
-        # Clean and normalize
-        text = text.strip()
+        config = self.cleaning_config
+        cleaned_paragraphs = []
+        initial_count = len(paragraphs)
+        self.stats["raw_paragraphs"] = initial_count
 
-        return text
+        # Compile regexes once
+        timestamp_regex = re.compile(config["regexes"]["timestamp_line"], re.IGNORECASE)
+        first_url_regex = re.compile(config["regexes"]["first_line_url"])
+        also_read_regex = re.compile(config["regexes"]["also_read"], re.IGNORECASE)
+
+        for i, para in enumerate(paragraphs):
+            if not para or not para.strip():
+                continue
+
+            para = para.strip()
+            original_para = para
+
+            # Apply regex cleaners
+            if i == 0 and first_url_regex.match(para):  # First paragraph URL
+                continue
+
+            if timestamp_regex.match(para):  # Timestamp lines
+                self.stats["dropped_by_timestamp"] += 1
+                continue
+
+            if also_read_regex.match(para):  # Also read lines
+                continue
+
+            # Unicode normalization
+            para = unicodedata.normalize("NFKC", para)
+
+            # Basic length filter
+            if len(para) < config["min_par_chars"]:
+                continue
+
+            # Stop phrases filter (case-insensitive)
+            lower_para = para.lower()
+            if any(phrase in lower_para for phrase in config["stop_phrases"]):
+                self.stats["dropped_by_cookie"] += 1
+                continue
+
+            # Link density filter
+            soup_para = BeautifulSoup(f"<p>{original_para}</p>", "html.parser")
+            links = soup_para.find_all("a")
+            link_text_len = sum(len(link.get_text()) for link in links)
+            total_text_len = len(para)
+            link_density = link_text_len / total_text_len if total_text_len > 0 else 0
+
+            if link_density > config["max_link_density"]:
+                self.stats["dropped_by_link_density"] += 1
+                continue
+
+            # Uppercase filter (for non-headings)
+            if len(para) > config.get("min_heading_chars", 3):
+                upper_count = sum(1 for c in para if c.isupper())
+                alpha_count = sum(1 for c in para if c.isalpha())
+                if alpha_count > 0:
+                    upper_ratio = upper_count / alpha_count
+
+                    # Menu detection (lots of uppercase + menu keywords)
+                    if upper_ratio > config["menu_upper_ratio"]:
+                        tokens = re.findall(r"[A-Za-z]+", para)
+                        if (
+                            len(tokens) >= config["menu_min_tokens"]
+                            and sum(
+                                1
+                                for token in tokens
+                                if token.lower() in config["menu_keywords"]
+                            )
+                            >= 3
+                        ):
+                            self.stats["dropped_by_menu"] += 1
+                            continue
+
+                    # General uppercase filter
+                    if upper_ratio > config["max_upper_ratio"]:
+                        self.stats["dropped_by_uppercase"] += 1
+                        continue
+
+            # Whitespace normalization
+            para = re.sub(r"\s+", " ", para).strip()
+
+            if para:
+                cleaned_paragraphs.append(para)
+
+        # Deduplicate paragraphs
+        seen_hashes = set()
+        deduped_paragraphs = []
+        for para in cleaned_paragraphs:
+            para_hash = hashlib.md5(para.lower().encode()).hexdigest()
+            if para_hash not in seen_hashes:
+                seen_hashes.add(para_hash)
+                deduped_paragraphs.append(para)
+
+        self.stats["final_paragraphs"] = len(deduped_paragraphs)
+        logger.debug(
+            f"Paragraph cleaning: {initial_count} -> {len(deduped_paragraphs)} paragraphs"
+        )
+
+        return deduped_paragraphs
+
+    def _score_paragraph(self, para: str, page_title: str = "") -> float:
+        """Score paragraph for content quality"""
+        if not para:
+            return 0.0
+
+        base_score = len(para)
+
+        # Apply link density penalty
+        soup_para = BeautifulSoup(f"<p>{para}</p>", "html.parser")
+        links = soup_para.find_all("a")
+        link_text_len = sum(len(link.get_text()) for link in links)
+        total_text_len = len(para)
+        link_density = link_text_len / total_text_len if total_text_len > 0 else 0
+
+        score = base_score * (
+            1 - link_density * self.cleaning_config.get("link_density_penalty", 1.0)
+        )
+
+        # Title keyword bonus
+        if page_title:
+            title_words = set(re.findall(r"\w+", page_title.lower()))
+            para_words = set(re.findall(r"\w+", para.lower()))
+            if title_words & para_words:  # Has common words with title
+                score *= self.cleaning_config.get("title_keyword_bonus", 1.5)
+
+        return score
+
+    def _select_best_content_run(
+        self, paragraphs: List[str], page_title: str = ""
+    ) -> List[str]:
+        """Select the best contiguous run of content paragraphs"""
+        if not paragraphs:
+            return []
+
+        if len(paragraphs) <= 5:
+            return paragraphs  # Too few to analyze, return all
+
+        # Score each paragraph
+        scores = [self._score_paragraph(para, page_title) for para in paragraphs]
+
+        # Find best contiguous run
+        min_run_chars = self.cleaning_config.get("min_contiguous_run_chars", 600)
+        best_run = []
+        best_score = 0
+
+        # Try different run lengths
+        for start in range(len(paragraphs)):
+            current_run = []
+            current_chars = 0
+            current_score = 0
+
+            for end in range(start, len(paragraphs)):
+                current_run.append(paragraphs[end])
+                current_chars += len(paragraphs[end])
+                current_score += scores[end]
+
+                if current_chars >= min_run_chars:
+                    avg_score = current_score / len(current_run)
+                    if avg_score > best_score:
+                        best_score = avg_score
+                        best_run = current_run.copy()
+
+        # Fallback: if no good run found, take top 5 scored paragraphs in order
+        if not best_run:
+            indexed_scores = [(scores[i], i) for i in range(len(scores))]
+            indexed_scores.sort(reverse=True)
+            top_indices = sorted([idx for _, idx in indexed_scores[:5]])
+            best_run = [paragraphs[i] for i in top_indices]
+
+        return best_run
+
+    async def _extract_article_content(
+        self, html_content: str, url: str = None
+    ) -> Optional[str]:
+        """Extract article content using domain-agnostic extractor stack"""
+        try:
+            if not html_content or not url:
+                return None
+
+            # Parse page title for scoring
+            soup = BeautifulSoup(html_content, "html.parser")
+            title_tag = soup.find("title")
+            page_title = title_tag.get_text().strip() if title_tag else ""
+
+            # STEP 1: Check if this domain benefits from AMP-first approach
+            domain = (
+                tldextract.extract(url).domain + "." + tldextract.extract(url).suffix
+            )
+            try_amp_first = domain in self.cleaning_config.get("amp_first_hints", [])
+
+            final_html = html_content
+            final_url = url
+
+            # STEP 2: Try AMP version if enabled and hinted
+            if try_amp_first and self.cleaning_config.get("amp", {}).get(
+                "enabled", True
+            ):
+
+                self.stats["amp_attempts"] += 1
+                amp_url = await self._find_amp_url(html_content, url)
+                if amp_url:
+                    amp_html = await self._fetch_url(amp_url)
+                    if amp_html:
+                        final_html = amp_html
+                        final_url = amp_url
+                        self.stats["amp_success"] += 1
+                        logger.debug(f"Using AMP version: {amp_url}")
+
+            # STEP 3: Extract paragraphs from HTML (AMP or original)
+            soup = BeautifulSoup(final_html, "html.parser")
+            raw_paragraphs = self._extract_paragraphs(soup)
+
+            if not raw_paragraphs:
+                logger.debug(f"No paragraphs extracted from {final_url}")
+                return None
+
+            # STEP 4: Clean paragraphs with generic filters
+            cleaned_paragraphs = self._clean_paragraphs(
+                raw_paragraphs, page_title, final_url
+            )
+
+            if not cleaned_paragraphs:
+                logger.debug(f"No paragraphs survived cleaning for {final_url}")
+                return None
+
+            # STEP 5: Select best contiguous content run
+            final_paragraphs = self._select_best_content_run(
+                cleaned_paragraphs, page_title
+            )
+
+            if not final_paragraphs:
+                logger.debug(f"No content run selected for {final_url}")
+                return None
+
+            # STEP 6: Join and finalize content
+            content = "\n\n".join(final_paragraphs)
+
+            # Apply final limits and normalization
+            max_chars = self.cleaning_config.get("limits", {}).get(
+                "max_content_chars", 50000
+            )
+            if len(content) > max_chars:
+                content = content[:max_chars]
+
+            # Final whitespace normalization
+            content = re.sub(r"\n{3,}", "\n\n", content)  # Limit paragraph breaks
+            content = re.sub(r" +", " ", content)  # Normalize spaces
+            content = content.strip()
+
+            logger.debug(
+                f"Extracted {len(content)} chars from {len(final_paragraphs)} paragraphs for {final_url}"
+            )
+            return content if content else None
+
+        except Exception as e:
+            logger.error(f"Content extraction failed for {url}: {e}")
+            import traceback
+
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return None
 
     def _classify_extraction_result(self, text: str) -> str:
         """Classify extraction result quality - map to actual enum values"""
