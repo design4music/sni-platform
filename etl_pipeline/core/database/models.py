@@ -39,6 +39,7 @@ class FeedType(PyEnum):
     """Feed type enumeration"""
 
     RSS = "rss"
+    GOOGLE_RSS = "google_rss"
     XML_SITEMAP = "xml_sitemap"
     API = "api"
     SCRAPER = "scraper"

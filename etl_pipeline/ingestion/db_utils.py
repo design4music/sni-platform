@@ -13,6 +13,7 @@ import structlog
 from sqlalchemy import text
 
 from ..core.database import get_db_session
+from .base import RawArticle
 from .sitemap_utils import normalize_url
 
 logger = structlog.get_logger(__name__)
@@ -239,3 +240,91 @@ def get_pending_articles_count() -> int:
     except Exception as e:
         logger.error(f"Error counting pending articles: {e}")
         return 0
+
+
+def save_article_from_rss(feed_id: str, article: RawArticle, source_name: str) -> str:
+    """
+    Save article from RSS feed using UPSERT pattern
+
+    Args:
+        feed_id: UUID of the news feed
+        article: RawArticle object from RSS ingestion
+        source_name: Name of news source
+
+    Returns:
+        "new", "duplicate", or "error"
+    """
+    try:
+        # Normalize URL
+        normalized_url = normalize_url(article.url)
+
+        # Ensure published_at is UTC
+        published_at = article.published_at
+        if published_at:
+            if published_at.tzinfo is None:
+                published_at = published_at.replace(tzinfo=timezone.utc)
+            else:
+                published_at = published_at.astimezone(timezone.utc)
+        else:
+            published_at = _now_utc()  # Default to now if no date
+
+        # Calculate hashes for deduplication
+        content_for_hash = f"{article.title}{normalized_url}"
+        content_hash = hashlib.sha256(content_for_hash.encode()).hexdigest()
+        title_hash = hashlib.sha256(article.title.encode()).hexdigest()
+
+        # Calculate word count
+        word_count = None
+        if article.content:
+            word_count = len(article.content.split())
+
+        with get_db_session() as session:
+            # UPSERT: Insert if not exists, ignore if exists
+            result = session.execute(
+                text(
+                    """
+                INSERT INTO articles (
+                    id, feed_id, title, content, summary, url, published_at,
+                    language, word_count, content_hash, title_hash, 
+                    source_name, author, created_at, processing_status
+                )
+                VALUES (
+                    :id, :feed_id, :title, :content, :summary, :url, :published_at,
+                    :language, :word_count, :content_hash, :title_hash,
+                    :source_name, :author, :created_at, :processing_status
+                )
+                ON CONFLICT (LOWER(url)) DO NOTHING
+            """
+                ),
+                {
+                    "id": str(uuid.uuid4()),
+                    "feed_id": feed_id,
+                    "title": article.title,
+                    "content": article.content,
+                    "summary": article.summary,
+                    "url": normalized_url,
+                    "published_at": published_at,
+                    "language": (
+                        "EN" if article.language == "en" else "EN"
+                    ),  # Convert to enum format
+                    "word_count": word_count,
+                    "content_hash": content_hash,
+                    "title_hash": title_hash,
+                    "source_name": source_name,
+                    "author": article.author,
+                    "created_at": _now_utc(),
+                    "processing_status": "PENDING",  # Ready for enrichment
+                },
+            )
+
+            # Check if row was inserted (rowcount > 0 means new insert)
+            if result.rowcount > 0:
+                logger.debug(f"Saved new RSS article: {article.title[:50]}...")
+                return "new"
+            else:
+                logger.debug(f"RSS article already exists: {article.title[:50]}...")
+                return "duplicate"
+
+    except Exception as e:
+        logger.error(f"Error saving RSS article {article.url}: {e}")
+        return "error"

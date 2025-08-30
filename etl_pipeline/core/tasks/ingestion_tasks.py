@@ -19,7 +19,7 @@ from sqlalchemy import exists, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ...ingestion.base import IngestionResult, RawArticle
-from ...ingestion.rss_ingestion import RSSIngestionSource
+from ...ingestion.rss_ingestion import GoogleNewsRSSSource, RSSIngestionSource
 from ..database import get_db_session
 from ..database.models import Article, NewsSource
 from ..exceptions import RetryableError, TaskError
@@ -63,8 +63,12 @@ class FeedIngestionManager:
         start_time = datetime.now()
 
         try:
-            # Initialize RSS source
-            rss_source = RSSIngestionSource(feed_config)
+            # Initialize RSS source based on source type
+            source_type = feed_config.get("source_type", "rss")
+            if source_type == "google_rss":
+                rss_source = GoogleNewsRSSSource(feed_config)
+            else:
+                rss_source = RSSIngestionSource(feed_config)
 
             # Fetch articles from RSS feed
             articles = []
@@ -297,10 +301,11 @@ class FeedIngestionManager:
                 return source
 
             # Create new source
+            source_type = feed_config.get("source_type", "rss")
             source = NewsSource(
                 source_name=feed_config["name"],
                 source_url=feed_config["url"],
-                source_type="rss",
+                source_type=source_type,
                 language_code=feed_config["language"],
                 country_code=(
                     feed_config.get("country", "")[:2]

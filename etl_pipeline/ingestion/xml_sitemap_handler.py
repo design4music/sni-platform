@@ -6,12 +6,14 @@ Handler for XML sitemaps using the registry pattern.
 Supports sitemap indexes, gzipped content, and robust parsing.
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
+from datetime import datetime
 
 import structlog
 
 from .db_utils import save_article_from_sitemap
 from .handlers import BaseFeedHandler, register
+from .rss_handler import clean_source_name
 from .sitemap_utils import fetch_sitemap_urls
 
 logger = structlog.get_logger(__name__)
@@ -35,7 +37,7 @@ class XMLSitemapHandler(BaseFeedHandler):
         feed_id: str,
         feed_name: str,
         feed_url: str,
-        hours_lookback: int,
+        last_fetched_at: Optional[datetime] = None,
         max_articles: int = 100,
     ) -> Tuple[int, int, int]:
         """
@@ -52,6 +54,9 @@ class XMLSitemapHandler(BaseFeedHandler):
             Tuple of (new_articles, duplicates, errors)
         """
         logger.info(f"Processing XML sitemap: {feed_name} ({feed_url})")
+
+        # Clean source name for database storage
+        clean_name = clean_source_name(feed_name)
 
         try:
             # Fetch URLs from sitemap
@@ -78,7 +83,7 @@ class XMLSitemapHandler(BaseFeedHandler):
                         feed_id=feed_id,
                         url=url,
                         published_at=published_at,
-                        source_name=feed_name,
+                        source_name=clean_name,
                     )
 
                     if result == "new":

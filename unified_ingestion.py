@@ -19,8 +19,11 @@ from etl_pipeline.ingestion.db_utils import (add_sitemap_feed,
                                              get_pending_articles_count)
 from etl_pipeline.ingestion.handlers import (get_handler,
                                              list_registered_handlers)
+from etl_pipeline.ingestion.rss_handler import (  # noqa: F401
+    GoogleRSSFeedHandler, RSSFeedHandler)
 # Import handlers to register them
-from etl_pipeline.ingestion.xml_sitemap_handler import XMLSitemapHandler  # noqa: F401
+from etl_pipeline.ingestion.xml_sitemap_handler import \
+    XMLSitemapHandler  # noqa: F401
 
 # Configure logging
 logging.basicConfig(
@@ -75,7 +78,7 @@ class UnifiedIngestionRunner:
             # Get all active feeds from database
             with get_db_session() as session:
                 query = """
-                    SELECT id, name, url, feed_type, priority
+                    SELECT id, name, url, feed_type, priority, last_fetched_at
                     FROM news_feeds 
                     WHERE is_active = true
                 """
@@ -97,7 +100,7 @@ class UnifiedIngestionRunner:
             logger.info(f"Processing {len(feeds)} active feeds")
 
             # Process each feed using appropriate handler
-            for feed_id, name, url, feed_type, priority in feeds:
+            for feed_id, name, url, feed_type, priority, last_fetched_at in feeds:
                 try:
                     # Get handler for feed type
                     handler = get_handler(feed_type)
@@ -112,7 +115,7 @@ class UnifiedIngestionRunner:
                             feed_id=str(feed_id),
                             feed_name=name,
                             feed_url=url,
-                            hours_lookback=hours_lookback,
+                            last_fetched_at=last_fetched_at,
                             max_articles=limit_per_feed,
                         )
                     else:
@@ -254,7 +257,9 @@ def main():
         "--hours", type=int, default=24, help="Hours to look back for new content"
     )
     parser.add_argument(
-        "--only", choices=["rss", "xml_sitemap"], help="Only process feeds of this type"
+        "--only",
+        choices=["rss", "google_rss", "xml_sitemap"],
+        help="Only process feeds of this type",
     )
     parser.add_argument(
         "--limit-per-feed", type=int, default=100, help="Max articles per feed"

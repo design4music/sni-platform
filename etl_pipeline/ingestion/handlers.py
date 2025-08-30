@@ -7,7 +7,8 @@ Makes adding new ingestion methods (Google News, APIs, etc.) a single-file chang
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Tuple
+from datetime import datetime
+from typing import Dict, Optional, Tuple
 
 import structlog
 
@@ -49,17 +50,17 @@ class BaseFeedHandler(ABC):
         feed_id: str,
         feed_name: str,
         feed_url: str,
-        hours_lookback: int,
+        last_fetched_at: Optional[datetime] = None,
         max_articles: int = 100,
     ) -> Tuple[int, int, int]:
         """
-        Ingest content from feed
+        Ingest content from feed using incremental approach
 
         Args:
             feed_id: Database feed ID
             feed_name: Human-readable feed name
             feed_url: Feed URL
-            hours_lookback: Hours to look back for new content
+            last_fetched_at: Timestamp of last successful fetch (None for new feeds)
             max_articles: Maximum articles to process
 
         Returns:

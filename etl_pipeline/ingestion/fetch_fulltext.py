@@ -23,6 +23,7 @@ from typing import List, Optional, Tuple
 from urllib.parse import urljoin
 
 import aiohttp
+import langdetect
 import structlog
 import tldextract
 import trafilatura
@@ -98,44 +99,47 @@ class ProgressiveFullTextFetcher:
         """Fallback cleaning configuration if YAML file not available"""
         return {
             "limits": {"max_content_chars": 50000, "extraction_timeout_seconds": 30},
-            "post_filter": {"max_line_link_density": 0.5}
+            "post_filter": {"max_line_link_density": 0.5},
         }
-
 
     def _load_feed_profile(self, url: str) -> Optional[dict]:
         """Load learned extraction profile from feed database"""
         try:
             with get_db_session() as db:
                 # Try to find profile by exact URL match first
-                query = text("""
+                query = text(
+                    """
                     SELECT extraction_profile 
                     FROM news_feeds 
                     WHERE url = :url OR :url LIKE CONCAT('%', REPLACE(url, 'https://', ''), '%')
                     AND extraction_profile IS NOT NULL
                     LIMIT 1
-                """)
+                """
+                )
                 result = db.execute(query, {"url": url})
                 row = result.fetchone()
-                
+
                 if not row:
                     # Try domain-scoped profile
                     domain = tldextract.extract(url).registered_domain
-                    query = text("""
+                    query = text(
+                        """
                         SELECT extraction_profile 
                         FROM news_feeds 
                         WHERE url LIKE :domain_pattern 
                         AND extraction_profile IS NOT NULL
                         AND extraction_profile->>'scope' = 'domain'
                         LIMIT 1
-                    """)
+                    """
+                    )
                     result = db.execute(query, {"domain_pattern": f"%{domain}%"})
                     row = result.fetchone()
-                
+
                 if row and row[0]:
                     profile = json.loads(row[0]) if isinstance(row[0], str) else row[0]
                     logger.debug(f"Loaded learned profile for {url}")
                     return profile
-                
+
                 return None
         except Exception as e:
             logger.warning(f"Failed to load learned profile for {url}: {e}")
@@ -214,6 +218,7 @@ class ProgressiveFullTextFetcher:
                   {time_filter}
                   AND (
                     processing_status IS NULL 
+                    OR processing_status = 'PENDING'
                     OR CHAR_LENGTH(content) BETWEEN 50 AND 1500
                   )
                   AND url IS NOT NULL
@@ -237,11 +242,18 @@ class ProgressiveFullTextFetcher:
                 ) as session:
 
                     headers = {
-                        "User-Agent": self.user_agent,
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                        "Accept-Language": "en-US,en;q=0.5",
-                        "Accept-Encoding": "gzip, deflate",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Accept-Encoding": "gzip, deflate, br",
                         "Connection": "keep-alive",
+                        "Upgrade-Insecure-Requests": "1",
+                        "Sec-Fetch-Dest": "document",
+                        "Sec-Fetch-Mode": "navigate", 
+                        "Sec-Fetch-Site": "none",
+                        "Sec-Ch-Ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
+                        "Sec-Ch-Ua-Mobile": "?0",
+                        "Sec-Ch-Ua-Platform": '"Windows"'
                     }
 
                     async with session.get(url, headers=headers) as response:
@@ -256,10 +268,21 @@ class ProgressiveFullTextFetcher:
                                     extracted_text
                                 )
                                 word_count = self._calculate_word_count(extracted_text)
+                                
+                                # Extract title from HTML for hash computation
+                                title = self._extract_title_from_html(html_content)
+                                
+                                # Compute real hashes after successful fetch
+                                content_hash = hashlib.sha256(extracted_text.encode()).hexdigest()
+                                title_hash = hashlib.sha256((title or "").encode()).hexdigest()
+                                
+                                # Detect language and overwrite default
+                                language = self._detect_language(extracted_text)
 
                                 # Update database with proper enum values
-                                self._update_article_content(
-                                    article_id, extracted_text, word_count, status
+                                self._update_article_content_with_hashes(
+                                    article_id, extracted_text, title, word_count, status, 
+                                    content_hash, title_hash, language
                                 )
 
                                 # Map status to stats tracking (use original logic for stats)
@@ -272,24 +295,25 @@ class ProgressiveFullTextFetcher:
                                 )
                                 return
                             else:
-                                self._update_article_status(article_id, "FAILED")
+                                # If fetch failed, leave hashes as NULL
+                                self._update_article_status_failed(article_id)
                                 self.stats["full_empty"] += 1
                                 return
 
                         elif response.status == 403 or response.status == 402:
-                            self._update_article_status(article_id, "FAILED")
+                            self._update_article_status_failed(article_id)
                             self.stats["full_paywall"] += 1
                             return
                         else:
                             if attempt == self.max_retries - 1:
-                                self._update_article_status(article_id, "FAILED")
+                                self._update_article_status_failed(article_id)
                                 self.stats["full_error"] += 1
                                 return
 
             except Exception as e:
                 if attempt == self.max_retries - 1:
                     logger.error(f"Failed to fetch {url}: {e}")
-                    self._update_article_status(article_id, "FAILED")
+                    self._update_article_status_failed(article_id)
                     self.stats["full_error"] += 1
                     return
 
@@ -302,11 +326,18 @@ class ProgressiveFullTextFetcher:
                 timeout=aiohttp.ClientTimeout(total=self.timeout)
             ) as session:
                 headers = {
-                    "User-Agent": self.user_agent,
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    "Accept-Language": "en-US,en;q=0.5",
-                    "Accept-Encoding": "gzip, deflate",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
                     "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate", 
+                    "Sec-Fetch-Site": "none",
+                    "Sec-Ch-Ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Google Chrome";v="116"',
+                    "Sec-Ch-Ua-Mobile": "?0",
+                    "Sec-Ch-Ua-Platform": '"Windows"'
                 }
                 async with session.get(url, headers=headers) as response:
                     if response.status == 200:
@@ -320,47 +351,51 @@ class ProgressiveFullTextFetcher:
         """Apply structural post-filtering to extracted content"""
         if not text:
             return text
-            
+
         # Split into lines for processing
-        lines = text.split('\n')
+        lines = text.split("\n")
         filtered_lines = []
         seen_lines = set()
-        
+
         # Get link density threshold from config
-        max_link_density = self.cleaning_config.get("post_filter", {}).get("max_line_link_density", 0.5)
-        
+        max_link_density = self.cleaning_config.get("post_filter", {}).get(
+            "max_line_link_density", 0.5
+        )
+
         for line in lines:
             line = line.strip()
             if not line:
                 continue
-                
+
             # Normalize whitespace
-            line = re.sub(r'\s+', ' ', line)
-            
+            line = re.sub(r"\s+", " ", line)
+
             # Compute link density for this line
             soup_line = BeautifulSoup(f"<p>{line}</p>", "html.parser")
             links = soup_line.find_all("a")
             if links:
                 link_text_len = sum(len(link.get_text()) for link in links)
                 total_text_len = len(line)
-                link_density = link_text_len / total_text_len if total_text_len > 0 else 0
-                
+                link_density = (
+                    link_text_len / total_text_len if total_text_len > 0 else 0
+                )
+
                 # Drop high-link-density lines
                 if link_density > max_link_density:
                     continue
-            
+
             # Collapse repeated identical lines
             line_hash = hashlib.md5(line.lower().encode()).hexdigest()
             if line_hash in seen_lines:
                 continue
             seen_lines.add(line_hash)
-            
+
             filtered_lines.append(line)
-        
+
         # Join with double newlines and final normalization
-        result = '\n\n'.join(filtered_lines)
-        result = re.sub(r'\n{3,}', '\n\n', result)  # Limit paragraph breaks
-        
+        result = "\n\n".join(filtered_lines)
+        result = re.sub(r"\n{3,}", "\n\n", result)  # Limit paragraph breaks
+
         return result.strip()
 
     def _extract_with_trafilatura(self, html_content: str, url: str) -> Optional[str]:
@@ -373,20 +408,21 @@ class ProgressiveFullTextFetcher:
                 favor_precision=True,
                 include_links=False,
                 include_images=False,
-                output_format="txt"
+                output_format="txt",
             )
-            
+
             if extracted and len(extracted.strip()) > 100:  # Minimum viable content
                 logger.debug(f"Trafilatura extracted {len(extracted)} chars for {url}")
                 return extracted
             return None
-            
+
         except Exception as e:
             logger.debug(f"Trafilatura extraction failed for {url}: {e}")
             return None
 
-
-    def _extract_with_learned_profile(self, html_content: str, profile: dict) -> Optional[str]:
+    def _extract_with_learned_profile(
+        self, html_content: str, profile: dict
+    ) -> Optional[str]:
         """Extract content using learned extraction profile with full validation"""
         try:
             # Apply pre-clean regex
@@ -396,64 +432,75 @@ class ProgressiveFullTextFetcher:
                 flags = regex_rule.get("flags", "")
                 if pattern:
                     re_flags = 0
-                    if 'i' in flags: re_flags |= re.IGNORECASE
-                    if 'm' in flags: re_flags |= re.MULTILINE
-                    if 's' in flags: re_flags |= re.DOTALL
-                    cleaned_html = re.sub(pattern, '', cleaned_html, flags=re_flags)
-            
-            soup = BeautifulSoup(cleaned_html, 'html.parser')
-            
+                    if "i" in flags:
+                        re_flags |= re.IGNORECASE
+                    if "m" in flags:
+                        re_flags |= re.MULTILINE
+                    if "s" in flags:
+                        re_flags |= re.DOTALL
+                    cleaned_html = re.sub(pattern, "", cleaned_html, flags=re_flags)
+
+            soup = BeautifulSoup(cleaned_html, "html.parser")
+
             # Select main content using learned selector
             main_selector = profile.get("main_selector", "")
             main_element = soup.select_one(main_selector)
             if not main_element:
                 logger.debug("Learned profile: main selector not found")
                 return None
-            
+
             # Remove unwanted selectors
             for selector in profile.get("remove_selectors", []):
                 for elem in main_element.select(selector):
                     elem.decompose()
-            
+
             # Keep only allowed tags
-            allowed_tags = set(profile.get("allow_tags", ["p", "h2", "h3", "ul", "li", "blockquote"]))
+            allowed_tags = set(
+                profile.get("allow_tags", ["p", "h2", "h3", "ul", "li", "blockquote"])
+            )
             for tag in main_element.find_all():
                 if tag.name not in allowed_tags:
                     tag.unwrap()
-            
+
             # Extract text
             text = main_element.get_text(" ", strip=True)
-            
+
             # Apply post-clean regex
             for regex_rule in profile.get("post_clean_regex", []):
                 pattern = regex_rule.get("pattern", "")
                 flags = regex_rule.get("flags", "")
                 if pattern:
                     re_flags = 0
-                    if 'i' in flags: re_flags |= re.IGNORECASE
-                    if 'm' in flags: re_flags |= re.MULTILINE
-                    text = re.sub(pattern, '', text, flags=re_flags)
-            
+                    if "i" in flags:
+                        re_flags |= re.IGNORECASE
+                    if "m" in flags:
+                        re_flags |= re.MULTILINE
+                    text = re.sub(pattern, "", text, flags=re_flags)
+
             # Remove junk phrases
             for phrase in profile.get("junk_phrases", []):
                 text = text.replace(phrase, "")
-            
+
             # Calculate metrics
             text_len = len(text)
             html_len = len(str(main_element))
             density = text_len / html_len if html_len > 0 else 0
-            
+
             # Validate against thresholds
             min_length = profile.get("min_length", 150)
             density_threshold = profile.get("density_threshold", 0.12)
-            
+
             if text_len >= min_length and density >= density_threshold:
-                logger.debug(f"Learned profile extraction: {text_len} chars, {density:.3f} density")
+                logger.debug(
+                    f"Learned profile extraction: {text_len} chars, {density:.3f} density"
+                )
                 return text.strip()
             else:
-                logger.debug(f"Learned profile failed validation: {text_len} chars, {density:.3f} density")
+                logger.debug(
+                    f"Learned profile failed validation: {text_len} chars, {density:.3f} density"
+                )
                 return None
-            
+
         except Exception as e:
             logger.debug(f"Learned profile extraction failed: {e}")
             return None
@@ -465,40 +512,59 @@ class ProgressiveFullTextFetcher:
         try:
             if not html_content or not url:
                 return None
-            
+
             # TIER 1: Learned Profiles - Try LLM-generated extraction profiles first
             learned_profile = self._load_feed_profile(url)
             if learned_profile:
                 logger.debug(f"Using learned profile for {url}")
-                content = self._extract_with_learned_profile(html_content, learned_profile)
+                content = self._extract_with_learned_profile(
+                    html_content, learned_profile
+                )
                 if content:
-                    logger.debug(f"Learned profile extraction: {len(content)} chars for {url}")
-                    logger.info(f"Extraction successful", 
-                              profile_used=True, extractor="learned_profile", 
-                              length=len(content), url=url)
+                    logger.debug(
+                        f"Learned profile extraction: {len(content)} chars for {url}"
+                    )
+                    logger.info(
+                        f"Extraction successful",
+                        profile_used=True,
+                        extractor="learned_profile",
+                        length=len(content),
+                        url=url,
+                    )
                     return content
-            
+
             # TIER 2: Trafilatura - Universal content extraction fallback
             content = self._extract_with_trafilatura(html_content, url)
             if content:
                 content = self._apply_structural_post_filter(content)
                 if content and len(content) > 100:
-                    logger.debug(f"Trafilatura extraction: {len(content)} chars for {url}")
-                    logger.info(f"Extraction successful",
-                              profile_used=False, extractor="trafilatura",
-                              length=len(content), url=url)
+                    logger.debug(
+                        f"Trafilatura extraction: {len(content)} chars for {url}"
+                    )
+                    logger.info(
+                        f"Extraction successful",
+                        profile_used=False,
+                        extractor="trafilatura",
+                        length=len(content),
+                        url=url,
+                    )
                     return content
-            
+
             # No extraction method succeeded
             logger.debug(f"No extraction method succeeded for {url}")
-            logger.info(f"Extraction failed", 
-                       profile_used=False, extractor="none", 
-                       length=0, url=url)
+            logger.info(
+                f"Extraction failed",
+                profile_used=False,
+                extractor="none",
+                length=0,
+                url=url,
+            )
             return None
 
         except Exception as e:
             logger.error(f"Content extraction failed for {url}: {e}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             return None
 
@@ -531,6 +597,77 @@ class ProgressiveFullTextFetcher:
     def _calculate_word_count(self, text: str) -> int:
         """Calculate word count from text"""
         return len(text.split())
+
+    def _extract_title_from_html(self, html_content: str) -> Optional[str]:
+        """Extract title from HTML content"""
+        try:
+            soup = BeautifulSoup(html_content, "html.parser")
+            
+            # Try various title extraction methods
+            title = None
+            
+            # Method 1: <title> tag
+            title_tag = soup.find("title")
+            if title_tag and title_tag.get_text(strip=True):
+                title = title_tag.get_text(strip=True)
+            
+            # Method 2: h1 tag as fallback
+            if not title:
+                h1_tag = soup.find("h1")
+                if h1_tag and h1_tag.get_text(strip=True):
+                    title = h1_tag.get_text(strip=True)
+            
+            # Method 3: og:title meta tag
+            if not title:
+                og_title = soup.find("meta", property="og:title")
+                if og_title and og_title.get("content"):
+                    title = og_title.get("content").strip()
+            
+            # Clean up the title
+            if title:
+                # Remove site name suffixes (common patterns)
+                title = re.sub(r'\s*[-|–]\s*[^-|–]*$', '', title)
+                title = title.strip()
+                
+                # Limit length
+                if len(title) > 200:
+                    title = title[:200].strip()
+            
+            return title if title else None
+            
+        except Exception as e:
+            logger.debug(f"Failed to extract title from HTML: {e}")
+            return None
+
+    def _detect_language(self, text: str) -> str:
+        """Detect language from text content"""
+        try:
+            if not text or len(text.strip()) < 50:
+                return "EN"  # Keep default for short text
+            
+            # Use langdetect to identify language
+            detected = langdetect.detect(text)
+            
+            # Map common language codes to our enum values
+            language_map = {
+                'en': 'EN',
+                'es': 'ES', 
+                'fr': 'FR',
+                'de': 'DE',
+                'it': 'IT',
+                'pt': 'PT',
+                'ru': 'RU',
+                'ar': 'AR',
+                'zh': 'ZH',
+                'ja': 'JA',
+                'ko': 'KO'
+            }
+            
+            return language_map.get(detected, 'UND')  # 'UND' for undefined/unknown
+            
+        except Exception as e:
+            logger.debug(f"Language detection failed: {e}")
+            return "EN"  # Keep default on detection failure
 
     def _update_article_content_only(
         self, article_id: str, content: str, word_count: int
@@ -577,6 +714,92 @@ class ProgressiveFullTextFetcher:
                     "status": status,
                     "article_id": article_id,
                 },
+            )
+            session.commit()
+
+    def _update_article_content_with_hashes(
+        self, article_id: str, content: str, title: Optional[str], word_count: int, 
+        status: str, content_hash: str, title_hash: str, language: str
+    ):
+        """Update article with extracted content, computed hashes, and detected language"""
+
+        with get_db_session() as session:
+            # If title was extracted, update both title and its hash
+            if title:
+                session.execute(
+                    text(
+                        """
+                    UPDATE articles 
+                    SET content = :content,
+                        title = :title,
+                        word_count = :word_count,
+                        processing_status = :status,
+                        content_hash = :content_hash,
+                        title_hash = :title_hash,
+                        language = :language
+                    WHERE id = :article_id
+                """
+                    ),
+                    {
+                        "content": content,
+                        "title": title,
+                        "word_count": word_count,
+                        "status": status,
+                        "content_hash": content_hash,
+                        "title_hash": title_hash,
+                        "language": language,
+                        "article_id": article_id,
+                    },
+                )
+            else:
+                # Keep existing title, but compute hash from existing title
+                # First get the existing title to compute its hash
+                result = session.execute(
+                    text("SELECT title FROM articles WHERE id = :article_id"),
+                    {"article_id": article_id}
+                )
+                existing_title = result.fetchone()
+                existing_title_text = existing_title[0] if existing_title and existing_title[0] else ""
+                existing_title_hash = hashlib.sha256(existing_title_text.encode()).hexdigest()
+                
+                session.execute(
+                    text(
+                        """
+                    UPDATE articles 
+                    SET content = :content,
+                        word_count = :word_count,
+                        processing_status = :status,
+                        content_hash = :content_hash,
+                        title_hash = :title_hash,
+                        language = :language
+                    WHERE id = :article_id
+                """
+                    ),
+                    {
+                        "content": content,
+                        "word_count": word_count,
+                        "status": status,
+                        "content_hash": content_hash,
+                        "title_hash": existing_title_hash,
+                        "language": language,
+                        "article_id": article_id,
+                    },
+                )
+            session.commit()
+
+    def _update_article_status_failed(self, article_id: str):
+        """Update article status to FAILED, leave hashes as NULL"""
+
+        with get_db_session() as session:
+            session.execute(
+                text(
+                    """
+                UPDATE articles 
+                SET processing_status = 'FAILED'
+                WHERE id = :article_id
+            """
+                ),
+                {"article_id": article_id},
             )
             session.commit()
 
