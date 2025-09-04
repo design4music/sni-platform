@@ -24,15 +24,15 @@ def init_database():
     config = get_config()
     
     _engine = create_engine(
-        config.database.url,
+        config.database_url,
         pool_pre_ping=True,
         pool_recycle=3600,
-        echo=config.api.debug
+        echo=config.debug
     )
     
     _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
     
-    logger.info(f"Database initialized: {config.database.name}")
+    logger.info(f"Database initialized: {config.db_name}")
 
 
 def get_engine():

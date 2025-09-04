@@ -151,7 +151,7 @@ CREATE TABLE runs (
     tokens_used INTEGER DEFAULT 0,     -- LLM token usage
     cost_usd DECIMAL(10,4) DEFAULT 0,  -- Cost tracking
     bucket_token_count INTEGER,        -- Tokens per bucket (for budgeting)
-    bucket_cost_estimate DECIMAL(10,4) -- Cost estimate per bucket
+    bucket_cost_estimate DECIMAL(10,4), -- Cost estimate per bucket
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -164,14 +164,6 @@ CREATE INDEX idx_titles_strategic ON titles(is_strategic) WHERE is_strategic = t
 CREATE INDEX idx_titles_language ON titles(detected_language);
 CREATE INDEX idx_titles_published ON titles(pubdate_utc);
 CREATE INDEX idx_titles_hash ON titles(content_hash);
-
--- Embedding index (only if pgvector is available)
-DO $$ 
-BEGIN
-    IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
-        CREATE INDEX idx_titles_embedding ON titles USING ivfflat (title_embedding vector_cosine_ops);
-    END IF;
-END $$;
 
 CREATE INDEX idx_buckets_date ON buckets(date_window_start, date_window_end);
 CREATE INDEX idx_events_bucket ON events(bucket_id);

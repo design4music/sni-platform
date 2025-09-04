@@ -24,7 +24,7 @@ def create_database():
     config = get_config()
     
     # Connect to postgres database to create SNI database
-    postgres_url = config.database.url.replace(f"/{config.database.name}", "/postgres")
+    postgres_url = config.database_url.replace(f"/{config.db_name}", "/postgres")
     
     try:
         engine = create_engine(postgres_url)
@@ -32,15 +32,15 @@ def create_database():
             # Check if database exists
             result = conn.execute(text(
                 "SELECT 1 FROM pg_database WHERE datname = :db_name"
-            ), {"db_name": config.database.name})
+            ), {"db_name": config.db_name})
             
             if not result.fetchone():
                 # Create database
                 conn.execute(text("COMMIT"))  # Close any transaction
-                conn.execute(text(f'CREATE DATABASE "{config.database.name}"'))
-                logger.info(f"Created database: {config.database.name}")
+                conn.execute(text(f'CREATE DATABASE "{config.db_name}"'))
+                logger.info(f"Created database: {config.db_name}")
             else:
-                logger.info(f"Database already exists: {config.database.name}")
+                logger.info(f"Database already exists: {config.db_name}")
                 
     except Exception as e:
         logger.error(f"Failed to create database: {e}")
@@ -83,14 +83,14 @@ def run_sql_script(script_path: Path):
     try:
         # Use psql command if available
         env = os.environ.copy()
-        env['PGPASSWORD'] = config.database.password
+        env['PGPASSWORD'] = config.db_password
         
         cmd = [
             'psql',
-            '-h', config.database.host,
-            '-p', str(config.database.port),
-            '-U', config.database.user,
-            '-d', config.database.name,
+            '-h', config.db_host,
+            '-p', str(config.db_port),
+            '-U', config.db_user,
+            '-d', config.db_name,
             '-f', str(script_path)
         ]
         
