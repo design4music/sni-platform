@@ -41,6 +41,12 @@ class SNIConfig(BaseSettings):
     cosine_threshold_dedup: float = Field(default=0.95, env="COSINE_THRESHOLD_DEDUP")
     cosine_threshold_bucket: float = Field(default=0.60, env="COSINE_THRESHOLD_BUCKET")
     
+    # Ingestion
+    max_items_per_feed: Optional[int] = Field(default=None, env="MAX_ITEMS_PER_FEED")
+    lookback_days: int = Field(default=3, env="LOOKBACK_DAYS")
+    http_retries: int = Field(default=3, env="HTTP_RETRIES")
+    http_timeout_sec: int = Field(default=30, env="HTTP_TIMEOUT_SEC")
+    
     # Language - NOTE: System supports ALL languages, these are just optimized/configured ones
     # Pipeline must never fail on unsupported languages (Portuguese, Malay, etc.)
     primary_language: str = Field(default="en", env="PRIMARY_LANGUAGE")
