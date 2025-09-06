@@ -1,0 +1,46 @@
+# What to do next (in order)
+
+1. **CLUST-1.5 — Persist gate results (thin)**
+
+* Add **gate\_decision** columns to `titles` (no new table):
+
+  * `gate_keep boolean NOT NULL DEFAULT false`
+  * `gate_reason text NULL`  // "actor\_hit" | "anchor\_sim" | "below\_threshold"
+  * `gate_score real NULL`
+  * `gate_anchor_labels text[] NULL`
+  * `gate_actor_hit text NULL`  // canonical actor code if hit
+  * `gate_at timestamptz NULL`
+* Add a tiny driver `apps/clust1/run_gate.py` that:
+
+  * pulls recent rows with `processing_status='pending' AND gate_at IS NULL`
+  * calls your `filter_titles_batch(...)`
+  * `UPDATE titles SET ... , gate_at=now(), processing_status='gated' WHERE id IN (...)`
+* Acceptance: run once → updates rows; run again → **idempotent** (no duplicates, no changes).
+
+2. **CLUST-2 — Big-bucket grouping (actor-set, 24–48h)**
+
+* For titles where `gate_keep = true`, compute:
+
+  * `actor_set`: from canonical actors present (use your alias list; no NER yet).
+  * `window_key`: floor(pubdate to UTC date) → group in 24h (configurable).
+* Create bucket records:
+
+  * `buckets(bucket_id, date_window_start, date_window_end, top_actors json, members_count, members_checksum, created_at)`
+* Create link table (or json on MVP): `bucket_members(bucket_id, title_id)`.
+* Guardrail for **sanctions/export\_controls/strike/platform\_ban**:
+
+  * if mechanism label fired in gate anchors, enforce **issuer→instrument→target** uniformity; split mixed triples.
+* Simple dedupe inside bucket: collapse near-identical by cosine ≥ 0.95 or trigram.
+
+3. **GEN-1 scaffolding**
+
+* Build the **prompt pack v1** (from the Context Pack) and a small runner that:
+
+  * loads one bucket → renders GEN-1 input JSON → calls LLM → validates schema → inserts `events` + `narratives`.
+* Run on 3–5 buckets for a sanity check (don’t mass-generate yet).
+
+# Hand-off text for Claude (copy/paste)
+
+* “Please add the following columns to `titles`: `gate_keep boolean default false, gate_reason text, gate_score real, gate_anchor_labels text[], gate_actor_hit text, gate_at timestamptz`. Then create `apps/clust1/run_gate.py` that selects rows with `processing_status='pending' AND gate_at IS NULL` in batches of 500, runs `StrategicGate.filter_titles_batch`, and updates those columns + sets `processing_status='gated'`. Must be idempotent and logged. Provide a smoke script that prints a 1-line summary (kept/total, reasons breakdown).”
+
+That keeps us strictly within the agreed plan, minimal schema touch, and sets up CLUST-2 nicely. If you want, I can draft the bucketer checklist next.

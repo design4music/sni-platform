@@ -38,8 +38,17 @@ class SNIConfig(BaseSettings):
     max_bucket_size: int = Field(default=100, env="MAX_BUCKET_SIZE")
     default_fetch_interval: int = Field(default=60, env="DEFAULT_FETCH_INTERVAL")
     embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2", env="EMBEDDING_MODEL")
+    
+    # Clustering thresholds
     cosine_threshold_dedup: float = Field(default=0.95, env="COSINE_THRESHOLD_DEDUP")
-    cosine_threshold_bucket: float = Field(default=0.60, env="COSINE_THRESHOLD_BUCKET")
+    cosine_threshold_bucket: float = Field(default=0.60, env="COSINE_THRESHOLD_BUCKET") 
+    cosine_threshold_gate: float = Field(default=0.70, env="COSINE_THRESHOLD_GATE")
+    cosine_threshold_merge: float = Field(default=0.85, env="COSINE_THRESHOLD_MERGE")
+    
+    # Strategic gate vocabulary paths
+    actors_csv_path: str = Field(default="data/actors.csv", env="ACTORS_CSV_PATH")
+    mechanisms_json_path: str = Field(default="data/mechanisms.json", env="MECHANISMS_JSON_PATH")
+    max_top_anchors: int = Field(default=3, env="MAX_TOP_ANCHORS")
     
     # Ingestion
     max_items_per_feed: Optional[int] = Field(default=None, env="MAX_ITEMS_PER_FEED")
