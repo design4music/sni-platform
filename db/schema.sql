@@ -1,5 +1,6 @@
 -- SNI-v2 Database Schema: Headlines-Only Multilingual Pipeline
 -- Based on the Context Document specifications
+-- Updated: 2025-09-07 with CLUST-1 Strategic Gate columns
 
 -- Enable pgvector extension if available
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -23,7 +24,14 @@ CREATE TABLE feeds (
     priority INTEGER DEFAULT 1,
     fetch_interval_minutes INTEGER DEFAULT 60,
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+    
+    -- RSS ingestion metadata
+    source_domain TEXT,                 -- Source domain for feed categorization
+    etag TEXT,                         -- ETag for conditional GET requests
+    last_modified TEXT,                -- Last-Modified header for conditional GET
+    last_pubdate_utc TIMESTAMP WITH TIME ZONE, -- Latest article pubdate seen
+    last_run_at TIMESTAMP WITH TIME ZONE       -- Last successful fetch timestamp
 );
 
 -- Headlines-only articles (massively simplified from original SNI)
@@ -34,6 +42,7 @@ CREATE TABLE titles (
     -- Core content (from Context Document section 5)
     title_original TEXT NOT NULL,       -- Raw title from RSS
     title_display TEXT NOT NULL,        -- Cleaned for display
+    title_norm TEXT,                    -- Normalized for matching (CLUST-1)
     url_gnews TEXT NOT NULL,            -- Google News URL
     publisher_name VARCHAR(255),        -- Publisher name
     publisher_domain VARCHAR(255),      -- Publisher domain
@@ -46,10 +55,18 @@ CREATE TABLE titles (
     detected_language VARCHAR(5),      -- Auto-detected language
     language_confidence FLOAT,         -- Detection confidence
     
-    -- Strategic filtering
+    -- Strategic filtering (legacy columns)
     is_strategic BOOLEAN,
     strategic_confidence FLOAT,
     strategic_signals JSONB DEFAULT '{}', -- Strategic indicators found
+    
+    -- Strategic Gate filtering (CLUST-1)
+    gate_keep BOOLEAN NOT NULL DEFAULT false,     -- Gate decision: keep/reject
+    gate_reason TEXT,                             -- Reason: actor_hit/anchor_sim/below_threshold
+    gate_score REAL,                              -- Similarity score (0-1)
+    gate_anchor_labels TEXT[],                    -- Matching anchor labels for mechanism
+    gate_actor_hit TEXT,                          -- Actor alias that matched
+    gate_at TIMESTAMP WITH TIME ZONE,             -- Gate processing timestamp
     
     -- Entities (multilingual NER)
     entities JSONB DEFAULT '{}',        -- Extracted entities
@@ -60,7 +77,7 @@ CREATE TABLE titles (
     title_embedding_json JSONB,         -- Fallback if no pgvector
     
     -- Processing status
-    processing_status VARCHAR(20) DEFAULT 'pending',  -- pending/completed/failed
+    processing_status VARCHAR(20) DEFAULT 'pending',  -- pending/gated/completed/failed
     processed_at TIMESTAMP,
     
     -- Metadata
@@ -165,6 +182,13 @@ CREATE INDEX idx_titles_language ON titles(detected_language);
 CREATE INDEX idx_titles_published ON titles(pubdate_utc);
 CREATE INDEX idx_titles_hash ON titles(content_hash);
 
+-- Strategic Gate indexes (CLUST-1)
+CREATE INDEX idx_titles_processing_status ON titles(processing_status);
+CREATE INDEX idx_titles_gate_keep ON titles(gate_keep) WHERE gate_keep = true;
+CREATE INDEX idx_titles_gate_reason ON titles(gate_reason);
+CREATE INDEX idx_titles_gate_at ON titles(gate_at);
+CREATE INDEX idx_titles_pending_gate ON titles(processing_status, gate_at) WHERE processing_status = 'pending' AND gate_at IS NULL;
+
 CREATE INDEX idx_buckets_date ON buckets(date_window_start, date_window_end);
 CREATE INDEX idx_events_bucket ON events(bucket_id);
 CREATE INDEX idx_events_mechanism ON events(mechanism);
@@ -173,6 +197,17 @@ CREATE INDEX idx_runs_phase ON runs(phase, created_at);
 
 -- Views for common queries (from Context Document)
 CREATE VIEW strategic_titles AS
+SELECT 
+    t.*,
+    f.name as feed_name,
+    f.language_code as feed_language,
+    f.country_code as feed_country
+FROM titles t
+JOIN feeds f ON t.feed_id = f.id
+WHERE t.gate_keep = true;  -- Updated to use Strategic Gate results
+
+-- Legacy view for backward compatibility
+CREATE VIEW legacy_strategic_titles AS
 SELECT 
     t.*,
     f.name as feed_name,
