@@ -1,12 +1,44 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(ls:*)",
-      "Bash(taskkill:*)",
-      "Bash(mkdir:*)"
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\core/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\core/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\api/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\scripts/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\db/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\scripts/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Bash(git add:*)",
+      "Bash(git ls-tree:*)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\core/**)",
+      "Bash(pip install:*)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\core/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\docs\\tickets/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\apps\\ingest/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\apps\\ingest/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\apps\\ingest/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\apps\\ingest/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\SNI-v2\\apps\\clust1/**)"
     ],
-    "deny": []
+    "deny": [],
+    "ask": []
   }
 }

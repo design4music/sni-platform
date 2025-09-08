@@ -1,0 +1,17 @@
+# Content Extraction Configuration
+# Simplified configuration for Trafilatura + Domain Profiles system
+
+# Content extraction limits
+limits:
+  max_content_chars: 50000            # Cap extracted content length
+  extraction_timeout_seconds: 30      # Timeout for content extraction
+
+# Structural post-filter settings
+post_filter:
+  max_line_link_density: 0.5          # Drop lines with >50% link text
+  
+# Note: Trafilatura handles all boilerplate removal automatically:
+# - Privacy policies, cookie notices, subscriptions
+# - Navigation menus, social media widgets  
+# - Timestamps, "Read More" links, advertisements
+# - Copyright notices, author information

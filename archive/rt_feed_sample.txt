@@ -1,0 +1,820 @@
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<rss xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<channel>
+<generator>NFE/5.0</generator>
+<title>"site:rt.com" - Google News</title>
+<link>https://news.google.com/search?q=site:rt.com&hl=en-US&gl=US&ceid=US:en</link>
+<language>en-US</language>
+<webMaster>news-webmaster@google.com</webMaster>
+<copyright>Copyright © 2025 Google. All rights reserved. This XML feed is made available solely for the purpose of rendering Google News results within a personal feed reader for personal, non-commercial use. Any other use of the feed is expressly prohibited. By accessing this feed or using these results in any manner whatsoever, you agree to be bound by the foregoing restrictions.</copyright>
+<lastBuildDate>Tue, 02 Sep 2025 09:50:18 GMT</lastBuildDate>
+<image>
+<title>Google News</title>
+<url>https://lh3.googleusercontent.com/-DR60l-K8vnyi99NZovm9HlXyZwQ85GMDxiwJWzoasZYCUrPuUM_P_4Rb7ei03j-0nRs0c4F=w256</url>
+<link>https://news.google.com/</link>
+<height>256</height>
+<width>256</width>
+</image>
+<description>Google News</description>
+<item>
+<title>Belgium announces sanctions against Israel - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibkFVX3lxTE1wOVI0eE9vRno2eC1Iel9hZ1dIbUhLTWVjMFl3ck9pQXpKcl9INmJ4Y055Y0o2bF9lRUZxNDBjUzNtc0REMENOMWpLT01tTTZxYm1lYVpDNDFlRTgwTGpfRFZuMjlOcGpJMHFxaTFR0gFzQVVfeXFMTXF0WGF4di1LNnZ4ZnYyMml2QnNUd3RkWHhJTGhoTmxkeTJ6UE41MHZZRmIyU19neS1ub3pZOUJaWWFxVDZrUVhicFNBVzdWVXhSY1VlWXo1clNWaFk1UGZPVUk0UGtFU1JROUF2bzdiSW84dw?oc=5</link>
+<guid isPermaLink="false">CBMibkFVX3lxTE1wOVI0eE9vRno2eC1Iel9hZ1dIbUhLTWVjMFl3ck9pQXpKcl9INmJ4Y055Y0o2bF9lRUZxNDBjUzNtc0REMENOMWpLT01tTTZxYm1lYVpDNDFlRTgwTGpfRFZuMjlOcGpJMHFxaTFR0gFzQVVfeXFMTXF0WGF4di1LNnZ4ZnYyMml2QnNUd3RkWHhJTGhoTmxkeTJ6UE41MHZZRmIyU19neS1ub3pZOUJaWWFxVDZrUVhicFNBVzdWVXhSY1VlWXo1clNWaFk1UGZPVUk0UGtFU1JROUF2bzdiSW84dw</guid>
+<pubDate>Tue, 02 Sep 2025 04:40:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE1wOVI0eE9vRno2eC1Iel9hZ1dIbUhLTWVjMFl3ck9pQXpKcl9INmJ4Y055Y0o2bF9lRUZxNDBjUzNtc0REMENOMWpLT01tTTZxYm1lYVpDNDFlRTgwTGpfRFZuMjlOcGpJMHFxaTFR0gFzQVVfeXFMTXF0WGF4di1LNnZ4ZnYyMml2QnNUd3RkWHhJTGhoTmxkeTJ6UE41MHZZRmIyU19neS1ub3pZOUJaWWFxVDZrUVhicFNBVzdWVXhSY1VlWXo1clNWaFk1UGZPVUk0UGtFU1JROUF2bzdiSW84dw?oc=5" target="_blank">Belgium announces sanctions against Israel</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>EU claim Russia blocked von der Leyen jet GPS is false – Flightradar - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiY0FVX3lxTE9oenJhcHc0N2ctZUJvSUh1am9kbmdqQV9Pamx2eHJrLVJtRWhVa3ZmdC1NZ2FVZ1dvd3VRN3FqZzY0VkhXeTBPcGhvNDNVQXdvbFRDQVBpdHVZOWVtMVVqbHM5b9IBaEFVX3lxTE4tMEVvR2Y0SDJJcHNSTEQxOThOeGxvdDdhSmw1MjQwX2Q4ck51RzJ2WjFIWk5hX1JIclpiSjVyeHhUT0VhLTFZTzNldmZqZVh5YTI2enJmWTA2QjlENXg5Qm9QLWh1UGFw?oc=5</link>
+<guid isPermaLink="false">CBMiY0FVX3lxTE9oenJhcHc0N2ctZUJvSUh1am9kbmdqQV9Pamx2eHJrLVJtRWhVa3ZmdC1NZ2FVZ1dvd3VRN3FqZzY0VkhXeTBPcGhvNDNVQXdvbFRDQVBpdHVZOWVtMVVqbHM5b9IBaEFVX3lxTE4tMEVvR2Y0SDJJcHNSTEQxOThOeGxvdDdhSmw1MjQwX2Q4ck51RzJ2WjFIWk5hX1JIclpiSjVyeHhUT0VhLTFZTzNldmZqZVh5YTI2enJmWTA2QjlENXg5Qm9QLWh1UGFw</guid>
+<pubDate>Mon, 01 Sep 2025 21:12:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE9oenJhcHc0N2ctZUJvSUh1am9kbmdqQV9Pamx2eHJrLVJtRWhVa3ZmdC1NZ2FVZ1dvd3VRN3FqZzY0VkhXeTBPcGhvNDNVQXdvbFRDQVBpdHVZOWVtMVVqbHM5b9IBaEFVX3lxTE4tMEVvR2Y0SDJJcHNSTEQxOThOeGxvdDdhSmw1MjQwX2Q4ck51RzJ2WjFIWk5hX1JIclpiSjVyeHhUT0VhLTFZTzNldmZqZVh5YTI2enJmWTA2QjlENXg5Qm9QLWh1UGFw?oc=5" target="_blank">EU claim Russia blocked von der Leyen jet GPS is false – Flightradar</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin holds talks with Xi in Beijing: Live Updates - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiYkFVX3lxTE9JZWJtbnN2Umg5YUpGcHBuazA2YXhJMk4yYzFGQW1kU25JeEFJYTUwMGZTNEpZd1czSHJaSU84MVlaMlF3aUFKWFl0dGV0Y20zenBEMzdqdDZzQnVKZlVoOUd30gFnQVVfeXFMTUVwcUYwRVdNZC14MF80VE1Ic0NCaXpBSW13dG9uNm9RQjN4ZlJuLXZBNTE2cWVTbU4tVlZ4cWhDNGstaHNSQm1ZUFMxUFZVLTBLU1phcjNrQ3pLX3g4Sk9xUTlCbHN2NA?oc=5</link>
+<guid isPermaLink="false">CBMiYkFVX3lxTE9JZWJtbnN2Umg5YUpGcHBuazA2YXhJMk4yYzFGQW1kU25JeEFJYTUwMGZTNEpZd1czSHJaSU84MVlaMlF3aUFKWFl0dGV0Y20zenBEMzdqdDZzQnVKZlVoOUd30gFnQVVfeXFMTUVwcUYwRVdNZC14MF80VE1Ic0NCaXpBSW13dG9uNm9RQjN4ZlJuLXZBNTE2cWVTbU4tVlZ4cWhDNGstaHNSQm1ZUFMxUFZVLTBLU1phcjNrQ3pLX3g4Sk9xUTlCbHN2NA</guid>
+<pubDate>Tue, 02 Sep 2025 03:19:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiYkFVX3lxTE9JZWJtbnN2Umg5YUpGcHBuazA2YXhJMk4yYzFGQW1kU25JeEFJYTUwMGZTNEpZd1czSHJaSU84MVlaMlF3aUFKWFl0dGV0Y20zenBEMzdqdDZzQnVKZlVoOUd30gFnQVVfeXFMTUVwcUYwRVdNZC14MF80VE1Ic0NCaXpBSW13dG9uNm9RQjN4ZlJuLXZBNTE2cWVTbU4tVlZ4cWhDNGstaHNSQm1ZUFMxUFZVLTBLU1phcjNrQ3pLX3g4Sk9xUTlCbHN2NA?oc=5" target="_blank">Putin holds talks with Xi in Beijing: Live Updates</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>The West had its century. The future belongs to these leaders now - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiY0FVX3lxTE5nRGN1ck1Ia1pjRGNOeC1tWnNBVW1CQnlHYzhrSGZaeDkzVTJab3ROM0VmSGoxN1FQbUhPYXdyUWthX183Qk1UZlBrV3RDOWNRMGhJbUxObC1pTnhLQ2F3SmNyd9IBaEFVX3lxTE1mRFNXMDhiOXR1XzJheTB1NE4xSTQyRHZ2NFZRd3hHSi1FV1hBSFZSTE1TcXhHTy1FT3JEd0VWYmJsTy14eWhzMW5PSkhuX2YyS3pVVUF6eXFJSExFd200YzZQaHJrdHpT?oc=5</link>
+<guid isPermaLink="false">CBMiY0FVX3lxTE5nRGN1ck1Ia1pjRGNOeC1tWnNBVW1CQnlHYzhrSGZaeDkzVTJab3ROM0VmSGoxN1FQbUhPYXdyUWthX183Qk1UZlBrV3RDOWNRMGhJbUxObC1pTnhLQ2F3SmNyd9IBaEFVX3lxTE1mRFNXMDhiOXR1XzJheTB1NE4xSTQyRHZ2NFZRd3hHSi1FV1hBSFZSTE1TcXhHTy1FT3JEd0VWYmJsTy14eWhzMW5PSkhuX2YyS3pVVUF6eXFJSExFd200YzZQaHJrdHpT</guid>
+<pubDate>Mon, 01 Sep 2025 20:34:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE5nRGN1ck1Ia1pjRGNOeC1tWnNBVW1CQnlHYzhrSGZaeDkzVTJab3ROM0VmSGoxN1FQbUhPYXdyUWthX183Qk1UZlBrV3RDOWNRMGhJbUxObC1pTnhLQ2F3SmNyd9IBaEFVX3lxTE1mRFNXMDhiOXR1XzJheTB1NE4xSTQyRHZ2NFZRd3hHSi1FV1hBSFZSTE1TcXhHTy1FT3JEd0VWYmJsTy14eWhzMW5PSkhuX2YyS3pVVUF6eXFJSExFd200YzZQaHJrdHpT?oc=5" target="_blank">The West had its century. The future belongs to these leaders now</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Russia backs China on global governance reform – Putin - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMickFVX3lxTE1DWHpVWEdadXFDTVNhWkJzYUp1YkZ4R3ctczR6VURDTkdMZlNsc05hMVlQUU04SnJTMFZQREdnLUFKQzAwazVjYjlVbjYtOVJSV1dhMTZ0UFhFeHpzZU1zRlZiZGFSZDFjOTJTbUxhMWVhUdIBd0FVX3lxTE42d2Y1VEpqOUxnZFBKOHlFMEw5ZkRudkxTMC1sZzVZMmppQjI5U3pHQUdZWFRXNFRqWEpkRVAxS1lpYVk4UU55dEtxTTdCemlhN2R3VkY1ZUNWX0VxbEc5dU1RRFhXcTNuWjZwRFlzM0gxS2dGRGdB?oc=5</link>
+<guid isPermaLink="false">CBMickFVX3lxTE1DWHpVWEdadXFDTVNhWkJzYUp1YkZ4R3ctczR6VURDTkdMZlNsc05hMVlQUU04SnJTMFZQREdnLUFKQzAwazVjYjlVbjYtOVJSV1dhMTZ0UFhFeHpzZU1zRlZiZGFSZDFjOTJTbUxhMWVhUdIBd0FVX3lxTE42d2Y1VEpqOUxnZFBKOHlFMEw5ZkRudkxTMC1sZzVZMmppQjI5U3pHQUdZWFRXNFRqWEpkRVAxS1lpYVk4UU55dEtxTTdCemlhN2R3VkY1ZUNWX0VxbEc5dU1RRFhXcTNuWjZwRFlzM0gxS2dGRGdB</guid>
+<pubDate>Mon, 01 Sep 2025 09:40:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1DWHpVWEdadXFDTVNhWkJzYUp1YkZ4R3ctczR6VURDTkdMZlNsc05hMVlQUU04SnJTMFZQREdnLUFKQzAwazVjYjlVbjYtOVJSV1dhMTZ0UFhFeHpzZU1zRlZiZGFSZDFjOTJTbUxhMWVhUdIBd0FVX3lxTE42d2Y1VEpqOUxnZFBKOHlFMEw5ZkRudkxTMC1sZzVZMmppQjI5U3pHQUdZWFRXNFRqWEpkRVAxS1lpYVk4UU55dEtxTTdCemlhN2R3VkY1ZUNWX0VxbEc5dU1RRFhXcTNuWjZwRFlzM0gxS2dGRGdB?oc=5" target="_blank">Russia backs China on global governance reform – Putin</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin and Xi issue WWII statement - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTE1qaGhBTnhDR0pnS0gyNHZOc0pPRjIwQ0wyQWw2Qk9KZUFjdmRSa245Ym5uR3RSX3VqRjdkSjVMYTM3VHAwaHpXV1NNS2h1cU1jZlFhakxtNGhvOUhjV3BiYTVzamNwZzc3bTU00gFwQVVfeXFMTzFUSmR1NzNhczlMc05tOEFVUlVPSElYYzJhMUx5Y3ZqQ3NrUWRrUXMzaHVqWmFmd21nd3p3MFFRUTB1aXR2LUhCanN2eDdNcnhWd1RYRWVIck9oekRvdF9mcERQbDkwNEE5STBrS1d3NA?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTE1qaGhBTnhDR0pnS0gyNHZOc0pPRjIwQ0wyQWw2Qk9KZUFjdmRSa245Ym5uR3RSX3VqRjdkSjVMYTM3VHAwaHpXV1NNS2h1cU1jZlFhakxtNGhvOUhjV3BiYTVzamNwZzc3bTU00gFwQVVfeXFMTzFUSmR1NzNhczlMc05tOEFVUlVPSElYYzJhMUx5Y3ZqQ3NrUWRrUXMzaHVqWmFmd21nd3p3MFFRUTB1aXR2LUhCanN2eDdNcnhWd1RYRWVIck9oekRvdF9mcERQbDkwNEE5STBrS1d3NA</guid>
+<pubDate>Tue, 02 Sep 2025 07:54:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE1qaGhBTnhDR0pnS0gyNHZOc0pPRjIwQ0wyQWw2Qk9KZUFjdmRSa245Ym5uR3RSX3VqRjdkSjVMYTM3VHAwaHpXV1NNS2h1cU1jZlFhakxtNGhvOUhjV3BiYTVzamNwZzc3bTU00gFwQVVfeXFMTzFUSmR1NzNhczlMc05tOEFVUlVPSElYYzJhMUx5Y3ZqQ3NrUWRrUXMzaHVqWmFmd21nd3p3MFFRUTB1aXR2LUhCanN2eDdNcnhWd1RYRWVIck9oekRvdF9mcERQbDkwNEE5STBrS1d3NA?oc=5" target="_blank">Putin and Xi issue WWII statement</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Berlin rebukes von der Leyen over troops for Ukraine claim - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiaEFVX3lxTE5PMEw1MFlkRUZ5TWI2RWlFUEdSMlBqWUhvNG1zWHNnZ3NXVXotN1g4ZHh3YXVTeV9PTkxpSmhONVNwWmQtckM4ckJZV2M4UFc5VTgxSEI5a2ZRREdCX0NjeV8zNXNhX1Fq0gFuQVVfeXFMUDl4NlJCZjlPejR6MjIxa1VSSTJ6ajZwVDFyU0t0RmN5ZlNCTTNBUkFLQTZmQUF6MlZrdHAzR3g0N004Vlo3UEFhVVQtSlgta25ySkRQVmZtTTIyUTZtaHotRExWM3BPMnVQLWJFalE?oc=5</link>
+<guid isPermaLink="false">CBMiaEFVX3lxTE5PMEw1MFlkRUZ5TWI2RWlFUEdSMlBqWUhvNG1zWHNnZ3NXVXotN1g4ZHh3YXVTeV9PTkxpSmhONVNwWmQtckM4ckJZV2M4UFc5VTgxSEI5a2ZRREdCX0NjeV8zNXNhX1Fq0gFuQVVfeXFMUDl4NlJCZjlPejR6MjIxa1VSSTJ6ajZwVDFyU0t0RmN5ZlNCTTNBUkFLQTZmQUF6MlZrdHAzR3g0N004Vlo3UEFhVVQtSlgta25ySkRQVmZtTTIyUTZtaHotRExWM3BPMnVQLWJFalE</guid>
+<pubDate>Mon, 01 Sep 2025 18:30:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5PMEw1MFlkRUZ5TWI2RWlFUEdSMlBqWUhvNG1zWHNnZ3NXVXotN1g4ZHh3YXVTeV9PTkxpSmhONVNwWmQtckM4ckJZV2M4UFc5VTgxSEI5a2ZRREdCX0NjeV8zNXNhX1Fq0gFuQVVfeXFMUDl4NlJCZjlPejR6MjIxa1VSSTJ6ajZwVDFyU0t0RmN5ZlNCTTNBUkFLQTZmQUF6MlZrdHAzR3g0N004Vlo3UEFhVVQtSlgta25ySkRQVmZtTTIyUTZtaHotRExWM3BPMnVQLWJFalE?oc=5" target="_blank">Berlin rebukes von der Leyen over troops for Ukraine claim</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Ukraine in NATO would mean civil war – former president - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMid0FVX3lxTE9xaWpaNlptVTU0QlhuUHE5aVdvVDlwUnUtM0Y2R0xlUTRYdk1tWS1sbVFYWnBBY0Uwb1N6SzU0VzBkbU9vREZzV3lmMFNBajNTak1Jazc0UVRFTF9pcWRIQzQ5MUJEei05TENBd3Vud3lETnV6T3l30gF8QVVfeXFMUDJoRHNXQmpmcUprQ0NlcXpkbVB6dzNiOXpDYUJCOWFVOTFydHdfQzM4WEd6VU91YWdwMEJZNGJ0bmRia0xBSV9wX29FUGduMnowMWY1djJXcmVVeWJlRl9rdTMxM0lUSkpRRkV4emRuZi1nNUJPdThGUG5jSQ?oc=5</link>
+<guid isPermaLink="false">CBMid0FVX3lxTE9xaWpaNlptVTU0QlhuUHE5aVdvVDlwUnUtM0Y2R0xlUTRYdk1tWS1sbVFYWnBBY0Uwb1N6SzU0VzBkbU9vREZzV3lmMFNBajNTak1Jazc0UVRFTF9pcWRIQzQ5MUJEei05TENBd3Vud3lETnV6T3l30gF8QVVfeXFMUDJoRHNXQmpmcUprQ0NlcXpkbVB6dzNiOXpDYUJCOWFVOTFydHdfQzM4WEd6VU91YWdwMEJZNGJ0bmRia0xBSV9wX29FUGduMnowMWY1djJXcmVVeWJlRl9rdTMxM0lUSkpRRkV4emRuZi1nNUJPdThGUG5jSQ</guid>
+<pubDate>Mon, 01 Sep 2025 17:33:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE9xaWpaNlptVTU0QlhuUHE5aVdvVDlwUnUtM0Y2R0xlUTRYdk1tWS1sbVFYWnBBY0Uwb1N6SzU0VzBkbU9vREZzV3lmMFNBajNTak1Jazc0UVRFTF9pcWRIQzQ5MUJEei05TENBd3Vud3lETnV6T3l30gF8QVVfeXFMUDJoRHNXQmpmcUprQ0NlcXpkbVB6dzNiOXpDYUJCOWFVOTFydHdfQzM4WEd6VU91YWdwMEJZNGJ0bmRia0xBSV9wX29FUGduMnowMWY1djJXcmVVeWJlRl9rdTMxM0lUSkpRRkV4emRuZi1nNUJPdThGUG5jSQ?oc=5" target="_blank">Ukraine in NATO would mean civil war – former president</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>US would become ‘third world nation’ without tariffs – Trump - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiaEFVX3lxTE9mZ01ERkQ1SnZVRElHRGcxaElUYndFdC1oYzU4R0RqbnUxLTJwWVhkSkNxaXFLRzVJaXdMMTdBTVUzZEhXSkNjMzI1cm5HcVM2eC1qWVJJOFpzeF9uaE9heXZiNkd2dVV50gFuQVVfeXFMTUo4NUpfZWd1cXVLSm5GZFVJdlNmMXowclpQcWM1UUFDZW5CaVZYU3RlTTJXQ3NKcktfUURXT3Aydk1JZXdqMWh3XzZWQmMwWjFveVpaZWI5bVVCMWtKbndSd04xYTlyUkNUYURiZnc?oc=5</link>
+<guid isPermaLink="false">CBMiaEFVX3lxTE9mZ01ERkQ1SnZVRElHRGcxaElUYndFdC1oYzU4R0RqbnUxLTJwWVhkSkNxaXFLRzVJaXdMMTdBTVUzZEhXSkNjMzI1cm5HcVM2eC1qWVJJOFpzeF9uaE9heXZiNkd2dVV50gFuQVVfeXFMTUo4NUpfZWd1cXVLSm5GZFVJdlNmMXowclpQcWM1UUFDZW5CaVZYU3RlTTJXQ3NKcktfUURXT3Aydk1JZXdqMWh3XzZWQmMwWjFveVpaZWI5bVVCMWtKbndSd04xYTlyUkNUYURiZnc</guid>
+<pubDate>Mon, 01 Sep 2025 10:47:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE9mZ01ERkQ1SnZVRElHRGcxaElUYndFdC1oYzU4R0RqbnUxLTJwWVhkSkNxaXFLRzVJaXdMMTdBTVUzZEhXSkNjMzI1cm5HcVM2eC1qWVJJOFpzeF9uaE9heXZiNkd2dVV50gFuQVVfeXFMTUo4NUpfZWd1cXVLSm5GZFVJdlNmMXowclpQcWM1UUFDZW5CaVZYU3RlTTJXQ3NKcktfUURXT3Aydk1JZXdqMWh3XzZWQmMwWjFveVpaZWI5bVVCMWtKbndSd04xYTlyUkNUYURiZnc?oc=5" target="_blank">US would become ‘third world nation’ without tariffs – Trump</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>US pushing EU states to sanction India – media - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTE1JZ0ZJSUFrc2IyR3UxVTEyV0tSbHNLVDU2S0NUZXRBdVdCbXZLQjlKWG1UN2tvU0ViTjBzMXhDZmc2TWZnZEJFUzNXV1A0bFJmcTVKc0ZIMm1XTDVFaV95SXdkdlljOXhSNm1PetIBckFVX3lxTE5YWUcyZE1DMzVLeUs0UTExZ0Y0QVRFZDR3d3JwcXZLVkNhLXY0QUs3dGpsR2R1U25pVFFtNllpNHdPaTJJLS1BQ1BCa3ZOWWF4ZldrR0EwN1NzSVFNZU9CbzBlVzlzZlRwUXF3M3luV2l4dw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTE1JZ0ZJSUFrc2IyR3UxVTEyV0tSbHNLVDU2S0NUZXRBdVdCbXZLQjlKWG1UN2tvU0ViTjBzMXhDZmc2TWZnZEJFUzNXV1A0bFJmcTVKc0ZIMm1XTDVFaV95SXdkdlljOXhSNm1PetIBckFVX3lxTE5YWUcyZE1DMzVLeUs0UTExZ0Y0QVRFZDR3d3JwcXZLVkNhLXY0QUs3dGpsR2R1U25pVFFtNllpNHdPaTJJLS1BQ1BCa3ZOWWF4ZldrR0EwN1NzSVFNZU9CbzBlVzlzZlRwUXF3M3luV2l4dw</guid>
+<pubDate>Mon, 01 Sep 2025 11:30:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1JZ0ZJSUFrc2IyR3UxVTEyV0tSbHNLVDU2S0NUZXRBdVdCbXZLQjlKWG1UN2tvU0ViTjBzMXhDZmc2TWZnZEJFUzNXV1A0bFJmcTVKc0ZIMm1XTDVFaV95SXdkdlljOXhSNm1PetIBckFVX3lxTE5YWUcyZE1DMzVLeUs0UTExZ0Y0QVRFZDR3d3JwcXZLVkNhLXY0QUs3dGpsR2R1U25pVFFtNllpNHdPaTJJLS1BQ1BCa3ZOWWF4ZldrR0EwN1NzSVFNZU9CbzBlVzlzZlRwUXF3M3luV2l4dw?oc=5" target="_blank">US pushing EU states to sanction India – media</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Xi calls on SCO members to challenge Western dominance - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiY0FVX3lxTE9UQm5wTzZzczdqRlJmZ2IyZGtUbGduWkFVdC1Lb3c5a3B2NjhhR2RrRVp4LXRZTW1DUjNoRmR2Y2tnZ0lMblRvX09XTS1ac1VSRjFnUFRBOVczWUp1VEYydkJDTdIBaEFVX3lxTE1WZjJfQ0lwY0VMSDNBcHRsdUZGODZiUmI4M2k0WnZDQTRzZ04yT0MzZWFfVy0xQnJyZmZGZVJMc0pWa2toaDlvS3R5ajgxeVVrXzNtZGN5NGZnZTBXMjhQbXBMbUFLU1Z2?oc=5</link>
+<guid isPermaLink="false">CBMiY0FVX3lxTE9UQm5wTzZzczdqRlJmZ2IyZGtUbGduWkFVdC1Lb3c5a3B2NjhhR2RrRVp4LXRZTW1DUjNoRmR2Y2tnZ0lMblRvX09XTS1ac1VSRjFnUFRBOVczWUp1VEYydkJDTdIBaEFVX3lxTE1WZjJfQ0lwY0VMSDNBcHRsdUZGODZiUmI4M2k0WnZDQTRzZ04yT0MzZWFfVy0xQnJyZmZGZVJMc0pWa2toaDlvS3R5ajgxeVVrXzNtZGN5NGZnZTBXMjhQbXBMbUFLU1Z2</guid>
+<pubDate>Mon, 01 Sep 2025 10:32:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE9UQm5wTzZzczdqRlJmZ2IyZGtUbGduWkFVdC1Lb3c5a3B2NjhhR2RrRVp4LXRZTW1DUjNoRmR2Y2tnZ0lMblRvX09XTS1ac1VSRjFnUFRBOVczWUp1VEYydkJDTdIBaEFVX3lxTE1WZjJfQ0lwY0VMSDNBcHRsdUZGODZiUmI4M2k0WnZDQTRzZ04yT0MzZWFfVy0xQnJyZmZGZVJMc0pWa2toaDlvS3R5ajgxeVVrXzNtZGN5NGZnZTBXMjhQbXBMbUFLU1Z2?oc=5" target="_blank">Xi calls on SCO members to challenge Western dominance</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>‘No one bothers anyone’ within SCO – Putin envoy - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMic0FVX3lxTE5EUnB5N3d1M2d0ejB4eDliY0ZrMEZYNVNFSk0xRUQ0dzgxZTUydW1raDBzU0s4T3BOckNnUGFKaDd6T2FHQVdpSDg5bjBjM0FodU8tRm51U29fXzA5cEw2ZkZoaUthcFNEeXpzMjRZZkxyS1nSAXhBVV95cUxNdUxZd2V1UDNMc2xLRXZ5UUx0SjRZMzVKQnJRU1o0OTJianhZamo1V2h0cF94MC04aHEtd2VaQTdrTExFTlZOUUdrY1p5ZWhjWTdNQlhnY3RmdHcxSkQwX0NBeGhjd3ZZZXBPbVZkZDZqUktOZEVmOUc?oc=5</link>
+<guid isPermaLink="false">CBMic0FVX3lxTE5EUnB5N3d1M2d0ejB4eDliY0ZrMEZYNVNFSk0xRUQ0dzgxZTUydW1raDBzU0s4T3BOckNnUGFKaDd6T2FHQVdpSDg5bjBjM0FodU8tRm51U29fXzA5cEw2ZkZoaUthcFNEeXpzMjRZZkxyS1nSAXhBVV95cUxNdUxZd2V1UDNMc2xLRXZ5UUx0SjRZMzVKQnJRU1o0OTJianhZamo1V2h0cF94MC04aHEtd2VaQTdrTExFTlZOUUdrY1p5ZWhjWTdNQlhnY3RmdHcxSkQwX0NBeGhjd3ZZZXBPbVZkZDZqUktOZEVmOUc</guid>
+<pubDate>Mon, 01 Sep 2025 07:43:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE5EUnB5N3d1M2d0ejB4eDliY0ZrMEZYNVNFSk0xRUQ0dzgxZTUydW1raDBzU0s4T3BOckNnUGFKaDd6T2FHQVdpSDg5bjBjM0FodU8tRm51U29fXzA5cEw2ZkZoaUthcFNEeXpzMjRZZkxyS1nSAXhBVV95cUxNdUxZd2V1UDNMc2xLRXZ5UUx0SjRZMzVKQnJRU1o0OTJianhZamo1V2h0cF94MC04aHEtd2VaQTdrTExFTlZOUUdrY1p5ZWhjWTdNQlhnY3RmdHcxSkQwX0NBeGhjd3ZZZXBPbVZkZDZqUktOZEVmOUc?oc=5" target="_blank">‘No one bothers anyone’ within SCO – Putin envoy</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>The old world order was buried in China. Here’s why it matters - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZEFVX3lxTE54cFJycmJJRDhaTFdDWWo0M3BqT2ZOSDRuTElZa0hzM1Y0VjlRandKU3JGYi1RcHowNk5rVGRScjhhWi1OTkNGS1BrMUc3TXNaUzlmU0owYkc3b3p3OWh4TS15SDfSAWpBVV95cUxOTzhDckFXYk9oT01iNjNjYmZUSExRZl84YktyR1loaGVPZElvNXFYVHo0T0xuSHk5ZUFaUU9NXzY4TzJrV1BvcWRXOTZsajl1dlQweDB3dkNrWTNobXdSUWIyZVcwQWNtOXlB?oc=5</link>
+<guid isPermaLink="false">CBMiZEFVX3lxTE54cFJycmJJRDhaTFdDWWo0M3BqT2ZOSDRuTElZa0hzM1Y0VjlRandKU3JGYi1RcHowNk5rVGRScjhhWi1OTkNGS1BrMUc3TXNaUzlmU0owYkc3b3p3OWh4TS15SDfSAWpBVV95cUxOTzhDckFXYk9oT01iNjNjYmZUSExRZl84YktyR1loaGVPZElvNXFYVHo0T0xuSHk5ZUFaUU9NXzY4TzJrV1BvcWRXOTZsajl1dlQweDB3dkNrWTNobXdSUWIyZVcwQWNtOXlB</guid>
+<pubDate>Mon, 01 Sep 2025 16:09:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZEFVX3lxTE54cFJycmJJRDhaTFdDWWo0M3BqT2ZOSDRuTElZa0hzM1Y0VjlRandKU3JGYi1RcHowNk5rVGRScjhhWi1OTkNGS1BrMUc3TXNaUzlmU0owYkc3b3p3OWh4TS15SDfSAWpBVV95cUxOTzhDckFXYk9oT01iNjNjYmZUSExRZl84YktyR1loaGVPZElvNXFYVHo0T0xuSHk5ZUFaUU9NXzY4TzJrV1BvcWRXOTZsajl1dlQweDB3dkNrWTNobXdSUWIyZVcwQWNtOXlB?oc=5" target="_blank">The old world order was buried in China. Here’s why it matters</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>South Africa finalizes Taiwan mission relocation - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMihgFBVV95cUxOZmJGallvNUhOaE5zVldSdlBxTVNkVElIMFJWT0ljMnNsa1VxOUJER0Jvd2lBaWZFZGprRG5ucjVoR0hocGwwTU15REdjbllIM1JvaVFQejdpVlJ3RlZqcWlZWXhEU2lpTXowQS1pbFFBcTQzcmdiN0g4S19LcjhibllqREpMQdIBiwFBVV95cUxQNHNRZFItNV93QjgxUXVUTzc0WlpaUnVlTGhlWDNjTTJtaHBaMXFrZTV4ZnkzYlY4Z2lmSmd1Tm9ZckViSlJiTnBxblpleWxhR3JLZmpNTkREN0xkSjBfOUhSSTBFYXU0MkQzV2pOXzl4NkV0MTh5SnJ3NGp5Yk84bTM3NHRuWlhHLU1F?oc=5</link>
+<guid isPermaLink="false">CBMihgFBVV95cUxOZmJGallvNUhOaE5zVldSdlBxTVNkVElIMFJWT0ljMnNsa1VxOUJER0Jvd2lBaWZFZGprRG5ucjVoR0hocGwwTU15REdjbllIM1JvaVFQejdpVlJ3RlZqcWlZWXhEU2lpTXowQS1pbFFBcTQzcmdiN0g4S19LcjhibllqREpMQdIBiwFBVV95cUxQNHNRZFItNV93QjgxUXVUTzc0WlpaUnVlTGhlWDNjTTJtaHBaMXFrZTV4ZnkzYlY4Z2lmSmd1Tm9ZckViSlJiTnBxblpleWxhR3JLZmpNTkREN0xkSjBfOUhSSTBFYXU0MkQzV2pOXzl4NkV0MTh5SnJ3NGp5Yk84bTM3NHRuWlhHLU1F</guid>
+<pubDate>Mon, 01 Sep 2025 15:22:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxOZmJGallvNUhOaE5zVldSdlBxTVNkVElIMFJWT0ljMnNsa1VxOUJER0Jvd2lBaWZFZGprRG5ucjVoR0hocGwwTU15REdjbllIM1JvaVFQejdpVlJ3RlZqcWlZWXhEU2lpTXowQS1pbFFBcTQzcmdiN0g4S19LcjhibllqREpMQdIBiwFBVV95cUxQNHNRZFItNV93QjgxUXVUTzc0WlpaUnVlTGhlWDNjTTJtaHBaMXFrZTV4ZnkzYlY4Z2lmSmd1Tm9ZckViSlJiTnBxblpleWxhR3JLZmpNTkREN0xkSjBfOUhSSTBFYXU0MkQzV2pOXzl4NkV0MTh5SnJ3NGp5Yk84bTM3NHRuWlhHLU1F?oc=5" target="_blank">South Africa finalizes Taiwan mission relocation</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>EU to shell out more money to track Russian trains – von der Leyen - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiogFBVV95cUxOQjl6NmkzNW5mVXY2X3ozR1lGMHVXODFCRDI0eVhVcTZwUmxRT2NhX1dtQXpkZkhxWEpqaXdrT0JDOGdXR0Y5SzJkMlZDUHdMdEtMQkdzSUtMMEVKcDc2bWhGaUVSeEsteFA5Y0VjYUt3cnFLYWpuck0xbkx4UG1Db0ZGZ2FfaXgtUVJOckRfQjRoSGViNExDM0V4T1dJcXpBSkHSAacBQVVfeXFMTzV1dlFxZUxxVEZ4QUIzT3RTTndWbS1fS0Y3RjZjSlkxSnBrU0lYX0JQS3N6OU5BZnFYRU1CcUNqVHhLckplRHFVdGJhb3lBNS05blA3NnEwNnpOU0NuRWhEdW5nX2l0RlFkWm9TRWZSQjk2RUY1WFlpYXlYWHJWb0JjSHZNSFVyX09qa092dW1mc1ZxY19Td3p3NzdBWUhuRlpINDhGcWs?oc=5</link>
+<guid isPermaLink="false">CBMiogFBVV95cUxOQjl6NmkzNW5mVXY2X3ozR1lGMHVXODFCRDI0eVhVcTZwUmxRT2NhX1dtQXpkZkhxWEpqaXdrT0JDOGdXR0Y5SzJkMlZDUHdMdEtMQkdzSUtMMEVKcDc2bWhGaUVSeEsteFA5Y0VjYUt3cnFLYWpuck0xbkx4UG1Db0ZGZ2FfaXgtUVJOckRfQjRoSGViNExDM0V4T1dJcXpBSkHSAacBQVVfeXFMTzV1dlFxZUxxVEZ4QUIzT3RTTndWbS1fS0Y3RjZjSlkxSnBrU0lYX0JQS3N6OU5BZnFYRU1CcUNqVHhLckplRHFVdGJhb3lBNS05blA3NnEwNnpOU0NuRWhEdW5nX2l0RlFkWm9TRWZSQjk2RUY1WFlpYXlYWHJWb0JjSHZNSFVyX09qa092dW1mc1ZxY19Td3p3NzdBWUhuRlpINDhGcWs</guid>
+<pubDate>Mon, 01 Sep 2025 16:54:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxOQjl6NmkzNW5mVXY2X3ozR1lGMHVXODFCRDI0eVhVcTZwUmxRT2NhX1dtQXpkZkhxWEpqaXdrT0JDOGdXR0Y5SzJkMlZDUHdMdEtMQkdzSUtMMEVKcDc2bWhGaUVSeEsteFA5Y0VjYUt3cnFLYWpuck0xbkx4UG1Db0ZGZ2FfaXgtUVJOckRfQjRoSGViNExDM0V4T1dJcXpBSkHSAacBQVVfeXFMTzV1dlFxZUxxVEZ4QUIzT3RTTndWbS1fS0Y3RjZjSlkxSnBrU0lYX0JQS3N6OU5BZnFYRU1CcUNqVHhLckplRHFVdGJhb3lBNS05blA3NnEwNnpOU0NuRWhEdW5nX2l0RlFkWm9TRWZSQjk2RUY1WFlpYXlYWHJWb0JjSHZNSFVyX09qa092dW1mc1ZxY19Td3p3NzdBWUhuRlpINDhGcWs?oc=5" target="_blank">EU to shell out more money to track Russian trains – von der Leyen</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin calls for international focus on ‘traditional values’ - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMihAFBVV95cUxORndwQWRycGg3U1pvNnpiXzRIOXRFLXVGc1M0ckJTenMwaHc5UmxhRUFWREx5dEFleWFPSVFadTJHWTFMR0txNG9waE9VbW1RcFV1WlVIcTNnblI0d01WUHJmbi1yM0JTWXVUMEhkcV9pNmNOODMweEI4OWxMMVpYVnhkVkrSAYoBQVVfeXFMTVhpU3lWQUU3N2dSMU9YMldxbkFlVkpvRDZGUFloN25XcGNjVTFjdlczeV91LVViX09PTU9WUXRKUmtEU1o2aERfNHRIMkZmZ0kzeDJ2SGpIbnRObkxSWVpVWl8tYUZrdi1CcVdHTDdUdFRKUVhaZkFmSF9uaWZmOFo4blROSVF1RXd3?oc=5</link>
+<guid isPermaLink="false">CBMihAFBVV95cUxORndwQWRycGg3U1pvNnpiXzRIOXRFLXVGc1M0ckJTenMwaHc5UmxhRUFWREx5dEFleWFPSVFadTJHWTFMR0txNG9waE9VbW1RcFV1WlVIcTNnblI0d01WUHJmbi1yM0JTWXVUMEhkcV9pNmNOODMweEI4OWxMMVpYVnhkVkrSAYoBQVVfeXFMTVhpU3lWQUU3N2dSMU9YMldxbkFlVkpvRDZGUFloN25XcGNjVTFjdlczeV91LVViX09PTU9WUXRKUmtEU1o2aERfNHRIMkZmZ0kzeDJ2SGpIbnRObkxSWVpVWl8tYUZrdi1CcVdHTDdUdFRKUVhaZkFmSF9uaWZmOFo4blROSVF1RXd3</guid>
+<pubDate>Mon, 01 Sep 2025 15:42:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMihAFBVV95cUxORndwQWRycGg3U1pvNnpiXzRIOXRFLXVGc1M0ckJTenMwaHc5UmxhRUFWREx5dEFleWFPSVFadTJHWTFMR0txNG9waE9VbW1RcFV1WlVIcTNnblI0d01WUHJmbi1yM0JTWXVUMEhkcV9pNmNOODMweEI4OWxMMVpYVnhkVkrSAYoBQVVfeXFMTVhpU3lWQUU3N2dSMU9YMldxbkFlVkpvRDZGUFloN25XcGNjVTFjdlczeV91LVViX09PTU9WUXRKUmtEU1o2aERfNHRIMkZmZ0kzeDJ2SGpIbnRObkxSWVpVWl8tYUZrdi1CcVdHTDdUdFRKUVhaZkFmSF9uaWZmOFo4blROSVF1RXd3?oc=5" target="_blank">Putin calls for international focus on ‘traditional values’</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>EU state’s opposition leader struck with walking stick - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiY0FVX3lxTFA0c1d5QVZzaHFjSTV0amMxeExJWXJmSldxMVI0VTZkeUxQdS1DVWk2cjlCWkpRYmNNVkNZemlsOHA5cThQdk9VMkRBdnhCLUhnOEY1bWpQQlZxemJPSUF0UjFIUdIBaEFVX3lxTE1pR1JHZGstYkhaZTc0MTJKa2tIakM1UTlnclgwR0JGblBWZGdfLUtpYnNZRVNrQVZnNTY5Z3NZUEhkdTY2V3dTTWVoNnN6SUpKNmZfZE9DbGZDSjlsSm9tZkl3bVl1SlR1?oc=5</link>
+<guid isPermaLink="false">CBMiY0FVX3lxTFA0c1d5QVZzaHFjSTV0amMxeExJWXJmSldxMVI0VTZkeUxQdS1DVWk2cjlCWkpRYmNNVkNZemlsOHA5cThQdk9VMkRBdnhCLUhnOEY1bWpQQlZxemJPSUF0UjFIUdIBaEFVX3lxTE1pR1JHZGstYkhaZTc0MTJKa2tIakM1UTlnclgwR0JGblBWZGdfLUtpYnNZRVNrQVZnNTY5Z3NZUEhkdTY2V3dTTWVoNnN6SUpKNmZfZE9DbGZDSjlsSm9tZkl3bVl1SlR1</guid>
+<pubDate>Mon, 01 Sep 2025 22:39:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTFA0c1d5QVZzaHFjSTV0amMxeExJWXJmSldxMVI0VTZkeUxQdS1DVWk2cjlCWkpRYmNNVkNZemlsOHA5cThQdk9VMkRBdnhCLUhnOEY1bWpQQlZxemJPSUF0UjFIUdIBaEFVX3lxTE1pR1JHZGstYkhaZTc0MTJKa2tIakM1UTlnclgwR0JGblBWZGdfLUtpYnNZRVNrQVZnNTY5Z3NZUEhkdTY2V3dTTWVoNnN6SUpKNmZfZE9DbGZDSjlsSm9tZkl3bVl1SlR1?oc=5" target="_blank">EU state’s opposition leader struck with walking stick</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin and Trump did not agree on summit with Zelensky – Kremlin aide - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTFBGREM5eXVick96WElpVy1Cd05kTkxFaDJLU1pYd1RaUXYtb2VBZ0hyckdDcGdxd0x6MTBGWnpVQmNVOFJ3MEVRT1g1VjZicTRpUHhlRmhsMmJNbGFZT20tNTRRRGF6eklXS282bNIBckFVX3lxTFBjNk4tYmI1QjdXakVVdmdValMyejVPdHIwdUtlZGpkdnpod0N2NGpJVHVQZlR0YTBKZERjZjR6LThuWjVkV0hDR3phWnlQNU5EUGRyXy1pTkk2dVhzZnRoemlGVWZLSGNxNTZVTmZsZWFsZw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTFBGREM5eXVick96WElpVy1Cd05kTkxFaDJLU1pYd1RaUXYtb2VBZ0hyckdDcGdxd0x6MTBGWnpVQmNVOFJ3MEVRT1g1VjZicTRpUHhlRmhsMmJNbGFZT20tNTRRRGF6eklXS282bNIBckFVX3lxTFBjNk4tYmI1QjdXakVVdmdValMyejVPdHIwdUtlZGpkdnpod0N2NGpJVHVQZlR0YTBKZERjZjR6LThuWjVkV0hDR3phWnlQNU5EUGRyXy1pTkk2dVhzZnRoemlGVWZLSGNxNTZVTmZsZWFsZw</guid>
+<pubDate>Mon, 01 Sep 2025 18:09:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTFBGREM5eXVick96WElpVy1Cd05kTkxFaDJLU1pYd1RaUXYtb2VBZ0hyckdDcGdxd0x6MTBGWnpVQmNVOFJ3MEVRT1g1VjZicTRpUHhlRmhsMmJNbGFZT20tNTRRRGF6eklXS282bNIBckFVX3lxTFBjNk4tYmI1QjdXakVVdmdValMyejVPdHIwdUtlZGpkdnpod0N2NGpJVHVQZlR0YTBKZERjZjR6LThuWjVkV0hDR3phWnlQNU5EUGRyXy1pTkk2dVhzZnRoemlGVWZLSGNxNTZVTmZsZWFsZw?oc=5" target="_blank">Putin and Trump did not agree on summit with Zelensky – Kremlin aide</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>1.4 billion Indians are ‘eagerly waiting’ for Putin’s visit – Modi - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMicEFVX3lxTFBKb1h2TW10UWFKcDNGeDFDVTViTWNzQkEwRkU3VjhjT2p1T0p6YWRzRVQ5TEVoV3ZiSnd4bW5lVUxzcExfcnZrTFV6UXNzUVNEaXE3OU1yN2pGeEhDa0hQaTQ0MWpJbFpMZHRvQUdCaGLSAXZBVV95cUxNcWRKX05VR0llOHNVXy04Q0NkUjI5eFJKdFRFdmFHdkhDLXZXWTVRdTY0ZmxiZnIxUDBXdk0yckJ5U1dTWjNZNDFVeXpaOEdsWGNPWXdtMTJ6OFg0OUtJelJuTXlSNnZ4M0RsdmYyUmpWSmFlQmRn?oc=5</link>
+<guid isPermaLink="false">CBMicEFVX3lxTFBKb1h2TW10UWFKcDNGeDFDVTViTWNzQkEwRkU3VjhjT2p1T0p6YWRzRVQ5TEVoV3ZiSnd4bW5lVUxzcExfcnZrTFV6UXNzUVNEaXE3OU1yN2pGeEhDa0hQaTQ0MWpJbFpMZHRvQUdCaGLSAXZBVV95cUxNcWRKX05VR0llOHNVXy04Q0NkUjI5eFJKdFRFdmFHdkhDLXZXWTVRdTY0ZmxiZnIxUDBXdk0yckJ5U1dTWjNZNDFVeXpaOEdsWGNPWXdtMTJ6OFg0OUtJelJuTXlSNnZ4M0RsdmYyUmpWSmFlQmRn</guid>
+<pubDate>Mon, 01 Sep 2025 07:24:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTFBKb1h2TW10UWFKcDNGeDFDVTViTWNzQkEwRkU3VjhjT2p1T0p6YWRzRVQ5TEVoV3ZiSnd4bW5lVUxzcExfcnZrTFV6UXNzUVNEaXE3OU1yN2pGeEhDa0hQaTQ0MWpJbFpMZHRvQUdCaGLSAXZBVV95cUxNcWRKX05VR0llOHNVXy04Q0NkUjI5eFJKdFRFdmFHdkhDLXZXWTVRdTY0ZmxiZnIxUDBXdk0yckJ5U1dTWjNZNDFVeXpaOEdsWGNPWXdtMTJ6OFg0OUtJelJuTXlSNnZ4M0RsdmYyUmpWSmFlQmRn?oc=5" target="_blank">1.4 billion Indians are ‘eagerly waiting’ for Putin’s visit – Modi</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin and Modi share ride in Russian-made Aurus limo - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiY0FVX3lxTE1JRnlKb0V5Y2tkSGpzeHpHLXAyREttejdsX3BkQ3NqOURfSGhScXRBQm5BRnJGbWc1RVg0Sy1KR0ZsVU8xN2NPN2g0RjFEWTFjZ2x4MDc2a0xzRGs2WjVpNE9NWdIBaEFVX3lxTFB5Q3VLTVhobVhrendpOU9kX2V2TE9nLUtKM2FUTmRjWFNxZ1RZOW9XZWctVlRWM1dUZGFNV21YNThTYXRLWTNQd1pCLXowX0x3RTdyaUlsNWh6alExbFM2cEFNRDBKMGlj?oc=5</link>
+<guid isPermaLink="false">CBMiY0FVX3lxTE1JRnlKb0V5Y2tkSGpzeHpHLXAyREttejdsX3BkQ3NqOURfSGhScXRBQm5BRnJGbWc1RVg0Sy1KR0ZsVU8xN2NPN2g0RjFEWTFjZ2x4MDc2a0xzRGs2WjVpNE9NWdIBaEFVX3lxTFB5Q3VLTVhobVhrendpOU9kX2V2TE9nLUtKM2FUTmRjWFNxZ1RZOW9XZWctVlRWM1dUZGFNV21YNThTYXRLWTNQd1pCLXowX0x3RTdyaUlsNWh6alExbFM2cEFNRDBKMGlj</guid>
+<pubDate>Mon, 01 Sep 2025 15:28:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE1JRnlKb0V5Y2tkSGpzeHpHLXAyREttejdsX3BkQ3NqOURfSGhScXRBQm5BRnJGbWc1RVg0Sy1KR0ZsVU8xN2NPN2g0RjFEWTFjZ2x4MDc2a0xzRGs2WjVpNE9NWdIBaEFVX3lxTFB5Q3VLTVhobVhrendpOU9kX2V2TE9nLUtKM2FUTmRjWFNxZ1RZOW9XZWctVlRWM1dUZGFNV21YNThTYXRLWTNQd1pCLXowX0x3RTdyaUlsNWh6alExbFM2cEFNRDBKMGlj?oc=5" target="_blank">Putin and Modi share ride in Russian-made Aurus limo</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>SCO summit highlights clash of security visions – expert - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTFB0R2NuM1VUUVJublZSSm10TlFYZnFNSnhtMVRJMG95RkgtNXFfWkU3cTlQdEhTNGdKMEdJOEFMNHB1RkJ3LTJwS2w4bG5ua3NsUHNHQjVPR01hVVhiVmx4ZVFNYnREQm5CZHow0gFwQVVfeXFMTjktbzczd1J1QUJVU1VGWURwUk1sY1JpTEdQR21IYVYtY1lxcFVUSk5oeVA4dE5BOVlMdDlqQjVsZ2VSTk10TkdYcjBwbGRYcGVzSzJxVERYOEIwZkJTcEo3MWlHaTJ1ZGpQU0ljVERkMQ?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTFB0R2NuM1VUUVJublZSSm10TlFYZnFNSnhtMVRJMG95RkgtNXFfWkU3cTlQdEhTNGdKMEdJOEFMNHB1RkJ3LTJwS2w4bG5ua3NsUHNHQjVPR01hVVhiVmx4ZVFNYnREQm5CZHow0gFwQVVfeXFMTjktbzczd1J1QUJVU1VGWURwUk1sY1JpTEdQR21IYVYtY1lxcFVUSk5oeVA4dE5BOVlMdDlqQjVsZ2VSTk10TkdYcjBwbGRYcGVzSzJxVERYOEIwZkJTcEo3MWlHaTJ1ZGpQU0ljVERkMQ</guid>
+<pubDate>Mon, 01 Sep 2025 15:09:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTFB0R2NuM1VUUVJublZSSm10TlFYZnFNSnhtMVRJMG95RkgtNXFfWkU3cTlQdEhTNGdKMEdJOEFMNHB1RkJ3LTJwS2w4bG5ua3NsUHNHQjVPR01hVVhiVmx4ZVFNYnREQm5CZHow0gFwQVVfeXFMTjktbzczd1J1QUJVU1VGWURwUk1sY1JpTEdQR21IYVYtY1lxcFVUSk5oeVA4dE5BOVlMdDlqQjVsZ2VSTk10TkdYcjBwbGRYcGVzSzJxVERYOEIwZkJTcEo3MWlHaTJ1ZGpQU0ljVERkMQ?oc=5" target="_blank">SCO summit highlights clash of security visions – expert</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin to brief Xi and Modi on Alaska talks with Trump - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMickFVX3lxTFB0S2NDZXlPQjVud3g1VkJ5X2dZUFZDZ3I3aFp0ZUp3V2cyOFBGdzFnYWktUnJ2bjItTy1XWEJCTXZCUnh2OUVwVzhUQi0ycGdjM3dJUHBjTVlNR2lqR0Q3c2I5SkF1c19scFJPOWlmYnNPQdIBd0FVX3lxTE9kTFhTVmRKRkNrNXhndWF2b2k1OFdiaVlTekVMcVB3X3lnQUNsYi1McWc3M1ZQcTc4bWMybHd1NXNMU0RpbGR2cUVOZWNYZXJPRE45aFNTZXlBNHFJTVMwb2YwWHk4b1RpZURIMlhucWdvRmF4YlhN?oc=5</link>
+<guid isPermaLink="false">CBMickFVX3lxTFB0S2NDZXlPQjVud3g1VkJ5X2dZUFZDZ3I3aFp0ZUp3V2cyOFBGdzFnYWktUnJ2bjItTy1XWEJCTXZCUnh2OUVwVzhUQi0ycGdjM3dJUHBjTVlNR2lqR0Q3c2I5SkF1c19scFJPOWlmYnNPQdIBd0FVX3lxTE9kTFhTVmRKRkNrNXhndWF2b2k1OFdiaVlTekVMcVB3X3lnQUNsYi1McWc3M1ZQcTc4bWMybHd1NXNMU0RpbGR2cUVOZWNYZXJPRE45aFNTZXlBNHFJTVMwb2YwWHk4b1RpZURIMlhucWdvRmF4YlhN</guid>
+<pubDate>Mon, 01 Sep 2025 07:14:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMickFVX3lxTFB0S2NDZXlPQjVud3g1VkJ5X2dZUFZDZ3I3aFp0ZUp3V2cyOFBGdzFnYWktUnJ2bjItTy1XWEJCTXZCUnh2OUVwVzhUQi0ycGdjM3dJUHBjTVlNR2lqR0Q3c2I5SkF1c19scFJPOWlmYnNPQdIBd0FVX3lxTE9kTFhTVmRKRkNrNXhndWF2b2k1OFdiaVlTekVMcVB3X3lnQUNsYi1McWc3M1ZQcTc4bWMybHd1NXNMU0RpbGR2cUVOZWNYZXJPRE45aFNTZXlBNHFJTVMwb2YwWHk4b1RpZURIMlhucWdvRmF4YlhN?oc=5" target="_blank">Putin to brief Xi and Modi on Alaska talks with Trump</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Trump moves to axe over 500 US state media staff - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5OQUk0clIxbXJWbmJXN2pMNWwxdnFZOHhjQzVhYjhCa3BYU25DWFk2Sjg3WWRraE5HUFpGS3E2ODdRNHMwb01nN29vM043OWtzYkNENjR3VUI4TkZaOGtNUmN3OFdKOFnSAWxBVV95cUxNSnZZeUF4TkthZ0diUUF3UVhvZUtDSFdWYnlTNVJlcjBVN2lmUE5ZWFcwOEQzUldQNGFNTDlkR0pfcmhLcFVNWklsSGloYmVtZmtIZHl6VlBnbWVTYVE1LWluT01ISllYRGV5elE?oc=5</link>
+<guid isPermaLink="false">CBMiZ0FVX3lxTE5OQUk0clIxbXJWbmJXN2pMNWwxdnFZOHhjQzVhYjhCa3BYU25DWFk2Sjg3WWRraE5HUFpGS3E2ODdRNHMwb01nN29vM043OWtzYkNENjR3VUI4TkZaOGtNUmN3OFdKOFnSAWxBVV95cUxNSnZZeUF4TkthZ0diUUF3UVhvZUtDSFdWYnlTNVJlcjBVN2lmUE5ZWFcwOEQzUldQNGFNTDlkR0pfcmhLcFVNWklsSGloYmVtZmtIZHl6VlBnbWVTYVE1LWluT01ISllYRGV5elE</guid>
+<pubDate>Mon, 01 Sep 2025 08:44:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5OQUk0clIxbXJWbmJXN2pMNWwxdnFZOHhjQzVhYjhCa3BYU25DWFk2Sjg3WWRraE5HUFpGS3E2ODdRNHMwb01nN29vM043OWtzYkNENjR3VUI4TkZaOGtNUmN3OFdKOFnSAWxBVV95cUxNSnZZeUF4TkthZ0diUUF3UVhvZUtDSFdWYnlTNVJlcjBVN2lmUE5ZWFcwOEQzUldQNGFNTDlkR0pfcmhLcFVNWklsSGloYmVtZmtIZHl6VlBnbWVTYVE1LWluT01ISllYRGV5elE?oc=5" target="_blank">Trump moves to axe over 500 US state media staff</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Polish president revives demand for reparations from Germany - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiekFVX3lxTFBKeFlXeUkzZXUtZnRTbV9RdWRibTBrRkVOeE1zUUo5Nk1Ebk9oSlJOUU9IUHNhWVNrNGZkaTU1U3VYeUhBRFdMYVZFQVdjTnhiNnpuMjNZcHZzT2FpLUgxS1RMMGlUZ09XcVE1dkl6T0syeGdXNXVqb2VR0gF_QVVfeXFMUGRKZm5ORGluck9rT3dlUGJCUkpZOTNmWmFhVmxmck9Fb244bFdqQjZVLXlKUmladHhSVUplbWFqSUpNcGpyUUZzY2VOa1ZxbTduNzhUcE0yeGZxZk5HWGlzdmM5WGNES0ZaY2FJbEEwQ2hURG1zdGh0a2hMWVFWbw?oc=5</link>
+<guid isPermaLink="false">CBMiekFVX3lxTFBKeFlXeUkzZXUtZnRTbV9RdWRibTBrRkVOeE1zUUo5Nk1Ebk9oSlJOUU9IUHNhWVNrNGZkaTU1U3VYeUhBRFdMYVZFQVdjTnhiNnpuMjNZcHZzT2FpLUgxS1RMMGlUZ09XcVE1dkl6T0syeGdXNXVqb2VR0gF_QVVfeXFMUGRKZm5ORGluck9rT3dlUGJCUkpZOTNmWmFhVmxmck9Fb244bFdqQjZVLXlKUmladHhSVUplbWFqSUpNcGpyUUZzY2VOa1ZxbTduNzhUcE0yeGZxZk5HWGlzdmM5WGNES0ZaY2FJbEEwQ2hURG1zdGh0a2hMWVFWbw</guid>
+<pubDate>Mon, 01 Sep 2025 14:57:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiekFVX3lxTFBKeFlXeUkzZXUtZnRTbV9RdWRibTBrRkVOeE1zUUo5Nk1Ebk9oSlJOUU9IUHNhWVNrNGZkaTU1U3VYeUhBRFdMYVZFQVdjTnhiNnpuMjNZcHZzT2FpLUgxS1RMMGlUZ09XcVE1dkl6T0syeGdXNXVqb2VR0gF_QVVfeXFMUGRKZm5ORGluck9rT3dlUGJCUkpZOTNmWmFhVmxmck9Fb244bFdqQjZVLXlKUmladHhSVUplbWFqSUpNcGpyUUZzY2VOa1ZxbTduNzhUcE0yeGZxZk5HWGlzdmM5WGNES0ZaY2FJbEEwQ2hURG1zdGh0a2hMWVFWbw?oc=5" target="_blank">Polish president revives demand for reparations from Germany</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Ukrainian MP blames Zelensky for assassination of far-right politician - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMilgFBVV95cUxOQ29oc0x3a0tGRWJSbEk3b0FEQU1EclFDWnZYTEwxNldybktMeWE1X1UwWUZUZUFnZFFHVUFINGlEbEVVTUNtWk9iZExGaGIxYUwzNUpmTGNQRkFmeVJFcWhMZ0FwMzJrVTNFWlVSOFNLaGVxamd6X0hjc3RkMzBIdXdhREpyM2NWTmpTdXA0NWFVQXJQNlHSAZsBQVVfeXFMT2FXT2NjeXk4QVZ3eFNqWnBGeGRtem1qQ1RXR2RSdXRRMDhvUUp2dFFyT2s4MmxHUDA4cDdmdFpaRVZfQkVOYzMwYm9vSmlZMlRKLWJaa2l0TWg3WXlQci1nQzdTQlprVkVhU0Y2ZHhYMnc4ckk1NXpoWjdTNmpwa2tkdy1DMy1wU185RERFLXNLNDNyZnJQalFOdXc?oc=5</link>
+<guid isPermaLink="false">CBMilgFBVV95cUxOQ29oc0x3a0tGRWJSbEk3b0FEQU1EclFDWnZYTEwxNldybktMeWE1X1UwWUZUZUFnZFFHVUFINGlEbEVVTUNtWk9iZExGaGIxYUwzNUpmTGNQRkFmeVJFcWhMZ0FwMzJrVTNFWlVSOFNLaGVxamd6X0hjc3RkMzBIdXdhREpyM2NWTmpTdXA0NWFVQXJQNlHSAZsBQVVfeXFMT2FXT2NjeXk4QVZ3eFNqWnBGeGRtem1qQ1RXR2RSdXRRMDhvUUp2dFFyT2s4MmxHUDA4cDdmdFpaRVZfQkVOYzMwYm9vSmlZMlRKLWJaa2l0TWg3WXlQci1nQzdTQlprVkVhU0Y2ZHhYMnc4ckk1NXpoWjdTNmpwa2tkdy1DMy1wU185RERFLXNLNDNyZnJQalFOdXc</guid>
+<pubDate>Mon, 01 Sep 2025 20:52:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMilgFBVV95cUxOQ29oc0x3a0tGRWJSbEk3b0FEQU1EclFDWnZYTEwxNldybktMeWE1X1UwWUZUZUFnZFFHVUFINGlEbEVVTUNtWk9iZExGaGIxYUwzNUpmTGNQRkFmeVJFcWhMZ0FwMzJrVTNFWlVSOFNLaGVxamd6X0hjc3RkMzBIdXdhREpyM2NWTmpTdXA0NWFVQXJQNlHSAZsBQVVfeXFMT2FXT2NjeXk4QVZ3eFNqWnBGeGRtem1qQ1RXR2RSdXRRMDhvUUp2dFFyT2s4MmxHUDA4cDdmdFpaRVZfQkVOYzMwYm9vSmlZMlRKLWJaa2l0TWg3WXlQci1nQzdTQlprVkVhU0Y2ZHhYMnc4ckk1NXpoWjdTNmpwa2tkdy1DMy1wU185RERFLXNLNDNyZnJQalFOdXc?oc=5" target="_blank">Ukrainian MP blames Zelensky for assassination of far-right politician</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>There should be no ‘double standards’ on terrorism – Modi - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiakFVX3lxTE1mRTJlejZoWWhpUDNUdVNWZ2pUdk5VS2JSbzc3VDZuNW1qZWdncjN5TFRFdzRKSGRMTFFDRmhhMEdoT0RfcGtjRWp4LWJIalphNmdnbGQ0UmYtYUFSOFQ3N3FBX012WlBWVEHSAW9BVV95cUxOQ2JXSk0zRUxfZEhGUkNCQ0dzVkZ3VjB2WkU1bTVaOVM4ZmgzVEgySE9vVEhIVmZxX1FiampCaXd0eXA3ZGUtWHhfd3dEQWEwTFI1TW5KR0pLV1B3cUtFc1djcWNoaUhad0NlcWNobFE?oc=5</link>
+<guid isPermaLink="false">CBMiakFVX3lxTE1mRTJlejZoWWhpUDNUdVNWZ2pUdk5VS2JSbzc3VDZuNW1qZWdncjN5TFRFdzRKSGRMTFFDRmhhMEdoT0RfcGtjRWp4LWJIalphNmdnbGQ0UmYtYUFSOFQ3N3FBX012WlBWVEHSAW9BVV95cUxOQ2JXSk0zRUxfZEhGUkNCQ0dzVkZ3VjB2WkU1bTVaOVM4ZmgzVEgySE9vVEhIVmZxX1FiampCaXd0eXA3ZGUtWHhfd3dEQWEwTFI1TW5KR0pLV1B3cUtFc1djcWNoaUhad0NlcWNobFE</guid>
+<pubDate>Mon, 01 Sep 2025 09:25:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiakFVX3lxTE1mRTJlejZoWWhpUDNUdVNWZ2pUdk5VS2JSbzc3VDZuNW1qZWdncjN5TFRFdzRKSGRMTFFDRmhhMEdoT0RfcGtjRWp4LWJIalphNmdnbGQ0UmYtYUFSOFQ3N3FBX012WlBWVEHSAW9BVV95cUxOQ2JXSk0zRUxfZEhGUkNCQ0dzVkZ3VjB2WkU1bTVaOVM4ZmgzVEgySE9vVEhIVmZxX1FiampCaXd0eXA3ZGUtWHhfd3dEQWEwTFI1TW5KR0pLV1B3cUtFc1djcWNoaUhad0NlcWNobFE?oc=5" target="_blank">There should be no ‘double standards’ on terrorism – Modi</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>China’s forgotten World War: The West has much to learn - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9JSENHNUJGYWZhZnUwbVQxczAzYmpOZWs4WmFQdG1OcG9oTW45RXBSSE1UblA1b3p1TlFsek16b25HN3F3VWt0WWhDNnM0R21mWjJDZzAzSFo3ZmdOV2QyRllfMjEwZjjSAWxBVV95cUxNZlJrZXNyaTRJSDVBNTFiQjI3YTNMd1RZNHFvaFdsS3BmNUNmaFJpV2xKUDVzLWd6OW50ZlJhY09meDl3ZE1qdFQ0bXljWGhEUzhwTUxhZFFqYlgzVmpDRV9rdS1sUFpYNHE1Zmo?oc=5</link>
+<guid isPermaLink="false">CBMiZ0FVX3lxTE9JSENHNUJGYWZhZnUwbVQxczAzYmpOZWs4WmFQdG1OcG9oTW45RXBSSE1UblA1b3p1TlFsek16b25HN3F3VWt0WWhDNnM0R21mWjJDZzAzSFo3ZmdOV2QyRllfMjEwZjjSAWxBVV95cUxNZlJrZXNyaTRJSDVBNTFiQjI3YTNMd1RZNHFvaFdsS3BmNUNmaFJpV2xKUDVzLWd6OW50ZlJhY09meDl3ZE1qdFQ0bXljWGhEUzhwTUxhZFFqYlgzVmpDRV9rdS1sUFpYNHE1Zmo</guid>
+<pubDate>Mon, 01 Sep 2025 18:13:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9JSENHNUJGYWZhZnUwbVQxczAzYmpOZWs4WmFQdG1OcG9oTW45RXBSSE1UblA1b3p1TlFsek16b25HN3F3VWt0WWhDNnM0R21mWjJDZzAzSFo3ZmdOV2QyRllfMjEwZjjSAWxBVV95cUxNZlJrZXNyaTRJSDVBNTFiQjI3YTNMd1RZNHFvaFdsS3BmNUNmaFJpV2xKUDVzLWd6OW50ZlJhY09meDl3ZE1qdFQ0bXljWGhEUzhwTUxhZFFqYlgzVmpDRV9rdS1sUFpYNHE1Zmo?oc=5" target="_blank">China’s forgotten World War: The West has much to learn</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>‘The Future of the World’ Open Dialogue to kick off in Russia - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidEFVX3lxTFBCQmlfUUU2b2twWk5wb2pFcTVzdXNkQlFGOHNQTzVYaDc2VzFWbmFJQkhqRjgxdHdfNGtIcVF3WXh0S0tVVTlvODJFeG1pM1VTM3lGMXpPb0l5cjF0TG10dnZwdVp0bW94U0lWZVJyMTFUTF9l0gF6QVVfeXFMUDM5V25Ma2tNOEZGVVN6WjdDQy1tYkhTaUVHaE4xOUVleEdJU0dtWEx6QkR4LWhDTVlRTWF3T190el96TUt6ZHFnZE5LU0xXM1VfZkRHNVpERGV3bWNOR1k2U0tjQjdIdmZnVmFkNlZ1VFZwS1RpVGRQbHc?oc=5</link>
+<guid isPermaLink="false">CBMidEFVX3lxTFBCQmlfUUU2b2twWk5wb2pFcTVzdXNkQlFGOHNQTzVYaDc2VzFWbmFJQkhqRjgxdHdfNGtIcVF3WXh0S0tVVTlvODJFeG1pM1VTM3lGMXpPb0l5cjF0TG10dnZwdVp0bW94U0lWZVJyMTFUTF9l0gF6QVVfeXFMUDM5V25Ma2tNOEZGVVN6WjdDQy1tYkhTaUVHaE4xOUVleEdJU0dtWEx6QkR4LWhDTVlRTWF3T190el96TUt6ZHFnZE5LU0xXM1VfZkRHNVpERGV3bWNOR1k2U0tjQjdIdmZnVmFkNlZ1VFZwS1RpVGRQbHc</guid>
+<pubDate>Mon, 01 Sep 2025 16:48:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidEFVX3lxTFBCQmlfUUU2b2twWk5wb2pFcTVzdXNkQlFGOHNQTzVYaDc2VzFWbmFJQkhqRjgxdHdfNGtIcVF3WXh0S0tVVTlvODJFeG1pM1VTM3lGMXpPb0l5cjF0TG10dnZwdVp0bW94U0lWZVJyMTFUTF9l0gF6QVVfeXFMUDM5V25Ma2tNOEZGVVN6WjdDQy1tYkhTaUVHaE4xOUVleEdJU0dtWEx6QkR4LWhDTVlRTWF3T190el96TUt6ZHFnZE5LU0xXM1VfZkRHNVpERGV3bWNOR1k2U0tjQjdIdmZnVmFkNlZ1VFZwS1RpVGRQbHc?oc=5" target="_blank">‘The Future of the World’ Open Dialogue to kick off in Russia</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>From czars to zoomers: Russia’s school uniform never died - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTE9SbnNFQm50MDljT1dkRXlPN3BzaWRQczlVSUVFZlQ4QmxMMVR2R0RFZHU5Wk8tV2pvRzg5UnE0bnpUU0Zzamx2bjFGcmQ1NUJET0RYcWhHM0gwYjJYUy1NYW1rU1FLWHFtNVhJ0gFwQVVfeXFMTzNTdFRKN055cC1LblF1RE02VGdSbnFmZ1NKV0lZXzh5TGZ5Z2YwMHBpRjBrUDh2OW9LSHZuZ1kzbnR6cGNtTnBLNWxscmdGM0RKdGJwMEtBTUVMVE9Fb1dLWmpSNWU4QmExQWZjZ3hNcA?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTE9SbnNFQm50MDljT1dkRXlPN3BzaWRQczlVSUVFZlQ4QmxMMVR2R0RFZHU5Wk8tV2pvRzg5UnE0bnpUU0Zzamx2bjFGcmQ1NUJET0RYcWhHM0gwYjJYUy1NYW1rU1FLWHFtNVhJ0gFwQVVfeXFMTzNTdFRKN055cC1LblF1RE02VGdSbnFmZ1NKV0lZXzh5TGZ5Z2YwMHBpRjBrUDh2OW9LSHZuZ1kzbnR6cGNtTnBLNWxscmdGM0RKdGJwMEtBTUVMVE9Fb1dLWmpSNWU4QmExQWZjZ3hNcA</guid>
+<pubDate>Mon, 01 Sep 2025 09:40:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE9SbnNFQm50MDljT1dkRXlPN3BzaWRQczlVSUVFZlQ4QmxMMVR2R0RFZHU5Wk8tV2pvRzg5UnE0bnpUU0Zzamx2bjFGcmQ1NUJET0RYcWhHM0gwYjJYUy1NYW1rU1FLWHFtNVhJ0gFwQVVfeXFMTzNTdFRKN055cC1LblF1RE02VGdSbnFmZ1NKV0lZXzh5TGZ5Z2YwMHBpRjBrUDh2OW9LSHZuZ1kzbnR6cGNtTnBLNWxscmdGM0RKdGJwMEtBTUVMVE9Fb1dLWmpSNWU4QmExQWZjZ3hNcA?oc=5" target="_blank">From czars to zoomers: Russia’s school uniform never died</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Pro-Palestine activists target Israeli singer in Poland (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTE9HRVpTZmhwcVRoMmZVc2lGN3J4STZQZTU1MUJDV3JDTEJLdGREcURyWHhfZ1FBQmZiZHFMMXBtQ29YSE1qNGY1ak8tZ19MMzAySXA2R184UUdpU0lVOFlKdWdOaUtsMG1lUUtsaExmTdIBdEFVX3lxTE1nRlVGTVJ3dUZITVIxQi1lTDFSenpyampiUFVuUFNmVVExX0ZyREJUTWFPcjBPWW0wRzRFbmFOOE8zRXJyM3M1VWhBTGoxcWtEMjNBbDdILXRLTndQSzEzMHlSVEt4X0lrNlJacWFlWmhQcWRZ?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTE9HRVpTZmhwcVRoMmZVc2lGN3J4STZQZTU1MUJDV3JDTEJLdGREcURyWHhfZ1FBQmZiZHFMMXBtQ29YSE1qNGY1ak8tZ19MMzAySXA2R184UUdpU0lVOFlKdWdOaUtsMG1lUUtsaExmTdIBdEFVX3lxTE1nRlVGTVJ3dUZITVIxQi1lTDFSenpyampiUFVuUFNmVVExX0ZyREJUTWFPcjBPWW0wRzRFbmFOOE8zRXJyM3M1VWhBTGoxcWtEMjNBbDdILXRLTndQSzEzMHlSVEt4X0lrNlJacWFlWmhQcWRZ</guid>
+<pubDate>Mon, 01 Sep 2025 20:19:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE9HRVpTZmhwcVRoMmZVc2lGN3J4STZQZTU1MUJDV3JDTEJLdGREcURyWHhfZ1FBQmZiZHFMMXBtQ29YSE1qNGY1ak8tZ19MMzAySXA2R184UUdpU0lVOFlKdWdOaUtsMG1lUUtsaExmTdIBdEFVX3lxTE1nRlVGTVJ3dUZITVIxQi1lTDFSenpyampiUFVuUFNmVVExX0ZyREJUTWFPcjBPWW0wRzRFbmFOOE8zRXJyM3M1VWhBTGoxcWtEMjNBbDdILXRLTndQSzEzMHlSVEt4X0lrNlJacWFlWmhQcWRZ?oc=5" target="_blank">Pro-Palestine activists target Israeli singer in Poland (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Kiev points finger at Russia over neo-Nazi politician’s murder - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTE1ZaTlSZjUxZzlvYTktQndCY0ZJcExSNWZreWMzT1pwMHVnWi14d2pld1FOcGhMbGVGbDFuQUFiYlRoQVk1NDBnU0FCRzFMaURJSW4wb2s0SmVLY0VmWXBGNnBBbmhRQ3d0Szh5OGl1ONIBdEFVX3lxTE8wcGVvQW10aEdYYlVZVnVmTFIydmZ2ajUwRWpDT3g2WXgxWFFlbTMxanI4N3Iya2FTdURLZUVTZ1lZYVptSnlwaVNRSDJoRlU1N1Mta3RtT2RWSmFFZ05XVUZnZUVrUExoOXg1ODhRTWk3dzNN?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTE1ZaTlSZjUxZzlvYTktQndCY0ZJcExSNWZreWMzT1pwMHVnWi14d2pld1FOcGhMbGVGbDFuQUFiYlRoQVk1NDBnU0FCRzFMaURJSW4wb2s0SmVLY0VmWXBGNnBBbmhRQ3d0Szh5OGl1ONIBdEFVX3lxTE8wcGVvQW10aEdYYlVZVnVmTFIydmZ2ajUwRWpDT3g2WXgxWFFlbTMxanI4N3Iya2FTdURLZUVTZ1lZYVptSnlwaVNRSDJoRlU1N1Mta3RtT2RWSmFFZ05XVUZnZUVrUExoOXg1ODhRTWk3dzNN</guid>
+<pubDate>Mon, 01 Sep 2025 13:51:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE1ZaTlSZjUxZzlvYTktQndCY0ZJcExSNWZreWMzT1pwMHVnWi14d2pld1FOcGhMbGVGbDFuQUFiYlRoQVk1NDBnU0FCRzFMaURJSW4wb2s0SmVLY0VmWXBGNnBBbmhRQ3d0Szh5OGl1ONIBdEFVX3lxTE8wcGVvQW10aEdYYlVZVnVmTFIydmZ2ajUwRWpDT3g2WXgxWFFlbTMxanI4N3Iya2FTdURLZUVTZ1lZYVptSnlwaVNRSDJoRlU1N1Mta3RtT2RWSmFFZ05XVUZnZUVrUExoOXg1ODhRTWk3dzNN?oc=5" target="_blank">Kiev points finger at Russia over neo-Nazi politician’s murder</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Senior German official urges intel reform to counter ‘Russian threat’ - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMif0FVX3lxTE1WUUVVZHIxS0V2dTltR185Y0I2VjhLTWdYdloyUUg4cGdhRXM1ZnNoeERsQ1NPWEk1LUR3NHNjWHJzdDFBbmxwTkFZR2Frd2N0ZUEwZElyYjRSdVRYOERGU0tnOWZNWW5NNjlZTXRpc2l0WVRyNVlQZnB3SXNqNVXSAYQBQVVfeXFMT2FXLUNDXzM1NTVSdm1ob2J3Uk9CUWVVbTR1SV9abHhfMXFLZU51blhtYU1YX0JmY0wwU19Ea1Q0TWdWTi1OMC1Yd1UwMXFOd2NKMnVUZHRLaVpheUJRTV9jZWx6TG92cTU2V3hlYjlscUg1NFJUM3lrbXdhajB3TXI0Q3pB?oc=5</link>
+<guid isPermaLink="false">CBMif0FVX3lxTE1WUUVVZHIxS0V2dTltR185Y0I2VjhLTWdYdloyUUg4cGdhRXM1ZnNoeERsQ1NPWEk1LUR3NHNjWHJzdDFBbmxwTkFZR2Frd2N0ZUEwZElyYjRSdVRYOERGU0tnOWZNWW5NNjlZTXRpc2l0WVRyNVlQZnB3SXNqNVXSAYQBQVVfeXFMT2FXLUNDXzM1NTVSdm1ob2J3Uk9CUWVVbTR1SV9abHhfMXFLZU51blhtYU1YX0JmY0wwU19Ea1Q0TWdWTi1OMC1Yd1UwMXFOd2NKMnVUZHRLaVpheUJRTV9jZWx6TG92cTU2V3hlYjlscUg1NFJUM3lrbXdhajB3TXI0Q3pB</guid>
+<pubDate>Mon, 01 Sep 2025 13:07:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE1WUUVVZHIxS0V2dTltR185Y0I2VjhLTWdYdloyUUg4cGdhRXM1ZnNoeERsQ1NPWEk1LUR3NHNjWHJzdDFBbmxwTkFZR2Frd2N0ZUEwZElyYjRSdVRYOERGU0tnOWZNWW5NNjlZTXRpc2l0WVRyNVlQZnB3SXNqNVXSAYQBQVVfeXFMT2FXLUNDXzM1NTVSdm1ob2J3Uk9CUWVVbTR1SV9abHhfMXFLZU51blhtYU1YX0JmY0wwU19Ea1Q0TWdWTi1OMC1Yd1UwMXFOd2NKMnVUZHRLaVpheUJRTV9jZWx6TG92cTU2V3hlYjlscUg1NFJUM3lrbXdhajB3TXI0Q3pB?oc=5" target="_blank">Senior German official urges intel reform to counter ‘Russian threat’</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Protesters heckle ‘Nazi criminal’ von der Leyen in Bulgaria (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTFBJTVJRdTZVUnFhRGVPZGVySThGUFk2QkhSeUVvZzhQTTF1WGFvd3ZLNmJsVGVuZUtXd1dGQXg5SE5temM0RUMtNERUalZSMzJoZ3BNNVJKdVhzT2hFV1Vqdm9ES1F5VzZhN2xwc0xjVdIBdEFVX3lxTE5yS1liUTM4b21qSHBtRDAtTF9MR1lSTTYxZ3JCXzZtUzIzVDFBaUZ6bDJDV24xcHpPYU1nMVU1S2hxNDlNSHRLeUZZMU1leG5zTXVjM19ZZmpkc2t6cjJLdmhIU183RUZhU3Nlb2ltVWFtQ203?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTFBJTVJRdTZVUnFhRGVPZGVySThGUFk2QkhSeUVvZzhQTTF1WGFvd3ZLNmJsVGVuZUtXd1dGQXg5SE5temM0RUMtNERUalZSMzJoZ3BNNVJKdVhzT2hFV1Vqdm9ES1F5VzZhN2xwc0xjVdIBdEFVX3lxTE5yS1liUTM4b21qSHBtRDAtTF9MR1lSTTYxZ3JCXzZtUzIzVDFBaUZ6bDJDV24xcHpPYU1nMVU1S2hxNDlNSHRLeUZZMU1leG5zTXVjM19ZZmpkc2t6cjJLdmhIU183RUZhU3Nlb2ltVWFtQ203</guid>
+<pubDate>Tue, 02 Sep 2025 00:43:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTFBJTVJRdTZVUnFhRGVPZGVySThGUFk2QkhSeUVvZzhQTTF1WGFvd3ZLNmJsVGVuZUtXd1dGQXg5SE5temM0RUMtNERUalZSMzJoZ3BNNVJKdVhzT2hFV1Vqdm9ES1F5VzZhN2xwc0xjVdIBdEFVX3lxTE5yS1liUTM4b21qSHBtRDAtTF9MR1lSTTYxZ3JCXzZtUzIzVDFBaUZ6bDJDV24xcHpPYU1nMVU1S2hxNDlNSHRLeUZZMU1leG5zTXVjM19ZZmpkc2t6cjJLdmhIU183RUZhU3Nlb2ltVWFtQ203?oc=5" target="_blank">Protesters heckle ‘Nazi criminal’ von der Leyen in Bulgaria (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Militia chief sworn in as head of rival government in African state - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMilwFBVV95cUxQU1dZdkZQMktnYkVLRDEtV3BJS01KTHd5eFh0T0lyZFNSc2ZJUG5FQ1dJbnNrN1UxbTR5MHR0YUNiYzlrSEhnc3lUTmtyUXp1LU93NnVaYmNOb0VBMGdKVWRMcUVaaTV1c05FYlhmUEpRaU1EX0pCNmdiYUhQbzhpX19GVXJCQzRLbEowM2N1dnhjRXY3OWk40gGcAUFVX3lxTE14X0huQUJXamRjdnlNeFNMYzBadF9GY0ZDZ182MVd4WWs4dGswdG16NUFOYkdyZ2RXN0YtSWQ5MXd6ZE5QbUk2bTg0THhaNFZYOEFpb0pPdlJFTG9rQ21wVHg0NGhhbHhKX2RWYXJfTE8xUTVaRUd3VGZ5UlVhSjVSeDZUMEk3Wkt6ZGtoVnJUdl9YT182WnVJY1hsbA?oc=5</link>
+<guid isPermaLink="false">CBMilwFBVV95cUxQU1dZdkZQMktnYkVLRDEtV3BJS01KTHd5eFh0T0lyZFNSc2ZJUG5FQ1dJbnNrN1UxbTR5MHR0YUNiYzlrSEhnc3lUTmtyUXp1LU93NnVaYmNOb0VBMGdKVWRMcUVaaTV1c05FYlhmUEpRaU1EX0pCNmdiYUhQbzhpX19GVXJCQzRLbEowM2N1dnhjRXY3OWk40gGcAUFVX3lxTE14X0huQUJXamRjdnlNeFNMYzBadF9GY0ZDZ182MVd4WWs4dGswdG16NUFOYkdyZ2RXN0YtSWQ5MXd6ZE5QbUk2bTg0THhaNFZYOEFpb0pPdlJFTG9rQ21wVHg0NGhhbHhKX2RWYXJfTE8xUTVaRUd3VGZ5UlVhSjVSeDZUMEk3Wkt6ZGtoVnJUdl9YT182WnVJY1hsbA</guid>
+<pubDate>Mon, 01 Sep 2025 12:44:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxQU1dZdkZQMktnYkVLRDEtV3BJS01KTHd5eFh0T0lyZFNSc2ZJUG5FQ1dJbnNrN1UxbTR5MHR0YUNiYzlrSEhnc3lUTmtyUXp1LU93NnVaYmNOb0VBMGdKVWRMcUVaaTV1c05FYlhmUEpRaU1EX0pCNmdiYUhQbzhpX19GVXJCQzRLbEowM2N1dnhjRXY3OWk40gGcAUFVX3lxTE14X0huQUJXamRjdnlNeFNMYzBadF9GY0ZDZ182MVd4WWs4dGswdG16NUFOYkdyZ2RXN0YtSWQ5MXd6ZE5QbUk2bTg0THhaNFZYOEFpb0pPdlJFTG9rQ21wVHg0NGhhbHhKX2RWYXJfTE8xUTVaRUd3VGZ5UlVhSjVSeDZUMEk3Wkt6ZGtoVnJUdl9YT182WnVJY1hsbA?oc=5" target="_blank">Militia chief sworn in as head of rival government in African state</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>African Orthodox clergy complete historic visit to Russia (PHOTOS, VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMifEFVX3lxTE9raWhuZnlxRzhmZ3FmVHB2b0NNTFkzRllfcXNTc2R0M3ZFNDlPQ2U5My1Ha2QydlE0ZVlTYWRXRklnVElwNGlPS2oxNG5QcEJ2WE0tLVhSczhuTER1Wjl5cFdWa2lTdk9TbDhaNGRlVGZLT05kUzhiWDNLcXfSAYIBQVVfeXFMT3B2UzFfOUtRemN0ZjNuVGE0WXpJNGxjdGZtdWl3VnF6dWFUTUg3NGlvU0w5M1VMX0FCOTl1MEJJWXpEN1B6dDFqQ2puU3VLRjN0MzFwS1BiZVJFcjBMTWZ5Z1dsTDdQUmVDU2hQajVYOEZ4UnFXdDNUT0FBSDZReU12dw?oc=5</link>
+<guid isPermaLink="false">CBMifEFVX3lxTE9raWhuZnlxRzhmZ3FmVHB2b0NNTFkzRllfcXNTc2R0M3ZFNDlPQ2U5My1Ha2QydlE0ZVlTYWRXRklnVElwNGlPS2oxNG5QcEJ2WE0tLVhSczhuTER1Wjl5cFdWa2lTdk9TbDhaNGRlVGZLT05kUzhiWDNLcXfSAYIBQVVfeXFMT3B2UzFfOUtRemN0ZjNuVGE0WXpJNGxjdGZtdWl3VnF6dWFUTUg3NGlvU0w5M1VMX0FCOTl1MEJJWXpEN1B6dDFqQ2puU3VLRjN0MzFwS1BiZVJFcjBMTWZ5Z1dsTDdQUmVDU2hQajVYOEZ4UnFXdDNUT0FBSDZReU12dw</guid>
+<pubDate>Mon, 01 Sep 2025 13:09:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMifEFVX3lxTE9raWhuZnlxRzhmZ3FmVHB2b0NNTFkzRllfcXNTc2R0M3ZFNDlPQ2U5My1Ha2QydlE0ZVlTYWRXRklnVElwNGlPS2oxNG5QcEJ2WE0tLVhSczhuTER1Wjl5cFdWa2lTdk9TbDhaNGRlVGZLT05kUzhiWDNLcXfSAYIBQVVfeXFMT3B2UzFfOUtRemN0ZjNuVGE0WXpJNGxjdGZtdWl3VnF6dWFUTUg3NGlvU0w5M1VMX0FCOTl1MEJJWXpEN1B6dDFqQ2puU3VLRjN0MzFwS1BiZVJFcjBMTWZ5Z1dsTDdQUmVDU2hQajVYOEZ4UnFXdDNUT0FBSDZReU12dw?oc=5" target="_blank">African Orthodox clergy complete historic visit to Russia (PHOTOS, VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Former EU state politician jailed over child porn – media - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidEFVX3lxTE9FamZQbDhjM2RiYWRBWFlpWG1HREtRMDFCeW1NVkQxaFphTVYzUnhXX3hla3FtN2dzNzU5cHFMNnc0NXU4UFo2aDFvZmJnSjZpWU5WX1JhWHBmVGtNVmpTZGZncTJhaDUxOEJ5ajFVbE9qRm5H0gF6QVVfeXFMTm5BY3A1QjFicFc2MFRSODhqcmc2dDVVYVR0Tmk0bmNBeTJTc0RLMS1oNWhabGhad1gzdkZ4bnBFUGtteUdmU1kycDJTd2o1aFdUNFNCQmtUdHdlaVk4VnhYWDJ2cEt5Vy1pQXBPdE83TUJHNzB6bV9BeVE?oc=5</link>
+<guid isPermaLink="false">CBMidEFVX3lxTE9FamZQbDhjM2RiYWRBWFlpWG1HREtRMDFCeW1NVkQxaFphTVYzUnhXX3hla3FtN2dzNzU5cHFMNnc0NXU4UFo2aDFvZmJnSjZpWU5WX1JhWHBmVGtNVmpTZGZncTJhaDUxOEJ5ajFVbE9qRm5H0gF6QVVfeXFMTm5BY3A1QjFicFc2MFRSODhqcmc2dDVVYVR0Tmk0bmNBeTJTc0RLMS1oNWhabGhad1gzdkZ4bnBFUGtteUdmU1kycDJTd2o1aFdUNFNCQmtUdHdlaVk4VnhYWDJ2cEt5Vy1pQXBPdE83TUJHNzB6bV9BeVE</guid>
+<pubDate>Mon, 01 Sep 2025 19:58:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidEFVX3lxTE9FamZQbDhjM2RiYWRBWFlpWG1HREtRMDFCeW1NVkQxaFphTVYzUnhXX3hla3FtN2dzNzU5cHFMNnc0NXU4UFo2aDFvZmJnSjZpWU5WX1JhWHBmVGtNVmpTZGZncTJhaDUxOEJ5ajFVbE9qRm5H0gF6QVVfeXFMTm5BY3A1QjFicFc2MFRSODhqcmc2dDVVYVR0Tmk0bmNBeTJTc0RLMS1oNWhabGhad1gzdkZ4bnBFUGtteUdmU1kycDJTd2o1aFdUNFNCQmtUdHdlaVk4VnhYWDJ2cEt5Vy1pQXBPdE83TUJHNzB6bV9BeVE?oc=5" target="_blank">Former EU state politician jailed over child porn – media</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin hails South Africa’s G20 chairmanship - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMif0FVX3lxTE9BajFyYnZDZm5OVW9YbVRJaVB2VHZVTHFlZUpiRDI2OUpRX2hwLVNZN3lad0QwWnF4SV94RXE1REdPZTBlbmw3bThvNHJnbDhVQm1MbW5SQ0dBa3pPVWxJaUZFSUJlZzk2MG03RVpxS2cxOU9NOVN6TUlCdXNDdm_SAYQBQVVfeXFMT2I1LUJHNmd0dzNwWnpfWEVJUS1qbnJPeElrUXZzdXJFemRwTWJhdEp5V1hPNXlSS3VxdkxaYXR1YjgtcDBBdlZkTDBhTHBVdk5RMjUwdGN0NDBKV3dOYVFScFE4bUFvcGF6REZCQ0VfNVMzcGdjMHNhTFE5blpSUmFFbldT?oc=5</link>
+<guid isPermaLink="false">CBMif0FVX3lxTE9BajFyYnZDZm5OVW9YbVRJaVB2VHZVTHFlZUpiRDI2OUpRX2hwLVNZN3lad0QwWnF4SV94RXE1REdPZTBlbmw3bThvNHJnbDhVQm1MbW5SQ0dBa3pPVWxJaUZFSUJlZzk2MG03RVpxS2cxOU9NOVN6TUlCdXNDdm_SAYQBQVVfeXFMT2I1LUJHNmd0dzNwWnpfWEVJUS1qbnJPeElrUXZzdXJFemRwTWJhdEp5V1hPNXlSS3VxdkxaYXR1YjgtcDBBdlZkTDBhTHBVdk5RMjUwdGN0NDBKV3dOYVFScFE4bUFvcGF6REZCQ0VfNVMzcGdjMHNhTFE5blpSUmFFbldT</guid>
+<pubDate>Mon, 01 Sep 2025 09:09:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE9BajFyYnZDZm5OVW9YbVRJaVB2VHZVTHFlZUpiRDI2OUpRX2hwLVNZN3lad0QwWnF4SV94RXE1REdPZTBlbmw3bThvNHJnbDhVQm1MbW5SQ0dBa3pPVWxJaUZFSUJlZzk2MG03RVpxS2cxOU9NOVN6TUlCdXNDdm_SAYQBQVVfeXFMT2I1LUJHNmd0dzNwWnpfWEVJUS1qbnJPeElrUXZzdXJFemRwTWJhdEp5V1hPNXlSS3VxdkxaYXR1YjgtcDBBdlZkTDBhTHBVdk5RMjUwdGN0NDBKV3dOYVFScFE4bUFvcGF6REZCQ0VfNVMzcGdjMHNhTFE5blpSUmFFbldT?oc=5" target="_blank">Putin hails South Africa’s G20 chairmanship</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>More bodies exhumed in mass cult case - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTE9zeVNrWmNnY2pEQUNmbm91SnJrcUxUeXJDeFJFZ3VnRXg3REs2Q2RtOUpzYjZDX0xfOE96S0k1ZkcwU2s2M29lUEkzY3NsbmlpcTNmMFRpQ21xcGp2cUNSVEpjMmpoUWRjOGJlbXA5Y9IBdEFVX3lxTE1QUVcwTXJkVzZFVVgzaWhZZG9mVGkzejZFQUxISmd2RU5FQTh6bF9Rd0hXdWFJaFllTXFtR2hFTVhLMEh4YktUVldYWUFZcUpGNU5vbmQ3M1NYaTZKTG5iNnBmVzBtMXRkeDVvMmJoRmE5TFU3?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTE9zeVNrWmNnY2pEQUNmbm91SnJrcUxUeXJDeFJFZ3VnRXg3REs2Q2RtOUpzYjZDX0xfOE96S0k1ZkcwU2s2M29lUEkzY3NsbmlpcTNmMFRpQ21xcGp2cUNSVEpjMmpoUWRjOGJlbXA5Y9IBdEFVX3lxTE1QUVcwTXJkVzZFVVgzaWhZZG9mVGkzejZFQUxISmd2RU5FQTh6bF9Rd0hXdWFJaFllTXFtR2hFTVhLMEh4YktUVldYWUFZcUpGNU5vbmQ3M1NYaTZKTG5iNnBmVzBtMXRkeDVvMmJoRmE5TFU3</guid>
+<pubDate>Mon, 01 Sep 2025 10:04:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE9zeVNrWmNnY2pEQUNmbm91SnJrcUxUeXJDeFJFZ3VnRXg3REs2Q2RtOUpzYjZDX0xfOE96S0k1ZkcwU2s2M29lUEkzY3NsbmlpcTNmMFRpQ21xcGp2cUNSVEpjMmpoUWRjOGJlbXA5Y9IBdEFVX3lxTE1QUVcwTXJkVzZFVVgzaWhZZG9mVGkzejZFQUxISmd2RU5FQTh6bF9Rd0hXdWFJaFllTXFtR2hFTVhLMEh4YktUVldYWUFZcUpGNU5vbmQ3M1NYaTZKTG5iNnBmVzBtMXRkeDVvMmJoRmE5TFU3?oc=5" target="_blank">More bodies exhumed in mass cult case</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>NATO’s Anschluss (by Dmitry Medvedev) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTFBCYk12azdQcEk4QmlodnpOM0RrOUFrUWEzUEhIY0UwdTc1OE4wLUtVSmhfZ2hGRFdEdFdvNDNIMGxJRTZEWExURTVid29HRWRPeEliMFRnTGxCZnBNTnNnejA0N0JWZ09neUFFMdIBckFVX3lxTFBPQjdzWUZMWlFXTGRPV0JlMGxsVDQxNU9iSUhiQ1hCNHNJcGJXVmpfbHVIcDdia0dXZmFMUmVOTHJzM0hWR1FuQkVaSG83SGdpY0k5M2xjV1ZRRzBNQ2ZsTVRnckNlcWs1bGpHV2hhSmw4QQ?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTFBCYk12azdQcEk4QmlodnpOM0RrOUFrUWEzUEhIY0UwdTc1OE4wLUtVSmhfZ2hGRFdEdFdvNDNIMGxJRTZEWExURTVid29HRWRPeEliMFRnTGxCZnBNTnNnejA0N0JWZ09neUFFMdIBckFVX3lxTFBPQjdzWUZMWlFXTGRPV0JlMGxsVDQxNU9iSUhiQ1hCNHNJcGJXVmpfbHVIcDdia0dXZmFMUmVOTHJzM0hWR1FuQkVaSG83SGdpY0k5M2xjV1ZRRzBNQ2ZsTVRnckNlcWs1bGpHV2hhSmw4QQ</guid>
+<pubDate>Thu, 28 Aug 2025 08:45:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTFBCYk12azdQcEk4QmlodnpOM0RrOUFrUWEzUEhIY0UwdTc1OE4wLUtVSmhfZ2hGRFdEdFdvNDNIMGxJRTZEWExURTVid29HRWRPeEliMFRnTGxCZnBNTnNnejA0N0JWZ09neUFFMdIBckFVX3lxTFBPQjdzWUZMWlFXTGRPV0JlMGxsVDQxNU9iSUhiQ1hCNHNJcGJXVmpfbHVIcDdia0dXZmFMUmVOTHJzM0hWR1FuQkVaSG83SGdpY0k5M2xjV1ZRRzBNQ2ZsTVRnckNlcWs1bGpHV2hhSmw4QQ?oc=5" target="_blank">NATO’s Anschluss (by Dmitry Medvedev)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Europe could ‘die out’ – Musk - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiYEFVX3lxTE9lOTlpcDJxcVA0NUlTZ3JBdjNlS1h6RWpkQ1FCZ2tJSzY0UTVBQVN6SzNmUHhkamE3LXJRck5YTXhYYVZiNTJwdUV4b2VNTENrUEFMMzlTUXQzZEh4clRCZtIBZkFVX3lxTE40Y1BZZHJ1TlpQRHh0cVBNN2hyamNZd2VDanZmakdNR3d2ZkJQUFdjUl9Fclc0WFBjV2tMNHVXNmF4NFVQaVUtN1FTMnlyamUxMUttNV9tSk1JSGxMRElndzJRd1BxQQ?oc=5</link>
+<guid isPermaLink="false">CBMiYEFVX3lxTE9lOTlpcDJxcVA0NUlTZ3JBdjNlS1h6RWpkQ1FCZ2tJSzY0UTVBQVN6SzNmUHhkamE3LXJRck5YTXhYYVZiNTJwdUV4b2VNTENrUEFMMzlTUXQzZEh4clRCZtIBZkFVX3lxTE40Y1BZZHJ1TlpQRHh0cVBNN2hyamNZd2VDanZmakdNR3d2ZkJQUFdjUl9Fclc0WFBjV2tMNHVXNmF4NFVQaVUtN1FTMnlyamUxMUttNV9tSk1JSGxMRElndzJRd1BxQQ</guid>
+<pubDate>Sun, 31 Aug 2025 08:18:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE9lOTlpcDJxcVA0NUlTZ3JBdjNlS1h6RWpkQ1FCZ2tJSzY0UTVBQVN6SzNmUHhkamE3LXJRck5YTXhYYVZiNTJwdUV4b2VNTENrUEFMMzlTUXQzZEh4clRCZtIBZkFVX3lxTE40Y1BZZHJ1TlpQRHh0cVBNN2hyamNZd2VDanZmakdNR3d2ZkJQUFdjUl9Fclc0WFBjV2tMNHVXNmF4NFVQaVUtN1FTMnlyamUxMUttNV9tSk1JSGxMRElndzJRd1BxQQ?oc=5" target="_blank">Europe could ‘die out’ – Musk</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Zelensky threatens ‘new deep strikes’ into Russia - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMie0FVX3lxTFB2OGxpemxDZHQ3LTZnMHg0cVYydVotLTdYMUR6YUs2cVppWk9xT256SEFTcjdRSFB0RWRDdFhVSEMyTWVfSzk0UC1lZTN4YktOUlJWUFZnWDRudzBONU9pRDNDZXpfRTMtUVZiU1RiZjlpOFJYNnc4MkxfVdIBgAFBVV95cUxNQXVvaTdNdzd4bUcxa1RMTmFBSHFqOWNwQ3l6ZFZnQm9tN29EU2ljSi1faWhqeWlGSjluWFI1cTRBX0staU43Z2l5MFZEVjFQWW96Vi1kaEhtNUtmeVB1VHdjWktKTFF0dVVqajlXOV8tZkQ0NTJCUG41U0Q2aUtoUA?oc=5</link>
+<guid isPermaLink="false">CBMie0FVX3lxTFB2OGxpemxDZHQ3LTZnMHg0cVYydVotLTdYMUR6YUs2cVppWk9xT256SEFTcjdRSFB0RWRDdFhVSEMyTWVfSzk0UC1lZTN4YktOUlJWUFZnWDRudzBONU9pRDNDZXpfRTMtUVZiU1RiZjlpOFJYNnc4MkxfVdIBgAFBVV95cUxNQXVvaTdNdzd4bUcxa1RMTmFBSHFqOWNwQ3l6ZFZnQm9tN29EU2ljSi1faWhqeWlGSjluWFI1cTRBX0staU43Z2l5MFZEVjFQWW96Vi1kaEhtNUtmeVB1VHdjWktKTFF0dVVqajlXOV8tZkQ0NTJCUG41U0Q2aUtoUA</guid>
+<pubDate>Sun, 31 Aug 2025 15:05:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMie0FVX3lxTFB2OGxpemxDZHQ3LTZnMHg0cVYydVotLTdYMUR6YUs2cVppWk9xT256SEFTcjdRSFB0RWRDdFhVSEMyTWVfSzk0UC1lZTN4YktOUlJWUFZnWDRudzBONU9pRDNDZXpfRTMtUVZiU1RiZjlpOFJYNnc4MkxfVdIBgAFBVV95cUxNQXVvaTdNdzd4bUcxa1RMTmFBSHFqOWNwQ3l6ZFZnQm9tN29EU2ljSi1faWhqeWlGSjluWFI1cTRBX0staU43Z2l5MFZEVjFQWW96Vi1kaEhtNUtmeVB1VHdjWktKTFF0dVVqajlXOV8tZkQ0NTJCUG41U0Q2aUtoUA?oc=5" target="_blank">Zelensky threatens ‘new deep strikes’ into Russia</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>IMPERIAL RECEIPTS: RT LAUNCHES SHOW WITH PROMINENT INDIAN POLITICIAN SHASHI THAROOR - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMihAFBVV95cUxQN0V2WXJ6d1BkRjJnVDlHWV93TTdmVVpWaGVKakJ6SFFsdy1QY1F1azNKMExRaGI2WGtCN0tvTnp3Sk9ybHJBSk16Ykp3ZktIVzU3T09CN0VhbVVGOXdJbTVqckVLSGlfQURRMkk4SzFfdFZiWXdiR2kydjhBcFdWd2NMQ3PSAYoBQVVfeXFMTVFTX2VMZ3ZKbHdFQ05jMl9uTVBUUUkxZERoUG81TDlieEg1VjhUZm9jYXB6aGEySVJKTmpsSXRsSE1sdWZLOU9IT1plSXFiY1l4U3FVRUNaTk9nU19BbFRBSkZidFBETnY5MTFhTVlmcG1NcVJJRFhVSWRJVnE5ZGRaX3FJTkhReG5n?oc=5</link>
+<guid isPermaLink="false">CBMihAFBVV95cUxQN0V2WXJ6d1BkRjJnVDlHWV93TTdmVVpWaGVKakJ6SFFsdy1QY1F1azNKMExRaGI2WGtCN0tvTnp3Sk9ybHJBSk16Ykp3ZktIVzU3T09CN0VhbVVGOXdJbTVqckVLSGlfQURRMkk4SzFfdFZiWXdiR2kydjhBcFdWd2NMQ3PSAYoBQVVfeXFMTVFTX2VMZ3ZKbHdFQ05jMl9uTVBUUUkxZERoUG81TDlieEg1VjhUZm9jYXB6aGEySVJKTmpsSXRsSE1sdWZLOU9IT1plSXFiY1l4U3FVRUNaTk9nU19BbFRBSkZidFBETnY5MTFhTVlmcG1NcVJJRFhVSWRJVnE5ZGRaX3FJTkhReG5n</guid>
+<pubDate>Mon, 01 Sep 2025 09:09:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMihAFBVV95cUxQN0V2WXJ6d1BkRjJnVDlHWV93TTdmVVpWaGVKakJ6SFFsdy1QY1F1azNKMExRaGI2WGtCN0tvTnp3Sk9ybHJBSk16Ykp3ZktIVzU3T09CN0VhbVVGOXdJbTVqckVLSGlfQURRMkk4SzFfdFZiWXdiR2kydjhBcFdWd2NMQ3PSAYoBQVVfeXFMTVFTX2VMZ3ZKbHdFQ05jMl9uTVBUUUkxZERoUG81TDlieEg1VjhUZm9jYXB6aGEySVJKTmpsSXRsSE1sdWZLOU9IT1plSXFiY1l4U3FVRUNaTk9nU19BbFRBSkZidFBETnY5MTFhTVlmcG1NcVJJRFhVSWRJVnE5ZGRaX3FJTkhReG5n?oc=5" target="_blank">IMPERIAL RECEIPTS: RT LAUNCHES SHOW WITH PROMINENT INDIAN POLITICIAN SHASHI THAROOR</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Türkiye’s mediation on Ukraine remains in demand – Putin - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTE04ZFhha3JUV2ExbHVqYzQxWVBtTDdsYVNKSS1XUVFRQ1FuVFNBZmkwbl9XMWZTU25nNEswM3RsQzM3cnJPY09IbzFEUTlfc0RKR2ZvUXNmTmI4NTR0YkJuZkt1ZUpJTFc5c2I00gFwQVVfeXFMUFJ4aFY1Ny1JSm83VWZDWGhmeVlVdE5OOTdrSWF2V2o0SHByWkQ1REFXVFMtUmE1T2tIYWcyTndVMjVlNExrZkFZUzg4WE9HeXpoalF6QU9lVnM4RmRMQnZVNGtMYXdvQ1lfekMwZEIzUg?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTE04ZFhha3JUV2ExbHVqYzQxWVBtTDdsYVNKSS1XUVFRQ1FuVFNBZmkwbl9XMWZTU25nNEswM3RsQzM3cnJPY09IbzFEUTlfc0RKR2ZvUXNmTmI4NTR0YkJuZkt1ZUpJTFc5c2I00gFwQVVfeXFMUFJ4aFY1Ny1JSm83VWZDWGhmeVlVdE5OOTdrSWF2V2o0SHByWkQ1REFXVFMtUmE1T2tIYWcyTndVMjVlNExrZkFZUzg4WE9HeXpoalF6QU9lVnM4RmRMQnZVNGtMYXdvQ1lfekMwZEIzUg</guid>
+<pubDate>Mon, 01 Sep 2025 10:05:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE04ZFhha3JUV2ExbHVqYzQxWVBtTDdsYVNKSS1XUVFRQ1FuVFNBZmkwbl9XMWZTU25nNEswM3RsQzM3cnJPY09IbzFEUTlfc0RKR2ZvUXNmTmI4NTR0YkJuZkt1ZUpJTFc5c2I00gFwQVVfeXFMUFJ4aFY1Ny1JSm83VWZDWGhmeVlVdE5OOTdrSWF2V2o0SHByWkQ1REFXVFMtUmE1T2tIYWcyTndVMjVlNExrZkFZUzg4WE9HeXpoalF6QU9lVnM4RmRMQnZVNGtMYXdvQ1lfekMwZEIzUg?oc=5" target="_blank">Türkiye’s mediation on Ukraine remains in demand – Putin</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Xi hosts Putin, Modi and other global leaders at SCO summit: As it happened - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMic0FVX3lxTE9oVHYwRmU3VmtpZy1JMktTa0dfZW1MUkhaVE8wV0xfbDljUzdaU2VCY1hzRlpBcWpualRyUl9TWnpkd3FhRFdRa0d5ZjBtVTg1MDJ5TEFHMTBxQTJTRDZleHJtTkdNaFh1d2JLQ1llalVVMnPSAXhBVV95cUxNVnNSSmJ5OFNYRWQ5VC1DdnBwTFpXMGZMYkJGc0FLeHVtTFhILTYyM1hRZVNLLTRid2xfcTl1a1lDX1hhYmVIVFFTeU9CeVdDZ0FPTUFDanFDQy14elVsMHRnZlA5MVlzR0w2OW1URkY3Z0R5czFGa28?oc=5</link>
+<guid isPermaLink="false">CBMic0FVX3lxTE9oVHYwRmU3VmtpZy1JMktTa0dfZW1MUkhaVE8wV0xfbDljUzdaU2VCY1hzRlpBcWpualRyUl9TWnpkd3FhRFdRa0d5ZjBtVTg1MDJ5TEFHMTBxQTJTRDZleHJtTkdNaFh1d2JLQ1llalVVMnPSAXhBVV95cUxNVnNSSmJ5OFNYRWQ5VC1DdnBwTFpXMGZMYkJGc0FLeHVtTFhILTYyM1hRZVNLLTRid2xfcTl1a1lDX1hhYmVIVFFTeU9CeVdDZ0FPTUFDanFDQy14elVsMHRnZlA5MVlzR0w2OW1URkY3Z0R5czFGa28</guid>
+<pubDate>Sun, 31 Aug 2025 05:43:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE9oVHYwRmU3VmtpZy1JMktTa0dfZW1MUkhaVE8wV0xfbDljUzdaU2VCY1hzRlpBcWpualRyUl9TWnpkd3FhRFdRa0d5ZjBtVTg1MDJ5TEFHMTBxQTJTRDZleHJtTkdNaFh1d2JLQ1llalVVMnPSAXhBVV95cUxNVnNSSmJ5OFNYRWQ5VC1DdnBwTFpXMGZMYkJGc0FLeHVtTFhILTYyM1hRZVNLLTRid2xfcTl1a1lDX1hhYmVIVFFTeU9CeVdDZ0FPTUFDanFDQy14elVsMHRnZlA5MVlzR0w2OW1URkY3Z0R5czFGa28?oc=5" target="_blank">Xi hosts Putin, Modi and other global leaders at SCO summit: As it happened</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Missiles don’t lie: What this region’s rocket stockpiles say about the next war - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiYEFVX3lxTE5NcVN3ZDZhbXVwaHViV211QXpUeEViVmpZNUV0Ui1BOVhDLTJkWDItU3hKYkZ3d0lINE54RzhLQjNnUUs3M2NEWDVFU1lkeFAzalNKQXB4TUpaa09mTGNOWNIBZkFVX3lxTE9LVlg3cWNiRXh4NnZpcElxc0tmdWVlYkFiSE83Ul91ZFplZDM1M2owWVpKNGJCdmtGV0g1WFI4MmJRRW9naDZXLXVhaExsXzJaNENwbzM5TFVEUmwwWlc5SXY5aXB2dw?oc=5</link>
+<guid isPermaLink="false">CBMiYEFVX3lxTE5NcVN3ZDZhbXVwaHViV211QXpUeEViVmpZNUV0Ui1BOVhDLTJkWDItU3hKYkZ3d0lINE54RzhLQjNnUUs3M2NEWDVFU1lkeFAzalNKQXB4TUpaa09mTGNOWNIBZkFVX3lxTE9LVlg3cWNiRXh4NnZpcElxc0tmdWVlYkFiSE83Ul91ZFplZDM1M2owWVpKNGJCdmtGV0g1WFI4MmJRRW9naDZXLXVhaExsXzJaNENwbzM5TFVEUmwwWlc5SXY5aXB2dw</guid>
+<pubDate>Sun, 31 Aug 2025 16:07:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE5NcVN3ZDZhbXVwaHViV211QXpUeEViVmpZNUV0Ui1BOVhDLTJkWDItU3hKYkZ3d0lINE54RzhLQjNnUUs3M2NEWDVFU1lkeFAzalNKQXB4TUpaa09mTGNOWNIBZkFVX3lxTE9LVlg3cWNiRXh4NnZpcElxc0tmdWVlYkFiSE83Ul91ZFplZDM1M2owWVpKNGJCdmtGV0g1WFI4MmJRRW9naDZXLXVhaExsXzJaNENwbzM5TFVEUmwwWlc5SXY5aXB2dw?oc=5" target="_blank">Missiles don’t lie: What this region’s rocket stockpiles say about the next war</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Hundreds killed in Afghanistan earthquake - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidEFVX3lxTFBZa2tsMk5qdXdsSzFZLTl1NHlRRk9OMzA4VGZzcUozbUFIbk9NLUMwdll3ZzRJMHhjck50ZTlBbWZjZExqUFZyeWJCNEx2MTMzbnJJY3JGVHhaTnY3S1l3RFM4a0hwX3pPbXZ3elVuLTBLaDZn0gF6QVVfeXFMTnFqY2pRYkp4aEdWVVlQV1JBUWZWb2VHYUpsbHJZZkpOZU01RjRvWm5WNGZzWnExZ0pwdkpIQUVJMjR4TnkwSDhHVktIVWZoM0paMjVLYWdXdjV2RG82NkJXb2Y1NmdjR0NvQXlka09PZTNraUFZV3dMY3c?oc=5</link>
+<guid isPermaLink="false">CBMidEFVX3lxTFBZa2tsMk5qdXdsSzFZLTl1NHlRRk9OMzA4VGZzcUozbUFIbk9NLUMwdll3ZzRJMHhjck50ZTlBbWZjZExqUFZyeWJCNEx2MTMzbnJJY3JGVHhaTnY3S1l3RFM4a0hwX3pPbXZ3elVuLTBLaDZn0gF6QVVfeXFMTnFqY2pRYkp4aEdWVVlQV1JBUWZWb2VHYUpsbHJZZkpOZU01RjRvWm5WNGZzWnExZ0pwdkpIQUVJMjR4TnkwSDhHVktIVWZoM0paMjVLYWdXdjV2RG82NkJXb2Y1NmdjR0NvQXlka09PZTNraUFZV3dMY3c</guid>
+<pubDate>Mon, 01 Sep 2025 10:04:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidEFVX3lxTFBZa2tsMk5qdXdsSzFZLTl1NHlRRk9OMzA4VGZzcUozbUFIbk9NLUMwdll3ZzRJMHhjck50ZTlBbWZjZExqUFZyeWJCNEx2MTMzbnJJY3JGVHhaTnY3S1l3RFM4a0hwX3pPbXZ3elVuLTBLaDZn0gF6QVVfeXFMTnFqY2pRYkp4aEdWVVlQV1JBUWZWb2VHYUpsbHJZZkpOZU01RjRvWm5WNGZzWnExZ0pwdkpIQUVJMjR4TnkwSDhHVktIVWZoM0paMjVLYWdXdjV2RG82NkJXb2Y1NmdjR0NvQXlka09PZTNraUFZV3dMY3c?oc=5" target="_blank">Hundreds killed in Afghanistan earthquake</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Houthis detain UN staff in Yemen - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibkFVX3lxTE1Fb3JMcWhJSWQ3LVUyTUhpWjBFQmduNFdYc1VYNmhQdFRlOEI2U1c2LUlfODVJUjh1X1JOc3FLZ3dobmxXaWtXdkRNN3hwaDItU2k4S0txOEo0SUFVRWRSbHF3OW5aTzU2ZHVMNGdB0gFzQVVfeXFMT091NFhDTTJDOGw3N2xQeHZpZFpsRWYtOXRnZWlUTE9TaTY3MTlEWW5nTW0tUjduXzhSb2NkWFdDZmk3MlBqSTdEaVVzZjBkVkpSZi15REpyQWlkQ0Q5ZGdVQUd5LUpndmJ2RC1GRXc2Uy1fdw?oc=5</link>
+<guid isPermaLink="false">CBMibkFVX3lxTE1Fb3JMcWhJSWQ3LVUyTUhpWjBFQmduNFdYc1VYNmhQdFRlOEI2U1c2LUlfODVJUjh1X1JOc3FLZ3dobmxXaWtXdkRNN3hwaDItU2k4S0txOEo0SUFVRWRSbHF3OW5aTzU2ZHVMNGdB0gFzQVVfeXFMT091NFhDTTJDOGw3N2xQeHZpZFpsRWYtOXRnZWlUTE9TaTY3MTlEWW5nTW0tUjduXzhSb2NkWFdDZmk3MlBqSTdEaVVzZjBkVkpSZi15REpyQWlkQ0Q5ZGdVQUd5LUpndmJ2RC1GRXc2Uy1fdw</guid>
+<pubDate>Mon, 01 Sep 2025 06:08:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE1Fb3JMcWhJSWQ3LVUyTUhpWjBFQmduNFdYc1VYNmhQdFRlOEI2U1c2LUlfODVJUjh1X1JOc3FLZ3dobmxXaWtXdkRNN3hwaDItU2k4S0txOEo0SUFVRWRSbHF3OW5aTzU2ZHVMNGdB0gFzQVVfeXFMT091NFhDTTJDOGw3N2xQeHZpZFpsRWYtOXRnZWlUTE9TaTY3MTlEWW5nTW0tUjduXzhSb2NkWFdDZmk3MlBqSTdEaVVzZjBkVkpSZi15REpyQWlkQ0Q5ZGdVQUd5LUpndmJ2RC1GRXc2Uy1fdw?oc=5" target="_blank">Houthis detain UN staff in Yemen</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>BBC warns about RT’s global influence - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTE0tSThVSzNFV2JVcEpGbkVnR3FFMzl0UlNxdHpZNUdPUzBJM0JKa2JLaHhUQlp1UlZxWEp6WXBHbktIaGc0QjQ2MWhCX2ZUSGh4Z0VUeTlCR0U3bmlWRWZZYU1TR005LWdrWGJB0gFwQVVfeXFMUFNqV1ZCTlBLdzRMVVRTTkNJNVBVb002T1MzT0hYRXJ5amhENmx1MGU3QktlYXp6dmVOZ3V1SGpyZ2ZlZDlibDdYMHhJRWc3aWRacFRRU0lMcFpXd19VZktSV2FFUjhkdmUzelVtbmFDQQ?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTE0tSThVSzNFV2JVcEpGbkVnR3FFMzl0UlNxdHpZNUdPUzBJM0JKa2JLaHhUQlp1UlZxWEp6WXBHbktIaGc0QjQ2MWhCX2ZUSGh4Z0VUeTlCR0U3bmlWRWZZYU1TR005LWdrWGJB0gFwQVVfeXFMUFNqV1ZCTlBLdzRMVVRTTkNJNVBVb002T1MzT0hYRXJ5amhENmx1MGU3QktlYXp6dmVOZ3V1SGpyZ2ZlZDlibDdYMHhJRWc3aWRacFRRU0lMcFpXd19VZktSV2FFUjhkdmUzelVtbmFDQQ</guid>
+<pubDate>Tue, 26 Aug 2025 12:21:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE0tSThVSzNFV2JVcEpGbkVnR3FFMzl0UlNxdHpZNUdPUzBJM0JKa2JLaHhUQlp1UlZxWEp6WXBHbktIaGc0QjQ2MWhCX2ZUSGh4Z0VUeTlCR0U3bmlWRWZZYU1TR005LWdrWGJB0gFwQVVfeXFMUFNqV1ZCTlBLdzRMVVRTTkNJNVBVb002T1MzT0hYRXJ5amhENmx1MGU3QktlYXp6dmVOZ3V1SGpyZ2ZlZDlibDdYMHhJRWc3aWRacFRRU0lMcFpXd19VZktSV2FFUjhkdmUzelVtbmFDQQ?oc=5" target="_blank">BBC warns about RT’s global influence</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Journalist publicly quits Reuters over Gaza ‘culpability’ - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMid0FVX3lxTE5QN3d2YjQxaVdkdU9Xc2h6VEtRajNSbFFOeGF1bDhjcUZlTTNnSlRDRnRfMDdFazdBeGsxTEVQbW5xSi1XT3Z2TjFYWVgwMHZkdkRpeGRlSEttaVdDeFMyTkZITkdYZDRFc0NUYms2RUhXVjJncDE40gF8QVVfeXFMUEM1WWQxcTBBNHZVbVhmZEViNXM2SVJGalNoalRzMy1IUFFtemhDejM0aWZta2JRMDNBY2tZNXY3dkJZY2dQd3BGVlRUYi1vYUhuamFxVjN0MXNTRnJZVkdoUHJaYUZCMFBwWUFueThGYTg2MFNnRlpmclRlNw?oc=5</link>
+<guid isPermaLink="false">CBMid0FVX3lxTE5QN3d2YjQxaVdkdU9Xc2h6VEtRajNSbFFOeGF1bDhjcUZlTTNnSlRDRnRfMDdFazdBeGsxTEVQbW5xSi1XT3Z2TjFYWVgwMHZkdkRpeGRlSEttaVdDeFMyTkZITkdYZDRFc0NUYms2RUhXVjJncDE40gF8QVVfeXFMUEM1WWQxcTBBNHZVbVhmZEViNXM2SVJGalNoalRzMy1IUFFtemhDejM0aWZta2JRMDNBY2tZNXY3dkJZY2dQd3BGVlRUYi1vYUhuamFxVjN0MXNTRnJZVkdoUHJaYUZCMFBwWUFueThGYTg2MFNnRlpmclRlNw</guid>
+<pubDate>Tue, 26 Aug 2025 15:59:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE5QN3d2YjQxaVdkdU9Xc2h6VEtRajNSbFFOeGF1bDhjcUZlTTNnSlRDRnRfMDdFazdBeGsxTEVQbW5xSi1XT3Z2TjFYWVgwMHZkdkRpeGRlSEttaVdDeFMyTkZITkdYZDRFc0NUYms2RUhXVjJncDE40gF8QVVfeXFMUEM1WWQxcTBBNHZVbVhmZEViNXM2SVJGalNoalRzMy1IUFFtemhDejM0aWZta2JRMDNBY2tZNXY3dkJZY2dQd3BGVlRUYi1vYUhuamFxVjN0MXNTRnJZVkdoUHJaYUZCMFBwWUFueThGYTg2MFNnRlpmclRlNw?oc=5" target="_blank">Journalist publicly quits Reuters over Gaza ‘culpability’</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Suspected assassin of neo-Nazi Ukrainian MP detained – Zelensky - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMid0FVX3lxTE5OTXdYM015R25uYlhGblhoWDQ5MmlmZXZNemJVdExuendoLWJPb2RCdGlINmM2a1p6YTV2eGNVSFlYa3JnNGFUWTl3R1BheWdEb3ZsbU1fTThXN29qbTh3bmI1X3FlZEdFVjVkcFRBdzZRaDNnTjVB0gF8QVVfeXFMTnFjYkdFY1NLVS1sZmJ3dGJRWjlaLWhKVl9vdjdjcGpkcTNwVW1sdjFmUzI5OWlYalZFSS1KTDVpV3JEMnhtekxaTHNBZ1RyX21xR2diM3ZybXBsM0xTS3J2My1KdHNmYndZRDN3VWJETXFlMFBReTBIR0N0Xw?oc=5</link>
+<guid isPermaLink="false">CBMid0FVX3lxTE5OTXdYM015R25uYlhGblhoWDQ5MmlmZXZNemJVdExuendoLWJPb2RCdGlINmM2a1p6YTV2eGNVSFlYa3JnNGFUWTl3R1BheWdEb3ZsbU1fTThXN29qbTh3bmI1X3FlZEdFVjVkcFRBdzZRaDNnTjVB0gF8QVVfeXFMTnFjYkdFY1NLVS1sZmJ3dGJRWjlaLWhKVl9vdjdjcGpkcTNwVW1sdjFmUzI5OWlYalZFSS1KTDVpV3JEMnhtekxaTHNBZ1RyX21xR2diM3ZybXBsM0xTS3J2My1KdHNmYndZRDN3VWJETXFlMFBReTBIR0N0Xw</guid>
+<pubDate>Sun, 31 Aug 2025 22:55:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE5OTXdYM015R25uYlhGblhoWDQ5MmlmZXZNemJVdExuendoLWJPb2RCdGlINmM2a1p6YTV2eGNVSFlYa3JnNGFUWTl3R1BheWdEb3ZsbU1fTThXN29qbTh3bmI1X3FlZEdFVjVkcFRBdzZRaDNnTjVB0gF8QVVfeXFMTnFjYkdFY1NLVS1sZmJ3dGJRWjlaLWhKVl9vdjdjcGpkcTNwVW1sdjFmUzI5OWlYalZFSS1KTDVpV3JEMnhtekxaTHNBZ1RyX21xR2diM3ZybXBsM0xTS3J2My1KdHNmYndZRDN3VWJETXFlMFBReTBIR0N0Xw?oc=5" target="_blank">Suspected assassin of neo-Nazi Ukrainian MP detained – Zelensky</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Car rams into Russian Consulate in Australia (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMic0FVX3lxTE52QW94S1JESnVQQkV2aldtQ3QtbHdWbXlVQmthNVc4dDlvQnpEOVdDVXlhTU1DcHJ4bHY5QXhhQU9mR0lEYTFNT0VLYWZMTVJnU3BHSk55UjBBNkpIODBZX0E0Ylk5cFA3VjJlTHdtRnhnQzDSAXhBVV95cUxNbEJDUV9JUWQwUFBnUDJOR0NjMWs5Qm0wQ1N5TXpsZWZYRnpxME5sZ0pDelFUZVIyZ0lxdE9idFdfSkx6clJtVjZVdEs4UGNvakxBNFZFa254NjVIa3hETWJJNkZhR1p3a0hVQnB3aE9rYXgySkFzTEI?oc=5</link>
+<guid isPermaLink="false">CBMic0FVX3lxTE52QW94S1JESnVQQkV2aldtQ3QtbHdWbXlVQmthNVc4dDlvQnpEOVdDVXlhTU1DcHJ4bHY5QXhhQU9mR0lEYTFNT0VLYWZMTVJnU3BHSk55UjBBNkpIODBZX0E0Ylk5cFA3VjJlTHdtRnhnQzDSAXhBVV95cUxNbEJDUV9JUWQwUFBnUDJOR0NjMWs5Qm0wQ1N5TXpsZWZYRnpxME5sZ0pDelFUZVIyZ0lxdE9idFdfSkx6clJtVjZVdEs4UGNvakxBNFZFa254NjVIa3hETWJJNkZhR1p3a0hVQnB3aE9rYXgySkFzTEI</guid>
+<pubDate>Sun, 31 Aug 2025 23:48:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE52QW94S1JESnVQQkV2aldtQ3QtbHdWbXlVQmthNVc4dDlvQnpEOVdDVXlhTU1DcHJ4bHY5QXhhQU9mR0lEYTFNT0VLYWZMTVJnU3BHSk55UjBBNkpIODBZX0E0Ylk5cFA3VjJlTHdtRnhnQzDSAXhBVV95cUxNbEJDUV9JUWQwUFBnUDJOR0NjMWs5Qm0wQ1N5TXpsZWZYRnpxME5sZ0pDelFUZVIyZ0lxdE9idFdfSkx6clJtVjZVdEs4UGNvakxBNFZFa254NjVIa3hETWJJNkZhR1p3a0hVQnB3aE9rYXgySkFzTEI?oc=5" target="_blank">Car rams into Russian Consulate in Australia (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>European ‘war party’ hindering Ukraine peace process – Kremlin - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiiAFBVV95cUxONmRhbHZDUjJqODZ2TmtSY096Ni0wb0k5ZWdNOXNwWFZBVGl5Ti1QYS1Ud2hPSV84SVBWQ2M3Q2VtWmlJU3o1ZF9XNFpkNlZpemV2clRWZDJla3hjVzNqRWFjSHdpUUlZbjY0Tm5RM0p4TVBnZDFqRlJGOThOMm5ZNkFtMkQ3NU1Z0gGOAUFVX3lxTE1Lc1ktVGFzai1obGY0VG9zYTZxTE9SMkg1SDd1UVJycGZvckV0SDBWMU53SlBNOUdYbW5oQWFvWFhGQ29RcVp4WVd0dmZZM3JOamdkRXkxTHI2NGZLV3dCejliZ05Td1BSV2x0eG5RZVJUTEhTVmhCYU9wY3pKWnkxVzZBSDREYm8tSFBQS3c?oc=5</link>
+<guid isPermaLink="false">CBMiiAFBVV95cUxONmRhbHZDUjJqODZ2TmtSY096Ni0wb0k5ZWdNOXNwWFZBVGl5Ti1QYS1Ud2hPSV84SVBWQ2M3Q2VtWmlJU3o1ZF9XNFpkNlZpemV2clRWZDJla3hjVzNqRWFjSHdpUUlZbjY0Tm5RM0p4TVBnZDFqRlJGOThOMm5ZNkFtMkQ3NU1Z0gGOAUFVX3lxTE1Lc1ktVGFzai1obGY0VG9zYTZxTE9SMkg1SDd1UVJycGZvckV0SDBWMU53SlBNOUdYbW5oQWFvWFhGQ29RcVp4WVd0dmZZM3JOamdkRXkxTHI2NGZLV3dCejliZ05Td1BSV2x0eG5RZVJUTEhTVmhCYU9wY3pKWnkxVzZBSDREYm8tSFBQS3c</guid>
+<pubDate>Sun, 31 Aug 2025 16:36:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxONmRhbHZDUjJqODZ2TmtSY096Ni0wb0k5ZWdNOXNwWFZBVGl5Ti1QYS1Ud2hPSV84SVBWQ2M3Q2VtWmlJU3o1ZF9XNFpkNlZpemV2clRWZDJla3hjVzNqRWFjSHdpUUlZbjY0Tm5RM0p4TVBnZDFqRlJGOThOMm5ZNkFtMkQ3NU1Z0gGOAUFVX3lxTE1Lc1ktVGFzai1obGY0VG9zYTZxTE9SMkg1SDd1UVJycGZvckV0SDBWMU53SlBNOUdYbW5oQWFvWFhGQ29RcVp4WVd0dmZZM3JOamdkRXkxTHI2NGZLV3dCejliZ05Td1BSV2x0eG5RZVJUTEhTVmhCYU9wY3pKWnkxVzZBSDREYm8tSFBQS3c?oc=5" target="_blank">European ‘war party’ hindering Ukraine peace process – Kremlin</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Germany reveals most popular names among welfare recipients - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiaEFVX3lxTE1kTkNkdGl5c1FDVmdGQm5oWXBOMjUxcFFBMDBmeXVKaEdSeV91aVM1TDdNOUdybUo2RnR6ekZOOG9kaUhLRzYwNldIREJ2c0NrRmFGNWhOcWJRZGd4eWxoMHpMTUdUY2Vh0gFuQVVfeXFMTkVGR2hwbVFwSzFHRWNDVkVKNzZwQk5nVkFIZXFvalN2VGxwYmtVZnVYMFVuek4yd2RTVldnWUM1MHhTcE9wMnJwVUZQR0NFM2NBZUhNdFQ3TllQd0p1Z3ZINVhLVnNvOTNPbzVhU1E?oc=5</link>
+<guid isPermaLink="false">CBMiaEFVX3lxTE1kTkNkdGl5c1FDVmdGQm5oWXBOMjUxcFFBMDBmeXVKaEdSeV91aVM1TDdNOUdybUo2RnR6ekZOOG9kaUhLRzYwNldIREJ2c0NrRmFGNWhOcWJRZGd4eWxoMHpMTUdUY2Vh0gFuQVVfeXFMTkVGR2hwbVFwSzFHRWNDVkVKNzZwQk5nVkFIZXFvalN2VGxwYmtVZnVYMFVuek4yd2RTVldnWUM1MHhTcE9wMnJwVUZQR0NFM2NBZUhNdFQ3TllQd0p1Z3ZINVhLVnNvOTNPbzVhU1E</guid>
+<pubDate>Sun, 31 Aug 2025 04:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE1kTkNkdGl5c1FDVmdGQm5oWXBOMjUxcFFBMDBmeXVKaEdSeV91aVM1TDdNOUdybUo2RnR6ekZOOG9kaUhLRzYwNldIREJ2c0NrRmFGNWhOcWJRZGd4eWxoMHpMTUdUY2Vh0gFuQVVfeXFMTkVGR2hwbVFwSzFHRWNDVkVKNzZwQk5nVkFIZXFvalN2VGxwYmtVZnVYMFVuek4yd2RTVldnWUM1MHhTcE9wMnJwVUZQR0NFM2NBZUhNdFQ3TllQd0p1Z3ZINVhLVnNvOTNPbzVhU1E?oc=5" target="_blank">Germany reveals most popular names among welfare recipients</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>African state suspends health project funded by Bill Gates - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMipAFBVV95cUxPV1A0WlBoQmNnenBPb1dmUFBBZkpGeExVblZOT3FmZTVkVXh4MkZkWkVld1N3Rk1tcHB4ZmE1MVhTbEhWZlVld2JXTjhUSjdTWDZ5ZjNJVENzUzVaeTJ2Y0l6SjM3TW12dldWRkhPNnNqdURNTHRldlpwV1hzRUJjdWNobHd1anc4d1IwaWtZTGliV2VHSEIwTUZqWktlT0pxZXM4a9IBqgFBVV95cUxOakx3bEY3XzIzbzlWODByRTBVQmNRQ2dYNHFtcmhLU21lNFJkb3RBU3IzVG5laF9nN1BwX0xkbTlsRklENjljcTM1a0REdGd5UzlwR3k4WXJmVVdIRXRPX2VKWm9xOG1ycG9PbFdGU21qUXc0SV8yd3BuSVFzRXhsb2M1LWtxaDN2NVQtb1JydFR0Q3kyTEVPdk9qM2c2bVFzYWM1UlFCQTN2Zw?oc=5</link>
+<guid isPermaLink="false">CBMipAFBVV95cUxPV1A0WlBoQmNnenBPb1dmUFBBZkpGeExVblZOT3FmZTVkVXh4MkZkWkVld1N3Rk1tcHB4ZmE1MVhTbEhWZlVld2JXTjhUSjdTWDZ5ZjNJVENzUzVaeTJ2Y0l6SjM3TW12dldWRkhPNnNqdURNTHRldlpwV1hzRUJjdWNobHd1anc4d1IwaWtZTGliV2VHSEIwTUZqWktlT0pxZXM4a9IBqgFBVV95cUxOakx3bEY3XzIzbzlWODByRTBVQmNRQ2dYNHFtcmhLU21lNFJkb3RBU3IzVG5laF9nN1BwX0xkbTlsRklENjljcTM1a0REdGd5UzlwR3k4WXJmVVdIRXRPX2VKWm9xOG1ycG9PbFdGU21qUXc0SV8yd3BuSVFzRXhsb2M1LWtxaDN2NVQtb1JydFR0Q3kyTEVPdk9qM2c2bVFzYWM1UlFCQTN2Zw</guid>
+<pubDate>Tue, 26 Aug 2025 09:50:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMipAFBVV95cUxPV1A0WlBoQmNnenBPb1dmUFBBZkpGeExVblZOT3FmZTVkVXh4MkZkWkVld1N3Rk1tcHB4ZmE1MVhTbEhWZlVld2JXTjhUSjdTWDZ5ZjNJVENzUzVaeTJ2Y0l6SjM3TW12dldWRkhPNnNqdURNTHRldlpwV1hzRUJjdWNobHd1anc4d1IwaWtZTGliV2VHSEIwTUZqWktlT0pxZXM4a9IBqgFBVV95cUxOakx3bEY3XzIzbzlWODByRTBVQmNRQ2dYNHFtcmhLU21lNFJkb3RBU3IzVG5laF9nN1BwX0xkbTlsRklENjljcTM1a0REdGd5UzlwR3k4WXJmVVdIRXRPX2VKWm9xOG1ycG9PbFdGU21qUXc0SV8yd3BuSVFzRXhsb2M1LWtxaDN2NVQtb1JydFR0Q3kyTEVPdk9qM2c2bVFzYWM1UlFCQTN2Zw?oc=5" target="_blank">African state suspends health project funded by Bill Gates</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Russia strikes Ukrainian port infrastructure – MOD - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMihAFBVV95cUxOc0lBaV9JYUNoQmtFazJZanBBbkFOMjZkRHltMVJBNUFSeWxCbnk4OHdwNVJrVXpYdmU5M1Y5OXFCZ3pWM2RBVFJBNWRyR0haNWI2ZlVFQjd4a1ZBYmtMbUczYmlTQ3dHazVuV05rcWVPMHRyNXNTZ0p6UlY0cnUzQXRoQnHSAYoBQVVfeXFMUERUS01oZEhNYzdxRV9CUGtZTnZLQ2FOZWJOTkg0V3dGOTdmUjhtVFNtOEprM01Sd1NTNnh3UVI3Z0k0TjROWl9kRGxlQkpSTHZJT1NHZVpGQ3VuOWhVZFNTTnZfWmFvMkpNb2VjTUY0Mk9mQ0J3MTdzWEdsT2ZTQlZ1Njk4V1FwaUVR?oc=5</link>
+<guid isPermaLink="false">CBMihAFBVV95cUxOc0lBaV9JYUNoQmtFazJZanBBbkFOMjZkRHltMVJBNUFSeWxCbnk4OHdwNVJrVXpYdmU5M1Y5OXFCZ3pWM2RBVFJBNWRyR0haNWI2ZlVFQjd4a1ZBYmtMbUczYmlTQ3dHazVuV05rcWVPMHRyNXNTZ0p6UlY0cnUzQXRoQnHSAYoBQVVfeXFMUERUS01oZEhNYzdxRV9CUGtZTnZLQ2FOZWJOTkg0V3dGOTdmUjhtVFNtOEprM01Sd1NTNnh3UVI3Z0k0TjROWl9kRGxlQkpSTHZJT1NHZVpGQ3VuOWhVZFNTTnZfWmFvMkpNb2VjTUY0Mk9mQ0J3MTdzWEdsT2ZTQlZ1Njk4V1FwaUVR</guid>
+<pubDate>Sun, 31 Aug 2025 11:16:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMihAFBVV95cUxOc0lBaV9JYUNoQmtFazJZanBBbkFOMjZkRHltMVJBNUFSeWxCbnk4OHdwNVJrVXpYdmU5M1Y5OXFCZ3pWM2RBVFJBNWRyR0haNWI2ZlVFQjd4a1ZBYmtMbUczYmlTQ3dHazVuV05rcWVPMHRyNXNTZ0p6UlY0cnUzQXRoQnHSAYoBQVVfeXFMUERUS01oZEhNYzdxRV9CUGtZTnZLQ2FOZWJOTkg0V3dGOTdmUjhtVFNtOEprM01Sd1NTNnh3UVI3Z0k0TjROWl9kRGxlQkpSTHZJT1NHZVpGQ3VuOWhVZFNTTnZfWmFvMkpNb2VjTUY0Mk9mQ0J3MTdzWEdsT2ZTQlZ1Njk4V1FwaUVR?oc=5" target="_blank">Russia strikes Ukrainian port infrastructure – MOD</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Intel chiefs behind Russiagate should be arrested – Trump - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibkFVX3lxTE1YSFlmWXlqSmQ5Sl9YWmJ5cDRyVWk3VV9VdXBNcFQ5dmdmcG9yWWMwdjhVb1NJaWZ6aVVsZTdpOV9oUmFfNHhhMkR3TzBPQUhxU08xR2lqUWV3Uk5jVnlpaHp1dUNaaU9Jc1RYWndB0gFzQVVfeXFMT2pwTExjU0xlbUJ1VFlRRlVxUmVTbU56dVlYSWpmSFl0RnBLTHVxR1FJdU5XWW1ZNTQtVHpEUXFRTURQeVpDSWVvVUVyc2VpTlp0eWctV3U0RzNlTFRUNm9uTmo1R2NmZWswT2kzQk9TRUd4SQ?oc=5</link>
+<guid isPermaLink="false">CBMibkFVX3lxTE1YSFlmWXlqSmQ5Sl9YWmJ5cDRyVWk3VV9VdXBNcFQ5dmdmcG9yWWMwdjhVb1NJaWZ6aVVsZTdpOV9oUmFfNHhhMkR3TzBPQUhxU08xR2lqUWV3Uk5jVnlpaHp1dUNaaU9Jc1RYWndB0gFzQVVfeXFMT2pwTExjU0xlbUJ1VFlRRlVxUmVTbU56dVlYSWpmSFl0RnBLTHVxR1FJdU5XWW1ZNTQtVHpEUXFRTURQeVpDSWVvVUVyc2VpTlp0eWctV3U0RzNlTFRUNm9uTmo1R2NmZWswT2kzQk9TRUd4SQ</guid>
+<pubDate>Sun, 31 Aug 2025 20:44:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE1YSFlmWXlqSmQ5Sl9YWmJ5cDRyVWk3VV9VdXBNcFQ5dmdmcG9yWWMwdjhVb1NJaWZ6aVVsZTdpOV9oUmFfNHhhMkR3TzBPQUhxU08xR2lqUWV3Uk5jVnlpaHp1dUNaaU9Jc1RYWndB0gFzQVVfeXFMT2pwTExjU0xlbUJ1VFlRRlVxUmVTbU56dVlYSWpmSFl0RnBLTHVxR1FJdU5XWW1ZNTQtVHpEUXFRTURQeVpDSWVvVUVyc2VpTlp0eWctV3U0RzNlTFRUNm9uTmo1R2NmZWswT2kzQk9TRUd4SQ?oc=5" target="_blank">Intel chiefs behind Russiagate should be arrested – Trump</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Modi and Xi hold talks as India-China ties warm - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZkFVX3lxTE9pZGFMVVM2b2JtNVZZVnoxcGlvR3ZONmZmODhNM2tfSDlUdFBva2d5YzI0YWczWjBmcHJydzZYajZ1SDI4RjkxSWJ6dkpPZGdMODVNUGlvb1RNbUI5SEFwWTdmOG40d9IBa0FVX3lxTE92ekJLNHhWZ0lIcko1WEliYWJUQndoZGotTlpNdU9HM19GQVYtSmRWWlc1YUxjdjFkNWpyaWE5UWhBelRsSmsxQVd1MWdBbEhzcW4wTjRHejRFSlNCSno3U2FmMUYtVVd2NXRj?oc=5</link>
+<guid isPermaLink="false">CBMiZkFVX3lxTE9pZGFMVVM2b2JtNVZZVnoxcGlvR3ZONmZmODhNM2tfSDlUdFBva2d5YzI0YWczWjBmcHJydzZYajZ1SDI4RjkxSWJ6dkpPZGdMODVNUGlvb1RNbUI5SEFwWTdmOG40d9IBa0FVX3lxTE92ekJLNHhWZ0lIcko1WEliYWJUQndoZGotTlpNdU9HM19GQVYtSmRWWlc1YUxjdjFkNWpyaWE5UWhBelRsSmsxQVd1MWdBbEhzcW4wTjRHejRFSlNCSno3U2FmMUYtVVd2NXRj</guid>
+<pubDate>Sun, 31 Aug 2025 05:31:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZkFVX3lxTE9pZGFMVVM2b2JtNVZZVnoxcGlvR3ZONmZmODhNM2tfSDlUdFBva2d5YzI0YWczWjBmcHJydzZYajZ1SDI4RjkxSWJ6dkpPZGdMODVNUGlvb1RNbUI5SEFwWTdmOG40d9IBa0FVX3lxTE92ekJLNHhWZ0lIcko1WEliYWJUQndoZGotTlpNdU9HM19GQVYtSmRWWlc1YUxjdjFkNWpyaWE5UWhBelRsSmsxQVd1MWdBbEhzcW4wTjRHejRFSlNCSno3U2FmMUYtVVd2NXRj?oc=5" target="_blank">Modi and Xi hold talks as India-China ties warm</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Trump teases executive action to overhaul voting system - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9HMWx4Q1l3Ynh0eHM1akw0SnduRWF2NkZSUGFMc2p3aWNSbllMc1paMkFKZUFkeXdDdDNockdpUFdXLVhOS2lSYnBnM3pMSTBNb0tkQXRRQzR3X3dncWNLZGdEcnV1SkXSAWxBVV95cUxPMzdCczhBMnVSTlFyV3FhUFgtcUxXSzNrQmk1WlFhUl9LNVdnWGhtZEprTlNKNEZ4WENjRTY5NjNTajhzVGlzcXBnZWZpYy1MSk1fcTVIdW5ON3VzTVJrSE56VU9jSXpGbFN2R1c?oc=5</link>
+<guid isPermaLink="false">CBMiZ0FVX3lxTE9HMWx4Q1l3Ynh0eHM1akw0SnduRWF2NkZSUGFMc2p3aWNSbllMc1paMkFKZUFkeXdDdDNockdpUFdXLVhOS2lSYnBnM3pMSTBNb0tkQXRRQzR3X3dncWNLZGdEcnV1SkXSAWxBVV95cUxPMzdCczhBMnVSTlFyV3FhUFgtcUxXSzNrQmk1WlFhUl9LNVdnWGhtZEprTlNKNEZ4WENjRTY5NjNTajhzVGlzcXBnZWZpYy1MSk1fcTVIdW5ON3VzTVJrSE56VU9jSXpGbFN2R1c</guid>
+<pubDate>Sun, 31 Aug 2025 17:45:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9HMWx4Q1l3Ynh0eHM1akw0SnduRWF2NkZSUGFMc2p3aWNSbllMc1paMkFKZUFkeXdDdDNockdpUFdXLVhOS2lSYnBnM3pMSTBNb0tkQXRRQzR3X3dncWNLZGdEcnV1SkXSAWxBVV95cUxPMzdCczhBMnVSTlFyV3FhUFgtcUxXSzNrQmk1WlFhUl9LNVdnWGhtZEprTlNKNEZ4WENjRTY5NjNTajhzVGlzcXBnZWZpYy1MSk1fcTVIdW5ON3VzTVJrSE56VU9jSXpGbFN2R1c?oc=5" target="_blank">Trump teases executive action to overhaul voting system</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>‘EU warmongers sabotaging’ Trump’s Ukraine peace efforts – Putin envoy - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTE5ZSDJxcTBtWDBmOUtOalQ3VS14TnlTT19LOXdZYnJ3OThvQmV0M19GTGhwd0YwWXFRZ0VtZkNQVDc3ZjFzSnBfTFVmVS1uejAxc1Fod1QwU1d6aElJMVlFOGdNWjFSR2tvSXd5X9IBckFVX3lxTE44OW04azc4UzB4UXFhSjRsWGdMTlNqSzRnRUFDZlA5ZjJsWGdQQTNndnZBdUoyN3l4TTFpYkx3WGgwM2k1ZHpTMXRNczQ1RVZOLTIxd0gwY0hCMy16UDVwMmdmQzdScUR6M0RMcGdFaVFfZw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTE5ZSDJxcTBtWDBmOUtOalQ3VS14TnlTT19LOXdZYnJ3OThvQmV0M19GTGhwd0YwWXFRZ0VtZkNQVDc3ZjFzSnBfTFVmVS1uejAxc1Fod1QwU1d6aElJMVlFOGdNWjFSR2tvSXd5X9IBckFVX3lxTE44OW04azc4UzB4UXFhSjRsWGdMTlNqSzRnRUFDZlA5ZjJsWGdQQTNndnZBdUoyN3l4TTFpYkx3WGgwM2k1ZHpTMXRNczQ1RVZOLTIxd0gwY0hCMy16UDVwMmdmQzdScUR6M0RMcGdFaVFfZw</guid>
+<pubDate>Sun, 31 Aug 2025 00:16:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5ZSDJxcTBtWDBmOUtOalQ3VS14TnlTT19LOXdZYnJ3OThvQmV0M19GTGhwd0YwWXFRZ0VtZkNQVDc3ZjFzSnBfTFVmVS1uejAxc1Fod1QwU1d6aElJMVlFOGdNWjFSR2tvSXd5X9IBckFVX3lxTE44OW04azc4UzB4UXFhSjRsWGdMTlNqSzRnRUFDZlA5ZjJsWGdQQTNndnZBdUoyN3l4TTFpYkx3WGgwM2k1ZHpTMXRNczQ1RVZOLTIxd0gwY0hCMy16UDVwMmdmQzdScUR6M0RMcGdFaVFfZw?oc=5" target="_blank">‘EU warmongers sabotaging’ Trump’s Ukraine peace efforts – Putin envoy</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Brussels preparing for a ‘long war, not peace’ – EU state - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMieEFVX3lxTE1FMHRYWXBUS3JuZ0pfczNtdDlscmpfOU1nMG1IemszV3VpT3pDT3VfaDNLRzM3ZFBvdUtFRVdLXzcxYnUxYWhtVTBPdE9oRGJoZFdOOGZ1cHZVU25JdnIzVEtPbHJ2d05QTzJMaVV3ZkRmYzRWRjVVLdIBfkFVX3lxTE12eVU2VF9jMEhGNjdmY1ZGSmJ0VDhBSVY3dlRVaU5MYTFxa2E2c2ZJSlJRbl9GN29xNTN3OGJ5UWg1SHpqVWVjWVZfNllFX1VPbS1PSHVaRm85dVg1S2lsMmVRQlRyYjdtNlIzUUFDQWZudUd3ZkY3Zy02d2ZyUQ?oc=5</link>
+<guid isPermaLink="false">CBMieEFVX3lxTE1FMHRYWXBUS3JuZ0pfczNtdDlscmpfOU1nMG1IemszV3VpT3pDT3VfaDNLRzM3ZFBvdUtFRVdLXzcxYnUxYWhtVTBPdE9oRGJoZFdOOGZ1cHZVU25JdnIzVEtPbHJ2d05QTzJMaVV3ZkRmYzRWRjVVLdIBfkFVX3lxTE12eVU2VF9jMEhGNjdmY1ZGSmJ0VDhBSVY3dlRVaU5MYTFxa2E2c2ZJSlJRbl9GN29xNTN3OGJ5UWg1SHpqVWVjWVZfNllFX1VPbS1PSHVaRm85dVg1S2lsMmVRQlRyYjdtNlIzUUFDQWZudUd3ZkY3Zy02d2ZyUQ</guid>
+<pubDate>Sat, 30 Aug 2025 19:40:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMieEFVX3lxTE1FMHRYWXBUS3JuZ0pfczNtdDlscmpfOU1nMG1IemszV3VpT3pDT3VfaDNLRzM3ZFBvdUtFRVdLXzcxYnUxYWhtVTBPdE9oRGJoZFdOOGZ1cHZVU25JdnIzVEtPbHJ2d05QTzJMaVV3ZkRmYzRWRjVVLdIBfkFVX3lxTE12eVU2VF9jMEhGNjdmY1ZGSmJ0VDhBSVY3dlRVaU5MYTFxa2E2c2ZJSlJRbl9GN29xNTN3OGJ5UWg1SHpqVWVjWVZfNllFX1VPbS1PSHVaRm85dVg1S2lsMmVRQlRyYjdtNlIzUUFDQWZudUd3ZkY3Zy02d2ZyUQ?oc=5" target="_blank">Brussels preparing for a ‘long war, not peace’ – EU state</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Germany gives up on idea of sending troops to Ukraine – Bild - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTE9Lb0ZWMm5lSDZnSFNLTkRNRlBibjk1eTlCYlRqMWlzcFhEQ3NZb2Ezei1XYVg1TzZheExENEdELTVlc3ZLSVhUb29JakFuQ2tBRWVybWhDdkpKRE5UdnRmRVM0OVI4dHlWRkZNcjMxMNIBdEFVX3lxTE1rdnkwM1dfSU5ESzdPX2tIbzNqS0x1bkFVRld1SjRGekZyZk1RS3lDQlk5UmJHNHdEWjdXVHNPbHVrZTE4ZUQyYW42b3g1ZTBRME9zSldBMmppdE03NmZ4eURwX0lBcXBlS3BDQkkwczBRb2Ja?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTE9Lb0ZWMm5lSDZnSFNLTkRNRlBibjk1eTlCYlRqMWlzcFhEQ3NZb2Ezei1XYVg1TzZheExENEdELTVlc3ZLSVhUb29JakFuQ2tBRWVybWhDdkpKRE5UdnRmRVM0OVI4dHlWRkZNcjMxMNIBdEFVX3lxTE1rdnkwM1dfSU5ESzdPX2tIbzNqS0x1bkFVRld1SjRGekZyZk1RS3lDQlk5UmJHNHdEWjdXVHNPbHVrZTE4ZUQyYW42b3g1ZTBRME9zSldBMmppdE03NmZ4eURwX0lBcXBlS3BDQkkwczBRb2Ja</guid>
+<pubDate>Sun, 31 Aug 2025 15:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE9Lb0ZWMm5lSDZnSFNLTkRNRlBibjk1eTlCYlRqMWlzcFhEQ3NZb2Ezei1XYVg1TzZheExENEdELTVlc3ZLSVhUb29JakFuQ2tBRWVybWhDdkpKRE5UdnRmRVM0OVI4dHlWRkZNcjMxMNIBdEFVX3lxTE1rdnkwM1dfSU5ESzdPX2tIbzNqS0x1bkFVRld1SjRGekZyZk1RS3lDQlk5UmJHNHdEWjdXVHNPbHVrZTE4ZUQyYW42b3g1ZTBRME9zSldBMmppdE03NmZ4eURwX0lBcXBlS3BDQkkwczBRb2Ja?oc=5" target="_blank">Germany gives up on idea of sending troops to Ukraine – Bild</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Germany blocks EU sanctions on Israel - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMicEFVX3lxTE9UVTh3cGluZWJYYVZtZkpPNlh4bWwwRjlLU1lGaUxzY2JKOUNMMW9RejQtaEhWQVVGSXhaU2RSZUFHUzd1WEtGS1YzY2NZdlVxQVJfd3ZNU2RmeVJqQUwxa0hsVkNaX3BST0o3RXlaSFPSAXZBVV95cUxObURIb3B0Vk9pajRURlItWmxLRi1HTkxjZUEwRFFrWklWaFo3TmxNNGJsTWd5SkRFcEtQREZUTGVJRTZHdDNIUkFjRkNkU2tCdnlVeWlQS21HV09CNGNiSnZ2bzFZdUY0UFo3QnktR282cUlpZ2t3?oc=5</link>
+<guid isPermaLink="false">CBMicEFVX3lxTE9UVTh3cGluZWJYYVZtZkpPNlh4bWwwRjlLU1lGaUxzY2JKOUNMMW9RejQtaEhWQVVGSXhaU2RSZUFHUzd1WEtGS1YzY2NZdlVxQVJfd3ZNU2RmeVJqQUwxa0hsVkNaX3BST0o3RXlaSFPSAXZBVV95cUxObURIb3B0Vk9pajRURlItWmxLRi1HTkxjZUEwRFFrWklWaFo3TmxNNGJsTWd5SkRFcEtQREZUTGVJRTZHdDNIUkFjRkNkU2tCdnlVeWlQS21HV09CNGNiSnZ2bzFZdUY0UFo3QnktR282cUlpZ2t3</guid>
+<pubDate>Sun, 31 Aug 2025 10:17:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE9UVTh3cGluZWJYYVZtZkpPNlh4bWwwRjlLU1lGaUxzY2JKOUNMMW9RejQtaEhWQVVGSXhaU2RSZUFHUzd1WEtGS1YzY2NZdlVxQVJfd3ZNU2RmeVJqQUwxa0hsVkNaX3BST0o3RXlaSFPSAXZBVV95cUxObURIb3B0Vk9pajRURlItWmxLRi1HTkxjZUEwRFFrWklWaFo3TmxNNGJsTWd5SkRFcEtQREZUTGVJRTZHdDNIUkFjRkNkU2tCdnlVeWlQS21HV09CNGNiSnZ2bzFZdUY0UFo3QnktR282cUlpZ2t3?oc=5" target="_blank">Germany blocks EU sanctions on Israel</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Russia’s top general gives update on territorial advances - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidkFVX3lxTE9SUklrbkZjempvMDRhY2tZX0ZHME8zQVMwNUx4dmJyRFJVRVFzdUUtMlllYUFEQkNlc3dPdldCZk9fRGdwN3hXVnRCWUc0cW43M1NETktTN2JiMlFrZ2ZkaXJxV2sxVy1GR3ZOZjMtTGtYVEk1WHfSAXtBVV95cUxPSWNNUmx1QnFSVHR0Zkd5V0N1dno1TThWeVB4MHN2eFRlamtOMnBFd0VsbDlhU3UwUUlHejcwOHFwWnBFM1lVY3NIRUJnQXdPYmY4U0FnVTJOQlVLenR2NmhIWUtXaWN1Y0dLb2dXSnZHNmVhUDkzS3RRNHM?oc=5</link>
+<guid isPermaLink="false">CBMidkFVX3lxTE9SUklrbkZjempvMDRhY2tZX0ZHME8zQVMwNUx4dmJyRFJVRVFzdUUtMlllYUFEQkNlc3dPdldCZk9fRGdwN3hXVnRCWUc0cW43M1NETktTN2JiMlFrZ2ZkaXJxV2sxVy1GR3ZOZjMtTGtYVEk1WHfSAXtBVV95cUxPSWNNUmx1QnFSVHR0Zkd5V0N1dno1TThWeVB4MHN2eFRlamtOMnBFd0VsbDlhU3UwUUlHejcwOHFwWnBFM1lVY3NIRUJnQXdPYmY4U0FnVTJOQlVLenR2NmhIWUtXaWN1Y0dLb2dXSnZHNmVhUDkzS3RRNHM</guid>
+<pubDate>Sat, 30 Aug 2025 17:58:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidkFVX3lxTE9SUklrbkZjempvMDRhY2tZX0ZHME8zQVMwNUx4dmJyRFJVRVFzdUUtMlllYUFEQkNlc3dPdldCZk9fRGdwN3hXVnRCWUc0cW43M1NETktTN2JiMlFrZ2ZkaXJxV2sxVy1GR3ZOZjMtTGtYVEk1WHfSAXtBVV95cUxPSWNNUmx1QnFSVHR0Zkd5V0N1dno1TThWeVB4MHN2eFRlamtOMnBFd0VsbDlhU3UwUUlHejcwOHFwWnBFM1lVY3NIRUJnQXdPYmY4U0FnVTJOQlVLenR2NmhIWUtXaWN1Y0dLb2dXSnZHNmVhUDkzS3RRNHM?oc=5" target="_blank">Russia’s top general gives update on territorial advances</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>China debuts world’s first 6G chip – media - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiYEFVX3lxTFBOXzAtRk13ZGw3d0w3Y0p0SGtNMHR3eGFNS1dpOUlEZVpEWWwyTXFhdnhnOWk4Qy1ZZW5IX0wyRkwyWVFYWVVlZ0tWRGlhRXBYNGJ5aWppWHlVRVBFT3VMQdIBZkFVX3lxTFA2akp6RE8tclpqdnRSQmJyQ2p2Z0FYQ0d1R1liZE0yVkhGdTlhaXFjdzBmZUFpNC01aWdkZGRPYUZraV9KdVVNMnFXa3Z3aUdQQko3bkVKTlZtdlVqRjgwNjlWblRjdw?oc=5</link>
+<guid isPermaLink="false">CBMiYEFVX3lxTFBOXzAtRk13ZGw3d0w3Y0p0SGtNMHR3eGFNS1dpOUlEZVpEWWwyTXFhdnhnOWk4Qy1ZZW5IX0wyRkwyWVFYWVVlZ0tWRGlhRXBYNGJ5aWppWHlVRVBFT3VMQdIBZkFVX3lxTFA2akp6RE8tclpqdnRSQmJyQ2p2Z0FYQ0d1R1liZE0yVkhGdTlhaXFjdzBmZUFpNC01aWdkZGRPYUZraV9KdVVNMnFXa3Z3aUdQQko3bkVKTlZtdlVqRjgwNjlWblRjdw</guid>
+<pubDate>Sat, 30 Aug 2025 13:54:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTFBOXzAtRk13ZGw3d0w3Y0p0SGtNMHR3eGFNS1dpOUlEZVpEWWwyTXFhdnhnOWk4Qy1ZZW5IX0wyRkwyWVFYWVVlZ0tWRGlhRXBYNGJ5aWppWHlVRVBFT3VMQdIBZkFVX3lxTFA2akp6RE8tclpqdnRSQmJyQ2p2Z0FYQ0d1R1liZE0yVkhGdTlhaXFjdzBmZUFpNC01aWdkZGRPYUZraV9KdVVNMnFXa3Z3aUdQQko3bkVKTlZtdlVqRjgwNjlWblRjdw?oc=5" target="_blank">China debuts world’s first 6G chip – media</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Ukraine faces ‘huge’ funding gap – top EU diplomat - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTE42NGRtMDgxTWNHRzVvWG1VbGV5NnJhaDNhYlBDRVdicDFVSjdBMnBnOFowU0hWNmkzRkFwdFVtU01nampyVjAtRDJfaWhvWDdJWGs5Tk1ObV84R2lTaDhVMnV2WXJsM1ctdmsxc1ZFTdIBdEFVX3lxTE5ISVIyRmZkMEtLUTdpTm5uTTFKRVpUbDdpNnpUVmZOOHh4TFA1VkxZWk5qaEpKcDJMOUNsd1dZLUFRUHBaQkxHcE0xaUxwZEJ6UTBkSG5xNzczMDlvV0xzRnRWVV8zWUl1S1J5b2RrT3NxSHdw?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTE42NGRtMDgxTWNHRzVvWG1VbGV5NnJhaDNhYlBDRVdicDFVSjdBMnBnOFowU0hWNmkzRkFwdFVtU01nampyVjAtRDJfaWhvWDdJWGs5Tk1ObV84R2lTaDhVMnV2WXJsM1ctdmsxc1ZFTdIBdEFVX3lxTE5ISVIyRmZkMEtLUTdpTm5uTTFKRVpUbDdpNnpUVmZOOHh4TFA1VkxZWk5qaEpKcDJMOUNsd1dZLUFRUHBaQkxHcE0xaUxwZEJ6UTBkSG5xNzczMDlvV0xzRnRWVV8zWUl1S1J5b2RrT3NxSHdw</guid>
+<pubDate>Sun, 31 Aug 2025 07:43:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE42NGRtMDgxTWNHRzVvWG1VbGV5NnJhaDNhYlBDRVdicDFVSjdBMnBnOFowU0hWNmkzRkFwdFVtU01nampyVjAtRDJfaWhvWDdJWGs5Tk1ObV84R2lTaDhVMnV2WXJsM1ctdmsxc1ZFTdIBdEFVX3lxTE5ISVIyRmZkMEtLUTdpTm5uTTFKRVpUbDdpNnpUVmZOOHh4TFA1VkxZWk5qaEpKcDJMOUNsd1dZLUFRUHBaQkxHcE0xaUxwZEJ6UTBkSG5xNzczMDlvV0xzRnRWVV8zWUl1S1J5b2RrT3NxSHdw?oc=5" target="_blank">Ukraine faces ‘huge’ funding gap – top EU diplomat</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin arrives in China for SCO summit and Victory Day (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMicEFVX3lxTE1hdDNkTjVtcTR4ZTZmMjNLOFhTUWxEZ0R2VnhSeXotY3hOaFB5R0tpUjNhYjRxdmR4ajZCeDUyZllvUFN6SXhFdzN5enZCNEhFamUyRU0tVXQ3NXRvZ3hxQWxOazdKWVg0OE1hc0ZCSXXSAXZBVV95cUxOMWtaVU56QWpwYkltMU1lOEh6eC1waDQzME5qeVdOUVg1WjNPYTdTM3FpbUFLWG9NOWNRdlZtTWNsUWVWOVBzXzBTeGxGVHkxNWtlNjB0eTNyOWhWUDNqSDd2TmdqbXgxUFpDMUdQQmQwM09HQmRR?oc=5</link>
+<guid isPermaLink="false">CBMicEFVX3lxTE1hdDNkTjVtcTR4ZTZmMjNLOFhTUWxEZ0R2VnhSeXotY3hOaFB5R0tpUjNhYjRxdmR4ajZCeDUyZllvUFN6SXhFdzN5enZCNEhFamUyRU0tVXQ3NXRvZ3hxQWxOazdKWVg0OE1hc0ZCSXXSAXZBVV95cUxOMWtaVU56QWpwYkltMU1lOEh6eC1waDQzME5qeVdOUVg1WjNPYTdTM3FpbUFLWG9NOWNRdlZtTWNsUWVWOVBzXzBTeGxGVHkxNWtlNjB0eTNyOWhWUDNqSDd2TmdqbXgxUFpDMUdQQmQwM09HQmRR</guid>
+<pubDate>Sun, 31 Aug 2025 02:05:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE1hdDNkTjVtcTR4ZTZmMjNLOFhTUWxEZ0R2VnhSeXotY3hOaFB5R0tpUjNhYjRxdmR4ajZCeDUyZllvUFN6SXhFdzN5enZCNEhFamUyRU0tVXQ3NXRvZ3hxQWxOazdKWVg0OE1hc0ZCSXXSAXZBVV95cUxOMWtaVU56QWpwYkltMU1lOEh6eC1waDQzME5qeVdOUVg1WjNPYTdTM3FpbUFLWG9NOWNRdlZtTWNsUWVWOVBzXzBTeGxGVHkxNWtlNjB0eTNyOWhWUDNqSDd2TmdqbXgxUFpDMUdQQmQwM09HQmRR?oc=5" target="_blank">Putin arrives in China for SCO summit and Victory Day (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Ukraine operation will continue – top Russian general - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiiAFBVV95cUxQcVBUT3M4aDhKVl8wWDVVa0pfR2xXelFmTEdfZ3FIWm84MkltdTBfY0hJbWxsemp5U3pYLTh5R2dOV1ZPdC1MZmhobjAxVXQ0YUkxQ1JwRG16LWpMcHVYcXdLVWlpeWY3dVl4emtxbzZtMGZidWVqQ3o0RVV1dFVwXy1GNTBzUTVt0gGOAUFVX3lxTE1ncnBRM25BOTdzUXpPRTNLUkp0T2x0UE56VWlWY3pILUN3ZGNVSkgyekRmR1l0bEN4RXhmN01NQU9PeXNnN3lZZ0NYdDRDZGFod25NNzhjVkdQWk95T0hkTlNmcUFMWHFJMTZMX0dYTkxEREFWYWdQUFQ1U1d5YkMyQzFxdjdHOGxCVHZkc3c?oc=5</link>
+<guid isPermaLink="false">CBMiiAFBVV95cUxQcVBUT3M4aDhKVl8wWDVVa0pfR2xXelFmTEdfZ3FIWm84MkltdTBfY0hJbWxsemp5U3pYLTh5R2dOV1ZPdC1MZmhobjAxVXQ0YUkxQ1JwRG16LWpMcHVYcXdLVWlpeWY3dVl4emtxbzZtMGZidWVqQ3o0RVV1dFVwXy1GNTBzUTVt0gGOAUFVX3lxTE1ncnBRM25BOTdzUXpPRTNLUkp0T2x0UE56VWlWY3pILUN3ZGNVSkgyekRmR1l0bEN4RXhmN01NQU9PeXNnN3lZZ0NYdDRDZGFod25NNzhjVkdQWk95T0hkTlNmcUFMWHFJMTZMX0dYTkxEREFWYWdQUFQ1U1d5YkMyQzFxdjdHOGxCVHZkc3c</guid>
+<pubDate>Sat, 30 Aug 2025 16:50:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxQcVBUT3M4aDhKVl8wWDVVa0pfR2xXelFmTEdfZ3FIWm84MkltdTBfY0hJbWxsemp5U3pYLTh5R2dOV1ZPdC1MZmhobjAxVXQ0YUkxQ1JwRG16LWpMcHVYcXdLVWlpeWY3dVl4emtxbzZtMGZidWVqQ3o0RVV1dFVwXy1GNTBzUTVt0gGOAUFVX3lxTE1ncnBRM25BOTdzUXpPRTNLUkp0T2x0UE56VWlWY3pILUN3ZGNVSkgyekRmR1l0bEN4RXhmN01NQU9PeXNnN3lZZ0NYdDRDZGFod25NNzhjVkdQWk95T0hkTlNmcUFMWHFJMTZMX0dYTkxEREFWYWdQUFQ1U1d5YkMyQzFxdjdHOGxCVHZkc3c?oc=5" target="_blank">Ukraine operation will continue – top Russian general</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>US believes EU blocking Ukraine peace with ‘unreasonable’ demands – Axios - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMid0FVX3lxTE9jYi16cG1EMk5QMTJkTjB4d2JRUzRGajhjSG91aGFSVXNqeGM1ckFKRnFtRWlEMGhoWTFRVVB5SzhlVVVTNFdKdGhuajNSZUxoU1FPNDFsanF4UV9ITUxsYVNzbWgyRGc0a1ZGQWgyd0F5MmVoQ2Fz0gF8QVVfeXFMUE1TQS1TQ2xPOXhHd2E1YWI4bUxZLXBPOW1sSEF6TkNJUjg5dHBlU0ZycFcxeW10cGhVWktxNnFFc3Q4cHlrcVB1VUt0V2RKd0Q1aUlRSzVOZUhfNnVDU0VoeEprRl85eEFFby1nZEJrYkxTM1psODNqazNYbw?oc=5</link>
+<guid isPermaLink="false">CBMid0FVX3lxTE9jYi16cG1EMk5QMTJkTjB4d2JRUzRGajhjSG91aGFSVXNqeGM1ckFKRnFtRWlEMGhoWTFRVVB5SzhlVVVTNFdKdGhuajNSZUxoU1FPNDFsanF4UV9ITUxsYVNzbWgyRGc0a1ZGQWgyd0F5MmVoQ2Fz0gF8QVVfeXFMUE1TQS1TQ2xPOXhHd2E1YWI4bUxZLXBPOW1sSEF6TkNJUjg5dHBlU0ZycFcxeW10cGhVWktxNnFFc3Q4cHlrcVB1VUt0V2RKd0Q1aUlRSzVOZUhfNnVDU0VoeEprRl85eEFFby1nZEJrYkxTM1psODNqazNYbw</guid>
+<pubDate>Sat, 30 Aug 2025 23:01:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE9jYi16cG1EMk5QMTJkTjB4d2JRUzRGajhjSG91aGFSVXNqeGM1ckFKRnFtRWlEMGhoWTFRVVB5SzhlVVVTNFdKdGhuajNSZUxoU1FPNDFsanF4UV9ITUxsYVNzbWgyRGc0a1ZGQWgyd0F5MmVoQ2Fz0gF8QVVfeXFMUE1TQS1TQ2xPOXhHd2E1YWI4bUxZLXBPOW1sSEF6TkNJUjg5dHBlU0ZycFcxeW10cGhVWktxNnFFc3Q4cHlrcVB1VUt0V2RKd0Q1aUlRSzVOZUhfNnVDU0VoeEprRl85eEFFby1nZEJrYkxTM1psODNqazNYbw?oc=5" target="_blank">US believes EU blocking Ukraine peace with ‘unreasonable’ demands – Axios</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Three giants at one table: Can Russia, India, and China rewrite the global rules? - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMicEFVX3lxTE5GY2VtbUpBMnFKc0tYSDgtNGVrR1Qtc2Q0aTlSVjFiVUZrUHE1MDhMRm5EZUtNMEJQc3Zpa0hYNHRxN3JvT2NsdFk0Q3RDc19EaUMtanJ1bExWTlVWZUhfRHNDR3dfTFVsVVMyTVFmbjfSAXZBVV95cUxNbE5FUUhlVDZlclU2NG9DU2dBQUR0ZW02SE5jTXZXSHFXam1taWgtNGc1bnNQb0MzU0VmWWJHZ3N5Y0xPdDN4N29IY0gwYW5FX1NGSGZCTWw4aS15YjdnYW8tUXEzb3o2TGVzT1lsalVINDR4cHFR?oc=5</link>
+<guid isPermaLink="false">CBMicEFVX3lxTE5GY2VtbUpBMnFKc0tYSDgtNGVrR1Qtc2Q0aTlSVjFiVUZrUHE1MDhMRm5EZUtNMEJQc3Zpa0hYNHRxN3JvT2NsdFk0Q3RDc19EaUMtanJ1bExWTlVWZUhfRHNDR3dfTFVsVVMyTVFmbjfSAXZBVV95cUxNbE5FUUhlVDZlclU2NG9DU2dBQUR0ZW02SE5jTXZXSHFXam1taWgtNGc1bnNQb0MzU0VmWWJHZ3N5Y0xPdDN4N29IY0gwYW5FX1NGSGZCTWw4aS15YjdnYW8tUXEzb3o2TGVzT1lsalVINDR4cHFR</guid>
+<pubDate>Sat, 30 Aug 2025 07:02:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE5GY2VtbUpBMnFKc0tYSDgtNGVrR1Qtc2Q0aTlSVjFiVUZrUHE1MDhMRm5EZUtNMEJQc3Zpa0hYNHRxN3JvT2NsdFk0Q3RDc19EaUMtanJ1bExWTlVWZUhfRHNDR3dfTFVsVVMyTVFmbjfSAXZBVV95cUxNbE5FUUhlVDZlclU2NG9DU2dBQUR0ZW02SE5jTXZXSHFXam1taWgtNGc1bnNQb0MzU0VmWWJHZ3N5Y0xPdDN4N29IY0gwYW5FX1NGSGZCTWw4aS15YjdnYW8tUXEzb3o2TGVzT1lsalVINDR4cHFR?oc=5" target="_blank">Three giants at one table: Can Russia, India, and China rewrite the global rules?</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Young Ukrainians rushing to leave the country – border official (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMic0FVX3lxTE9rOUdxWm9uRk1ENlhtYXR4QkJMN2d6M0ZRX2VWTzZuWTFFWm1kdi1PZlViQ2JhTmNTeXpUV0JWR2VtWWV0amphZUo4N1hqYktia0VtZDhYOVVmZlpkTFBQZXo1b2gyallIY0lZU3loZnBMYVnSAXhBVV95cUxOSW1lRTF1VnNCTDV4Xzl4SkFsUjhDc2RRMTJkRDJPTHAwY2l1WXNNYkVCVkI0ZEtwdVB2Y3Z6OEt3MDA4UnV5UW8xeTJ4UXM5bTBhNENXa1RsRUNZanJLWjNRSnk0aXF4YlZ6ZjhOX203eUZpNGhPMXA?oc=5</link>
+<guid isPermaLink="false">CBMic0FVX3lxTE9rOUdxWm9uRk1ENlhtYXR4QkJMN2d6M0ZRX2VWTzZuWTFFWm1kdi1PZlViQ2JhTmNTeXpUV0JWR2VtWWV0amphZUo4N1hqYktia0VtZDhYOVVmZlpkTFBQZXo1b2gyallIY0lZU3loZnBMYVnSAXhBVV95cUxOSW1lRTF1VnNCTDV4Xzl4SkFsUjhDc2RRMTJkRDJPTHAwY2l1WXNNYkVCVkI0ZEtwdVB2Y3Z6OEt3MDA4UnV5UW8xeTJ4UXM5bTBhNENXa1RsRUNZanJLWjNRSnk0aXF4YlZ6ZjhOX203eUZpNGhPMXA</guid>
+<pubDate>Thu, 28 Aug 2025 15:58:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE9rOUdxWm9uRk1ENlhtYXR4QkJMN2d6M0ZRX2VWTzZuWTFFWm1kdi1PZlViQ2JhTmNTeXpUV0JWR2VtWWV0amphZUo4N1hqYktia0VtZDhYOVVmZlpkTFBQZXo1b2gyallIY0lZU3loZnBMYVnSAXhBVV95cUxOSW1lRTF1VnNCTDV4Xzl4SkFsUjhDc2RRMTJkRDJPTHAwY2l1WXNNYkVCVkI0ZEtwdVB2Y3Z6OEt3MDA4UnV5UW8xeTJ4UXM5bTBhNENXa1RsRUNZanJLWjNRSnk0aXF4YlZ6ZjhOX203eUZpNGhPMXA?oc=5" target="_blank">Young Ukrainians rushing to leave the country – border official (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Trump promises trilateral meeting with Putin and Zelensky - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMihwFBVV95cUxPUXNMT29Vd2VUUmMyc0hvM2lkM21ncm5adWJrSTNoUjJ4U0kxZ25SZ3JibFVqVW8xeHRJd1pJWDZaeUJiTUd6dFpYcjFBY01JREVjVDY3MWh6OExMMjhLSE9wTVJaMTFKekc1STNaQ1VEalV0RmdkRVZHWWwyMWN6WldXa2k2VlXSAYwBQVVfeXFMTjVmTkFrdTd0R1lUeGlrdWhOc3NWSEUxN1h5ZXlPZ2poYTZtZjVGeGh6S0NXcnBzWjNJakEycTBVYU9FMlNXTXhpcC1LWU5sRG1rOU4wT2FnbHdwZFhTUWFDc1VYeG5iLWMxMjBlZHlXOTRBVklUa3JENlZhdjR2M2F4STJZZUU5TDJFbGM?oc=5</link>
+<guid isPermaLink="false">CBMihwFBVV95cUxPUXNMT29Vd2VUUmMyc0hvM2lkM21ncm5adWJrSTNoUjJ4U0kxZ25SZ3JibFVqVW8xeHRJd1pJWDZaeUJiTUd6dFpYcjFBY01JREVjVDY3MWh6OExMMjhLSE9wTVJaMTFKekc1STNaQ1VEalV0RmdkRVZHWWwyMWN6WldXa2k2VlXSAYwBQVVfeXFMTjVmTkFrdTd0R1lUeGlrdWhOc3NWSEUxN1h5ZXlPZ2poYTZtZjVGeGh6S0NXcnBzWjNJakEycTBVYU9FMlNXTXhpcC1LWU5sRG1rOU4wT2FnbHdwZFhTUWFDc1VYeG5iLWMxMjBlZHlXOTRBVklUa3JENlZhdjR2M2F4STJZZUU5TDJFbGM</guid>
+<pubDate>Sat, 30 Aug 2025 20:48:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxPUXNMT29Vd2VUUmMyc0hvM2lkM21ncm5adWJrSTNoUjJ4U0kxZ25SZ3JibFVqVW8xeHRJd1pJWDZaeUJiTUd6dFpYcjFBY01JREVjVDY3MWh6OExMMjhLSE9wTVJaMTFKekc1STNaQ1VEalV0RmdkRVZHWWwyMWN6WldXa2k2VlXSAYwBQVVfeXFMTjVmTkFrdTd0R1lUeGlrdWhOc3NWSEUxN1h5ZXlPZ2poYTZtZjVGeGh6S0NXcnBzWjNJakEycTBVYU9FMlNXTXhpcC1LWU5sRG1rOU4wT2FnbHdwZFhTUWFDc1VYeG5iLWMxMjBlZHlXOTRBVklUa3JENlZhdjR2M2F4STJZZUU5TDJFbGM?oc=5" target="_blank">Trump promises trilateral meeting with Putin and Zelensky</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Could Russia have joined NATO? - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMicEFVX3lxTFBjMndqakEwdVdGU3RvWEpBalJUVFUzMmdzYmRWUTNyT2tSTWtWT2hLSTQ3am11ZGVTY2VjQlY4b2FoMWpKLVNkOXZGV2h3c0lXbGk0RTZyLXhKUUM2WlpUOVpsX212YzhUcjR4eWcyQ2zSAXZBVV95cUxNWWRnZU81OGdaVnM0d25lVmJ0RVZHeWMxTnBoOEREdS1aWFluQm1PeHhKX3A1V3lIS2hYaWpZSDdzRkNCQnRxWTFycGZvN3A3OXlpaGpUdXFaLVlYXzVzM3ltZEQ1OG1pRzZaYnAteXdyNEoxTU1B?oc=5</link>
+<guid isPermaLink="false">CBMicEFVX3lxTFBjMndqakEwdVdGU3RvWEpBalJUVFUzMmdzYmRWUTNyT2tSTWtWT2hLSTQ3am11ZGVTY2VjQlY4b2FoMWpKLVNkOXZGV2h3c0lXbGk0RTZyLXhKUUM2WlpUOVpsX212YzhUcjR4eWcyQ2zSAXZBVV95cUxNWWRnZU81OGdaVnM0d25lVmJ0RVZHeWMxTnBoOEREdS1aWFluQm1PeHhKX3A1V3lIS2hYaWpZSDdzRkNCQnRxWTFycGZvN3A3OXlpaGpUdXFaLVlYXzVzM3ltZEQ1OG1pRzZaYnAteXdyNEoxTU1B</guid>
+<pubDate>Sat, 30 Aug 2025 19:54:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTFBjMndqakEwdVdGU3RvWEpBalJUVFUzMmdzYmRWUTNyT2tSTWtWT2hLSTQ3am11ZGVTY2VjQlY4b2FoMWpKLVNkOXZGV2h3c0lXbGk0RTZyLXhKUUM2WlpUOVpsX212YzhUcjR4eWcyQ2zSAXZBVV95cUxNWWRnZU81OGdaVnM0d25lVmJ0RVZHeWMxTnBoOEREdS1aWFluQm1PeHhKX3A1V3lIS2hYaWpZSDdzRkNCQnRxWTFycGZvN3A3OXlpaGpUdXFaLVlYXzVzM3ltZEQ1OG1pRzZaYnAteXdyNEoxTU1B?oc=5" target="_blank">Could Russia have joined NATO?</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Germany ‘already in conflict’ with Russia – Merz - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTE1QQTFTWVdIQldpRWZCTkk3bmh0T0haZEdIbVRSTkNQUVlCZWU1dHZRMmxwVkJtZ01Hd0JrU19KWmdkd3Bpemc5bE9zR0k0WlhINEY4QXRmN0lqQkdRWnlEcVBXSUZ5VUtFWjFxcdIBckFVX3lxTE01czgxLWFqS2tFT1dSekdCRmRKWlhxZjRpbWc1dFVreWdIMUN0Y0FmR2dEdUVfUDJDQm11ZGFaZl9XX3E2b2dLaWdCM1M3dU5VT2l2WWhOenI3bk8zdFNnWGZaaHZiX0ZmLUlHcnFpbkRaZw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTE1QQTFTWVdIQldpRWZCTkk3bmh0T0haZEdIbVRSTkNQUVlCZWU1dHZRMmxwVkJtZ01Hd0JrU19KWmdkd3Bpemc5bE9zR0k0WlhINEY4QXRmN0lqQkdRWnlEcVBXSUZ5VUtFWjFxcdIBckFVX3lxTE01czgxLWFqS2tFT1dSekdCRmRKWlhxZjRpbWc1dFVreWdIMUN0Y0FmR2dEdUVfUDJDQm11ZGFaZl9XX3E2b2dLaWdCM1M3dU5VT2l2WWhOenI3bk8zdFNnWGZaaHZiX0ZmLUlHcnFpbkRaZw</guid>
+<pubDate>Sat, 30 Aug 2025 13:31:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1QQTFTWVdIQldpRWZCTkk3bmh0T0haZEdIbVRSTkNQUVlCZWU1dHZRMmxwVkJtZ01Hd0JrU19KWmdkd3Bpemc5bE9zR0k0WlhINEY4QXRmN0lqQkdRWnlEcVBXSUZ5VUtFWjFxcdIBckFVX3lxTE01czgxLWFqS2tFT1dSekdCRmRKWlhxZjRpbWc1dFVreWdIMUN0Y0FmR2dEdUVfUDJDQm11ZGFaZl9XX3E2b2dLaWdCM1M3dU5VT2l2WWhOenI3bk8zdFNnWGZaaHZiX0ZmLUlHcnFpbkRaZw?oc=5" target="_blank">Germany ‘already in conflict’ with Russia – Merz</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Man kills mother after ChatGPT influence – media - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMickFVX3lxTE5Pc2NJMkoyYmc1aHY3TXkyV2RGalNRSExFZGE0RzdEWkdoVzFwVEpyT1FzY0dHVGNhWG9OVXUzV2h5eDF1RUJkNGFKRjZyQlVIcUtBLXF3OXlGamt6T0h0X3FtamRHdV92Q3lPMTRtcjM5d9IBd0FVX3lxTE8wck03NTFuclJRbEZiZDhNT0M0d0RxOGNycENhaXItZHdPR2RoMWpqNlNiM3VxZnphNmdBeVZkc25EVGN3RzlmMGRueWtucmNYOHdBRnBNT2RzOVdMbDZyX09NZTBYRFZIRlVyVmVwM0hYSWc2VVhj?oc=5</link>
+<guid isPermaLink="false">CBMickFVX3lxTE5Pc2NJMkoyYmc1aHY3TXkyV2RGalNRSExFZGE0RzdEWkdoVzFwVEpyT1FzY0dHVGNhWG9OVXUzV2h5eDF1RUJkNGFKRjZyQlVIcUtBLXF3OXlGamt6T0h0X3FtamRHdV92Q3lPMTRtcjM5d9IBd0FVX3lxTE8wck03NTFuclJRbEZiZDhNT0M0d0RxOGNycENhaXItZHdPR2RoMWpqNlNiM3VxZnphNmdBeVZkc25EVGN3RzlmMGRueWtucmNYOHdBRnBNT2RzOVdMbDZyX09NZTBYRFZIRlVyVmVwM0hYSWc2VVhj</guid>
+<pubDate>Sat, 30 Aug 2025 16:37:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE5Pc2NJMkoyYmc1aHY3TXkyV2RGalNRSExFZGE0RzdEWkdoVzFwVEpyT1FzY0dHVGNhWG9OVXUzV2h5eDF1RUJkNGFKRjZyQlVIcUtBLXF3OXlGamt6T0h0X3FtamRHdV92Q3lPMTRtcjM5d9IBd0FVX3lxTE8wck03NTFuclJRbEZiZDhNT0M0d0RxOGNycENhaXItZHdPR2RoMWpqNlNiM3VxZnphNmdBeVZkc25EVGN3RzlmMGRueWtucmNYOHdBRnBNT2RzOVdMbDZyX09NZTBYRFZIRlVyVmVwM0hYSWc2VVhj?oc=5" target="_blank">Man kills mother after ChatGPT influence – media</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Moscow blasts Iranian media over false Israel war claims - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiaEFVX3lxTE5Ya011SWZtTG5HejZscHlQNG5FUi1lQ2VUTjM3X0lIVEZyOGVGcEVMN1hobzdxbzBYczllNXBKcHZ2aG41T0dGZzNfcjljMjNUZ1EzZUh0SHNiVDItajdocWxwWDJxVjU50gFuQVVfeXFMT2pQalR5d2h4Ql9Od25DUzBVR2hPbFJ1cjRaT0R2dFhkQ2NfT1kxc3NkX0s3VlpMODVwSWhGd0oydzRwWTY4aEFOTThtQ3pqdzJMbWhTcUJhQkVpelVnSWhhWFZqcHZuaUhiN1ZmWXc?oc=5</link>
+<guid isPermaLink="false">CBMiaEFVX3lxTE5Ya011SWZtTG5HejZscHlQNG5FUi1lQ2VUTjM3X0lIVEZyOGVGcEVMN1hobzdxbzBYczllNXBKcHZ2aG41T0dGZzNfcjljMjNUZ1EzZUh0SHNiVDItajdocWxwWDJxVjU50gFuQVVfeXFMT2pQalR5d2h4Ql9Od25DUzBVR2hPbFJ1cjRaT0R2dFhkQ2NfT1kxc3NkX0s3VlpMODVwSWhGd0oydzRwWTY4aEFOTThtQ3pqdzJMbWhTcUJhQkVpelVnSWhhWFZqcHZuaUhiN1ZmWXc</guid>
+<pubDate>Sat, 30 Aug 2025 09:11:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5Ya011SWZtTG5HejZscHlQNG5FUi1lQ2VUTjM3X0lIVEZyOGVGcEVMN1hobzdxbzBYczllNXBKcHZ2aG41T0dGZzNfcjljMjNUZ1EzZUh0SHNiVDItajdocWxwWDJxVjU50gFuQVVfeXFMT2pQalR5d2h4Ql9Od25DUzBVR2hPbFJ1cjRaT0R2dFhkQ2NfT1kxc3NkX0s3VlpMODVwSWhGd0oydzRwWTY4aEFOTThtQ3pqdzJMbWhTcUJhQkVpelVnSWhhWFZqcHZuaUhiN1ZmWXc?oc=5" target="_blank">Moscow blasts Iranian media over false Israel war claims</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Kamala Harris’ security protection revoked – media - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidEFVX3lxTE5fUTUwU2VhTWxtSk54VUNoT1ZramNjVHh0Q2k5ZnhIM2dzNDM3c25nelJoUlZQanFYX3M0VFdtaUJDTTlod2JMTWJRTzdqYnpHZ1R4c1R5eGpnekFzTTh0bXRfY0ljRFk2VmtuanVHS1NWWHBa0gF6QVVfeXFMT2gyYXBnUzFzRHhWSFE3T1RYQ0w4bUk0YmV6eThfanBldFhwam5ET1htTGlpaU16WVp6MUJnVE9UMWlUY1NjMmw0SW1uSkNVbzNGcmRoX2N5MmZWbm9FU3lhdFNTenFGUnJPbUFiRmU0cktadXFFNE15cWc?oc=5</link>
+<guid isPermaLink="false">CBMidEFVX3lxTE5fUTUwU2VhTWxtSk54VUNoT1ZramNjVHh0Q2k5ZnhIM2dzNDM3c25nelJoUlZQanFYX3M0VFdtaUJDTTlod2JMTWJRTzdqYnpHZ1R4c1R5eGpnekFzTTh0bXRfY0ljRFk2VmtuanVHS1NWWHBa0gF6QVVfeXFMT2gyYXBnUzFzRHhWSFE3T1RYQ0w4bUk0YmV6eThfanBldFhwam5ET1htTGlpaU16WVp6MUJnVE9UMWlUY1NjMmw0SW1uSkNVbzNGcmRoX2N5MmZWbm9FU3lhdFNTenFGUnJPbUFiRmU0cktadXFFNE15cWc</guid>
+<pubDate>Sat, 30 Aug 2025 09:53:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidEFVX3lxTE5fUTUwU2VhTWxtSk54VUNoT1ZramNjVHh0Q2k5ZnhIM2dzNDM3c25nelJoUlZQanFYX3M0VFdtaUJDTTlod2JMTWJRTzdqYnpHZ1R4c1R5eGpnekFzTTh0bXRfY0ljRFk2VmtuanVHS1NWWHBa0gF6QVVfeXFMT2gyYXBnUzFzRHhWSFE3T1RYQ0w4bUk0YmV6eThfanBldFhwam5ET1htTGlpaU16WVp6MUJnVE9UMWlUY1NjMmw0SW1uSkNVbzNGcmRoX2N5MmZWbm9FU3lhdFNTenFGUnJPbUFiRmU0cktadXFFNE15cWc?oc=5" target="_blank">Kamala Harris’ security protection revoked – media</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Trump backing ‘Chinese peacekeepers’ in Ukraine – FT - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMif0FVX3lxTE9MbWo0SndIUVRxLTlDeWZBSWh0aUh2Ukd6VFZ2SGd6MGlrakRFREZDbndORElwT0ZIbTVuNzgxUmZmQVdjRDhyTE5OTERYSmhKempGWl9PMGJvNWpqRGl5Tk9YNjVJVFppX0Vta3R0XzBJSGZqMjl3cExGc3ljUzDSAYQBQVVfeXFMTVRFREI0VW02TVJfMWRFYXc3MXdLT0sxNHJibXNNdWxwd19samtjaTZpU1V6WU9hSFd4VWRuc0hKOVNNZmhvT3NJSE5zQ3FQdk1JVDV5cjloQ0Z2OEFTczAyS2ZDQkRfV0VQUXFraXhnZE1vUVNsLU5pU0Myay11TnZrQV9u?oc=5</link>
+<guid isPermaLink="false">CBMif0FVX3lxTE9MbWo0SndIUVRxLTlDeWZBSWh0aUh2Ukd6VFZ2SGd6MGlrakRFREZDbndORElwT0ZIbTVuNzgxUmZmQVdjRDhyTE5OTERYSmhKempGWl9PMGJvNWpqRGl5Tk9YNjVJVFppX0Vta3R0XzBJSGZqMjl3cExGc3ljUzDSAYQBQVVfeXFMTVRFREI0VW02TVJfMWRFYXc3MXdLT0sxNHJibXNNdWxwd19samtjaTZpU1V6WU9hSFd4VWRuc0hKOVNNZmhvT3NJSE5zQ3FQdk1JVDV5cjloQ0Z2OEFTczAyS2ZDQkRfV0VQUXFraXhnZE1vUVNsLU5pU0Myay11TnZrQV9u</guid>
+<pubDate>Sat, 30 Aug 2025 07:49:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE9MbWo0SndIUVRxLTlDeWZBSWh0aUh2Ukd6VFZ2SGd6MGlrakRFREZDbndORElwT0ZIbTVuNzgxUmZmQVdjRDhyTE5OTERYSmhKempGWl9PMGJvNWpqRGl5Tk9YNjVJVFppX0Vta3R0XzBJSGZqMjl3cExGc3ljUzDSAYQBQVVfeXFMTVRFREI0VW02TVJfMWRFYXc3MXdLT0sxNHJibXNNdWxwd19samtjaTZpU1V6WU9hSFd4VWRuc0hKOVNNZmhvT3NJSE5zQ3FQdk1JVDV5cjloQ0Z2OEFTczAyS2ZDQkRfV0VQUXFraXhnZE1vUVNsLU5pU0Myay11TnZrQV9u?oc=5" target="_blank">Trump backing ‘Chinese peacekeepers’ in Ukraine – FT</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>The dark secret of Zelensky’s Ukraine behind the assassination of one of its founders - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidkFVX3lxTFB2Z3NDellyNXM2dkR3ZXpTM0JWaGEwRzFsRWdwMm0yWGE4SWZHb2F0UjUxSzlJaU9iNkt5aHM1YkV1SE9rclR5T0JTVC1KX1I0YXdmQWZTbmR6WWljczl4dkMyMmcwZ0ZkbGkyaFNQSDJnUWdoUWfSAXtBVV95cUxOR25MRnBYLXJSeF9VanlRMWlId0hyUmpxeXJ1aXpTNkZFekZqSGlVM2dMMVFhY0ttalFBVkxYb1JWMXNCczQyUVV6U3d4b3Rnd085azJXYmlZa1dhVzFQY25uX09uVjhCaWlDY3V5ekdEMjdueWhral9xbWc?oc=5</link>
+<guid isPermaLink="false">CBMidkFVX3lxTFB2Z3NDellyNXM2dkR3ZXpTM0JWaGEwRzFsRWdwMm0yWGE4SWZHb2F0UjUxSzlJaU9iNkt5aHM1YkV1SE9rclR5T0JTVC1KX1I0YXdmQWZTbmR6WWljczl4dkMyMmcwZ0ZkbGkyaFNQSDJnUWdoUWfSAXtBVV95cUxOR25MRnBYLXJSeF9VanlRMWlId0hyUmpxeXJ1aXpTNkZFekZqSGlVM2dMMVFhY0ttalFBVkxYb1JWMXNCczQyUVV6U3d4b3Rnd085azJXYmlZa1dhVzFQY25uX09uVjhCaWlDY3V5ekdEMjdueWhral9xbWc</guid>
+<pubDate>Sun, 31 Aug 2025 14:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidkFVX3lxTFB2Z3NDellyNXM2dkR3ZXpTM0JWaGEwRzFsRWdwMm0yWGE4SWZHb2F0UjUxSzlJaU9iNkt5aHM1YkV1SE9rclR5T0JTVC1KX1I0YXdmQWZTbmR6WWljczl4dkMyMmcwZ0ZkbGkyaFNQSDJnUWdoUWfSAXtBVV95cUxOR25MRnBYLXJSeF9VanlRMWlId0hyUmpxeXJ1aXpTNkZFekZqSGlVM2dMMVFhY0ttalFBVkxYb1JWMXNCczQyUVV6U3d4b3Rnd085azJXYmlZa1dhVzFQY25uX09uVjhCaWlDY3V5ekdEMjdueWhral9xbWc?oc=5" target="_blank">The dark secret of Zelensky’s Ukraine behind the assassination of one of its founders</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Al-Qaeda strikes back in 2025: They’re not done with us yet - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZkFVX3lxTE90Sk1VSEw1MnNKempYQzNveWVWRFRWbUdGeUVuQ0U3MDVSWXk0UTJYZ3BrcU9Pb3c2QUJDRWk0dW40MlI4N3lmZ0t0QlRMck5ldnUtMV9vdlBCRjdpczRWQ2F3cXpVQdIBa0FVX3lxTE9TTVV0Y25CSmNiX1NsdkZsQjdkOUtnOXZMS21HVnVGRWV2ZDdHeG1CaVVUX3YzLVNrbG5wMkhlLTY0NFdXYVgyZVc5dUhPRmMyRkY4VzJoRjlUOUJGaUJtZFJMN2U3Y3JkVUM4?oc=5</link>
+<guid isPermaLink="false">CBMiZkFVX3lxTE90Sk1VSEw1MnNKempYQzNveWVWRFRWbUdGeUVuQ0U3MDVSWXk0UTJYZ3BrcU9Pb3c2QUJDRWk0dW40MlI4N3lmZ0t0QlRMck5ldnUtMV9vdlBCRjdpczRWQ2F3cXpVQdIBa0FVX3lxTE9TTVV0Y25CSmNiX1NsdkZsQjdkOUtnOXZMS21HVnVGRWV2ZDdHeG1CaVVUX3YzLVNrbG5wMkhlLTY0NFdXYVgyZVc5dUhPRmMyRkY4VzJoRjlUOUJGaUJtZFJMN2U3Y3JkVUM4</guid>
+<pubDate>Sat, 30 Aug 2025 14:23:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZkFVX3lxTE90Sk1VSEw1MnNKempYQzNveWVWRFRWbUdGeUVuQ0U3MDVSWXk0UTJYZ3BrcU9Pb3c2QUJDRWk0dW40MlI4N3lmZ0t0QlRMck5ldnUtMV9vdlBCRjdpczRWQ2F3cXpVQdIBa0FVX3lxTE9TTVV0Y25CSmNiX1NsdkZsQjdkOUtnOXZMS21HVnVGRWV2ZDdHeG1CaVVUX3YzLVNrbG5wMkhlLTY0NFdXYVgyZVc5dUhPRmMyRkY4VzJoRjlUOUJGaUJtZFJMN2U3Y3JkVUM4?oc=5" target="_blank">Al-Qaeda strikes back in 2025: They’re not done with us yet</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Türkiye ‘completely’ cutting trade with Israel - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTE1mUWZNa1M1aXVpMldYd1JaWFFPMG0yT0RmY0xhWFl3R2dsdDBFc1hDYnFvbEE1UmZvUUJVMC1TYnRHdVdzQUItU1NfMUVYTV8ydHZmMDFraTdqeUVwTnNwRi1NZHlZMDFSLS1F0gFwQVVfeXFMTzlELVhXekE5RjVUeDhpcnNiTzNmN1Z0V1ZzdnhralVsVmdLWHdqR2taLXVUeXAtck9HVDBCY2hTMDE5SE5fdHhUVzFsVEFhRHZ1c29GZGF2YmQ2WVczTnZ4ZE1keFY4WVI2SHJCa1Fkcg?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTE1mUWZNa1M1aXVpMldYd1JaWFFPMG0yT0RmY0xhWFl3R2dsdDBFc1hDYnFvbEE1UmZvUUJVMC1TYnRHdVdzQUItU1NfMUVYTV8ydHZmMDFraTdqeUVwTnNwRi1NZHlZMDFSLS1F0gFwQVVfeXFMTzlELVhXekE5RjVUeDhpcnNiTzNmN1Z0V1ZzdnhralVsVmdLWHdqR2taLXVUeXAtck9HVDBCY2hTMDE5SE5fdHhUVzFsVEFhRHZ1c29GZGF2YmQ2WVczTnZ4ZE1keFY4WVI2SHJCa1Fkcg</guid>
+<pubDate>Sat, 30 Aug 2025 11:29:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE1mUWZNa1M1aXVpMldYd1JaWFFPMG0yT0RmY0xhWFl3R2dsdDBFc1hDYnFvbEE1UmZvUUJVMC1TYnRHdVdzQUItU1NfMUVYTV8ydHZmMDFraTdqeUVwTnNwRi1NZHlZMDFSLS1F0gFwQVVfeXFMTzlELVhXekE5RjVUeDhpcnNiTzNmN1Z0V1ZzdnhralVsVmdLWHdqR2taLXVUeXAtck9HVDBCY2hTMDE5SE5fdHhUVzFsVEFhRHZ1c29GZGF2YmQ2WVczTnZ4ZE1keFY4WVI2SHJCa1Fkcg?oc=5" target="_blank">Türkiye ‘completely’ cutting trade with Israel</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>South Africa launches G20 committee on global wealth inequality - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMimwFBVV95cUxPTGU4bU9xWk9mbzQzZmRlVmtmeERKWXJJanYyVC1MYzZ2OXlRM1B3MGhOWmFxMlJna2FiRW5YMWVJRk1BcUhmMzNKZ2ctVGM1dDB4MlRUSktScVJ2U1JjNWFJVXh5WlNnSk43ODBOTEQ2RmphSXJ4R0JJa2hxWW9VakZDdXFZcUgzdVAwMWRBNmRsQUJBeTdjeC1mUdIBoAFBVV95cUxQbk83YXV5QlRWQ0NGWnBXVVNpT2R4OElHQWEwdTlnR0pCNEx2WnBSTnhFMHpZZHd3eE96R1BYRnh4aG9zSzlNdzUzRWhibmJoelB6Q19GbEN0MDJxNnNJX3AwSlI2T1JidGNNWURzeDFCY1ZUVXFjbk1qYVFtS0pnYkEwbHhnd3lmWHZqdHBCN0FVUUk1T21RSi1BMXFHbHM2?oc=5</link>
+<guid isPermaLink="false">CBMimwFBVV95cUxPTGU4bU9xWk9mbzQzZmRlVmtmeERKWXJJanYyVC1MYzZ2OXlRM1B3MGhOWmFxMlJna2FiRW5YMWVJRk1BcUhmMzNKZ2ctVGM1dDB4MlRUSktScVJ2U1JjNWFJVXh5WlNnSk43ODBOTEQ2RmphSXJ4R0JJa2hxWW9VakZDdXFZcUgzdVAwMWRBNmRsQUJBeTdjeC1mUdIBoAFBVV95cUxQbk83YXV5QlRWQ0NGWnBXVVNpT2R4OElHQWEwdTlnR0pCNEx2WnBSTnhFMHpZZHd3eE96R1BYRnh4aG9zSzlNdzUzRWhibmJoelB6Q19GbEN0MDJxNnNJX3AwSlI2T1JidGNNWURzeDFCY1ZUVXFjbk1qYVFtS0pnYkEwbHhnd3lmWHZqdHBCN0FVUUk1T21RSi1BMXFHbHM2</guid>
+<pubDate>Sat, 30 Aug 2025 08:46:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMimwFBVV95cUxPTGU4bU9xWk9mbzQzZmRlVmtmeERKWXJJanYyVC1MYzZ2OXlRM1B3MGhOWmFxMlJna2FiRW5YMWVJRk1BcUhmMzNKZ2ctVGM1dDB4MlRUSktScVJ2U1JjNWFJVXh5WlNnSk43ODBOTEQ2RmphSXJ4R0JJa2hxWW9VakZDdXFZcUgzdVAwMWRBNmRsQUJBeTdjeC1mUdIBoAFBVV95cUxQbk83YXV5QlRWQ0NGWnBXVVNpT2R4OElHQWEwdTlnR0pCNEx2WnBSTnhFMHpZZHd3eE96R1BYRnh4aG9zSzlNdzUzRWhibmJoelB6Q19GbEN0MDJxNnNJX3AwSlI2T1JidGNNWURzeDFCY1ZUVXFjbk1qYVFtS0pnYkEwbHhnd3lmWHZqdHBCN0FVUUk1T21RSi1BMXFHbHM2?oc=5" target="_blank">South Africa launches G20 committee on global wealth inequality</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Putin and Xi to lay foundations for a new world order in Beijing - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTE5RYk55VHNfMmFvel91SDhMVEg1ckd3UVk1dWk2VEhEVHJZb2hlUDVyNjJfVUVtbnE3dGhhUHJ6bklyTWJjcU8zelhwX3dNQ3BGb19Db040WGszRnlydi16bW8yWnVaeW5nSm5RatIBckFVX3lxTFBlOEZqN2JHaEZLWWpQTEZERl9LcjRhNWg5Vng4Z3hhUXk3N0dyN2FGc29DWko2LTdFRkJwY0FWN3VUNzFfZjRPaE0xLTRuTjRfbDkyd1RhYm9IMWVkZE1idkE0Um5VanlVU1FCZkFHdGF5dw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTE5RYk55VHNfMmFvel91SDhMVEg1ckd3UVk1dWk2VEhEVHJZb2hlUDVyNjJfVUVtbnE3dGhhUHJ6bklyTWJjcU8zelhwX3dNQ3BGb19Db040WGszRnlydi16bW8yWnVaeW5nSm5RatIBckFVX3lxTFBlOEZqN2JHaEZLWWpQTEZERl9LcjRhNWg5Vng4Z3hhUXk3N0dyN2FGc29DWko2LTdFRkJwY0FWN3VUNzFfZjRPaE0xLTRuTjRfbDkyd1RhYm9IMWVkZE1idkE0Um5VanlVU1FCZkFHdGF5dw</guid>
+<pubDate>Fri, 29 Aug 2025 22:04:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5RYk55VHNfMmFvel91SDhMVEg1ckd3UVk1dWk2VEhEVHJZb2hlUDVyNjJfVUVtbnE3dGhhUHJ6bklyTWJjcU8zelhwX3dNQ3BGb19Db040WGszRnlydi16bW8yWnVaeW5nSm5RatIBckFVX3lxTFBlOEZqN2JHaEZLWWpQTEZERl9LcjRhNWg5Vng4Z3hhUXk3N0dyN2FGc29DWko2LTdFRkJwY0FWN3VUNzFfZjRPaE0xLTRuTjRfbDkyd1RhYm9IMWVkZE1idkE0Um5VanlVU1FCZkFHdGF5dw?oc=5" target="_blank">Putin and Xi to lay foundations for a new world order in Beijing</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Von der Leyen calls Putin a ‘predator’ - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMicEFVX3lxTE4xWW00REwyT2dILXBtNTU0TFItRG9uZm9YbXhHUlo2Nm9qYVlFMDN6c2lYRG5MSm15UjMwbk5kM2pFYWZkeHpkVjVEcEFfelpjcW5iNF9uR2NUem5FbmVhQWtoYzhLbEN1cm9ublRSZnLSAXZBVV95cUxOMF9DOV9mRUdLV2E3R2xoNjh1bVFCcjc3bUpMOGliM0hNajV3d012Z19OMjVtODllMlJzMU1DRDZDdkZWQnJTc1ZwamgxYVh5aFN3NUQ3WFljTWkwWTV2TmhVelVRQ2RWVUtRdGpZQ3hCQnVWMF9B?oc=5</link>
+<guid isPermaLink="false">CBMicEFVX3lxTE4xWW00REwyT2dILXBtNTU0TFItRG9uZm9YbXhHUlo2Nm9qYVlFMDN6c2lYRG5MSm15UjMwbk5kM2pFYWZkeHpkVjVEcEFfelpjcW5iNF9uR2NUem5FbmVhQWtoYzhLbEN1cm9ublRSZnLSAXZBVV95cUxOMF9DOV9mRUdLV2E3R2xoNjh1bVFCcjc3bUpMOGliM0hNajV3d012Z19OMjVtODllMlJzMU1DRDZDdkZWQnJTc1ZwamgxYVh5aFN3NUQ3WFljTWkwWTV2TmhVelVRQ2RWVUtRdGpZQ3hCQnVWMF9B</guid>
+<pubDate>Sat, 30 Aug 2025 03:11:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE4xWW00REwyT2dILXBtNTU0TFItRG9uZm9YbXhHUlo2Nm9qYVlFMDN6c2lYRG5MSm15UjMwbk5kM2pFYWZkeHpkVjVEcEFfelpjcW5iNF9uR2NUem5FbmVhQWtoYzhLbEN1cm9ublRSZnLSAXZBVV95cUxOMF9DOV9mRUdLV2E3R2xoNjh1bVFCcjc3bUpMOGliM0hNajV3d012Z19OMjVtODllMlJzMU1DRDZDdkZWQnJTc1ZwamgxYVh5aFN3NUQ3WFljTWkwWTV2TmhVelVRQ2RWVUtRdGpZQ3hCQnVWMF9B?oc=5" target="_blank">Von der Leyen calls Putin a ‘predator’</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Staunch neo-Nazi and Maidan kingpin assassinated: Who was prominent Ukrainian MP Andrey Parubiy? - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMihAFBVV95cUxPdEJ4WEhvSUc2TEJzZC13dXZLS1J5TEVaWmxMVEgwcFBPa0tkWkJyQU9kUVR6LXlhMktJY1JMWnhSTXNuTGlVakxJQm1JbnhlaXFmZk1kdzgwaEJVNFRJVzBJSUVIalFLclk0TWJaaEdBbnJpUXdOUlliT0poV0oxTzFKR1_SAYoBQVVfeXFMUFc5eEZBSE0yeXhzaUNlUU9tUk9KU2VVSkdCcU85NloxTU4waVk4bFR0TlFYaHNGdDlmU3VlbEoyQmVUNnNURlAyQ2NSTDJaOF9mTVJkTGx2ajRQeXI4SmFGU01BMFFjbi1kQ1UwbW43a1AyeENrbllUVHJjaVBLcS1wbkpvSWQ4b1pn?oc=5</link>
+<guid isPermaLink="false">CBMihAFBVV95cUxPdEJ4WEhvSUc2TEJzZC13dXZLS1J5TEVaWmxMVEgwcFBPa0tkWkJyQU9kUVR6LXlhMktJY1JMWnhSTXNuTGlVakxJQm1JbnhlaXFmZk1kdzgwaEJVNFRJVzBJSUVIalFLclk0TWJaaEdBbnJpUXdOUlliT0poV0oxTzFKR1_SAYoBQVVfeXFMUFc5eEZBSE0yeXhzaUNlUU9tUk9KU2VVSkdCcU85NloxTU4waVk4bFR0TlFYaHNGdDlmU3VlbEoyQmVUNnNURlAyQ2NSTDJaOF9mTVJkTGx2ajRQeXI4SmFGU01BMFFjbi1kQ1UwbW43a1AyeENrbllUVHJjaVBLcS1wbkpvSWQ4b1pn</guid>
+<pubDate>Sat, 30 Aug 2025 16:12:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMihAFBVV95cUxPdEJ4WEhvSUc2TEJzZC13dXZLS1J5TEVaWmxMVEgwcFBPa0tkWkJyQU9kUVR6LXlhMktJY1JMWnhSTXNuTGlVakxJQm1JbnhlaXFmZk1kdzgwaEJVNFRJVzBJSUVIalFLclk0TWJaaEdBbnJpUXdOUlliT0poV0oxTzFKR1_SAYoBQVVfeXFMUFc5eEZBSE0yeXhzaUNlUU9tUk9KU2VVSkdCcU85NloxTU4waVk4bFR0TlFYaHNGdDlmU3VlbEoyQmVUNnNURlAyQ2NSTDJaOF9mTVJkTGx2ajRQeXI4SmFGU01BMFFjbi1kQ1UwbW43a1AyeENrbllUVHJjaVBLcS1wbkpvSWQ4b1pn?oc=5" target="_blank">Staunch neo-Nazi and Maidan kingpin assassinated: Who was prominent Ukrainian MP Andrey Parubiy?</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Prominent Ukrainian far-right MP shot dead in Lviv (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMie0FVX3lxTFAya2pnRjdOZll1WW5NSzdpVDRza2owdktCSVFnbjl5bEcwcjhmX0NXNjRzVmZqQ01WVzhKR1VobHF0R3BmTmVCR3V4emtZdHhNMXAwZEpHanNQU01QZDZqRklIeHVVNGRNYXBKa1BfeERQQzZYOC1BaDd1a9IBgAFBVV95cUxQNWk3WXZHUnlSS2t1ZEI4U2hLY1M4OEN1R3NkUzNiZm1teEpMLUFQeldlbzFrM2tJQ0hlYVJaVVdqS1R1YmJNVkRDQjNTYXdaM1Q4RHVVT3V0SEMwZ2FSX3llNk16UGtJdjJzT2hpamtvUE9RaFR0NGpuWTJxNHpzRg?oc=5</link>
+<guid isPermaLink="false">CBMie0FVX3lxTFAya2pnRjdOZll1WW5NSzdpVDRza2owdktCSVFnbjl5bEcwcjhmX0NXNjRzVmZqQ01WVzhKR1VobHF0R3BmTmVCR3V4emtZdHhNMXAwZEpHanNQU01QZDZqRklIeHVVNGRNYXBKa1BfeERQQzZYOC1BaDd1a9IBgAFBVV95cUxQNWk3WXZHUnlSS2t1ZEI4U2hLY1M4OEN1R3NkUzNiZm1teEpMLUFQeldlbzFrM2tJQ0hlYVJaVVdqS1R1YmJNVkRDQjNTYXdaM1Q4RHVVT3V0SEMwZ2FSX3llNk16UGtJdjJzT2hpamtvUE9RaFR0NGpuWTJxNHpzRg</guid>
+<pubDate>Sat, 30 Aug 2025 11:10:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMie0FVX3lxTFAya2pnRjdOZll1WW5NSzdpVDRza2owdktCSVFnbjl5bEcwcjhmX0NXNjRzVmZqQ01WVzhKR1VobHF0R3BmTmVCR3V4emtZdHhNMXAwZEpHanNQU01QZDZqRklIeHVVNGRNYXBKa1BfeERQQzZYOC1BaDd1a9IBgAFBVV95cUxQNWk3WXZHUnlSS2t1ZEI4U2hLY1M4OEN1R3NkUzNiZm1teEpMLUFQeldlbzFrM2tJQ0hlYVJaVVdqS1R1YmJNVkRDQjNTYXdaM1Q4RHVVT3V0SEMwZ2FSX3llNk16UGtJdjJzT2hpamtvUE9RaFR0NGpuWTJxNHpzRg?oc=5" target="_blank">Prominent Ukrainian far-right MP shot dead in Lviv (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Japan pledges $68bn investment in India - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTE8tZ1g2UkU1b2t6SkhuNVYtbVcwUG1Nb1VYcWRPZHNrVDlMUENOR095ZU54UWEtMHpsUlJYV3JCQmNnVkdGNmRUOUNQMDVrVGd1NlFKWWotdnpncXNTQWRvSVRabksxellLRXBoctIBckFVX3lxTFBBeDJ2U0ZaT1NyUTg5amRQYlZyVTRjRm5VbXM0SE5fbWRZY2RqbmFhWVU2OHJGNXhiN0FqOVZuc3NzbTV4SU5KMjlxQmlCdXdXRVl5YmFyWGE2WGNZUzFPdkRBVFVhUXE0UHN0R3dJVFo0dw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTE8tZ1g2UkU1b2t6SkhuNVYtbVcwUG1Nb1VYcWRPZHNrVDlMUENOR095ZU54UWEtMHpsUlJYV3JCQmNnVkdGNmRUOUNQMDVrVGd1NlFKWWotdnpncXNTQWRvSVRabksxellLRXBoctIBckFVX3lxTFBBeDJ2U0ZaT1NyUTg5amRQYlZyVTRjRm5VbXM0SE5fbWRZY2RqbmFhWVU2OHJGNXhiN0FqOVZuc3NzbTV4SU5KMjlxQmlCdXdXRVl5YmFyWGE2WGNZUzFPdkRBVFVhUXE0UHN0R3dJVFo0dw</guid>
+<pubDate>Sat, 30 Aug 2025 05:51:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE8tZ1g2UkU1b2t6SkhuNVYtbVcwUG1Nb1VYcWRPZHNrVDlMUENOR095ZU54UWEtMHpsUlJYV3JCQmNnVkdGNmRUOUNQMDVrVGd1NlFKWWotdnpncXNTQWRvSVRabksxellLRXBoctIBckFVX3lxTFBBeDJ2U0ZaT1NyUTg5amRQYlZyVTRjRm5VbXM0SE5fbWRZY2RqbmFhWVU2OHJGNXhiN0FqOVZuc3NzbTV4SU5KMjlxQmlCdXdXRVl5YmFyWGE2WGNZUzFPdkRBVFVhUXE0UHN0R3dJVFo0dw?oc=5" target="_blank">Japan pledges $68bn investment in India</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Vance accuses Politico of ‘foreign influence operation’ against Witkoff - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMid0FVX3lxTE5Da3ltZlJMXzM2RzFaTjk5ZkduXzlFa1B2dHB6bVM5OERMTzlnNVdXM3o3YXFPSkJBX0RGZlZ3VUphcWNwcGgzOVQyRjFsWElfMnpIZmQwQ2RTdnFaSU5hZ0NNVVVxNzJ0Zkx6WFFpSUN5UkxINmJ30gF8QVVfeXFMTWxzZW1ENU92QURXYlp3TnVlRndRN056OGlfenNoQmVHRGF0ZktWS3A2ZGlhXzlGbFY4bDQwVVFMcUxqRGxmS1JZVWpzMXdUcGFGTF9KcDVtYWQ5RWVSYUVvUWRud0J0OWhhT21BTDVjNnJDUWgyQXFDdWxPVw?oc=5</link>
+<guid isPermaLink="false">CBMid0FVX3lxTE5Da3ltZlJMXzM2RzFaTjk5ZkduXzlFa1B2dHB6bVM5OERMTzlnNVdXM3o3YXFPSkJBX0RGZlZ3VUphcWNwcGgzOVQyRjFsWElfMnpIZmQwQ2RTdnFaSU5hZ0NNVVVxNzJ0Zkx6WFFpSUN5UkxINmJ30gF8QVVfeXFMTWxzZW1ENU92QURXYlp3TnVlRndRN056OGlfenNoQmVHRGF0ZktWS3A2ZGlhXzlGbFY4bDQwVVFMcUxqRGxmS1JZVWpzMXdUcGFGTF9KcDVtYWQ5RWVSYUVvUWRud0J0OWhhT21BTDVjNnJDUWgyQXFDdWxPVw</guid>
+<pubDate>Sat, 30 Aug 2025 02:05:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE5Da3ltZlJMXzM2RzFaTjk5ZkduXzlFa1B2dHB6bVM5OERMTzlnNVdXM3o3YXFPSkJBX0RGZlZ3VUphcWNwcGgzOVQyRjFsWElfMnpIZmQwQ2RTdnFaSU5hZ0NNVVVxNzJ0Zkx6WFFpSUN5UkxINmJ30gF8QVVfeXFMTWxzZW1ENU92QURXYlp3TnVlRndRN056OGlfenNoQmVHRGF0ZktWS3A2ZGlhXzlGbFY4bDQwVVFMcUxqRGxmS1JZVWpzMXdUcGFGTF9KcDVtYWQ5RWVSYUVvUWRud0J0OWhhT21BTDVjNnJDUWgyQXFDdWxPVw?oc=5" target="_blank">Vance accuses Politico of ‘foreign influence operation’ against Witkoff</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>German police disperse protest against militarization (VIDEOS) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMid0FVX3lxTE1oSEZZQ1hKeURGZFBOMlpObkVkQ1h3dUtvb3B1VU1fVC1qNVNkN3RoRFpKalg5Tl9MQkNzVTM0MXJLb1RfbEh4SUszbnFmV3Q4VUhoY19iaUExSVZYbUp3QTFMSzhVRFQ5U3VHWVZyaTZIOXFFd0FZ0gF8QVVfeXFMTV9lNEVKWmxudHgxQ0RZOGFtQ0RUaWNSX0p4aGkwS0k5aURiOUwxSHFmbVpqNXBmV0lZdVg1dERCYmVmWUx0MEkwQnBGV3FkRVZIRGR1QndzVDIteFFKOURRYzFTdXltbTRHbV9rc040ZGE4RUotMUg3OXN5bA?oc=5</link>
+<guid isPermaLink="false">CBMid0FVX3lxTE1oSEZZQ1hKeURGZFBOMlpObkVkQ1h3dUtvb3B1VU1fVC1qNVNkN3RoRFpKalg5Tl9MQkNzVTM0MXJLb1RfbEh4SUszbnFmV3Q4VUhoY19iaUExSVZYbUp3QTFMSzhVRFQ5U3VHWVZyaTZIOXFFd0FZ0gF8QVVfeXFMTV9lNEVKWmxudHgxQ0RZOGFtQ0RUaWNSX0p4aGkwS0k5aURiOUwxSHFmbVpqNXBmV0lZdVg1dERCYmVmWUx0MEkwQnBGV3FkRVZIRGR1QndzVDIteFFKOURRYzFTdXltbTRHbV9rc040ZGE4RUotMUg3OXN5bA</guid>
+<pubDate>Sun, 31 Aug 2025 12:48:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE1oSEZZQ1hKeURGZFBOMlpObkVkQ1h3dUtvb3B1VU1fVC1qNVNkN3RoRFpKalg5Tl9MQkNzVTM0MXJLb1RfbEh4SUszbnFmV3Q4VUhoY19iaUExSVZYbUp3QTFMSzhVRFQ5U3VHWVZyaTZIOXFFd0FZ0gF8QVVfeXFMTV9lNEVKWmxudHgxQ0RZOGFtQ0RUaWNSX0p4aGkwS0k5aURiOUwxSHFmbVpqNXBmV0lZdVg1dERCYmVmWUx0MEkwQnBGV3FkRVZIRGR1QndzVDIteFFKOURRYzFTdXltbTRHbV9rc040ZGE4RUotMUg3OXN5bA?oc=5" target="_blank">German police disperse protest against militarization (VIDEOS)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>What happens when you try to beat Russia with the best military tech of your time - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMic0FVX3lxTFBpX3UtNmlvYVM3aGhEcFFsaTRxei1XbU0tN2hkNER3Mml5MUN2OUhCREptUmRxcDFvQlZXTVo0MzI4VWVPZVFqMERiMGRmMkpyWlViSFMyY1k3VTlFQXZ4WjhHSkhXUnRSbHZ5ZTU2bzI0cDDSAXhBVV95cUxQOHh2REktQzNQSHVXQy1GZEs1TS1HZ0ZWRVlFbHhSVkttcWYyS2hGR1d1d2tiMGt2ejZNa3hnbE82WTBib0d6dzUwOVh0WFJkc2RQUVZ1emxUM0F2Zlc1eWxYbF9feDIxX3ZjaG83aW1hSEx2ejF2dDk?oc=5</link>
+<guid isPermaLink="false">CBMic0FVX3lxTFBpX3UtNmlvYVM3aGhEcFFsaTRxei1XbU0tN2hkNER3Mml5MUN2OUhCREptUmRxcDFvQlZXTVo0MzI4VWVPZVFqMERiMGRmMkpyWlViSFMyY1k3VTlFQXZ4WjhHSkhXUnRSbHZ5ZTU2bzI0cDDSAXhBVV95cUxQOHh2REktQzNQSHVXQy1GZEs1TS1HZ0ZWRVlFbHhSVkttcWYyS2hGR1d1d2tiMGt2ejZNa3hnbE82WTBib0d6dzUwOVh0WFJkc2RQUVZ1emxUM0F2Zlc1eWxYbF9feDIxX3ZjaG83aW1hSEx2ejF2dDk</guid>
+<pubDate>Fri, 29 Aug 2025 18:45:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFBpX3UtNmlvYVM3aGhEcFFsaTRxei1XbU0tN2hkNER3Mml5MUN2OUhCREptUmRxcDFvQlZXTVo0MzI4VWVPZVFqMERiMGRmMkpyWlViSFMyY1k3VTlFQXZ4WjhHSkhXUnRSbHZ5ZTU2bzI0cDDSAXhBVV95cUxQOHh2REktQzNQSHVXQy1GZEs1TS1HZ0ZWRVlFbHhSVkttcWYyS2hGR1d1d2tiMGt2ejZNa3hnbE82WTBib0d6dzUwOVh0WFJkc2RQUVZ1emxUM0F2Zlc1eWxYbF9feDIxX3ZjaG83aW1hSEx2ejF2dDk?oc=5" target="_blank">What happens when you try to beat Russia with the best military tech of your time</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>French PM admits debt will devastate next generation - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMidkFVX3lxTFBfRTFGTFNFTVd6QlBrWDVyRE1oSkh0bXkxbjRqNTEzSm5rYjBGZHgzSEtRcUNYQ0R6eWV5Rm5GUkx1eUFJVXFLb2FONncyWWtYYzByNUNWTjJwVG01MTloNjFZdnhEYmlEM1dtRExKNl90N0lyUVHSAXtBVV95cUxOaEE2NW1KeGY1QWhYUmlUWlVwTFROaG9iVk1ZR1BPWGphM0Z5ZHczUkJQazZyQ1haNDZYT1dWZGFTTWthaWJiYUZpQV9EMzBXbnJKanJodWtTNVN5T0ZpVWltdDhCVWRZWGVqblMzc3RiR2dOX3UycXJNNlE?oc=5</link>
+<guid isPermaLink="false">CBMidkFVX3lxTFBfRTFGTFNFTVd6QlBrWDVyRE1oSkh0bXkxbjRqNTEzSm5rYjBGZHgzSEtRcUNYQ0R6eWV5Rm5GUkx1eUFJVXFLb2FONncyWWtYYzByNUNWTjJwVG01MTloNjFZdnhEYmlEM1dtRExKNl90N0lyUVHSAXtBVV95cUxOaEE2NW1KeGY1QWhYUmlUWlVwTFROaG9iVk1ZR1BPWGphM0Z5ZHczUkJQazZyQ1haNDZYT1dWZGFTTWthaWJiYUZpQV9EMzBXbnJKanJodWtTNVN5T0ZpVWltdDhCVWRZWGVqblMzc3RiR2dOX3UycXJNNlE</guid>
+<pubDate>Sat, 30 Aug 2025 06:42:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMidkFVX3lxTFBfRTFGTFNFTVd6QlBrWDVyRE1oSkh0bXkxbjRqNTEzSm5rYjBGZHgzSEtRcUNYQ0R6eWV5Rm5GUkx1eUFJVXFLb2FONncyWWtYYzByNUNWTjJwVG01MTloNjFZdnhEYmlEM1dtRExKNl90N0lyUVHSAXtBVV95cUxOaEE2NW1KeGY1QWhYUmlUWlVwTFROaG9iVk1ZR1BPWGphM0Z5ZHczUkJQazZyQ1haNDZYT1dWZGFTTWthaWJiYUZpQV9EMzBXbnJKanJodWtTNVN5T0ZpVWltdDhCVWRZWGVqblMzc3RiR2dOX3UycXJNNlE?oc=5" target="_blank">French PM admits debt will devastate next generation</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>German unemployment hits ten-year high - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiekFVX3lxTE1MVXlYbDVKWUFkTE5hWENsRkctVVItNnZMTWgwWTFoVnk4VE96QmRXVV9rNFBMS3hmeEJ2VkZYLWZCQUctVG9yY1NuQWNieGltYzFXR0x4WldIX2lQdWlaLU53cFhfUVRfRDN4TE5DSzJneWVkclhqMmpR0gF_QVVfeXFMT3Q4MEN2SlJOZUtabW5DbFdfR2ROdUZyUTQzcEdDQWN2ZlRVelJmNVNfbkVKRGpKWk5nd2NFejVGWWQ5QWpseHRiNWkwdmJyMl91MTh4STdEZ2hBdFhUcWdlbE5LZm5IUDZrSExLQndxdzVlcjlsQUhmZkpJMUlWNA?oc=5</link>
+<guid isPermaLink="false">CBMiekFVX3lxTE1MVXlYbDVKWUFkTE5hWENsRkctVVItNnZMTWgwWTFoVnk4VE96QmRXVV9rNFBMS3hmeEJ2VkZYLWZCQUctVG9yY1NuQWNieGltYzFXR0x4WldIX2lQdWlaLU53cFhfUVRfRDN4TE5DSzJneWVkclhqMmpR0gF_QVVfeXFMT3Q4MEN2SlJOZUtabW5DbFdfR2ROdUZyUTQzcEdDQWN2ZlRVelJmNVNfbkVKRGpKWk5nd2NFejVGWWQ5QWpseHRiNWkwdmJyMl91MTh4STdEZ2hBdFhUcWdlbE5LZm5IUDZrSExLQndxdzVlcjlsQUhmZkpJMUlWNA</guid>
+<pubDate>Fri, 29 Aug 2025 18:42:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiekFVX3lxTE1MVXlYbDVKWUFkTE5hWENsRkctVVItNnZMTWgwWTFoVnk4VE96QmRXVV9rNFBMS3hmeEJ2VkZYLWZCQUctVG9yY1NuQWNieGltYzFXR0x4WldIX2lQdWlaLU53cFhfUVRfRDN4TE5DSzJneWVkclhqMmpR0gF_QVVfeXFMT3Q4MEN2SlJOZUtabW5DbFdfR2ROdUZyUTQzcEdDQWN2ZlRVelJmNVNfbkVKRGpKWk5nd2NFejVGWWQ5QWpseHRiNWkwdmJyMl91MTh4STdEZ2hBdFhUcWdlbE5LZm5IUDZrSExLQndxdzVlcjlsQUhmZkpJMUlWNA?oc=5" target="_blank">German unemployment hits ten-year high</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>NATO state’s president claims Trump a ‘Russian asset’ (VIDEO) - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibEFVX3lxTE1DaFByRWM1N3gySjB4T3g1ZnlsbXFqejQ3R3J1eGRoekRWakJTZTRaMGw2UV82OUdrTGFWRXBQLU9TRTdZS0tKMm1TcUNsakVqOWVSdmVpR3BhN3dYdEYtNEstY1Z2aExQVmJwOdIBckFVX3lxTE5HeHJWUmw2YXpJUUNPOExVNHROcHdSeVl5V0k4bHBZTGpHb1lLUnIya3BsZlFWdUFxekdhMmwyVDIybGQ1cG1DdjNLWnJOZDJrMDBIM3ZCNmZmVkJrb25QdFlBSUxSREhRM2RtbGh0UHhMZw?oc=5</link>
+<guid isPermaLink="false">CBMibEFVX3lxTE1DaFByRWM1N3gySjB4T3g1ZnlsbXFqejQ3R3J1eGRoekRWakJTZTRaMGw2UV82OUdrTGFWRXBQLU9TRTdZS0tKMm1TcUNsakVqOWVSdmVpR3BhN3dYdEYtNEstY1Z2aExQVmJwOdIBckFVX3lxTE5HeHJWUmw2YXpJUUNPOExVNHROcHdSeVl5V0k4bHBZTGpHb1lLUnIya3BsZlFWdUFxekdhMmwyVDIybGQ1cG1DdjNLWnJOZDJrMDBIM3ZCNmZmVkJrb25QdFlBSUxSREhRM2RtbGh0UHhMZw</guid>
+<pubDate>Fri, 29 Aug 2025 00:59:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1DaFByRWM1N3gySjB4T3g1ZnlsbXFqejQ3R3J1eGRoekRWakJTZTRaMGw2UV82OUdrTGFWRXBQLU9TRTdZS0tKMm1TcUNsakVqOWVSdmVpR3BhN3dYdEYtNEstY1Z2aExQVmJwOdIBckFVX3lxTE5HeHJWUmw2YXpJUUNPOExVNHROcHdSeVl5V0k4bHBZTGpHb1lLUnIya3BsZlFWdUFxekdhMmwyVDIybGQ1cG1DdjNLWnJOZDJrMDBIM3ZCNmZmVkJrb25QdFlBSUxSREhRM2RtbGh0UHhMZw?oc=5" target="_blank">NATO state’s president claims Trump a ‘Russian asset’ (VIDEO)</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Russia and China ‘united in our vision’ – Putin - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiaEFVX3lxTE9IRm9xbUl1ekkxWExlUVNDLVpxZkZVSXdlTlFyZXhsaEUtY3ZrMG0teURVZG5OMlZyUnlWVW52ck1MODFidVYzNTZLR3UtZlZfVDZwelMzaTRHb3NxaF94cGtsb2dVNS1B0gFuQVVfeXFMTk9zNFFLdHhVQTdTejY4UlVlVlZva3VoSUJ5ZmltOTdaZzVIWkwtVkxxTmYtelhEeEpfSEFjUjBJN1oyamRpSE1SbDdNNlNWWG1KdXRFMThzYXg4LXJSLTBYMTloR2VTOUF5WkVKSVE?oc=5</link>
+<guid isPermaLink="false">CBMiaEFVX3lxTE9IRm9xbUl1ekkxWExlUVNDLVpxZkZVSXdlTlFyZXhsaEUtY3ZrMG0teURVZG5OMlZyUnlWVW52ck1MODFidVYzNTZLR3UtZlZfVDZwelMzaTRHb3NxaF94cGtsb2dVNS1B0gFuQVVfeXFMTk9zNFFLdHhVQTdTejY4UlVlVlZva3VoSUJ5ZmltOTdaZzVIWkwtVkxxTmYtelhEeEpfSEFjUjBJN1oyamRpSE1SbDdNNlNWWG1KdXRFMThzYXg4LXJSLTBYMTloR2VTOUF5WkVKSVE</guid>
+<pubDate>Fri, 29 Aug 2025 22:25:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE9IRm9xbUl1ekkxWExlUVNDLVpxZkZVSXdlTlFyZXhsaEUtY3ZrMG0teURVZG5OMlZyUnlWVW52ck1MODFidVYzNTZLR3UtZlZfVDZwelMzaTRHb3NxaF94cGtsb2dVNS1B0gFuQVVfeXFMTk9zNFFLdHhVQTdTejY4UlVlVlZva3VoSUJ5ZmltOTdaZzVIWkwtVkxxTmYtelhEeEpfSEFjUjBJN1oyamRpSE1SbDdNNlNWWG1KdXRFMThzYXg4LXJSLTBYMTloR2VTOUF5WkVKSVE?oc=5" target="_blank">Russia and China ‘united in our vision’ – Putin</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Rubio hands USAID over for final termination - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMia0FVX3lxTE43MzBiQzZCRk1kdlAyanlWYVpqUzZ4ZkF1YkUzeHhITlUycmpKaU15dUItbzBiSnlRY1F4bVc2UE5MdjloRW9md1c3R0xqYU1iQ1VjeEp6WDhZNC1aRHBLUzRzWHVQZldPTmdv0gFwQVVfeXFMT2htcEJEUjZZM0tVejJ4ZWIzUU9YZFFMVUoyWVJVdVU3cWJJb1pwd2RodmY1dENSS0VQQTZfOVpDSHVyUDNfUWtkTGZyRUxZcnFNWF9JTlVkcnBYTVdtUnE2cWg1eEZZVDlkVThveUNTWQ?oc=5</link>
+<guid isPermaLink="false">CBMia0FVX3lxTE43MzBiQzZCRk1kdlAyanlWYVpqUzZ4ZkF1YkUzeHhITlUycmpKaU15dUItbzBiSnlRY1F4bVc2UE5MdjloRW9md1c3R0xqYU1iQ1VjeEp6WDhZNC1aRHBLUzRzWHVQZldPTmdv0gFwQVVfeXFMT2htcEJEUjZZM0tVejJ4ZWIzUU9YZFFMVUoyWVJVdVU3cWJJb1pwd2RodmY1dENSS0VQQTZfOVpDSHVyUDNfUWtkTGZyRUxZcnFNWF9JTlVkcnBYTVdtUnE2cWg1eEZZVDlkVThveUNTWQ</guid>
+<pubDate>Fri, 29 Aug 2025 20:43:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE43MzBiQzZCRk1kdlAyanlWYVpqUzZ4ZkF1YkUzeHhITlUycmpKaU15dUItbzBiSnlRY1F4bVc2UE5MdjloRW9md1c3R0xqYU1iQ1VjeEp6WDhZNC1aRHBLUzRzWHVQZldPTmdv0gFwQVVfeXFMT2htcEJEUjZZM0tVejJ4ZWIzUU9YZFFMVUoyWVJVdVU3cWJJb1pwd2RodmY1dENSS0VQQTZfOVpDSHVyUDNfUWtkTGZyRUxZcnFNWF9JTlVkcnBYTVdtUnE2cWg1eEZZVDlkVThveUNTWQ?oc=5" target="_blank">Rubio hands USAID over for final termination</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Trump haters’ new political strategy: Just hope he dies - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiY0FVX3lxTFBySnB4c2IwdXpaaUtjLVpLQUdnalJIaVRqQ2JLN0dLbDl2Yng1ajV6SFVOUFpwdmZ6X2pVS21DQ19ZUHh0UUdjZE1TeUFTNExwU2p0b3g4NEpYdWQ4X2NyVmdwZ9IBaEFVX3lxTE90UWlkRDdGUGlWbURQUUJndzRFT3p3WDg5cFFTUWlPWDR3UC1PbzVmWkNkUlhmLVFOODhlYklIRWt4YWF1c2FBR0UtcnVsdXJXTTBfLTY3VjZGQ0Vyc1FxdE9weXpxUFZi?oc=5</link>
+<guid isPermaLink="false">CBMiY0FVX3lxTFBySnB4c2IwdXpaaUtjLVpLQUdnalJIaVRqQ2JLN0dLbDl2Yng1ajV6SFVOUFpwdmZ6X2pVS21DQ19ZUHh0UUdjZE1TeUFTNExwU2p0b3g4NEpYdWQ4X2NyVmdwZ9IBaEFVX3lxTE90UWlkRDdGUGlWbURQUUJndzRFT3p3WDg5cFFTUWlPWDR3UC1PbzVmWkNkUlhmLVFOODhlYklIRWt4YWF1c2FBR0UtcnVsdXJXTTBfLTY3VjZGQ0Vyc1FxdE9weXpxUFZi</guid>
+<pubDate>Sun, 31 Aug 2025 19:32:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTFBySnB4c2IwdXpaaUtjLVpLQUdnalJIaVRqQ2JLN0dLbDl2Yng1ajV6SFVOUFpwdmZ6X2pVS21DQ19ZUHh0UUdjZE1TeUFTNExwU2p0b3g4NEpYdWQ4X2NyVmdwZ9IBaEFVX3lxTE90UWlkRDdGUGlWbURQUUJndzRFT3p3WDg5cFFTUWlPWDR3UC1PbzVmWkNkUlhmLVFOODhlYklIRWt4YWF1c2FBR0UtcnVsdXJXTTBfLTY3VjZGQ0Vyc1FxdE9weXpxUFZi?oc=5" target="_blank">Trump haters’ new political strategy: Just hope he dies</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Ukraine takes new step towards banning its largest Christian church - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMib0FVX3lxTE14dVV1OWdXbk8zbng5MXJhdkR6Ym1QMEg5UlMzNlJMVnVOdWdpeG1vRHlUYlItbFlhbzFCMTl3UVR0RG5DbEtyOUlvTVB3X2tIbW9aZGFfODZQOUtvdHkxMjlFcDVBcFB1S3ZoNHNpUdIBdEFVX3lxTFBDakVneHhoX2lTNlhZUzVaWDhET2JjT2lRZE1vYVdWb2VDM3VENWFkTENLLVVDMDJUVi0wXzAySjJySFAzb0ExWWp5MFZwcFcwSHpiNWE0QWdVdGgwa2Y1VlE3dnUwS3JIZlIzeW83dGJCUlVQ?oc=5</link>
+<guid isPermaLink="false">CBMib0FVX3lxTE14dVV1OWdXbk8zbng5MXJhdkR6Ym1QMEg5UlMzNlJMVnVOdWdpeG1vRHlUYlItbFlhbzFCMTl3UVR0RG5DbEtyOUlvTVB3X2tIbW9aZGFfODZQOUtvdHkxMjlFcDVBcFB1S3ZoNHNpUdIBdEFVX3lxTFBDakVneHhoX2lTNlhZUzVaWDhET2JjT2lRZE1vYVdWb2VDM3VENWFkTENLLVVDMDJUVi0wXzAySjJySFAzb0ExWWp5MFZwcFcwSHpiNWE0QWdVdGgwa2Y1VlE3dnUwS3JIZlIzeW83dGJCUlVQ</guid>
+<pubDate>Fri, 29 Aug 2025 18:20:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE14dVV1OWdXbk8zbng5MXJhdkR6Ym1QMEg5UlMzNlJMVnVOdWdpeG1vRHlUYlItbFlhbzFCMTl3UVR0RG5DbEtyOUlvTVB3X2tIbW9aZGFfODZQOUtvdHkxMjlFcDVBcFB1S3ZoNHNpUdIBdEFVX3lxTFBDakVneHhoX2lTNlhZUzVaWDhET2JjT2lRZE1vYVdWb2VDM3VENWFkTENLLVVDMDJUVi0wXzAySjJySFAzb0ExWWp5MFZwcFcwSHpiNWE0QWdVdGgwa2Y1VlE3dnUwS3JIZlIzeW83dGJCUlVQ?oc=5" target="_blank">Ukraine takes new step towards banning its largest Christian church</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Member state accuses EU of inaction on Israel despite Gaza ‘genocide’ - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9sNTVnSFhTR2JLdFVBeUlHSEhaUEVUUnB1ZmU3dFlMeGdQNkZJV3d6S2RtRHlCWFBFdDc5SGN1REQ4dU1LcHJ3RF9ZREgxRWJkNDhMLUR5dlV5QmhUb1ExYnYxcmVWVGvSAWxBVV95cUxOWFF2U21DemxLbERfZVhuVk8tYU9takRpeHF1RHk3by00dzNXb1lIVFp0V3B4dWVNTlE0aEVheGpKT0pRZWFFVk14RDlyZTE2WXVFZFJIQlFkQ2VmNW5MOTdEV0lIMGVjUm8wdWU?oc=5</link>
+<guid isPermaLink="false">CBMiZ0FVX3lxTE9sNTVnSFhTR2JLdFVBeUlHSEhaUEVUUnB1ZmU3dFlMeGdQNkZJV3d6S2RtRHlCWFBFdDc5SGN1REQ4dU1LcHJ3RF9ZREgxRWJkNDhMLUR5dlV5QmhUb1ExYnYxcmVWVGvSAWxBVV95cUxOWFF2U21DemxLbERfZVhuVk8tYU9takRpeHF1RHk3by00dzNXb1lIVFp0V3B4dWVNTlE0aEVheGpKT0pRZWFFVk14RDlyZTE2WXVFZFJIQlFkQ2VmNW5MOTdEV0lIMGVjUm8wdWU</guid>
+<pubDate>Fri, 29 Aug 2025 11:28:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9sNTVnSFhTR2JLdFVBeUlHSEhaUEVUUnB1ZmU3dFlMeGdQNkZJV3d6S2RtRHlCWFBFdDc5SGN1REQ4dU1LcHJ3RF9ZREgxRWJkNDhMLUR5dlV5QmhUb1ExYnYxcmVWVGvSAWxBVV95cUxOWFF2U21DemxLbERfZVhuVk8tYU9takRpeHF1RHk3by00dzNXb1lIVFp0V3B4dWVNTlE0aEVheGpKT0pRZWFFVk14RDlyZTE2WXVFZFJIQlFkQ2VmNW5MOTdEV0lIMGVjUm8wdWU?oc=5" target="_blank">Member state accuses EU of inaction on Israel despite Gaza ‘genocide’</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Vance ready to lead US in case of ‘tragedy’ - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMic0FVX3lxTE12aksyTFFkc3pXTUlCNzU0aUVxanM3Q1pOTGlNMTZrLVk3V3hCbFp0N1hSWjMxUFFqbDZGLWJUamhYeWZZZHNEdjRpWnBLclJrSmgyT2h2ZVV3b3h1dDcyRTRseDlKX2ZXQm9RR0NnYlBLU2fSAXhBVV95cUxOYW1MSVNwWXdhMU02UmsteHFHVlRzN2Jrak05b3N6bmRiN0NpMzNjXy1lT2JYQnZMMzJyQjYxWVRteU81RldrcmI3aWVYTUFpdGNVTVd2TlNMcWJvT0FGeVRlajlqcnBLdzVPek1oOWpsLVJTQzNkVVU?oc=5</link>
+<guid isPermaLink="false">CBMic0FVX3lxTE12aksyTFFkc3pXTUlCNzU0aUVxanM3Q1pOTGlNMTZrLVk3V3hCbFp0N1hSWjMxUFFqbDZGLWJUamhYeWZZZHNEdjRpWnBLclJrSmgyT2h2ZVV3b3h1dDcyRTRseDlKX2ZXQm9RR0NnYlBLU2fSAXhBVV95cUxOYW1MSVNwWXdhMU02UmsteHFHVlRzN2Jrak05b3N6bmRiN0NpMzNjXy1lT2JYQnZMMzJyQjYxWVRteU81RldrcmI3aWVYTUFpdGNVTVd2TlNMcWJvT0FGeVRlajlqcnBLdzVPek1oOWpsLVJTQzNkVVU</guid>
+<pubDate>Fri, 29 Aug 2025 09:32:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE12aksyTFFkc3pXTUlCNzU0aUVxanM3Q1pOTGlNMTZrLVk3V3hCbFp0N1hSWjMxUFFqbDZGLWJUamhYeWZZZHNEdjRpWnBLclJrSmgyT2h2ZVV3b3h1dDcyRTRseDlKX2ZXQm9RR0NnYlBLU2fSAXhBVV95cUxOYW1MSVNwWXdhMU02UmsteHFHVlRzN2Jrak05b3N6bmRiN0NpMzNjXy1lT2JYQnZMMzJyQjYxWVRteU81RldrcmI3aWVYTUFpdGNVTVd2TlNMcWJvT0FGeVRlajlqcnBLdzVPek1oOWpsLVJTQzNkVVU?oc=5" target="_blank">Vance ready to lead US in case of ‘tragedy’</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>How EU elites hijacked this little country’s independence - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibkFVX3lxTFBnQURiUVFZWFhoWUZmRHNDYVEwSjI1ME9zdzdaR1VPaGYwbUNhZlVHQjhWN2tyTU5fU0tLc0lsOXMxYllRYUxla1FMN0RFNDBTeHlRaDR1Zk5rYkdrNmcwMTM3UklNcF9mdVF3WnpB0gFzQVVfeXFMUG9LU3EzUDgxTXZqUXM5NVZYeXg4Q2phNldUM1VteE1fOWZkUUI1TVhGeTI5bW1NVlhFbno1RFdIT1dmUUVLRmFzR3JLdFUtWVRXODlFd19sZEI5WnlQY1pPV1ZEQkRLX29hdXRWZFI3czNnbw?oc=5</link>
+<guid isPermaLink="false">CBMibkFVX3lxTFBnQURiUVFZWFhoWUZmRHNDYVEwSjI1ME9zdzdaR1VPaGYwbUNhZlVHQjhWN2tyTU5fU0tLc0lsOXMxYllRYUxla1FMN0RFNDBTeHlRaDR1Zk5rYkdrNmcwMTM3UklNcF9mdVF3WnpB0gFzQVVfeXFMUG9LU3EzUDgxTXZqUXM5NVZYeXg4Q2phNldUM1VteE1fOWZkUUI1TVhGeTI5bW1NVlhFbno1RFdIT1dmUUVLRmFzR3JLdFUtWVRXODlFd19sZEI5WnlQY1pPV1ZEQkRLX29hdXRWZFI3czNnbw</guid>
+<pubDate>Fri, 29 Aug 2025 20:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTFBnQURiUVFZWFhoWUZmRHNDYVEwSjI1ME9zdzdaR1VPaGYwbUNhZlVHQjhWN2tyTU5fU0tLc0lsOXMxYllRYUxla1FMN0RFNDBTeHlRaDR1Zk5rYkdrNmcwMTM3UklNcF9mdVF3WnpB0gFzQVVfeXFMUG9LU3EzUDgxTXZqUXM5NVZYeXg4Q2phNldUM1VteE1fOWZkUUI1TVhGeTI5bW1NVlhFbno1RFdIT1dmUUVLRmFzR3JLdFUtWVRXODlFd19sZEI5WnlQY1pPV1ZEQkRLX29hdXRWZFI3czNnbw?oc=5" target="_blank">How EU elites hijacked this little country’s independence</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+<item>
+<title>Russian gas giant ramps up China exports - rt.com</title>
+<link>https://news.google.com/rss/articles/CBMibkFVX3lxTE1TX3lmTXNjeElHNWxwcWtkQUZ2dlliVjlHQUxNdkdfWUxIZmlvaWNVa2N1aFNiNXl2eVRqazJ2SDEwWWJvakdqSk0wb1hlNEctZlVnQ29Da3VnUGZZWWFwc2c4Y0tUQ1ZTVW52eFhn0gFzQVVfeXFMTjE5eVl1TTMxMWRyckN6TlMwZnJMQlg1dXl6R0lQQXY0dFBTc3QwQXk4Rzh3RGZ5LTVrdGVMQnRMLU1jMnJYVmIybXB1a2ZwTE1TWXVQY0ZKLUYyd2duTmtQdEhwVE9VdUlRZ3FYRE1Wa2Jzcw?oc=5</link>
+<guid isPermaLink="false">CBMibkFVX3lxTE1TX3lmTXNjeElHNWxwcWtkQUZ2dlliVjlHQUxNdkdfWUxIZmlvaWNVa2N1aFNiNXl2eVRqazJ2SDEwWWJvakdqSk0wb1hlNEctZlVnQ29Da3VnUGZZWWFwc2c4Y0tUQ1ZTVW52eFhn0gFzQVVfeXFMTjE5eVl1TTMxMWRyckN6TlMwZnJMQlg1dXl6R0lQQXY0dFBTc3QwQXk4Rzh3RGZ5LTVrdGVMQnRMLU1jMnJYVmIybXB1a2ZwTE1TWXVQY0ZKLUYyd2duTmtQdEhwVE9VdUlRZ3FYRE1Wa2Jzcw</guid>
+<pubDate>Fri, 29 Aug 2025 14:28:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTE1TX3lmTXNjeElHNWxwcWtkQUZ2dlliVjlHQUxNdkdfWUxIZmlvaWNVa2N1aFNiNXl2eVRqazJ2SDEwWWJvakdqSk0wb1hlNEctZlVnQ29Da3VnUGZZWWFwc2c4Y0tUQ1ZTVW52eFhn0gFzQVVfeXFMTjE5eVl1TTMxMWRyckN6TlMwZnJMQlg1dXl6R0lQQXY0dFBTc3QwQXk4Rzh3RGZ5LTVrdGVMQnRMLU1jMnJYVmIybXB1a2ZwTE1TWXVQY0ZKLUYyd2duTmtQdEhwVE9VdUlRZ3FYRE1Wa2Jzcw?oc=5" target="_blank">Russian gas giant ramps up China exports</a>&nbsp;&nbsp;<font color="#6f6f6f">rt.com</font></description>
+<source url="https://www.rt.com">rt.com</source>
+</item>
+</channel>
+</rss>

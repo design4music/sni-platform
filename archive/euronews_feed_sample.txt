@@ -1,0 +1,820 @@
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<rss xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<channel>
+<generator>NFE/5.0</generator>
+<title>"site:euronews.com" - Google News</title>
+<link>https://news.google.com/search?q=site:euronews.com&hl=en-US&gl=US&ceid=US:en</link>
+<language>en-US</language>
+<webMaster>news-webmaster@google.com</webMaster>
+<copyright>Copyright © 2025 Google. All rights reserved. This XML feed is made available solely for the purpose of rendering Google News results within a personal feed reader for personal, non-commercial use. Any other use of the feed is expressly prohibited. By accessing this feed or using these results in any manner whatsoever, you agree to be bound by the foregoing restrictions.</copyright>
+<lastBuildDate>Tue, 02 Sep 2025 10:16:00 GMT</lastBuildDate>
+<image>
+<title>Google News</title>
+<url>https://lh3.googleusercontent.com/-DR60l-K8vnyi99NZovm9HlXyZwQ85GMDxiwJWzoasZYCUrPuUM_P_4Rb7ei03j-0nRs0c4F=w256</url>
+<link>https://news.google.com/</link>
+<height>256</height>
+<width>256</width>
+</image>
+<description>Google News</description>
+<item>
+<title>Why has paint been thrown at the Sagrada Família in Barcelona? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizwFBVV95cUxQXzluVDdJWTYyemZEX1BYZllXUHdIbWdMeUpXOG1ZQTBwUVFqZ2VBMnR0Z050RzhYWkRIZDJabnpxOGw2VUxiR01NVGI0dDlDb2E0akNuMTJNRnMxaXlUc1hfZlJzbWlUSnF0emVSZVNPeXBhVEZQQTNDUEdkZjA4aHMtR1FZYjZFR21USXVnRUlXXzk0WF9FWTd6N1RDM0JNdmpjeGZlaWl4cWh3X0RMVUJpak55Y3hxRUR1TVd1cVItY1FNWTN3Sl9jY2p6dEk?oc=5</link>
+<guid isPermaLink="false">CBMizwFBVV95cUxQXzluVDdJWTYyemZEX1BYZllXUHdIbWdMeUpXOG1ZQTBwUVFqZ2VBMnR0Z050RzhYWkRIZDJabnpxOGw2VUxiR01NVGI0dDlDb2E0akNuMTJNRnMxaXlUc1hfZlJzbWlUSnF0emVSZVNPeXBhVEZQQTNDUEdkZjA4aHMtR1FZYjZFR21USXVnRUlXXzk0WF9FWTd6N1RDM0JNdmpjeGZlaWl4cWh3X0RMVUJpak55Y3hxRUR1TVd1cVItY1FNWTN3Sl9jY2p6dEk</guid>
+<pubDate>Tue, 02 Sep 2025 07:31:17 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizwFBVV95cUxQXzluVDdJWTYyemZEX1BYZllXUHdIbWdMeUpXOG1ZQTBwUVFqZ2VBMnR0Z050RzhYWkRIZDJabnpxOGw2VUxiR01NVGI0dDlDb2E0akNuMTJNRnMxaXlUc1hfZlJzbWlUSnF0emVSZVNPeXBhVEZQQTNDUEdkZjA4aHMtR1FZYjZFR21USXVnRUlXXzk0WF9FWTd6N1RDM0JNdmpjeGZlaWl4cWh3X0RMVUJpak55Y3hxRUR1TVd1cVItY1FNWTN3Sl9jY2p6dEk?oc=5" target="_blank">Why has paint been thrown at the Sagrada Família in Barcelona?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>How to protect yourself from the WhatsApp scam that steals your identity and asks contacts for money - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiywFBVV95cUxPMGU2OTk4alFPY0dkMjQyZ2w3ZTJCN016VzlyajFQSnFVU21lR29KaU5sS0ZEeHhqSkFwTERCemV1Ry1zVFNPbmstVnVha0s5Uk11YXhsQmcyZkFHbDdfV3AwczhWd3pCRDlzRUt4RDV5MFd0amlELThkckF0d29FaTduQmFQWTBUeFE2ZHFlUlZSWm1lNUZQakFXSXdNUkdIYjl1X1g1T2pYak1aVFBCdFVwUnNFSHFfRjgwMnlRZTcwWllvQURaaTJHQQ?oc=5</link>
+<guid isPermaLink="false">CBMiywFBVV95cUxPMGU2OTk4alFPY0dkMjQyZ2w3ZTJCN016VzlyajFQSnFVU21lR29KaU5sS0ZEeHhqSkFwTERCemV1Ry1zVFNPbmstVnVha0s5Uk11YXhsQmcyZkFHbDdfV3AwczhWd3pCRDlzRUt4RDV5MFd0amlELThkckF0d29FaTduQmFQWTBUeFE2ZHFlUlZSWm1lNUZQakFXSXdNUkdIYjl1X1g1T2pYak1aVFBCdFVwUnNFSHFfRjgwMnlRZTcwWllvQURaaTJHQQ</guid>
+<pubDate>Tue, 02 Sep 2025 07:00:45 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiywFBVV95cUxPMGU2OTk4alFPY0dkMjQyZ2w3ZTJCN016VzlyajFQSnFVU21lR29KaU5sS0ZEeHhqSkFwTERCemV1Ry1zVFNPbmstVnVha0s5Uk11YXhsQmcyZkFHbDdfV3AwczhWd3pCRDlzRUt4RDV5MFd0amlELThkckF0d29FaTduQmFQWTBUeFE2ZHFlUlZSWm1lNUZQakFXSXdNUkdIYjl1X1g1T2pYak1aVFBCdFVwUnNFSHFfRjgwMnlRZTcwWllvQURaaTJHQQ?oc=5" target="_blank">How to protect yourself from the WhatsApp scam that steals your identity and asks contacts for money</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Maduro threatens 'republic in arms' if US forces attack Venezuela - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxOV2tiMGt5a2dmYmJERk1KT3VoaVFUSjl6ZklnZklEbG5HQmdTVUYxWFB0TzlrSjRJZVZsSTQzenFMZGNaUWJZYld2ek15Z21qdG8zS1JWMWs5eHV6QkN0OTdPVnFoQnFGY1MtQS1UUG5MY0hBajdPcnZmZDZhcE5jYjk1enVuTmNmX1VFWWVUeF9DSURNakZMbHFZb29jSjVnZlhPX193OVJ2Z2V4SGxrMUxnenJzVEpIM3lhaFJKc2xfV1M0?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxOV2tiMGt5a2dmYmJERk1KT3VoaVFUSjl6ZklnZklEbG5HQmdTVUYxWFB0TzlrSjRJZVZsSTQzenFMZGNaUWJZYld2ek15Z21qdG8zS1JWMWs5eHV6QkN0OTdPVnFoQnFGY1MtQS1UUG5MY0hBajdPcnZmZDZhcE5jYjk1enVuTmNmX1VFWWVUeF9DSURNakZMbHFZb29jSjVnZlhPX193OVJ2Z2V4SGxrMUxnenJzVEpIM3lhaFJKc2xfV1M0</guid>
+<pubDate>Tue, 02 Sep 2025 03:15:11 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxOV2tiMGt5a2dmYmJERk1KT3VoaVFUSjl6ZklnZklEbG5HQmdTVUYxWFB0TzlrSjRJZVZsSTQzenFMZGNaUWJZYld2ek15Z21qdG8zS1JWMWs5eHV6QkN0OTdPVnFoQnFGY1MtQS1UUG5MY0hBajdPcnZmZDZhcE5jYjk1enVuTmNmX1VFWWVUeF9DSURNakZMbHFZb29jSjVnZlhPX193OVJ2Z2V4SGxrMUxnenJzVEpIM3lhaFJKc2xfV1M0?oc=5" target="_blank">Maduro threatens 'republic in arms' if US forces attack Venezuela</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Belgium to recognise Palestine at the UN General Assembly - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisAFBVV95cUxNY1ljNEw4d0NjUkY1SE9lNVR2NUZRSVRCVWtsQjlIODZONTAwemlqcVNKc1Q3N21MMlZ0c29VSnNSSXprVXZKYTVaenRyYzhlbHBfcmJOTmlpYks3eWlERmotWW9ocHdVWmhXbDFYZlE5SlAyMGdJZGozaW9ndnZvMlBlRzhFWHNoaXlZZEh1SHFES3M4bUZ3dEx2d25jTFlHN3pmOVd0dk1fWFpEVkF1Yg?oc=5</link>
+<guid isPermaLink="false">CBMisAFBVV95cUxNY1ljNEw4d0NjUkY1SE9lNVR2NUZRSVRCVWtsQjlIODZONTAwemlqcVNKc1Q3N21MMlZ0c29VSnNSSXprVXZKYTVaenRyYzhlbHBfcmJOTmlpYks3eWlERmotWW9ocHdVWmhXbDFYZlE5SlAyMGdJZGozaW9ndnZvMlBlRzhFWHNoaXlZZEh1SHFES3M4bUZ3dEx2d25jTFlHN3pmOVd0dk1fWFpEVkF1Yg</guid>
+<pubDate>Tue, 02 Sep 2025 07:03:24 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxNY1ljNEw4d0NjUkY1SE9lNVR2NUZRSVRCVWtsQjlIODZONTAwemlqcVNKc1Q3N21MMlZ0c29VSnNSSXprVXZKYTVaenRyYzhlbHBfcmJOTmlpYks3eWlERmotWW9ocHdVWmhXbDFYZlE5SlAyMGdJZGozaW9ndnZvMlBlRzhFWHNoaXlZZEh1SHFES3M4bUZ3dEx2d25jTFlHN3pmOVd0dk1fWFpEVkF1Yg?oc=5" target="_blank">Belgium to recognise Palestine at the UN General Assembly</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Zelenskyy once again hit with false property empire allegations - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirgFBVV95cUxQRWlUWnZDX0xORE9fZ2w0MnFEWGZUTWFQd0xLOXFMbWZqeEdTWDA0Z21ISmxrMHI1WGttT2dqUGR1eG5kM25IX2xIVU9pbjh3bkpzU2F1UDF0akFocXp6TFMwU1lWVXJLQ3lFa0JnOGd4MlJudG11Y19HS1VhTlNEVWlqRXVSM3JOemJjbjRfa2hHMy1Ud1FPc1RvUEVBd05NQUhPX1RxUW1oRDFXWlE?oc=5</link>
+<guid isPermaLink="false">CBMirgFBVV95cUxQRWlUWnZDX0xORE9fZ2w0MnFEWGZUTWFQd0xLOXFMbWZqeEdTWDA0Z21ISmxrMHI1WGttT2dqUGR1eG5kM25IX2xIVU9pbjh3bkpzU2F1UDF0akFocXp6TFMwU1lWVXJLQ3lFa0JnOGd4MlJudG11Y19HS1VhTlNEVWlqRXVSM3JOemJjbjRfa2hHMy1Ud1FPc1RvUEVBd05NQUhPX1RxUW1oRDFXWlE</guid>
+<pubDate>Tue, 02 Sep 2025 05:45:46 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxQRWlUWnZDX0xORE9fZ2w0MnFEWGZUTWFQd0xLOXFMbWZqeEdTWDA0Z21ISmxrMHI1WGttT2dqUGR1eG5kM25IX2xIVU9pbjh3bkpzU2F1UDF0akFocXp6TFMwU1lWVXJLQ3lFa0JnOGd4MlJudG11Y19HS1VhTlNEVWlqRXVSM3JOemJjbjRfa2hHMy1Ud1FPc1RvUEVBd05NQUhPX1RxUW1oRDFXWlE?oc=5" target="_blank">Zelenskyy once again hit with false property empire allegations</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Loopholes in ship flagging system undermine sanctions on Russia, Iran and North Korea – report - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMi0gFBVV95cUxNbF9sWGlNQm9QcndtNlBhUzRaWDZQcjBkTFg5OFZRaEJWVVV0d2drb3YxaXJTMXVvbjZkdVVzUUtkTkE0WGpMdkhjXzBnMmI3eUEteVB6ZExYUW1qX2ZYTlUxUnZPOWd3a0tnRE5NaUNGTWtjQ2RHd1pwOTR4NHpvc09CRHZFdWVJaDNBY1ZWRkt5QV83OXpOWmhXQkp2ZklXZDdrTGpGQnZWTGs5QVZHdjdUQWNyQTlpWWNGTjNTU1RGdXFTek9hNGlFeHN6eXFSdEE?oc=5</link>
+<guid isPermaLink="false">CBMi0gFBVV95cUxNbF9sWGlNQm9QcndtNlBhUzRaWDZQcjBkTFg5OFZRaEJWVVV0d2drb3YxaXJTMXVvbjZkdVVzUUtkTkE0WGpMdkhjXzBnMmI3eUEteVB6ZExYUW1qX2ZYTlUxUnZPOWd3a0tnRE5NaUNGTWtjQ2RHd1pwOTR4NHpvc09CRHZFdWVJaDNBY1ZWRkt5QV83OXpOWmhXQkp2ZklXZDdrTGpGQnZWTGs5QVZHdjdUQWNyQTlpWWNGTjNTU1RGdXFTek9hNGlFeHN6eXFSdEE</guid>
+<pubDate>Tue, 02 Sep 2025 08:00:29 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxNbF9sWGlNQm9QcndtNlBhUzRaWDZQcjBkTFg5OFZRaEJWVVV0d2drb3YxaXJTMXVvbjZkdVVzUUtkTkE0WGpMdkhjXzBnMmI3eUEteVB6ZExYUW1qX2ZYTlUxUnZPOWd3a0tnRE5NaUNGTWtjQ2RHd1pwOTR4NHpvc09CRHZFdWVJaDNBY1ZWRkt5QV83OXpOWmhXQkp2ZklXZDdrTGpGQnZWTGs5QVZHdjdUQWNyQTlpWWNGTjNTU1RGdXFTek9hNGlFeHN6eXFSdEE?oc=5" target="_blank">Loopholes in ship flagging system undermine sanctions on Russia, Iran and North Korea – report</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Russia accused of jamming GPS of Ursula von der Leyen's plane during Bulgaria trip - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixgFBVV95cUxPLXFnQngxWFFwOVpQWlRqN1pwMU1EMlA1T2lnMTFvR0FJVWRtS2ZFbk02eElVVmFjSFFTVzlQQ09rbjQ0Q0t5Z3N0RlA2NTlSRV9QR3I1UlJTR0Vlb0VTTFZfTENtSlZBbFdxS0FCYjRmQW1vUVViM2kwN25Vekg2RHlMV2VrVGtpU1ZESFdMZnRQcThZUWZCbWJqZHFIU0NBWE5TNWVtbzFwamVUZVIzVVM1TEVnM0tXRTRaWlNod1Y1WHlFZWc?oc=5</link>
+<guid isPermaLink="false">CBMixgFBVV95cUxPLXFnQngxWFFwOVpQWlRqN1pwMU1EMlA1T2lnMTFvR0FJVWRtS2ZFbk02eElVVmFjSFFTVzlQQ09rbjQ0Q0t5Z3N0RlA2NTlSRV9QR3I1UlJTR0Vlb0VTTFZfTENtSlZBbFdxS0FCYjRmQW1vUVViM2kwN25Vekg2RHlMV2VrVGtpU1ZESFdMZnRQcThZUWZCbWJqZHFIU0NBWE5TNWVtbzFwamVUZVIzVVM1TEVnM0tXRTRaWlNod1Y1WHlFZWc</guid>
+<pubDate>Mon, 01 Sep 2025 10:41:19 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxPLXFnQngxWFFwOVpQWlRqN1pwMU1EMlA1T2lnMTFvR0FJVWRtS2ZFbk02eElVVmFjSFFTVzlQQ09rbjQ0Q0t5Z3N0RlA2NTlSRV9QR3I1UlJTR0Vlb0VTTFZfTENtSlZBbFdxS0FCYjRmQW1vUVViM2kwN25Vekg2RHlMV2VrVGtpU1ZESFdMZnRQcThZUWZCbWJqZHFIU0NBWE5TNWVtbzFwamVUZVIzVVM1TEVnM0tXRTRaWlNod1Y1WHlFZWc?oc=5" target="_blank">Russia accused of jamming GPS of Ursula von der Leyen's plane during Bulgaria trip</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Bulgarian nationalists attack car believing von der Leyen was inside - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitAFBVV95cUxNRENfV19hR2FockxSTVphd240bjZJQ1dsY2xPcFJmUFV1YzRfRGU5MjJpM2xiTHZQdXByMVJYNVBrSHZWTjdtbzU3TG5LcHVvSTBuVVNnUzh0TzB3U3FKcWQtaU95MVM0c1MzaWNuWm9fNWF1QnJhdkE4bGstZ1N1WUpldG5kVEp5UXYxZTBQblBSSVd4d0IxYW5vRkxoMDFMUUhhVEU1QTQxdC1OMVdfRTFVTi0?oc=5</link>
+<guid isPermaLink="false">CBMitAFBVV95cUxNRENfV19hR2FockxSTVphd240bjZJQ1dsY2xPcFJmUFV1YzRfRGU5MjJpM2xiTHZQdXByMVJYNVBrSHZWTjdtbzU3TG5LcHVvSTBuVVNnUzh0TzB3U3FKcWQtaU95MVM0c1MzaWNuWm9fNWF1QnJhdkE4bGstZ1N1WUpldG5kVEp5UXYxZTBQblBSSVd4d0IxYW5vRkxoMDFMUUhhVEU1QTQxdC1OMVdfRTFVTi0</guid>
+<pubDate>Mon, 01 Sep 2025 07:34:26 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxNRENfV19hR2FockxSTVphd240bjZJQ1dsY2xPcFJmUFV1YzRfRGU5MjJpM2xiTHZQdXByMVJYNVBrSHZWTjdtbzU3TG5LcHVvSTBuVVNnUzh0TzB3U3FKcWQtaU95MVM0c1MzaWNuWm9fNWF1QnJhdkE4bGstZ1N1WUpldG5kVEp5UXYxZTBQblBSSVd4d0IxYW5vRkxoMDFMUUhhVEU1QTQxdC1OMVdfRTFVTi0?oc=5" target="_blank">Bulgarian nationalists attack car believing von der Leyen was inside</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Storm forces Gaza aid flotilla back to Barcelona port - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMikwFBVV95cUxNSmpRUkpnUFRZQ2JCVEVWX1dQSDJfZ1Bfdy1fc0FZQjk1UVN0X2htYk9Ed0xBcWk0TEl0QWtNSTUyU2pmTTJaM21ZRjQ5QkExcEt4UmJjWnJ4VGppc1pmOFpTRWNtOXRaNV9TZ0F2dXpta3E5bFZPdXNpbEFSWWlaSkdzbGowRU41RUpTX1RFc055dHM?oc=5</link>
+<guid isPermaLink="false">CBMikwFBVV95cUxNSmpRUkpnUFRZQ2JCVEVWX1dQSDJfZ1Bfdy1fc0FZQjk1UVN0X2htYk9Ed0xBcWk0TEl0QWtNSTUyU2pmTTJaM21ZRjQ5QkExcEt4UmJjWnJ4VGppc1pmOFpTRWNtOXRaNV9TZ0F2dXpta3E5bFZPdXNpbEFSWWlaSkdzbGowRU41RUpTX1RFc055dHM</guid>
+<pubDate>Mon, 01 Sep 2025 11:34:43 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMikwFBVV95cUxNSmpRUkpnUFRZQ2JCVEVWX1dQSDJfZ1Bfdy1fc0FZQjk1UVN0X2htYk9Ed0xBcWk0TEl0QWtNSTUyU2pmTTJaM21ZRjQ5QkExcEt4UmJjWnJ4VGppc1pmOFpTRWNtOXRaNV9TZ0F2dXpta3E5bFZPdXNpbEFSWWlaSkdzbGowRU41RUpTX1RFc055dHM?oc=5" target="_blank">Storm forces Gaza aid flotilla back to Barcelona port</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Holocaust memorial in Lyon vandalised with Free Gaza inscription in 'intolerable act' - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuwFBVV95cUxPR0FXSUlfa2RCNUVZbFlyYWh2X3RVTUF2T1FYM0MwcG9ncHhkV0NxcERxNG5CTml2eFRMLWNDTlJnNGNMRC03S0s5ZDlyNm5GTkhJOWNtYkM0N0o5Y3EwVW5JWjc4Z1hUVzEyVkNneklHakpUVnMwVnRPSzlMak02bWJkNGhrS1dwYlltT3BSdVRjUkhlOWxQa0s4T1JqemNjU1VCbTV1MTJoQkgyV1U5MkNuUmF0T2YxOVNj?oc=5</link>
+<guid isPermaLink="false">CBMiuwFBVV95cUxPR0FXSUlfa2RCNUVZbFlyYWh2X3RVTUF2T1FYM0MwcG9ncHhkV0NxcERxNG5CTml2eFRMLWNDTlJnNGNMRC03S0s5ZDlyNm5GTkhJOWNtYkM0N0o5Y3EwVW5JWjc4Z1hUVzEyVkNneklHakpUVnMwVnRPSzlMak02bWJkNGhrS1dwYlltT3BSdVRjUkhlOWxQa0s4T1JqemNjU1VCbTV1MTJoQkgyV1U5MkNuUmF0T2YxOVNj</guid>
+<pubDate>Thu, 09 Jan 2025 08:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuwFBVV95cUxPR0FXSUlfa2RCNUVZbFlyYWh2X3RVTUF2T1FYM0MwcG9ncHhkV0NxcERxNG5CTml2eFRMLWNDTlJnNGNMRC03S0s5ZDlyNm5GTkhJOWNtYkM0N0o5Y3EwVW5JWjc4Z1hUVzEyVkNneklHakpUVnMwVnRPSzlMak02bWJkNGhrS1dwYlltT3BSdVRjUkhlOWxQa0s4T1JqemNjU1VCbTV1MTJoQkgyV1U5MkNuUmF0T2YxOVNj?oc=5" target="_blank">Holocaust memorial in Lyon vandalised with Free Gaza inscription in 'intolerable act'</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>High blood pressure? How to lower your risk of heart attack and stroke - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiwAFBVV95cUxOcGRuUXZTQlh6SDZyVTJIRkhyeEZOUGg5UXNmU2w4eEpPQ2tFOFNiMTVuVzhPdXp0a01FLThLLTMwLXBkbjE0cU9tS0U4RFF6UDBKYmw3RC02OXBsSFBGN3ljSVh0WlFrX0FQOVc4NThIZElzR0tlSVlTVUM5Vy10Z0dRWnktdy0xNzNnUFpRWDQxck9BWURrZzNaSnFvS1BLT3YyeFl4VURMdWZEbkp6NzRyTWd1YzRETHpzM0N2OWg?oc=5</link>
+<guid isPermaLink="false">CBMiwAFBVV95cUxOcGRuUXZTQlh6SDZyVTJIRkhyeEZOUGg5UXNmU2w4eEpPQ2tFOFNiMTVuVzhPdXp0a01FLThLLTMwLXBkbjE0cU9tS0U4RFF6UDBKYmw3RC02OXBsSFBGN3ljSVh0WlFrX0FQOVc4NThIZElzR0tlSVlTVUM5Vy10Z0dRWnktdy0xNzNnUFpRWDQxck9BWURrZzNaSnFvS1BLT3YyeFl4VURMdWZEbkp6NzRyTWd1YzRETHpzM0N2OWg</guid>
+<pubDate>Mon, 01 Sep 2025 04:00:48 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxOcGRuUXZTQlh6SDZyVTJIRkhyeEZOUGg5UXNmU2w4eEpPQ2tFOFNiMTVuVzhPdXp0a01FLThLLTMwLXBkbjE0cU9tS0U4RFF6UDBKYmw3RC02OXBsSFBGN3ljSVh0WlFrX0FQOVc4NThIZElzR0tlSVlTVUM5Vy10Z0dRWnktdy0xNzNnUFpRWDQxck9BWURrZzNaSnFvS1BLT3YyeFl4VURMdWZEbkp6NzRyTWd1YzRETHpzM0N2OWg?oc=5" target="_blank">High blood pressure? How to lower your risk of heart attack and stroke</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Putin blames West and NATO for Russia's war in Ukraine at China summit - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxPNGNFNzJUX3FJQzB2emxkMUFYUFhvSThzeUhMSl9UcVJncUNPcUd3Z2RjcnM3WGItcThQUHBVSkZsbm0yblJMMWU3Qmg0aGlUeklNeFJYUElnaWVCMmtiUnZmbW53c2pFbkNsWU9fUlZDSXJ4eUZsM3Z3cy14Q0lDcXFmczRjOFJHc2Q2b3dlM3ZDNmR2NUExS25RQ3hkcTg5WGMzVWJrcDBxbW1ERGxORmo0ZUt1ZVhQNFAxdlVJZVFSZDFH?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxPNGNFNzJUX3FJQzB2emxkMUFYUFhvSThzeUhMSl9UcVJncUNPcUd3Z2RjcnM3WGItcThQUHBVSkZsbm0yblJMMWU3Qmg0aGlUeklNeFJYUElnaWVCMmtiUnZmbW53c2pFbkNsWU9fUlZDSXJ4eUZsM3Z3cy14Q0lDcXFmczRjOFJHc2Q2b3dlM3ZDNmR2NUExS25RQ3hkcTg5WGMzVWJrcDBxbW1ERGxORmo0ZUt1ZVhQNFAxdlVJZVFSZDFH</guid>
+<pubDate>Mon, 01 Sep 2025 08:44:51 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxPNGNFNzJUX3FJQzB2emxkMUFYUFhvSThzeUhMSl9UcVJncUNPcUd3Z2RjcnM3WGItcThQUHBVSkZsbm0yblJMMWU3Qmg0aGlUeklNeFJYUElnaWVCMmtiUnZmbW53c2pFbkNsWU9fUlZDSXJ4eUZsM3Z3cy14Q0lDcXFmczRjOFJHc2Q2b3dlM3ZDNmR2NUExS25RQ3hkcTg5WGMzVWJrcDBxbW1ERGxORmo0ZUt1ZVhQNFAxdlVJZVFSZDFH?oc=5" target="_blank">Putin blames West and NATO for Russia's war in Ukraine at China summit</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Ancient DNA solves mystery behind world's first pandemic - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiywFBVV95cUxPal90V2NlemhheXVPNDVvNzN5WTYwUjZ3V2lZT21ibGJaXzRQQUFOemQ1NFN3Uml2bUZwM3k3RUNJcGo4REM2eV9YX2o1eXhZTVhkZHplbDAtMGU0ZWRCbG1QWWJEWENpTk03UTlmUkdNQUk1THQ0SGFjckJLN2tPa0VtZWtGdk94cHNRQ0VXQzd2ZWtwX3F6UHFiVElxM1NUUVNlRDdYakNrQmw0LS1qbGhNay1LNkRDUk5tMGY0WW5EWmZfMVFYNm95Zw?oc=5</link>
+<guid isPermaLink="false">CBMiywFBVV95cUxPal90V2NlemhheXVPNDVvNzN5WTYwUjZ3V2lZT21ibGJaXzRQQUFOemQ1NFN3Uml2bUZwM3k3RUNJcGo4REM2eV9YX2o1eXhZTVhkZHplbDAtMGU0ZWRCbG1QWWJEWENpTk03UTlmUkdNQUk1THQ0SGFjckJLN2tPa0VtZWtGdk94cHNRQ0VXQzd2ZWtwX3F6UHFiVElxM1NUUVNlRDdYakNrQmw0LS1qbGhNay1LNkRDUk5tMGY0WW5EWmZfMVFYNm95Zw</guid>
+<pubDate>Mon, 01 Sep 2025 13:21:15 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiywFBVV95cUxPal90V2NlemhheXVPNDVvNzN5WTYwUjZ3V2lZT21ibGJaXzRQQUFOemQ1NFN3Uml2bUZwM3k3RUNJcGo4REM2eV9YX2o1eXhZTVhkZHplbDAtMGU0ZWRCbG1QWWJEWENpTk03UTlmUkdNQUk1THQ0SGFjckJLN2tPa0VtZWtGdk94cHNRQ0VXQzd2ZWtwX3F6UHFiVElxM1NUUVNlRDdYakNrQmw0LS1qbGhNay1LNkRDUk5tMGY0WW5EWmZfMVFYNm95Zw?oc=5" target="_blank">Ancient DNA solves mystery behind world's first pandemic</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Rhode Island’s ‘Taylor Swift tax’ sets off debate over second homes - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitAFBVV95cUxPaWZ2SXlwRWVEUzdxWnJkVEFfYmhFM1VCTEZvMk9NbDByRVJCRTRMaHdrTzI2d1JuWkdYNy04S3BWRmlBWTFBWDZtWlVMUUZCTmQweVV6UWNHTFNJX2RaNVlMaUg0dXZMRWVvay1BUEFQNElPMlJKLXkxSDVNX2tORzlEdk5EalFuQ3lMVHBoUGZ5VXdrWk9XRVBFd3U3NG1BVGE5UUdkSDktVDJFNmdSNTFCLWc?oc=5</link>
+<guid isPermaLink="false">CBMitAFBVV95cUxPaWZ2SXlwRWVEUzdxWnJkVEFfYmhFM1VCTEZvMk9NbDByRVJCRTRMaHdrTzI2d1JuWkdYNy04S3BWRmlBWTFBWDZtWlVMUUZCTmQweVV6UWNHTFNJX2RaNVlMaUg0dXZMRWVvay1BUEFQNElPMlJKLXkxSDVNX2tORzlEdk5EalFuQ3lMVHBoUGZ5VXdrWk9XRVBFd3U3NG1BVGE5UUdkSDktVDJFNmdSNTFCLWc</guid>
+<pubDate>Mon, 01 Sep 2025 12:17:41 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxPaWZ2SXlwRWVEUzdxWnJkVEFfYmhFM1VCTEZvMk9NbDByRVJCRTRMaHdrTzI2d1JuWkdYNy04S3BWRmlBWTFBWDZtWlVMUUZCTmQweVV6UWNHTFNJX2RaNVlMaUg0dXZMRWVvay1BUEFQNElPMlJKLXkxSDVNX2tORzlEdk5EalFuQ3lMVHBoUGZ5VXdrWk9XRVBFd3U3NG1BVGE5UUdkSDktVDJFNmdSNTFCLWc?oc=5" target="_blank">Rhode Island’s ‘Taylor Swift tax’ sets off debate over second homes</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Sightseeing at speed: Why extreme day trips are an extremely bad idea - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizgFBVV95cUxQdjZYZEMxOUJzdGVVc1lpTEtDMXN1cHptY2ktVlNaUGc1Wm9nb0ZWTkFTQ21PeWFidXptUkRQZ3RYekdlZE9oaW5STHRrWTdOWGdnXzZqSmJlWTBHenJQcVFKSHJ4SHpGODBubl9Kd2dNeFBNWWFRcG83ajdudHFHSDk0cG9NRkY0a0xRUzhGa0hCb3NkNHBTYnJSOGsyN1hkTDNHNXVqLWNROTJpZ3NiNVZCbFRQanZucGFDVjIybmpWZm13eXRvdkFLdWtRZw?oc=5</link>
+<guid isPermaLink="false">CBMizgFBVV95cUxQdjZYZEMxOUJzdGVVc1lpTEtDMXN1cHptY2ktVlNaUGc1Wm9nb0ZWTkFTQ21PeWFidXptUkRQZ3RYekdlZE9oaW5STHRrWTdOWGdnXzZqSmJlWTBHenJQcVFKSHJ4SHpGODBubl9Kd2dNeFBNWWFRcG83ajdudHFHSDk0cG9NRkY0a0xRUzhGa0hCb3NkNHBTYnJSOGsyN1hkTDNHNXVqLWNROTJpZ3NiNVZCbFRQanZucGFDVjIybmpWZm13eXRvdkFLdWtRZw</guid>
+<pubDate>Mon, 01 Sep 2025 06:01:05 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizgFBVV95cUxQdjZYZEMxOUJzdGVVc1lpTEtDMXN1cHptY2ktVlNaUGc1Wm9nb0ZWTkFTQ21PeWFidXptUkRQZ3RYekdlZE9oaW5STHRrWTdOWGdnXzZqSmJlWTBHenJQcVFKSHJ4SHpGODBubl9Kd2dNeFBNWWFRcG83ajdudHFHSDk0cG9NRkY0a0xRUzhGa0hCb3NkNHBTYnJSOGsyN1hkTDNHNXVqLWNROTJpZ3NiNVZCbFRQanZucGFDVjIybmpWZm13eXRvdkFLdWtRZw?oc=5" target="_blank">Sightseeing at speed: Why extreme day trips are an extremely bad idea</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Hydrogen sets sail for zero-emission shipping in the Netherlands - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirwFBVV95cUxPN0JHTFlsT01MaF9MUWtBR1BrU1huLXFtbnBxeHktNFZ3ZU82RE1LYWh3Q1dKNlpwa1hJM2otZWhoZmliZld6VmtEY1RJVi1Canp2MkVjRUxQdWxqZGx5TWZXcElnUTBpYU1BWXM4NjZwQ0tQQ0wxT0pWcGlldnZmUm1PSXQ2dk5nOVhTOUJNNHExUXJpLWphTDlxbllVYlhkbkVKTjNKZUZwMmNpWE9J?oc=5</link>
+<guid isPermaLink="false">CBMirwFBVV95cUxPN0JHTFlsT01MaF9MUWtBR1BrU1huLXFtbnBxeHktNFZ3ZU82RE1LYWh3Q1dKNlpwa1hJM2otZWhoZmliZld6VmtEY1RJVi1Canp2MkVjRUxQdWxqZGx5TWZXcElnUTBpYU1BWXM4NjZwQ0tQQ0wxT0pWcGlldnZmUm1PSXQ2dk5nOVhTOUJNNHExUXJpLWphTDlxbllVYlhkbkVKTjNKZUZwMmNpWE9J</guid>
+<pubDate>Mon, 01 Sep 2025 13:00:58 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirwFBVV95cUxPN0JHTFlsT01MaF9MUWtBR1BrU1huLXFtbnBxeHktNFZ3ZU82RE1LYWh3Q1dKNlpwa1hJM2otZWhoZmliZld6VmtEY1RJVi1Canp2MkVjRUxQdWxqZGx5TWZXcElnUTBpYU1BWXM4NjZwQ0tQQ0wxT0pWcGlldnZmUm1PSXQ2dk5nOVhTOUJNNHExUXJpLWphTDlxbllVYlhkbkVKTjNKZUZwMmNpWE9J?oc=5" target="_blank">Hydrogen sets sail for zero-emission shipping in the Netherlands</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Landslide kills over 1,000 people in Sudan's Darfur region, rebel group says - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirgFBVV95cUxOdnlfZ3JmY2FYRnhFT19aSjRvb0Q2ajlMYXlGY3hWcEY1bV9UeXN0SFZlYmpPZG92UlpLajl1M0lfaWxfY0NaQnk0OFdfWXlENlBUeVZwQ1FxZld5eFFpR3lRVkhFT3hXQW5Ga2xSODVWRzRjODlIUDhsVUVfNDRhZUxSX0J5Wlk0MXdGUVlVWTFnVFRkcXNmRXFXbWNfVGFRZXFUeTQ1bGRwNHh0d1E?oc=5</link>
+<guid isPermaLink="false">CBMirgFBVV95cUxOdnlfZ3JmY2FYRnhFT19aSjRvb0Q2ajlMYXlGY3hWcEY1bV9UeXN0SFZlYmpPZG92UlpLajl1M0lfaWxfY0NaQnk0OFdfWXlENlBUeVZwQ1FxZld5eFFpR3lRVkhFT3hXQW5Ga2xSODVWRzRjODlIUDhsVUVfNDRhZUxSX0J5Wlk0MXdGUVlVWTFnVFRkcXNmRXFXbWNfVGFRZXFUeTQ1bGRwNHh0d1E</guid>
+<pubDate>Tue, 02 Sep 2025 03:59:22 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxOdnlfZ3JmY2FYRnhFT19aSjRvb0Q2ajlMYXlGY3hWcEY1bV9UeXN0SFZlYmpPZG92UlpLajl1M0lfaWxfY0NaQnk0OFdfWXlENlBUeVZwQ1FxZld5eFFpR3lRVkhFT3hXQW5Ga2xSODVWRzRjODlIUDhsVUVfNDRhZUxSX0J5Wlk0MXdGUVlVWTFnVFRkcXNmRXFXbWNfVGFRZXFUeTQ1bGRwNHh0d1E?oc=5" target="_blank">Landslide kills over 1,000 people in Sudan's Darfur region, rebel group says</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Australian fugitive being helped by others as manhunt nears second week, say police - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiugFBVV95cUxPbnlOcHMybkVwNlE4TzlfVFFLb3E2R1pseEo2U0xHb2tMd1lYTFBxend5cHN6cXdhaWF3bGhWMWU5ZnZ6UFdqM2RCN0JlNVZYSjVSUExqcmdNZmdoT3lwV2tVdXVfaVlSRHhiMkxrUUF1TDROT04tMEVUN2wyalZfM2NXS1JheUh4dklqazRSeXZuWHctOVhjQ2VKM3Q2ZTNLYURhYnB2WnRXdjhSeEtXS0NySU1RLVVkOXc?oc=5</link>
+<guid isPermaLink="false">CBMiugFBVV95cUxPbnlOcHMybkVwNlE4TzlfVFFLb3E2R1pseEo2U0xHb2tMd1lYTFBxend5cHN6cXdhaWF3bGhWMWU5ZnZ6UFdqM2RCN0JlNVZYSjVSUExqcmdNZmdoT3lwV2tVdXVfaVlSRHhiMkxrUUF1TDROT04tMEVUN2wyalZfM2NXS1JheUh4dklqazRSeXZuWHctOVhjQ2VKM3Q2ZTNLYURhYnB2WnRXdjhSeEtXS0NySU1RLVVkOXc</guid>
+<pubDate>Mon, 01 Sep 2025 12:12:13 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxPbnlOcHMybkVwNlE4TzlfVFFLb3E2R1pseEo2U0xHb2tMd1lYTFBxend5cHN6cXdhaWF3bGhWMWU5ZnZ6UFdqM2RCN0JlNVZYSjVSUExqcmdNZmdoT3lwV2tVdXVfaVlSRHhiMkxrUUF1TDROT04tMEVUN2wyalZfM2NXS1JheUh4dklqazRSeXZuWHctOVhjQ2VKM3Q2ZTNLYURhYnB2WnRXdjhSeEtXS0NySU1RLVVkOXc?oc=5" target="_blank">Australian fugitive being helped by others as manhunt nears second week, say police</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Ukraine claims 'Russian trace' possible in assassination of politician Andriy Parubiy - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuwFBVV95cUxORExnSEM3TF9xQ0xQNk5MVHlicVpDY1RzeGEzUnhDVXdfLUJyMWVUOFlrM1pPclJBcGo0T3FMeEJYdUNTY2Qzb0xBMXZNemRZaW1oRWc2LWpHT3g4QWJsajdnc2trNkJ3RkhsSzRjQklpVGZpeEVCV09mMEhCdG5oallkNHIweVVQaE5IeEhwcUVyZmQ5bUhLYXVmeWtsazMzMVRlUEVXd0J5Q2pwMGp6bW9mUHBURmdOQkFr?oc=5</link>
+<guid isPermaLink="false">CBMiuwFBVV95cUxORExnSEM3TF9xQ0xQNk5MVHlicVpDY1RzeGEzUnhDVXdfLUJyMWVUOFlrM1pPclJBcGo0T3FMeEJYdUNTY2Qzb0xBMXZNemRZaW1oRWc2LWpHT3g4QWJsajdnc2trNkJ3RkhsSzRjQklpVGZpeEVCV09mMEhCdG5oallkNHIweVVQaE5IeEhwcUVyZmQ5bUhLYXVmeWtsazMzMVRlUEVXd0J5Q2pwMGp6bW9mUHBURmdOQkFr</guid>
+<pubDate>Mon, 01 Sep 2025 13:05:22 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuwFBVV95cUxORExnSEM3TF9xQ0xQNk5MVHlicVpDY1RzeGEzUnhDVXdfLUJyMWVUOFlrM1pPclJBcGo0T3FMeEJYdUNTY2Qzb0xBMXZNemRZaW1oRWc2LWpHT3g4QWJsajdnc2trNkJ3RkhsSzRjQklpVGZpeEVCV09mMEhCdG5oallkNHIweVVQaE5IeEhwcUVyZmQ5bUhLYXVmeWtsazMzMVRlUEVXd0J5Q2pwMGp6bW9mUHBURmdOQkFr?oc=5" target="_blank">Ukraine claims 'Russian trace' possible in assassination of politician Andriy Parubiy</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>The Ozempic ripple: When a single jab moves an entire market - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiqwFBVV95cUxONWpKQVRwTjVXSl85MFhJSVp3SnFhNDVnZ1BFeURxOTM0ODR1aFlkUmFKWm1tOHk1TE5PbEZJbG1HU19kX3FFaDVNNmNJSmtoNkJSMzl1b1RlRjRYdFQwdnVwYS1EdzhrdzZHOXpBa0REdGYtYWg2R2tTNmlFMU1WN0x6WTBFdUdHRzJ5d0dBX29VODBmLXRvWi1Ic2J0OS1PUE9CVHA4OVFIU0U?oc=5</link>
+<guid isPermaLink="false">CBMiqwFBVV95cUxONWpKQVRwTjVXSl85MFhJSVp3SnFhNDVnZ1BFeURxOTM0ODR1aFlkUmFKWm1tOHk1TE5PbEZJbG1HU19kX3FFaDVNNmNJSmtoNkJSMzl1b1RlRjRYdFQwdnVwYS1EdzhrdzZHOXpBa0REdGYtYWg2R2tTNmlFMU1WN0x6WTBFdUdHRzJ5d0dBX29VODBmLXRvWi1Ic2J0OS1PUE9CVHA4OVFIU0U</guid>
+<pubDate>Tue, 02 Sep 2025 04:56:40 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxONWpKQVRwTjVXSl85MFhJSVp3SnFhNDVnZ1BFeURxOTM0ODR1aFlkUmFKWm1tOHk1TE5PbEZJbG1HU19kX3FFaDVNNmNJSmtoNkJSMzl1b1RlRjRYdFQwdnVwYS1EdzhrdzZHOXpBa0REdGYtYWg2R2tTNmlFMU1WN0x6WTBFdUdHRzJ5d0dBX29VODBmLXRvWi1Ic2J0OS1PUE9CVHA4OVFIU0U?oc=5" target="_blank">The Ozempic ripple: When a single jab moves an entire market</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>'Dragon's teeth' go up on Lithuania's border with Russia's Kaliningrad - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirgFBVV95cUxQMDk3QnhpbEJ6YlBBdHBuVjRUajJmS1NseUhsSklpU3ZuQktaZ0tfRVFzV2hXZFpXOS1HemwwOFR1RW1hWHdndkxYSzRiNUtmWUFhclpfMzhVQWNxS3BxNDBoVzVxNTFKc2VzanZuZ1VaSHZUeUowc3RMbG8xMS00U3UxTGtaM29ISEt6U01QWWdGQlF3LTBwU3JWMHBRclRMUGROXzVzTW9hTnl4N2c?oc=5</link>
+<guid isPermaLink="false">CBMirgFBVV95cUxQMDk3QnhpbEJ6YlBBdHBuVjRUajJmS1NseUhsSklpU3ZuQktaZ0tfRVFzV2hXZFpXOS1HemwwOFR1RW1hWHdndkxYSzRiNUtmWUFhclpfMzhVQWNxS3BxNDBoVzVxNTFKc2VzanZuZ1VaSHZUeUowc3RMbG8xMS00U3UxTGtaM29ISEt6U01QWWdGQlF3LTBwU3JWMHBRclRMUGROXzVzTW9hTnl4N2c</guid>
+<pubDate>Mon, 01 Sep 2025 08:22:28 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxQMDk3QnhpbEJ6YlBBdHBuVjRUajJmS1NseUhsSklpU3ZuQktaZ0tfRVFzV2hXZFpXOS1HemwwOFR1RW1hWHdndkxYSzRiNUtmWUFhclpfMzhVQWNxS3BxNDBoVzVxNTFKc2VzanZuZ1VaSHZUeUowc3RMbG8xMS00U3UxTGtaM29ISEt6U01QWWdGQlF3LTBwU3JWMHBRclRMUGROXzVzTW9hTnl4N2c?oc=5" target="_blank">'Dragon's teeth' go up on Lithuania's border with Russia's Kaliningrad</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Russian propaganda is 'overtaking' legitimate news in the Czech Republic - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitwFBVV95cUxQTVdHZ2hrdUNfZ01lcmhHWlFzSW00NVB5R3Y2SlN6blY3aXN2M0ZvR1FvTHRRMGNsOGxXX3FELXhjQ0NXN2tMbDlEUTg2N2stQWdoS1dlaW1KXzFiYkxFclBjbjdPOTdJcVdVeHdBNXdQbjJteEZ0Z21KbW8zR3pKa21sZ3pXWjlFQklEVVBkLXFxVnVtanFtRlJKbTloNkJCOWNHRXF6TzVHMFRzNkFqZk41OUJIclE?oc=5</link>
+<guid isPermaLink="false">CBMitwFBVV95cUxQTVdHZ2hrdUNfZ01lcmhHWlFzSW00NVB5R3Y2SlN6blY3aXN2M0ZvR1FvTHRRMGNsOGxXX3FELXhjQ0NXN2tMbDlEUTg2N2stQWdoS1dlaW1KXzFiYkxFclBjbjdPOTdJcVdVeHdBNXdQbjJteEZ0Z21KbW8zR3pKa21sZ3pXWjlFQklEVVBkLXFxVnVtanFtRlJKbTloNkJCOWNHRXF6TzVHMFRzNkFqZk41OUJIclE</guid>
+<pubDate>Mon, 01 Sep 2025 08:59:16 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitwFBVV95cUxQTVdHZ2hrdUNfZ01lcmhHWlFzSW00NVB5R3Y2SlN6blY3aXN2M0ZvR1FvTHRRMGNsOGxXX3FELXhjQ0NXN2tMbDlEUTg2N2stQWdoS1dlaW1KXzFiYkxFclBjbjdPOTdJcVdVeHdBNXdQbjJteEZ0Z21KbW8zR3pKa21sZ3pXWjlFQklEVVBkLXFxVnVtanFtRlJKbTloNkJCOWNHRXF6TzVHMFRzNkFqZk41OUJIclE?oc=5" target="_blank">Russian propaganda is 'overtaking' legitimate news in the Czech Republic</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Stuffed wardrobes: Which European countries are drowning in household clutter? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivwFBVV95cUxPMkFhOVh0VE1FSHM2WTE5X2dWMzkwSG1NZlh1dzhfR2g2NFIxMTYyeE5YcUtJeEpsRWxrbHVvLXJmWVJoaGUxT3dFTVl2UHo0WDFpZUZ3bV9tT0NzcTBwdHZtbUp1ZjloRzBPc2xuZzhpT0xSQ29pbVo2bC1wN0x5ZkM4eTBnX2lDb0Znamh6NFEyMWhQRTcwOWJSUHZlQ0g3d2FUWFZ4aGkzSDNEVlRRSEtLdDlSZXV6TjJ1Rk54RQ?oc=5</link>
+<guid isPermaLink="false">CBMivwFBVV95cUxPMkFhOVh0VE1FSHM2WTE5X2dWMzkwSG1NZlh1dzhfR2g2NFIxMTYyeE5YcUtJeEpsRWxrbHVvLXJmWVJoaGUxT3dFTVl2UHo0WDFpZUZ3bV9tT0NzcTBwdHZtbUp1ZjloRzBPc2xuZzhpT0xSQ29pbVo2bC1wN0x5ZkM4eTBnX2lDb0Znamh6NFEyMWhQRTcwOWJSUHZlQ0g3d2FUWFZ4aGkzSDNEVlRRSEtLdDlSZXV6TjJ1Rk54RQ</guid>
+<pubDate>Mon, 01 Sep 2025 14:27:10 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivwFBVV95cUxPMkFhOVh0VE1FSHM2WTE5X2dWMzkwSG1NZlh1dzhfR2g2NFIxMTYyeE5YcUtJeEpsRWxrbHVvLXJmWVJoaGUxT3dFTVl2UHo0WDFpZUZ3bV9tT0NzcTBwdHZtbUp1ZjloRzBPc2xuZzhpT0xSQ29pbVo2bC1wN0x5ZkM4eTBnX2lDb0Znamh6NFEyMWhQRTcwOWJSUHZlQ0g3d2FUWFZ4aGkzSDNEVlRRSEtLdDlSZXV6TjJ1Rk54RQ?oc=5" target="_blank">Stuffed wardrobes: Which European countries are drowning in household clutter?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Europe's new fighter jet project at risk amidst ownership disputes - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuAFBVV95cUxOb1NtM19WMEhrQW1RYVVCM2R2RTNaWGxpRkthcDhITHpKelVoaFktZE5xNzg3azhZZzhwUEFhb3NmTHJMNnYtWEVJT1RyUFRXbHh5TmpYZmN2eVY4WkZzV3NXUlFnYTEtWG1EdHQyMUh6REIxcjJUN0ZqOERkd3NGOWdkbGkwbFZvWnpFSEpOTmhEeUZnRVNwcjNZcVhOd0U0XzRGQVk5NGY3LTExVVlTLWxnOWJfVmdJ?oc=5</link>
+<guid isPermaLink="false">CBMiuAFBVV95cUxOb1NtM19WMEhrQW1RYVVCM2R2RTNaWGxpRkthcDhITHpKelVoaFktZE5xNzg3azhZZzhwUEFhb3NmTHJMNnYtWEVJT1RyUFRXbHh5TmpYZmN2eVY4WkZzV3NXUlFnYTEtWG1EdHQyMUh6REIxcjJUN0ZqOERkd3NGOWdkbGkwbFZvWnpFSEpOTmhEeUZnRVNwcjNZcVhOd0U0XzRGQVk5NGY3LTExVVlTLWxnOWJfVmdJ</guid>
+<pubDate>Mon, 01 Sep 2025 15:24:20 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxOb1NtM19WMEhrQW1RYVVCM2R2RTNaWGxpRkthcDhITHpKelVoaFktZE5xNzg3azhZZzhwUEFhb3NmTHJMNnYtWEVJT1RyUFRXbHh5TmpYZmN2eVY4WkZzV3NXUlFnYTEtWG1EdHQyMUh6REIxcjJUN0ZqOERkd3NGOWdkbGkwbFZvWnpFSEpOTmhEeUZnRVNwcjNZcVhOd0U0XzRGQVk5NGY3LTExVVlTLWxnOWJfVmdJ?oc=5" target="_blank">Europe's new fighter jet project at risk amidst ownership disputes</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Weber: 'We have to defend ourselves' against Russian hostilities - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisgFBVV95cUxOWWlDazdZcHVPT2VyazM1UEZYSTM1dS1xS2wwS1NFZHlBaEpjTXlJVzZBanVGQW1PUUNMUGZBVHJkU3NXWVFmQnIwblhwT3NidVNhUnNXSHktTkZuTExUeFdSM0RVNVZGQ2xiVWl3ZjdGampaQVdIbFZvOF9sOWc3OGVKbEdfNmxfR2ZKOWo5OXhRTHM2dHMwa2JnRmtSbmxCWXhwd3prSlBjWEhQNHVnbFpR?oc=5</link>
+<guid isPermaLink="false">CBMisgFBVV95cUxOWWlDazdZcHVPT2VyazM1UEZYSTM1dS1xS2wwS1NFZHlBaEpjTXlJVzZBanVGQW1PUUNMUGZBVHJkU3NXWVFmQnIwblhwT3NidVNhUnNXSHktTkZuTExUeFdSM0RVNVZGQ2xiVWl3ZjdGampaQVdIbFZvOF9sOWc3OGVKbEdfNmxfR2ZKOWo5OXhRTHM2dHMwa2JnRmtSbmxCWXhwd3prSlBjWEhQNHVnbFpR</guid>
+<pubDate>Mon, 01 Sep 2025 16:45:19 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxOWWlDazdZcHVPT2VyazM1UEZYSTM1dS1xS2wwS1NFZHlBaEpjTXlJVzZBanVGQW1PUUNMUGZBVHJkU3NXWVFmQnIwblhwT3NidVNhUnNXSHktTkZuTExUeFdSM0RVNVZGQ2xiVWl3ZjdGampaQVdIbFZvOF9sOWc3OGVKbEdfNmxfR2ZKOWo5OXhRTHM2dHMwa2JnRmtSbmxCWXhwd3prSlBjWEhQNHVnbFpR?oc=5" target="_blank">Weber: 'We have to defend ourselves' against Russian hostilities</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>What's next for France as PM Bayrou faces government collapse? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuwFBVV95cUxQWlRhQXF2c0xkU0E1bFhKVnZBOWhRY2FfOXU4MG1jb3ZfN3RhN0xTa0xRd2MzZC1KbXU0SkotM2VNODRsbGpraVdzeWctVWctemZNNmlyUnRoekJYbWx3UEdHZXlvdlRwc3BxWVlRQTZ1S1dmZkk1MWRxQmtGb1NlUkVPekp1NTBRb3BvS0lBYWxoMjdvdW5BTUlJTVBwMW5IUEtHSjdGV01KeU1pV1dzSmdaZlFzZlZ0elVB?oc=5</link>
+<guid isPermaLink="false">CBMiuwFBVV95cUxQWlRhQXF2c0xkU0E1bFhKVnZBOWhRY2FfOXU4MG1jb3ZfN3RhN0xTa0xRd2MzZC1KbXU0SkotM2VNODRsbGpraVdzeWctVWctemZNNmlyUnRoekJYbWx3UEdHZXlvdlRwc3BxWVlRQTZ1S1dmZkk1MWRxQmtGb1NlUkVPekp1NTBRb3BvS0lBYWxoMjdvdW5BTUlJTVBwMW5IUEtHSjdGV01KeU1pV1dzSmdaZlFzZlZ0elVB</guid>
+<pubDate>Mon, 01 Sep 2025 14:52:41 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuwFBVV95cUxQWlRhQXF2c0xkU0E1bFhKVnZBOWhRY2FfOXU4MG1jb3ZfN3RhN0xTa0xRd2MzZC1KbXU0SkotM2VNODRsbGpraVdzeWctVWctemZNNmlyUnRoekJYbWx3UEdHZXlvdlRwc3BxWVlRQTZ1S1dmZkk1MWRxQmtGb1NlUkVPekp1NTBRb3BvS0lBYWxoMjdvdW5BTUlJTVBwMW5IUEtHSjdGV01KeU1pV1dzSmdaZlFzZlZ0elVB?oc=5" target="_blank">What's next for France as PM Bayrou faces government collapse?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>German Chancellor Merz 'mentally preparing' for long war in Ukraine - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiqwFBVV95cUxNZE1SeS1mT1VkYnpxajJsR3lKbE5pdDl2NUhEeDdRemhVRkZuLVNWWlhKRHFjTVZLYl9aRGFQZ01LWEVBZzhKWUdhc2d5eDd5dXNkYklnYlpIcHhRLXZ1dXBQSVR4enB4SzEzZlNZMlY2UWM0MndIU253UVY5czhyYkl2eDBNbngxckhfd2FtTWp4eU9QQjlkSi03cWJpWFloU0VuWkdDOWNSV3M?oc=5</link>
+<guid isPermaLink="false">CBMiqwFBVV95cUxNZE1SeS1mT1VkYnpxajJsR3lKbE5pdDl2NUhEeDdRemhVRkZuLVNWWlhKRHFjTVZLYl9aRGFQZ01LWEVBZzhKWUdhc2d5eDd5dXNkYklnYlpIcHhRLXZ1dXBQSVR4enB4SzEzZlNZMlY2UWM0MndIU253UVY5czhyYkl2eDBNbngxckhfd2FtTWp4eU9QQjlkSi03cWJpWFloU0VuWkdDOWNSV3M</guid>
+<pubDate>Mon, 01 Sep 2025 09:13:20 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiqwFBVV95cUxNZE1SeS1mT1VkYnpxajJsR3lKbE5pdDl2NUhEeDdRemhVRkZuLVNWWlhKRHFjTVZLYl9aRGFQZ01LWEVBZzhKWUdhc2d5eDd5dXNkYklnYlpIcHhRLXZ1dXBQSVR4enB4SzEzZlNZMlY2UWM0MndIU253UVY5czhyYkl2eDBNbngxckhfd2FtTWp4eU9QQjlkSi03cWJpWFloU0VuWkdDOWNSV3M?oc=5" target="_blank">German Chancellor Merz 'mentally preparing' for long war in Ukraine</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Auto-enrolment: A quiet pension shift that could fuel Europe’s economy - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivgFBVV95cUxOUG5XUEVtcVhBVmd6N1Z4dnF2blhhUFBzNHJ2VTFRMEMtUVZDbG1IVTJHZFdkMVBrc0JSanVCT1E5TjU4Q0FVLVp2SXg1Tk1pb2lSbnFSWkNvM0dMZDRIT0hFSmdvRkVNQm5hMVA4ekUxeV8xWUM0UG12dThfZkpUeXNPclp1NWROQ1otWGlvWDNPNkVlRWtDeEpBTzRtaVZ5MkFJdGRGaThRTGMyWUcxMkY4a2NyVW1aWGxFQjJn?oc=5</link>
+<guid isPermaLink="false">CBMivgFBVV95cUxOUG5XUEVtcVhBVmd6N1Z4dnF2blhhUFBzNHJ2VTFRMEMtUVZDbG1IVTJHZFdkMVBrc0JSanVCT1E5TjU4Q0FVLVp2SXg1Tk1pb2lSbnFSWkNvM0dMZDRIT0hFSmdvRkVNQm5hMVA4ekUxeV8xWUM0UG12dThfZkpUeXNPclp1NWROQ1otWGlvWDNPNkVlRWtDeEpBTzRtaVZ5MkFJdGRGaThRTGMyWUcxMkY4a2NyVW1aWGxFQjJn</guid>
+<pubDate>Sun, 31 Aug 2025 05:01:56 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxOUG5XUEVtcVhBVmd6N1Z4dnF2blhhUFBzNHJ2VTFRMEMtUVZDbG1IVTJHZFdkMVBrc0JSanVCT1E5TjU4Q0FVLVp2SXg1Tk1pb2lSbnFSWkNvM0dMZDRIT0hFSmdvRkVNQm5hMVA4ekUxeV8xWUM0UG12dThfZkpUeXNPclp1NWROQ1otWGlvWDNPNkVlRWtDeEpBTzRtaVZ5MkFJdGRGaThRTGMyWUcxMkY4a2NyVW1aWGxFQjJn?oc=5" target="_blank">Auto-enrolment: A quiet pension shift that could fuel Europe’s economy</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>'Predator' Putin can only be kept in check through strong deterrence, says von der Leyen - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMi0gFBVV95cUxQWU83cTY3TUpOXzY4Mm9OWWR6Tzdnam1KbXVyLUgwc2VlQ2lUb3hLRm9KRm4zbGhVM01McFQ5MGlyallGdEE1cmJEY0tqN09LaERTdklJano0czJra01lSXVnbFhGY3BESjBabU5TMUlXS2lNajBsYkt3VVQ4SW9xckx5LWFaVmVxZ2tTNzRWYWR5UWFhWXA2WjlBSVdrRVE5c2puQThSQmZVUC1XUk9nTF8zUmhCRDJTT0kyNnN0dTI3aUZFcWE0OVBibXhyQ3diZ3c?oc=5</link>
+<guid isPermaLink="false">CBMi0gFBVV95cUxQWU83cTY3TUpOXzY4Mm9OWWR6Tzdnam1KbXVyLUgwc2VlQ2lUb3hLRm9KRm4zbGhVM01McFQ5MGlyallGdEE1cmJEY0tqN09LaERTdklJano0czJra01lSXVnbFhGY3BESjBabU5TMUlXS2lNajBsYkt3VVQ4SW9xckx5LWFaVmVxZ2tTNzRWYWR5UWFhWXA2WjlBSVdrRVE5c2puQThSQmZVUC1XUk9nTF8zUmhCRDJTT0kyNnN0dTI3aUZFcWE0OVBibXhyQ3diZ3c</guid>
+<pubDate>Sun, 31 Aug 2025 12:53:47 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxQWU83cTY3TUpOXzY4Mm9OWWR6Tzdnam1KbXVyLUgwc2VlQ2lUb3hLRm9KRm4zbGhVM01McFQ5MGlyallGdEE1cmJEY0tqN09LaERTdklJano0czJra01lSXVnbFhGY3BESjBabU5TMUlXS2lNajBsYkt3VVQ4SW9xckx5LWFaVmVxZ2tTNzRWYWR5UWFhWXA2WjlBSVdrRVE5c2puQThSQmZVUC1XUk9nTF8zUmhCRDJTT0kyNnN0dTI3aUZFcWE0OVBibXhyQ3diZ3c?oc=5" target="_blank">'Predator' Putin can only be kept in check through strong deterrence, says von der Leyen</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>'From Moscow with love': Germany issues arrest warrant after neo-Nazi Liebich flees the country - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivgFBVV95cUxPdDh5VE5BMFhPYjU3aDRoQ2FqbVhOdjFfQ0ptM2NGb290SXl2SkxBeTJmUmEya0g3cDNMVG5IQk94akFycHFSMkVUS3pEeTN6U29oVmR3QnptaVFoNGFVMUdrSmRZa0psVzllbmhnVk1PVHp1RkRKeXZRM2VGMlhCcmF4M1hmWFNXWGlydGpqNTBIZEpsWWpVQ3U5ME1lWGl4QXJ2aTdsbG9hRXliXzc2bXpQcG5rOWNFQU5oa1JB?oc=5</link>
+<guid isPermaLink="false">CBMivgFBVV95cUxPdDh5VE5BMFhPYjU3aDRoQ2FqbVhOdjFfQ0ptM2NGb290SXl2SkxBeTJmUmEya0g3cDNMVG5IQk94akFycHFSMkVUS3pEeTN6U29oVmR3QnptaVFoNGFVMUdrSmRZa0psVzllbmhnVk1PVHp1RkRKeXZRM2VGMlhCcmF4M1hmWFNXWGlydGpqNTBIZEpsWWpVQ3U5ME1lWGl4QXJ2aTdsbG9hRXliXzc2bXpQcG5rOWNFQU5oa1JB</guid>
+<pubDate>Sun, 31 Aug 2025 11:05:56 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPdDh5VE5BMFhPYjU3aDRoQ2FqbVhOdjFfQ0ptM2NGb290SXl2SkxBeTJmUmEya0g3cDNMVG5IQk94akFycHFSMkVUS3pEeTN6U29oVmR3QnptaVFoNGFVMUdrSmRZa0psVzllbmhnVk1PVHp1RkRKeXZRM2VGMlhCcmF4M1hmWFNXWGlydGpqNTBIZEpsWWpVQ3U5ME1lWGl4QXJ2aTdsbG9hRXliXzc2bXpQcG5rOWNFQU5oa1JB?oc=5" target="_blank">'From Moscow with love': Germany issues arrest warrant after neo-Nazi Liebich flees the country</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Finland will remove swastikas from its air force flags to avoid 'awkwardness' with Western allies - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxOVTlJaG9OM2I5a2x4Vy01MXd6YnNCb3ppZHh6b0ZUMGowV3dQTHhPdXd5Si1GUXhZZWVjS2lYcUNnbU5SaHgxQlg1bXF4cnBPV3EtRGlvMmNiNFBOSlE1YmlNemRodVpGc0tWYWZSMzlhdHVGbnVVSkZWejg5MXJ5SFZXMFdaT0dWMWVwZ1dhajlONVV3dzIwcTR0WWVNUS16WFMwNnBXR0NzOUM4S3d4ZzAyTU90a29NUEg1clc2aFNVVTZl?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxOVTlJaG9OM2I5a2x4Vy01MXd6YnNCb3ppZHh6b0ZUMGowV3dQTHhPdXd5Si1GUXhZZWVjS2lYcUNnbU5SaHgxQlg1bXF4cnBPV3EtRGlvMmNiNFBOSlE1YmlNemRodVpGc0tWYWZSMzlhdHVGbnVVSkZWejg5MXJ5SFZXMFdaT0dWMWVwZ1dhajlONVV3dzIwcTR0WWVNUS16WFMwNnBXR0NzOUM4S3d4ZzAyTU90a29NUEg1clc2aFNVVTZl</guid>
+<pubDate>Fri, 29 Aug 2025 19:56:24 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxOVTlJaG9OM2I5a2x4Vy01MXd6YnNCb3ppZHh6b0ZUMGowV3dQTHhPdXd5Si1GUXhZZWVjS2lYcUNnbU5SaHgxQlg1bXF4cnBPV3EtRGlvMmNiNFBOSlE1YmlNemRodVpGc0tWYWZSMzlhdHVGbnVVSkZWejg5MXJ5SFZXMFdaT0dWMWVwZ1dhajlONVV3dzIwcTR0WWVNUS16WFMwNnBXR0NzOUM4S3d4ZzAyTU90a29NUEg1clc2aFNVVTZl?oc=5" target="_blank">Finland will remove swastikas from its air force flags to avoid 'awkwardness' with Western allies</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Petition to make abortion access easier given to European Commission - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivgFBVV95cUxPYWl1cXpCaUlvNWVjUDFpUjlnbWloRnJTS1NLQ3VkNjZCcjhvRUZZa25YdE5Dbk9JTldZSXJ6U2hLVUxZWlV1Wm9kODhJNVcxbVRFTnNTWUtGXzRaOXZ2Ty1oc1ZOSzNsbnByTlVCSEEwUU5WMjZocWw5b045ck1mM1BLdFpEbHFmZFVhNDd1MFRIVDYxQko5b3dvekVleWpjckY3TWZPOHQ3am9iem9Tdm9MMmFsYXZ4Znp5Rktn?oc=5</link>
+<guid isPermaLink="false">CBMivgFBVV95cUxPYWl1cXpCaUlvNWVjUDFpUjlnbWloRnJTS1NLQ3VkNjZCcjhvRUZZa25YdE5Dbk9JTldZSXJ6U2hLVUxZWlV1Wm9kODhJNVcxbVRFTnNTWUtGXzRaOXZ2Ty1oc1ZOSzNsbnByTlVCSEEwUU5WMjZocWw5b045ck1mM1BLdFpEbHFmZFVhNDd1MFRIVDYxQko5b3dvekVleWpjckY3TWZPOHQ3am9iem9Tdm9MMmFsYXZ4Znp5Rktn</guid>
+<pubDate>Mon, 01 Sep 2025 16:21:09 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPYWl1cXpCaUlvNWVjUDFpUjlnbWloRnJTS1NLQ3VkNjZCcjhvRUZZa25YdE5Dbk9JTldZSXJ6U2hLVUxZWlV1Wm9kODhJNVcxbVRFTnNTWUtGXzRaOXZ2Ty1oc1ZOSzNsbnByTlVCSEEwUU5WMjZocWw5b045ck1mM1BLdFpEbHFmZFVhNDd1MFRIVDYxQko5b3dvekVleWpjckY3TWZPOHQ3am9iem9Tdm9MMmFsYXZ4Znp5Rktn?oc=5" target="_blank">Petition to make abortion access easier given to European Commission</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Newly discovered document adds evidence that Shroud of Turin is fake - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizwFBVV95cUxPZDJfU2NraHNjZG9kejZXaUJ2M0hFR255QVhwTjFtTEpybERRSnB4TTlxMEU5X2wxdGVYZE9RLVExYmZMcmN5cjNSSnVBZFg2dTlNZDhMLVZUXzBZUjU2SHVEOFlqWV9yYmxDbkZfR2FzeWVWUFo5N3JQMEtZWWlSN1lRdmFZSDNWbFRPN2ZRRk1CQ0FtZnduVkFLYnR6aWdSenBvNXhSYkpsNjRaRkhka1RCMDBwMjYwYmdGYTNKRFI3czNjX3dwYlV6aGxkLTA?oc=5</link>
+<guid isPermaLink="false">CBMizwFBVV95cUxPZDJfU2NraHNjZG9kejZXaUJ2M0hFR255QVhwTjFtTEpybERRSnB4TTlxMEU5X2wxdGVYZE9RLVExYmZMcmN5cjNSSnVBZFg2dTlNZDhMLVZUXzBZUjU2SHVEOFlqWV9yYmxDbkZfR2FzeWVWUFo5N3JQMEtZWWlSN1lRdmFZSDNWbFRPN2ZRRk1CQ0FtZnduVkFLYnR6aWdSenBvNXhSYkpsNjRaRkhka1RCMDBwMjYwYmdGYTNKRFI3czNjX3dwYlV6aGxkLTA</guid>
+<pubDate>Fri, 29 Aug 2025 09:05:50 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizwFBVV95cUxPZDJfU2NraHNjZG9kejZXaUJ2M0hFR255QVhwTjFtTEpybERRSnB4TTlxMEU5X2wxdGVYZE9RLVExYmZMcmN5cjNSSnVBZFg2dTlNZDhMLVZUXzBZUjU2SHVEOFlqWV9yYmxDbkZfR2FzeWVWUFo5N3JQMEtZWWlSN1lRdmFZSDNWbFRPN2ZRRk1CQ0FtZnduVkFLYnR6aWdSenBvNXhSYkpsNjRaRkhka1RCMDBwMjYwYmdGYTNKRFI3czNjX3dwYlV6aGxkLTA?oc=5" target="_blank">Newly discovered document adds evidence that Shroud of Turin is fake</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>September air traffic strike in France could hit travellers hard - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiugFBVV95cUxQb2VZQktQb25fcm9WejBIbVBDcWhNaV9xT2kwYWM1MVQxNktSMm5VdGtxM3VNSTgzTGtwUUhpSHhvN0JqQmlSMUVITWtsa0MzLS13Vk9sUjhOTThpNzZmc2N2LV9yTjBfSWFNTHJtazdGRkdRdXotdkVTVGYyTlFQeWM0WHB2WnpoQ2lEUW1PTThNeEV3b0tucmhadmhWUFVxeWxyY3owVVd3eFREQ0NGc09GSHNUQjBHaVE?oc=5</link>
+<guid isPermaLink="false">CBMiugFBVV95cUxQb2VZQktQb25fcm9WejBIbVBDcWhNaV9xT2kwYWM1MVQxNktSMm5VdGtxM3VNSTgzTGtwUUhpSHhvN0JqQmlSMUVITWtsa0MzLS13Vk9sUjhOTThpNzZmc2N2LV9yTjBfSWFNTHJtazdGRkdRdXotdkVTVGYyTlFQeWM0WHB2WnpoQ2lEUW1PTThNeEV3b0tucmhadmhWUFVxeWxyY3owVVd3eFREQ0NGc09GSHNUQjBHaVE</guid>
+<pubDate>Fri, 29 Aug 2025 15:26:07 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQb2VZQktQb25fcm9WejBIbVBDcWhNaV9xT2kwYWM1MVQxNktSMm5VdGtxM3VNSTgzTGtwUUhpSHhvN0JqQmlSMUVITWtsa0MzLS13Vk9sUjhOTThpNzZmc2N2LV9yTjBfSWFNTHJtazdGRkdRdXotdkVTVGYyTlFQeWM0WHB2WnpoQ2lEUW1PTThNeEV3b0tucmhadmhWUFVxeWxyY3owVVd3eFREQ0NGc09GSHNUQjBHaVE?oc=5" target="_blank">September air traffic strike in France could hit travellers hard</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Fake images of PM Meloni and other women politicians on porn website spark outrage in Italy - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMi0gFBVV95cUxQR0REOC0tSDdpMnpTVU9UeVl4OERKWUZ4bmpnaDFvQjBESVlfSEdMYWJjN0NWTnllQTZvWkc2NjN2Ym5EbkZkNDJjLVV3X2lYYmNYOWNMWERYRFZXMktFbzJvdG5uX0J4czlSTEFjeWlQT3RReGFNaHdIVDh6RGRmaFl6S0p3eE9TZWhERDJnWlUwMlRLRW9nODZUeFY2UFJQNUdFcWtDWUpscUowN0NkR1hCdFJDZ3pBY3g1YUU4RmxfV1pVcnpEbVFRcXZEZkVZRWc?oc=5</link>
+<guid isPermaLink="false">CBMi0gFBVV95cUxQR0REOC0tSDdpMnpTVU9UeVl4OERKWUZ4bmpnaDFvQjBESVlfSEdMYWJjN0NWTnllQTZvWkc2NjN2Ym5EbkZkNDJjLVV3X2lYYmNYOWNMWERYRFZXMktFbzJvdG5uX0J4czlSTEFjeWlQT3RReGFNaHdIVDh6RGRmaFl6S0p3eE9TZWhERDJnWlUwMlRLRW9nODZUeFY2UFJQNUdFcWtDWUpscUowN0NkR1hCdFJDZ3pBY3g1YUU4RmxfV1pVcnpEbVFRcXZEZkVZRWc</guid>
+<pubDate>Fri, 29 Aug 2025 12:36:57 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxQR0REOC0tSDdpMnpTVU9UeVl4OERKWUZ4bmpnaDFvQjBESVlfSEdMYWJjN0NWTnllQTZvWkc2NjN2Ym5EbkZkNDJjLVV3X2lYYmNYOWNMWERYRFZXMktFbzJvdG5uX0J4czlSTEFjeWlQT3RReGFNaHdIVDh6RGRmaFl6S0p3eE9TZWhERDJnWlUwMlRLRW9nODZUeFY2UFJQNUdFcWtDWUpscUowN0NkR1hCdFJDZ3pBY3g1YUU4RmxfV1pVcnpEbVFRcXZEZkVZRWc?oc=5" target="_blank">Fake images of PM Meloni and other women politicians on porn website spark outrage in Italy</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>AI simulation shows ‘worst-case scenario’ Mount Fuji eruption - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiywFBVV95cUxQQ0dvY2FfYlQ3aVZqcktKM3JocDBndTdxRk1LUk9ZTzNSOW1ZU015Qk5ROEJFOUFNcVB3cm5pNXJQc2ZQSTBJdEJ2UkJSTEdqNldmM25ZLXcySjN4bjBuRDhuazdCTmVTTTdPSjJZZ2lCZExSRWV4RGlMTmdqSjVPOUE3ZTlHYWZTc3N4RGxKcV9xUlp4LTZRTXQzdHZUdm1ydVZ0RXc0OE1qeEtZSm10eDZTWWtwU0prRjVQNzBBZjdtWUJfMTNud0FLOA?oc=5</link>
+<guid isPermaLink="false">CBMiywFBVV95cUxQQ0dvY2FfYlQ3aVZqcktKM3JocDBndTdxRk1LUk9ZTzNSOW1ZU015Qk5ROEJFOUFNcVB3cm5pNXJQc2ZQSTBJdEJ2UkJSTEdqNldmM25ZLXcySjN4bjBuRDhuazdCTmVTTTdPSjJZZ2lCZExSRWV4RGlMTmdqSjVPOUE3ZTlHYWZTc3N4RGxKcV9xUlp4LTZRTXQzdHZUdm1ydVZ0RXc0OE1qeEtZSm10eDZTWWtwU0prRjVQNzBBZjdtWUJfMTNud0FLOA</guid>
+<pubDate>Tue, 02 Sep 2025 05:00:27 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiywFBVV95cUxQQ0dvY2FfYlQ3aVZqcktKM3JocDBndTdxRk1LUk9ZTzNSOW1ZU015Qk5ROEJFOUFNcVB3cm5pNXJQc2ZQSTBJdEJ2UkJSTEdqNldmM25ZLXcySjN4bjBuRDhuazdCTmVTTTdPSjJZZ2lCZExSRWV4RGlMTmdqSjVPOUE3ZTlHYWZTc3N4RGxKcV9xUlp4LTZRTXQzdHZUdm1ydVZ0RXc0OE1qeEtZSm10eDZTWWtwU0prRjVQNzBBZjdtWUJfMTNud0FLOA?oc=5" target="_blank">AI simulation shows ‘worst-case scenario’ Mount Fuji eruption</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>From Taylor Swift to Twin Peaks: What are the most iconic rings in pop culture? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivgFBVV95cUxOWmdscjloWkM4MjUxdmxjSDBBNFpyQjBqRXJaMmtUSTJjbVFuR1Bsc25XYXFZcVdRaUxRajV5VFFOc0tOb2N3eFpNQkNqQkFLSDdFQjdsOFVBQnpxejYxRXVTQmpYRHNXVHU0bDJHT3VHWHZzNkk5M1phU05US3lkcFhHY0N2a1hVd201NDRoS0xSU2RYcmtXMG9VV0gtS1BfQWFJM1JaYVZjWk03Q2JLbzRBQW1hRHpkMC1EVGln?oc=5</link>
+<guid isPermaLink="false">CBMivgFBVV95cUxOWmdscjloWkM4MjUxdmxjSDBBNFpyQjBqRXJaMmtUSTJjbVFuR1Bsc25XYXFZcVdRaUxRajV5VFFOc0tOb2N3eFpNQkNqQkFLSDdFQjdsOFVBQnpxejYxRXVTQmpYRHNXVHU0bDJHT3VHWHZzNkk5M1phU05US3lkcFhHY0N2a1hVd201NDRoS0xSU2RYcmtXMG9VV0gtS1BfQWFJM1JaYVZjWk03Q2JLbzRBQW1hRHpkMC1EVGln</guid>
+<pubDate>Thu, 28 Aug 2025 14:49:52 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxOWmdscjloWkM4MjUxdmxjSDBBNFpyQjBqRXJaMmtUSTJjbVFuR1Bsc25XYXFZcVdRaUxRajV5VFFOc0tOb2N3eFpNQkNqQkFLSDdFQjdsOFVBQnpxejYxRXVTQmpYRHNXVHU0bDJHT3VHWHZzNkk5M1phU05US3lkcFhHY0N2a1hVd201NDRoS0xSU2RYcmtXMG9VV0gtS1BfQWFJM1JaYVZjWk03Q2JLbzRBQW1hRHpkMC1EVGln?oc=5" target="_blank">From Taylor Swift to Twin Peaks: What are the most iconic rings in pop culture?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Will the EU dare to sanction Russia's closest allies? The idea is back on the table - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixgFBVV95cUxQRU9vd19fSWZrTzdRZzdvRl9Dak1fQzV4em15eDNXaDR6S2tGUVVmTG9WTXFQbzNybk5oeHVQNzZBcEtMMTNlTGtaX0NOYUx6YnBPS3lLaVE3LUltSHhUZUE3SGtCNXo0RHpTNzVkRXhWT0dYRW1IMjk1R3JQWU1SRTY4cmNnM3NLNzhXTXR0ZnJ0cW9zSnB1c0ZXLWFtX2VzUHNJUlYtdms1MFNpTklTc24yTDdwclRpOWkzUXlzLW42eDVWc3c?oc=5</link>
+<guid isPermaLink="false">CBMixgFBVV95cUxQRU9vd19fSWZrTzdRZzdvRl9Dak1fQzV4em15eDNXaDR6S2tGUVVmTG9WTXFQbzNybk5oeHVQNzZBcEtMMTNlTGtaX0NOYUx6YnBPS3lLaVE3LUltSHhUZUE3SGtCNXo0RHpTNzVkRXhWT0dYRW1IMjk1R3JQWU1SRTY4cmNnM3NLNzhXTXR0ZnJ0cW9zSnB1c0ZXLWFtX2VzUHNJUlYtdms1MFNpTklTc24yTDdwclRpOWkzUXlzLW42eDVWc3c</guid>
+<pubDate>Fri, 29 Aug 2025 10:36:22 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxQRU9vd19fSWZrTzdRZzdvRl9Dak1fQzV4em15eDNXaDR6S2tGUVVmTG9WTXFQbzNybk5oeHVQNzZBcEtMMTNlTGtaX0NOYUx6YnBPS3lLaVE3LUltSHhUZUE3SGtCNXo0RHpTNzVkRXhWT0dYRW1IMjk1R3JQWU1SRTY4cmNnM3NLNzhXTXR0ZnJ0cW9zSnB1c0ZXLWFtX2VzUHNJUlYtdms1MFNpTklTc24yTDdwclRpOWkzUXlzLW42eDVWc3c?oc=5" target="_blank">Will the EU dare to sanction Russia's closest allies? The idea is back on the table</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Trump’s tariffs knocked down by federal appeals court. What now? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiqgFBVV95cUxOazVZTm42Q2JMYTh1QWpZelNLZzRGdHJKUUJUZlVvMlRTcmM3RlJXamJYdXNUR1ZQN2t4ZTJCa2ljQlRSNEx0OU5DV2RqTDFOb3lERFdCd1QtZnNQYm9Ic0Z3eXZrcUlnRkFBTG1oNFdFNHFjOFZxVC1WdXZOOFJtMlhReFIybjdReUNGYkxGQWFqb0ZWNHdKZWZzczFybEJLRXBwbXVTNG9JUQ?oc=5</link>
+<guid isPermaLink="false">CBMiqgFBVV95cUxOazVZTm42Q2JMYTh1QWpZelNLZzRGdHJKUUJUZlVvMlRTcmM3RlJXamJYdXNUR1ZQN2t4ZTJCa2ljQlRSNEx0OU5DV2RqTDFOb3lERFdCd1QtZnNQYm9Ic0Z3eXZrcUlnRkFBTG1oNFdFNHFjOFZxVC1WdXZOOFJtMlhReFIybjdReUNGYkxGQWFqb0ZWNHdKZWZzczFybEJLRXBwbXVTNG9JUQ</guid>
+<pubDate>Thu, 09 Jan 2025 08:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxOazVZTm42Q2JMYTh1QWpZelNLZzRGdHJKUUJUZlVvMlRTcmM3RlJXamJYdXNUR1ZQN2t4ZTJCa2ljQlRSNEx0OU5DV2RqTDFOb3lERFdCd1QtZnNQYm9Ic0Z3eXZrcUlnRkFBTG1oNFdFNHFjOFZxVC1WdXZOOFJtMlhReFIybjdReUNGYkxGQWFqb0ZWNHdKZWZzczFybEJLRXBwbXVTNG9JUQ?oc=5" target="_blank">Trump’s tariffs knocked down by federal appeals court. What now?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Iran-backed Houthi PM killed in Israeli airstrikes on Yemen's capital - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMipwFBVV95cUxONDdpSEhzVGEtMEl4YUtCa18zbFZEdmtIT2hNcXExY0NzTFBVR29paXdYczFkTm9JLXFMcFZYaDVFY20tTGQ3U1V0QXUwZ3BqZElQTFdPN1R0V2ZEVVMyY1dUbi1USEpzYXNJTGh3bVI3dzM2eUMzc19qTlNWbjlYMjh0VzE2REY1RzVBcFBiSzR6NEI2YnFfME4yb3dCajRwQUVqQTFvUQ?oc=5</link>
+<guid isPermaLink="false">CBMipwFBVV95cUxONDdpSEhzVGEtMEl4YUtCa18zbFZEdmtIT2hNcXExY0NzTFBVR29paXdYczFkTm9JLXFMcFZYaDVFY20tTGQ3U1V0QXUwZ3BqZElQTFdPN1R0V2ZEVVMyY1dUbi1USEpzYXNJTGh3bVI3dzM2eUMzc19qTlNWbjlYMjh0VzE2REY1RzVBcFBiSzR6NEI2YnFfME4yb3dCajRwQUVqQTFvUQ</guid>
+<pubDate>Fri, 29 Aug 2025 09:09:22 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxONDdpSEhzVGEtMEl4YUtCa18zbFZEdmtIT2hNcXExY0NzTFBVR29paXdYczFkTm9JLXFMcFZYaDVFY20tTGQ3U1V0QXUwZ3BqZElQTFdPN1R0V2ZEVVMyY1dUbi1USEpzYXNJTGh3bVI3dzM2eUMzc19qTlNWbjlYMjh0VzE2REY1RzVBcFBiSzR6NEI2YnFfME4yb3dCajRwQUVqQTFvUQ?oc=5" target="_blank">Iran-backed Houthi PM killed in Israeli airstrikes on Yemen's capital</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>‘Very unusual’ flu outbreak in Denmark linked to music festival - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiyAFBVV95cUxQYnI2cExtcGY5TllZbTViV3d4cjIxMjcxeW5CcmFzdktreC1LMTZCWjU4TkVIZ0NXQnJfcFhfWldSaVM0V0JpT2xQY0tzVXJuVlA0d09rOWVieHB1TzY2R19sYWg3dy01MGlGZjBCUUdWU2x6TGo0QmFhcDY1YmNKTXd5U2xpbnNkbWhPNzlrTDVMZUwxZHFDZURTaTk0YTZSUkttQW1lNGxNMWtuWXhKV21kX0lXcEZneHZ6bmhENFYyTHVmRG01dw?oc=5</link>
+<guid isPermaLink="false">CBMiyAFBVV95cUxQYnI2cExtcGY5TllZbTViV3d4cjIxMjcxeW5CcmFzdktreC1LMTZCWjU4TkVIZ0NXQnJfcFhfWldSaVM0V0JpT2xQY0tzVXJuVlA0d09rOWVieHB1TzY2R19sYWg3dy01MGlGZjBCUUdWU2x6TGo0QmFhcDY1YmNKTXd5U2xpbnNkbWhPNzlrTDVMZUwxZHFDZURTaTk0YTZSUkttQW1lNGxNMWtuWXhKV21kX0lXcEZneHZ6bmhENFYyTHVmRG01dw</guid>
+<pubDate>Fri, 29 Aug 2025 14:32:16 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiyAFBVV95cUxQYnI2cExtcGY5TllZbTViV3d4cjIxMjcxeW5CcmFzdktreC1LMTZCWjU4TkVIZ0NXQnJfcFhfWldSaVM0V0JpT2xQY0tzVXJuVlA0d09rOWVieHB1TzY2R19sYWg3dy01MGlGZjBCUUdWU2x6TGo0QmFhcDY1YmNKTXd5U2xpbnNkbWhPNzlrTDVMZUwxZHFDZURTaTk0YTZSUkttQW1lNGxNMWtuWXhKV21kX0lXcEZneHZ6bmhENFYyTHVmRG01dw?oc=5" target="_blank">‘Very unusual’ flu outbreak in Denmark linked to music festival</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Mangystau: Walk through Kazakhstan's otherworldly desert wonders - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxOV3JKcWpzX3lROE5CR1JZUGZ6bkd0czRFM2hHbDV1UXh0N3hLZ3BhQTBtNzd2R2ZEM2RkbWFBamZIRWVPVXg1bDF0eENxak5qYm9OSWFKaG5qUlgyVHRVUzE5NV9oYy1NYjFJVnU2VmxRMjRRSnc4aXJLdlNRR1k2a29FS1dhdEJhR1Q0cmNFS01SUHM0ZGZ0UWI1UlhUWEhoRHBIZTBsTW1QRlMwNjd2UEpSOHFqR3NlWnZYNWxsUHdQMXBV?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxOV3JKcWpzX3lROE5CR1JZUGZ6bkd0czRFM2hHbDV1UXh0N3hLZ3BhQTBtNzd2R2ZEM2RkbWFBamZIRWVPVXg1bDF0eENxak5qYm9OSWFKaG5qUlgyVHRVUzE5NV9oYy1NYjFJVnU2VmxRMjRRSnc4aXJLdlNRR1k2a29FS1dhdEJhR1Q0cmNFS01SUHM0ZGZ0UWI1UlhUWEhoRHBIZTBsTW1QRlMwNjd2UEpSOHFqR3NlWnZYNWxsUHdQMXBV</guid>
+<pubDate>Sat, 30 Aug 2025 06:02:34 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxOV3JKcWpzX3lROE5CR1JZUGZ6bkd0czRFM2hHbDV1UXh0N3hLZ3BhQTBtNzd2R2ZEM2RkbWFBamZIRWVPVXg1bDF0eENxak5qYm9OSWFKaG5qUlgyVHRVUzE5NV9oYy1NYjFJVnU2VmxRMjRRSnc4aXJLdlNRR1k2a29FS1dhdEJhR1Q0cmNFS01SUHM0ZGZ0UWI1UlhUWEhoRHBIZTBsTW1QRlMwNjd2UEpSOHFqR3NlWnZYNWxsUHdQMXBV?oc=5" target="_blank">Mangystau: Walk through Kazakhstan's otherworldly desert wonders</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Croatian Air Force pilot and partner arrested for alleged espionage in Kosovo, reports claim - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuAFBVV95cUxPS05nTkp0Y05TTlFtN2lKbXMtVE1DVHBVMDI3Mll4NUFiTllFNWJZTmxGSnRvcGotdzV1cFN4WmlLTkh1b0Z1SW11eGNTTkdNTmJqUUpyQUpudGVfTmVhVEJuMFVuN2hiWlRzMzFMeFdZX19oRFdpVFFaZEJraXNoVDRZck5sWFl0THQ2S3ViaVlFRk11VE9RZHFLQWRaM0ZmM2M3eWdhSE84ZkxzSGMxRFBETFJpRTNm?oc=5</link>
+<guid isPermaLink="false">CBMiuAFBVV95cUxPS05nTkp0Y05TTlFtN2lKbXMtVE1DVHBVMDI3Mll4NUFiTllFNWJZTmxGSnRvcGotdzV1cFN4WmlLTkh1b0Z1SW11eGNTTkdNTmJqUUpyQUpudGVfTmVhVEJuMFVuN2hiWlRzMzFMeFdZX19oRFdpVFFaZEJraXNoVDRZck5sWFl0THQ2S3ViaVlFRk11VE9RZHFLQWRaM0ZmM2M3eWdhSE84ZkxzSGMxRFBETFJpRTNm</guid>
+<pubDate>Thu, 28 Aug 2025 11:18:16 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxPS05nTkp0Y05TTlFtN2lKbXMtVE1DVHBVMDI3Mll4NUFiTllFNWJZTmxGSnRvcGotdzV1cFN4WmlLTkh1b0Z1SW11eGNTTkdNTmJqUUpyQUpudGVfTmVhVEJuMFVuN2hiWlRzMzFMeFdZX19oRFdpVFFaZEJraXNoVDRZck5sWFl0THQ2S3ViaVlFRk11VE9RZHFLQWRaM0ZmM2M3eWdhSE84ZkxzSGMxRFBETFJpRTNm?oc=5" target="_blank">Croatian Air Force pilot and partner arrested for alleged espionage in Kosovo, reports claim</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Ombudsman opens inquiry into Commission’s silence on EU privacy chief - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirgFBVV95cUxQUGdEV2k3NnF1TGhyY256NEs5RzE4cjA3RDRod1RoazZScG1qYjRvYWlxUXpxYmFTYkdpc3k2T2VldWdxcGRIV3hNb0t6bHNTRjRkU3ZCWHBQbDlGdnAwcWNmWmRhMjlLU055N2FhWnZLNG41QVUzNTcwbUZKMWRpbXNQRVpWTDBtLWZ1aEMyRUg1ZTY1WGVfU0x4Y2xzUmc0UkJ5LTNMX2dJWHVWWVE?oc=5</link>
+<guid isPermaLink="false">CBMirgFBVV95cUxQUGdEV2k3NnF1TGhyY256NEs5RzE4cjA3RDRod1RoazZScG1qYjRvYWlxUXpxYmFTYkdpc3k2T2VldWdxcGRIV3hNb0t6bHNTRjRkU3ZCWHBQbDlGdnAwcWNmWmRhMjlLU055N2FhWnZLNG41QVUzNTcwbUZKMWRpbXNQRVpWTDBtLWZ1aEMyRUg1ZTY1WGVfU0x4Y2xzUmc0UkJ5LTNMX2dJWHVWWVE</guid>
+<pubDate>Mon, 01 Sep 2025 12:48:10 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxQUGdEV2k3NnF1TGhyY256NEs5RzE4cjA3RDRod1RoazZScG1qYjRvYWlxUXpxYmFTYkdpc3k2T2VldWdxcGRIV3hNb0t6bHNTRjRkU3ZCWHBQbDlGdnAwcWNmWmRhMjlLU055N2FhWnZLNG41QVUzNTcwbUZKMWRpbXNQRVpWTDBtLWZ1aEMyRUg1ZTY1WGVfU0x4Y2xzUmc0UkJ5LTNMX2dJWHVWWVE?oc=5" target="_blank">Ombudsman opens inquiry into Commission’s silence on EU privacy chief</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Trump sends navy fleet to Venezuela — but does the Suns cartel exist? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirwFBVV95cUxQR0ZycDF6bl9lZk5JNC1seElvOFlrckVoX3pjdzZST0NuTWo0d2U0YWpaR1ZsUWcyMVQ2Y3laNmZaelY5S2MzTGtaZ3VrZWQ1ZnNHUjNRQ0dpZXZIVFpCa3V6M2pUN3BGUFhNVmFRY250OGVwX3NDdlBTektRR3dYTk9CRGNHd05NVEx2NjhLWVVmV2hvbXpWb1F3QXh4Y3Zuc3JpWmtFdTFubUxBdGZZ?oc=5</link>
+<guid isPermaLink="false">CBMirwFBVV95cUxQR0ZycDF6bl9lZk5JNC1seElvOFlrckVoX3pjdzZST0NuTWo0d2U0YWpaR1ZsUWcyMVQ2Y3laNmZaelY5S2MzTGtaZ3VrZWQ1ZnNHUjNRQ0dpZXZIVFpCa3V6M2pUN3BGUFhNVmFRY250OGVwX3NDdlBTektRR3dYTk9CRGNHd05NVEx2NjhLWVVmV2hvbXpWb1F3QXh4Y3Zuc3JpWmtFdTFubUxBdGZZ</guid>
+<pubDate>Fri, 29 Aug 2025 11:07:36 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirwFBVV95cUxQR0ZycDF6bl9lZk5JNC1seElvOFlrckVoX3pjdzZST0NuTWo0d2U0YWpaR1ZsUWcyMVQ2Y3laNmZaelY5S2MzTGtaZ3VrZWQ1ZnNHUjNRQ0dpZXZIVFpCa3V6M2pUN3BGUFhNVmFRY250OGVwX3NDdlBTektRR3dYTk9CRGNHd05NVEx2NjhLWVVmV2hvbXpWb1F3QXh4Y3Zuc3JpWmtFdTFubUxBdGZZ?oc=5" target="_blank">Trump sends navy fleet to Venezuela — but does the Suns cartel exist?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Original Harry Potter director on reboot series: ‘What’s the point?’ - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxNclpubXo0bV91OXN5ZGZjVldxSHRkeUY0VWNjb3llZWlxR2Jha1UydjJMUThUbl9xX2Z2RUREUGdrd1AzdktaMFpHTG11cXdERW9MdS11Q2lVSDQ2dVpidUpIdEUwT05rUm9SVzVLMkd4Y2VkNVFzYjZuRDdXOWdhNDIwUzZudXN6aWFBdUNmSTFUY3hDWFdfNlMyRjdqeDdtQmhMTzI5X3N5SjZ6TDNUOGFzQ0FUazZXNEJweURkQXR4VmdJ?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxNclpubXo0bV91OXN5ZGZjVldxSHRkeUY0VWNjb3llZWlxR2Jha1UydjJMUThUbl9xX2Z2RUREUGdrd1AzdktaMFpHTG11cXdERW9MdS11Q2lVSDQ2dVpidUpIdEUwT05rUm9SVzVLMkd4Y2VkNVFzYjZuRDdXOWdhNDIwUzZudXN6aWFBdUNmSTFUY3hDWFdfNlMyRjdqeDdtQmhMTzI5X3N5SjZ6TDNUOGFzQ0FUazZXNEJweURkQXR4VmdJ</guid>
+<pubDate>Fri, 29 Aug 2025 07:12:35 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxNclpubXo0bV91OXN5ZGZjVldxSHRkeUY0VWNjb3llZWlxR2Jha1UydjJMUThUbl9xX2Z2RUREUGdrd1AzdktaMFpHTG11cXdERW9MdS11Q2lVSDQ2dVpidUpIdEUwT05rUm9SVzVLMkd4Y2VkNVFzYjZuRDdXOWdhNDIwUzZudXN6aWFBdUNmSTFUY3hDWFdfNlMyRjdqeDdtQmhMTzI5X3N5SjZ6TDNUOGFzQ0FUazZXNEJweURkQXR4VmdJ?oc=5" target="_blank">Original Harry Potter director on reboot series: ‘What’s the point?’</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Unions warn of ‘low’ firefighter numbers as EU faces record wildfires - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivwFBVV95cUxNS1FpVkZvQlVEQ2RCdjdnb3VxLTdjTDB6Z0hqS0pkbzQ5QkpQc3VSdzFfcDhjMV9KMC1MbEc5VF8wMDRhUlJDQ1pSWWxKeHpXal90ZFVGOVVnMUdWdHJudkRfNjBtdVAwTnlOZ19TamhLZTlhWmp4by1ZWEdVNTl0a09TNWxqbUhsMkpoQ3g5TDk1VWlNNUVhMGlxYXRFN2ZGSGhKcV9JUEJKZ0g3MnVFNUlteE1ISE15ejhWQlBKYw?oc=5</link>
+<guid isPermaLink="false">CBMivwFBVV95cUxNS1FpVkZvQlVEQ2RCdjdnb3VxLTdjTDB6Z0hqS0pkbzQ5QkpQc3VSdzFfcDhjMV9KMC1MbEc5VF8wMDRhUlJDQ1pSWWxKeHpXal90ZFVGOVVnMUdWdHJudkRfNjBtdVAwTnlOZ19TamhLZTlhWmp4by1ZWEdVNTl0a09TNWxqbUhsMkpoQ3g5TDk1VWlNNUVhMGlxYXRFN2ZGSGhKcV9JUEJKZ0g3MnVFNUlteE1ISE15ejhWQlBKYw</guid>
+<pubDate>Mon, 01 Sep 2025 05:00:53 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivwFBVV95cUxNS1FpVkZvQlVEQ2RCdjdnb3VxLTdjTDB6Z0hqS0pkbzQ5QkpQc3VSdzFfcDhjMV9KMC1MbEc5VF8wMDRhUlJDQ1pSWWxKeHpXal90ZFVGOVVnMUdWdHJudkRfNjBtdVAwTnlOZ19TamhLZTlhWmp4by1ZWEdVNTl0a09TNWxqbUhsMkpoQ3g5TDk1VWlNNUVhMGlxYXRFN2ZGSGhKcV9JUEJKZ0g3MnVFNUlteE1ISE15ejhWQlBKYw?oc=5" target="_blank">Unions warn of ‘low’ firefighter numbers as EU faces record wildfires</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Rome denies French PM Bayrou's 'unfounded' tax dumping claims - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixgFBVV95cUxPWGxmbUhSVnJEMDZVX3RobmlacWxKdVhONHo2Zkk1d1RIRDJpZmtCWlo3Z0g0T1lhb3B6NmhQSWlkRDRzYTdFMm1xRVZ1UHU4b2Jtcy1fUzd6LVZIaFVBSWxZVkpLTXdqSzI1bXRRcWFJY3M3dVpyMG9BOVE0N1NoUUV2Nlp0Q2ZfRkk3NTJsZmwtZFlkYVZiNVFFSzVHSk1HU25NYi1MbENEMEtTUDFwUE5kU1VRR0dUaDVua1ZzQVBiLThyZWc?oc=5</link>
+<guid isPermaLink="false">CBMixgFBVV95cUxPWGxmbUhSVnJEMDZVX3RobmlacWxKdVhONHo2Zkk1d1RIRDJpZmtCWlo3Z0g0T1lhb3B6NmhQSWlkRDRzYTdFMm1xRVZ1UHU4b2Jtcy1fUzd6LVZIaFVBSWxZVkpLTXdqSzI1bXRRcWFJY3M3dVpyMG9BOVE0N1NoUUV2Nlp0Q2ZfRkk3NTJsZmwtZFlkYVZiNVFFSzVHSk1HU25NYi1MbENEMEtTUDFwUE5kU1VRR0dUaDVua1ZzQVBiLThyZWc</guid>
+<pubDate>Mon, 01 Sep 2025 14:36:16 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxPWGxmbUhSVnJEMDZVX3RobmlacWxKdVhONHo2Zkk1d1RIRDJpZmtCWlo3Z0g0T1lhb3B6NmhQSWlkRDRzYTdFMm1xRVZ1UHU4b2Jtcy1fUzd6LVZIaFVBSWxZVkpLTXdqSzI1bXRRcWFJY3M3dVpyMG9BOVE0N1NoUUV2Nlp0Q2ZfRkk3NTJsZmwtZFlkYVZiNVFFSzVHSk1HU25NYi1MbENEMEtTUDFwUE5kU1VRR0dUaDVua1ZzQVBiLThyZWc?oc=5" target="_blank">Rome denies French PM Bayrou's 'unfounded' tax dumping claims</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Russia fires third large-scale attack at Ukraine this week, hitting Odesa and Kherson - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivAFBVV95cUxOX0NYREowTmNUenVWZHlVWW52TW8yOHhSeFZLS25ZWE9BUDVmeDRTUHp3SGhHVDFvOFJlaDEwdTZqZFdwVHpkM2xYTkV6Y2xULXpMQnRySHN1ZjE1R2tfTXlJZWRWTkFsMWcwcUdhaXdUa0hqRDQxa0pHaXZ3b0RaQzAtb09wZmVSdTlkWDFRM2NzNm85RDFUYnBLajczV3RuQ1VmZ3VYR2NRbDNvTkxjZXRqamtzOTMwRGpIVg?oc=5</link>
+<guid isPermaLink="false">CBMivAFBVV95cUxOX0NYREowTmNUenVWZHlVWW52TW8yOHhSeFZLS25ZWE9BUDVmeDRTUHp3SGhHVDFvOFJlaDEwdTZqZFdwVHpkM2xYTkV6Y2xULXpMQnRySHN1ZjE1R2tfTXlJZWRWTkFsMWcwcUdhaXdUa0hqRDQxa0pHaXZ3b0RaQzAtb09wZmVSdTlkWDFRM2NzNm85RDFUYnBLajczV3RuQ1VmZ3VYR2NRbDNvTkxjZXRqamtzOTMwRGpIVg</guid>
+<pubDate>Sun, 31 Aug 2025 15:09:32 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivAFBVV95cUxOX0NYREowTmNUenVWZHlVWW52TW8yOHhSeFZLS25ZWE9BUDVmeDRTUHp3SGhHVDFvOFJlaDEwdTZqZFdwVHpkM2xYTkV6Y2xULXpMQnRySHN1ZjE1R2tfTXlJZWRWTkFsMWcwcUdhaXdUa0hqRDQxa0pHaXZ3b0RaQzAtb09wZmVSdTlkWDFRM2NzNm85RDFUYnBLajczV3RuQ1VmZ3VYR2NRbDNvTkxjZXRqamtzOTMwRGpIVg?oc=5" target="_blank">Russia fires third large-scale attack at Ukraine this week, hitting Odesa and Kherson</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>What we know about Alibaba’s potential new AI chip - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxNS2lFZHFwcTQ1SDNnR1dXZ0FSbU1GcVlhdzR6MGRNRlltZFZBUWIwRTNWQndqVWVJX1Z3b3JXUHdrSDZVRkJ0ZDFUWnluSTdKRmRndkdNSjFpclFfMDBDWG5XajBNNkR4ckt6SFN4OEc3bFhuRUxNTUo3OC1FT0VaS3hGUHYyQ0VTNDVXUWhQbExLelhJRDcxWElsMXFUZUNTUTA2cGtodlVuM3lRME9ad2lFU2FCRWNxZlZHZjN1UlYxeVpf?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxNS2lFZHFwcTQ1SDNnR1dXZ0FSbU1GcVlhdzR6MGRNRlltZFZBUWIwRTNWQndqVWVJX1Z3b3JXUHdrSDZVRkJ0ZDFUWnluSTdKRmRndkdNSjFpclFfMDBDWG5XajBNNkR4ckt6SFN4OEc3bFhuRUxNTUo3OC1FT0VaS3hGUHYyQ0VTNDVXUWhQbExLelhJRDcxWElsMXFUZUNTUTA2cGtodlVuM3lRME9ad2lFU2FCRWNxZlZHZjN1UlYxeVpf</guid>
+<pubDate>Mon, 01 Sep 2025 12:39:05 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxNS2lFZHFwcTQ1SDNnR1dXZ0FSbU1GcVlhdzR6MGRNRlltZFZBUWIwRTNWQndqVWVJX1Z3b3JXUHdrSDZVRkJ0ZDFUWnluSTdKRmRndkdNSjFpclFfMDBDWG5XajBNNkR4ckt6SFN4OEc3bFhuRUxNTUo3OC1FT0VaS3hGUHYyQ0VTNDVXUWhQbExLelhJRDcxWElsMXFUZUNTUTA2cGtodlVuM3lRME9ad2lFU2FCRWNxZlZHZjN1UlYxeVpf?oc=5" target="_blank">What we know about Alibaba’s potential new AI chip</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Hungary sanctions Ukrainian drone commander for bombing oil pipeline in Russia - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiwgFBVV95cUxOOXoxSV9Bc0RWY3QyaVA0cy0yS1RnZEVBcnFoVTcxcUgtY2lIVWlrZzQ5V01RbF92Zlk0THJ6SU1NZ3RsQ3pBenVGcVR1U1l0R29CX2RlR3BGNVRKVkdBSFk5UGNLVzdtZ0x0UXZaODhWN294aHg0dEdEalFELU9zU1NEU1VRTjdOUWk4NzNLUFRsd3BKQ1Zrc21ocHVzeDlKUjhZZGtocjNvUlRCUFA5SldwbF9ISHVVX3d5NGZVT3M3UQ?oc=5</link>
+<guid isPermaLink="false">CBMiwgFBVV95cUxOOXoxSV9Bc0RWY3QyaVA0cy0yS1RnZEVBcnFoVTcxcUgtY2lIVWlrZzQ5V01RbF92Zlk0THJ6SU1NZ3RsQ3pBenVGcVR1U1l0R29CX2RlR3BGNVRKVkdBSFk5UGNLVzdtZ0x0UXZaODhWN294aHg0dEdEalFELU9zU1NEU1VRTjdOUWk4NzNLUFRsd3BKQ1Zrc21ocHVzeDlKUjhZZGtocjNvUlRCUFA5SldwbF9ISHVVX3d5NGZVT3M3UQ</guid>
+<pubDate>Thu, 28 Aug 2025 13:39:52 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiwgFBVV95cUxOOXoxSV9Bc0RWY3QyaVA0cy0yS1RnZEVBcnFoVTcxcUgtY2lIVWlrZzQ5V01RbF92Zlk0THJ6SU1NZ3RsQ3pBenVGcVR1U1l0R29CX2RlR3BGNVRKVkdBSFk5UGNLVzdtZ0x0UXZaODhWN294aHg0dEdEalFELU9zU1NEU1VRTjdOUWk4NzNLUFRsd3BKQ1Zrc21ocHVzeDlKUjhZZGtocjNvUlRCUFA5SldwbF9ISHVVX3d5NGZVT3M3UQ?oc=5" target="_blank">Hungary sanctions Ukrainian drone commander for bombing oil pipeline in Russia</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Europe's NATO allies set to jointly reach 2% spending target this year - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiwwFBVV95cUxQdHZ5TFZ3Rk1kdGtnN0dmTnBxNHZPREVueVFWX1hENXYyaURTdWJxN0xoc3d5YWpwUVA2Zk1IZ3lpUzlSaWhyMDFwaWVJS2VzRGVqNU5rcFRWNkhzcjc3dlRKWXM2X24tTHpvUXVsWk14dl9tTDMxaXpjNlFzYWVtVzY2eE9JNVNJV3dhZzJtaUVNRFZjTE1YbDB1RVo0MVZlblotbDl6Y29pT2NicWZIME43N25rZkxVaHFLZW95NDhHZDQ?oc=5</link>
+<guid isPermaLink="false">CBMiwwFBVV95cUxQdHZ5TFZ3Rk1kdGtnN0dmTnBxNHZPREVueVFWX1hENXYyaURTdWJxN0xoc3d5YWpwUVA2Zk1IZ3lpUzlSaWhyMDFwaWVJS2VzRGVqNU5rcFRWNkhzcjc3dlRKWXM2X24tTHpvUXVsWk14dl9tTDMxaXpjNlFzYWVtVzY2eE9JNVNJV3dhZzJtaUVNRFZjTE1YbDB1RVo0MVZlblotbDl6Y29pT2NicWZIME43N25rZkxVaHFLZW95NDhHZDQ</guid>
+<pubDate>Thu, 28 Aug 2025 11:39:15 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiwwFBVV95cUxQdHZ5TFZ3Rk1kdGtnN0dmTnBxNHZPREVueVFWX1hENXYyaURTdWJxN0xoc3d5YWpwUVA2Zk1IZ3lpUzlSaWhyMDFwaWVJS2VzRGVqNU5rcFRWNkhzcjc3dlRKWXM2X24tTHpvUXVsWk14dl9tTDMxaXpjNlFzYWVtVzY2eE9JNVNJV3dhZzJtaUVNRFZjTE1YbDB1RVo0MVZlblotbDl6Y29pT2NicWZIME43N25rZkxVaHFLZW95NDhHZDQ?oc=5" target="_blank">Europe's NATO allies set to jointly reach 2% spending target this year</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Iraq's al-Nouri Mosque reopens eight years after ISIS destroyed it - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiugFBVV95cUxNYlhKYU5KQWdHWXdMSUtydU9pMWZnNnFTS1ptblFRS2JpNWtna09iRWxFc3d0bzFJeFNhb0dPUFFUcTVOYTdha0ZVenJsYm9iODhOc2tBd2NQaUxxZGpOcngtMTBxUnlZSHV6bGdYYTM5SlNlNUNFVW8zU0d5d1hYNm1ZX3VaVmNVcnd1YWVGUktxMEMzbnlWQjQya2d2dDBEdzcxODZTaWZ1VWJqeWxIWjRyQXcxdnVYbnc?oc=5</link>
+<guid isPermaLink="false">CBMiugFBVV95cUxNYlhKYU5KQWdHWXdMSUtydU9pMWZnNnFTS1ptblFRS2JpNWtna09iRWxFc3d0bzFJeFNhb0dPUFFUcTVOYTdha0ZVenJsYm9iODhOc2tBd2NQaUxxZGpOcngtMTBxUnlZSHV6bGdYYTM5SlNlNUNFVW8zU0d5d1hYNm1ZX3VaVmNVcnd1YWVGUktxMEMzbnlWQjQya2d2dDBEdzcxODZTaWZ1VWJqeWxIWjRyQXcxdnVYbnc</guid>
+<pubDate>Mon, 01 Sep 2025 15:14:07 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxNYlhKYU5KQWdHWXdMSUtydU9pMWZnNnFTS1ptblFRS2JpNWtna09iRWxFc3d0bzFJeFNhb0dPUFFUcTVOYTdha0ZVenJsYm9iODhOc2tBd2NQaUxxZGpOcngtMTBxUnlZSHV6bGdYYTM5SlNlNUNFVW8zU0d5d1hYNm1ZX3VaVmNVcnd1YWVGUktxMEMzbnlWQjQya2d2dDBEdzcxODZTaWZ1VWJqeWxIWjRyQXcxdnVYbnc?oc=5" target="_blank">Iraq's al-Nouri Mosque reopens eight years after ISIS destroyed it</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Argentina's President Milei pelted with rocks at Buenos Aires district rally - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisAFBVV95cUxPVm40LWZGNVh6SkwtcnpOQ1Azb0FBMzl2THpQUS1TTUp6ZjlmQ2J4Z05HU3Vzcmo3aHA0ZU5ORnNIT0JKSWFvbkZ3SUtVNUZPMGYyLVNaVUxXNnJaYU05OXpYUFN5RFhtbTg4UDROMWxpcWtWaVFEdGFjNFVsVmVDSExkZXNKT254ZUZ4by1VeGpUdmtsdFpRbHRYaldSTHRfUmZOLU1oaFM2bUNBUEthag?oc=5</link>
+<guid isPermaLink="false">CBMisAFBVV95cUxPVm40LWZGNVh6SkwtcnpOQ1Azb0FBMzl2THpQUS1TTUp6ZjlmQ2J4Z05HU3Vzcmo3aHA0ZU5ORnNIT0JKSWFvbkZ3SUtVNUZPMGYyLVNaVUxXNnJaYU05OXpYUFN5RFhtbTg4UDROMWxpcWtWaVFEdGFjNFVsVmVDSExkZXNKT254ZUZ4by1VeGpUdmtsdFpRbHRYaldSTHRfUmZOLU1oaFM2bUNBUEthag</guid>
+<pubDate>Thu, 28 Aug 2025 12:36:07 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxPVm40LWZGNVh6SkwtcnpOQ1Azb0FBMzl2THpQUS1TTUp6ZjlmQ2J4Z05HU3Vzcmo3aHA0ZU5ORnNIT0JKSWFvbkZ3SUtVNUZPMGYyLVNaVUxXNnJaYU05OXpYUFN5RFhtbTg4UDROMWxpcWtWaVFEdGFjNFVsVmVDSExkZXNKT254ZUZ4by1VeGpUdmtsdFpRbHRYaldSTHRfUmZOLU1oaFM2bUNBUEthag?oc=5" target="_blank">Argentina's President Milei pelted with rocks at Buenos Aires district rally</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Video. Flash floods hit northern Thailand after tropical depression - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMipAFBVV95cUxQaEpyVDFsMDhnOUd2dzBRZkU1emRKaDM2NHY3ejM4aWF0UkpoTVZDVVFob19jV0J5elFXcmpDN2tYa01yTUY1ZWRVRXFzSXNVZGdmWGRBSUlYaTNfV2lRTURfb1AwdXM4M3pMRTROXzNiclFUWGNEZVVhNnVneEJ0YVhsRnZRS2FEdXhod0RaVnkwU2VFX0FqXzNfZ0ZHRFNYZjgyVg?oc=5</link>
+<guid isPermaLink="false">CBMipAFBVV95cUxQaEpyVDFsMDhnOUd2dzBRZkU1emRKaDM2NHY3ejM4aWF0UkpoTVZDVVFob19jV0J5elFXcmpDN2tYa01yTUY1ZWRVRXFzSXNVZGdmWGRBSUlYaTNfV2lRTURfb1AwdXM4M3pMRTROXzNiclFUWGNEZVVhNnVneEJ0YVhsRnZRS2FEdXhod0RaVnkwU2VFX0FqXzNfZ0ZHRFNYZjgyVg</guid>
+<pubDate>Mon, 01 Sep 2025 11:07:57 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMipAFBVV95cUxQaEpyVDFsMDhnOUd2dzBRZkU1emRKaDM2NHY3ejM4aWF0UkpoTVZDVVFob19jV0J5elFXcmpDN2tYa01yTUY1ZWRVRXFzSXNVZGdmWGRBSUlYaTNfV2lRTURfb1AwdXM4M3pMRTROXzNiclFUWGNEZVVhNnVneEJ0YVhsRnZRS2FEdXhod0RaVnkwU2VFX0FqXzNfZ0ZHRFNYZjgyVg?oc=5" target="_blank">Video. Flash floods hit northern Thailand after tropical depression</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>The Global Sumud Flotilla sets sail from Barcelona for Gaza - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiugFBVV95cUxOZHQ2bTdmeHlxRDJYalpxbjhnWmpyOG0zZnNyRF9jYXg2Ym50NXBOYS1Sb09kZ1JlUlpwVlMxdWlreFJpcmVyMkQzVWxOSVB1RG9EMFdXSTl1NjVLdTE2WjJ6aGdGYmRnemtaM1NmX18tR1RyTzdMSHloUnF0QmhMcGxEWVN4Z1gzUzRNY0tVbUg4WllQc00yZ281a0w1MWc0N2Q2cTlDMWpUUkxTOGFRUUd4UEluN0xxZ3c?oc=5</link>
+<guid isPermaLink="false">CBMiugFBVV95cUxOZHQ2bTdmeHlxRDJYalpxbjhnWmpyOG0zZnNyRF9jYXg2Ym50NXBOYS1Sb09kZ1JlUlpwVlMxdWlreFJpcmVyMkQzVWxOSVB1RG9EMFdXSTl1NjVLdTE2WjJ6aGdGYmRnemtaM1NmX18tR1RyTzdMSHloUnF0QmhMcGxEWVN4Z1gzUzRNY0tVbUg4WllQc00yZ281a0w1MWc0N2Q2cTlDMWpUUkxTOGFRUUd4UEluN0xxZ3c</guid>
+<pubDate>Sun, 31 Aug 2025 19:12:58 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxOZHQ2bTdmeHlxRDJYalpxbjhnWmpyOG0zZnNyRF9jYXg2Ym50NXBOYS1Sb09kZ1JlUlpwVlMxdWlreFJpcmVyMkQzVWxOSVB1RG9EMFdXSTl1NjVLdTE2WjJ6aGdGYmRnemtaM1NmX18tR1RyTzdMSHloUnF0QmhMcGxEWVN4Z1gzUzRNY0tVbUg4WllQc00yZ281a0w1MWc0N2Q2cTlDMWpUUkxTOGFRUUd4UEluN0xxZ3c?oc=5" target="_blank">The Global Sumud Flotilla sets sail from Barcelona for Gaza</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Polish Air Force F-16 fighter jet crashes during air show rehearsal, killing pilot - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuAFBVV95cUxNUVhMX1BuOWhuQUMySURoYjBvVE1peXRBWkZYQktqZWd6MUMwalZ6VGdMX1kwaDBUOWpXN0xGRkxkQlNveEo5dFhmSTctclIzOERjYWhsZUlyYzI4UzlNeHdUWnpqNWFSbDdQY0VhZG1Nc1pxdmpBSno3RXFrM25zdF8zY3R0TDJ4dGpGRGNkWU1CTDJNNEdlU2tGelk1VzU2WEFpQ2dMZDJNZEtkMTd3bjA4YnVWd3NH?oc=5</link>
+<guid isPermaLink="false">CBMiuAFBVV95cUxNUVhMX1BuOWhuQUMySURoYjBvVE1peXRBWkZYQktqZWd6MUMwalZ6VGdMX1kwaDBUOWpXN0xGRkxkQlNveEo5dFhmSTctclIzOERjYWhsZUlyYzI4UzlNeHdUWnpqNWFSbDdQY0VhZG1Nc1pxdmpBSno3RXFrM25zdF8zY3R0TDJ4dGpGRGNkWU1CTDJNNEdlU2tGelk1VzU2WEFpQ2dMZDJNZEtkMTd3bjA4YnVWd3NH</guid>
+<pubDate>Thu, 28 Aug 2025 19:16:58 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxNUVhMX1BuOWhuQUMySURoYjBvVE1peXRBWkZYQktqZWd6MUMwalZ6VGdMX1kwaDBUOWpXN0xGRkxkQlNveEo5dFhmSTctclIzOERjYWhsZUlyYzI4UzlNeHdUWnpqNWFSbDdQY0VhZG1Nc1pxdmpBSno3RXFrM25zdF8zY3R0TDJ4dGpGRGNkWU1CTDJNNEdlU2tGelk1VzU2WEFpQ2dMZDJNZEtkMTd3bjA4YnVWd3NH?oc=5" target="_blank">Polish Air Force F-16 fighter jet crashes during air show rehearsal, killing pilot</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Beta blockers offer no benefit after minor heart attack, trial finds - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizgFBVV95cUxOTHdacWRyMlpIMERuMDV3V0FGMWkxZUVHMXh0V0hjY1BYSkN3ZElOcENQdDEzU3Nybl9XbGFPVlVXLXVBbVhvN2I5YTZIUkJqWDYxMmU3bTk4UUhSd1B3V0VjQmtEVUhYUXhmTXdGQXRYb2pBalpPejdBcnJFLVMwZWFmbWlzeFdEWnBDa1JibjhhZzVBR3FoT21icUlmS0w3MkRVZF84MHl5NnJ4QUk0ZHkwaWVQc3NjUGZxTGpJWGE2cElJV3NpOWQ4azQ5dw?oc=5</link>
+<guid isPermaLink="false">CBMizgFBVV95cUxOTHdacWRyMlpIMERuMDV3V0FGMWkxZUVHMXh0V0hjY1BYSkN3ZElOcENQdDEzU3Nybl9XbGFPVlVXLXVBbVhvN2I5YTZIUkJqWDYxMmU3bTk4UUhSd1B3V0VjQmtEVUhYUXhmTXdGQXRYb2pBalpPejdBcnJFLVMwZWFmbWlzeFdEWnBDa1JibjhhZzVBR3FoT21icUlmS0w3MkRVZF84MHl5NnJ4QUk0ZHkwaWVQc3NjUGZxTGpJWGE2cElJV3NpOWQ4azQ5dw</guid>
+<pubDate>Mon, 01 Sep 2025 10:00:30 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizgFBVV95cUxOTHdacWRyMlpIMERuMDV3V0FGMWkxZUVHMXh0V0hjY1BYSkN3ZElOcENQdDEzU3Nybl9XbGFPVlVXLXVBbVhvN2I5YTZIUkJqWDYxMmU3bTk4UUhSd1B3V0VjQmtEVUhYUXhmTXdGQXRYb2pBalpPejdBcnJFLVMwZWFmbWlzeFdEWnBDa1JibjhhZzVBR3FoT21icUlmS0w3MkRVZF84MHl5NnJ4QUk0ZHkwaWVQc3NjUGZxTGpJWGE2cElJV3NpOWQ4azQ5dw?oc=5" target="_blank">Beta blockers offer no benefit after minor heart attack, trial finds</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Gaza campaigning French MEP Rima Hassan 'honoured' by controversial Belgian university plaudit - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMi0gFBVV95cUxPNXN1eG93N1M2TjZha1RueldtTE1jdTNub3h5aHVHTFlMMWUxSVZnMFFXVS01blZRSHhSNC1kWFh6OGllM3NkRTcxbzZGTHhuRHBYZlh5cmlTSlZZemZlU0JGQkYycnhYQ3NCMXlIOGZESUtzaE4zN3FwdGtPOGV1c21VLUhTX09JOFh0Q1lJZ1NUWThtZHFacVRSV0ZZMS03S0REaHNsWXctUDJnVGR3Y3pjUXRSLUN2aUhCZTFoWGdKdXl1M3JjQ3BBR04zVHNaeHc?oc=5</link>
+<guid isPermaLink="false">CBMi0gFBVV95cUxPNXN1eG93N1M2TjZha1RueldtTE1jdTNub3h5aHVHTFlMMWUxSVZnMFFXVS01blZRSHhSNC1kWFh6OGllM3NkRTcxbzZGTHhuRHBYZlh5cmlTSlZZemZlU0JGQkYycnhYQ3NCMXlIOGZESUtzaE4zN3FwdGtPOGV1c21VLUhTX09JOFh0Q1lJZ1NUWThtZHFacVRSV0ZZMS03S0REaHNsWXctUDJnVGR3Y3pjUXRSLUN2aUhCZTFoWGdKdXl1M3JjQ3BBR04zVHNaeHc</guid>
+<pubDate>Mon, 01 Sep 2025 14:10:43 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMi0gFBVV95cUxPNXN1eG93N1M2TjZha1RueldtTE1jdTNub3h5aHVHTFlMMWUxSVZnMFFXVS01blZRSHhSNC1kWFh6OGllM3NkRTcxbzZGTHhuRHBYZlh5cmlTSlZZemZlU0JGQkYycnhYQ3NCMXlIOGZESUtzaE4zN3FwdGtPOGV1c21VLUhTX09JOFh0Q1lJZ1NUWThtZHFacVRSV0ZZMS03S0REaHNsWXctUDJnVGR3Y3pjUXRSLUN2aUhCZTFoWGdKdXl1M3JjQ3BBR04zVHNaeHc?oc=5" target="_blank">Gaza campaigning French MEP Rima Hassan 'honoured' by controversial Belgian university plaudit</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>More than 800 killed after 6.0 magnitude quake rocks Afghanistan - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMipwFBVV95cUxQUTJrX3RpWVZZQjh6eUxKaThoREFJOTlKdGR2UEdsZXc5Z0gzLVZ4anNkeWRYc3lWMGpDN2N1OEZ0VlFuN1NKdWozeGsxQXAzLWlLY2hlX20zYkJtN2ZyVnhHWDRuVDYtSUZFczV3MFY4N1lpTTRkN2RKREhXR2hlYUVmMjNZdXRVTlRhbFRHU2dDUUJ0bURKTHRzaXVSM2xMRjZVRkdKMA?oc=5</link>
+<guid isPermaLink="false">CBMipwFBVV95cUxQUTJrX3RpWVZZQjh6eUxKaThoREFJOTlKdGR2UEdsZXc5Z0gzLVZ4anNkeWRYc3lWMGpDN2N1OEZ0VlFuN1NKdWozeGsxQXAzLWlLY2hlX20zYkJtN2ZyVnhHWDRuVDYtSUZFczV3MFY4N1lpTTRkN2RKREhXR2hlYUVmMjNZdXRVTlRhbFRHU2dDUUJ0bURKTHRzaXVSM2xMRjZVRkdKMA</guid>
+<pubDate>Mon, 01 Sep 2025 04:52:19 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxQUTJrX3RpWVZZQjh6eUxKaThoREFJOTlKdGR2UEdsZXc5Z0gzLVZ4anNkeWRYc3lWMGpDN2N1OEZ0VlFuN1NKdWozeGsxQXAzLWlLY2hlX20zYkJtN2ZyVnhHWDRuVDYtSUZFczV3MFY4N1lpTTRkN2RKREhXR2hlYUVmMjNZdXRVTlRhbFRHU2dDUUJ0bURKTHRzaXVSM2xMRjZVRkdKMA?oc=5" target="_blank">More than 800 killed after 6.0 magnitude quake rocks Afghanistan</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Taylor Swift is miles richer than her new fiancé. Here’s by how much - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisAFBVV95cUxPSjhLZDZQaVpiUU1DUmhUcDRGNS1VYk5INDEzM3JUQnZ4TEJGMWd5SEVOV2J5ZU94cFhUYmJBMnh0aWMxZy1EOF9hOUd0MHA0VDJqRWphNkFiSFhERVo0V2s3NGVfeGlGS29zR2QyOEJIRXhvNTByS1RqZ3ZPUzFWSzRSRmpXR0hwOGF2aXRNZi1qam1ZNjBGQk9aY3lBUFp4bEtBT2lCM2Q1LXc5clBiNA?oc=5</link>
+<guid isPermaLink="false">CBMisAFBVV95cUxPSjhLZDZQaVpiUU1DUmhUcDRGNS1VYk5INDEzM3JUQnZ4TEJGMWd5SEVOV2J5ZU94cFhUYmJBMnh0aWMxZy1EOF9hOUd0MHA0VDJqRWphNkFiSFhERVo0V2s3NGVfeGlGS29zR2QyOEJIRXhvNTByS1RqZ3ZPUzFWSzRSRmpXR0hwOGF2aXRNZi1qam1ZNjBGQk9aY3lBUFp4bEtBT2lCM2Q1LXc5clBiNA</guid>
+<pubDate>Wed, 27 Aug 2025 14:47:25 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxPSjhLZDZQaVpiUU1DUmhUcDRGNS1VYk5INDEzM3JUQnZ4TEJGMWd5SEVOV2J5ZU94cFhUYmJBMnh0aWMxZy1EOF9hOUd0MHA0VDJqRWphNkFiSFhERVo0V2s3NGVfeGlGS29zR2QyOEJIRXhvNTByS1RqZ3ZPUzFWSzRSRmpXR0hwOGF2aXRNZi1qam1ZNjBGQk9aY3lBUFp4bEtBT2lCM2Q1LXc5clBiNA?oc=5" target="_blank">Taylor Swift is miles richer than her new fiancé. Here’s by how much</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Hungary sues EU over Russian assets being used for Ukraine aid - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivwFBVV95cUxOUGtQam4yRTlzLWxSYXBVaTNrMm5ubzE5X2ROSTNyWk9DUkRNV0V1dnlSS0pGUjNiR015bHpKX1NuTVhKNy1ETFBMbWMzcDdRQ1JJVU9aZ1c4eFkzUk9icVlQU29pTlMzUWN2WVBvWjRib2dXZzJYWHBMOW1OSXhVTTlWbHZSVGhNNDJmZThuZFdzQjlpSXo1QnNpY19zeUJacndLTWFwQlN6dkM1YlEyX3ctaGNfbVBvQ2pSd2x4RQ?oc=5</link>
+<guid isPermaLink="false">CBMivwFBVV95cUxOUGtQam4yRTlzLWxSYXBVaTNrMm5ubzE5X2ROSTNyWk9DUkRNV0V1dnlSS0pGUjNiR015bHpKX1NuTVhKNy1ETFBMbWMzcDdRQ1JJVU9aZ1c4eFkzUk9icVlQU29pTlMzUWN2WVBvWjRib2dXZzJYWHBMOW1OSXhVTTlWbHZSVGhNNDJmZThuZFdzQjlpSXo1QnNpY19zeUJacndLTWFwQlN6dkM1YlEyX3ctaGNfbVBvQ2pSd2x4RQ</guid>
+<pubDate>Wed, 27 Aug 2025 17:32:19 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivwFBVV95cUxOUGtQam4yRTlzLWxSYXBVaTNrMm5ubzE5X2ROSTNyWk9DUkRNV0V1dnlSS0pGUjNiR015bHpKX1NuTVhKNy1ETFBMbWMzcDdRQ1JJVU9aZ1c4eFkzUk9icVlQU29pTlMzUWN2WVBvWjRib2dXZzJYWHBMOW1OSXhVTTlWbHZSVGhNNDJmZThuZFdzQjlpSXo1QnNpY19zeUJacndLTWFwQlN6dkM1YlEyX3ctaGNfbVBvQ2pSd2x4RQ?oc=5" target="_blank">Hungary sues EU over Russian assets being used for Ukraine aid</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Video. Latest news bulletin | September 1st, 2025 – Morning - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMikwFBVV95cUxOWEdpbUVjdW50UlkwSUxqSnlTakwwaV9TelR1TWxxUjRKOF8wUnZsVzNkTjZxVTZsTDJDNEJ6YnlGVmc3SnlIMGh3MmZCLURJUWRqOGtIdWl3Yk9za2diTGlYcWF6dlgydkNCWU1tRVFzNWpNRUJYRkNEam1kZ2FEWmZfSXlldUh4eUtiSXd1ZnNjaFE?oc=5</link>
+<guid isPermaLink="false">CBMikwFBVV95cUxOWEdpbUVjdW50UlkwSUxqSnlTakwwaV9TelR1TWxxUjRKOF8wUnZsVzNkTjZxVTZsTDJDNEJ6YnlGVmc3SnlIMGh3MmZCLURJUWRqOGtIdWl3Yk9za2diTGlYcWF6dlgydkNCWU1tRVFzNWpNRUJYRkNEam1kZ2FEWmZfSXlldUh4eUtiSXd1ZnNjaFE</guid>
+<pubDate>Mon, 01 Sep 2025 05:00:33 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMikwFBVV95cUxOWEdpbUVjdW50UlkwSUxqSnlTakwwaV9TelR1TWxxUjRKOF8wUnZsVzNkTjZxVTZsTDJDNEJ6YnlGVmc3SnlIMGh3MmZCLURJUWRqOGtIdWl3Yk9za2diTGlYcWF6dlgydkNCWU1tRVFzNWpNRUJYRkNEam1kZ2FEWmZfSXlldUh4eUtiSXd1ZnNjaFE?oc=5" target="_blank">Video. Latest news bulletin | September 1st, 2025 – Morning</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>'KPop Demon Hunters' becomes Netflix's most-watched film ever - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiygFBVV95cUxPSl90VmxTS0JFQUctS21VNDJTaTFpVGdLQ0hSNXZHX3RaZU5fakgxSHRRNTBIdGpneWFmX0NQU2IyLW5VSlRERTc1VEo1dDltOTl6aUFmM1JKaG85RGFRREFENFhRSW40N1dkamt1TzAzRmJ4N2kyOHU0NS1MV0lPekgwSUt0SGl5S29Ya1lWbmxkeldRVFdBeVZ5aVNXTk1zMTh0b2Uxb1l3WEZDeUg3TUFoSlZuSURLNXNOeDZpdVdJLVI4SENiQ0xR?oc=5</link>
+<guid isPermaLink="false">CBMiygFBVV95cUxPSl90VmxTS0JFQUctS21VNDJTaTFpVGdLQ0hSNXZHX3RaZU5fakgxSHRRNTBIdGpneWFmX0NQU2IyLW5VSlRERTc1VEo1dDltOTl6aUFmM1JKaG85RGFRREFENFhRSW40N1dkamt1TzAzRmJ4N2kyOHU0NS1MV0lPekgwSUt0SGl5S29Ya1lWbmxkeldRVFdBeVZ5aVNXTk1zMTh0b2Uxb1l3WEZDeUg3TUFoSlZuSURLNXNOeDZpdVdJLVI4SENiQ0xR</guid>
+<pubDate>Wed, 27 Aug 2025 08:50:53 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiygFBVV95cUxPSl90VmxTS0JFQUctS21VNDJTaTFpVGdLQ0hSNXZHX3RaZU5fakgxSHRRNTBIdGpneWFmX0NQU2IyLW5VSlRERTc1VEo1dDltOTl6aUFmM1JKaG85RGFRREFENFhRSW40N1dkamt1TzAzRmJ4N2kyOHU0NS1MV0lPekgwSUt0SGl5S29Ya1lWbmxkeldRVFdBeVZ5aVNXTk1zMTh0b2Uxb1l3WEZDeUg3TUFoSlZuSURLNXNOeDZpdVdJLVI4SENiQ0xR?oc=5" target="_blank">'KPop Demon Hunters' becomes Netflix's most-watched film ever</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Guinness World Records turns 70 and reveals unclaimed record titles - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisgFBVV95cUxON1kwUzdJRUE2alJhM25mbEVoZjZXMUNMbnVwamhVZThhay16M0NZNzRVVDYzLVAxZldLSHo4aTFpVTJBQVpqam1fc2NONXJUQU83MWV0dlF5cWRGb3VFUmVOb2dSZE5hNTB1c0l2LU0wbTluMGluN1dxYkVtaDd6YUlsdXl4RjhrRmxQeWJrTGkzN2VKRzlwNG1HcnRDQ1hrM3NNZ0trNTVMZmQzOWIzMUp3?oc=5</link>
+<guid isPermaLink="false">CBMisgFBVV95cUxON1kwUzdJRUE2alJhM25mbEVoZjZXMUNMbnVwamhVZThhay16M0NZNzRVVDYzLVAxZldLSHo4aTFpVTJBQVpqam1fc2NONXJUQU83MWV0dlF5cWRGb3VFUmVOb2dSZE5hNTB1c0l2LU0wbTluMGluN1dxYkVtaDd6YUlsdXl4RjhrRmxQeWJrTGkzN2VKRzlwNG1HcnRDQ1hrM3NNZ0trNTVMZmQzOWIzMUp3</guid>
+<pubDate>Wed, 27 Aug 2025 10:37:26 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxON1kwUzdJRUE2alJhM25mbEVoZjZXMUNMbnVwamhVZThhay16M0NZNzRVVDYzLVAxZldLSHo4aTFpVTJBQVpqam1fc2NONXJUQU83MWV0dlF5cWRGb3VFUmVOb2dSZE5hNTB1c0l2LU0wbTluMGluN1dxYkVtaDd6YUlsdXl4RjhrRmxQeWJrTGkzN2VKRzlwNG1HcnRDQ1hrM3NNZ0trNTVMZmQzOWIzMUp3?oc=5" target="_blank">Guinness World Records turns 70 and reveals unclaimed record titles</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Denmark apologises for forced birth control in Greenland - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuAFBVV95cUxONFVVX0RzMnZtbldpTlRjc2p3b2kybFREbUV6OVhLbUN3UEtZX28xeFBTU1Zfamd6bGs0RndseURqNWtkZDdLLUVqdjJBQzlabTh5YXdFdy1VYTY0NmtNbzJlVzhmekNLTVQ0N3RNT0twSVFFNE9mZk1VaE9COTV5VlNkWlZYYlVRWi1aTUxLYmc4Y1hLU3NBVFJ0ZFozR3kyUHVKZWtQVF9ucWNfOTJJZUwwQmZCQWFy?oc=5</link>
+<guid isPermaLink="false">CBMiuAFBVV95cUxONFVVX0RzMnZtbldpTlRjc2p3b2kybFREbUV6OVhLbUN3UEtZX28xeFBTU1Zfamd6bGs0RndseURqNWtkZDdLLUVqdjJBQzlabTh5YXdFdy1VYTY0NmtNbzJlVzhmekNLTVQ0N3RNT0twSVFFNE9mZk1VaE9COTV5VlNkWlZYYlVRWi1aTUxLYmc4Y1hLU3NBVFJ0ZFozR3kyUHVKZWtQVF9ucWNfOTJJZUwwQmZCQWFy</guid>
+<pubDate>Wed, 27 Aug 2025 14:37:52 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxONFVVX0RzMnZtbldpTlRjc2p3b2kybFREbUV6OVhLbUN3UEtZX28xeFBTU1Zfamd6bGs0RndseURqNWtkZDdLLUVqdjJBQzlabTh5YXdFdy1VYTY0NmtNbzJlVzhmekNLTVQ0N3RNT0twSVFFNE9mZk1VaE9COTV5VlNkWlZYYlVRWi1aTUxLYmc4Y1hLU3NBVFJ0ZFozR3kyUHVKZWtQVF9ucWNfOTJJZUwwQmZCQWFy?oc=5" target="_blank">Denmark apologises for forced birth control in Greenland</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Woody Allen responds to backlash over Russian film festival appearance - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixgFBVV95cUxPYkVpb1JENlhQV0V1LVIxbEdhbUtKMnc0UkY4bkxLU1JsZFNOUFNMRVIyTFdmclVkLXdGejNCcFJ3d0x3VXVkNDVWVlNPSlhUalZrMkFEWmRuUlpaeHVDR2tSYS1qU3J1T09kbEpMaVQ4ZHhxQk9kTUJrOVgtNmVnSGpZR2IyT3dtRUpHaTdlb3RXOXJ3NWI0LWViak1QWlExeUJ4VDB2N0dPTXl3anI5a2tRYjZwZnFTckJlZTE3TWhmRXQ0RlE?oc=5</link>
+<guid isPermaLink="false">CBMixgFBVV95cUxPYkVpb1JENlhQV0V1LVIxbEdhbUtKMnc0UkY4bkxLU1JsZFNOUFNMRVIyTFdmclVkLXdGejNCcFJ3d0x3VXVkNDVWVlNPSlhUalZrMkFEWmRuUlpaeHVDR2tSYS1qU3J1T09kbEpMaVQ4ZHhxQk9kTUJrOVgtNmVnSGpZR2IyT3dtRUpHaTdlb3RXOXJ3NWI0LWViak1QWlExeUJ4VDB2N0dPTXl3anI5a2tRYjZwZnFTckJlZTE3TWhmRXQ0RlE</guid>
+<pubDate>Tue, 26 Aug 2025 07:19:16 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxPYkVpb1JENlhQV0V1LVIxbEdhbUtKMnc0UkY4bkxLU1JsZFNOUFNMRVIyTFdmclVkLXdGejNCcFJ3d0x3VXVkNDVWVlNPSlhUalZrMkFEWmRuUlpaeHVDR2tSYS1qU3J1T09kbEpMaVQ4ZHhxQk9kTUJrOVgtNmVnSGpZR2IyT3dtRUpHaTdlb3RXOXJ3NWI0LWViak1QWlExeUJ4VDB2N0dPTXl3anI5a2tRYjZwZnFTckJlZTE3TWhmRXQ0RlE?oc=5" target="_blank">Woody Allen responds to backlash over Russian film festival appearance</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Israel's Netanyahu recognises Armenian genocide in a historic first - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivgFBVV95cUxNbWl1OUFBTk8zbXlCUE83UkhTZGRLT3czUUdQS2RsOUJzQk9zZDFJNEZIbDQ1NjR4eTBTYl9Kc2UwVy1QVWFUX0U4clJMNllVVmpRektJaHRpM21fYk9WZnd1UFFCUDFEdHFKWHZELTNpcW1VX0pXakxUdTJybjRNcjE1XzluN1U5VDE5eWJ0RzFJdlFLdUlvQ0NnUEJNTEd2eVJpZmxzOURPamZPVkFPUEE0dnZ1WXhhQjRVbEVR?oc=5</link>
+<guid isPermaLink="false">CBMivgFBVV95cUxNbWl1OUFBTk8zbXlCUE83UkhTZGRLT3czUUdQS2RsOUJzQk9zZDFJNEZIbDQ1NjR4eTBTYl9Kc2UwVy1QVWFUX0U4clJMNllVVmpRektJaHRpM21fYk9WZnd1UFFCUDFEdHFKWHZELTNpcW1VX0pXakxUdTJybjRNcjE1XzluN1U5VDE5eWJ0RzFJdlFLdUlvQ0NnUEJNTEd2eVJpZmxzOURPamZPVkFPUEE0dnZ1WXhhQjRVbEVR</guid>
+<pubDate>Wed, 27 Aug 2025 11:47:35 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxNbWl1OUFBTk8zbXlCUE83UkhTZGRLT3czUUdQS2RsOUJzQk9zZDFJNEZIbDQ1NjR4eTBTYl9Kc2UwVy1QVWFUX0U4clJMNllVVmpRektJaHRpM21fYk9WZnd1UFFCUDFEdHFKWHZELTNpcW1VX0pXakxUdTJybjRNcjE1XzluN1U5VDE5eWJ0RzFJdlFLdUlvQ0NnUEJNTEd2eVJpZmxzOURPamZPVkFPUEE0dnZ1WXhhQjRVbEVR?oc=5" target="_blank">Israel's Netanyahu recognises Armenian genocide in a historic first</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Exclusive: EU Council faces German defamation claim on sanctions - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizAFBVV95cUxQUzRsQmNwdFNDMmtLdXRfVXJ2UjVKRlpFZ2pscVZxTHdjV2dNNUtwTVRJbm9DNHVxQTBvaDZadmRmeVVSY25LMTQ1SUVSYWgwUXRIOXVETTM3ODRBTWdVRVlzU3VpelZyNWR4VEtBc3JiT3A0TGphMmJGSXJVWk01REdUbE03TmZWRGV2UWhzZ0h6d1ZfdDFHelgwb1Z3ZXNzdDczRnkyWDdvTWR1WC0tVlByQTFjM2tiRUFIZXF2cmoxWXFVSDlOemNXV04?oc=5</link>
+<guid isPermaLink="false">CBMizAFBVV95cUxQUzRsQmNwdFNDMmtLdXRfVXJ2UjVKRlpFZ2pscVZxTHdjV2dNNUtwTVRJbm9DNHVxQTBvaDZadmRmeVVSY25LMTQ1SUVSYWgwUXRIOXVETTM3ODRBTWdVRVlzU3VpelZyNWR4VEtBc3JiT3A0TGphMmJGSXJVWk01REdUbE03TmZWRGV2UWhzZ0h6d1ZfdDFHelgwb1Z3ZXNzdDczRnkyWDdvTWR1WC0tVlByQTFjM2tiRUFIZXF2cmoxWXFVSDlOemNXV04</guid>
+<pubDate>Wed, 27 Aug 2025 05:00:22 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizAFBVV95cUxQUzRsQmNwdFNDMmtLdXRfVXJ2UjVKRlpFZ2pscVZxTHdjV2dNNUtwTVRJbm9DNHVxQTBvaDZadmRmeVVSY25LMTQ1SUVSYWgwUXRIOXVETTM3ODRBTWdVRVlzU3VpelZyNWR4VEtBc3JiT3A0TGphMmJGSXJVWk01REdUbE03TmZWRGV2UWhzZ0h6d1ZfdDFHelgwb1Z3ZXNzdDczRnkyWDdvTWR1WC0tVlByQTFjM2tiRUFIZXF2cmoxWXFVSDlOemNXV04?oc=5" target="_blank">Exclusive: EU Council faces German defamation claim on sanctions</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>AI stethoscope can detect heart issues in 15 seconds, UK doctors find - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivAFBVV95cUxNbjBya3poeGJSQ0dZdlRpeC1JTmdwbFRqZU1pVmpYSDROWVFJd3loMUtPRTBXTFpHTHlDTzJHdG1ZbWt4WjlqOUFoYUZTQ1QtMURrb2JhSUFZMWZXcmE5d2FDdXVpMUpZV0pyWDJ0WFVSR01UbjdKWFFmbTVFb2NDOWYzUVc5YXZ1MWJBWUxmbTFJZUJkVGNjMHpxQXdJcjhTblFidFppaWk2X2NYV2VrOFcyYmNBTFRsZnFZdg?oc=5</link>
+<guid isPermaLink="false">CBMivAFBVV95cUxNbjBya3poeGJSQ0dZdlRpeC1JTmdwbFRqZU1pVmpYSDROWVFJd3loMUtPRTBXTFpHTHlDTzJHdG1ZbWt4WjlqOUFoYUZTQ1QtMURrb2JhSUFZMWZXcmE5d2FDdXVpMUpZV0pyWDJ0WFVSR01UbjdKWFFmbTVFb2NDOWYzUVc5YXZ1MWJBWUxmbTFJZUJkVGNjMHpxQXdJcjhTblFidFppaWk2X2NYV2VrOFcyYmNBTFRsZnFZdg</guid>
+<pubDate>Mon, 01 Sep 2025 10:20:59 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivAFBVV95cUxNbjBya3poeGJSQ0dZdlRpeC1JTmdwbFRqZU1pVmpYSDROWVFJd3loMUtPRTBXTFpHTHlDTzJHdG1ZbWt4WjlqOUFoYUZTQ1QtMURrb2JhSUFZMWZXcmE5d2FDdXVpMUpZV0pyWDJ0WFVSR01UbjdKWFFmbTVFb2NDOWYzUVc5YXZ1MWJBWUxmbTFJZUJkVGNjMHpxQXdJcjhTblFidFppaWk2X2NYV2VrOFcyYmNBTFRsZnFZdg?oc=5" target="_blank">AI stethoscope can detect heart issues in 15 seconds, UK doctors find</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Sliding doors: The EU that could’ve been with Draghi in charge - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiqgFBVV95cUxOR1ktU09Jbk1ZMEIxRlNOdjdBOXJvNWpmblVEQjBQY29aT1Q0UG9ROE1TQ2FaTnptRklDbW1ZTW9YSUt6YTIxZTlzTjJhT2l6UThyWHdXbW5mZVNfYk9FTWgyUVNRdldmN2dDZ0dHQTZWZ2FPNzRGZGRtSlFDWmVraDd3SnowYzVYUEpJNDlWMk9YQ2pCaW5KV1UwM25YVzU0bFRLTk1BU0VsQQ?oc=5</link>
+<guid isPermaLink="false">CBMiqgFBVV95cUxOR1ktU09Jbk1ZMEIxRlNOdjdBOXJvNWpmblVEQjBQY29aT1Q0UG9ROE1TQ2FaTnptRklDbW1ZTW9YSUt6YTIxZTlzTjJhT2l6UThyWHdXbW5mZVNfYk9FTWgyUVNRdldmN2dDZ0dHQTZWZ2FPNzRGZGRtSlFDWmVraDd3SnowYzVYUEpJNDlWMk9YQ2pCaW5KV1UwM25YVzU0bFRLTk1BU0VsQQ</guid>
+<pubDate>Wed, 27 Aug 2025 06:06:54 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxOR1ktU09Jbk1ZMEIxRlNOdjdBOXJvNWpmblVEQjBQY29aT1Q0UG9ROE1TQ2FaTnptRklDbW1ZTW9YSUt6YTIxZTlzTjJhT2l6UThyWHdXbW5mZVNfYk9FTWgyUVNRdldmN2dDZ0dHQTZWZ2FPNzRGZGRtSlFDWmVraDd3SnowYzVYUEpJNDlWMk9YQ2pCaW5KV1UwM25YVzU0bFRLTk1BU0VsQQ?oc=5" target="_blank">Sliding doors: The EU that could’ve been with Draghi in charge</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>China rejects joining Trump-proposed denuclearisation talks with US and Russia - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitAFBVV95cUxOTzN4bGNlXzdfaEJtREVpYmttSzN1S1pWRlFNdzNzU1lKc3JNTkMtZ0VSNWRRb3VWNGJLQU00eGxyRFBOckVHQTlkbnBuRUhsS1NxY0lzaktyQ1d5aUZsQ2pLQmNMMnI3V2VMdjNBN3Rqai0xbUdQQWd3SGQyZXMtdTZIRTlDclJiVkRxcVIydjVnc0xIMXhNNVdCOUNTYm9DZ1VpYWFHamxHT2lYbmlqcG5kd2c?oc=5</link>
+<guid isPermaLink="false">CBMitAFBVV95cUxOTzN4bGNlXzdfaEJtREVpYmttSzN1S1pWRlFNdzNzU1lKc3JNTkMtZ0VSNWRRb3VWNGJLQU00eGxyRFBOckVHQTlkbnBuRUhsS1NxY0lzaktyQ1d5aUZsQ2pLQmNMMnI3V2VMdjNBN3Rqai0xbUdQQWd3SGQyZXMtdTZIRTlDclJiVkRxcVIydjVnc0xIMXhNNVdCOUNTYm9DZ1VpYWFHamxHT2lYbmlqcG5kd2c</guid>
+<pubDate>Wed, 27 Aug 2025 12:35:35 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxOTzN4bGNlXzdfaEJtREVpYmttSzN1S1pWRlFNdzNzU1lKc3JNTkMtZ0VSNWRRb3VWNGJLQU00eGxyRFBOckVHQTlkbnBuRUhsS1NxY0lzaktyQ1d5aUZsQ2pLQmNMMnI3V2VMdjNBN3Rqai0xbUdQQWd3SGQyZXMtdTZIRTlDclJiVkRxcVIydjVnc0xIMXhNNVdCOUNTYm9DZ1VpYWFHamxHT2lYbmlqcG5kd2c?oc=5" target="_blank">China rejects joining Trump-proposed denuclearisation talks with US and Russia</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Tax revenue as a share of GDP in Europe: Which countries collect the most? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuAFBVV95cUxNUXhPdXJNQVdYZDFiQ0o1WmFKbE9OYkdxcmFNc1Y3ZlJJMEtfRVd5Z3dqSnZGWXlaaDlXbVVKUzZVd2piYk5BQzE1Y0JCa2JGWlQ0NVQweFd5Vkk0cWY2TXZkM1lURkFrT0lBclMyeUhnQlVHUHp4RFRmWkVyR25HTVhCeEwwQTFwZFIxXzM2M2RHcEdzSE94a0dLNVRWSkIxYzFxT29oRE91V2RYdENvWi1ndWtabkJN?oc=5</link>
+<guid isPermaLink="false">CBMiuAFBVV95cUxNUXhPdXJNQVdYZDFiQ0o1WmFKbE9OYkdxcmFNc1Y3ZlJJMEtfRVd5Z3dqSnZGWXlaaDlXbVVKUzZVd2piYk5BQzE1Y0JCa2JGWlQ0NVQweFd5Vkk0cWY2TXZkM1lURkFrT0lBclMyeUhnQlVHUHp4RFRmWkVyR25HTVhCeEwwQTFwZFIxXzM2M2RHcEdzSE94a0dLNVRWSkIxYzFxT29oRE91V2RYdENvWi1ndWtabkJN</guid>
+<pubDate>Tue, 26 Aug 2025 05:00:08 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxNUXhPdXJNQVdYZDFiQ0o1WmFKbE9OYkdxcmFNc1Y3ZlJJMEtfRVd5Z3dqSnZGWXlaaDlXbVVKUzZVd2piYk5BQzE1Y0JCa2JGWlQ0NVQweFd5Vkk0cWY2TXZkM1lURkFrT0lBclMyeUhnQlVHUHp4RFRmWkVyR25HTVhCeEwwQTFwZFIxXzM2M2RHcEdzSE94a0dLNVRWSkIxYzFxT29oRE91V2RYdENvWi1ndWtabkJN?oc=5" target="_blank">Tax revenue as a share of GDP in Europe: Which countries collect the most?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Ukraine knocks out nearly one-fifth of Russia's oil refining capacity - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxPbTZrQk9iSGVqQXczVTJqMnU2SUxJek5Jc0xQbU5TeDBGYW5DU0NHeDNHYVE1UWNKckZKMFZVOVk2WVpYVWZ3WnBmX1ZCbTZKdlA1V09YT0lrUkVVcmtTMFYwX1dSQU9lb05lZUxPM3VhWG5LVjNqX0JjbEkyb2tROXhzallXWVVmcG5kV1p5cm5XTnVTeEJycHJjR2U2RDR1Y1hCWnhBU0FLUlJWdi05aDdIb2xRTnRuampvRWlMTFFoN3pW?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxPbTZrQk9iSGVqQXczVTJqMnU2SUxJek5Jc0xQbU5TeDBGYW5DU0NHeDNHYVE1UWNKckZKMFZVOVk2WVpYVWZ3WnBmX1ZCbTZKdlA1V09YT0lrUkVVcmtTMFYwX1dSQU9lb05lZUxPM3VhWG5LVjNqX0JjbEkyb2tROXhzallXWVVmcG5kV1p5cm5XTnVTeEJycHJjR2U2RDR1Y1hCWnhBU0FLUlJWdi05aDdIb2xRTnRuampvRWlMTFFoN3pW</guid>
+<pubDate>Tue, 26 Aug 2025 13:06:59 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxPbTZrQk9iSGVqQXczVTJqMnU2SUxJek5Jc0xQbU5TeDBGYW5DU0NHeDNHYVE1UWNKckZKMFZVOVk2WVpYVWZ3WnBmX1ZCbTZKdlA1V09YT0lrUkVVcmtTMFYwX1dSQU9lb05lZUxPM3VhWG5LVjNqX0JjbEkyb2tROXhzallXWVVmcG5kV1p5cm5XTnVTeEJycHJjR2U2RDR1Y1hCWnhBU0FLUlJWdi05aDdIb2xRTnRuampvRWlMTFFoN3pW?oc=5" target="_blank">Ukraine knocks out nearly one-fifth of Russia's oil refining capacity</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Indonesian president Prabowo Subianto cancels China visit amid growing protests - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitgFBVV95cUxQQW53TExmcXdra3R5SVAwbURBTzhOaUh6Q2k4N0VsdEtxZUkzTlJDb0RELTNaNlVpR0U1YnNLWWpjZkFLYVpEOWEteFNJQ1lMYlhJTWE4VWdLU0oxQkItRHZpRGpWM2pTMzFiODFzaUdTOEpVbXNiLWZqb2s4VmRwYzN3ck5oVzkyNkdZUXU4WkJER2kybjN6dkE1eExsaXM2MW55SWpWa3dvMkNFMlRtYWlkNzg1dw?oc=5</link>
+<guid isPermaLink="false">CBMitgFBVV95cUxQQW53TExmcXdra3R5SVAwbURBTzhOaUh6Q2k4N0VsdEtxZUkzTlJDb0RELTNaNlVpR0U1YnNLWWpjZkFLYVpEOWEteFNJQ1lMYlhJTWE4VWdLU0oxQkItRHZpRGpWM2pTMzFiODFzaUdTOEpVbXNiLWZqb2s4VmRwYzN3ck5oVzkyNkdZUXU4WkJER2kybjN6dkE1eExsaXM2MW55SWpWa3dvMkNFMlRtYWlkNzg1dw</guid>
+<pubDate>Sun, 31 Aug 2025 15:10:59 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxQQW53TExmcXdra3R5SVAwbURBTzhOaUh6Q2k4N0VsdEtxZUkzTlJDb0RELTNaNlVpR0U1YnNLWWpjZkFLYVpEOWEteFNJQ1lMYlhJTWE4VWdLU0oxQkItRHZpRGpWM2pTMzFiODFzaUdTOEpVbXNiLWZqb2s4VmRwYzN3ck5oVzkyNkdZUXU4WkJER2kybjN6dkE1eExsaXM2MW55SWpWa3dvMkNFMlRtYWlkNzg1dw?oc=5" target="_blank">Indonesian president Prabowo Subianto cancels China visit amid growing protests</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Polish president vetoes bill to extend support for Ukraine's Starlink - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuwFBVV95cUxNdktrNTV5LWpXSU1fdk9XbXdQSHJrVGZodFMtZWs3eEFWMlVuMUNlcFdMTnl3MUplNnh6NzM4QVRrR0Z2UXJqVjEwbVJNR1ZhZExfTkpKdmRmSzBwa3pHQUJBZVlMNUhkQWhpVFdLZ3g2SzRld3lvQjBjTVN1UW13aDgxdXlDRkF5VkhoSHNjb0lmbHcwbUxYejNnM3FURDdPcFBIcmxtcFF0TjhpRGJ2QXF4cUY3dnNVbnEw?oc=5</link>
+<guid isPermaLink="false">CBMiuwFBVV95cUxNdktrNTV5LWpXSU1fdk9XbXdQSHJrVGZodFMtZWs3eEFWMlVuMUNlcFdMTnl3MUplNnh6NzM4QVRrR0Z2UXJqVjEwbVJNR1ZhZExfTkpKdmRmSzBwa3pHQUJBZVlMNUhkQWhpVFdLZ3g2SzRld3lvQjBjTVN1UW13aDgxdXlDRkF5VkhoSHNjb0lmbHcwbUxYejNnM3FURDdPcFBIcmxtcFF0TjhpRGJ2QXF4cUY3dnNVbnEw</guid>
+<pubDate>Tue, 26 Aug 2025 14:20:34 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuwFBVV95cUxNdktrNTV5LWpXSU1fdk9XbXdQSHJrVGZodFMtZWs3eEFWMlVuMUNlcFdMTnl3MUplNnh6NzM4QVRrR0Z2UXJqVjEwbVJNR1ZhZExfTkpKdmRmSzBwa3pHQUJBZVlMNUhkQWhpVFdLZ3g2SzRld3lvQjBjTVN1UW13aDgxdXlDRkF5VkhoSHNjb0lmbHcwbUxYejNnM3FURDdPcFBIcmxtcFF0TjhpRGJ2QXF4cUY3dnNVbnEw?oc=5" target="_blank">Polish president vetoes bill to extend support for Ukraine's Starlink</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Video. Latest news bulletin | August 31st, 2025 – Evening - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMikAFBVV95cUxONjJWWUNaQW9yRHZFeXZLTEdlWWJrdnh3SGppcHRqTjBlaC0wV09kdnYteU5mSlVmLVlKSjVWbVBVaW9Td1U5VmZSQXRWS29xS09MaTdIOWdxOWRoWW5ENTJfLUotRWNRRFhtOU1fSUFuTDJhT055UFB6cThzbXVOWkc1ZURlbHFlRTJHRlp1dFg?oc=5</link>
+<guid isPermaLink="false">CBMikAFBVV95cUxONjJWWUNaQW9yRHZFeXZLTEdlWWJrdnh3SGppcHRqTjBlaC0wV09kdnYteU5mSlVmLVlKSjVWbVBVaW9Td1U5VmZSQXRWS29xS09MaTdIOWdxOWRoWW5ENTJfLUotRWNRRFhtOU1fSUFuTDJhT055UFB6cThzbXVOWkc1ZURlbHFlRTJHRlp1dFg</guid>
+<pubDate>Sun, 31 Aug 2025 16:00:29 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMikAFBVV95cUxONjJWWUNaQW9yRHZFeXZLTEdlWWJrdnh3SGppcHRqTjBlaC0wV09kdnYteU5mSlVmLVlKSjVWbVBVaW9Td1U5VmZSQXRWS29xS09MaTdIOWdxOWRoWW5ENTJfLUotRWNRRFhtOU1fSUFuTDJhT055UFB6cThzbXVOWkc1ZURlbHFlRTJHRlp1dFg?oc=5" target="_blank">Video. Latest news bulletin | August 31st, 2025 – Evening</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Israel claims death of Hamas armed wing spokesperson Abu Obeida - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMioAFBVV95cUxNX250cnFybXNvMWxJbkhVbFNzanhsbmVqX0Vfajl4cmFLaDhSMUUyZUYtTWpuZlFhMzZCdmxQbEZ6UFE4RUVYNzFrbHNfMDdJWEwySWN4M2ZyY00xZkhGUC1aQXBLZmxUWHJ1WmNGMzh1cEJSWThtMW9Rdm1tWWZ4TGlrcTdfNUVvZDR4Zjd2MTIwbVpUVTAzUHNHSVpsQkJD?oc=5</link>
+<guid isPermaLink="false">CBMioAFBVV95cUxNX250cnFybXNvMWxJbkhVbFNzanhsbmVqX0Vfajl4cmFLaDhSMUUyZUYtTWpuZlFhMzZCdmxQbEZ6UFE4RUVYNzFrbHNfMDdJWEwySWN4M2ZyY00xZkhGUC1aQXBLZmxUWHJ1WmNGMzh1cEJSWThtMW9Rdm1tWWZ4TGlrcTdfNUVvZDR4Zjd2MTIwbVpUVTAzUHNHSVpsQkJD</guid>
+<pubDate>Sun, 31 Aug 2025 19:12:11 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNX250cnFybXNvMWxJbkhVbFNzanhsbmVqX0Vfajl4cmFLaDhSMUUyZUYtTWpuZlFhMzZCdmxQbEZ6UFE4RUVYNzFrbHNfMDdJWEwySWN4M2ZyY00xZkhGUC1aQXBLZmxUWHJ1WmNGMzh1cEJSWThtMW9Rdm1tWWZ4TGlrcTdfNUVvZDR4Zjd2MTIwbVpUVTAzUHNHSVpsQkJD?oc=5" target="_blank">Israel claims death of Hamas armed wing spokesperson Abu Obeida</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>We have work to do, Serbia’s future is in the EU, Vučić tells Euronews - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitgFBVV95cUxQSTNtVkgyWl85SWZQUjFfVWlNWm51bFFCaU9lcFBzUHBtV0FRRHhDRTVDbjBRdkpNcEt0VmR2cEp0UVRoQTRkZWxXRXVwUExnNGxvUXdWdURaMnV5aVAxanlwNUlWcTM5TVNScFROOVZwOVh2eUV3V3RlSTZxcXFPTzRyR2tHdkhhZ0NiSFI5cGs5R2RCQ0lkZURuc29DU1UybllCRlZMUnprWm1nQjQ5MmFlbHpzdw?oc=5</link>
+<guid isPermaLink="false">CBMitgFBVV95cUxQSTNtVkgyWl85SWZQUjFfVWlNWm51bFFCaU9lcFBzUHBtV0FRRHhDRTVDbjBRdkpNcEt0VmR2cEp0UVRoQTRkZWxXRXVwUExnNGxvUXdWdURaMnV5aVAxanlwNUlWcTM5TVNScFROOVZwOVh2eUV3V3RlSTZxcXFPTzRyR2tHdkhhZ0NiSFI5cGs5R2RCQ0lkZURuc29DU1UybllCRlZMUnprWm1nQjQ5MmFlbHpzdw</guid>
+<pubDate>Mon, 25 Aug 2025 15:20:53 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxQSTNtVkgyWl85SWZQUjFfVWlNWm51bFFCaU9lcFBzUHBtV0FRRHhDRTVDbjBRdkpNcEt0VmR2cEp0UVRoQTRkZWxXRXVwUExnNGxvUXdWdURaMnV5aVAxanlwNUlWcTM5TVNScFROOVZwOVh2eUV3V3RlSTZxcXFPTzRyR2tHdkhhZ0NiSFI5cGs5R2RCQ0lkZURuc29DU1UybllCRlZMUnprWm1nQjQ5MmFlbHpzdw?oc=5" target="_blank">We have work to do, Serbia’s future is in the EU, Vučić tells Euronews</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Trump demands death penalty for all murder cases in Washington - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiowFBVV95cUxPNXVRa3RYTGZZQnhSQXVJZkRzel9HTFVWRndJNTZmMHBIdlBiNjJ1SFZ4VHIteEh0bHFpZ3M0QXJoeGxJdzhPeHdLbThYYm12dk4xbS02cjRuWHdtbEE3Rjk0ZHdFd2hMN1UzNDc0NEd5THFnVzZweEpnd2dPYTJoS243d1NFNUhoSGo3bXpqVjJyekRUUWhCcGdJQkNjcTZFYW1J?oc=5</link>
+<guid isPermaLink="false">CBMiowFBVV95cUxPNXVRa3RYTGZZQnhSQXVJZkRzel9HTFVWRndJNTZmMHBIdlBiNjJ1SFZ4VHIteEh0bHFpZ3M0QXJoeGxJdzhPeHdLbThYYm12dk4xbS02cjRuWHdtbEE3Rjk0ZHdFd2hMN1UzNDc0NEd5THFnVzZweEpnd2dPYTJoS243d1NFNUhoSGo3bXpqVjJyekRUUWhCcGdJQkNjcTZFYW1J</guid>
+<pubDate>Wed, 27 Aug 2025 03:32:24 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxPNXVRa3RYTGZZQnhSQXVJZkRzel9HTFVWRndJNTZmMHBIdlBiNjJ1SFZ4VHIteEh0bHFpZ3M0QXJoeGxJdzhPeHdLbThYYm12dk4xbS02cjRuWHdtbEE3Rjk0ZHdFd2hMN1UzNDc0NEd5THFnVzZweEpnd2dPYTJoS243d1NFNUhoSGo3bXpqVjJyekRUUWhCcGdJQkNjcTZFYW1J?oc=5" target="_blank">Trump demands death penalty for all murder cases in Washington</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>No, JD Vance did not say Romania is a French colony - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMinAFBVV95cUxNblpQb1l0X2xuMUMzUGwwbGRTZXgtVkpJQXJ2MjRmbjZEYmhqVldHV2R0NlRIZEZnYzRfRnE0QmwxaTNyX3ZEbWNPWnYxVldjd18zQURWTVRlN0V0NVdFenIzZ0dQb05KREZ2aVFkVWdPN0VwRjBLckV5Y2R3b2QxLTd3Z0xLaVRERmRxVko4bWdMTTJGU3EyXzh4WVM?oc=5</link>
+<guid isPermaLink="false">CBMinAFBVV95cUxNblpQb1l0X2xuMUMzUGwwbGRTZXgtVkpJQXJ2MjRmbjZEYmhqVldHV2R0NlRIZEZnYzRfRnE0QmwxaTNyX3ZEbWNPWnYxVldjd18zQURWTVRlN0V0NVdFenIzZ0dQb05KREZ2aVFkVWdPN0VwRjBLckV5Y2R3b2QxLTd3Z0xLaVRERmRxVko4bWdMTTJGU3EyXzh4WVM</guid>
+<pubDate>Mon, 25 Aug 2025 05:45:51 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMinAFBVV95cUxNblpQb1l0X2xuMUMzUGwwbGRTZXgtVkpJQXJ2MjRmbjZEYmhqVldHV2R0NlRIZEZnYzRfRnE0QmwxaTNyX3ZEbWNPWnYxVldjd18zQURWTVRlN0V0NVdFenIzZ0dQb05KREZ2aVFkVWdPN0VwRjBLckV5Y2R3b2QxLTd3Z0xLaVRERmRxVko4bWdMTTJGU3EyXzh4WVM?oc=5" target="_blank">No, JD Vance did not say Romania is a French colony</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Putin arrives in China for key regional security summit amid stalled Ukraine peace talks - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiwgFBVV95cUxQaU02ZGNSREVPYi1VRVByaG1pa1NnMVVodnVpdWVGQWNTT1ZITVhHUFMtT3JzaEJCVS1iM2lSaTFKMVFQTVRJenFfZGgzU2hjTi1vQm55RXZfMmpSeHNNWVI4Uk40UEJSU1NwbEpHYTdxUkRSdHNudG5YVU9VQ2ZXc3BsR3E4MlZCOW1nZTVwR2s5dUpmLWdvanFveDRrdmZrekNlN1dlMzRCWWFUTmR1SUNkbkFNVzlfaEZ6OGZmeWM2QQ?oc=5</link>
+<guid isPermaLink="false">CBMiwgFBVV95cUxQaU02ZGNSREVPYi1VRVByaG1pa1NnMVVodnVpdWVGQWNTT1ZITVhHUFMtT3JzaEJCVS1iM2lSaTFKMVFQTVRJenFfZGgzU2hjTi1vQm55RXZfMmpSeHNNWVI4Uk40UEJSU1NwbEpHYTdxUkRSdHNudG5YVU9VQ2ZXc3BsR3E4MlZCOW1nZTVwR2s5dUpmLWdvanFveDRrdmZrekNlN1dlMzRCWWFUTmR1SUNkbkFNVzlfaEZ6OGZmeWM2QQ</guid>
+<pubDate>Sun, 31 Aug 2025 11:50:52 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiwgFBVV95cUxQaU02ZGNSREVPYi1VRVByaG1pa1NnMVVodnVpdWVGQWNTT1ZITVhHUFMtT3JzaEJCVS1iM2lSaTFKMVFQTVRJenFfZGgzU2hjTi1vQm55RXZfMmpSeHNNWVI4Uk40UEJSU1NwbEpHYTdxUkRSdHNudG5YVU9VQ2ZXc3BsR3E4MlZCOW1nZTVwR2s5dUpmLWdvanFveDRrdmZrekNlN1dlMzRCWWFUTmR1SUNkbkFNVzlfaEZ6OGZmeWM2QQ?oc=5" target="_blank">Putin arrives in China for key regional security summit amid stalled Ukraine peace talks</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>The three Scottish brothers who set a world record for fastest Pacific row — in 139 days - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivwFBVV95cUxNQ2J3a1Nlb3RsSHdBYVRjSmNFX2JxQWV3aDQ4VHZJeVNfXzJ5RjRpbU5Vbkc4eVNPbkF6RGFLUGdsMnU1bzBBMGlBRGVaVmx2eUdVMlRKVzNzZ01feWpTcGVPTkdzcVJQR1hwWUYwMmxLY2JWRVhyUWc1Q1E4YXNBaG5va1JLSWJPT0xQQkUyQUJaY0dmdlotVUQ1dHF0UUhGRC0tS1cyWGxMNjNZZVl0WTVubE80SXlWVUtEYXRDOA?oc=5</link>
+<guid isPermaLink="false">CBMivwFBVV95cUxNQ2J3a1Nlb3RsSHdBYVRjSmNFX2JxQWV3aDQ4VHZJeVNfXzJ5RjRpbU5Vbkc4eVNPbkF6RGFLUGdsMnU1bzBBMGlBRGVaVmx2eUdVMlRKVzNzZ01feWpTcGVPTkdzcVJQR1hwWUYwMmxLY2JWRVhyUWc1Q1E4YXNBaG5va1JLSWJPT0xQQkUyQUJaY0dmdlotVUQ1dHF0UUhGRC0tS1cyWGxMNjNZZVl0WTVubE80SXlWVUtEYXRDOA</guid>
+<pubDate>Sun, 31 Aug 2025 07:42:58 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivwFBVV95cUxNQ2J3a1Nlb3RsSHdBYVRjSmNFX2JxQWV3aDQ4VHZJeVNfXzJ5RjRpbU5Vbkc4eVNPbkF6RGFLUGdsMnU1bzBBMGlBRGVaVmx2eUdVMlRKVzNzZ01feWpTcGVPTkdzcVJQR1hwWUYwMmxLY2JWRVhyUWc1Q1E4YXNBaG5va1JLSWJPT0xQQkUyQUJaY0dmdlotVUQ1dHF0UUhGRC0tS1cyWGxMNjNZZVl0WTVubE80SXlWVUtEYXRDOA?oc=5" target="_blank">The three Scottish brothers who set a world record for fastest Pacific row — in 139 days</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>German transgender neo-Nazi to serve time in women's prison - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMitwFBVV95cUxQME1MRXlmNWdmcmdMbDZ5MDctNnNTT095bUI4a1FzZVVBcURhWmhFOGo3WVJLc2NGZTYxUHkzeUFPS0dkV1dnYjMwV3hxRno2cTVuOF93WG9iYmtSNFp6UWZ1TUhEZ3Q4aktWVTU1SWgtSUZVR2IzSlVHRFJXSU9NY1hiMzNUQ191NUdpWENxdjFPTEducVNjcjB6Y1N0UzM0c01NQWpva0xyN3NJdkpEX0JJMzg1ZWs?oc=5</link>
+<guid isPermaLink="false">CBMitwFBVV95cUxQME1MRXlmNWdmcmdMbDZ5MDctNnNTT095bUI4a1FzZVVBcURhWmhFOGo3WVJLc2NGZTYxUHkzeUFPS0dkV1dnYjMwV3hxRno2cTVuOF93WG9iYmtSNFp6UWZ1TUhEZ3Q4aktWVTU1SWgtSUZVR2IzSlVHRFJXSU9NY1hiMzNUQ191NUdpWENxdjFPTEducVNjcjB6Y1N0UzM0c01NQWpva0xyN3NJdkpEX0JJMzg1ZWs</guid>
+<pubDate>Thu, 21 Aug 2025 07:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMitwFBVV95cUxQME1MRXlmNWdmcmdMbDZ5MDctNnNTT095bUI4a1FzZVVBcURhWmhFOGo3WVJLc2NGZTYxUHkzeUFPS0dkV1dnYjMwV3hxRno2cTVuOF93WG9iYmtSNFp6UWZ1TUhEZ3Q4aktWVTU1SWgtSUZVR2IzSlVHRFJXSU9NY1hiMzNUQ191NUdpWENxdjFPTEducVNjcjB6Y1N0UzM0c01NQWpva0xyN3NJdkpEX0JJMzg1ZWs?oc=5" target="_blank">German transgender neo-Nazi to serve time in women's prison</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>World Sushi Skills: Lithuanian chef crowned world champion in Japan - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiuwFBVV95cUxPT09BMWs5eWM0NmRaMjl1VUY0UGw0REdsT0ZFT0RYamdMY3dKWWJ4VUkyTmJ5X1Vuako1bl9PV0J1VjNjazdiUjNNYy1NM1ZhY25xakoxdHQ4bFp1WXFaY2RxVDR1dk4wdFdjbXM1dmZxNEotZHpFbDhuYlhEeWY1R2tJWE04TjAwclJSZ3M0dHFVOWo3M1NoLXlIWGdtT0tEOHE5MDZIOXgyRFVNSVAyQnRWUlNmNjNVVjN3?oc=5</link>
+<guid isPermaLink="false">CBMiuwFBVV95cUxPT09BMWs5eWM0NmRaMjl1VUY0UGw0REdsT0ZFT0RYamdMY3dKWWJ4VUkyTmJ5X1Vuako1bl9PV0J1VjNjazdiUjNNYy1NM1ZhY25xakoxdHQ4bFp1WXFaY2RxVDR1dk4wdFdjbXM1dmZxNEotZHpFbDhuYlhEeWY1R2tJWE04TjAwclJSZ3M0dHFVOWo3M1NoLXlIWGdtT0tEOHE5MDZIOXgyRFVNSVAyQnRWUlNmNjNVVjN3</guid>
+<pubDate>Mon, 01 Sep 2025 06:27:29 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiuwFBVV95cUxPT09BMWs5eWM0NmRaMjl1VUY0UGw0REdsT0ZFT0RYamdMY3dKWWJ4VUkyTmJ5X1Vuako1bl9PV0J1VjNjazdiUjNNYy1NM1ZhY25xakoxdHQ4bFp1WXFaY2RxVDR1dk4wdFdjbXM1dmZxNEotZHpFbDhuYlhEeWY1R2tJWE04TjAwclJSZ3M0dHFVOWo3M1NoLXlIWGdtT0tEOHE5MDZIOXgyRFVNSVAyQnRWUlNmNjNVVjN3?oc=5" target="_blank">World Sushi Skills: Lithuanian chef crowned world champion in Japan</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>China’s Xi and India’s Modi vow stronger ties in Tianjin meeting - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivgFBVV95cUxPNEl6MVJDTXk5QXpaeXpkTTNhUGNPZDF4VkNsVEZGaTlxS29mRG9qTXRtV0dMZTB4dDJTUnBiOUV1WEVTWEtrMnU5QkxycGdEU1pGVFhqN1d3S3JqV3hQMGdTeHBUNDllTlNpRTRNZU9yb19MUElHb3BkN1g2bkxaZUdmX1QwUGpnUmhRQTN0RmJfTTJNRGdocUI1ZkFmckhUMXFrOGNqX3o3R2lsQ1E5ZE9lMTQyb0ZHMlJFN2J3?oc=5</link>
+<guid isPermaLink="false">CBMivgFBVV95cUxPNEl6MVJDTXk5QXpaeXpkTTNhUGNPZDF4VkNsVEZGaTlxS29mRG9qTXRtV0dMZTB4dDJTUnBiOUV1WEVTWEtrMnU5QkxycGdEU1pGVFhqN1d3S3JqV3hQMGdTeHBUNDllTlNpRTRNZU9yb19MUElHb3BkN1g2bkxaZUdmX1QwUGpnUmhRQTN0RmJfTTJNRGdocUI1ZkFmckhUMXFrOGNqX3o3R2lsQ1E5ZE9lMTQyb0ZHMlJFN2J3</guid>
+<pubDate>Sun, 31 Aug 2025 08:55:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPNEl6MVJDTXk5QXpaeXpkTTNhUGNPZDF4VkNsVEZGaTlxS29mRG9qTXRtV0dMZTB4dDJTUnBiOUV1WEVTWEtrMnU5QkxycGdEU1pGVFhqN1d3S3JqV3hQMGdTeHBUNDllTlNpRTRNZU9yb19MUElHb3BkN1g2bkxaZUdmX1QwUGpnUmhRQTN0RmJfTTJNRGdocUI1ZkFmckhUMXFrOGNqX3o3R2lsQ1E5ZE9lMTQyb0ZHMlJFN2J3?oc=5" target="_blank">China’s Xi and India’s Modi vow stronger ties in Tianjin meeting</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Trump merchandise: Why have the 2028 hats gone viral? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisgFBVV95cUxObGVHLUs5X1FVaHExcFc0RUp4Yjh2aXV6Q2hRVjFfOHJFejNhX0hPc2liT09BUldTSVliLUlOLTlnRW9FTWs2SmRzcmM1NUszcHdrbjQ1NWhkQU5FOTlWUU9VVHBENmJWUnpXWk5GX1BpejJVNGFYNHI3R2tFRVRiQWc1VDhFdEpETEsyM0h1MjlGbWQ3TlhCckoyVHJ5akUyXzB1OFhqUWVrOExxT08zYmZ3?oc=5</link>
+<guid isPermaLink="false">CBMisgFBVV95cUxObGVHLUs5X1FVaHExcFc0RUp4Yjh2aXV6Q2hRVjFfOHJFejNhX0hPc2liT09BUldTSVliLUlOLTlnRW9FTWs2SmRzcmM1NUszcHdrbjQ1NWhkQU5FOTlWUU9VVHBENmJWUnpXWk5GX1BpejJVNGFYNHI3R2tFRVRiQWc1VDhFdEpETEsyM0h1MjlGbWQ3TlhCckoyVHJ5akUyXzB1OFhqUWVrOExxT08zYmZ3</guid>
+<pubDate>Sat, 23 Aug 2025 07:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxObGVHLUs5X1FVaHExcFc0RUp4Yjh2aXV6Q2hRVjFfOHJFejNhX0hPc2liT09BUldTSVliLUlOLTlnRW9FTWs2SmRzcmM1NUszcHdrbjQ1NWhkQU5FOTlWUU9VVHBENmJWUnpXWk5GX1BpejJVNGFYNHI3R2tFRVRiQWc1VDhFdEpETEsyM0h1MjlGbWQ3TlhCckoyVHJ5akUyXzB1OFhqUWVrOExxT08zYmZ3?oc=5" target="_blank">Trump merchandise: Why have the 2028 hats gone viral?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>What missiles does North Korea have in its weapon arsenal? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMinwFBVV95cUxNc3BHdGdOVXNtNzZSSnM5d0s2NURGQ2RoVkxIbFE0aTgtbmw2cmFFMTRlVFQ4LTBTOS05WTJkSk5CVnZ4UTYyUGVkUF9hV0h1R3djeEZSSXdOS2FRYUM3cTkwR0FfTzZIUHgyNzlYQlhFdzdCQUlUeUJTSHlZNHdlXzdTcWt0MWNVbWhKZXpRa2w0ckFWcWhuR0dfZ0lZVEU?oc=5</link>
+<guid isPermaLink="false">CBMinwFBVV95cUxNc3BHdGdOVXNtNzZSSnM5d0s2NURGQ2RoVkxIbFE0aTgtbmw2cmFFMTRlVFQ4LTBTOS05WTJkSk5CVnZ4UTYyUGVkUF9hV0h1R3djeEZSSXdOS2FRYUM3cTkwR0FfTzZIUHgyNzlYQlhFdzdCQUlUeUJTSHlZNHdlXzdTcWt0MWNVbWhKZXpRa2w0ckFWcWhuR0dfZ0lZVEU</guid>
+<pubDate>Sun, 31 Aug 2025 06:00:57 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMinwFBVV95cUxNc3BHdGdOVXNtNzZSSnM5d0s2NURGQ2RoVkxIbFE0aTgtbmw2cmFFMTRlVFQ4LTBTOS05WTJkSk5CVnZ4UTYyUGVkUF9hV0h1R3djeEZSSXdOS2FRYUM3cTkwR0FfTzZIUHgyNzlYQlhFdzdCQUlUeUJTSHlZNHdlXzdTcWt0MWNVbWhKZXpRa2w0ckFWcWhuR0dfZ0lZVEU?oc=5" target="_blank">What missiles does North Korea have in its weapon arsenal?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Is Meta failing to stop the spread of non-consensual images? - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivAFBVV95cUxNZ1pfaGZ0b282U1ZyWGZGSnRsVmxIN0VfNTZqSVdJSjQzQjZ1cDhYY1hjb2ZxWHl3RFZJY3VHZnNxR1ZuQlRNYzFaQU9fRXFSdmhvdnBkVjE1blkxMmY2RncyY1Bnd3JpX0JsTTNPN3hOeEhJMXFBZ2tIZkIzejJ6R0NKcWlYZnRiaHI2TE13RUo4OHlLQ2RtZk1Va2E4NVd3N0N4YzJTLTVvMzZnYkV3aTN5UWR5NmJlcUtYaw?oc=5</link>
+<guid isPermaLink="false">CBMivAFBVV95cUxNZ1pfaGZ0b282U1ZyWGZGSnRsVmxIN0VfNTZqSVdJSjQzQjZ1cDhYY1hjb2ZxWHl3RFZJY3VHZnNxR1ZuQlRNYzFaQU9fRXFSdmhvdnBkVjE1blkxMmY2RncyY1Bnd3JpX0JsTTNPN3hOeEhJMXFBZ2tIZkIzejJ6R0NKcWlYZnRiaHI2TE13RUo4OHlLQ2RtZk1Va2E4NVd3N0N4YzJTLTVvMzZnYkV3aTN5UWR5NmJlcUtYaw</guid>
+<pubDate>Mon, 01 Sep 2025 05:00:41 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivAFBVV95cUxNZ1pfaGZ0b282U1ZyWGZGSnRsVmxIN0VfNTZqSVdJSjQzQjZ1cDhYY1hjb2ZxWHl3RFZJY3VHZnNxR1ZuQlRNYzFaQU9fRXFSdmhvdnBkVjE1blkxMmY2RncyY1Bnd3JpX0JsTTNPN3hOeEhJMXFBZ2tIZkIzejJ6R0NKcWlYZnRiaHI2TE13RUo4OHlLQ2RtZk1Va2E4NVd3N0N4YzJTLTVvMzZnYkV3aTN5UWR5NmJlcUtYaw?oc=5" target="_blank">Is Meta failing to stop the spread of non-consensual images?</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Terrorism case against Kneecap rapper Mo Chara adjourned by UK court - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMisgFBVV95cUxOSFhiMjJQUk9wQVpRek1XcVVOS3VaS3ltdTNWT3o5c0w3RUJ2OE92TzRFVk1RWl83b0lpY3E1Y2g0R0hWaUF3WnFJSEJmeXVENGFsOGRmMmplTnJfWXJYY3lpYktGektnMzN2cWl2c1ZiNnkwSzZERG9nX003eTFGVXA5LTFscXZQeS1Ga1R3UEhzM3hyNUpOd19RWWZrb2xONnRka0ZwUVUwWDY5Q2tIY3h3?oc=5</link>
+<guid isPermaLink="false">CBMisgFBVV95cUxOSFhiMjJQUk9wQVpRek1XcVVOS3VaS3ltdTNWT3o5c0w3RUJ2OE92TzRFVk1RWl83b0lpY3E1Y2g0R0hWaUF3WnFJSEJmeXVENGFsOGRmMmplTnJfWXJYY3lpYktGektnMzN2cWl2c1ZiNnkwSzZERG9nX003eTFGVXA5LTFscXZQeS1Ga1R3UEhzM3hyNUpOd19RWWZrb2xONnRka0ZwUVUwWDY5Q2tIY3h3</guid>
+<pubDate>Wed, 20 Aug 2025 07:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxOSFhiMjJQUk9wQVpRek1XcVVOS3VaS3ltdTNWT3o5c0w3RUJ2OE92TzRFVk1RWl83b0lpY3E1Y2g0R0hWaUF3WnFJSEJmeXVENGFsOGRmMmplTnJfWXJYY3lpYktGektnMzN2cWl2c1ZiNnkwSzZERG9nX003eTFGVXA5LTFscXZQeS1Ga1R3UEhzM3hyNUpOd19RWWZrb2xONnRka0ZwUVUwWDY5Q2tIY3h3?oc=5" target="_blank">Terrorism case against Kneecap rapper Mo Chara adjourned by UK court</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Singer Taylor Swift and football player Travis Kelce get engaged - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiyAFBVV95cUxOaEpIZFNVM2tDWjctSzltM3JncDhXa3F4VlRwSXRxY2V5cnkyandtbkR4Y2dZVloxWFl5WVRJWUtvZ2N4aWtCNTBhb1phaTM4YVkwbDZVNjhXcENjQlNKbTVlTWNVSFFZb1hkWTV3NEpBS0NuaXQ5NTVvMXRndnZGSVFUdW9XajlSNUd6SFg0RVBaTGxyRGRfZmNmeU1zcWs4cTdtTGJPSVQ4QjFsZ3Y3MUVXQXZSd2JqcFpSRk1pMzA0ejlwSngydQ?oc=5</link>
+<guid isPermaLink="false">CBMiyAFBVV95cUxOaEpIZFNVM2tDWjctSzltM3JncDhXa3F4VlRwSXRxY2V5cnkyandtbkR4Y2dZVloxWFl5WVRJWUtvZ2N4aWtCNTBhb1phaTM4YVkwbDZVNjhXcENjQlNKbTVlTWNVSFFZb1hkWTV3NEpBS0NuaXQ5NTVvMXRndnZGSVFUdW9XajlSNUd6SFg0RVBaTGxyRGRfZmNmeU1zcWs4cTdtTGJPSVQ4QjFsZ3Y3MUVXQXZSd2JqcFpSRk1pMzA0ejlwSngydQ</guid>
+<pubDate>Tue, 26 Aug 2025 18:41:31 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiyAFBVV95cUxOaEpIZFNVM2tDWjctSzltM3JncDhXa3F4VlRwSXRxY2V5cnkyandtbkR4Y2dZVloxWFl5WVRJWUtvZ2N4aWtCNTBhb1phaTM4YVkwbDZVNjhXcENjQlNKbTVlTWNVSFFZb1hkWTV3NEpBS0NuaXQ5NTVvMXRndnZGSVFUdW9XajlSNUd6SFg0RVBaTGxyRGRfZmNmeU1zcWs4cTdtTGJPSVQ4QjFsZ3Y3MUVXQXZSd2JqcFpSRk1pMzA0ejlwSngydQ?oc=5" target="_blank">Singer Taylor Swift and football player Travis Kelce get engaged</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>'We have a lot to do’: President Vučić insists Serbia’s EU membership remains crucial - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixgFBVV95cUxPR1BCdnY0c19pTUgyTktRcHJEWEhiQ0xIRjZfUG1hRWw4UVJiUUozWFB6bkJybFVWX3ViZU9pYVJ0ZEdQR0xlWnpoc29KY3BDNnVMOF9qQzdLSXRIMENEckRtdTFmUTgwcnI1cEEzYzEtU3V5VGFHMFhZUHlOSEZUSVp4aXZJQXN2d3J2YkRVYlZXMWJDNTJkMURWOGEzdW5aNHFWYXdpYTg3QXUzbHFjSXVtN2VzSXVWNFo3cGk2emRzY2J5bkE?oc=5</link>
+<guid isPermaLink="false">CBMixgFBVV95cUxPR1BCdnY0c19pTUgyTktRcHJEWEhiQ0xIRjZfUG1hRWw4UVJiUUozWFB6bkJybFVWX3ViZU9pYVJ0ZEdQR0xlWnpoc29KY3BDNnVMOF9qQzdLSXRIMENEckRtdTFmUTgwcnI1cEEzYzEtU3V5VGFHMFhZUHlOSEZUSVp4aXZJQXN2d3J2YkRVYlZXMWJDNTJkMURWOGEzdW5aNHFWYXdpYTg3QXUzbHFjSXVtN2VzSXVWNFo3cGk2emRzY2J5bkE</guid>
+<pubDate>Tue, 26 Aug 2025 11:15:56 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixgFBVV95cUxPR1BCdnY0c19pTUgyTktRcHJEWEhiQ0xIRjZfUG1hRWw4UVJiUUozWFB6bkJybFVWX3ViZU9pYVJ0ZEdQR0xlWnpoc29KY3BDNnVMOF9qQzdLSXRIMENEckRtdTFmUTgwcnI1cEEzYzEtU3V5VGFHMFhZUHlOSEZUSVp4aXZJQXN2d3J2YkRVYlZXMWJDNTJkMURWOGEzdW5aNHFWYXdpYTg3QXUzbHFjSXVtN2VzSXVWNFo3cGk2emRzY2J5bkE?oc=5" target="_blank">'We have a lot to do’: President Vučić insists Serbia’s EU membership remains crucial</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Estonia to borrow up to €3.6 billion in EU defence loans - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiogFBVV95cUxQM25JcmxPQ1RtQjZ3YUZDNjJuV1VLbVFIRUN5N0FHZ1c4YWhEckpiUlh5THBTd3JpNXFrZUVBLURIWWJuUE16bzZ5WFc0b2pwOTZyZHNTM084RE9KWlROTVAya01uSksyS2s4SmVWWUFDT081aHUzb0NHUEF6SGlUVTU1eDZ2Njd4LWxybDNkY3RLZ0FjWld5T2xHX016Y2JQcXc?oc=5</link>
+<guid isPermaLink="false">CBMiogFBVV95cUxQM25JcmxPQ1RtQjZ3YUZDNjJuV1VLbVFIRUN5N0FHZ1c4YWhEckpiUlh5THBTd3JpNXFrZUVBLURIWWJuUE16bzZ5WFc0b2pwOTZyZHNTM084RE9KWlROTVAya01uSksyS2s4SmVWWUFDT081aHUzb0NHUEF6SGlUVTU1eDZ2Njd4LWxybDNkY3RLZ0FjWld5T2xHX016Y2JQcXc</guid>
+<pubDate>Sat, 30 Aug 2025 19:45:35 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxQM25JcmxPQ1RtQjZ3YUZDNjJuV1VLbVFIRUN5N0FHZ1c4YWhEckpiUlh5THBTd3JpNXFrZUVBLURIWWJuUE16bzZ5WFc0b2pwOTZyZHNTM084RE9KWlROTVAya01uSksyS2s4SmVWWUFDT081aHUzb0NHUEF6SGlUVTU1eDZ2Njd4LWxybDNkY3RLZ0FjWld5T2xHX016Y2JQcXc?oc=5" target="_blank">Estonia to borrow up to €3.6 billion in EU defence loans</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Birdwatching tourism helps biodiversity protection in these countries - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizAFBVV95cUxPZi1BV3ZZaU5ERFpQZl9qSzg0N09uZXFhdVp6blRGd254cXNpcXJkSjBiSV9ENkRoR0JaZzQySVUzMG1lMTFqV2xOWXlveHZrWlFMZWh2dXlGSS1rc1BMakdpMlh3V2lSMjJlMUU2ZGtuV1NLazBPbEx1emI1UHhEdkg4ZzNnLUd3aV9SODdqR0xZX3FxSVlnYnBoZW9UWVVZUjZ1UnZlWHJrTFZRcngtVWplWUlpVi16MmdELVlaQXRzQUhneGJOZWd4Z28?oc=5</link>
+<guid isPermaLink="false">CBMizAFBVV95cUxPZi1BV3ZZaU5ERFpQZl9qSzg0N09uZXFhdVp6blRGd254cXNpcXJkSjBiSV9ENkRoR0JaZzQySVUzMG1lMTFqV2xOWXlveHZrWlFMZWh2dXlGSS1rc1BMakdpMlh3V2lSMjJlMUU2ZGtuV1NLazBPbEx1emI1UHhEdkg4ZzNnLUd3aV9SODdqR0xZX3FxSVlnYnBoZW9UWVVZUjZ1UnZlWHJrTFZRcngtVWplWUlpVi16MmdELVlaQXRzQUhneGJOZWd4Z28</guid>
+<pubDate>Sun, 31 Aug 2025 05:00:25 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizAFBVV95cUxPZi1BV3ZZaU5ERFpQZl9qSzg0N09uZXFhdVp6blRGd254cXNpcXJkSjBiSV9ENkRoR0JaZzQySVUzMG1lMTFqV2xOWXlveHZrWlFMZWh2dXlGSS1rc1BMakdpMlh3V2lSMjJlMUU2ZGtuV1NLazBPbEx1emI1UHhEdkg4ZzNnLUd3aV9SODdqR0xZX3FxSVlnYnBoZW9UWVVZUjZ1UnZlWHJrTFZRcngtVWplWUlpVi16MmdELVlaQXRzQUhneGJOZWd4Z28?oc=5" target="_blank">Birdwatching tourism helps biodiversity protection in these countries</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Medieval towns, low crime rates: Why these are Europe’s safest cities - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMizgFBVV95cUxQWHFqd21CaXViUjUxOGtGVnQ4NG1HQ21FQzQ5SWp5YkZGYk82bWo1QmFnYUNtYzc4cW9ldHBzVFV5azFLa0h1OTRPMkRXX3F2Q3AxZmd5a1lzOWtFLTBOb0tubFJKVHJscmJsNGFndmhhV3JBUXBMV1dLTHQwVDQ1OWp3NHdJb2s5NWwzS3pVMEN6d241RnNLQUFaUGNoUTk0NTFHc1FySmZSVWRhNV94ZHVseC1ZLUR6MzBUVnZ2RTg3d2RBb0QzMUdNQXYtZw?oc=5</link>
+<guid isPermaLink="false">CBMizgFBVV95cUxQWHFqd21CaXViUjUxOGtGVnQ4NG1HQ21FQzQ5SWp5YkZGYk82bWo1QmFnYUNtYzc4cW9ldHBzVFV5azFLa0h1OTRPMkRXX3F2Q3AxZmd5a1lzOWtFLTBOb0tubFJKVHJscmJsNGFndmhhV3JBUXBMV1dLTHQwVDQ1OWp3NHdJb2s5NWwzS3pVMEN6d241RnNLQUFaUGNoUTk0NTFHc1FySmZSVWRhNV94ZHVseC1ZLUR6MzBUVnZ2RTg3d2RBb0QzMUdNQXYtZw</guid>
+<pubDate>Tue, 12 Aug 2025 07:00:00 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMizgFBVV95cUxQWHFqd21CaXViUjUxOGtGVnQ4NG1HQ21FQzQ5SWp5YkZGYk82bWo1QmFnYUNtYzc4cW9ldHBzVFV5azFLa0h1OTRPMkRXX3F2Q3AxZmd5a1lzOWtFLTBOb0tubFJKVHJscmJsNGFndmhhV3JBUXBMV1dLTHQwVDQ1OWp3NHdJb2s5NWwzS3pVMEN6d241RnNLQUFaUGNoUTk0NTFHc1FySmZSVWRhNV94ZHVseC1ZLUR6MzBUVnZ2RTg3d2RBb0QzMUdNQXYtZw?oc=5" target="_blank">Medieval towns, low crime rates: Why these are Europe’s safest cities</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Kim meets families of troops killed fighting for Russia in Kursk - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMivAFBVV95cUxQWG42YmNuQnZxbzdYbGZWczktYWdXeWFDY3ZLYnNPNk1iekR4V1NFRVJ5c0Q5LUluTzJzTGdoNkhucUNBX2RnZUlKZV84b29aSnV4SnpqSUFYSC05WnpxTmNoM2l4MVNGVEppdkRIUmFrTEFuQXI1TlBUU1dtQTZjc1FKSEVYdTlvUUM4UmIwcjk1cThHUm81cmtBbkFWd3Bid3RFTGI4M2gzVU1wQTNJWTREX0oxQnBRQXpEUA?oc=5</link>
+<guid isPermaLink="false">CBMivAFBVV95cUxQWG42YmNuQnZxbzdYbGZWczktYWdXeWFDY3ZLYnNPNk1iekR4V1NFRVJ5c0Q5LUluTzJzTGdoNkhucUNBX2RnZUlKZV84b29aSnV4SnpqSUFYSC05WnpxTmNoM2l4MVNGVEppdkRIUmFrTEFuQXI1TlBUU1dtQTZjc1FKSEVYdTlvUUM4UmIwcjk1cThHUm81cmtBbkFWd3Bid3RFTGI4M2gzVU1wQTNJWTREX0oxQnBRQXpEUA</guid>
+<pubDate>Sun, 31 Aug 2025 07:05:40 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMivAFBVV95cUxQWG42YmNuQnZxbzdYbGZWczktYWdXeWFDY3ZLYnNPNk1iekR4V1NFRVJ5c0Q5LUluTzJzTGdoNkhucUNBX2RnZUlKZV84b29aSnV4SnpqSUFYSC05WnpxTmNoM2l4MVNGVEppdkRIUmFrTEFuQXI1TlBUU1dtQTZjc1FKSEVYdTlvUUM4UmIwcjk1cThHUm81cmtBbkFWd3Bid3RFTGI4M2gzVU1wQTNJWTREX0oxQnBRQXpEUA?oc=5" target="_blank">Kim meets families of troops killed fighting for Russia in Kursk</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Video. Latest news bulletin | August 31st, 2025 – Midday - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMijwFBVV95cUxPTlF2bjBMaVJkMUtNdUdySjF6bUliQlpBeE1FUjhTQW9xZ21mRDBxNGRxZjFObk5zVHl2akhzdWRNd1BhSzYtZHpwU2k4NXhCVVdWT21IY0hLRTVuLVlQVlNVY1RnQ3NBRms1ZXZ3UTlUbmRmNUlna2NOMzQ5QXpTcmpjZHBsRE5PNDVEdy1ZTQ?oc=5</link>
+<guid isPermaLink="false">CBMijwFBVV95cUxPTlF2bjBMaVJkMUtNdUdySjF6bUliQlpBeE1FUjhTQW9xZ21mRDBxNGRxZjFObk5zVHl2akhzdWRNd1BhSzYtZHpwU2k4NXhCVVdWT21IY0hLRTVuLVlQVlNVY1RnQ3NBRms1ZXZ3UTlUbmRmNUlna2NOMzQ5QXpTcmpjZHBsRE5PNDVEdy1ZTQ</guid>
+<pubDate>Sun, 31 Aug 2025 10:00:16 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMijwFBVV95cUxPTlF2bjBMaVJkMUtNdUdySjF6bUliQlpBeE1FUjhTQW9xZ21mRDBxNGRxZjFObk5zVHl2akhzdWRNd1BhSzYtZHpwU2k4NXhCVVdWT21IY0hLRTVuLVlQVlNVY1RnQ3NBRms1ZXZ3UTlUbmRmNUlna2NOMzQ5QXpTcmpjZHBsRE5PNDVEdy1ZTQ?oc=5" target="_blank">Video. Latest news bulletin | August 31st, 2025 – Midday</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>China's role in multilateralism extremely important, says Guterres - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMiwAFBVV95cUxPelVNaFRJOEQ2U2pHYWpQUlVCMjZHanQ2X2g1NXllOWFhM05VRXlDLUVSMm9ZVXRWNTgtWHBrOGZxS0VhZlFYT2l4MDJDR3pILTl2SHpPRjlzM1VqalJDdzY5bUcxQnA2UERLSVpLbmtqQlZsd291OUl1YmpDQVluR1Q0cUV5ZTRjbFl3QVZxWWNKSmQxRDdFMzJhMmd1VTRTenVnWlBHNnB0NS04U09Vd096SEtDYndwTVdJTk5yLTU?oc=5</link>
+<guid isPermaLink="false">CBMiwAFBVV95cUxPelVNaFRJOEQ2U2pHYWpQUlVCMjZHanQ2X2g1NXllOWFhM05VRXlDLUVSMm9ZVXRWNTgtWHBrOGZxS0VhZlFYT2l4MDJDR3pILTl2SHpPRjlzM1VqalJDdzY5bUcxQnA2UERLSVpLbmtqQlZsd291OUl1YmpDQVluR1Q0cUV5ZTRjbFl3QVZxWWNKSmQxRDdFMzJhMmd1VTRTenVnWlBHNnB0NS04U09Vd096SEtDYndwTVdJTk5yLTU</guid>
+<pubDate>Sat, 30 Aug 2025 15:27:12 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxPelVNaFRJOEQ2U2pHYWpQUlVCMjZHanQ2X2g1NXllOWFhM05VRXlDLUVSMm9ZVXRWNTgtWHBrOGZxS0VhZlFYT2l4MDJDR3pILTl2SHpPRjlzM1VqalJDdzY5bUcxQnA2UERLSVpLbmtqQlZsd291OUl1YmpDQVluR1Q0cUV5ZTRjbFl3QVZxWWNKSmQxRDdFMzJhMmd1VTRTenVnWlBHNnB0NS04U09Vd096SEtDYndwTVdJTk5yLTU?oc=5" target="_blank">China's role in multilateralism extremely important, says Guterres</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>EU Member States divided over Gaza at their Copenhagen meeting - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMirAFBVV95cUxQakpjQkM3Vl96dExHTE5wWnpsQzJkRVVmWXpsWDFPTzFLRE1yQlZ1MWRCRHZacFIzLXZPRkpNSEtDLWd0M3hDX2ZYNExoRTkwSGNTMXZIV1EwZDhwQ0xLeEVib1hZbm14Z3JkMTBzRjdmdTNST0lqcmFIaXQ2YWh4SVZFcFpRdm1YWHhoMXZ6dWpLMXJLM1hIbU9wdzJrRHZjYmhjMEd4VnZtMkgy?oc=5</link>
+<guid isPermaLink="false">CBMirAFBVV95cUxQakpjQkM3Vl96dExHTE5wWnpsQzJkRVVmWXpsWDFPTzFLRE1yQlZ1MWRCRHZacFIzLXZPRkpNSEtDLWd0M3hDX2ZYNExoRTkwSGNTMXZIV1EwZDhwQ0xLeEVib1hZbm14Z3JkMTBzRjdmdTNST0lqcmFIaXQ2YWh4SVZFcFpRdm1YWHhoMXZ6dWpLMXJLM1hIbU9wdzJrRHZjYmhjMEd4VnZtMkgy</guid>
+<pubDate>Sat, 30 Aug 2025 17:02:04 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMirAFBVV95cUxQakpjQkM3Vl96dExHTE5wWnpsQzJkRVVmWXpsWDFPTzFLRE1yQlZ1MWRCRHZacFIzLXZPRkpNSEtDLWd0M3hDX2ZYNExoRTkwSGNTMXZIV1EwZDhwQ0xLeEVib1hZbm14Z3JkMTBzRjdmdTNST0lqcmFIaXQ2YWh4SVZFcFpRdm1YWHhoMXZ6dWpLMXJLM1hIbU9wdzJrRHZjYmhjMEd4VnZtMkgy?oc=5" target="_blank">EU Member States divided over Gaza at their Copenhagen meeting</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+<item>
+<title>Portuguese bullfighter's death sparks row over social media hate - Euronews.com</title>
+<link>https://news.google.com/rss/articles/CBMixAFBVV95cUxQMm9mQ2J1b0F5RWJTdW96YXZlajJGUWpNMWxpTFhtcFhrZk9MSDIzTXN3a0JnTGNTSlc5Q2NKLUxWR0FDR2NtcThxdTFQaU9tMDhTMGxXNkFaOHUzWmNwakUxU0haa001bHduTDBYMEtQYmlqV1pNX3Y5dTJWQ2I4cnd5dDZJejZDdjhNenBHNE1GVGJNRnpDUGROMUp6WkpUZl9sdU81V0RPSFpFczJWNWVhSGMzTGVEeXZmZzlpRnhobzhN?oc=5</link>
+<guid isPermaLink="false">CBMixAFBVV95cUxQMm9mQ2J1b0F5RWJTdW96YXZlajJGUWpNMWxpTFhtcFhrZk9MSDIzTXN3a0JnTGNTSlc5Q2NKLUxWR0FDR2NtcThxdTFQaU9tMDhTMGxXNkFaOHUzWmNwakUxU0haa001bHduTDBYMEtQYmlqV1pNX3Y5dTJWQ2I4cnd5dDZJejZDdjhNenBHNE1GVGJNRnpDUGROMUp6WkpUZl9sdU81V0RPSFpFczJWNWVhSGMzTGVEeXZmZzlpRnhobzhN</guid>
+<pubDate>Sat, 30 Aug 2025 13:59:50 GMT</pubDate>
+<description><a href="https://news.google.com/rss/articles/CBMixAFBVV95cUxQMm9mQ2J1b0F5RWJTdW96YXZlajJGUWpNMWxpTFhtcFhrZk9MSDIzTXN3a0JnTGNTSlc5Q2NKLUxWR0FDR2NtcThxdTFQaU9tMDhTMGxXNkFaOHUzWmNwakUxU0haa001bHduTDBYMEtQYmlqV1pNX3Y5dTJWQ2I4cnd5dDZJejZDdjhNenBHNE1GVGJNRnpDUGROMUp6WkpUZl9sdU81V0RPSFpFczJWNWVhSGMzTGVEeXZmZzlpRnhobzhN?oc=5" target="_blank">Portuguese bullfighter's death sparks row over social media hate</a>&nbsp;&nbsp;<font color="#6f6f6f">Euronews.com</font></description>
+<source url="https://www.euronews.com">Euronews.com</source>
+</item>
+</channel>
+</rss>
