@@ -17,7 +17,8 @@ from sentence_transformers import SentenceTransformer
 import unicodedata
 
 from core.config import get_config
-from apps.clust1.vocab_loader import load_actor_aliases, load_mechanism_anchors
+from apps.clust1.vocab_loader import load_mechanism_anchors
+from apps.clust1.actor_extractor import create_actor_extractor
 
 
 @dataclass
@@ -40,7 +41,7 @@ class StrategicGate:
         
         # Load vocabularies with validation
         try:
-            self._actor_aliases = load_actor_aliases(self.config.actors_csv_path)
+            self._actor_extractor = create_actor_extractor()
             self._mech = load_mechanism_anchors(self.config.mechanisms_json_path)
         except Exception as e:
             raise RuntimeError(f"Failed to load vocabularies: {e}")
@@ -52,10 +53,6 @@ class StrategicGate:
         self._model: Optional[SentenceTransformer] = None
         self._anchor_labels: List[str] = self._mech.labels
         self._anchor_centroids: Optional[np.ndarray] = None
-        
-        # Precompiled regex patterns for actor matching
-        self._actor_patterns: List[Tuple[str, str, Optional[Pattern], bool]] = []
-        self._compile_actor_patterns()
     
     def _validate_config(self):
         """Validate required config parameters exist"""
@@ -64,29 +61,6 @@ class StrategicGate:
             if not hasattr(self.config, attr):
                 raise ValueError(f"Missing required config parameter: {attr}")
     
-    def _has_cjk_chars(self, text: str) -> bool:
-        """Check if text contains CJK characters"""
-        return any('\u4e00' <= char <= '\u9fff' or  # Chinese
-                  '\u3040' <= char <= '\u309f' or  # Hiragana
-                  '\u30a0' <= char <= '\u30ff' or  # Katakana
-                  '\uac00' <= char <= '\ud7af'     # Hangul
-                  for char in text)
-    
-    def _compile_actor_patterns(self):
-        """Precompile regex patterns for actor alias matching"""
-        for entity_id, aliases in self._actor_aliases.items():
-            for alias in aliases:
-                alias_lower = alias.strip().lower()
-                # Check if alias contains CJK characters
-                has_cjk = self._has_cjk_chars(alias)
-                
-                if has_cjk or ' ' not in alias_lower:
-                    # For CJK or single-word aliases, use simple case-insensitive substring
-                    self._actor_patterns.append((entity_id, alias_lower, None, True))
-                else:
-                    # For Latin script with spaces, use word boundary regex
-                    pattern = re.compile(r'\b' + re.escape(alias_lower) + r'\b', re.IGNORECASE)
-                    self._actor_patterns.append((entity_id, alias_lower, pattern, False))
     
     def _init_model(self) -> None:
         """Initialize sentence transformer model and compute anchor centroids lazily"""
@@ -136,34 +110,6 @@ class StrategicGate:
         self._anchor_centroids = np.vstack(centroids)
         self._anchor_labels = valid_labels
     
-    def _normalize_text(self, text: str) -> str:
-        """Normalize text to match title_norm processing"""
-        if not text:
-            return ""
-        
-        # NFKC Unicode normalization
-        text = unicodedata.normalize('NFKC', text)
-        
-        # Lowercase and collapse whitespace
-        text = re.sub(r'\s+', ' ', text.lower()).strip()
-        
-        return text
-    
-    def _actor_match(self, text: str) -> Optional[str]:
-        """Check if text contains any actor aliases with optimized pattern matching"""
-        text_lower = text.lower()
-        
-        for entity_id, alias_lower, pattern, is_substring in self._actor_patterns:
-            if is_substring:
-                # Single alias substring check, no re-lookup
-                if alias_lower in text_lower:
-                    return entity_id
-            else:
-                # Regex word boundary matching
-                if pattern and pattern.search(text_lower):
-                    return entity_id
-        
-        return None
     
     def _anchor_similarity(self, normalized_text: str) -> Tuple[float, List[str], List[Tuple[str, float]]]:
         """Compute similarity to mechanism anchor centroids with telemetry"""
@@ -202,14 +148,14 @@ class StrategicGate:
         Returns:
             GateResult with filtering decision and telemetry
         """
-        # Normalize input text
-        normalized_text = self._normalize_text(title_text)
+        # Normalize input text using shared normalization
+        normalized_text = self._actor_extractor.normalize(title_text)
         
         if not normalized_text:
             return GateResult(False, 0.0, "below_threshold", [], [])
         
-        # Check for actor matches first (fast path)
-        actor_hit = self._actor_match(normalized_text)
+        # Check for actor matches first (fast path) using shared extractor
+        actor_hit = self._actor_extractor.first_hit(title_text)
         if actor_hit:
             return GateResult(
                 keep=True,
@@ -265,10 +211,10 @@ def filter_titles_batch(titles: List[Dict[str, Any]]) -> List[Tuple[Dict[str, An
     for title in titles:
         # Use title_norm if available, fallback to title_display
         title_text = title.get("title_norm") or title.get("title_display", "")
-        normalized_text = gate._normalize_text(title_text)
+        normalized_text = gate._actor_extractor.normalize(title_text)
         
-        # Check for actor match first
-        actor_hit = gate._actor_match(normalized_text) if normalized_text else None
+        # Check for actor match first using shared extractor
+        actor_hit = gate._actor_extractor.first_hit(title_text) if title_text else None
         actor_hits.append(actor_hit)
         
         texts.append(normalized_text)

@@ -50,6 +50,12 @@ class SNIConfig(BaseSettings):
     mechanisms_json_path: str = Field(default="data/mechanisms.json", env="MECHANISMS_JSON_PATH")
     max_top_anchors: int = Field(default=3, env="MAX_TOP_ANCHORS")
     
+    # CLUST-2 Bucket configuration
+    bucket_max_span_hours: int = Field(default=72, env="BUCKET_MAX_SPAN_HOURS")
+    bucket_min_size: int = Field(default=3, env="BUCKET_MIN_SIZE")
+    bucket_since_hours: int = Field(default=72, env="BUCKET_SINCE_HOURS")
+    bucket_max_actors: int = Field(default=4, env="BUCKET_MAX_ACTORS")
+    
     # Ingestion
     max_items_per_feed: Optional[int] = Field(default=None, env="MAX_ITEMS_PER_FEED")
     lookback_days: int = Field(default=3, env="LOOKBACK_DAYS")
