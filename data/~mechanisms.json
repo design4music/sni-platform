@@ -1,0 +1,206 @@
+{
+  "sanctions": {
+    "label": "Sanctions",
+    "guarded": true,
+    "anchors_en": ["imposes sanctions", "blacklists entity", "announces sanctions"],
+    "scope_note": "State sanctions on states/orgs/people"
+  },
+  "export_controls": {
+    "label": "Export controls",
+    "guarded": true,
+    "anchors_en": ["restricts chip exports", "imposes export curbs", "licensing requirements"],
+    "scope_note": "Limits on tech/dual-use trade"
+  },
+  "strike_airstrike": {
+    "label": "Air/missile strike",
+    "guarded": true,
+    "anchors_en": ["airstrikes hit", "missile barrage", "precision strike"],
+    "scope_note": "Kinetic strike from air/missile"
+  },
+  "ground_incursion": {
+    "label": "Ground incursion",
+    "guarded": false,
+    "anchors_en": ["cross-border incursion", "ground offensive", "pushes into"],
+    "scope_note": "Cross-border/territorial push"
+  },
+  "missile_test": {
+    "label": "Missile/rocket test",
+    "guarded": false,
+    "anchors_en": ["test-fires missile", "launches rocket", "ballistic test"],
+    "scope_note": "Demonstrative launches/tests"
+  },
+  "ceasefire_talks": {
+    "label": "Ceasefire talks",
+    "guarded": false,
+    "anchors_en": ["truce talks", "mediated ceasefire", "ceasefire negotiations"],
+    "scope_note": "Talks aimed at halting hostilities"
+  },
+  "peace_process": {
+    "label": "Peace process",
+    "guarded": false,
+    "anchors_en": ["peace talks", "framework agreement", "roadmap"],
+    "scope_note": "Longer-horizon settlement tracks"
+  },
+  "summit_meeting": {
+    "label": "Summit/meeting",
+    "guarded": false,
+    "anchors_en": ["leaders meet", "summit convenes", "bilateral talks"],
+    "scope_note": "Leader or minister-level meets"
+  },
+  "diplomatic_statement": {
+    "label": "Diplomatic statement",
+    "guarded": false,
+    "anchors_en": ["warns", "condemns", "urges"],
+    "scope_note": "Official statements/notes"
+  },
+  "aid_package": {
+    "label": "Aid package (mil/hum)",
+    "guarded": false,
+    "anchors_en": ["announces aid package", "military assistance", "humanitarian aid"],
+    "scope_note": "Financial/material assistance"
+  },
+  "arms_transfer": {
+    "label": "Arms transfer/sale",
+    "guarded": false,
+    "anchors_en": ["approves arms sale", "delivers weapons", "defense package"],
+    "scope_note": "Defense equipment transfers"
+  },
+  "defense_deal": {
+    "label": "Defense cooperation",
+    "guarded": false,
+    "anchors_en": ["defense pact", "security agreement", "base access"],
+    "scope_note": "Formal defense agreements"
+  },
+  "regulation_policy": {
+    "label": "Regulation/policy",
+    "guarded": false,
+    "anchors_en": ["passes bill", "issues regulation", "approves law"],
+    "scope_note": "Domestic policy change"
+  },
+  "court_ruling": {
+    "label": "Court ruling",
+    "guarded": false,
+    "anchors_en": ["court blocks", "judge rules", "strikes down"],
+    "scope_note": "Judicial decisions"
+  },
+  "election": {
+    "label": "Election",
+    "guarded": false,
+    "anchors_en": ["wins election", "runoff scheduled", "votes counted"],
+    "scope_note": "Electoral events"
+  },
+  "protest_unrest": {
+    "label": "Protest/unrest",
+    "guarded": false,
+    "anchors_en": ["protests erupt", "mass demonstrations", "clashes"],
+    "scope_note": "Collective action/riots"
+  },
+  "platform_ban": {
+    "label": "Platform ban",
+    "guarded": true,
+    "anchors_en": ["bans X nationwide", "platform suspended", "blocked"],
+    "scope_note": "Nationwide or state-level platform blocking"
+  },
+  "cyber_operation": {
+    "label": "Cyber operation",
+    "guarded": false,
+    "anchors_en": ["hacking campaign", "cyberattack", "intrusion"],
+    "scope_note": "Offensive/defensive cyber activity"
+  },
+  "energy_supply": {
+    "label": "Energy supply/no-supply",
+    "guarded": false,
+    "anchors_en": ["pipeline halted", "cuts gas", "power shortage"],
+    "scope_note": "Energy flow decisions"
+  },
+  "trade_agreement": {
+    "label": "Trade deal",
+    "guarded": false,
+    "anchors_en": ["signs trade agreement", "FTA", "tariff-free"],
+    "scope_note": "International trade pacts"
+  },
+  "asset_freeze": {
+    "label": "Asset freeze",
+    "guarded": true,
+    "anchors_en": ["freezes assets", "seizes funds", "blocks property"],
+    "scope_note": "Financial blocking measures"
+  },
+  "travel_ban": {
+    "label": "Travel/visa ban",
+    "guarded": true,
+    "anchors_en": ["visa restrictions", "travel ban", "entry barred"],
+    "scope_note": "Mobility restrictions on persons/entities"
+  },
+  "border_security": {
+    "label": "Border deployment",
+    "guarded": false,
+    "anchors_en": ["deploys troops to border", "border reinforcement"],
+    "scope_note": "Security posture at border"
+  },
+  "recognition": {
+    "label": "Recognition/no-recognition",
+    "guarded": false,
+    "anchors_en": ["recognizes government", "recognizes state", "withdraws recognition"],
+    "scope_note": "Diplomatic recognition disputes"
+  },
+  "referendum": {
+    "label": "Referendum",
+    "guarded": false,
+    "anchors_en": ["holds referendum", "votes on", "plebiscite"],
+    "scope_note": "Popular vote on specific question"
+  },
+  "coup_attempt": {
+    "label": "Coup/putsch",
+    "guarded": false,
+    "anchors_en": ["coup attempt", "military seizes", "overthrows"],
+    "scope_note": "Regime change attempts"
+  },
+  "censorship_law": {
+    "label": "Censorship/speech law",
+    "guarded": false,
+    "anchors_en": ["criminalizes speech", "online harms bill", "content regulation"],
+    "scope_note": "Legal speech restrictions"
+  },
+  "data_breach": {
+    "label": "Data breach/leak",
+    "guarded": false,
+    "anchors_en": ["data leak", "breach exposes", "hacker publishes"],
+    "scope_note": "Non-state or corporate data incidents"
+  },
+  "pipeline_disruption": {
+    "label": "Pipeline/infra disruption",
+    "guarded": false,
+    "anchors_en": ["pipeline explosion", "dam sabotage", "grid outage"],
+    "scope_note": "Infrastructure shocks"
+  },
+  "tariff_duties": {
+    "label": "Tariff/duties",
+    "guarded": false,
+    "anchors_en": ["raises tariffs", "imposes duties", "retaliatory tariffs"],
+    "scope_note": "Trade taxes"
+  },
+  "space_launch": {
+    "label": "Space launch/test",
+    "guarded": false,
+    "anchors_en": ["launches satellite", "spacecraft liftoff", "orbital test"],
+    "scope_note": "Space activity"
+  },
+  "natural_disaster": {
+    "label": "Natural disaster",
+    "guarded": false,
+    "anchors_en": ["earthquake", "flooding", "wildfire spreads"],
+    "scope_note": "Non-manmade disasters"
+  },
+  "public_health": {
+    "label": "Public health emergency",
+    "guarded": false,
+    "anchors_en": ["declares health emergency", "outbreak", "WHO alert"],
+    "scope_note": "Epidemic/pandemic alerts"
+  },
+  "market_controls": {
+    "label": "Market/price controls",
+    "guarded": false,
+    "anchors_en": ["price cap", "export ban on food", "quota"],
+    "scope_note": "Domestic/intl market management"
+  }
+}
