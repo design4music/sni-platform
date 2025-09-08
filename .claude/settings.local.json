@@ -4,7 +4,10 @@
     "allow": [
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)"
     ],
     "deny": []
   }
