@@ -61,11 +61,10 @@ def test_database_extensions():
     print("\n=== POSTGRESQL EXTENSIONS TEST ===")
 
     try:
-        from sqlalchemy import text
-
         from etl_pipeline.core.config import get_config
         from etl_pipeline.core.database import (get_db_session,
                                                 initialize_database)
+        from sqlalchemy import text
 
         config = get_config()
         initialize_database(config.database)

@@ -18,9 +18,6 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-
 # Import models from both systems to validate compatibility
 from database_models import Narrative as LegacyNarrative
 from etl_pipeline.clustering.clust2_segment_narratives import \
@@ -28,6 +25,8 @@ from etl_pipeline.clustering.clust2_segment_narratives import \
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
 from etl_pipeline.core.database.models import NarrativeMetrics, NarrativeNSF1
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 
 class TestParentChildMigration:

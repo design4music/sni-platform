@@ -35,11 +35,10 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 # Configure logging
 logging.basicConfig(

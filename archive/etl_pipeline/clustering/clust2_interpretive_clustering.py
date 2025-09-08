@@ -33,11 +33,10 @@ if sys.platform.startswith("win"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
-from sqlalchemy import text
-
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
 from etl_pipeline.core.llm_client import get_llm_client
+from sqlalchemy import text
 
 
 class CLUST2InterpretiveClustering:

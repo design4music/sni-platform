@@ -5,10 +5,9 @@ import sys
 
 sys.path.append(".")
 
-from sqlalchemy import text
-
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
+from sqlalchemy import text
 
 
 def main():

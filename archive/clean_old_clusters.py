@@ -11,7 +11,6 @@ import sys
 sys.path.append(".")
 
 import psycopg2
-
 from etl_pipeline.core.config import get_config
 
 

@@ -14,6 +14,8 @@ from uuid import UUID, uuid4
 
 import redis.asyncio as redis
 from cachetools import TTLCache
+# Import centralized config
+from etl_pipeline.core.config import get_config
 from fastapi import (BackgroundTasks, Body, Depends, FastAPI, HTTPException,
                      Path, Query, WebSocket, WebSocketDisconnect, status)
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,9 +28,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
-
-# Import centralized config
-from etl_pipeline.core.config import get_config
 
 # ============================================================================
 # CONFIGURATION AND SETUP

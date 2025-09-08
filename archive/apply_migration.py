@@ -2,10 +2,9 @@
 """
 Apply database migration for parent/child narratives
 """
-from sqlalchemy import text
-
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
+from sqlalchemy import text
 
 
 def apply_migration():

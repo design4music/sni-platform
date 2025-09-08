@@ -18,13 +18,12 @@ from typing import Dict, List, Optional, Tuple
 import feedparser
 import requests
 from dateutil import parser as date_parser
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
 from etl_pipeline.core.database.models import (Article, FeedType, LanguageCode,
                                                NewsFeed)
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 # Configure logging
 logging.basicConfig(
