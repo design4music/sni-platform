@@ -1,10 +1,10 @@
 """
 CLUST-001: Strategic Gate Filtering
-Simplified actor-based filtering with fast string matching
+Multi-vocabulary filtering with go/stop lists
 
 Logic:
-- Keep if: actor alias match (geopolitical entities, strategic actors)
-- No domain exclusions (all feeds are curated strategic sources)
+- STOP lists override GO lists (stop_culture.csv beats everything)
+- GO lists: actors.csv, go_people.csv, go_taxonomy.csv (when ready) → strategic
 - Fast word-boundary matching for Latin/Cyrillic, substring for CJK/Thai
 """
 
@@ -13,7 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from apps.clust1.actor_extractor import create_actor_extractor
+from apps.clust1.taxonomy_extractor import \
+    create_multi_vocab_taxonomy_extractor
 from core.config import get_config
 
 
@@ -22,61 +23,75 @@ class GateResult:
     """Result of strategic gate filtering with telemetry"""
 
     keep: bool
-    score: float  # 0.99 for actor_hit, 0.0 for no match
-    reason: str  # "actor_hit" | "no_actor"
+    score: float  # 0.99 for strategic_hit, 0.0 for no match
+    reason: str  # "strategic_hit" | "blocked_by_stop" | "no_strategic"
     anchor_labels: List[str]  # empty (legacy field)
     anchor_scores: List[tuple[str, float]]  # empty (legacy field)
-    actor_hit: Optional[str] = None  # canonical actor code (e.g., "US")
+    actor_hit: Optional[str] = None  # matching entity_id from any go list
 
 
 class StrategicGate:
-    """Strategic Gate Filter - determines if headlines have strategic relevance"""
+    """Strategic Gate Filter with multi-vocabulary go/stop list logic"""
 
     def __init__(self):
         self.config = get_config()
         self._validate_config()
 
-        # Load actor vocabulary only
+        # Load multi-vocabulary taxonomy extractor
         try:
-            self._actor_extractor = create_actor_extractor()
+            self._taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
         except Exception as e:
-            raise RuntimeError(f"Failed to load actor vocabulary: {e}")
+            raise RuntimeError(f"Failed to load taxonomy vocabularies: {e}")
 
     def _validate_config(self):
         """Validate required config parameters exist"""
-        required_attrs = ["actors_csv_path"]
+        required_attrs = [
+            "actors_csv_path",
+            "go_people_csv_path",
+            "stop_culture_csv_path",
+        ]
         for attr in required_attrs:
             if not hasattr(self.config, attr):
                 raise ValueError(f"Missing required config parameter: {attr}")
 
     def filter_title(self, title_text: str) -> GateResult:
         """
-        Apply strategic gate filtering to a single title.
+        Apply strategic gate filtering with go/stop list precedence.
 
         Args:
             title_text: The title text to evaluate (will be normalized)
 
         Returns:
             GateResult with filtering decision and telemetry
+
+        Logic:
+        1. If stop_culture.csv matches → NON-strategic (stop overrides all)
+        2. If actors.csv OR go_people.csv OR go_taxonomy.csv match → STRATEGIC
+        3. No matches → NON-strategic
         """
         if not title_text:
-            return GateResult(False, 0.0, "no_actor", [], [])
+            return GateResult(False, 0.0, "no_strategic", [], [])
 
-        # Check for actor matches (fast path)
-        actor_hit = self._actor_extractor.first_hit(title_text)
-        if actor_hit:
+        # Use enhanced multi-vocabulary logic
+        strategic_hit = self._taxonomy_extractor.strategic_first_hit(title_text)
+
+        if strategic_hit:
             return GateResult(
                 keep=True,
-                score=0.99,  # Fixed score for actor hits
-                reason="actor_hit",
-                anchor_labels=[],  # No longer used
-                anchor_scores=[],  # No longer used
-                actor_hit=actor_hit,
+                score=0.99,
+                reason="strategic_hit",
+                anchor_labels=[],  # Legacy field
+                anchor_scores=[],  # Legacy field
+                actor_hit=strategic_hit,
             )
 
-        # No actor found
+        # No strategic content found (either blocked by stop list or no matches)
         return GateResult(
-            keep=False, score=0.0, reason="no_actor", anchor_labels=[], anchor_scores=[]
+            keep=False,
+            score=0.0,
+            reason="no_strategic",
+            anchor_labels=[],
+            anchor_scores=[],
         )
 
 

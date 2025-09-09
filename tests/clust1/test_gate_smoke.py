@@ -22,12 +22,18 @@ class TestStrategicGateSmoke:
         validation = validate_vocabularies()
 
         assert validation["actors_file_exists"], "actors.csv file missing"
+        assert validation["go_people_file_exists"], "go_people.csv file missing"
+        assert validation["stop_culture_file_exists"], "stop_culture.csv file missing"
         assert validation["actors_count"] > 0, "No actors loaded"
+        assert validation["go_people_count"] > 0, "No people loaded"
+        assert validation["stop_culture_count"] > 0, "No stop culture phrases loaded"
         assert (
             len(validation["errors"]) == 0
         ), f"Vocabulary errors: {validation['errors']}"
 
-        print(f"[PASS] Loaded {validation['actors_count']} actors")
+        print(
+            f"[PASS] Loaded {validation['actors_count']} actors, {validation['go_people_count']} people, {validation['stop_culture_count']} stop phrases"
+        )
 
     def test_actor_hit_eu_sanctions(self, gate):
         """Test actor hit - EU sanctions (hits EU actor)"""
@@ -36,7 +42,7 @@ class TestStrategicGateSmoke:
         )
 
         assert result.keep is True
-        assert result.reason == "actor_hit"
+        assert result.reason == "strategic_hit"
         assert result.score == 0.99
         assert result.actor_hit in ["EU", "IR"]  # Should hit EU or Iran actor
 
@@ -47,7 +53,7 @@ class TestStrategicGateSmoke:
         result = gate.filter_title("Beijing warns against Taiwan independence moves")
 
         assert result.keep is True
-        assert result.reason == "actor_hit"
+        assert result.reason == "strategic_hit"
         assert result.score == 0.99
         assert result.actor_hit in ["CN", "China"]  # Could be mapped to either
 
@@ -58,7 +64,7 @@ class TestStrategicGateSmoke:
         result = gate.filter_title("Barcelona defeats Real Madrid 3-1 in El Clasico")
 
         assert result.keep is True
-        assert result.reason == "actor_hit"  # Madrid matches Spain actor
+        assert result.reason == "strategic_hit"  # Madrid matches Spain actor
         assert result.score == 0.99
         assert result.actor_hit == "ES"  # Spain actor
 
@@ -69,7 +75,7 @@ class TestStrategicGateSmoke:
         result = gate.filter_title("Team Alpha defeats Team Beta in championship match")
 
         assert result.keep is False
-        assert result.reason == "no_actor"
+        assert result.reason == "no_strategic"
         assert result.score == 0.0
 
         print(f"[PASS] Sports no actor: score={result.score}")
@@ -80,7 +86,7 @@ class TestStrategicGateSmoke:
 
         # Should hit actor (Russia)
         assert result.keep is True
-        assert result.reason == "actor_hit"
+        assert result.reason == "strategic_hit"
 
         print(f"[PASS] Russian text: reason={result.reason}, actor={result.actor_hit}")
 
@@ -90,7 +96,7 @@ class TestStrategicGateSmoke:
 
         # Should hit actor (China/中国)
         assert result.keep is True
-        assert result.reason == "actor_hit"
+        assert result.reason == "strategic_hit"
         # Chinese aliases use substring matching, not word boundaries
 
         print(f"[PASS] Chinese text: reason={result.reason}, actor={result.actor_hit}")
@@ -101,7 +107,7 @@ class TestStrategicGateSmoke:
 
         # Should not hit any actors
         assert result.keep is False
-        assert result.reason == "no_actor"
+        assert result.reason == "no_strategic"
         assert result.score == 0.0
 
         print(f"[PASS] Non-strategic content: reason={result.reason}")
@@ -134,19 +140,19 @@ class TestStrategicGateSmoke:
         # Check specific results
         eu_title, eu_result = results[0]
         assert eu_result.keep is True
-        assert eu_result.reason == "actor_hit"  # EU or Iran actor hit
+        assert eu_result.reason == "strategic_hit"  # EU or Iran actor hit
 
         beijing_title, beijing_result = results[1]
         assert beijing_result.keep is True
-        assert beijing_result.reason == "actor_hit"
+        assert beijing_result.reason == "strategic_hit"
 
         sports_title, sports_result = results[2]
         assert sports_result.keep is False
-        assert sports_result.reason == "no_actor"
+        assert sports_result.reason == "no_strategic"
 
         russia_title, russia_result = results[3]
         assert russia_result.keep is True
-        assert russia_result.reason == "actor_hit"  # Russia actor
+        assert russia_result.reason == "strategic_hit"  # Russia actor
 
         empty_title, empty_result = results[4]
         assert empty_result.keep is False
@@ -178,9 +184,62 @@ class TestStrategicGateSmoke:
         for title, should_match in true_positives:
             result = gate.filter_title(title)
             assert result.keep is True, f"Should match: '{title}'"
-            assert result.reason == "actor_hit"
+            assert result.reason == "strategic_hit"
 
         print("[PASS] Word boundary precision working")
+
+    def test_go_people_list(self, gate):
+        """Test go_people.csv matches mark content as strategic"""
+        # Test major political figures from go_people.csv
+        test_cases = [
+            "Donald Trump announces new policy initiative",
+            "Xi Jinping meets with European leaders",
+            "Putin addresses the nation on security matters",
+            "Elon Musk announces Tesla expansion plans",
+        ]
+
+        for title in test_cases:
+            result = gate.filter_title(title)
+            assert result.keep is True, f"Should be strategic: '{title}'"
+            assert result.reason == "strategic_hit"
+            assert result.score == 0.99
+
+        print("[PASS] Go people list working correctly")
+
+    def test_stop_culture_blocks_strategic(self, gate):
+        """Test stop_culture.csv blocks strategic content"""
+        # These should be blocked by stop_culture.csv even though they contain strategic actors
+        stop_cases = [
+            "Italy wins Eurovision song contest finale",  # "finale" in stop_culture
+            "France leads fashion week trends in Paris",  # "fashion" in stop_culture
+            "US team wins Olympic gold medal",  # "olympic" in stop_culture
+            "German coach announces new football strategy",  # "coach", "football" in stop_culture
+        ]
+
+        for title in stop_cases:
+            result = gate.filter_title(title)
+            assert result.keep is False, f"Should be blocked by stop list: '{title}'"
+            assert result.reason == "no_strategic"
+            assert result.score == 0.0
+
+        print("[PASS] Stop culture list blocking correctly")
+
+    def test_pure_strategic_no_stop(self, gate):
+        """Test strategic content without stop words remains strategic"""
+        strategic_cases = [
+            "Italy announces new EU trade policy",
+            "France condemns Russian military actions",
+            "United States imposes sanctions on Iranian officials",
+            "Germany supports NATO expansion plans",
+        ]
+
+        for title in strategic_cases:
+            result = gate.filter_title(title)
+            assert result.keep is True, f"Should remain strategic: '{title}'"
+            assert result.reason == "strategic_hit"
+            assert result.score == 0.99
+
+        print("[PASS] Pure strategic content working correctly")
 
 
 if __name__ == "__main__":
@@ -202,6 +261,9 @@ if __name__ == "__main__":
         test_instance.test_edge_case_empty_text(gate)
         test_instance.test_batch_processing(gate)
         test_instance.test_actor_boundary_precision(gate)
+        test_instance.test_go_people_list(gate)
+        test_instance.test_stop_culture_blocks_strategic(gate)
+        test_instance.test_pure_strategic_no_stop(gate)
 
         print("\n" + "=" * 50)
         print("[PASS] ALL SMOKE TESTS PASSED")

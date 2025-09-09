@@ -44,10 +44,27 @@ class SNIConfig(BaseSettings):
     # Strategic gate vocabulary paths
     actors_csv_path: str = Field(default="data/actors.csv", env="ACTORS_CSV_PATH")
 
+    # Multi-list strategic filtering (go/stop lists)
+    go_people_csv_path: str = Field(
+        default="data/go_people.csv", env="GO_PEOPLE_CSV_PATH"
+    )
+    stop_culture_csv_path: str = Field(
+        default="data/stop_culture.csv", env="STOP_CULTURE_CSV_PATH"
+    )
+    go_taxonomy_csv_path: str = Field(
+        default="data/go_taxonomy.csv", env="GO_TAXONOMY_CSV_PATH"
+    )
+
+    # Processing time windows (unified across all phases)
+    # This setting controls how far back to look for titles in all processing phases:
+    # - CLUST-1 Strategic Gate (when processing pending titles)
+    # - CLUST-2 Big-Bucket Grouping (when creating clusters)
+    # - Future processing phases should use this same window for consistency
+    processing_window_hours: int = Field(default=72, env="PROCESSING_WINDOW_HOURS")
+
     # CLUST-2 Bucket configuration
     bucket_max_span_hours: int = Field(default=72, env="BUCKET_MAX_SPAN_HOURS")
-    bucket_min_size: int = Field(default=3, env="BUCKET_MIN_SIZE")
-    bucket_since_hours: int = Field(default=72, env="BUCKET_SINCE_HOURS")
+    bucket_min_size: int = Field(default=1, env="BUCKET_MIN_SIZE")
     bucket_max_actors: int = Field(default=4, env="BUCKET_MAX_ACTORS")
 
     # Ingestion

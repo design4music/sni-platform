@@ -7,7 +7,12 @@
       "Bash(taskkill:*)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)"
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\data/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\docs\\tickets/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\data/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\data/**)",
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\core/**)"
     ],
     "deny": []
   }
