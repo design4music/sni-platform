@@ -1,0 +1,62 @@
+ Key Architectural Decisions to Discuss:
+
+  1. Bucket Processing Strategy
+
+  - Order: Newest first? Largest first? Most strategic actors? 
+++ It really doesn't matter.
+  - Batching: How many buckets per LLM call?
+++ I don't know what is possible technically. Maybe we can grab many small buckets at once?
+  - Cross-bucket: How aggressively should we merge across buckets?
+++ This is really an "intelligence" work in a true sense. "Very aggressively" if it makes sense :)
+
+  2. LLM Prompt Design
+
+  - Event Family Detection: What criteria for "same story"?
+++ Shared actors (but intelligent way, e.g. mechanically "Lavrov" and "Russia" are two diff actors/buckets but the LLM hopefully can see them as the same actor)
+++ Shared time window defined intellegently again (LLM should be able to recognize that two titles belong to the same flow of events)
+++ Shared mechanism/Action (we dropped "mechanism" as a clustering method but the concept is valid. LLM can understand that the titles describe the same "acton" even if in diff words (and languages))
+++ Shared Geography (regional aspect is also fluid, can be as wide as South Eastern Asia or as narrow as Kurskaja Oblast. LLM should understand)
+++ So "same story" is a Story describing same Action of the same actors in the same geography/time window -- all understood interpretatively or intelligently!
+  - Framed Narrative: How detailed should stance analysis be?
+++ We will callibrate, I don't know yet. The idea was to add 1-2 sentences, so not detailed. But let's look at the Output. It's important that FN gives clear Framing distilled from the source titles.
+  - Evidence Requirements: How strict on headline citations?
+++ I am tempted to give LLM a bit of freedom here but we Need to be careful. Let's callibrate. Make it very strict first.
+
+  3. Database Design
+
+  - Event Family Fields: What metadata to capture?
+++ I don't know. We have the table. Let's discuss if we absolutely Need to add anything.
+  - Framed Narrative Structure: How to store stance/framing data?
+++ We have "narratives" table. 
+  - Relationships: Link back to original buckets/titles?
+++ It is super-important to link each FN to all its articles (or the other way around). Basically, in the UI we should be able to Show links to every article under each FN. If EF has more than one FN, the sum of articles under each FN should give all articles related to this EF. Buckets are purely technical shortcut.I am thinking to even drop them entirely. They definitely don't have any value for end user.
+
+  4. Quality Controls
+
+  - Validation Rules: What makes a good EF vs poor EF?
+++ EF should answer "who" did "what", "where", maybe "when". While FN answers "why" (according to the sources claims)
+  - Confidence Thresholds: When to accept/reject LLM output?
+++ This I can't answer. Don't know, don't understand the Question.
+  - Human Review: What flagging for manual review?
+++ Let's leave it for now. Once we have a corpus of EFs and FNs I might develop ideas. Right now it's a bit too early.
+
+  5. Processing Scale
+
+  - Batch Size: How many titles per LLM context window?
+++ As many as possible, I don't know. But you processed 100 titles in one go, just fine. 
+  - Rate Limiting: DeepSeek API constraints?
+++ I don't know about it. We should be fine since we only analyse titles. We can pause between 1000s? I don't know, tell me the options.
+  - Error Handling: Retry logic, partial failures?
+++ Tell me options
+
+  ---
+  Questions for you:
+
+  1. Priority order - Which phases should we tackle first?
+++ everything :)
+  2. Scope - Start simple with single-bucket EFs, or go full cross-bucket from day 1?
+++ "single-bucket EFs" make Little sense. Go full cross-bucket from day 1!
+  3. Quality vs Speed - More LLM calls for higher quality, or efficient batch processing?
+++ We might want to calibrate, no idea. Quality is critical. 
+  4. Integration - Should GEN-1 run automatically after CLUST-2, or manually triggered?
+++ eventually everything runs automatically as one Pipeline (cron)
