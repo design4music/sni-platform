@@ -184,6 +184,30 @@ python scripts/check_status.py
 
 ## 🛠️ Development
 
+### Process Rules - Better Development Workflow
+
+Follow these rules to prevent rushing into implementation without proper planning:
+
+1. **Architecture First**: Always create a comprehensive architectural plan before building
+   - Document the plan in `docs/tickets/` for review
+   - Break complex features into phases and steps
+   - Get architectural approval before implementation
+
+2. **Check Existing Software Landscape**: Before building anything new, audit what already exists
+   - Review existing apps, core modules, and utilities
+   - Check for similar patterns or components that can be reused
+   - Map how new work fits into the existing codebase architecture
+
+3. **Complete Functional Blocks**: Build complete, testable functional units rather than incremental pieces
+   - Finish entire features or phases before moving to the next
+   - Include proper error handling and logging
+   - Test end-to-end functionality
+
+4. **Stay Strategic**: Focus on high-level architectural decisions rather than getting lost in technical details
+   - Prioritize system design over implementation specifics
+   - Maintain awareness of how components interact
+   - Document design decisions and trade-offs
+
 ### Adding New Languages
 
 1. Install spaCy model: `python -m spacy download {lang}_core_news_sm`
