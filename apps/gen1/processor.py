@@ -10,7 +10,7 @@ from loguru import logger
 
 from apps.gen1.database import get_gen1_database
 from apps.gen1.llm_client import get_gen1_llm_client
-from apps.gen1.models import (BucketContext, EventFamily, FramedNarrative,
+from apps.gen1.models import (EventFamily, FramedNarrative,
                               LLMEventFamilyRequest, LLMEventFamilyResponse,
                               LLMFramedNarrativeRequest,
                               LLMFramedNarrativeResponse, ProcessingResult)
@@ -23,8 +23,8 @@ class Gen1Processor:
     Core GEN-1 processor for Event Family assembly and Framed Narrative generation
 
     Orchestrates the complete pipeline:
-    1. Load CLUST-2 buckets as processing hints
-    2. Use LLM to assemble Event Families with cross-bucket intelligence
+    1. Load strategic titles for direct processing
+    2. Use LLM to assemble Event Families from title clusters
     3. Generate Framed Narratives for each Event Family
     4. Save results to database with quality tracking
     """
@@ -36,7 +36,6 @@ class Gen1Processor:
         self.validator = get_gen1_validator()
 
         # Processing configuration
-        self.max_buckets_per_batch = 10
         self.max_event_families_per_batch = 8
         self.max_narratives_per_event = 3
 
@@ -206,175 +205,6 @@ class Gen1Processor:
                 errors=[f"Processing failed: {e}"],
                 warnings=[],
             )
-
-    async def process_event_families(
-        self,
-        since_hours: int = 72,
-        min_bucket_size: int = 2,
-        max_buckets: Optional[int] = None,
-        dry_run: bool = False,
-    ) -> ProcessingResult:
-        """
-        Main processing pipeline for Event Family assembly
-
-        Args:
-            since_hours: How far back to look for buckets
-            min_bucket_size: Minimum titles per bucket to process
-            max_buckets: Maximum buckets to process (None for all)
-            dry_run: If True, don't save results to database
-
-        Returns:
-            ProcessingResult with metrics and artifacts
-        """
-        start_time = datetime.now()
-        logger.info(
-            "Starting GEN-1 Event Family processing",
-            since_hours=since_hours,
-            min_size=min_bucket_size,
-            max_buckets=max_buckets,
-            dry_run=dry_run,
-        )
-
-        try:
-            # Phase 1: Load CLUST-2 buckets for processing
-            buckets = self.db.get_active_buckets(
-                since_hours=since_hours,
-                min_bucket_size=min_bucket_size,
-                limit=max_buckets,
-                order_by="newest_first",
-            )
-
-            if not buckets:
-                logger.warning("No active buckets found for processing")
-                return ProcessingResult(
-                    processed_buckets=[],
-                    total_titles_processed=0,
-                    event_families=[],
-                    framed_narratives=[],
-                    success_rate=1.0,
-                    processing_time_seconds=0,
-                    errors=[],
-                    warnings=["No buckets available for processing"],
-                )
-
-            logger.info(f"Loaded {len(buckets)} buckets for processing")
-
-            # Phase 2: Batch process buckets into Event Families
-            event_families = []
-            processed_bucket_ids = []
-            total_titles = sum(bucket.title_count for bucket in buckets)
-            errors = []
-            warnings = []
-
-            # Process buckets in batches to manage LLM context limits
-            for i in range(0, len(buckets), self.max_buckets_per_batch):
-                batch_buckets = buckets[i : i + self.max_buckets_per_batch]
-
-                try:
-                    batch_efs = await self._process_bucket_batch(batch_buckets)
-                    event_families.extend(batch_efs)
-                    processed_bucket_ids.extend([b.bucket_id for b in batch_buckets])
-
-                    logger.info(
-                        f"Batch {i//self.max_buckets_per_batch + 1} completed: "
-                        f"{len(batch_efs)} Event Families from {len(batch_buckets)} buckets"
-                    )
-
-                except Exception as e:
-                    error_msg = f"Batch processing failed: {e}"
-                    logger.error(error_msg)
-                    errors.append(error_msg)
-
-            # Phase 3: Generate Framed Narratives for Event Families
-            framed_narratives = []
-            for event_family in event_families:
-                try:
-                    narratives = await self._generate_framed_narratives(event_family)
-                    framed_narratives.extend(narratives)
-                except Exception as e:
-                    error_msg = (
-                        f"Narrative generation failed for EF {event_family.id}: {e}"
-                    )
-                    logger.error(error_msg)
-                    errors.append(error_msg)
-
-            # Phase 4: Validate results
-            validation_result = self.validator.validate_processing_result(
-                event_families, framed_narratives
-            )
-
-            if validation_result["overall"]["quality_score"] < 0.5:
-                warnings.append(
-                    f"Low quality score: {validation_result['overall']['quality_score']:.2f}"
-                )
-
-            # Phase 5: Save results to database (unless dry run)
-            if not dry_run:
-                await self._save_results(event_families, framed_narratives)
-
-            # Calculate metrics
-            end_time = datetime.now()
-            processing_time = (end_time - start_time).total_seconds()
-            success_rate = (len(event_families) / len(buckets)) if buckets else 1.0
-
-            result = ProcessingResult(
-                processed_buckets=processed_bucket_ids,
-                total_titles_processed=total_titles,
-                event_families=event_families,
-                framed_narratives=framed_narratives,
-                success_rate=success_rate,
-                processing_time_seconds=processing_time,
-                errors=errors,
-                warnings=warnings,
-            )
-
-            logger.info(f"GEN-1 processing completed: {result.summary}")
-            return result
-
-        except Exception as e:
-            logger.error(f"GEN-1 processing failed: {e}")
-            raise
-
-    async def _process_bucket_batch(
-        self, buckets: List[BucketContext]
-    ) -> List[EventFamily]:
-        """
-        Process a batch of buckets into Event Families using LLM
-
-        Args:
-            buckets: List of bucket contexts to process
-
-        Returns:
-            List of assembled Event Families
-        """
-        try:
-            # Build LLM request with processing instructions
-            request = LLMEventFamilyRequest(
-                buckets=buckets,
-                processing_instructions=self._get_event_family_instructions(),
-                max_event_families=self.max_event_families_per_batch,
-            )
-
-            # Call LLM for Event Family assembly
-            response = await self.llm.assemble_event_families(request)
-
-            # Convert LLM response to EventFamily objects
-            event_families = []
-            for ef_data in response.event_families:
-                event_family = await self._create_event_family_from_llm(
-                    ef_data, buckets
-                )
-                event_families.append(event_family)
-
-            logger.debug(
-                f"LLM assembled {len(event_families)} Event Families from {len(buckets)} buckets"
-            )
-
-            return event_families
-
-        except Exception as e:
-            logger.error(f"Bucket batch processing failed: {e}")
-            return []
 
     async def _generate_framed_narratives(
         self, event_family: EventFamily
@@ -586,36 +416,6 @@ class Gen1Processor:
             logger.error(f"Framed Narrative creation failed: {e}")
             return None
 
-    async def _create_event_family_from_llm(
-        self, ef_data: Dict[str, Any], buckets: List[BucketContext]
-    ) -> EventFamily:
-        """Convert LLM response data to EventFamily object"""
-
-        # Parse timestamps
-        event_start = datetime.fromisoformat(
-            ef_data["event_start"].replace("Z", "+00:00")
-        )
-        event_end = None
-        if ef_data.get("event_end"):
-            event_end = datetime.fromisoformat(
-                ef_data["event_end"].replace("Z", "+00:00")
-            )
-
-        return EventFamily(
-            title=ef_data["title"],
-            summary=ef_data["summary"],
-            key_actors=ef_data.get("key_actors", []),
-            event_type=ef_data["event_type"],
-            geography=ef_data.get("geography"),
-            event_start=event_start,
-            event_end=event_end,
-            source_bucket_ids=[
-                str(bid) for bid in ef_data.get("source_bucket_ids", [])
-            ],
-            source_title_ids=[str(tid) for tid in ef_data.get("source_title_ids", [])],
-            confidence_score=ef_data.get("confidence_score", 0.5),
-            coherence_reason=ef_data["coherence_reason"],
-        )
 
     async def _create_framed_narrative_from_llm(
         self, fn_data: Dict[str, Any], event_family_id: str
@@ -654,7 +454,7 @@ class Gen1Processor:
                 query = f"""
                 SELECT 
                     id, title_display as text, url_gnews as url, publisher_name as source_name, pubdate_utc, 
-                    lang as lang_code, entities as extracted_actors, entities as extracted_taxonomy
+                    detected_language as lang_code, entities as extracted_actors, entities as extracted_taxonomy
                 FROM titles 
                 WHERE id::text IN ({placeholders})
                 ORDER BY pubdate_utc DESC
@@ -779,7 +579,6 @@ NARRATIVE QUALITY:
 
             # Add configuration info
             stats["config"] = {
-                "max_buckets_per_batch": self.max_buckets_per_batch,
                 "max_event_families_per_batch": self.max_event_families_per_batch,
                 "max_narratives_per_event": self.max_narratives_per_event,
             }

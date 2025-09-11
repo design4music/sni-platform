@@ -41,7 +41,6 @@ def reset_to_pending():
                 gate_keep = NULL,
                 gate_reason = NULL,
                 gate_score = NULL,
-                gate_anchor_labels = NULL,
                 gate_actor_hit = NULL,
                 gate_at = NULL
             WHERE processing_status = 'gated'
