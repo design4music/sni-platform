@@ -3,20 +3,14 @@ GEN-1 LLM Client
 Specialized LLM interactions for Event Family assembly and Framed Narrative generation
 """
 
-import asyncio
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from loguru import logger
 
-from apps.gen1.models import (
-    BucketContext,
-    EventFamily,
-    LLMEventFamilyRequest,
-    LLMEventFamilyResponse,
-    LLMFramedNarrativeRequest,
-    LLMFramedNarrativeResponse,
-)
+from apps.gen1.models import (LLMEventFamilyRequest, LLMEventFamilyResponse,
+                              LLMFramedNarrativeRequest,
+                              LLMFramedNarrativeResponse)
 from core.config import get_config
 
 
@@ -134,10 +128,10 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
     ) -> LLMEventFamilyResponse:
         """
         Use LLM to assemble Event Families from bucket contexts
-        
+
         Args:
             request: Event Family assembly request with bucket contexts
-            
+
         Returns:
             LLM response with Event Families and reasoning
         """
@@ -165,10 +159,10 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
     ) -> LLMEventFamilyResponse:
         """
         Phase 2: Assemble Event Families directly from titles (no buckets)
-        
+
         Args:
             request: Event Family assembly request with title contexts
-            
+
         Returns:
             LLM response with Event Families and reasoning
         """
@@ -196,10 +190,10 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
     ) -> LLMFramedNarrativeResponse:
         """
         Use LLM to generate Framed Narratives for an Event Family
-        
+
         Args:
             request: Framed Narrative generation request
-            
+
         Returns:
             LLM response with Framed Narratives and analysis
         """
@@ -233,13 +227,15 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
 
         # Add bucket information
         for i, bucket in enumerate(request.buckets, 1):
-            prompt_parts.extend([
-                f"Bucket {i}: {bucket.bucket_key} ({bucket.title_count} titles)",
-                f"  Actors: {', '.join(bucket.actor_codes)}",
-                f"  Time span: {bucket.time_span_hours:.1f} hours",
-                f"  Window: {bucket.time_window_start} to {bucket.time_window_end}",
-                "  Headlines:",
-            ])
+            prompt_parts.extend(
+                [
+                    f"Bucket {i}: {bucket.bucket_key} ({bucket.title_count} titles)",
+                    f"  Actors: {', '.join(bucket.actor_codes)}",
+                    f"  Time span: {bucket.time_span_hours:.1f} hours",
+                    f"  Window: {bucket.time_window_start} to {bucket.time_window_end}",
+                    "  Headlines:",
+                ]
+            )
 
             for title in bucket.titles:
                 prompt_parts.append(f"    - {title.get('text', 'N/A')}")
@@ -247,14 +243,15 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             prompt_parts.append("")
 
         # Add processing instructions
-        prompt_parts.extend([
-            "INSTRUCTIONS:",
-            request.processing_instructions,
-            "",
-            f"Maximum Event Families to create: {request.max_event_families}",
-            "",
-            "RESPONSE FORMAT (JSON):",
-            """{
+        prompt_parts.extend(
+            [
+                "INSTRUCTIONS:",
+                request.processing_instructions,
+                "",
+                f"Maximum Event Families to create: {request.max_event_families}",
+                "",
+                "RESPONSE FORMAT (JSON):",
+                """{
   "event_families": [
     {
       "title": "Clear event title",
@@ -274,13 +271,12 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
   "confidence": 0.8,
   "warnings": ["Any concerns or limitations"]
 }""",
-        ])
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
-    def _build_framed_narrative_prompt(
-        self, request: LLMFramedNarrativeRequest
-    ) -> str:
+    def _build_framed_narrative_prompt(self, request: LLMFramedNarrativeRequest) -> str:
         """Build comprehensive prompt for Framed Narrative generation"""
 
         ef = request.event_family
@@ -300,17 +296,20 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
 
         # Add title contexts
         for title in request.titles_context:
-            prompt_parts.append(f"  - {title.get('text', 'N/A')} [{title.get('source', 'Unknown')}]")
+            prompt_parts.append(
+                f"  - {title.get('text', 'N/A')} [{title.get('source', 'Unknown')}]"
+            )
 
-        prompt_parts.extend([
-            "",
-            "INSTRUCTIONS:",
-            request.framing_instructions,
-            "",
-            f"Maximum Framed Narratives to create: {request.max_narratives}",
-            "",
-            "RESPONSE FORMAT (JSON):",
-            """{
+        prompt_parts.extend(
+            [
+                "",
+                "INSTRUCTIONS:",
+                request.framing_instructions,
+                "",
+                f"Maximum Framed Narratives to create: {request.max_narratives}",
+                "",
+                "RESPONSE FORMAT (JSON):",
+                """{
   "framed_narratives": [
     {
       "frame_type": "Type of framing (supportive/critical/neutral/etc)",
@@ -327,7 +326,8 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
   "confidence": 0.8,
   "dominant_frames": ["frame1", "frame2"]
 }""",
-        ])
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -341,47 +341,51 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
         ]
 
         # Add title information directly (no buckets)
-        titles_context = getattr(request, 'title_context', [])
+        titles_context = getattr(request, "title_context", [])
         for i, title in enumerate(titles_context, 1):
-            prompt_parts.extend([
-                f"Title {i}: {title.get('text', 'N/A')}",
-                f"  ID: {title.get('id', 'N/A')}",
-                f"  Source: {title.get('source', 'Unknown')}",
-                f"  Date: {title.get('pubdate_utc', 'Unknown')}",
-                f"  Language: {title.get('language', 'Unknown')}",
-                f"  Gate Actors: {title.get('gate_actors', 'None')}",
-                "",
-            ])
+            prompt_parts.extend(
+                [
+                    f"Title {i}: {title.get('text', 'N/A')}",
+                    f"  ID: {title.get('id', 'N/A')}",
+                    f"  Source: {title.get('source', 'Unknown')}",
+                    f"  Date: {title.get('pubdate_utc', 'Unknown')}",
+                    f"  Language: {title.get('language', 'Unknown')}",
+                    f"  Gate Actors: {title.get('gate_actors', 'None')}",
+                    "",
+                ]
+            )
 
         # Add processing instructions
-        prompt_parts.extend([
-            "INSTRUCTIONS:",
-            request.processing_instructions,
-            "",
-            f"Maximum Event Families to create: {request.max_event_families}",
-            "",
-            "RESPONSE FORMAT (JSON):",
-            "{",
-            '  "event_families": [',
-            "    {",
-            '      "title": "Clear event title",',
-            '      "summary": "Factual summary",',
-            '      "key_actors": ["actor1"],',
-            '      "event_type": "Type",',
-            '      "geography": "Location",',
-            '      "event_start": "2024-01-01T12:00:00Z",',
-            '      "event_end": "2024-01-01T18:00:00Z",',
-            '      "source_bucket_ids": [],',
-            '      "source_title_ids": ["title_id1"],',
-            '      "confidence_score": 0.85,',
-            '      "coherence_reason": "Why coherent"',
-            "    }",
-            "  ],",
-            '  "processing_reasoning": "Overall reasoning",',
-            '  "confidence": 0.8,',
-            '  "warnings": []',
-            "}"
-        ])
+        prompt_parts.extend(
+            [
+                "INSTRUCTIONS:",
+                request.processing_instructions,
+                "",
+                f"Maximum Event Families to create: {request.max_event_families}",
+                "",
+                "RESPONSE FORMAT (JSON):",
+                "{",
+                '  "event_families": [',
+                "    {",
+                '      "title": "Clear event title",',
+                '      "summary": "Factual summary",',
+                '      "key_actors": ["actor1"],',
+                '      "event_type": "Type",',
+                '      "geography": "Location",',
+                '      "event_start": "2024-01-01T12:00:00Z",',
+                '      "event_end": "2024-01-01T18:00:00Z",',
+                '      "source_bucket_ids": [],',
+                '      "source_title_ids": ["title_id1"],',
+                '      "confidence_score": 0.85,',
+                '      "coherence_reason": "Why coherent"',
+                "    }",
+                "  ],",
+                '  "processing_reasoning": "Overall reasoning",',
+                '  "confidence": 0.8,',
+                '  "warnings": []',
+                "}",
+            ]
+        )
 
         return "\n".join(prompt_parts)
 
@@ -412,7 +416,7 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             )
 
             logger.debug(
-                f"LLM call successful",
+                "LLM call successful",
                 prompt_length=len(user_prompt),
                 response_length=len(response),
             )
@@ -423,7 +427,9 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             logger.error(f"LLM call failed: {e}")
             raise
 
-    def _parse_event_family_response(self, response_text: str) -> LLMEventFamilyResponse:
+    def _parse_event_family_response(
+        self, response_text: str
+    ) -> LLMEventFamilyResponse:
         """Parse and validate Event Family response from LLM"""
         try:
             # Extract JSON from response

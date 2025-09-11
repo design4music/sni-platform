@@ -122,3 +122,8 @@ def filter_titles_batch(
         results.append((title, result))
 
     return results
+
+
+def get_strategic_gate_service() -> StrategicGate:
+    """Factory function to get strategic gate service."""
+    return StrategicGate()

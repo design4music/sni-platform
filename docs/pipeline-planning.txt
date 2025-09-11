@@ -1,0 +1,45 @@
+## Next Phase Planning                                                                                                        
+### Phase 2B: Cleanup                                                                                                         
+- Remove deprecated bucket tables                                                
+- Archive legacy clustering scripts                                                                                           
+- Update configuration for bucketless operation                                              
+### Phase 2C: Optimization                                   
+- Automated pipeline orchestration
+- Real-time processing capabilities
+- Enhanced narrative Generation
+
+Simplified Pipeline Architecture
+
+  Current Reality
+
+  - titles.event_family_id IS NULL = needs processing
+  - titles.event_family_id IS NOT NULL = already assigned, skip
+
+  Your Proposed Flow
+
+  1. GEN-1 Main Pipeline (simple & fast):
+    - Query: WHERE gate_keep = true AND event_family_id IS NULL
+    - Create new Event Families from these unassigned titles
+    - No time windows needed at all!
+  2. EF Consolidation (separate cron job):
+    - Analyze existing EFs for potential mergers
+    - "IDF Gaza Action #47" + "IDF Gaza Action #52" → merge into original EF
+    - Can be sophisticated, take time, run separately
+
+  Benefits of This Approach
+
+  ✅ Simple main pipeline - just process unassigned titles
+  ✅ No complex LLM decision logic - create new EFs, worry about consolidation later✅ Performance - fast daily processing
+  without heavy analysis
+  ✅ Maintainable - two separate, focused responsibilities
+  ✅ Debuggable - easy to see what went wrong where
+
+  Implementation Changes Needed
+
+  1. Remove time constraints from get_unassigned_strategic_titles()
+  2. Simple query: WHERE gate_keep = true AND event_family_id IS NULL
+  3. Future: Build EF consolidation/merger service
+
+  This is definitely the right architectural approach. Should I implement the simplified GEN-1 processing (remove since_hours,
+  process ALL unassigned titles)?
+

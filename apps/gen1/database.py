@@ -5,11 +5,10 @@ Database interactions for Event Families and Framed Narratives
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
-from sqlalchemy import and_, desc, func, or_, text
+from sqlalchemy import text
 
 from apps.gen1.models import BucketContext, EventFamily, FramedNarrative
 from core.database import get_db_session
@@ -33,13 +32,13 @@ class Gen1Database:
     ) -> List[BucketContext]:
         """
         Retrieve active CLUST-2 buckets for processing
-        
+
         Args:
             since_hours: How far back to look for buckets
             min_bucket_size: Minimum number of titles per bucket
             limit: Maximum number of buckets to return
             order_by: Ordering strategy ('newest_first', 'largest_first', 'oldest_first')
-            
+
         Returns:
             List of BucketContext objects ready for GEN-1 processing
         """
@@ -80,7 +79,8 @@ class Gen1Database:
 
                 # Execute bucket query
                 bucket_results = session.execute(
-                    text(bucket_query), {"since_hours": since_hours, "min_bucket_size": min_bucket_size}
+                    text(bucket_query),
+                    {"since_hours": since_hours, "min_bucket_size": min_bucket_size},
                 ).fetchall()
 
                 bucket_contexts = []
@@ -117,24 +117,23 @@ class Gen1Database:
 
     def get_unassigned_strategic_titles(
         self,
-        since_hours: int = 72,
         limit: Optional[int] = None,
         order_by: str = "newest_first",
     ) -> List[Dict[str, Any]]:
         """
-        Retrieve unassigned strategic titles for direct EF processing (Phase 2)
-        
+        Retrieve ALL unassigned strategic titles for direct EF processing (Phase 2)
+        Simplified approach: process all titles where event_family_id IS NULL
+
         Args:
-            since_hours: How far back to look for titles
-            limit: Maximum number of titles to return
+            limit: Maximum number of titles to return (None for all titles)
             order_by: Ordering strategy ('newest_first', 'oldest_first')
-            
+
         Returns:
             List of strategic title dictionaries ready for GEN-1 processing
         """
         try:
             with get_db_session() as session:
-                # Query for unassigned strategic titles
+                # Simple query for ALL unassigned strategic titles (corpus-wide)
                 titles_query = """
                 SELECT 
                     id,
@@ -150,9 +149,8 @@ class Gen1Database:
                 FROM titles 
                 WHERE gate_keep = true 
                 AND event_family_id IS NULL
-                AND created_at >= NOW() - INTERVAL '%d HOUR' % :since_hours
                 """
-                
+
                 # Add ordering
                 if order_by == "newest_first":
                     titles_query += " ORDER BY pubdate_utc DESC"
@@ -160,16 +158,14 @@ class Gen1Database:
                     titles_query += " ORDER BY pubdate_utc ASC"
                 else:
                     titles_query += " ORDER BY pubdate_utc DESC"
-                
+
                 # Add limit if specified
                 if limit:
                     titles_query += f" LIMIT {limit}"
-                
+
                 # Execute query
-                results = session.execute(
-                    text(titles_query), {"since_hours": since_hours}
-                ).fetchall()
-                
+                results = session.execute(text(titles_query)).fetchall()
+
                 titles = []
                 for row in results:
                     title_dict = {
@@ -185,15 +181,14 @@ class Gen1Database:
                         "created_at": row.created_at,
                     }
                     titles.append(title_dict)
-                
+
                 logger.info(
-                    f"Retrieved {len(titles)} unassigned strategic titles",
-                    since_hours=since_hours,
+                    f"Retrieved {len(titles)} unassigned strategic titles (corpus-wide)",
                     order=order_by,
                 )
-                
+
                 return titles
-                
+
         except Exception as e:
             logger.error(f"Failed to get unassigned strategic titles: {e}")
             raise
@@ -207,49 +202,54 @@ class Gen1Database:
     ) -> bool:
         """
         Assign titles to an Event Family (Phase 2)
-        
+
         Args:
             title_ids: List of title IDs to assign
             event_family_id: Event Family ID to assign them to
             confidence: LLM confidence in the assignment
             reason: Reason for assignment
-            
+
         Returns:
             True if successful, False otherwise
         """
         try:
             with get_db_session() as session:
                 # Update titles with Event Family assignment
-                update_query = """
+                # Convert UUIDs to proper format for PostgreSQL
+                uuid_placeholders = ",".join(
+                    [f":uuid_{i}" for i in range(len(title_ids))]
+                )
+                update_query = f"""
                 UPDATE titles 
                 SET event_family_id = :event_family_id,
                     ef_assignment_confidence = :confidence,
                     ef_assignment_reason = :reason,
                     ef_assignment_at = NOW()
-                WHERE id = ANY(:title_ids)
+                WHERE id IN ({uuid_placeholders})
                 AND gate_keep = true 
                 AND event_family_id IS NULL
                 """
-                
-                result = session.execute(
-                    text(update_query),
-                    {
-                        "event_family_id": event_family_id,
-                        "confidence": confidence,
-                        "reason": reason,
-                        "title_ids": title_ids,
-                    }
-                )
-                
+
+                # Build parameters dict with individual UUID parameters
+                params = {
+                    "event_family_id": event_family_id,
+                    "confidence": confidence,
+                    "reason": reason,
+                }
+                for i, title_id in enumerate(title_ids):
+                    params[f"uuid_{i}"] = title_id
+
+                result = session.execute(text(update_query), params)
+
                 updated_count = result.rowcount
                 logger.info(
                     f"Assigned {updated_count} titles to Event Family {event_family_id}",
                     confidence=confidence,
                     reason=reason[:100],
                 )
-                
+
                 return updated_count > 0
-                
+
         except Exception as e:
             logger.error(f"Failed to assign titles to Event Family: {e}")
             return False
@@ -274,7 +274,9 @@ class Gen1Database:
             ORDER BY t.pubdate_utc DESC
             """
 
-            title_results = session.execute(text(title_query), {"bucket_id": bucket_id}).fetchall()
+            title_results = session.execute(
+                text(title_query), {"bucket_id": bucket_id}
+            ).fetchall()
 
             titles = []
             for title_row in title_results:
@@ -300,10 +302,10 @@ class Gen1Database:
     async def save_event_family(self, event_family: EventFamily) -> bool:
         """
         Save an Event Family to the database
-        
+
         Args:
             event_family: EventFamily object to save
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -345,7 +347,9 @@ class Gen1Database:
                     },
                 )
 
-                logger.debug(f"Saved Event Family: {event_family.id} - {event_family.title}")
+                logger.debug(
+                    f"Saved Event Family: {event_family.id} - {event_family.title}"
+                )
                 return True
 
         except Exception as e:
@@ -355,10 +359,10 @@ class Gen1Database:
     async def save_framed_narrative(self, framed_narrative: FramedNarrative) -> bool:
         """
         Save a Framed Narrative to the database
-        
+
         Args:
             framed_narrative: FramedNarrative object to save
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -412,12 +416,12 @@ class Gen1Database:
     ) -> List[EventFamily]:
         """
         Retrieve Event Families from the database
-        
+
         Args:
             since_hours: How far back to look for Event Families
             limit: Maximum number to return
             include_narratives: Whether to include associated Framed Narratives
-            
+
         Returns:
             List of EventFamily objects
         """
@@ -472,10 +476,10 @@ class Gen1Database:
     ) -> List[FramedNarrative]:
         """
         Get all Framed Narratives for a specific Event Family
-        
+
         Args:
             event_family_id: ID of the Event Family
-            
+
         Returns:
             List of FramedNarrative objects
         """
@@ -518,11 +522,11 @@ class Gen1Database:
     ) -> Optional[EventFamily]:
         """
         Check if an Event Family with similar title composition already exists
-        
+
         Args:
             title_ids: List of title IDs to check against
             similarity_threshold: Minimum similarity score to consider a match
-            
+
         Returns:
             Existing EventFamily if found, None otherwise
         """
@@ -538,7 +542,7 @@ class Gen1Database:
     async def get_processing_stats(self) -> Dict[str, Any]:
         """
         Get GEN-1 processing statistics
-        
+
         Returns:
             Dictionary with processing metrics
         """
