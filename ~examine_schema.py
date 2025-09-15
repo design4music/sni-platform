@@ -10,8 +10,10 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from core.database import get_db_session
 from sqlalchemy import text
+
+from core.database import get_db_session
+
 
 def examine_schema():
     """Examine current database schema"""

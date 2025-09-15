@@ -11,17 +11,14 @@ import json
 import logging
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import feedparser
-import requests
 from dateutil import parser as date_parser
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
-from etl_pipeline.core.database.models import (Article, FeedType, LanguageCode,
-                                               NewsFeed)
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -428,7 +425,7 @@ async def main():
         ingestion = ProductionRSSIngestion(args.config)
         stats = await ingestion.run_ingestion(args.limit)
 
-        print(f"\n=== Production RSS Ingestion Complete ===")
+        print("\n=== Production RSS Ingestion Complete ===")
         print(f"Feeds processed: {stats['successful_feeds']}/{stats['total_feeds']}")
         print(f"Articles processed: {stats['total_articles']}")
         print(f"New articles: {stats['new_articles']}")

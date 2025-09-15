@@ -67,7 +67,6 @@ def get_db_session() -> Generator[Session, None, None]:
 
 def create_tables():
     """Create all database tables"""
-    from . import models  # Import models to register them
     
     engine = get_engine()
     Base.metadata.create_all(bind=engine)
@@ -76,7 +75,6 @@ def create_tables():
 
 def drop_tables():
     """Drop all database tables (use with caution!)"""
-    from . import models  # Import models to register them
     
     engine = get_engine()
     Base.metadata.drop_all(bind=engine)

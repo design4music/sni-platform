@@ -32,7 +32,7 @@ def test_database_connection():
 
             result = db.execute(text("SELECT COUNT(*) as count FROM articles")).first()
             article_count = result.count if result else 0
-            print(f"[OK] Database connection successful")
+            print("[OK] Database connection successful")
             print(f"[OK] Articles in database: {article_count}")
 
             # Check for narratives table

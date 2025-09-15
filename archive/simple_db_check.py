@@ -69,10 +69,10 @@ def main():
 
         print()
         print("STATUS SUMMARY:")
-        print(f"  Database: CONNECTED (PostgreSQL)")
+        print("  Database: CONNECTED (PostgreSQL)")
         print(f"  Tables: {len(tables)} core tables exist")
         print(f"  Data: {sum(counts.values()):,} total records")
-        print(f"  Extensions: vector + pg_trgm ready")
+        print("  Extensions: vector + pg_trgm ready")
 
         # Check pipeline status
         has_articles = counts["articles"] > 0

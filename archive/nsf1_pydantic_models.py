@@ -3,9 +3,8 @@ NSF-1 Pydantic Models - Exact match to finalized JSON specification
 These models replace the existing narrative models in strategic_narrative_api.py
 """
 
-import math
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field

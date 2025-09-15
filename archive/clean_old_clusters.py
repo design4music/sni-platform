@@ -4,7 +4,6 @@ Clean Old Clusters
 Remove old biased clusters before running new CLUST-1
 """
 
-import os
 import sys
 
 # Add project root to path
@@ -39,13 +38,13 @@ def clean_old_clusters():
     )
     algorithms = cur.fetchall()
 
-    print(f"CURRENT STATE:")
+    print("CURRENT STATE:")
     print(f"  Total cluster assignments: {old_count:,}")
     for alg, count in algorithms:
         print(f"  {alg}: {count:,} assignments")
 
     # Show sample of old clusters to confirm bias issue
-    print(f"\nSAMPLE OF OLD CLUSTERS (checking for source bias):")
+    print("\nSAMPLE OF OLD CLUSTERS (checking for source bias):")
     cur.execute(
         """
         SELECT ac.cluster_id, a.source_name, COUNT(*) as count
@@ -69,12 +68,12 @@ def clean_old_clusters():
         print(f"    {source_name}: {count} articles")
 
     # Clear all old clusters
-    print(f"\nCLEARING OLD CLUSTERS...")
+    print("\nCLEARING OLD CLUSTERS...")
     cur.execute("DELETE FROM article_clusters")
     removed_count = cur.rowcount
 
     print(f"Removed {removed_count:,} old cluster assignments")
-    print(f"[OK] Database ready for new keyword-based clustering!")
+    print("[OK] Database ready for new keyword-based clustering!")
 
     cur.close()
     conn.close()

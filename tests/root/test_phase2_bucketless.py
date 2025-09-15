@@ -13,9 +13,11 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from loguru import logger
-from apps.gen1.processor import get_gen1_processor
+
 from apps.gen1.database import get_gen1_database
+from apps.gen1.processor import get_gen1_processor
 from core.database import check_database_connection
+
 
 async def test_phase2_bucketless():
     """Test Phase 2 direct title→EF processing architecture"""

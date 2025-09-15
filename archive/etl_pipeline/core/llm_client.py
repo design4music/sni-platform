@@ -6,7 +6,6 @@ Simple abstraction that hides provider details from pipeline code.
 Currently uses DeepSeek but can be easily swapped without changing pipeline code.
 """
 
-import asyncio
 import json
 import os
 from typing import Any, Dict, List, Optional

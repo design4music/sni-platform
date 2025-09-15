@@ -42,7 +42,7 @@ def test_centralized_config():
         # Validate configuration
         validation_errors = config.validate()
         if validation_errors:
-            print(f"[WARNING] Configuration validation issues:")
+            print("[WARNING] Configuration validation issues:")
             for error in validation_errors:
                 print(f"  - {error}")
         else:

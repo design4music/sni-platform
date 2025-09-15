@@ -6,7 +6,6 @@ Remove noise keywords and keep only meaningful ones for clustering
 
 import os
 import sys
-import time
 
 # Fix Windows Unicode encoding
 if sys.platform.startswith("win"):
@@ -46,12 +45,12 @@ def cleanup_keywords():
     cur.execute("SELECT COUNT(*) FROM article_keywords")
     initial_relationships = cur.fetchone()[0]
 
-    print(f"BEFORE cleanup:")
+    print("BEFORE cleanup:")
     print(f"  Keywords: {initial_keywords:,}")
     print(f"  Relationships: {initial_relationships:,}")
 
     # CLEANUP RULES
-    print(f"\nApplying cleanup rules...")
+    print("\nApplying cleanup rules...")
 
     # Rule 1: Remove keywords that appear only once (94.7% of noise)
     print("1. Removing unique keywords (frequency = 1)...")
@@ -135,7 +134,7 @@ def cleanup_keywords():
     cur.execute("SELECT COUNT(*) FROM article_keywords")
     final_relationships = cur.fetchone()[0]
 
-    print(f"\nAFTER cleanup:")
+    print("\nAFTER cleanup:")
     print(f"  Keywords: {final_keywords:,} (was {initial_keywords:,})")
     print(f"  Relationships: {final_relationships:,} (was {initial_relationships:,})")
     print(
@@ -144,7 +143,7 @@ def cleanup_keywords():
     print(f"  Strategic keywords (freq >= 2): {strategic_keywords:,}")
 
     # Show top keywords after cleanup
-    print(f"\nTop Strategic Keywords After Cleanup:")
+    print("\nTop Strategic Keywords After Cleanup:")
     cur.execute(
         """
         SELECT keyword, keyword_type, entity_label, base_frequency 
@@ -159,7 +158,7 @@ def cleanup_keywords():
         print(f'  {i:2}. "{keyword}"{entity_info} - {ktype}, freq: {freq}')
 
     # Keyword type distribution after cleanup
-    print(f"\nKeyword Types After Cleanup:")
+    print("\nKeyword Types After Cleanup:")
     cur.execute(
         "SELECT keyword_type, COUNT(*) FROM keywords GROUP BY keyword_type ORDER BY COUNT(*) DESC"
     )
@@ -167,7 +166,7 @@ def cleanup_keywords():
         print(f"  {ktype}: {count:,} keywords")
 
     # Frequency distribution after cleanup
-    print(f"\nFrequency Distribution After Cleanup:")
+    print("\nFrequency Distribution After Cleanup:")
     cur.execute(
         "SELECT base_frequency, COUNT(*) FROM keywords GROUP BY base_frequency ORDER BY base_frequency"
     )
@@ -181,8 +180,8 @@ def cleanup_keywords():
     print(f"  Common (6-20 times): {common_count:,} keywords")
     print(f"  Strategic (20+ times): {strategic_count:,} keywords")
 
-    print(f"\n[OK] KEYWORD CLEANUP COMPLETE!")
-    print(f"Ready for high-quality keyword-based clustering!")
+    print("\n[OK] KEYWORD CLEANUP COMPLETE!")
+    print("Ready for high-quality keyword-based clustering!")
 
     cur.close()
     conn.close()

@@ -44,119 +44,6 @@ def setup_logging(verbose: bool = False):
     )
 
 
-async def run_event_family_assembly(
-    since_hours: int,
-    min_bucket_size: int,
-    max_buckets: Optional[int],
-    dry_run: bool,
-    summary_only: bool,
-) -> bool:
-    """
-    Execute Event Family assembly pipeline
-
-    Args:
-        since_hours: How far back to look for buckets
-        min_bucket_size: Minimum titles per bucket
-        max_buckets: Maximum buckets to process
-        dry_run: Don't save results to database
-        summary_only: Show summary instead of processing
-
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        processor = get_gen1_processor()
-
-        if summary_only:
-            logger.info("Generating GEN-1 processing summary...")
-            summary = await processor.get_processing_summary(since_hours=24)
-
-            print("\n" + "=" * 60)
-            print("GEN-1 PROCESSING SUMMARY")
-            print("=" * 60)
-
-            # Core metrics
-            print(f"Event Families (Total): {summary.get('event_families_total', 0)}")
-            print(f"Event Families (24h): {summary.get('event_families_24h', 0)}")
-            print(
-                f"Framed Narratives (Total): {summary.get('framed_narratives_total', 0)}"
-            )
-            print(f"Framed Narratives (24h): {summary.get('framed_narratives_24h', 0)}")
-            print(
-                f"Average Confidence Score: {summary.get('avg_confidence_score', 0):.3f}"
-            )
-
-            # Configuration
-            config_info = summary.get("config", {})
-            print("\nConfiguration:")
-            print(
-                f"  Max buckets per batch: {config_info.get('max_buckets_per_batch', 'N/A')}"
-            )
-            print(
-                f"  Max Event Families per batch: {config_info.get('max_event_families_per_batch', 'N/A')}"
-            )
-            print(
-                f"  Max narratives per event: {config_info.get('max_narratives_per_event', 'N/A')}"
-            )
-
-            print("\n" + "=" * 60)
-            return True
-
-        # Run full processing pipeline
-        logger.info(
-            "Starting GEN-1 Event Family assembly",
-            since_hours=since_hours,
-            min_size=min_bucket_size,
-            max_buckets=max_buckets,
-            dry_run=dry_run,
-        )
-
-        result = await processor.process_event_families(
-            since_hours=since_hours,
-            min_bucket_size=min_bucket_size,
-            max_buckets=max_buckets,
-            dry_run=dry_run,
-        )
-
-        # Display results
-        print("\n" + "=" * 60)
-        print("GEN-1 PROCESSING RESULTS")
-        print("=" * 60)
-        print(f"Result: {result.summary}")
-        print(f"Processing time: {result.processing_time_seconds:.1f} seconds")
-        print(f"Success rate: {result.success_rate:.1%}")
-
-        if result.event_families:
-            print("\nEvent Families created:")
-            for ef in result.event_families[:5]:  # Show first 5
-                print(f"  - {ef.title} (confidence: {ef.confidence_score:.2f})")
-            if len(result.event_families) > 5:
-                print(f"  ... and {len(result.event_families) - 5} more")
-
-        if result.framed_narratives:
-            print("\nFramed Narratives generated:")
-            for fn in result.framed_narratives[:5]:  # Show first 5
-                print(f"  - {fn.frame_type}: {fn.frame_description[:60]}...")
-            if len(result.framed_narratives) > 5:
-                print(f"  ... and {len(result.framed_narratives) - 5} more")
-
-        if result.errors:
-            print("\nErrors encountered:")
-            for error in result.errors:
-                print(f"  - {error}")
-
-        if result.warnings:
-            print("\nWarnings:")
-            for warning in result.warnings:
-                print(f"  - {warning}")
-
-        print("\n" + "=" * 60)
-
-        return len(result.errors) == 0
-
-    except Exception as e:
-        logger.error(f"GEN-1 processing failed: {e}")
-        return False
 
 
 async def run_direct_title_processing(
@@ -292,7 +179,6 @@ async def check_system_readiness() -> bool:
     logger.info(f"LLM provider: {config.llm_provider}")
 
     # Check for required tables
-    # This would check if CLUST-2 has created buckets and bucket_members tables
     logger.info("Required tables: OK (assumed)")
 
     logger.info("System readiness check passed")
@@ -306,26 +192,6 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    parser.add_argument(
-        "--hours",
-        type=int,
-        default=72,
-        help="How far back to look for buckets (hours) - only applies to legacy bucket mode",
-    )
-
-    parser.add_argument(
-        "--min-size",
-        type=int,
-        default=2,
-        help="Minimum number of titles per bucket to process",
-    )
-
-    parser.add_argument(
-        "--max-buckets",
-        type=int,
-        default=None,
-        help="Maximum number of buckets to process (None for all)",
-    )
 
     parser.add_argument(
         "--dry-run",
@@ -352,12 +218,6 @@ def main():
         help="Check system readiness and exit",
     )
 
-    parser.add_argument(
-        "--mode",
-        choices=["buckets", "direct"],
-        default="buckets",
-        help="Processing mode: 'buckets' (legacy) or 'direct' (bucketless Phase 2)",
-    )
 
     parser.add_argument(
         "--max-titles",
@@ -392,22 +252,13 @@ def main():
                 logger.error("System readiness check failed")
                 return 1
 
-            # Run processing pipeline based on mode
-            if args.mode == "direct":
-                success = await run_direct_title_processing(
-                    max_titles=args.max_titles,
-                    batch_size=args.batch_size,
-                    dry_run=args.dry_run,
-                    summary_only=args.summary,
-                )
-            else:  # buckets mode (legacy)
-                success = await run_event_family_assembly(
-                    since_hours=args.hours,
-                    min_bucket_size=args.min_size,
-                    max_buckets=args.max_buckets,
-                    dry_run=args.dry_run,
-                    summary_only=args.summary,
-                )
+            # Run direct title processing (only mode available)
+            success = await run_direct_title_processing(
+                max_titles=args.max_titles,
+                batch_size=args.batch_size,
+                dry_run=args.dry_run,
+                summary_only=args.summary,
+            )
 
             return 0 if success else 1
 

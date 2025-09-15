@@ -1,11 +1,9 @@
-import types
 from datetime import datetime, timezone
 import unicodedata
 import pytest
 
 # If your fetcher path differs, adjust this import
 from apps.ingest.rss_fetcher import RSSFetcher
-from apps.ingest.feeds_repo import FeedsRepo
 
 # ---- Minimal XML fixture (2 items) ----
 # Includes <source> so we can verify real publisher extraction.

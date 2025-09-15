@@ -74,9 +74,6 @@ class Gen1Validator:
         if not event_family.source_title_ids:
             issues.append("No source titles referenced")
 
-        if not event_family.source_bucket_ids:
-            issues.append("No source buckets referenced")
-
         # Actor validation
         if len(event_family.key_actors) > 10:
             issues.append("Too many key actors (>10) - may indicate poor focus")

@@ -6,14 +6,13 @@ using the new fringe_notes and data_quality_notes JSONB fields.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import structlog
-from sqlalchemy import func, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..database import get_db_session
-from ..database.models import NarrativeMetrics, NarrativeNSF1
 
 logger = structlog.get_logger(__name__)
 

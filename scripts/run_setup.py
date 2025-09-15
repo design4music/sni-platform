@@ -6,7 +6,6 @@ One-command setup for the entire SNI-v2 system
 
 import sys
 import subprocess
-import os
 from pathlib import Path
 
 # Add project root to path

@@ -3,16 +3,18 @@
 Quick test of GEN-1 Event Family Assembly with fixed Framed Narrative generation
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from apps.gen1.processor import get_gen1_processor
 from loguru import logger
+
+from apps.gen1.processor import get_gen1_processor
+
 
 async def test_gen1_quick():
     """Test GEN-1 processing with a small number of buckets"""
@@ -28,7 +30,7 @@ async def test_gen1_quick():
         dry_run=False  # Save to database to test full pipeline
     )
     
-    logger.info(f"\n=== TEST RESULTS ===")
+    logger.info("\n=== TEST RESULTS ===")
     logger.info(f"Event Families: {len(result.event_families)}")
     logger.info(f"Framed Narratives: {len(result.framed_narratives)}")
     logger.info(f"Success Rate: {result.success_rate:.1%}")

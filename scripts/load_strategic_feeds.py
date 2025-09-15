@@ -7,7 +7,7 @@ Imports feeds from data/strategic_news_feeds.csv into the feeds table
 import sys
 import csv
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime
 from uuid import uuid4
 
 # Add project root to path
@@ -126,7 +126,7 @@ def load_feeds_from_csv():
                 failed_count += 1
                 continue
         
-        logger.info(f"Feed loading complete:")
+        logger.info("Feed loading complete:")
         logger.info(f"  - Inserted: {inserted_count}")
         logger.info(f"  - Skipped (duplicates): {skipped_count}")
         logger.info(f"  - Failed: {failed_count}")

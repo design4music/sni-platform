@@ -9,7 +9,6 @@ Test script to verify frozen Python version and locked requirements work correct
 import os
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 

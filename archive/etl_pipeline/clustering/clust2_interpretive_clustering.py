@@ -17,7 +17,7 @@ import os
 import sys
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 project_root = os.path.dirname(
@@ -383,7 +383,7 @@ Article Context:
             narrative_result = await self._generate_cluster_narratives(cluster_content)
 
             if narrative_result.get("status") == "SKIP_CLUSTER":
-                print(f"  -> SKIPPED: Non-strategic content")
+                print("  -> SKIPPED: Non-strategic content")
                 with get_db_session() as session:
                     session.execute(
                         text(

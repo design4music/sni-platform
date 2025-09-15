@@ -11,22 +11,15 @@ Comprehensive test suite to validate Migration 003:
 - Rollback capability
 """
 
-import asyncio
 import time
 from datetime import datetime
-from typing import List, Optional
-from uuid import UUID, uuid4
 
 import pytest
 # Import models from both systems to validate compatibility
-from database_models import Narrative as LegacyNarrative
-from etl_pipeline.clustering.clust2_segment_narratives import \
-    CLUST2NarrativeSegmentation
 from etl_pipeline.core.config import get_config
 from etl_pipeline.core.database import get_db_session, initialize_database
-from etl_pipeline.core.database.models import NarrativeMetrics, NarrativeNSF1
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from etl_pipeline.core.database.models import NarrativeNSF1
+from sqlalchemy import text
 
 
 class TestParentChildMigration:

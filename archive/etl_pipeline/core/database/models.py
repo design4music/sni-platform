@@ -17,7 +17,7 @@ from sqlalchemy import (JSON, Boolean, CheckConstraint, Column, DateTime,
                         UniqueConstraint)
 from sqlalchemy.dialects.postgresql import ENUM, JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm import relationship
 
 logger = structlog.get_logger(__name__)
 

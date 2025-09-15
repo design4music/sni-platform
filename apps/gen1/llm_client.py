@@ -29,12 +29,12 @@ class Gen1LLMClient:
 
         self.event_family_system_prompt = """
 **Role**
-You are an expert news analyst. From headline *batches* (buckets grouped by actor sets), identify **Event Families (EFs)**—ongoing stories that tie together similar events via shared actors, theaters, or themes.
+You are an expert news analyst. From strategic news titles, identify **Event Families (EFs)**—ongoing stories that tie together similar events via shared actors, theaters, or themes.
 
 **Key principles**
 
 1. **Ongoing narratives, not one-offs.** Think "Macron's Middle East diplomacy," "US–China trade relations," "Russia's military operations."
-2. **Buckets are hints, not walls.** Freely **pull in** across buckets or **exclude** items inside a bucket.
+2. **Strategic semantic grouping.** Group titles by thematic coherence and shared strategic elements.
 3. **Prefer coherence over fragmentation.** Fewer, broader EFs > many micro-EFs.
 4. **Actor canonicalization.** Treat equivalents as one actor set (e.g., *Lavrov → Russia; Trump → United States*).
 5. **Time is not a hard boundary.** EFs can span weeks or months; use time only to support coherence, not to exclude.
@@ -123,36 +123,6 @@ ANALYSIS REQUIREMENTS:
 Respond in JSON format with framed narratives, exact evidence quotes, and analysis.
 """
 
-    async def assemble_event_families(
-        self, request: LLMEventFamilyRequest
-    ) -> LLMEventFamilyResponse:
-        """
-        Use LLM to assemble Event Families from bucket contexts
-
-        Args:
-            request: Event Family assembly request with bucket contexts
-
-        Returns:
-            LLM response with Event Families and reasoning
-        """
-        try:
-            # Build comprehensive prompt with bucket data
-            user_prompt = self._build_event_family_prompt(request)
-
-            # Call LLM with structured request
-            response_text = await self._call_llm(
-                system_prompt=self.event_family_system_prompt,
-                user_prompt=user_prompt,
-                max_tokens=4000,
-                temperature=0.2,
-            )
-
-            # Parse and validate response
-            return self._parse_event_family_response(response_text)
-
-        except Exception as e:
-            logger.error(f"Event Family assembly failed: {e}")
-            raise
 
     async def assemble_event_families_from_titles(
         self, request: LLMEventFamilyRequest
@@ -216,65 +186,6 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             logger.error(f"Framed Narrative generation failed: {e}")
             raise
 
-    def _build_event_family_prompt(self, request: LLMEventFamilyRequest) -> str:
-        """Build comprehensive prompt for Event Family assembly"""
-
-        prompt_parts = [
-            "TASK: Analyze these news headline buckets and identify coherent Event Families.",
-            "",
-            "BUCKET CONTEXTS:",
-        ]
-
-        # Add bucket information
-        for i, bucket in enumerate(request.buckets, 1):
-            prompt_parts.extend(
-                [
-                    f"Bucket {i}: {bucket.bucket_key} ({bucket.title_count} titles)",
-                    f"  Actors: {', '.join(bucket.actor_codes)}",
-                    f"  Time span: {bucket.time_span_hours:.1f} hours",
-                    f"  Window: {bucket.time_window_start} to {bucket.time_window_end}",
-                    "  Headlines:",
-                ]
-            )
-
-            for title in bucket.titles:
-                prompt_parts.append(f"    - {title.get('text', 'N/A')}")
-
-            prompt_parts.append("")
-
-        # Add processing instructions
-        prompt_parts.extend(
-            [
-                "INSTRUCTIONS:",
-                request.processing_instructions,
-                "",
-                f"Maximum Event Families to create: {request.max_event_families}",
-                "",
-                "RESPONSE FORMAT (JSON):",
-                """{
-  "event_families": [
-    {
-      "title": "Clear event title",
-      "summary": "Factual summary of what happened",
-      "key_actors": ["actor1", "actor2"],
-      "event_type": "Type of event",
-      "geography": "Location (if relevant)",
-      "event_start": "2024-01-01T12:00:00Z",
-      "event_end": "2024-01-01T18:00:00Z",
-      "source_bucket_ids": ["bucket_id1"],
-      "source_title_ids": ["title_id1", "title_id2"],
-      "confidence_score": 0.85,
-      "coherence_reason": "Why these titles form a coherent event"
-    }
-  ],
-  "processing_reasoning": "Overall reasoning for Event Family decisions",
-  "confidence": 0.8,
-  "warnings": ["Any concerns or limitations"]
-}""",
-            ]
-        )
-
-        return "\n".join(prompt_parts)
 
     def _build_framed_narrative_prompt(self, request: LLMFramedNarrativeRequest) -> str:
         """Build comprehensive prompt for Framed Narrative generation"""
@@ -374,7 +285,6 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
                 '      "geography": "Location",',
                 '      "event_start": "2024-01-01T12:00:00Z",',
                 '      "event_end": "2024-01-01T18:00:00Z",',
-                '      "source_bucket_ids": [],',
                 '      "source_title_ids": ["title_id1"],',
                 '      "confidence_score": 0.85,',
                 '      "coherence_reason": "Why coherent"',

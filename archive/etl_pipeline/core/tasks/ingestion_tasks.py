@@ -8,13 +8,11 @@ with news content from configured feeds. Uses the news_feeds_config.json for sou
 import asyncio
 import hashlib
 import json
-import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiohttp
-import feedparser
 import structlog
 from langdetect import LangDetectError, detect
 from sqlalchemy import exists, select
@@ -23,7 +21,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ...ingestion.base import IngestionResult, RawArticle
 from ...ingestion.rss_ingestion import RSSIngestionSource
 from ..database import get_db_session
-from ..database.models import Article, NewsFeed, NewsSource
+from ..database.models import Article, NewsSource
 from ..exceptions import RetryableError, TaskError
 from .celery_app import celery_app
 

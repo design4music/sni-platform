@@ -4,16 +4,18 @@ Test Phase 1 Prompt Improvements
 Compare fragmentation before/after the updated Event Family prompts
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from apps.gen1.processor import get_gen1_processor
 from loguru import logger
+
+from apps.gen1.processor import get_gen1_processor
+
 
 async def test_phase1_fragmentation_reduction():
     """Test Phase 1 prompt improvements for reduced fragmentation"""
@@ -30,9 +32,9 @@ async def test_phase1_fragmentation_reduction():
         dry_run=False     # Save to database for comparison
     )
     
-    logger.info(f"\n=== PHASE 1 TEST RESULTS ===")
+    logger.info("\n=== PHASE 1 TEST RESULTS ===")
     logger.info(f"Event Families Created: {len(result.event_families)}")
-    logger.info(f"Expected Reduction: Should be 2-3 broad EFs instead of 7+ fragmented ones")
+    logger.info("Expected Reduction: Should be 2-3 broad EFs instead of 7+ fragmented ones")
     logger.info(f"Framed Narratives: {len(result.framed_narratives)}")
     logger.info(f"Success Rate: {result.success_rate:.1%}")
     logger.info(f"Processing Time: {result.processing_time_seconds:.1f}s")
@@ -43,7 +45,7 @@ async def test_phase1_fragmentation_reduction():
         logger.warning(f"Warnings: {result.warnings}")
     
     # Analyze Event Family coherence
-    logger.info(f"\n=== EVENT FAMILY COHERENCE ANALYSIS ===")
+    logger.info("\n=== EVENT FAMILY COHERENCE ANALYSIS ===")
     
     for i, ef in enumerate(result.event_families, 1):
         logger.info(f"\n--- Event Family {i}: COHERENCE CHECK ---")
@@ -67,7 +69,7 @@ async def test_phase1_fragmentation_reduction():
         logger.info(f"Coherence Reason: {ef.coherence_reason[:150]}...")
     
     # Overall fragmentation assessment
-    logger.info(f"\n=== FRAGMENTATION ASSESSMENT ===")
+    logger.info("\n=== FRAGMENTATION ASSESSMENT ===")
     
     single_title_efs = len([ef for ef in result.event_families if len(ef.source_title_ids) == 1])
     multi_title_efs = len([ef for ef in result.event_families if len(ef.source_title_ids) > 1])
@@ -89,7 +91,7 @@ async def test_phase1_fragmentation_reduction():
     logger.info(f"Phase 1 Assessment: {assessment}")
     
     # Show thematic diversity
-    logger.info(f"\n=== THEMATIC DIVERSITY CHECK ===")
+    logger.info("\n=== THEMATIC DIVERSITY CHECK ===")
     event_types = [ef.event_type for ef in result.event_families]
     geographies = [ef.geography for ef in result.event_families if ef.geography]
     

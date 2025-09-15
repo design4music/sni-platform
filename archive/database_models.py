@@ -4,14 +4,13 @@ Includes all tables, relationships, and database configuration
 """
 
 import enum
-import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from typing import Any, Dict
+from uuid import uuid4
 
-from sqlalchemy import ARRAY, JSON, Boolean, CheckConstraint, Column, DateTime
+from sqlalchemy import ARRAY, Boolean, CheckConstraint, Column, DateTime
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import (Float, ForeignKey, Index, Integer, LargeBinary, String,
+from sqlalchemy import (Float, ForeignKey, Index, Integer, String,
                         Table, Text, UniqueConstraint)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -19,7 +18,7 @@ from sqlalchemy.dialects.postgresql import VECTOR
 from sqlalchemy.event import listens_for
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Session, relationship, sessionmaker
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()

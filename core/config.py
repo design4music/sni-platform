@@ -1,6 +1,5 @@
 """SNI-v2 Configuration Management"""
 
-import os
 from pathlib import Path
 from typing import List, Optional
 

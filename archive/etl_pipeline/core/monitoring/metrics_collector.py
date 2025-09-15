@@ -5,7 +5,6 @@ This module provides comprehensive metrics collection, aggregation, and
 export capabilities with Prometheus integration and custom business metrics.
 """
 
-import asyncio
 import time
 from collections import defaultdict, deque
 from contextlib import contextmanager
@@ -15,14 +14,12 @@ from threading import Lock
 from typing import Any, Dict, List, Optional, Union
 
 import structlog
-from prometheus_client import (CONTENT_TYPE_LATEST, CollectorRegistry, Counter,
-                               Gauge, Histogram, Info, Summary,
-                               generate_latest)
+from prometheus_client import (CollectorRegistry, Counter,
+                               Gauge, Histogram, Info, generate_latest)
 
 from ..config import MonitoringConfig
 from ..database import get_db_session
-from ..database.models import (Article, FeedMetrics, PipelineRun,
-                               ProcessingStatus)
+from ..database.models import (ProcessingStatus)
 from ..exceptions import MetricsError
 
 logger = structlog.get_logger(__name__)

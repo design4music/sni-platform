@@ -12,14 +12,13 @@ Integrates with:
 """
 
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 import structlog
 
 from ..database import get_db_session
-from ..database.models import Article, NarrativeNSF1
+from ..database.models import NarrativeNSF1
 
 logger = structlog.get_logger(__name__)
 

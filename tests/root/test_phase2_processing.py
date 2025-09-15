@@ -3,16 +3,18 @@
 Test Phase 2: Direct title→EF assignment (bucketless architecture)
 """
 
+import asyncio
 import sys
 from pathlib import Path
-import asyncio
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from apps.gen1.processor import Processor
 from loguru import logger
+
+from apps.gen1.processor import Processor
+
 
 async def test_phase2_processing():
     """Test new bucketless architecture with real strategic titles"""
@@ -29,7 +31,7 @@ async def test_phase2_processing():
         dry_run=False
     )
     
-    logger.info(f"Processing Result:")
+    logger.info("Processing Result:")
     logger.info(f"  Titles processed: {result.titles_processed}")
     logger.info(f"  Event Families created: {result.event_families_created}")
     logger.info(f"  Framed Narratives created: {result.framed_narratives_created}")

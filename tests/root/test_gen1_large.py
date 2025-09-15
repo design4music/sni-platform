@@ -3,16 +3,18 @@
 Generate 20 Event Families for detailed analysis
 """
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from apps.gen1.processor import get_gen1_processor
 from loguru import logger
+
+from apps.gen1.processor import get_gen1_processor
+
 
 async def create_20_event_families():
     """Create 20 Event Families for analysis"""
@@ -28,7 +30,7 @@ async def create_20_event_families():
         dry_run=False     # Save to database for analysis
     )
     
-    logger.info(f"\n=== GENERATION RESULTS ===")
+    logger.info("\n=== GENERATION RESULTS ===")
     logger.info(f"Event Families Created: {len(result.event_families)}")
     logger.info(f"Framed Narratives: {len(result.framed_narratives)}")
     logger.info(f"Success Rate: {result.success_rate:.1%}")
@@ -40,7 +42,7 @@ async def create_20_event_families():
         logger.warning(f"Warnings: {result.warnings}")
     
     # Display detailed analysis of Event Families
-    logger.info(f"\n=== DETAILED EVENT FAMILY ANALYSIS ===")
+    logger.info("\n=== DETAILED EVENT FAMILY ANALYSIS ===")
     
     for i, ef in enumerate(result.event_families, 1):
         logger.info(f"\n--- Event Family {i} ---")
@@ -55,7 +57,7 @@ async def create_20_event_families():
         logger.info(f"Coherence Reason: {ef.coherence_reason[:100]}...")
     
     # Show statistics
-    logger.info(f"\n=== EVENT FAMILY STATISTICS ===")
+    logger.info("\n=== EVENT FAMILY STATISTICS ===")
     
     # Event types distribution
     event_types = [ef.event_type for ef in result.event_families]
@@ -63,7 +65,7 @@ async def create_20_event_families():
     for et in event_types:
         type_counts[et] = type_counts.get(et, 0) + 1
     
-    logger.info(f"Event Types:")
+    logger.info("Event Types:")
     for event_type, count in sorted(type_counts.items(), key=lambda x: x[1], reverse=True):
         logger.info(f"  {event_type}: {count}")
     
@@ -73,7 +75,7 @@ async def create_20_event_families():
     for geo in geographies:
         geo_counts[geo] = geo_counts.get(geo, 0) + 1
     
-    logger.info(f"\nGeography Distribution:")
+    logger.info("\nGeography Distribution:")
     for geography, count in sorted(geo_counts.items(), key=lambda x: x[1], reverse=True):
         logger.info(f"  {geography}: {count}")
     
@@ -84,7 +86,7 @@ async def create_20_event_families():
     medium_confidence = len([c for c in confidences if 0.6 <= c < 0.8])
     low_confidence = len([c for c in confidences if c < 0.6])
     
-    logger.info(f"\nConfidence Analysis:")
+    logger.info("\nConfidence Analysis:")
     logger.info(f"  Average Confidence: {avg_confidence:.2f}")
     logger.info(f"  High (≥0.8): {high_confidence}")
     logger.info(f"  Medium (0.6-0.8): {medium_confidence}") 
@@ -96,7 +98,7 @@ async def create_20_event_families():
     single_title = len([c for c in title_counts if c == 1])
     multi_title = len([c for c in title_counts if c > 1])
     
-    logger.info(f"\nTitle Count Analysis:")
+    logger.info("\nTitle Count Analysis:")
     logger.info(f"  Average Titles per EF: {avg_titles:.1f}")
     logger.info(f"  Single-title EFs: {single_title}")
     logger.info(f"  Multi-title EFs: {multi_title}")

@@ -10,9 +10,12 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from core.database import get_db_session
-from sqlalchemy import text
 from collections import Counter
+
+from sqlalchemy import text
+
+from core.database import get_db_session
+
 
 def analyze_event_families():
     """Analyze existing Event Families"""

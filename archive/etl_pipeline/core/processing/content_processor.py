@@ -6,26 +6,23 @@ multilingual processing using spaCy and HuggingFace transformers.
 """
 
 import asyncio
-import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import spacy
 import structlog
 import torch
 from langdetect import DetectorFactory, detect
-from transformers import (AutoModelForSequenceClassification,
-                          AutoModelForTokenClassification, AutoTokenizer,
-                          Pipeline, pipeline)
+from transformers import (pipeline)
 
 from ..config import ProcessingConfig
 from ..database import get_db_session
 from ..database.models import (Article, ContentCategory, EntityMention,
                                LanguageCode, ProcessingStatus)
-from ..exceptions import ContentError, ProcessingError
+from ..exceptions import ProcessingError
 from ..monitoring import MetricsCollector
 
 logger = structlog.get_logger(__name__)

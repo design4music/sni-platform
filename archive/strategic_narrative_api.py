@@ -4,7 +4,6 @@ Complete API specification with all endpoints, models, and configurations
 """
 
 import asyncio
-import hashlib
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
@@ -23,7 +22,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from pydantic import BaseModel, ConfigDict, Field, validator
+from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware

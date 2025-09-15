@@ -5,8 +5,6 @@ This module provides REST API endpoints for pipeline management,
 real-time data access, and monitoring integration.
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -27,7 +25,7 @@ from ..core.database.models import (Article, ContentCategory, EntityMention,
 from ..core.exceptions import APIError, ValidationError
 from ..core.monitoring import AlertManager, MetricsCollector
 from ..core.tasks import (celery_app, check_celery_health, get_active_tasks,
-                          health_check, ingest_feed, run_daily_pipeline,
+                          ingest_feed, run_daily_pipeline,
                           trending_analysis)
 
 logger = structlog.get_logger(__name__)

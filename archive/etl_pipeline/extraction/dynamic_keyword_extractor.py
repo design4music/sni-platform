@@ -7,19 +7,16 @@ Purely data-driven approach - NO predefined keyword lists.
 Extracts keywords from content and learns strategic patterns dynamically.
 """
 
-import logging
-import math
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import spacy
 import structlog
 import yake
 from keybert import KeyBERT
-from sentence_transformers import SentenceTransformer
 
 logger = structlog.get_logger(__name__)
 

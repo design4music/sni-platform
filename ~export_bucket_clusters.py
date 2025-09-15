@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Export bucket members grouped by bucket_id to CSV for cluster analysis"""
 
-import csv
 import sys
-from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -59,7 +57,7 @@ def export_bucket_clusters():
 
     print(f"Export complete: {output_file}")
 
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total buckets: {len(buckets)}")
     print(f"  Total titles: {len(rows)}")
     print(f"  Avg titles per bucket: {len(rows)/len(buckets):.1f}")
@@ -68,7 +66,7 @@ def export_bucket_clusters():
     largest_buckets = sorted(buckets.items(), key=lambda x: len(x[1]), reverse=True)[
         :10
     ]
-    print(f"\nLargest buckets:")
+    print("\nLargest buckets:")
     for bucket_id, titles in largest_buckets:
         print(f"  {bucket_id}: {len(titles)} titles")
 

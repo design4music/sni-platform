@@ -171,7 +171,7 @@ def main():
             """))
             title_row = title_result.fetchone()
             
-            print(f"Database Summary:")
+            print("Database Summary:")
             print(f"  Feeds: {feed_row.active_feeds}/{feed_row.total_feeds} active")
             print(f"  Titles: {title_row.total_titles} total, {title_row.pending_titles} pending, {title_row.gated_titles} gated")
         return

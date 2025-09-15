@@ -5,22 +5,19 @@ This module sets up Celery for distributed task processing with Redis backend,
 comprehensive error handling, and monitoring integration.
 """
 
-import logging
-import os
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List
 
 import structlog
 from celery import Celery, Task
-from celery.exceptions import Ignore, Retry
+from celery.exceptions import Ignore
 from celery.signals import (beat_init, task_failure, task_postrun, task_prerun,
                             task_retry, worker_ready, worker_shutdown)
 from kombu import Exchange, Queue
 
 from ..config import get_config
-from ..database import get_db_session, initialize_database
-from ..exceptions import (NonRetryableError, RetryableError, TaskError,
-                          is_retryable_error)
+from ..database import initialize_database
+from ..exceptions import (RetryableError, is_retryable_error)
 from ..monitoring import MetricsCollector
 
 logger = structlog.get_logger(__name__)

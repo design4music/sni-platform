@@ -40,9 +40,6 @@ class EventFamily(BaseModel):
     )
 
     # Source metadata
-    source_bucket_ids: List[str] = Field(
-        description="CLUST-2 bucket IDs that contributed to this EF"
-    )
     source_title_ids: List[str] = Field(
         description="Title IDs that are part of this event family"
     )
@@ -103,22 +100,6 @@ class FramedNarrative(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-class BucketContext(BaseModel):
-    """
-    Context information about CLUST-2 buckets for GEN-1 processing
-    """
-
-    bucket_id: str
-    bucket_key: str  # Actor set key like "CN-US"
-    actor_codes: List[str]
-    title_count: int
-    time_span_hours: float
-    time_window_start: datetime
-    time_window_end: datetime
-
-    # Titles within this bucket
-    titles: List[Dict[str, Any]] = Field(default_factory=list)
-
 
 @dataclass
 class ProcessingResult:
@@ -126,8 +107,7 @@ class ProcessingResult:
     Result of GEN-1 processing operation
     """
 
-    # Input context
-    processed_buckets: List[str]
+    # Input context  
     total_titles_processed: int
 
     # Output artifacts
@@ -146,8 +126,7 @@ class ProcessingResult:
     def summary(self) -> str:
         """Human-readable summary of processing results"""
         return (
-            f"Processed {len(self.processed_buckets)} buckets, "
-            f"{self.total_titles_processed} titles -> "
+            f"Processed {self.total_titles_processed} titles -> "
             f"{len(self.event_families)} Event Families, "
             f"{len(self.framed_narratives)} Framed Narratives"
         )
@@ -158,11 +137,7 @@ class LLMEventFamilyRequest(BaseModel):
     Request structure for LLM Event Family assembly
     """
 
-    # Legacy bucket-based processing
-    buckets: Optional[List[BucketContext]] = None
-    cross_bucket_context: Optional[Dict[str, Any]] = None
-
-    # Phase 2: Direct title processing
+    # Direct title processing
     title_context: Optional[List[Dict[str, Any]]] = None
 
     processing_instructions: str

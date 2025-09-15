@@ -29,7 +29,7 @@ import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -492,7 +492,7 @@ async def main():
 
         results = await consolidator.run_consolidation()
 
-        print(f"\n=== CLUST-3 Consolidation Results ===")
+        print("\n=== CLUST-3 Consolidation Results ===")
         print(f"Status: {results['status']}")
 
         if results["status"] == "success":
@@ -503,7 +503,7 @@ async def main():
 
             if "final_stats" in results:
                 stats = results["final_stats"]
-                print(f"\nFinal narrative counts:")
+                print("\nFinal narrative counts:")
                 for stage, count in stats.items():
                     print(f"  {stage}: {count}")
         else:

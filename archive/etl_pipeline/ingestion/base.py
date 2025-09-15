@@ -3,7 +3,6 @@ Base classes and interfaces for data ingestion
 """
 
 import asyncio
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timezone

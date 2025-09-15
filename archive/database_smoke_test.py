@@ -7,7 +7,6 @@ Comprehensive database verification including table counts, structure validation
 and index verification for all core tables.
 """
 
-import os
 import sys
 from collections import defaultdict
 from datetime import datetime
@@ -454,7 +453,7 @@ def generate_summary_report(
 
     # Data summary
     if table_counts:
-        print(f"\nData Summary:")
+        print("\nData Summary:")
         total_articles = table_counts.get("articles", 0)
         total_keywords = table_counts.get("keywords", 0)
         total_relationships = table_counts.get("article_keywords", 0)
@@ -474,7 +473,7 @@ def generate_summary_report(
             print(f"  Average Keywords per Article: {avg_keywords_per_article:.1f}")
 
     # Recommendations
-    print(f"\nRecommendations:")
+    print("\nRecommendations:")
     if not connectivity_ok:
         print("  - Fix database connectivity issues")
     if not extensions_ok:

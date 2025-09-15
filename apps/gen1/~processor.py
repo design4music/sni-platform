@@ -75,7 +75,6 @@ class Gen1Processor:
             if not titles:
                 logger.warning("No unassigned strategic titles found for processing")
                 return ProcessingResult(
-                    processed_buckets=[],
                     total_titles_processed=0,
                     event_families=[],
                     framed_narratives=[],
@@ -89,13 +88,17 @@ class Gen1Processor:
                 f"Found {len(titles)} unassigned strategic titles for processing"
             )
 
-            # Phase 2: Group titles into batches for LLM processing
+            # Phase 2: Group titles into entity-coherent batches for LLM processing
+            from apps.gen1.entity_batcher import group_titles_by_entities
+            
+            entity_batches = group_titles_by_entities(titles, target_batch_size=batch_size)
+            
+            # Convert entity batch format to title batch format for compatibility
             title_batches = []
-            for i in range(0, len(titles), batch_size):
-                batch = titles[i : i + batch_size]
-                title_batches.append(batch)
-
-            logger.info(f"Created {len(title_batches)} title batches for processing")
+            for entity_batch in entity_batches:
+                title_batches.append(entity_batch['titles'])
+            
+            logger.info(f"Created {len(title_batches)} entity-coherent title batches for processing")
 
             # Phase 3: Process each batch through LLM
             all_event_families = []
@@ -180,9 +183,6 @@ class Gen1Processor:
             )
 
             return ProcessingResult(
-                processed_buckets=[
-                    f"title_batch_{i}" for i in range(len(title_batches))
-                ],
                 total_titles_processed=total_processed,
                 event_families=all_event_families,
                 framed_narratives=all_framed_narratives,
@@ -196,7 +196,6 @@ class Gen1Processor:
             processing_time = (datetime.now() - start_time).total_seconds()
             logger.error(f"GEN-1 Direct Title Processing failed: {e}")
             return ProcessingResult(
-                processed_buckets=[],
                 total_titles_processed=0,
                 event_families=[],
                 framed_narratives=[],
@@ -361,7 +360,6 @@ class Gen1Processor:
                 geography=ef_data.get("geography"),
                 event_start=event_start,
                 event_end=event_end,
-                source_bucket_ids=[],  # Phase 2: No buckets
                 source_title_ids=[
                     str(tid) for tid in ef_data.get("source_title_ids", [])
                 ],
@@ -415,7 +413,6 @@ class Gen1Processor:
         except Exception as e:
             logger.error(f"Framed Narrative creation failed: {e}")
             return None
-
 
     async def _create_framed_narrative_from_llm(
         self, fn_data: Dict[str, Any], event_family_id: str

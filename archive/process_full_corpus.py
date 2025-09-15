@@ -147,9 +147,9 @@ async def process_remaining_corpus():
 
     total_time = time.time() - overall_start
 
-    print(f"\n" + "=" * 50)
-    print(f"SESSION COMPLETE")
-    print(f"=" * 50)
+    print("\n" + "=" * 50)
+    print("SESSION COMPLETE")
+    print("=" * 50)
     print(f"Articles processed this session: {total_processed}")
     print(f"Keywords discovered: {total_keywords_created}")
     print(f"Keyword relationships: {total_relationships}")
@@ -166,7 +166,7 @@ async def process_remaining_corpus():
         result = session.execute(text("SELECT COUNT(*) FROM keywords"))
         final_keywords = result.fetchone()[0]
 
-    print(f"\nTOTAL CORPUS PROGRESS:")
+    print("\nTOTAL CORPUS PROGRESS:")
     print(
         f"Articles with keywords: {final_processed}/{total_count} ({final_processed/total_count*100:.1f}%)"
     )

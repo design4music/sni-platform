@@ -5,25 +5,21 @@ Tests the new fringe_notes and data_quality_notes JSONB fields,
 helper methods, and integration with CLUST-2 and ETL pipeline.
 """
 
-import json
 import os
 # Import the models and functions to test
 import sys
-from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from etl_pipeline.core.data_quality import (DataQualityTracker,
                                             QualityIssueType,
                                             track_ingestion_quality_issues)
-from etl_pipeline.core.database.models import Base, NarrativeNSF1
+from etl_pipeline.core.database.models import NarrativeNSF1
 from etl_pipeline.core.queries.fringe_analysis import (
-    FringeAnalysisQueries, get_fringe_analysis_dashboard)
+    FringeAnalysisQueries)
 
 
 class TestFringeAndQualityNotesModels:
@@ -444,10 +440,6 @@ if __name__ == "__main__":
     class BasicTests(unittest.TestCase):
         def test_imports(self):
             """Test that all modules import correctly"""
-            from etl_pipeline.core.data_quality import DataQualityTracker
-            from etl_pipeline.core.database.models import NarrativeNSF1
-            from etl_pipeline.core.queries.fringe_analysis import \
-                FringeAnalysisQueries
 
             self.assertTrue(True)
 

@@ -6,21 +6,18 @@ ingestion, processing, ML integration, and monitoring tasks.
 """
 
 import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import structlog
-from celery import chain, chord, group
+from celery import group
 
 from ..config import get_config
 from ..database import get_db_session
 from ..database.models import (Article, DataQualityReport, NewsFeed,
                                PipelineRun, ProcessingStatus, TrendingTopic)
-from ..exceptions import (IngestionError, PipelineError, ProcessingError,
-                          TaskError, ValidationError)
+from ..exceptions import (IngestionError, PipelineError, TaskError)
 from ..ingestion import FeedIngestor
-from ..monitoring import MetricsCollector
 from ..processing import ContentProcessor
 from .celery_app import ETLTask, celery_app
 
