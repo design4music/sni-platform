@@ -1,0 +1,42 @@
+# Search exclusion patterns for SNI project
+# This file documents directories to exclude from code searches and analysis
+
+# Archive directories - read-only legacy code
+archive/
+*/archive/
+
+# Log files and temp data
+*.log
+logs/
+*.tmp
+*.temp
+
+# Python cache and build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files (may contain secrets)
+.env
+.env.local
+
+# Database files and backups
+*.db
+*.sqlite
+*.dump
+*.backup
+
+# Large data files
+*.csv.gz
+*.parquet
+*.feather

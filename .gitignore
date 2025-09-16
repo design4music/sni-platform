@@ -77,3 +77,6 @@ temp/
 # Backup files
 *.bak
 *.backup
+
+# Archive directories (legacy code, should not be committed)
+archive/
