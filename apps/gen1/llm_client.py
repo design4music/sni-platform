@@ -3,8 +3,10 @@ GEN-1 LLM Client
 Specialized LLM interactions for Event Family assembly and Framed Narrative generation
 """
 
+import csv
 import json
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
@@ -24,27 +26,52 @@ class Gen1LLMClient:
         self.config = get_config()
         self._init_prompts()
 
+    def _load_taxonomies(self) -> None:
+        """Load event type and theater taxonomies from CSV files"""
+        data_path = Path(__file__).parent.parent.parent / "data"
+
+        # Load event types
+        self.event_types: List[Dict[str, str]] = []
+        event_types_path = data_path / "event_types.csv"
+        if event_types_path.exists():
+            with open(event_types_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                self.event_types = list(reader)
+
+        # Load theaters
+        self.theaters: List[Dict[str, str]] = []
+        theaters_path = data_path / "theaters.csv"
+        if theaters_path.exists():
+            with open(theaters_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                self.theaters = list(reader)
+
     def _init_prompts(self):
         """Initialize prompt templates for GEN-1 operations"""
 
+        # Load standardized taxonomies
+        self._load_taxonomies()
+
         self.event_family_system_prompt = """
 **Role**
-You are an expert news analyst. From strategic news titles, identify **Event Families (EFs)**—ongoing stories that tie together similar events via shared actors, theaters, or themes.
+You are an expert news analyst. From strategic news titles, assemble long-lived **Event Families (Sagas)** by grouping incidents that share (key_actors + geography + event_type). Do not create families for single incidents; absorb repeated incidents into one family.
 
 **Key principles**
 
-1. **Ongoing narratives, not one-offs.** Think "Macron's Middle East diplomacy," "US–China trade relations," "Russia's military operations."
-2. **Strategic semantic grouping.** Group titles by thematic coherence and shared strategic elements.
-3. **Prefer coherence over fragmentation.** Fewer, broader EFs > many micro-EFs.
+1. **Create Sagas, not single incidents.** Think "Ukraine Conflict Saga," "Gaza Military Operations Saga," "Iran Nuclear Diplomacy Saga."
+2. **Triple key matching: actors + geography + event_type.** Events with same strategic actors, same theater, and same activity type = one Saga.
+3. **Absorb incidents into existing patterns.** If similar actors are doing similar things in the same theater, it's the same ongoing Saga.
 4. **Actor canonicalization.** Treat equivalents as one actor set (e.g., *Lavrov → Russia; Trump → United States*).
-5. **Time is not a hard boundary.** EFs can span weeks or months; use time only to support coherence, not to exclude.
+5. **Time spans are expected.** Sagas naturally span weeks or months; temporal gaps don't break the pattern.
 
-**EF inclusion criteria (apply intelligently, not mechanically)**
+**Saga Assembly Criteria (Triple Key Matching)**
 
-* **Shared strategic actors.** Overlapping or equivalent actor sets drive unity.
-* **Shared strategic context.** Headlines contribute to the *same ongoing situation/policy area*.
-* **Shared action pattern / theme.** Similar activity type (e.g., **diplomacy, economic policy, military operations, domestic politics**).
-* **Shared theater / geography (broad).** E.g., *Middle East*, *European security*, *Asia–Pacific*.
+* **ACTORS**: Same strategic actors or actor sets (canonicalized equivalents)
+* **GEOGRAPHY**: Same strategic theater (use specific theater codes)  
+* **EVENT_TYPE**: Same category of strategic activity
+* **PATTERN**: Repeated or ongoing incidents, not isolated events
+
+**Anti-fragmentation Rule**: If you can group incidents by (actors + geography + event_type), you MUST create one Saga, not multiple families.
 
 **STRATEGIC FOCUS REQUIREMENT**
 
@@ -61,11 +88,57 @@ INCLUDE strategic content such as:
 * **Domestic politics** (elections, major policy changes, political crises)
 * **Technology & regulation** (major tech policy, international tech competition)
 
+**MULTILINGUAL PROCESSING**
+
+This system processes content in multiple languages including English, Spanish, French, German, Italian, Portuguese, Indonesian, and others. You MUST:
+
+1. **Cross-language consolidation**: Group titles about the same strategic event regardless of language
+   - Example: English "Putin visits China", Spanish "Putin visita China", French "Poutine visite la Chine" = same EF
+2. **Actor canonicalization across languages**: Standardize actor names to English canonical forms
+   - "Emmanuel Macron" = "Macron" = "Francia" → "France" 
+   - "Xi Jinping" = "习近平" = "Cina" → "China"
+   - "Donald Trump" = "Trump" = "Estados Unidos" → "United States"
+3. **Theater/event_type consistency**: Use English taxonomy values regardless of source language
+4. **Summary language**: Always write summaries and titles in English for system consistency
+5. **Language diversity strength**: Multilingual coverage provides richer perspective on global events
+
 CRITICAL REQUIREMENT - TITLE ID USAGE:
 - Each title has an "id" field with a UUID (e.g., "094faf99-124a-47fc-b213-f743497d7f30")
 - In source_title_ids, you MUST use these exact UUID values, NOT array indices
 - DO NOT use numbers like 0, 1, 2, 3 - use the actual "id" field values
 - Example: Use ["094faf99-124a-47fc-b213-f743497d7f30", "a005e6ba-f1e2-4007-9cf7-cd9584c339e1"]
+
+**STANDARDIZED TAXONOMIES - MANDATORY COMPLIANCE**
+
+EVENT_TYPE must be one of these exact values:
+- Strategy/Tactics: Military strategy and tactical operations
+- Humanitarian: Humanitarian crises and aid operations  
+- Alliances/Geopolitics: Alliance formation and geopolitical realignments
+- Diplomacy/Negotiations: Diplomatic meetings and negotiation processes
+- Sanctions/Economy: Economic sanctions and financial measures
+- Domestic Politics: Internal political developments and governance
+- Procurement/Force-gen: Military procurement and force generation
+- Tech/Cyber/OSINT: Technology warfare and intelligence operations
+- Legal/ICC: Legal proceedings and international court actions
+- Information/Media/Platforms: Information warfare and media operations
+- Energy/Infrastructure: Energy security and critical infrastructure
+
+GEOGRAPHY must be one of these specific theater codes (choose the most relevant):
+- UKRAINE: Ukraine Conflict Theater (Russia-Ukraine war, border incidents)
+- GAZA: Gaza/Palestine Theater (Israel-Palestine conflict zone)
+- TAIWAN_STRAIT: Taiwan Strait Theater (China-Taiwan tensions, South China Sea)
+- IRAN_NUCLEAR: Iran Nuclear Theater (Nuclear program, sanctions, IAEA)
+- EUROPE_SECURITY: European Security Theater (NATO, EU defense matters)
+- US_DOMESTIC: US Domestic Theater (US internal politics, domestic policy)
+- CHINA_TRADE: China Trade Theater (US-China economic competition)
+- MEAST_REGIONAL: Middle East Regional Theater (Syria, Iraq, Yemen, Gulf states)
+- CYBER_GLOBAL: Global Cyber Theater (State cyber operations, digital warfare)
+- CLIMATE_GLOBAL: Climate/Energy Theater (Energy security, resource conflicts)
+- AFRICA_SECURITY: Africa Security Theater (African conflicts, peacekeeping)
+- KOREA_PENINSULA: Korean Peninsula Theater (North Korea, regional tensions)
+- LATAM_REGIONAL: Latin America Regional Theater (US-Venezuela, US-Mexico border, regional conflicts)
+- ARCTIC: Arctic Theater (Arctic sovereignty, resource competition)
+- GLOBAL_SUMMIT: Global Diplomatic Theater (International summits, multilateral diplomacy)
 
 EVENT FAMILY REQUIREMENTS (EF should answer):
 - WHO: Key actors involved (people, countries, organizations)
@@ -87,12 +160,16 @@ You are an expert in media framing analysis, specializing in identifying how dif
 
 Your task is to analyze headlines about a specific Event Family and identify distinct Framed Narratives (FNs) - stanceful renderings showing how outlets position/frame the event.
 
-KEY PRINCIPLES:
-1. Framed Narratives MUST cite specific headline evidence - NO EXCEPTIONS
-2. State evaluative/causal framing clearly (supportive, critical, neutral, etc.)
-3. Identify key language that signals the framing
-4. Focus on how the SAME event is positioned differently
-5. Typically 1-2 dominant framings per event
+**HARD RULES - NON-NEGOTIABLE:**
+1. **MUST cite 2-6 specific headline UUIDs per frame** with short quotes from those headlines
+2. **Maximum 1-3 frames total** - drop weak frames, keep only the strongest
+3. **Each frame needs concrete textual evidence** - quote the actual headline language that signals the framing
+4. **No frame without citations** - if you can't cite specific headlines, don't create the frame
+
+**KEY PRINCIPLES:**
+- State evaluative/causal framing clearly (supportive, critical, neutral, etc.)
+- Focus on how the SAME event is positioned differently by different outlets
+- Quality over quantity - fewer, well-evidenced frames are better than many weak ones
 
 CRITICAL REQUIREMENT - TITLE ID USAGE:
 - Each title has an "id" field with a UUID (e.g., "094faf99-124a-47fc-b213-f743497d7f30")
@@ -122,7 +199,6 @@ ANALYSIS REQUIREMENTS:
 
 Respond in JSON format with framed narratives, exact evidence quotes, and analysis.
 """
-
 
     async def assemble_event_families_from_titles(
         self, request: LLMEventFamilyRequest
@@ -185,7 +261,6 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
         except Exception as e:
             logger.error(f"Framed Narrative generation failed: {e}")
             raise
-
 
     def _build_framed_narrative_prompt(self, request: LLMFramedNarrativeRequest) -> str:
         """Build comprehensive prompt for Framed Narrative generation"""
@@ -281,8 +356,8 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
                 '      "title": "Clear event title",',
                 '      "summary": "Factual summary",',
                 '      "key_actors": ["actor1"],',
-                '      "event_type": "Type",',
-                '      "geography": "Location",',
+                '      "event_type": "Strategy/Tactics",',
+                '      "geography": "UKRAINE",',
                 '      "event_start": "2024-01-01T12:00:00Z",',
                 '      "event_end": "2024-01-01T18:00:00Z",',
                 '      "source_title_ids": ["title_id1"],',
@@ -310,20 +385,45 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
         Call the LLM with system and user prompts
         Uses existing SNI LLM configuration
         """
-        # Import here to avoid circular imports
-        from archive.etl_pipeline.core.llm_client import get_llm_client
+        # Use active config instead of archived code
+        import httpx
+
+        from core.config import get_config
+
+        config = get_config()
 
         try:
-            llm_client = get_llm_client()
+            headers = {
+                "Authorization": f"Bearer {config.deepseek_api_key}",
+                "Content-Type": "application/json",
+            }
 
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ]
 
-            response = await llm_client.chat_completion(
-                messages=messages, max_tokens=max_tokens, temperature=temperature
-            )
+            payload = {
+                "model": config.llm_model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+
+            async with httpx.AsyncClient(timeout=config.llm_timeout_seconds) as client:
+                response_data = await client.post(
+                    f"{config.deepseek_api_url}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                )
+
+                if response_data.status_code != 200:
+                    raise Exception(
+                        f"LLM API error: {response_data.status_code} - {response_data.text}"
+                    )
+
+                data = response_data.json()
+                response = data["choices"][0]["message"]["content"].strip()
 
             logger.debug(
                 "LLM call successful",

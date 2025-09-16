@@ -35,10 +35,15 @@ class SNIConfig(BaseSettings):
     llm_provider: str = Field(default="deepseek", env="LLM_PROVIDER")
     llm_model: str = Field(default="deepseek-chat", env="LLM_MODEL")
     max_tokens: int = Field(default=4000, env="MAX_TOKENS_PER_REQUEST")
+    llm_timeout_seconds: int = Field(default=180, env="LLM_TIMEOUT_SECONDS")
 
     # Processing
     max_bucket_size: int = Field(default=100, env="MAX_BUCKET_SIZE")
     default_fetch_interval: int = Field(default=60, env="DEFAULT_FETCH_INTERVAL")
+
+    # GEN-1 Event Family Processing
+    ef_batch_size: int = Field(default=500, env="EF_BATCH_SIZE")
+    ef_max_titles_per_batch: int = Field(default=500, env="EF_MAX_TITLES_PER_BATCH")
 
     # Strategic gate vocabulary paths
     actors_csv_path: str = Field(default="data/actors.csv", env="ACTORS_CSV_PATH")

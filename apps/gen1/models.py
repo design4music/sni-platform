@@ -29,8 +29,20 @@ class EventFamily(BaseModel):
     event_type: str = Field(
         description="Type of event (e.g., 'diplomatic meeting', 'economic policy')"
     )
-    geography: Optional[str] = Field(
-        default=None, description="Geographic location if relevant"
+    primary_theater: Optional[str] = Field(
+        default=None, description="Primary theater code (e.g., 'UKRAINE', 'GAZA')"
+    )
+    
+    # EF Key system for continuous merging
+    ef_key: Optional[str] = Field(
+        default=None, description="Deterministic key for Event Family merging (16-char hash)"
+    )
+    status: str = Field(default="active", description="Event Family status (active/merged)")
+    merged_into: Optional[str] = Field(
+        default=None, description="UUID of Event Family this was merged into"
+    )
+    merge_rationale: Optional[str] = Field(
+        default=None, description="Explanation of why this EF was merged"
     )
 
     # Time boundaries

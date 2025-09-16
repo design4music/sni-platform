@@ -43,6 +43,7 @@ class Gen1Database:
         try:
             with get_db_session() as session:
                 # Simple query for ALL unassigned strategic titles (corpus-wide)
+                # MULTILINGUAL: Process all languages - system supports multilingual content
                 titles_query = """
                 SELECT 
                     id,
@@ -178,15 +179,17 @@ class Gen1Database:
         """
         try:
             with get_db_session() as session:
-                # Insert into event_families table (Phase 2: No source_bucket_ids column)
+                # Insert into event_families table (Phase 2: Updated schema with ef_key system)
                 insert_query = """
                 INSERT INTO event_families (
-                    id, title, summary, key_actors, event_type, geography,
+                    id, title, summary, key_actors, event_type, primary_theater,
+                    ef_key, status, merged_into, merge_rationale,
                     event_start, event_end, source_title_ids,
                     confidence_score, coherence_reason, created_at, updated_at,
                     processing_notes
                 ) VALUES (
-                    :id, :title, :summary, :key_actors, :event_type, :geography,
+                    :id, :title, :summary, :key_actors, :event_type, :primary_theater,
+                    :ef_key, :status, :merged_into, :merge_rationale,
                     :event_start, :event_end, :source_title_ids,
                     :confidence_score, :coherence_reason, :created_at, :updated_at,
                     :processing_notes
@@ -201,7 +204,11 @@ class Gen1Database:
                         "summary": event_family.summary,
                         "key_actors": event_family.key_actors,
                         "event_type": event_family.event_type,
-                        "geography": event_family.geography,
+                        "primary_theater": event_family.primary_theater,
+                        "ef_key": event_family.ef_key,
+                        "status": event_family.status,
+                        "merged_into": event_family.merged_into,
+                        "merge_rationale": event_family.merge_rationale,
                         "event_start": event_family.event_start,
                         "event_end": event_family.event_end,
                         "source_title_ids": event_family.source_title_ids,
@@ -221,6 +228,78 @@ class Gen1Database:
         except Exception as e:
             logger.error(f"Failed to save Event Family: {e}")
             return False
+
+    async def upsert_event_family_by_ef_key(self, event_family: EventFamily) -> tuple[bool, Optional[str]]:
+        """
+        Upsert Event Family using ef_key for continuous merging
+        
+        Args:
+            event_family: EventFamily object to save or merge
+            
+        Returns:
+            Tuple of (success: bool, existing_ef_id: Optional[str])
+            - If existing_ef_id is None, new EF was created
+            - If existing_ef_id is provided, merge with existing EF
+        """
+        try:
+            with get_db_session() as session:
+                if not event_family.ef_key:
+                    # No ef_key, use regular save
+                    success = await self.save_event_family(event_family)
+                    return success, None
+                
+                # Check if EF with same ef_key already exists
+                existing_query = """
+                SELECT id, title, source_title_ids, key_actors, event_start, event_end
+                FROM event_families 
+                WHERE ef_key = :ef_key AND status = 'active'
+                LIMIT 1
+                """
+                
+                result = session.execute(text(existing_query), {"ef_key": event_family.ef_key}).fetchone()
+                
+                if result:
+                    # EF with same ef_key exists - merge titles into existing EF
+                    existing_ef_id = str(result.id)
+                    existing_title_ids = result.source_title_ids or []
+                    new_title_ids = event_family.source_title_ids or []
+                    
+                    # Merge title lists (deduplicate)
+                    merged_title_ids = list(set(existing_title_ids + new_title_ids))
+                    
+                    # Update existing EF with merged titles and extended time range
+                    update_query = """
+                    UPDATE event_families 
+                    SET source_title_ids = :merged_title_ids,
+                        event_start = LEAST(event_start, :new_start),
+                        event_end = GREATEST(COALESCE(event_end, :new_end), :new_end),
+                        updated_at = NOW(),
+                        processing_notes = CONCAT(COALESCE(processing_notes, ''), '; Merged ef_key: ', :new_ef_title)
+                    WHERE id = :existing_ef_id
+                    """
+                    
+                    session.execute(text(update_query), {
+                        "merged_title_ids": merged_title_ids,
+                        "new_start": event_family.event_start,
+                        "new_end": event_family.event_end,
+                        "new_ef_title": event_family.title[:100],  # Truncate for notes
+                        "existing_ef_id": existing_ef_id
+                    })
+                    
+                    logger.info(
+                        f"Merged EF with ef_key {event_family.ef_key}: "
+                        f"{len(new_title_ids)} new titles into existing EF {existing_ef_id}"
+                    )
+                    
+                    return True, existing_ef_id
+                else:
+                    # No existing EF, create new one
+                    success = await self.save_event_family(event_family)
+                    return success, None
+                    
+        except Exception as e:
+            logger.error(f"Failed to upsert Event Family by ef_key: {e}")
+            return False, None
 
     async def save_framed_narrative(self, framed_narrative: FramedNarrative) -> bool:
         """

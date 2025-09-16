@@ -57,11 +57,12 @@ python -m apps.clust1.run_enhanced_gate --hours 24 --max-titles 1000
 **Output:** Creates `event_families` and `framed_narratives` records
 
 #### Pass 1: Sequential EF Assembly
-- **Strategy:** Process titles in large sequential batches (1,000 per batch)
+- **Strategy:** Process titles in configurable sequential batches (500 per batch)
 - **Focus:** Basic Event Family creation with essential metadata
-- **LLM Processing:** Content-driven EF generation (not artificially limited)
+- **LLM Processing:** Content-driven EF generation with 180s timeout per batch
 - **Performance:** 40x faster than entity-based batching
-- **Anti-fragmentation:** Prefers coherent, comprehensive Event Families
+- **Anti-fragmentation:** Uses 2-parameter EF keys (theater + event_type) to prevent fragmentation
+- **Configuration:** Batch size and timeout controlled via `core/config.py`
 
 **Execution:**
 ```bash
@@ -111,8 +112,9 @@ python -m apps.gen1.multipass_processor pass2   # Cross-merging + narratives
 ### Performance Benchmarks
 - **RSS Ingestion:** ~3-5 minutes for 137 feeds
 - **Enhanced Gating:** ~30-60 seconds for 1,000 titles
-- **Pass 1 (Sequential):** ~15-20 minutes for 7,500 titles (8 batches)
+- **Pass 1 (Sequential):** ~3 minutes per 500-title batch (15 batches for 7,500 titles)
 - **Pass 2 (Cross-merge):** ~5-10 minutes for 45 Event Families
+- **LLM Timeout:** 180 seconds per batch (configurable)
 
 ### Current System Status
 - **Event Families Generated:** 45 (from 7,491 strategic titles)
@@ -168,9 +170,23 @@ python -m apps.gen1.multipass_processor pass2   # Cross-merging + narratives
 - `~phase2_design.md` - Legacy design documents
 
 ### Configuration
+- `core/config.py` - Centralized system configuration
 - `.claude/settings.local.json` - Claude Code integration
 - `CLAUDE.md` - Project instructions
 - `README.md` - Project overview
+
+#### Key Configuration Settings
+```python
+# GEN-1 Event Family Processing (core/config.py)
+ef_batch_size: int = 500                    # Titles per batch
+llm_timeout_seconds: int = 180              # LLM API timeout per request
+```
+
+**Background Processing & Timeouts:**
+- Background processes run indefinitely without timeout
+- 180s timeout applies to individual LLM API calls only
+- Complex Event Family assembly can take 60-180s per batch
+- Multiple batches processed sequentially without interruption
 
 ## Quality Assurance
 

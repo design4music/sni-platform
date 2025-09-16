@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 import structlog
 
+from core.config import get_config
+
 logger = structlog.get_logger(__name__)
 
 
@@ -26,18 +28,20 @@ class LLMClient:
 
     def __init__(self):
         """Initialize LLM client with configuration from environment"""
-
-        # Load configuration from environment
+        
+        config = get_config()
+        
+        # Load configuration from config system
         self.api_key = (
-            os.getenv("DEEPSEEK_API_KEY") or "sk-7f684036607a4647bfb08df006b54ea1"
+            config.deepseek_api_key or "sk-7f684036607a4647bfb08df006b54ea1"
         )
-        self.base_url = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1")
-        self.model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+        self.base_url = config.deepseek_api_url
+        self.model = config.llm_model
 
         if not self.api_key:
             raise ValueError("LLM API key not configured")
 
-        self.timeout = 60
+        self.timeout = config.llm_timeout_seconds
         self.max_retries = 2
 
         logger.info("LLM client initialized", model=self.model)
