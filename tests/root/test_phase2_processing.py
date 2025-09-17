@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from loguru import logger
 
-from apps.gen1.processor import Processor
+from apps.generate.processor import Processor
 
 
 async def test_phase2_processing():

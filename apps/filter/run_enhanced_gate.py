@@ -15,8 +15,8 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from loguru import logger
-from apps.clust1.strategic_gate import get_strategic_gate_service
-from apps.clust1.entity_enrichment import get_entity_enrichment_service
+from apps.filter.strategic_gate import get_strategic_gate_service
+from apps.filter.entity_enrichment import get_entity_enrichment_service
 from core.database import get_db_session
 from sqlalchemy import text
 

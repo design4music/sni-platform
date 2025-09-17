@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from apps.gen1.models import (LLMEventFamilyRequest, LLMEventFamilyResponse,
+from apps.generate.models import (LLMEventFamilyRequest, LLMEventFamilyResponse,
                               LLMFramedNarrativeRequest,
                               LLMFramedNarrativeResponse)
 from core.config import get_config

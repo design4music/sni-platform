@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from loguru import logger
 
-from apps.gen1.processor import get_gen1_processor
+from apps.generate.processor import get_gen1_processor
 
 
 async def create_20_event_families():

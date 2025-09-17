@@ -5,8 +5,8 @@ Validates actor matching and edge cases across languages
 
 import pytest
 
-from apps.clust1.strategic_gate import StrategicGate, filter_titles_batch
-from apps.clust1.vocab_loader import validate_vocabularies
+from apps.filter.strategic_gate import StrategicGate, filter_titles_batch
+from apps.filter.vocab_loader import validate_vocabularies
 
 
 class TestStrategicGateSmoke:

@@ -23,7 +23,7 @@ def create_event_type_mapping() -> Dict[str, str]:
     return {
         # Military/Security Operations
         "Military Operation": "Strategy/Tactics",
-        "Military Operations": "Strategy/Tactics", 
+        "Military Operations": "Strategy/Tactics",
         "Military/Security Incident": "Strategy/Tactics",
         "Military Incident": "Strategy/Tactics",
         "Military Strike/International Incident": "Strategy/Tactics",
@@ -34,37 +34,31 @@ def create_event_type_mapping() -> Dict[str, str]:
         "Military Operation/Political Policy": "Strategy/Tactics",
         "Military Display/Diplomatic Summit": "Strategy/Tactics",
         "Military cooperation/Regional security": "Alliances/Geopolitics",
-        
         # Political Violence
         "Political Violence/Assassination": "Domestic Politics",
-        
-        # Diplomatic Relations  
+        # Diplomatic Relations
         "Diplomatic Relations": "Diplomacy/Negotiations",
         "Diplomatic Scandal": "Diplomacy/Negotiations",
-        "Diplomacy/Nuclear Agreement": "Diplomacy/Negotiations", 
+        "Diplomacy/Nuclear Agreement": "Diplomacy/Negotiations",
         "Diplomacy": "Diplomacy/Negotiations",
         "Diplomatic Summit": "Diplomacy/Negotiations",
         "Diplomacy/Armed Conflict": "Diplomacy/Negotiations",
         "Diplomatic crisis/Nuclear negotiations": "Diplomacy/Negotiations",
-        
         # Domestic Politics
         "Domestic Politics": "Domestic Politics",
-        "Domestic Policy": "Domestic Politics", 
+        "Domestic Policy": "Domestic Politics",
         "Domestic Politics/Protests": "Domestic Politics",
         "Domestic Security Policy": "Domestic Politics",
-        
-        # International Relations  
+        # International Relations
         "International Conflict/Sanctions": "Sanctions/Economy",
         "International Security Agreement": "Alliances/Geopolitics",
         "Military Conflict/International Diplomacy": "Alliances/Geopolitics",
         "Military conflict/International security": "Alliances/Geopolitics",
-        
         # Economic/Trade
         "Geopolitical Tensions/Trade Policy": "Sanctions/Economy",
         "Economic Diplomacy": "Sanctions/Economy",
-        "Economic Policy/Trade Sanctions": "Sanctions/Economy", 
+        "Economic Policy/Trade Sanctions": "Sanctions/Economy",
         "Trade Agreement": "Sanctions/Economy",
-        
         # Other Categories
         "Political Scandal/Dismissal": "Domestic Politics",
         "Financial Crime/Scandal": "Legal/ICC",
@@ -79,15 +73,14 @@ def create_geography_mapping() -> Dict[str, str]:
     return {
         # North America
         "United States": "NAMERICA",
-        "United States, Utah": "NAMERICA", 
+        "United States, Utah": "NAMERICA",
         "United States/Utah": "NAMERICA",
         "United States/International": "NAMERICA",
         "Chicago, USA": "NAMERICA",
         "Carib Sea/International Waters": "NAMERICA",
-        
         # Europe
         "France": "EUROPE",
-        "Ukraine": "EUROPE", 
+        "Ukraine": "EUROPE",
         "Poland/Eastern Europe": "EUROPE",
         "Poland-Ukraine border region": "EUROPE",
         "Ukraine/Eastern Europe": "EUROPE",
@@ -98,62 +91,62 @@ def create_geography_mapping() -> Dict[str, str]:
         "Europe/Latin America": "EUROPE",  # Primarily European context
         "United Kingdom": "EUROPE",
         "Russia": "EUROPE",  # For European security context
-        
         # Middle East
         "Middle East": "MEAST",
         "Middle East/International": "MEAST",
         "Qatar/Middle East": "MEAST",
         "Doha, Qatar": "MEAST",
-        "Gaza Strip": "MEAST", 
+        "Gaza Strip": "MEAST",
         "Gaza/Middle East": "MEAST",
         "Gaza City, West Bank": "MEAST",
         "Israel, Gaza, Middle East": "MEAST",
-        
         # Asia-Pacific
         "China, Beijing": "ASIA",
-        "Beijing, China": "ASIA", 
+        "Beijing, China": "ASIA",
         "Asia-Pacific": "ASIA",
         "Asia-Pacific, North America": "ASIA",  # Primary theater is Asia-Pacific
-        
         # Global/Multi-theater
         "Global": "GLOBAL",
         "Virtual Summit": "VIRTUAL",
-        
         # Mixed cases - assign to primary theater
         "United Kingdom, United States": "GLOBAL",  # Trans-Atlantic
-        "United States, Israel, Qatar": "GLOBAL",   # Multi-theater event
+        "United States, Israel, Qatar": "GLOBAL",  # Multi-theater event
     }
 
 
 def update_event_families_taxonomies() -> Tuple[int, int]:
     """
     Update existing Event Families with standardized taxonomies
-    
+
     Returns:
         Tuple of (event_type_updates, geography_updates)
     """
     logger.info("=== UPDATING EVENT FAMILIES TAXONOMIES ===")
-    
+
     event_type_mapping = create_event_type_mapping()
     geography_mapping = create_geography_mapping()
-    
+
     event_type_updates = 0
     geography_updates = 0
-    
+
     with get_db_session() as session:
         # Get all Event Families
-        families = session.execute(text("""
+        families = session.execute(
+            text(
+                """
             SELECT id, title, event_type, geography 
             FROM event_families 
             ORDER BY created_at DESC
-        """)).fetchall()
-        
+        """
+            )
+        ).fetchall()
+
         logger.info(f"Found {len(families)} Event Families to process")
-        
+
         for family in families:
             updates = []
             params = {"family_id": str(family.id)}
-            
+
             # Update event_type if mapping exists
             if family.event_type in event_type_mapping:
                 new_event_type = event_type_mapping[family.event_type]
@@ -161,11 +154,15 @@ def update_event_families_taxonomies() -> Tuple[int, int]:
                     updates.append("event_type = :new_event_type")
                     params["new_event_type"] = new_event_type
                     event_type_updates += 1
-                    logger.info(f"Event Type: '{family.event_type}' → '{new_event_type}'")
+                    logger.info(
+                        f"Event Type: '{family.event_type}' → '{new_event_type}'"
+                    )
             else:
-                logger.warning(f"No mapping for event_type: '{family.event_type}' (EF: {family.title})")
-            
-            # Update geography if mapping exists  
+                logger.warning(
+                    f"No mapping for event_type: '{family.event_type}' (EF: {family.title})"
+                )
+
+            # Update geography if mapping exists
             if family.geography in geography_mapping:
                 new_geography = geography_mapping[family.geography]
                 if new_geography != family.geography:
@@ -174,8 +171,10 @@ def update_event_families_taxonomies() -> Tuple[int, int]:
                     geography_updates += 1
                     logger.info(f"Geography: '{family.geography}' → '{new_geography}'")
             else:
-                logger.warning(f"No mapping for geography: '{family.geography}' (EF: {family.title})")
-            
+                logger.warning(
+                    f"No mapping for geography: '{family.geography}' (EF: {family.title})"
+                )
+
             # Apply updates if any
             if updates:
                 update_query = f"""
@@ -184,58 +183,81 @@ def update_event_families_taxonomies() -> Tuple[int, int]:
                 WHERE id = :family_id
                 """
                 session.execute(text(update_query), params)
-        
+
         session.commit()
-    
-    logger.info(f"Taxonomy updates completed:")
+
+    logger.info("Taxonomy updates completed:")
     logger.info(f"  Event type updates: {event_type_updates}")
     logger.info(f"  Geography updates: {geography_updates}")
-    
+
     return event_type_updates, geography_updates
 
 
 def verify_taxonomy_compliance() -> None:
     """Verify all Event Families now use standardized taxonomies"""
     logger.info("=== VERIFYING TAXONOMY COMPLIANCE ===")
-    
+
     standardized_event_types = {
-        "Strategy/Tactics", "Humanitarian", "Alliances/Geopolitics", 
-        "Diplomacy/Negotiations", "Sanctions/Economy", "Domestic Politics",
-        "Procurement/Force-gen", "Tech/Cyber/OSINT", "Legal/ICC",
-        "Information/Media/Platforms", "Energy/Infrastructure"
+        "Strategy/Tactics",
+        "Humanitarian",
+        "Alliances/Geopolitics",
+        "Diplomacy/Negotiations",
+        "Sanctions/Economy",
+        "Domestic Politics",
+        "Procurement/Force-gen",
+        "Tech/Cyber/OSINT",
+        "Legal/ICC",
+        "Information/Media/Platforms",
+        "Energy/Infrastructure",
     }
-    
+
     standardized_geographies = {
-        "NAMERICA", "EUROPE", "MEAST", "ASIA", "AFRICA", 
-        "LATAM", "GLOBAL", "VIRTUAL"
+        "NAMERICA",
+        "EUROPE",
+        "MEAST",
+        "ASIA",
+        "AFRICA",
+        "LATAM",
+        "GLOBAL",
+        "VIRTUAL",
     }
-    
+
     with get_db_session() as session:
         # Check event_type compliance
-        non_standard_types = session.execute(text("""
+        non_standard_types = session.execute(
+            text(
+                """
             SELECT DISTINCT event_type, COUNT(*) as count
             FROM event_families 
             WHERE event_type NOT IN :valid_types
             GROUP BY event_type
             ORDER BY count DESC
-        """), {"valid_types": tuple(standardized_event_types)}).fetchall()
-        
+        """
+            ),
+            {"valid_types": tuple(standardized_event_types)},
+        ).fetchall()
+
         if non_standard_types:
             logger.warning("Non-standard event_type values found:")
             for row in non_standard_types:
                 logger.warning(f"  {row.count}x '{row.event_type}'")
         else:
             logger.info("✓ All event_type values are compliant")
-        
+
         # Check geography compliance
-        non_standard_geos = session.execute(text("""
+        non_standard_geos = session.execute(
+            text(
+                """
             SELECT DISTINCT geography, COUNT(*) as count
             FROM event_families 
             WHERE geography NOT IN :valid_geos
             GROUP BY geography  
             ORDER BY count DESC
-        """), {"valid_geos": tuple(standardized_geographies)}).fetchall()
-        
+        """
+            ),
+            {"valid_geos": tuple(standardized_geographies)},
+        ).fetchall()
+
         if non_standard_geos:
             logger.warning("Non-standard geography values found:")
             for row in non_standard_geos:
@@ -249,13 +271,13 @@ def main():
     try:
         # Update taxonomies
         event_updates, geo_updates = update_event_families_taxonomies()
-        
+
         # Verify compliance
         verify_taxonomy_compliance()
-        
-        logger.info(f"Taxonomy standardization complete!")
+
+        logger.info("Taxonomy standardization complete!")
         logger.info(f"Total updates: {event_updates + geo_updates}")
-        
+
     except Exception as e:
         logger.error(f"Taxonomy update failed: {e}")
         sys.exit(1)

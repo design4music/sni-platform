@@ -14,8 +14,8 @@ sys.path.insert(0, str(project_root))
 
 from loguru import logger
 
-from apps.gen1.database import get_gen1_database
-from apps.gen1.processor import get_gen1_processor
+from apps.generate.database import get_gen1_database
+from apps.generate.processor import get_gen1_processor
 from core.database import check_database_connection
 
 

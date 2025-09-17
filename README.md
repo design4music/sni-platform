@@ -57,8 +57,8 @@ python scripts/test_setup.py
 SNI-v2/
 ├── apps/                   # Core processing pipeline
 │   ├── ingest/            # RSS fetch & normalize
-│   ├── clust1/            # Bucketing & guardrails  
-│   ├── gen1/              # Prompts & LLM calls
+│   ├── filter/            # Bucketing & guardrails  
+│   ├── generate/          # Prompts & LLM calls
 │   ├── merge/             # Cross-feed reconciliation
 │   └── arc/               # Cross-event patterns
 ├── core/                   # Core utilities

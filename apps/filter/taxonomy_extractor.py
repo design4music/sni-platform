@@ -269,7 +269,7 @@ def create_multi_vocab_taxonomy_extractor() -> MultiVocabTaxonomyExtractor:
     Returns:
         MultiVocabTaxonomyExtractor instance with all loaded vocabularies
     """
-    from apps.clust1.vocab_loader import (load_actor_aliases,
+    from apps.filter.vocab_loader import (load_actor_aliases,
                                           load_go_people_aliases,
                                           load_go_taxonomy_aliases,
                                           load_stop_culture_phrases)
@@ -294,7 +294,7 @@ def create_actor_extractor() -> ActorExtractor:
     Returns:
         ActorExtractor instance (legacy wrapper around new system)
     """
-    from apps.clust1.vocab_loader import load_actor_aliases
+    from apps.filter.vocab_loader import load_actor_aliases
     from core.config import get_config
 
     config = get_config()

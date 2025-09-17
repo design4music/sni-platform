@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from apps.clust1.taxonomy_extractor import \
+from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
 from core.config import get_config
 

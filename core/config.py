@@ -84,6 +84,27 @@ class SNIConfig(BaseSettings):
         default="en,es,fr,de,ru,zh", env="SUPPORTED_LANGUAGES"
     )
 
+    # Pipeline Orchestration
+    pipeline_enabled: bool = Field(default=True, env="PIPELINE_ENABLED")
+    pipeline_daemon_mode: bool = Field(default=False, env="PIPELINE_DAEMON_MODE")
+    pipeline_interval_minutes: int = Field(default=60, env="PIPELINE_INTERVAL_MINUTES")
+    pipeline_max_cycles: Optional[int] = Field(default=None, env="PIPELINE_MAX_CYCLES")
+    
+    # Phase Control (enable/disable individual phases)
+    phase_1_ingest_enabled: bool = Field(default=True, env="PHASE_1_INGEST_ENABLED")
+    phase_2_filter_enabled: bool = Field(default=True, env="PHASE_2_FILTER_ENABLED")
+    phase_3_generate_enabled: bool = Field(default=True, env="PHASE_3_GENERATE_ENABLED")
+    
+    # Phase Limits (for controlled execution)
+    phase_1_max_feeds: Optional[int] = Field(default=None, env="PHASE_1_MAX_FEEDS")
+    phase_2_max_titles: Optional[int] = Field(default=1000, env="PHASE_2_MAX_TITLES")
+    phase_3_max_titles: Optional[int] = Field(default=500, env="PHASE_3_MAX_TITLES")
+    
+    # Monitoring and Safety
+    pipeline_error_threshold: int = Field(default=3, env="PIPELINE_ERROR_THRESHOLD")
+    pipeline_heartbeat_file: str = Field(default="logs/pipeline_heartbeat.json", env="PIPELINE_HEARTBEAT_FILE")
+    pipeline_status_file: str = Field(default="logs/pipeline_status.json", env="PIPELINE_STATUS_FILE")
+
     # Project paths
     project_root: Path = Field(default_factory=lambda: Path(__file__).parent.parent)
 

@@ -14,7 +14,7 @@ from sqlalchemy import text
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from apps.clust1.entity_enrichment import \
+from apps.filter.entity_enrichment import \
     get_entity_enrichment_service  # noqa: E402
 from core.database import get_db_session  # noqa: E402
 

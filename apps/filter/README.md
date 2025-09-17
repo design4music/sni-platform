@@ -26,18 +26,18 @@ Then Entity Enrichment adds JSON values to strategic titles only - this mechanis
 
   Why It Didn't Work Smoothly Initially
 
-  1. Import Path Issues: The new scripts had from apps.clust1.* imports that failed when run directly. Solution: Use python -m
-  apps.clust1.module_name
-  2. Hidden Working Scripts: The working pipeline used apps/clust1/run_gate.py (not the new run_enhanced_gate.py) for strategic
+  1. Import Path Issues: The new scripts had from apps.filter.* imports that failed when run directly. Solution: Use python -m
+  apps.filter.module_name
+  2. Hidden Working Scripts: The working pipeline used apps/filter/run_gate.py (not the new run_enhanced_gate.py) for strategic
   filtering
   3. Sequential Dependencies: Entity enrichment only works AFTER strategic gate processing marks titles as strategic
 
   Correct Processing Order
 
   1. RSS Ingestion:           apps/ingest/run_ingestion.py
-  2. Strategic Gate:          apps/clust1/run_gate.py
-  3. Entity Enrichment:       python -m apps.clust1.entity_enrichment
-  4. [Future] GEN-1 Direct:   apps/gen1/run_gen1.py
+  2. Strategic Gate:          apps/filter/run_gate.py
+  3. Entity Enrichment:       python -m apps.filter.entity_enrichment
+  4. [Future] GEN-1 Direct:   apps/generate/run_gen1.py
 
   CLUST-1 Scripts - Deprecation Analysis
 

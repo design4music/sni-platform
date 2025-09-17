@@ -51,7 +51,7 @@ def fetcher(monkeypatch):
             self.meta["last_pubdate_utc"] = last_pubdate_utc
 
     # Patch FeedsRepo class BEFORE creating RSSFetcher
-    monkeypatch.setattr("apps.ingest.rss_fetcher.FeedsRepo", DummyFeedsRepo)
+    monkeypatch.setattr("apps.1_ingest.rss_fetcher.FeedsRepo", DummyFeedsRepo)
 
     f = RSSFetcher()
 

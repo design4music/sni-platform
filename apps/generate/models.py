@@ -32,12 +32,15 @@ class EventFamily(BaseModel):
     primary_theater: Optional[str] = Field(
         default=None, description="Primary theater code (e.g., 'UKRAINE', 'GAZA')"
     )
-    
+
     # EF Key system for continuous merging
     ef_key: Optional[str] = Field(
-        default=None, description="Deterministic key for Event Family merging (16-char hash)"
+        default=None,
+        description="Deterministic key for Event Family merging (16-char hash)",
     )
-    status: str = Field(default="active", description="Event Family status (active/merged)")
+    status: str = Field(
+        default="active", description="Event Family status (active/merged)"
+    )
     merged_into: Optional[str] = Field(
         default=None, description="UUID of Event Family this was merged into"
     )
@@ -112,14 +115,13 @@ class FramedNarrative(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
-
 @dataclass
 class ProcessingResult:
     """
     Result of GEN-1 processing operation
     """
 
-    # Input context  
+    # Input context
     total_titles_processed: int
 
     # Output artifacts

@@ -1,0 +1,401 @@
+#!/usr/bin/env python3
+"""
+SNI-v2 Unified Pipeline Orchestrator
+Coordinates RSS ingestion → strategic filtering → Event Family generation
+"""
+
+import asyncio
+import json
+import sys
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import typer
+from loguru import logger
+
+# Add project root to path
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+from core.config import get_config
+from core.database import get_db_session
+
+
+app = typer.Typer(help="SNI-v2 Pipeline Orchestrator")
+config = get_config()
+
+
+class PipelineOrchestrator:
+    """Main pipeline coordinator"""
+    
+    def __init__(self):
+        self.config = get_config()
+        self.start_time = datetime.now()
+        self.cycle_count = 0
+        self.error_count = 0
+        self.status = {"phase": "idle", "last_run": None, "errors": []}
+        
+    def log_status(self, phase: str, status: str, details: Optional[Dict] = None):
+        """Update pipeline status tracking"""
+        self.status.update({
+            "phase": phase,
+            "status": status,
+            "last_update": datetime.now().isoformat(),
+            "cycle": self.cycle_count,
+            "details": details or {}
+        })
+        
+        # Write status to file for monitoring
+        status_file = Path(self.config.pipeline_status_file)
+        status_file.parent.mkdir(exist_ok=True)
+        
+        with open(status_file, "w") as f:
+            json.dump(self.status, f, indent=2, default=str)
+            
+        # Write heartbeat
+        heartbeat_file = Path(self.config.pipeline_heartbeat_file)
+        with open(heartbeat_file, "w") as f:
+            json.dump({
+                "timestamp": datetime.now().isoformat(),
+                "cycle": self.cycle_count,
+                "uptime_minutes": (datetime.now() - self.start_time).total_seconds() / 60
+            }, f, indent=2)
+    
+    async def run_phase_1_ingest(self) -> Dict:
+        """Phase 1: RSS Ingestion"""
+        if not self.config.phase_1_ingest_enabled:
+            return {"status": "skipped", "reason": "disabled"}
+            
+        logger.info("=== PHASE 1: RSS INGESTION ===")
+        self.log_status("1_ingest", "running")
+        
+        try:
+            # Import and run ingestion
+            from apps.ingest.run_ingestion import main as run_ingest
+            
+            # Run ingestion with configured limits
+            max_feeds = self.config.phase_1_max_feeds
+            result = await asyncio.to_thread(run_ingest, max_feeds=max_feeds)
+            
+            self.log_status("1_ingest", "completed", {"result": result})
+            logger.info(f"Phase 1 completed: {result}")
+            return {"status": "success", "result": result}
+            
+        except Exception as e:
+            self.error_count += 1
+            self.status["errors"].append({
+                "phase": "1_ingest",
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
+            self.log_status("1_ingest", "error", {"error": str(e)})
+            logger.error(f"Phase 1 failed: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    async def run_phase_2_filter(self) -> Dict:
+        """Phase 2: Strategic Filtering + Entity Extraction"""
+        if not self.config.phase_2_filter_enabled:
+            return {"status": "skipped", "reason": "disabled"}
+            
+        logger.info("=== PHASE 2: STRATEGIC FILTERING ===")
+        self.log_status("2_filter", "running")
+        
+        try:
+            # Import and run enhanced gate
+            from apps.filter.run_enhanced_gate import main as run_gate
+            
+            # Run with configured limits
+            max_titles = self.config.phase_2_max_titles
+            hours = self.config.processing_window_hours
+            
+            result = await asyncio.to_thread(
+                run_gate, 
+                max_titles=max_titles,
+                hours=hours
+            )
+            
+            self.log_status("2_filter", "completed", {"result": result})
+            logger.info(f"Phase 2 completed: {result}")
+            return {"status": "success", "result": result}
+            
+        except Exception as e:
+            self.error_count += 1
+            self.status["errors"].append({
+                "phase": "2_filter", 
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            })
+            self.log_status("2_filter", "error", {"error": str(e)})
+            logger.error(f"Phase 2 failed: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    async def run_phase_3_generate(self) -> Dict:
+        """Phase 3: Event Family Generation (Pass 1 + Pass 2)"""
+        if not self.config.phase_3_generate_enabled:
+            return {"status": "skipped", "reason": "disabled"}
+            
+        logger.info("=== PHASE 3: EVENT FAMILY GENERATION ===")
+        self.log_status("3_generate", "running")
+        
+        try:
+            # Import multipass processor
+            from apps.generate.multipass_processor import main as run_multipass
+            
+            max_titles = self.config.phase_3_max_titles
+            
+            # Pass 1: EF Assembly
+            logger.info("Phase 3A: EF Assembly (Pass 1)")
+            pass1_result = await asyncio.to_thread(
+                run_multipass,
+                mode="pass1",
+                max_titles=max_titles
+            )
+            
+            # Pass 2: Cross-merging & Narratives
+            logger.info("Phase 3B: Cross-merging (Pass 2)")
+            pass2_result = await asyncio.to_thread(
+                run_multipass,
+                mode="pass2", 
+                max_event_families=50
+            )
+            
+            result = {
+                "pass1": pass1_result,
+                "pass2": pass2_result
+            }
+            
+            self.log_status("3_generate", "completed", {"result": result})
+            logger.info(f"Phase 3 completed: {result}")
+            return {"status": "success", "result": result}
+            
+        except Exception as e:
+            self.error_count += 1
+            self.status["errors"].append({
+                "phase": "3_generate",
+                "error": str(e), 
+                "timestamp": datetime.now().isoformat()
+            })
+            self.log_status("3_generate", "error", {"error": str(e)})
+            logger.error(f"Phase 3 failed: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    async def run_single_cycle(self) -> Dict:
+        """Execute one complete pipeline cycle"""
+        self.cycle_count += 1
+        cycle_start = datetime.now()
+        
+        logger.info(f"=== PIPELINE CYCLE {self.cycle_count} START ===")
+        self.log_status("cycle", "starting")
+        
+        results = {}
+        
+        # Execute phases sequentially
+        if self.config.phase_1_ingest_enabled:
+            results["phase_1"] = await self.run_phase_1_ingest()
+            
+        if self.config.phase_2_filter_enabled:
+            results["phase_2"] = await self.run_phase_2_filter()
+            
+        if self.config.phase_3_generate_enabled:
+            results["phase_3"] = await self.run_phase_3_generate()
+        
+        # Calculate cycle metrics
+        cycle_duration = (datetime.now() - cycle_start).total_seconds()
+        
+        cycle_summary = {
+            "cycle": self.cycle_count,
+            "duration_seconds": cycle_duration,
+            "results": results,
+            "error_count": self.error_count,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        self.log_status("cycle", "completed", cycle_summary)
+        
+        # Check error threshold
+        if self.error_count >= self.config.pipeline_error_threshold:
+            logger.error(f"Error threshold reached: {self.error_count}")
+            raise Exception(f"Too many errors: {self.error_count}")
+        
+        logger.info(f"=== CYCLE {self.cycle_count} COMPLETED in {cycle_duration:.1f}s ===")
+        return cycle_summary
+    
+    async def run_daemon(self):
+        """Run pipeline in daemon mode with interval"""
+        logger.info("=== STARTING PIPELINE DAEMON ===")
+        logger.info(f"Interval: {self.config.pipeline_interval_minutes} minutes")
+        logger.info(f"Max cycles: {self.config.pipeline_max_cycles or 'unlimited'}")
+        
+        while True:
+            try:
+                # Run cycle
+                cycle_result = await self.run_single_cycle()
+                
+                # Check max cycles limit
+                if (self.config.pipeline_max_cycles and 
+                    self.cycle_count >= self.config.pipeline_max_cycles):
+                    logger.info(f"Max cycles reached: {self.cycle_count}")
+                    break
+                
+                # Wait for next cycle
+                if self.config.pipeline_daemon_mode:
+                    wait_minutes = self.config.pipeline_interval_minutes
+                    logger.info(f"Waiting {wait_minutes} minutes until next cycle...")
+                    await asyncio.sleep(wait_minutes * 60)
+                else:
+                    # Single run mode
+                    break
+                    
+            except KeyboardInterrupt:
+                logger.info("Pipeline stopped by user")
+                break
+            except Exception as e:
+                logger.error(f"Pipeline cycle failed: {e}")
+                if self.error_count >= self.config.pipeline_error_threshold:
+                    logger.error("Error threshold exceeded, stopping pipeline")
+                    break
+                # Wait before retry
+                logger.info("Waiting 5 minutes before retry...")
+                await asyncio.sleep(300)
+
+
+# CLI Commands
+
+@app.command()
+def run(
+    daemon: bool = typer.Option(False, "--daemon", help="Run in daemon mode"),
+    cycles: Optional[int] = typer.Option(None, "--max-cycles", help="Maximum cycles to run"),
+    interval: Optional[int] = typer.Option(None, "--interval", help="Minutes between cycles")
+):
+    """Run the complete SNI pipeline"""
+    
+    # Override config with CLI parameters
+    if daemon is not None:
+        config.pipeline_daemon_mode = daemon
+    if cycles is not None:
+        config.pipeline_max_cycles = cycles
+    if interval is not None:
+        config.pipeline_interval_minutes = interval
+    
+    logger.info("=== SNI-v2 PIPELINE ORCHESTRATOR ===")
+    logger.info(f"Daemon mode: {config.pipeline_daemon_mode}")
+    logger.info(f"Interval: {config.pipeline_interval_minutes} minutes")
+    logger.info(f"Max cycles: {config.pipeline_max_cycles or 'unlimited'}")
+    
+    # Create and run orchestrator
+    orchestrator = PipelineOrchestrator()
+    
+    try:
+        asyncio.run(orchestrator.run_daemon())
+    except KeyboardInterrupt:
+        logger.info("Pipeline stopped by user")
+    except Exception as e:
+        logger.error(f"Pipeline failed: {e}")
+        sys.exit(1)
+
+
+@app.command()
+def status():
+    """Show pipeline status"""
+    status_file = Path(config.pipeline_status_file)
+    heartbeat_file = Path(config.pipeline_heartbeat_file)
+    
+    print("=== PIPELINE STATUS ===")
+    
+    if status_file.exists():
+        with open(status_file) as f:
+            status = json.load(f)
+            
+        print(f"Phase: {status.get('phase', 'unknown')}")
+        print(f"Status: {status.get('status', 'unknown')}")
+        print(f"Cycle: {status.get('cycle', 0)}")
+        print(f"Last Update: {status.get('last_update', 'never')}")
+        
+        if status.get('errors'):
+            print(f"Recent Errors: {len(status['errors'])}")
+            for error in status['errors'][-3:]:
+                print(f"  {error['timestamp']}: {error['error']}")
+    else:
+        print("No status file found")
+    
+    print()
+    
+    if heartbeat_file.exists():
+        with open(heartbeat_file) as f:
+            heartbeat = json.load(f)
+            
+        print("=== HEARTBEAT ===")
+        print(f"Last Heartbeat: {heartbeat.get('timestamp', 'never')}")
+        print(f"Uptime: {heartbeat.get('uptime_minutes', 0):.1f} minutes")
+        print(f"Cycles Completed: {heartbeat.get('cycle', 0)}")
+    else:
+        print("No heartbeat file found")
+
+
+@app.command()
+def phase1(
+    max_feeds: Optional[int] = typer.Option(None, help="Maximum feeds to process")
+):
+    """Run Phase 1: RSS Ingestion only"""
+    
+    async def run_phase1():
+        orchestrator = PipelineOrchestrator()
+        if max_feeds:
+            orchestrator.config.phase_1_max_feeds = max_feeds
+        result = await orchestrator.run_phase_1_ingest()
+        print(f"Phase 1 result: {result}")
+    
+    asyncio.run(run_phase1())
+
+
+@app.command()
+def phase2(
+    max_titles: Optional[int] = typer.Option(None, help="Maximum titles to process"),
+    hours: Optional[int] = typer.Option(None, help="Processing window in hours")
+):
+    """Run Phase 2: Strategic Filtering only"""
+    
+    async def run_phase2():
+        orchestrator = PipelineOrchestrator()
+        if max_titles:
+            orchestrator.config.phase_2_max_titles = max_titles
+        if hours:
+            orchestrator.config.processing_window_hours = hours
+        result = await orchestrator.run_phase_2_filter()
+        print(f"Phase 2 result: {result}")
+    
+    asyncio.run(run_phase2())
+
+
+@app.command()
+def phase3(
+    max_titles: Optional[int] = typer.Option(None, help="Maximum titles to process"),
+    pass_only: Optional[str] = typer.Option(None, help="Run only 'pass1' or 'pass2'")
+):
+    """Run Phase 3: Event Family Generation only"""
+    
+    async def run_phase3():
+        orchestrator = PipelineOrchestrator()
+        if max_titles:
+            orchestrator.config.phase_3_max_titles = max_titles
+            
+        if pass_only:
+            # Run specific pass only
+            from apps.generate.multipass_processor import main as run_multipass
+            result = await asyncio.to_thread(
+                run_multipass,
+                mode=pass_only,
+                max_titles=max_titles or orchestrator.config.phase_3_max_titles
+            )
+            print(f"Phase 3 {pass_only} result: {result}")
+        else:
+            result = await orchestrator.run_phase_3_generate()
+            print(f"Phase 3 result: {result}")
+    
+    asyncio.run(run_phase3())
+
+
+if __name__ == "__main__":
+    app()

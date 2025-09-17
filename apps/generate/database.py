@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 from sqlalchemy import text
 
-from apps.gen1.models import EventFamily, FramedNarrative
+from apps.generate.models import EventFamily, FramedNarrative
 from core.database import get_db_session
 
 
@@ -22,7 +22,6 @@ class Gen1Database:
 
     def __init__(self):
         pass
-
 
     def get_unassigned_strategic_titles(
         self,
@@ -129,10 +128,14 @@ class Gen1Database:
                 # Cast UUIDs properly for PostgreSQL
                 if not title_ids:
                     return False
-                    
+
                 # Convert title_ids to proper UUID format for PostgreSQL
-                uuid_list = "ARRAY[" + ",".join([f"'{title_id}'::uuid" for title_id in title_ids]) + "]"
-                
+                uuid_list = (
+                    "ARRAY["
+                    + ",".join([f"'{title_id}'::uuid" for title_id in title_ids])
+                    + "]"
+                )
+
                 update_query = f"""
                 UPDATE titles 
                 SET event_family_id = :event_family_id,
@@ -165,7 +168,6 @@ class Gen1Database:
         except Exception as e:
             logger.error(f"Failed to assign titles to Event Family: {e}")
             return False
-
 
     async def save_event_family(self, event_family: EventFamily) -> bool:
         """
@@ -229,13 +231,15 @@ class Gen1Database:
             logger.error(f"Failed to save Event Family: {e}")
             return False
 
-    async def upsert_event_family_by_ef_key(self, event_family: EventFamily) -> tuple[bool, Optional[str]]:
+    async def upsert_event_family_by_ef_key(
+        self, event_family: EventFamily
+    ) -> tuple[bool, Optional[str]]:
         """
         Upsert Event Family using ef_key for continuous merging
-        
+
         Args:
             event_family: EventFamily object to save or merge
-            
+
         Returns:
             Tuple of (success: bool, existing_ef_id: Optional[str])
             - If existing_ef_id is None, new EF was created
@@ -247,7 +251,7 @@ class Gen1Database:
                     # No ef_key, use regular save
                     success = await self.save_event_family(event_family)
                     return success, None
-                
+
                 # Check if EF with same ef_key already exists
                 existing_query = """
                 SELECT id, title, source_title_ids, key_actors, event_start, event_end
@@ -255,18 +259,20 @@ class Gen1Database:
                 WHERE ef_key = :ef_key AND status = 'active'
                 LIMIT 1
                 """
-                
-                result = session.execute(text(existing_query), {"ef_key": event_family.ef_key}).fetchone()
-                
+
+                result = session.execute(
+                    text(existing_query), {"ef_key": event_family.ef_key}
+                ).fetchone()
+
                 if result:
                     # EF with same ef_key exists - merge titles into existing EF
                     existing_ef_id = str(result.id)
                     existing_title_ids = result.source_title_ids or []
                     new_title_ids = event_family.source_title_ids or []
-                    
+
                     # Merge title lists (deduplicate)
                     merged_title_ids = list(set(existing_title_ids + new_title_ids))
-                    
+
                     # Update existing EF with merged titles and extended time range
                     update_query = """
                     UPDATE event_families 
@@ -277,26 +283,31 @@ class Gen1Database:
                         processing_notes = CONCAT(COALESCE(processing_notes, ''), '; Merged ef_key: ', :new_ef_title)
                     WHERE id = :existing_ef_id
                     """
-                    
-                    session.execute(text(update_query), {
-                        "merged_title_ids": merged_title_ids,
-                        "new_start": event_family.event_start,
-                        "new_end": event_family.event_end,
-                        "new_ef_title": event_family.title[:100],  # Truncate for notes
-                        "existing_ef_id": existing_ef_id
-                    })
-                    
+
+                    session.execute(
+                        text(update_query),
+                        {
+                            "merged_title_ids": merged_title_ids,
+                            "new_start": event_family.event_start,
+                            "new_end": event_family.event_end,
+                            "new_ef_title": event_family.title[
+                                :100
+                            ],  # Truncate for notes
+                            "existing_ef_id": existing_ef_id,
+                        },
+                    )
+
                     logger.info(
                         f"Merged EF with ef_key {event_family.ef_key}: "
                         f"{len(new_title_ids)} new titles into existing EF {existing_ef_id}"
                     )
-                    
+
                     return True, existing_ef_id
                 else:
                     # No existing EF, create new one
                     success = await self.save_event_family(event_family)
                     return success, None
-                    
+
         except Exception as e:
             logger.error(f"Failed to upsert Event Family by ef_key: {e}")
             return False, None

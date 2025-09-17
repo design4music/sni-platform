@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 
 from sqlalchemy import create_engine, text
 from core.config import get_config
-from apps.clust1.run_gate import GateProcessor
+from apps.filter.run_gate import GateProcessor
 
 
 def insert_test_titles():

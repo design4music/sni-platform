@@ -16,14 +16,14 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 from sqlalchemy import text
 
-from apps.gen1.database import get_gen1_database
-from apps.gen1.ef_key import (generate_ef_key_from_data,
+from apps.generate.database import get_gen1_database
+from apps.generate.ef_key import (generate_ef_key_from_data,
                               validate_ef_key_components)
-from apps.gen1.llm_client import get_gen1_llm_client
-from apps.gen1.models import (EventFamily, FramedNarrative,
+from apps.generate.llm_client import get_gen1_llm_client
+from apps.generate.models import (EventFamily, FramedNarrative,
                               LLMEventFamilyRequest, LLMFramedNarrativeRequest,
                               ProcessingResult)
-from apps.gen1.sequential_batcher import group_titles_sequentially
+from apps.generate.sequential_batcher import group_titles_sequentially
 from core.config import get_config
 from core.database import get_db_session
 
@@ -1401,7 +1401,7 @@ if __name__ == "__main__":
 
         else:
             print(
-                "Usage: python -m apps.gen1.multipass_processor [pass1|pass2a|pass2] [max_items] [--dry-run]"
+                "Usage: python -m apps.generate.multipass_processor [pass1|pass2a|pass2] [max_items] [--dry-run]"
             )
             print("  pass1: Run Pass 1 (EF assembly from titles)")
             print("  pass2a: Run Pass 2A (EF merging by theater+type)")

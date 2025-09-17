@@ -28,7 +28,7 @@ RSS Sources → Ingestion → Strategic Gating → Entity Extraction → Multi-P
 **Performance:** ~2,000-5,000 titles ingested per run (varies by news cycle)
 
 ### 2. Enhanced Strategic Gate + Entity Processing
-**Entry Point:** `python -m apps.clust1.run_enhanced_gate`  
+**Entry Point:** `python -m apps.filter.run_enhanced_gate`  
 **Purpose:** Combined strategic filtering and entity extraction in one pass  
 **Input:** Titles with `processing_status='pending'`  
 **Output:** Updates `gate_keep`, `gate_reason`, `entities`, `gate_score`, `gate_actor_hit`
@@ -47,11 +47,11 @@ RSS Sources → Ingestion → Strategic Gating → Entity Extraction → Multi-P
 
 **Execution:**
 ```bash
-python -m apps.clust1.run_enhanced_gate --hours 24 --max-titles 1000
+python -m apps.filter.run_enhanced_gate --hours 24 --max-titles 1000
 ```
 
 ### 3. Multi-Pass Event Family Generation (GEN-1)
-**Entry Point:** `python -m apps.gen1.multipass_processor`  
+**Entry Point:** `python -m apps.generate.multipass_processor`  
 **Purpose:** Intelligent Event Family assembly with anti-fragmentation focus  
 **Input:** Strategic titles where `event_family_id IS NULL`  
 **Output:** Creates `event_families` and `framed_narratives` records
@@ -66,7 +66,7 @@ python -m apps.clust1.run_enhanced_gate --hours 24 --max-titles 1000
 
 **Execution:**
 ```bash
-python -m apps.gen1.multipass_processor pass1 [max_titles]
+python -m apps.generate.multipass_processor pass1 [max_titles]
 ```
 
 #### Pass 2: Cross-Merging & Narrative Generation
@@ -78,7 +78,7 @@ python -m apps.gen1.multipass_processor pass1 [max_titles]
 
 **Execution:**
 ```bash
-python -m apps.gen1.multipass_processor pass2 [max_event_families]
+python -m apps.generate.multipass_processor pass2 [max_event_families]
 ```
 
 ### 4. Anti-Fragmentation Philosophy
@@ -102,11 +102,11 @@ python -m apps.gen1.multipass_processor pass2 [max_event_families]
 python -m apps.ingest.run_ingestion
 
 # 2. Enhanced gating + entity extraction (combined)
-python -m apps.clust1.run_enhanced_gate --hours 2
+python -m apps.filter.run_enhanced_gate --hours 2
 
 # 3. Multi-pass Event Family generation
-python -m apps.gen1.multipass_processor pass1   # Basic EF assembly
-python -m apps.gen1.multipass_processor pass2   # Cross-merging + narratives
+python -m apps.generate.multipass_processor pass1   # Basic EF assembly
+python -m apps.generate.multipass_processor pass2   # Cross-merging + narratives
 ```
 
 ### Performance Benchmarks
@@ -216,13 +216,13 @@ llm_timeout_seconds: int = 180              # LLM API timeout per request
 ### Health Checks
 ```bash
 # Check recent ingestion
-python -c "from apps.gen1.database import get_gen1_database; import asyncio; print(asyncio.run(get_gen1_database().get_processing_stats()))"
+python -c "from apps.generate.database import get_gen1_database; import asyncio; print(asyncio.run(get_gen1_database().get_processing_stats()))"
 
 # Check strategic title counts
 python -c "from core.database import get_db_session; from sqlalchemy import text; with get_db_session() as s: print(f'Strategic: {s.execute(text(\"SELECT COUNT(*) FROM titles WHERE gate_keep = true\")).scalar()}')"
 
 # Check Event Family generation status
-python -c "from apps.gen1.database import get_gen1_database; import asyncio; db = get_gen1_database(); efs = asyncio.run(db.get_event_families(limit=5)); print(f'{len(efs)} recent Event Families')"
+python -c "from apps.generate.database import get_gen1_database; import asyncio; db = get_gen1_database(); efs = asyncio.run(db.get_event_families(limit=5)); print(f'{len(efs)} recent Event Families')"
 ```
 
 ## Development Workflow
@@ -230,13 +230,13 @@ python -c "from apps.gen1.database import get_gen1_database; import asyncio; db 
 ### Testing Multi-Pass Processing
 ```bash
 # Test small batch Pass 1
-python -m apps.gen1.multipass_processor pass1 100 --dry-run
+python -m apps.generate.multipass_processor pass1 100 --dry-run
 
 # Test Pass 2 with limited EFs  
-python -m apps.gen1.multipass_processor pass2 5 --dry-run
+python -m apps.generate.multipass_processor pass2 5 --dry-run
 
 # Check processing results
-python -c "from apps.gen1.database import get_gen1_database; import asyncio; print(asyncio.run(get_gen1_database().get_processing_stats()))"
+python -c "from apps.generate.database import get_gen1_database; import asyncio; print(asyncio.run(get_gen1_database().get_processing_stats()))"
 ```
 
 ### Code Quality Standards

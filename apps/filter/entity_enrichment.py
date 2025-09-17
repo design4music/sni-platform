@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 from loguru import logger
 
-from apps.clust1.taxonomy_extractor import create_multi_vocab_taxonomy_extractor
+from apps.filter.taxonomy_extractor import create_multi_vocab_taxonomy_extractor
 from core.database import get_db_session
 from sqlalchemy import text
 
