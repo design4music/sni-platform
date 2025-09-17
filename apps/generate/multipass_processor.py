@@ -18,11 +18,11 @@ from sqlalchemy import text
 
 from apps.generate.database import get_gen1_database
 from apps.generate.ef_key import (generate_ef_key_from_data,
-                              validate_ef_key_components)
+                                  validate_ef_key_components)
 from apps.generate.llm_client import get_gen1_llm_client
 from apps.generate.models import (EventFamily, FramedNarrative,
-                              LLMEventFamilyRequest, LLMFramedNarrativeRequest,
-                              ProcessingResult)
+                                  LLMEventFamilyRequest,
+                                  LLMFramedNarrativeRequest, ProcessingResult)
 from apps.generate.sequential_batcher import group_titles_sequentially
 from core.config import get_config
 from core.database import get_db_session
@@ -84,7 +84,7 @@ class MultiPassProcessor:
             # Use configurable batch size for reliable processing
             config = get_config()
             sequential_batches = group_titles_sequentially(
-                titles, batch_size=config.ef_batch_size
+                titles, batch_size=config.batch_size
             )
             logger.info(f"Created {len(sequential_batches)} sequential batches")
 
@@ -444,73 +444,40 @@ class MultiPassProcessor:
                 }
             )
 
-        prompt = f"""You are assembling long-lived Event Families (Sagas) by (key_actors + geography + event_type). Do not create families for single incidents; absorb repeated incidents into one family.
+        prompt = f"""Group {len(titles_context)} strategic news titles into Event Family Sagas.
 
-PASS 1 OBJECTIVE: Create basic Event Families with essential metadata using STANDARDIZED taxonomies. 
-Do NOT generate Framed Narratives or extensive analysis - keep it focused and efficient.
-
-HEADLINES TO PROCESS ({len(titles_context)} titles from mixed sources and topics):
 {self._format_titles_for_llm(titles_context)}
 
-STANDARDIZED TAXONOMIES (MUST USE THESE EXACT VALUES):
+RULES:
+- Group by primary_theater + event_type and overlapping actors
+- Create long-lived event families, not single incidents
+- Use canonical actor names (Putin=Russia, Trump=United States)
+- Strategic content only (no sports, entertainment, weather)
+- Use exact title UUIDs in source_title_ids
 
-EVENT_TYPE (choose exactly one):
-- Strategy/Tactics: Military operations, defense planning, strategic movements
-- Humanitarian: Refugee crises, disaster response, aid operations  
-- Alliances/Geopolitics: NATO/alliance activities, coalition building, geopolitical shifts
-- Diplomacy/Negotiations: Peace talks, diplomatic summits, treaty negotiations
-- Sanctions/Economy: Economic sanctions, trade wars, economic diplomacy
-- Domestic Politics: Internal politics, elections, domestic policy changes
-- Procurement/Force-gen: Military procurement, force generation, defense industry
-- Tech/Cyber/OSINT: Cyber operations, technology warfare, intelligence operations
-- Legal/ICC: International law, war crimes, legal proceedings
-- Information/Media/Platforms: Media operations, information warfare, platform policies
-- Energy/Infrastructure: Energy security, infrastructure attacks, resource conflicts
+EVENT_TYPE: Strategy/Tactics, Humanitarian, Alliances/Geopolitics, Diplomacy/Negotiations, Sanctions/Economy,
+Domestic Politics, Procurement/Force-gen, Tech/Cyber/OSINT, Legal/ICC, Information/Media/Platforms, Energy/Infrastructure
 
-PRIMARY_THEATER (choose exactly one):
-- UKRAINE: Ukraine conflict theater (Russia-Ukraine war zone)
-- GAZA: Gaza/Palestine theater (Israel-Palestine conflict zone)
-- TAIWAN_STRAIT: Taiwan Strait theater (China-Taiwan tensions)
-- IRAN_NUCLEAR: Iran nuclear program and sanctions
-- EUROPE_SECURITY: European/NATO security matters
-- US_DOMESTIC: US internal politics and domestic policy
-- CHINA_TRADE: US-China economic competition
-- MEAST_REGIONAL: Broader Middle East conflicts
-- CYBER_GLOBAL: Global cyber operations
-- CLIMATE_GLOBAL: Climate/energy security issues
-- AFRICA_SECURITY: African conflicts and operations
-- KOREA_PENINSULA: North Korea nuclear program
-- LATAM_REGIONAL: Latin America regional politics
-- ARCTIC: Arctic sovereignty and competition
-- GLOBAL_SUMMIT: International summits and diplomacy
+PRIMARY_THEATER: UKRAINE, GAZA, TAIWAN_STRAIT, IRAN_NUCLEAR, EUROPE_SECURITY, US_DOMESTIC, CHINA_TRADE,
+MEAST_REGIONAL, CYBER_GLOBAL, CLIMATE_GLOBAL, AFRICA_SECURITY, KOREA_PENINSULA, LATAM_REGIONAL, ARCTIC, GLOBAL_SUMMIT
 
-INSTRUCTIONS:
-1. Group headlines into LONG-LIVED EVENT FAMILIES representing ongoing strategic situations
-2. Use canonical actor names from our databases (e.g., "Donald Trump", "Vladimir Putin", "NATO")
-3. Choose PRIMARY_THEATER and EVENT_TYPE from the standardized lists above (EXACT spelling required)
-4. Create comprehensive families that can absorb future related incidents
-5. Focus on key_actors + primary_theater + event_type coherence for ef_key generation
-6. Create 3-12 Event Families maximum (prioritize consolidation over fragmentation)
-
-RESPOND IN THIS JSON FORMAT:
+JSON FORMAT:
 {{
     "event_families": [
         {{
-            "title": "Strategic, long-lived family title",
-            "summary": "Comprehensive 2-3 sentence summary covering the ongoing situation",
-            "key_actors": ["Canonical Name 1", "Canonical Name 2"],
+            "title": "Saga title",
+            "summary": "Brief summary",
+            "key_actors": ["Actor 1", "Actor 2"],
             "event_type": "EXACT value from EVENT_TYPE list above",
             "primary_theater": "EXACT value from PRIMARY_THEATER list above",
             "event_start": "2025-09-11T10:00:00+00:00",
             "event_end": "2025-09-11T12:00:00+00:00",
-            "source_title_ids": ["headline_id_1", "headline_id_2"],
+            "source_title_ids": ["title_id_1", "title_id_2"],
             "confidence_score": 0.85,
             "coherence_reason": "Why these headlines form a strategic, long-lived Event Family"
         }}
     ]
-}}
-
-CRITICAL: Use ONLY the exact event_type and primary_theater values listed above. This enables deterministic ef_key generation for continuous merging."""
+}}"""
 
         try:
             # Create LLM request

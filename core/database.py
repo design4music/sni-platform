@@ -2,10 +2,11 @@
 
 from contextlib import contextmanager
 from typing import Generator
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.ext.declarative import declarative_base
+
 from loguru import logger
+from sqlalchemy import create_engine, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
 
 from .config import get_config
 
@@ -20,18 +21,20 @@ _SessionLocal = None
 def init_database():
     """Initialize database connection"""
     global _engine, _SessionLocal
-    
+
     config = get_config()
-    
+
     _engine = create_engine(
         config.database_url,
         pool_pre_ping=True,
         pool_recycle=3600,
-        echo=config.debug
+        pool_size=config.db_pool_size,
+        pool_timeout=config.db_timeout_seconds,
+        echo=config.debug,
     )
-    
+
     _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
-    
+
     logger.info(f"Database initialized: {config.db_name}")
 
 
@@ -67,7 +70,7 @@ def get_db_session() -> Generator[Session, None, None]:
 
 def create_tables():
     """Create all database tables"""
-    
+
     engine = get_engine()
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created")
@@ -75,7 +78,7 @@ def create_tables():
 
 def drop_tables():
     """Drop all database tables (use with caution!)"""
-    
+
     engine = get_engine()
     Base.metadata.drop_all(bind=engine)
     logger.warning("Database tables dropped")
@@ -96,20 +99,20 @@ def get_database_stats() -> dict:
     """Get basic database statistics"""
     with get_db_session() as session:
         stats = {}
-        
+
         # Check if tables exist and get counts
         table_queries = {
             "feeds": "SELECT COUNT(*) FROM feeds",
-            "titles": "SELECT COUNT(*) FROM titles", 
+            "titles": "SELECT COUNT(*) FROM titles",
             "clusters": "SELECT COUNT(*) FROM clusters",
-            "narratives": "SELECT COUNT(*) FROM narratives"
+            "narratives": "SELECT COUNT(*) FROM narratives",
         }
-        
+
         for table, query in table_queries.items():
             try:
                 result = session.execute(text(query))
                 stats[table] = result.scalar()
             except Exception:
                 stats[table] = "N/A (table not found)"
-        
+
         return stats

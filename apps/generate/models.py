@@ -15,22 +15,25 @@ from pydantic import BaseModel, Field
 
 class EventFamily(BaseModel):
     """
-    Event Family (EF): Coherent real-world news happening/episode
+    Event Family (EF): Long-lived strategic saga spanning multiple incidents
 
-    An Event Family represents a single real-world news happening that may be
-    covered across multiple headlines/outlets. It focuses on the concrete event
-    with specific actors, time, and optionally geography.
+    An Event Family represents an ongoing strategic saga that absorbs multiple related incidents
+    with overlapping actors in the same primary_theater + event_type.
+    Sagas naturally span weeks/months rather than single events.
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    title: str = Field(description="Clear, descriptive title for the event family")
-    summary: str = Field(description="Factual summary of what happened")
+    title: str = Field(description="Neutral, descriptive title for the strategic saga")
+    summary: str = Field(
+        description="Neutral, factual summary of the ongoing situation"
+    )
     key_actors: List[str] = Field(description="Primary actors/entities involved")
     event_type: str = Field(
-        description="Type of event (e.g., 'diplomatic meeting', 'economic policy')"
+        description="Event type from standardized taxonomy (Strategy/Tactics, Diplomacy/Negotiations, etc.)"
     )
     primary_theater: Optional[str] = Field(
-        default=None, description="Primary theater code (e.g., 'UKRAINE', 'GAZA')"
+        default=None,
+        description="Theater code from standardized list (UKRAINE, GAZA, EUROPE_SECURITY, etc.)",
     )
 
     # EF Key system for continuous merging

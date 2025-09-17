@@ -3,6 +3,7 @@ GEN-1 LLM Client
 Specialized LLM interactions for Event Family assembly and Framed Narrative generation
 """
 
+import asyncio
 import csv
 import json
 from pathlib import Path
@@ -10,9 +11,10 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from apps.generate.models import (LLMEventFamilyRequest, LLMEventFamilyResponse,
-                              LLMFramedNarrativeRequest,
-                              LLMFramedNarrativeResponse)
+from apps.generate.models import (LLMEventFamilyRequest,
+                                  LLMEventFamilyResponse,
+                                  LLMFramedNarrativeRequest,
+                                  LLMFramedNarrativeResponse)
 from core.config import get_config
 
 
@@ -220,8 +222,8 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             response_text = await self._call_llm(
                 system_prompt=self.event_family_system_prompt,
                 user_prompt=user_prompt,
-                max_tokens=4000,
-                temperature=0.2,
+                max_tokens=self.config.llm_max_tokens_ef,
+                temperature=self.config.llm_temperature,
             )
 
             # Parse and validate response
@@ -251,8 +253,8 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             response_text = await self._call_llm(
                 system_prompt=self.framed_narrative_system_prompt,
                 user_prompt=user_prompt,
-                max_tokens=3000,
-                temperature=0.1,
+                max_tokens=self.config.llm_max_tokens_fn,
+                temperature=self.config.llm_temperature,
             )
 
             # Parse and validate response
@@ -378,64 +380,82 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
         self,
         system_prompt: str,
         user_prompt: str,
-        max_tokens: int = 2000,
-        temperature: float = 0.3,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
     ) -> str:
         """
         Call the LLM with system and user prompts
         Uses existing SNI LLM configuration
         """
-        # Use active config instead of archived code
+        # Use unified configuration
         import httpx
 
-        from core.config import get_config
+        # Apply defaults if not specified
+        if max_tokens is None:
+            max_tokens = self.config.llm_max_tokens_generic
+        if temperature is None:
+            temperature = self.config.llm_temperature
 
-        config = get_config()
+        # Implement retry logic with exponential backoff
+        for attempt in range(self.config.llm_retry_attempts):
+            try:
+                headers = {
+                    "Authorization": f"Bearer {self.config.deepseek_api_key}",
+                    "Content-Type": "application/json",
+                }
 
-        try:
-            headers = {
-                "Authorization": f"Bearer {config.deepseek_api_key}",
-                "Content-Type": "application/json",
-            }
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ]
 
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ]
+                payload = {
+                    "model": self.config.llm_model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                }
 
-            payload = {
-                "model": config.llm_model,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": temperature,
-            }
-
-            async with httpx.AsyncClient(timeout=config.llm_timeout_seconds) as client:
-                response_data = await client.post(
-                    f"{config.deepseek_api_url}/chat/completions",
-                    headers=headers,
-                    json=payload,
-                )
-
-                if response_data.status_code != 200:
-                    raise Exception(
-                        f"LLM API error: {response_data.status_code} - {response_data.text}"
+                async with httpx.AsyncClient(
+                    timeout=self.config.llm_timeout_seconds
+                ) as client:
+                    response_data = await client.post(
+                        f"{self.config.deepseek_api_url}/chat/completions",
+                        headers=headers,
+                        json=payload,
                     )
 
-                data = response_data.json()
-                response = data["choices"][0]["message"]["content"].strip()
+                    if response_data.status_code != 200:
+                        raise Exception(
+                            f"LLM API error: {response_data.status_code} - {response_data.text}"
+                        )
 
-            logger.debug(
-                "LLM call successful",
-                prompt_length=len(user_prompt),
-                response_length=len(response),
-            )
+                    data = response_data.json()
+                    response = data["choices"][0]["message"]["content"].strip()
 
-            return response
+                logger.debug(
+                    "LLM call successful",
+                    attempt=attempt + 1,
+                    prompt_length=len(user_prompt),
+                    response_length=len(response),
+                )
 
-        except Exception as e:
-            logger.error(f"LLM call failed: {e}")
-            raise
+                return response
+
+            except Exception as e:
+                is_last_attempt = attempt == self.config.llm_retry_attempts - 1
+                if is_last_attempt:
+                    logger.error(
+                        f"LLM call failed after {self.config.llm_retry_attempts} attempts: {e}"
+                    )
+                    raise
+                else:
+                    # Exponential backoff with jitter
+                    delay = (self.config.llm_retry_backoff**attempt) + (0.1 * attempt)
+                    logger.warning(
+                        f"LLM call attempt {attempt + 1} failed: {e}. Retrying in {delay:.1f}s"
+                    )
+                    await asyncio.sleep(delay)
 
     def _parse_event_family_response(
         self, response_text: str
@@ -489,9 +509,18 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             # Try parsing as direct JSON first
             return json.loads(text.strip())
         except json.JSONDecodeError:
-            # Try to find JSON within the text
+            # Try to find JSON within markdown code blocks
             import re
 
+            # First, try to extract from markdown code blocks
+            markdown_match = re.search(r"```json\s*(\{.*\})\s*```", text, re.DOTALL)
+            if markdown_match:
+                try:
+                    return json.loads(markdown_match.group(1))
+                except json.JSONDecodeError:
+                    pass
+
+            # Fallback: try to find any JSON object in the text
             json_match = re.search(r"\{.*\}", text, re.DOTALL)
             if json_match:
                 try:

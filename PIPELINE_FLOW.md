@@ -2,6 +2,34 @@
 
 *Updated: September 15, 2025 - Multi-Pass GEN-1 Architecture*
 
+# Project Vision (SNI / SNE)
+
+**Goal.** Turn raw multi-source news into a small set of long-lived, strategic **Event Families (EFs)** and their **Framed Narratives (FNs)**—so analysts see the big stories, not a flood of one-offs.
+
+**What the platform does (end-to-end).**
+
+* **Ingest** new items from configured RSS feeds; dedupe; store titles.
+* **Strategic gate** each title: extract geopolitical actors, drop non-strategic items via stop-lists; mark "strategic".
+* **Generate EFs (Pass-1)** in sequential batches (~500): assemble broad, long-lived families by **theater + event_type** (actors inform content but are not the merge key). Avoid fragmentation; absorb repetitive incidents.
+* **Merge EFs (Pass-2A)** across all new batches in the run: consolidate families that share **theater + event_type**; keep fewer, richer EFs.
+* **Generate FNs (Pass-2B)** per EF: surface 1–3 dominant frames with headline-level evidence (UUIDs).
+* **Continuous upkeep (cron)**: periodically re-scan previously created EFs and **merge newly created with historical** ones to keep families long-lived and coherent.
+
+**Principles.**
+
+* **Anti-fragmentation first:** prefer comprehensive EFs over many small clusters. Time windows are flexible.
+* **Strategic scope only:** diplomacy, military, economy, domestic politics, tech/regulation; exclude sports/celebrity/local crime.
+* **Evidence discipline:** all FN claims cite actual title UUIDs.
+
+**Outputs.**
+
+* A compact set of active **Event Families** (by **theater** and **event_type**), each with linked titles.
+* **Framed Narratives** per EF showing how media position the same saga.
+
+**Run mode.**
+
+* One orchestrated script can execute the full cycle; individual phases are callable for ops/testing.
+
 ## Architecture Overview
 
 The SNI (Strategic Narrative Intelligence) system operates a **sequential processing pipeline** that transforms raw RSS feeds into strategic Event Families and Framed Narratives. The system emphasizes **anti-fragmentation** through intelligent content consolidation.
@@ -61,7 +89,7 @@ python -m apps.filter.run_enhanced_gate --hours 24 --max-titles 1000
 - **Focus:** Basic Event Family creation with essential metadata
 - **LLM Processing:** Content-driven EF generation with 180s timeout per batch
 - **Performance:** 40x faster than entity-based batching
-- **Anti-fragmentation:** Uses 2-parameter EF keys (theater + event_type) to prevent fragmentation
+- **Anti-fragmentation:** Uses 2-parameter EF keys (primary_theater + event_type) to prevent fragmentation
 - **Configuration:** Batch size and timeout controlled via `core/config.py`
 
 **Execution:**
@@ -81,6 +109,38 @@ python -m apps.generate.multipass_processor pass1 [max_titles]
 python -m apps.generate.multipass_processor pass2 [max_event_families]
 ```
 
+#### Pass 3: Daily Continuous Merging (Scheduled Operation)
+**Entry Point:** `python -m apps.generate.daily_continuous_merging run [max_titles] [max_efs]`  
+**Purpose:** Automated daily workflow combining incremental EF assembly with cross-merging  
+**Schedule:** Designed for automated daily execution (cron/scheduler integration)
+
+**Two-Stage Daily Process:**
+1. **Incremental Pass 1**: Process newly unassigned strategic titles (default: 100 titles)
+2. **Incremental Pass 2A**: Analyze existing Event Families for merge opportunities (default: 50 EFs)
+
+**Anti-Fragmentation Focus:**
+- Continuous consolidation prevents information fragmentation over time
+- Theater-based EF key analysis for intelligent merge detection
+- System status monitoring with ready-for-processing indicators
+
+**Execution:**
+```bash
+# Run daily workflow (default limits)
+python -m apps.generate.daily_continuous_merging run
+
+# Run with custom limits  
+python -m apps.generate.daily_continuous_merging run 200 100
+
+# System status check
+python -m apps.generate.daily_continuous_merging status
+```
+
+**Monitoring Features:**
+- Active/merged Event Family counts
+- Unassigned strategic titles tracking
+- Theater distribution analysis
+- 24-hour processing metrics
+
 ### 4. Anti-Fragmentation Philosophy
 
 **Core Principle:** Fight political information fragmentation by:
@@ -96,7 +156,24 @@ python -m apps.generate.multipass_processor pass2 [max_event_families]
 
 ## Complete Pipeline Execution
 
-### Sequential Processing Order
+### Unified Pipeline Orchestrator (NEW)
+**Entry Point:** `python run_pipeline.py`  
+**Purpose:** Single command execution of entire pipeline with status tracking
+
+```bash
+# Complete pipeline (all phases)
+python run_pipeline.py run
+
+# Individual phases
+python run_pipeline.py phase1 --max-feeds 10      # RSS ingestion  
+python run_pipeline.py phase2 --hours 2           # Strategic filtering
+python run_pipeline.py phase3 --max-titles 500    # Event Family generation
+
+# Pipeline status monitoring
+python run_pipeline.py status
+```
+
+### Sequential Processing Order (Manual)
 ```bash
 # 1. Ingest latest news (137 feeds)
 python -m apps.ingest.run_ingestion
@@ -117,7 +194,7 @@ python -m apps.generate.multipass_processor pass2   # Cross-merging + narratives
 - **LLM Timeout:** 180 seconds per batch (configurable)
 
 ### Current System Status
-- **Event Families Generated:** 45 (from 7,491 strategic titles)
+- **Event Families Generated:** testing on small batches (10 titles). Preparing to run on all corpus of 7,500+ titles.
 - **Average Confidence:** 0.91 (very high quality)
 - **Framed Narratives:** 0 (Pass 2 implementation ready)
 - **Anti-fragmentation Success:** Comprehensive EFs covering major strategic events
@@ -142,7 +219,7 @@ python -m apps.generate.multipass_processor pass2   # Cross-merging + narratives
 ### Sequential vs Entity-Based Batching
 **Decision:** Sequential batching (40x performance improvement)  
 **Rationale:** Entity-based batching created too many small, inefficient batches  
-**Result:** 7,491 titles processed in 8 large batches instead of 54+ small ones
+**Result:** still calibrating/testing
 
 ### Multi-Pass vs Single-Pass Processing
 **Decision:** Two-pass architecture (Pass 1: Assembly, Pass 2: Cross-merging)  
@@ -157,11 +234,12 @@ python -m apps.generate.multipass_processor pass2   # Cross-merging + narratives
 ## File Organization
 
 ### Active Components
+- `run_pipeline.py` - **NEW: Unified pipeline orchestrator**
 - `apps/ingest/run_ingestion.py` - RSS ingestion
-- `apps/clust1/run_enhanced_gate.py` - Strategic gating + entities
-- `apps/gen1/multipass_processor.py` - Multi-pass EF generation
-- `apps/gen1/llm_client.py` - LLM prompt management
-- `apps/gen1/database.py` - Database operations
+- `apps/filter/run_enhanced_gate.py` - Strategic gating + entities (renamed from clust1)
+- `apps/generate/multipass_processor.py` - Multi-pass EF generation (renamed from gen1)
+- `apps/generate/llm_client.py` - LLM prompt management (with JSON parsing fix)
+- `apps/generate/database.py` - Database operations
 - `data/*.csv` - Strategic vocabularies (actors, people, taxonomy)
 
 ### Archived/Legacy Components (prefixed with ~)
@@ -193,9 +271,9 @@ llm_timeout_seconds: int = 180              # LLM API timeout per request
 ### Strategic Content Focus
 - **Included:** Diplomacy, military operations, economic policy, domestic politics, tech regulation
 - **Excluded:** Sports, entertainment, weather, local crime, celebrity news
-- **Filtering:** Automated via CSV vocabularies + manual stop lists
+- **Filtering:** Automated via CSV stop list AND LLM prompt for non-strategic content that leaked through
 
-### LLM Prompt Engineering
+### LLM Prompt Engineering [to be rewritten]
 - **Event Family Assembly:** Strategic semantic grouping with actor canonicalization  
 - **Cross-Merging:** Anti-fragmentation analysis with high confidence thresholds
 - **Framed Narratives:** Evidence-based framing analysis with exact quote requirements
@@ -203,7 +281,6 @@ llm_timeout_seconds: int = 180              # LLM API timeout per request
 ### Data Quality Metrics
 - **UUID Integrity:** All title references use actual UUIDs (not array indices)
 - **Confidence Tracking:** LLM confidence scores for all generated content
-- **Evidence Requirements:** All narratives must cite specific headline evidence
 
 ## Troubleshooting
 
@@ -244,6 +321,7 @@ python -c "from apps.generate.database import get_gen1_database; import asyncio;
 - **UUID References:** Always use actual title IDs, never array indices
 - **Error Handling:** Comprehensive exception handling with meaningful messages
 - **Documentation:** Inline docstrings for all major functions
+- **Database connection** Always use PostgreSQL connection in `core/config.py`
 
 ---
 

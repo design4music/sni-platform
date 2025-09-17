@@ -34,16 +34,29 @@ class SNIConfig(BaseSettings):
     anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
     llm_provider: str = Field(default="deepseek", env="LLM_PROVIDER")
     llm_model: str = Field(default="deepseek-chat", env="LLM_MODEL")
-    max_tokens: int = Field(default=4000, env="MAX_TOKENS_PER_REQUEST")
+
+    # LLM Configuration - Unified Parameters
     llm_timeout_seconds: int = Field(default=180, env="LLM_TIMEOUT_SECONDS")
+    llm_max_tokens_ef: int = Field(default=4000, env="LLM_MAX_TOKENS_EF")
+    llm_max_tokens_fn: int = Field(default=3000, env="LLM_MAX_TOKENS_FN")
+    llm_max_tokens_generic: int = Field(default=2000, env="LLM_MAX_TOKENS_GENERIC")
+    llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
+    llm_retry_attempts: int = Field(default=3, env="LLM_RETRY_ATTEMPTS")
+    llm_retry_backoff: float = Field(default=2.0, env="LLM_RETRY_BACKOFF")
 
-    # Processing
-    max_bucket_size: int = Field(default=100, env="MAX_BUCKET_SIZE")
+    # Rate Limiting
+    llm_requests_per_minute: int = Field(default=30, env="LLM_REQUESTS_PER_MINUTE")
+    llm_concurrent_requests: int = Field(default=1, env="LLM_CONCURRENT_REQUESTS")
+
+    # Batch Processing - Unified Configuration
+    batch_size: int = Field(default=100, env="BATCH_SIZE")
+    max_titles_per_run: int = Field(default=10000, env="MAX_TITLES_PER_RUN")
+    max_event_families_per_run: int = Field(
+        default=1000, env="MAX_EVENT_FAMILIES_PER_RUN"
+    )
+
+    # Legacy support (deprecated - remove in future)
     default_fetch_interval: int = Field(default=60, env="DEFAULT_FETCH_INTERVAL")
-
-    # GEN-1 Event Family Processing
-    ef_batch_size: int = Field(default=500, env="EF_BATCH_SIZE")
-    ef_max_titles_per_batch: int = Field(default=500, env="EF_MAX_TITLES_PER_BATCH")
 
     # Strategic gate vocabulary paths
     actors_csv_path: str = Field(default="data/actors.csv", env="ACTORS_CSV_PATH")
@@ -66,12 +79,11 @@ class SNIConfig(BaseSettings):
     # - Future processing phases should use this same window for consistency
     processing_window_hours: int = Field(default=72, env="PROCESSING_WINDOW_HOURS")
 
-    # CLUST-2 Bucket configuration
-    bucket_max_span_hours: int = Field(default=72, env="BUCKET_MAX_SPAN_HOURS")
-    bucket_min_size: int = Field(default=1, env="BUCKET_MIN_SIZE")
-    bucket_max_actors: int = Field(default=4, env="BUCKET_MAX_ACTORS")
+    # Database Configuration
+    db_pool_size: int = Field(default=5, env="DB_POOL_SIZE")
+    db_timeout_seconds: int = Field(default=30, env="DB_TIMEOUT_SECONDS")
 
-    # Ingestion
+    # Ingestion Configuration
     max_items_per_feed: Optional[int] = Field(default=None, env="MAX_ITEMS_PER_FEED")
     lookback_days: int = Field(default=3, env="LOOKBACK_DAYS")
     http_retries: int = Field(default=3, env="HTTP_RETRIES")
@@ -89,21 +101,25 @@ class SNIConfig(BaseSettings):
     pipeline_daemon_mode: bool = Field(default=False, env="PIPELINE_DAEMON_MODE")
     pipeline_interval_minutes: int = Field(default=60, env="PIPELINE_INTERVAL_MINUTES")
     pipeline_max_cycles: Optional[int] = Field(default=None, env="PIPELINE_MAX_CYCLES")
-    
+
     # Phase Control (enable/disable individual phases)
     phase_1_ingest_enabled: bool = Field(default=True, env="PHASE_1_INGEST_ENABLED")
     phase_2_filter_enabled: bool = Field(default=True, env="PHASE_2_FILTER_ENABLED")
     phase_3_generate_enabled: bool = Field(default=True, env="PHASE_3_GENERATE_ENABLED")
-    
+
     # Phase Limits (for controlled execution)
     phase_1_max_feeds: Optional[int] = Field(default=None, env="PHASE_1_MAX_FEEDS")
     phase_2_max_titles: Optional[int] = Field(default=1000, env="PHASE_2_MAX_TITLES")
     phase_3_max_titles: Optional[int] = Field(default=500, env="PHASE_3_MAX_TITLES")
-    
+
     # Monitoring and Safety
     pipeline_error_threshold: int = Field(default=3, env="PIPELINE_ERROR_THRESHOLD")
-    pipeline_heartbeat_file: str = Field(default="logs/pipeline_heartbeat.json", env="PIPELINE_HEARTBEAT_FILE")
-    pipeline_status_file: str = Field(default="logs/pipeline_status.json", env="PIPELINE_STATUS_FILE")
+    pipeline_heartbeat_file: str = Field(
+        default="logs/pipeline_heartbeat.json", env="PIPELINE_HEARTBEAT_FILE"
+    )
+    pipeline_status_file: str = Field(
+        default="logs/pipeline_status.json", env="PIPELINE_STATUS_FILE"
+    )
 
     # Project paths
     project_root: Path = Field(default_factory=lambda: Path(__file__).parent.parent)

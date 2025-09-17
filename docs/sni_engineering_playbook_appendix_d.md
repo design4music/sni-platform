@@ -17,11 +17,11 @@
 - **Single source of truth for config** → `sni/config.py` exposes **typed** settings; all modules import from it. No ad‑hoc `os.getenv` reads elsewhere.
 - **Directories**
   - `apps/ingest/` – RSS fetch, normalize
-  - `apps/clust1/` – bucketing, guardrails
-  - `apps/gen1/` – prompts & LLM calls
+  - `apps/filter/` – filtering, actor extraction, gating
+  - `apps/generate/` – multipass generate EFs and FNs
   - `apps/merge/`, `apps/arc/`
   - `db/` – migrations, seeds, schema snapshots
-  - `docs/` – context/specs; notebooks under `docs/notebooks/`
+  - `docs/` – context/specs; tickets under `docs/tickets/`
   - `scripts/` – one‑shot utilities (idempotent)
   - `tests/` – smoke + contract tests
 - **File placement**: `.md` only in `/docs/`; schema SQL only in `/db/`.
@@ -37,7 +37,7 @@
 ## D.3 Dependencies & reproducibility
 
 - **Exact versions** only (`requirements.txt`/lockfile); no floating `>=`.
-- **Determinism**: all thresholds/constants (e.g., dedupe 0.95, bucket 0.60, merge 0.85, gate ≥0.70) live in `sni/constants.py`.
+- **Determinism**: all thresholds/constants live in `core/config.py`.
 - **Randomness**: if sampling is used anywhere, set seed and record it in `runs`.
 
 ## D.4 Database & schema hygiene
@@ -63,14 +63,16 @@
 - **Strategic gate v2**: pure function returns `{keep: bool, score: float, reason: str}`; maintain test fixtures.
 - **Typed contract:** implement as `GateResult` **dataclass** (or `TypedDict`) with fields\
   `keep: bool`, `score: float`, `reason: str`, `anchors: list[str]` *(which anchor phrases fired)* for transparent audits and easy testing.
+[outdated]
 - **Guarded mechanisms**: enforce issuer→instrument→target uniformity (sanctions/export\_controls/asset\_freeze/travel\_ban/strike\_airstrike/platform\_ban). Split mixed triples.
 - **Thresholds**: constants – dedupe 0.95; bucket 0.60; merge 0.85.
 - **Caps**: bucket ≤100 items; GEN payload ≤8k tokens.
 - **De‑dup**: cosine 0.95 plus trigram/Jaccard as tie‑breaker.
+[end of outdated]
 
 ## D.7 LLM usage (GEN‑1/MERGE/ARC)
 
-- **Prompt templates** under `apps/gen1/prompts/`, versioned (`v1`, `v2`…), referenced by **explicit id** in `runs.prompt_version`.
+- **Prompt templates** under `apps/generate/prompts/`, versioned (`v1`, `v2`…), referenced by **explicit id** in `runs.prompt_version`.
 - **Inputs‑only facts**: Event.shared\_facts is intersection; no new facts/numbers/actors. Narrative/Arc theses may paraphrase with hedging.
 - **Budgeting**: log token usage and estimate cost per bucket.
 - **Retries**: at‑most‑once for GEN‑1; on failure, record in `runs` and leave bucket pending.
@@ -78,9 +80,9 @@
 
 ## D.8 Observability & ops
 
-- **Structured logs** (JSON): `phase`, `bucket_id`, counts, timings, thresholds, model version.
-- **Metrics**: gate keep‑rate, avg bucket size, merge decisions, LLM success rate, token totals.
-- **Crash policy**: fail a single feed/bucket without halting the whole run; end‑of‑run failure summary.
+- **Structured logs** (JSON): `phase`, counts, timings, thresholds, model version.
+- **Metrics**: gate keep‑rate, merge decisions, LLM success rate, token totals.
+- **Crash policy**: fail a single feed/ef without halting the whole run; end‑of‑run failure summary.
 - **framing\_disagreement\_rate**: percentage of Events that yield **≥2 Framed Narratives** (per batch and rolling 7/30-day).
 
 ## D.9 Performance & cost
@@ -88,7 +90,6 @@
 - **Batch I/O**: DB insert/read in 100‑item batches.
 - **Parallelism**: cap concurrent feeds (backfill 5–10; daily 2–4).
 - **Caching**: cache embeddings for `title_norm` keyed by `content_hash`.
-- **Short‑circuit**: skip GEN‑1 for tiny buckets (<3 items) unless flagged by rule.
 
 ## D.10 Security & data handling
 
@@ -100,17 +101,13 @@
 
 - **Smoke tests**
   - Ingest: run on a known sample feed → assert inserted/dupe counts and idempotency on second run.
-  - GEN‑1: run on 1 tiny bucket → schema‑valid Event/Narrative JSON produced.
+  - GEN‑1: run on 1 tiny batch → schema‑valid Event/Narrative JSON produced.
 - **Contract tests**
-  - **Guarded mechanisms**: fixtures where mixed `issuer→target` headlines must be split into separate buckets.
-  - **MERGE**: two clusters from different feeds/days with the same fingerprint must merge (cosine ≥0.85); a near‑miss must not.
-- **Prompt golden tests**
-  - Keep a small set of buckets with **golden outputs**; fail if the output schema or key fields drift unexpectedly.
+  - **Guarded mechanisms**: fixtures where mixed `issuer→target` headlines must be split into separate EFs.
 - **DoD checklist (for any change)**
-  1. Thresholds in `sni/constants.py` reviewed/confirmed.
-  2. Tests added/updated; CI green.
-  3. `docs/CHANGELOG.md` updated with rationale.
-  4. `runs` records the new `prompt_version` or component version.
+  1. Tests added/updated; CI green.
+  2. `docs/CHANGELOG.md` updated with rationale.
+  3. `runs` records the new `prompt_version` or component version.
 
 ## D.12 Code style & documentation
 
@@ -145,12 +142,6 @@
 
 - **Pre‑commit**: run `ruff --fix` and `black`; refuse commit on lint errors.
 - **Pre‑merge**: CI must be green; golden tests must pass; if thresholds changed, require a short rationale PR note.
-
-## D.18 Performance budgets (advisory)
-
-- **Ingest**: ≤ 2s per feed fetch on average; retries excluded.
-- **CLUST‑1**: ≤ 5ms per item for embedding + bucketing on a laptop‑class CPU (cached embeddings excluded).
-- **GEN‑1**: ≤ 8k tokens per bucket; under agreed monthly token budget.
 
 ---
 

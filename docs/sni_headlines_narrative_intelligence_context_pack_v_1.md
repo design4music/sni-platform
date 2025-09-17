@@ -56,7 +56,6 @@
 - **Event Family (EF):** Neutral description of an episode/phase (actors, mechanism, time, place) plus **1–3 shared facts** true for all items.
 - **Framed Narrative (FN):** A distinct storyline **about the same EF**, defined by its **framing vector** (roles, cause, legitimacy, intent, solution, norms/salience, temporal). Usually 1 per EF; create 2 when framing materially diverges.
 - **Structural Arc (SA):** Optional umbrella that links multiple EFs via a recurring storyline pattern (e.g., “Technology’s dark unintended consequences”).
-- **Bucket / Cluster:** A pre‑LLM, deterministic pile of similar titles (same actors/time; special guardrails for sanctions/strikes) – the unit we hand to the LLM.
 
 > Working unit formula: **Narrative = Event × Framing**. Arcs connect many Events.
 

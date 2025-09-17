@@ -117,19 +117,17 @@ def validate_ef_key_components(
     """
     Validate that ef_key components are valid
 
+    ALIGNED WITH 2-PARAMETER APPROACH: Only validates theater + event_type
+    (actors are ignored in actual ef_key generation)
+
     Args:
-        actors: List of actors
+        actors: List of actors (IGNORED for validation, kept for API compatibility)
         primary_theater: Theater code
         event_type: Event type
 
     Returns:
         True if components are valid for ef_key generation
     """
-    # Must have at least one actor
-    if not actors or not any(actor.strip() for actor in actors):
-        logger.warning("ef_key validation failed: No valid actors provided")
-        return False
-
     # Must have theater
     if not primary_theater or not primary_theater.strip():
         logger.warning("ef_key validation failed: No primary_theater provided")
