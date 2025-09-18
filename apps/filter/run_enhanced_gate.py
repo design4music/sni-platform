@@ -10,15 +10,14 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+from loguru import logger
+from sqlalchemy import text
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from loguru import logger
-from sqlalchemy import text
-
 from apps.filter.entity_enrichment import get_entity_enrichment_service
-from apps.filter.strategic_gate import get_strategic_gate_service
 from core.database import get_db_session
 
 
@@ -52,7 +51,6 @@ async def run_enhanced_gate_processing(
 
     try:
         # Get services
-        gate_service = get_strategic_gate_service()
         entity_service = get_entity_enrichment_service()
 
         # Get titles to process

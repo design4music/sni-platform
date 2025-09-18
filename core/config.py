@@ -35,6 +35,29 @@ class SNIConfig(BaseSettings):
     llm_provider: str = Field(default="deepseek", env="LLM_PROVIDER")
     llm_model: str = Field(default="deepseek-chat", env="LLM_MODEL")
 
+    # DeepSeek API Constraints & Limits (for informed concurrency optimization)
+    # Source: DeepSeek API documentation and testing results
+    # Context Window: 128K tokens (131,072 tokens) for deepseek-chat model
+    # Max Output: 8K tokens (8,192 tokens) - hard limit, no higher setting possible
+    # Rate Limits: No traditional rate limits - uses dynamic throttling instead
+    # Request Timeout: 30 minutes maximum per request
+    # Concurrency: No documented hard limits, but dynamic throttling applies
+    # Token Counting: Uses tiktoken cl100k_base encoding
+
+    # Current Conservative Settings Based on API Constraints:
+    deepseek_context_window_tokens: int = Field(
+        default=131072, env="DEEPSEEK_CONTEXT_WINDOW"
+    )  # 128K
+    deepseek_max_output_tokens: int = Field(
+        default=8192, env="DEEPSEEK_MAX_OUTPUT_TOKENS"
+    )  # 8K hard limit
+    deepseek_request_timeout_minutes: int = Field(
+        default=30, env="DEEPSEEK_REQUEST_TIMEOUT"
+    )  # API maximum
+    deepseek_dynamic_throttling: bool = Field(
+        default=True, env="DEEPSEEK_DYNAMIC_THROTTLING"
+    )  # No rate limits
+
     # LLM Configuration - Unified Parameters
     llm_timeout_seconds: int = Field(default=180, env="LLM_TIMEOUT_SECONDS")
     llm_max_tokens_ef: int = Field(default=4000, env="LLM_MAX_TOKENS_EF")
@@ -54,6 +77,46 @@ class SNIConfig(BaseSettings):
     max_event_families_per_run: int = Field(
         default=1000, env="MAX_EVENT_FAMILIES_PER_RUN"
     )
+
+    # MAP/REDUCE Configuration (Alternative Processing)
+    # Concurrency Optimization Guidelines:
+    # - DeepSeek uses dynamic throttling, not hard rate limits
+    # - Current settings (MAP=4, REDUCE=8) are conservative for reliability
+    # - Higher concurrency possible but may trigger throttling/delays
+    # - Optimal range likely MAP=8-16, REDUCE=12-24 based on API behavior
+    # - Token limits: MAP=8000 (near max), REDUCE=4000 (default)
+    # - Monitor response times: >10s may indicate throttling
+    mapreduce_enabled: bool = Field(default=False, env="MAPREDUCE_ENABLED")
+    map_batch_size: int = Field(
+        default=100, env="MAP_BATCH_SIZE"
+    )  # Titles per MAP call (fits in context)
+    map_concurrency: int = Field(
+        default=8, env="MAP_CONCURRENCY"
+    )  # Production: max parallelism
+    map_timeout_seconds: int = Field(default=90, env="MAP_TIMEOUT_SECONDS")
+    map_max_tokens: int = Field(
+        default=8000, env="MAP_MAX_TOKENS"
+    )  # Near DeepSeek's 8192 limit
+    reduce_concurrency: int = Field(
+        default=12, env="REDUCE_CONCURRENCY"
+    )  # Production: max parallelism
+    reduce_timeout_seconds: int = Field(default=45, env="REDUCE_TIMEOUT_SECONDS")
+    reduce_max_titles: int = Field(
+        default=12, env="REDUCE_MAX_TITLES"
+    )  # Titles per REDUCE call
+
+    # Concurrency Testing Strategy (for educated optimization):
+    # 1. Baseline: Current conservative settings (MAP=4, REDUCE=8)
+    # 2. Moderate: MAP=8, REDUCE=12 (2x increase)
+    # 3. Aggressive: MAP=16, REDUCE=24 (4x increase)
+    # 4. Monitor metrics: response_time_avg, throttling_events, error_rate
+    # 5. Success criteria: <5s avg response, <5% errors, minimal throttling
+    # 6. If throttling detected (>10s responses), back off by 25-50%
+
+    # Token Budget Calculations:
+    # MAP Phase: ~100 titles × 50 tokens = 5K input + 8K output = 13K total (within 131K limit)
+    # REDUCE Phase: ~12 titles × 50 tokens = 600 input + 4K output = 4.6K total (within 131K limit)
+    # Concurrent requests share no token budget (each request independent)
 
     # Legacy support (deprecated - remove in future)
     default_fetch_interval: int = Field(default=60, env="DEFAULT_FETCH_INTERVAL")

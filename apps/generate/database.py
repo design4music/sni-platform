@@ -109,7 +109,7 @@ class Gen1Database:
         event_family_id: str,
         confidence: float,
         reason: str,
-    ) -> bool:
+    ) -> int:
         """
         Assign titles to an Event Family (Phase 2)
 
@@ -120,14 +120,14 @@ class Gen1Database:
             reason: Reason for assignment
 
         Returns:
-            True if successful, False otherwise
+            Number of titles successfully assigned
         """
         try:
             with get_db_session() as session:
                 # Update titles with Event Family assignment
                 # Cast UUIDs properly for PostgreSQL
                 if not title_ids:
-                    return False
+                    return 0
 
                 # Convert title_ids to proper UUID format for PostgreSQL
                 uuid_list = (
@@ -163,11 +163,11 @@ class Gen1Database:
                     reason=reason[:100],
                 )
 
-                return updated_count > 0
+                return updated_count
 
         except Exception as e:
             logger.error(f"Failed to assign titles to Event Family: {e}")
-            return False
+            return 0
 
     async def save_event_family(self, event_family: EventFamily) -> bool:
         """

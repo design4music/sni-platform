@@ -18,8 +18,7 @@ from etl_pipeline.core.data_quality import (DataQualityTracker,
                                             QualityIssueType,
                                             track_ingestion_quality_issues)
 from etl_pipeline.core.database.models import NarrativeNSF1
-from etl_pipeline.core.queries.fringe_analysis import (
-    FringeAnalysisQueries)
+from etl_pipeline.core.queries.fringe_analysis import FringeAnalysisQueries
 
 
 class TestFringeAndQualityNotesModels:

@@ -7,10 +7,9 @@ Coordinates RSS ingestion → strategic filtering → Event Family generation
 import asyncio
 import json
 import sys
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import typer
 from loguru import logger
@@ -20,7 +19,6 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from core.config import get_config
-from core.database import get_db_session
 
 app = typer.Typer(help="SNI-v2 Pipeline Orchestrator")
 config = get_config()
@@ -79,7 +77,6 @@ class PipelineOrchestrator:
 
         try:
             # Run ingestion subprocess
-            import subprocess
 
             cmd = [sys.executable, "-m", "apps.ingest.run_ingestion"]
             if (
@@ -463,6 +460,63 @@ def phase3(
             print(f"Phase 3 result: {result}")
 
     asyncio.run(run_phase3())
+
+
+@app.command()
+def phase3_mapreduce(
+    max_titles: int = typer.Option(1000, help="Maximum titles to process"),
+    dry_run: bool = typer.Option(False, help="Dry run mode (no database writes)"),
+):
+    """Phase 3: MAP/REDUCE Event Family Generation (Alternative Implementation)"""
+
+    async def run_mapreduce():
+        try:
+            config = get_config()
+            if not getattr(
+                config, "mapreduce_enabled", True
+            ):  # Default enabled for testing
+                logger.warning(
+                    "MAP/REDUCE processing may be disabled in config. Set MAPREDUCE_ENABLED=true to enable."
+                )
+
+            from apps.generate.mapreduce_processor import MapReduceProcessor
+
+            processor = MapReduceProcessor()
+
+            if dry_run:
+                logger.info("DRY RUN MODE: No database writes will be performed")
+                return
+
+            logger.info(
+                f"Starting MAP/REDUCE processing for up to {max_titles} titles..."
+            )
+            result = await processor.run_pass1_mapreduce(max_titles)
+
+            logger.info("=== MAP/REDUCE RESULTS ===")
+            logger.info(f"Total processing time: {result.total_seconds:.1f}s")
+            logger.info(f"  MAP phase: {result.map_phase_seconds:.1f}s")
+            logger.info(f"  GROUP phase: {result.group_phase_seconds:.1f}s")
+            logger.info(f"  REDUCE phase: {result.reduce_phase_seconds:.1f}s")
+            logger.info(
+                f"Event Families: {result.event_families_created} created, {result.event_families_merged} merged"
+            )
+            logger.info(f"Titles assigned: {result.titles_assigned}")
+            logger.info(
+                f"Success rates: MAP {result.classification_success_rate:.1%}, REDUCE {result.reduce_success_rate:.1%}"
+            )
+
+            if result.total_seconds <= 180:  # 3 minutes
+                logger.info("✓ Performance target achieved: ≤3 minutes")
+            else:
+                logger.warning(
+                    f"✗ Performance target missed: {result.total_seconds:.1f}s > 180s"
+                )
+
+        except Exception as e:
+            logger.error(f"MAP/REDUCE processing failed: {e}")
+            raise typer.Exit(1)
+
+    asyncio.run(run_mapreduce())
 
 
 if __name__ == "__main__":
