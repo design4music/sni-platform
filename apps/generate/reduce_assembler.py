@@ -9,8 +9,8 @@ from typing import Dict, List
 from loguru import logger
 
 from apps.generate.llm_client import get_gen1_llm_client
-from apps.generate.mapreduce_models import EFGroup, ReduceResponse
-from apps.generate.mapreduce_prompts import build_ef_generation_prompt
+from apps.generate.mapreduce_models import IncidentAnalysis, IncidentCluster
+from apps.generate.mapreduce_prompts import build_incident_analysis_prompt
 from apps.generate.models import EventFamily
 from core.config import SNIConfig
 
@@ -26,33 +26,52 @@ class ReduceAssembler:
         self.config = config
         self.llm_client = get_gen1_llm_client()
 
-    async def generate_ef_content(self, ef_group: EFGroup) -> ReduceResponse:
+    async def analyze_incident_cluster(
+        self, incident_cluster: IncidentCluster, all_titles: List[Dict[str, str]]
+    ) -> IncidentAnalysis:
         """
-        Generate EF title and summary for a single EF group
+        Analyze an incident cluster to create comprehensive Event Family
 
         Args:
-            ef_group: Grouped titles by (theater, event_type)
+            incident_cluster: Incident cluster with title IDs and metadata
+            all_titles: All title data for lookup
 
         Returns:
-            ReduceResponse with generated EF title and summary
+            IncidentAnalysis with complete EF analysis and events timeline
 
         Raises:
             Exception: If LLM call fails or response parsing fails
         """
         logger.debug(
-            f"REDUCE: Generating EF for {ef_group.primary_theater}/{ef_group.event_type} ({len(ef_group.titles)} titles)"
+            f"REDUCE: Analyzing incident cluster '{incident_cluster.incident_name}' ({len(incident_cluster.title_ids)} titles)"
         )
 
         try:
-            # Sample titles if group is too large
-            sample_titles = self._sample_titles_for_ef_generation(ef_group.titles)
+            # Get titles for this incident cluster
+            title_lookup = {title["id"]: title for title in all_titles}
+            cluster_titles = []
 
-            # Build prompt
-            system_prompt, user_prompt = build_ef_generation_prompt(
-                ef_group.primary_theater, ef_group.event_type, sample_titles
+            for title_id in incident_cluster.title_ids:
+                if title_id in title_lookup:
+                    cluster_titles.append(title_lookup[title_id])
+                else:
+                    logger.warning(
+                        f"REDUCE: Title ID {title_id} not found in title data"
+                    )
+
+            if not cluster_titles:
+                raise ValueError(
+                    f"No valid titles found for incident cluster '{incident_cluster.incident_name}'"
+                )
+
+            # Build incident analysis prompt
+            system_prompt, user_prompt = build_incident_analysis_prompt(
+                incident_cluster.incident_name,
+                incident_cluster.rationale,
+                cluster_titles,
             )
 
-            # Call LLM with REDUCE timeout
+            # Call LLM for incident analysis
             response_text = await self.llm_client._call_llm(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
@@ -61,53 +80,28 @@ class ReduceAssembler:
             )
 
             # Parse JSON response
-            ef_content = self._parse_ef_generation_response(response_text)
+            incident_analysis = self._parse_incident_analysis_response(response_text)
 
             logger.debug(
-                f"REDUCE: Generated EF '{ef_content.ef_title}' for {ef_group.primary_theater}/{ef_group.event_type}"
+                f"REDUCE: Analyzed incident '{incident_cluster.incident_name}' -> {incident_analysis.primary_theater}/{incident_analysis.event_type} with {len(incident_analysis.events)} events"
             )
-            return ef_content
+            return incident_analysis
 
         except Exception as e:
             logger.error(
-                f"REDUCE: EF generation failed for {ef_group.primary_theater}/{ef_group.event_type}: {e}"
+                f"REDUCE: Incident analysis failed for '{incident_cluster.incident_name}': {e}"
             )
             raise
 
-    def _sample_titles_for_ef_generation(
-        self, titles: List[Dict[str, str]]
-    ) -> List[Dict[str, str]]:
+    def _parse_incident_analysis_response(self, response_text: str) -> IncidentAnalysis:
         """
-        Sample up to N titles for EF generation (to stay within prompt limits)
+        Parse JSON response from incident analysis into IncidentAnalysis object
 
         Args:
-            titles: All titles in the group
+            response_text: LLM response text (should be JSON with IncidentAnalysis structure)
 
         Returns:
-            Sampled titles (up to reduce_max_titles)
-        """
-        max_titles = self.config.reduce_max_titles
-
-        if len(titles) <= max_titles:
-            return titles
-
-        # Sample evenly across the time range
-        # For now, just take first N titles (could be improved with temporal sampling)
-        sampled = titles[:max_titles]
-        logger.debug(
-            f"REDUCE: Sampled {len(sampled)}/{len(titles)} titles for EF generation"
-        )
-        return sampled
-
-    def _parse_ef_generation_response(self, response_text: str) -> ReduceResponse:
-        """
-        Parse JSON response into ReduceResponse object
-
-        Args:
-            response_text: LLM response text (should be JSON)
-
-        Returns:
-            ReduceResponse object
+            IncidentAnalysis object with complete incident analysis
 
         Raises:
             ValueError: If parsing fails or response is invalid
@@ -117,12 +111,20 @@ class ReduceAssembler:
             response_data = self.llm_client._extract_json(response_text)
 
             # Validate required fields
-            if "ef_title" not in response_data or "ef_summary" not in response_data:
-                raise ValueError(
-                    f"Missing required fields in response: {response_data}"
-                )
+            required_fields = [
+                "primary_theater",
+                "event_type",
+                "ef_title",
+                "ef_summary",
+                "events",
+            ]
+            for field in required_fields:
+                if field not in response_data:
+                    raise ValueError(
+                        f"Missing required field '{field}' in response: {response_data}"
+                    )
 
-            # Validate field lengths
+            # Validate ef_title and ef_summary
             ef_title = response_data["ef_title"].strip()
             ef_summary = response_data["ef_summary"].strip()
 
@@ -138,168 +140,317 @@ class ReduceAssembler:
                 )
                 ef_summary = ef_summary[:277] + "..."
 
-            return ReduceResponse(ef_title=ef_title, ef_summary=ef_summary)
+            # Validate events
+            events = response_data["events"]
+            if not isinstance(events, list):
+                raise ValueError(f"Events must be a list, got: {type(events)}")
+
+            # Validate each event structure
+            for i, event in enumerate(events):
+                required_event_fields = [
+                    "summary",
+                    "date",
+                    "source_title_ids",
+                    "event_id",
+                ]
+                for field in required_event_fields:
+                    if field not in event:
+                        raise ValueError(
+                            f"Event {i} missing required field '{field}': {event}"
+                        )
+
+            # Validate theater and event_type are from allowed lists
+            # Note: We could add validation against THEATERS and EVENT_TYPES here if needed
+
+            return IncidentAnalysis(
+                primary_theater=response_data["primary_theater"],
+                event_type=response_data["event_type"],
+                ef_title=ef_title,
+                ef_summary=ef_summary,
+                events=events,
+            )
 
         except Exception as e:
-            logger.error(f"REDUCE: Response parsing failed: {e}")
+            logger.error(f"REDUCE: Incident analysis response parsing failed: {e}")
             logger.error(f"REDUCE: Response text: {response_text[:500]}...")
-            raise ValueError(f"Failed to parse EF generation response: {e}")
+            raise ValueError(f"Failed to parse incident analysis response: {e}")
 
-    async def process_groups_parallel(
-        self, ef_groups: List[EFGroup]
+    async def process_incidents_parallel(
+        self, incident_clusters: List[IncidentCluster], all_titles: List[Dict[str, str]]
     ) -> List[EventFamily]:
         """
-        Process all EF groups with parallel REDUCE calls
+        Process all incident clusters with parallel REDUCE calls
 
         Args:
-            ef_groups: All EF groups to process
+            incident_clusters: All incident clusters to analyze
+            all_titles: All title data for lookup
 
         Returns:
             List of EventFamily objects with generated content
 
         Raises:
-            Exception: If too many groups fail
+            Exception: If too many clusters fail
         """
-        if not ef_groups:
+        if not incident_clusters:
             return []
 
         logger.info(
-            f"REDUCE: Starting parallel EF generation for {len(ef_groups)} groups"
+            f"REDUCE: Starting parallel incident analysis for {len(incident_clusters)} clusters"
         )
 
         # Create semaphore for concurrency control
         semaphore = asyncio.Semaphore(self.config.reduce_concurrency)
 
-        async def process_group_with_semaphore(
-            ef_group: EFGroup, group_num: int
+        async def process_incident_with_semaphore(
+            incident_cluster: IncidentCluster, cluster_num: int
         ) -> EventFamily:
-            """Process single EF group with concurrency control"""
+            """Process single incident cluster with concurrency control"""
             async with semaphore:
                 logger.debug(
-                    f"REDUCE: Processing group {group_num + 1}/{len(ef_groups)}"
+                    f"REDUCE: Processing incident {cluster_num + 1}/{len(incident_clusters)}: {incident_cluster.incident_name}"
                 )
                 try:
-                    # Generate EF content
-                    ef_content = await self.generate_ef_content(ef_group)
+                    # Analyze incident cluster
+                    incident_analysis = await self.analyze_incident_cluster(
+                        incident_cluster, all_titles
+                    )
 
-                    # Create EventFamily object
-                    event_family = self._build_event_family(ef_group, ef_content)
+                    # Create EventFamily object from incident analysis
+                    event_family = self._build_event_family_from_incident(
+                        incident_cluster, incident_analysis, all_titles
+                    )
                     return event_family
 
                 except Exception as e:
-                    logger.error(f"REDUCE: Group {group_num + 1} failed: {e}")
+                    logger.error(f"REDUCE: Incident {cluster_num + 1} failed: {e}")
                     # Create fallback EventFamily with generic content
-                    return self._build_fallback_event_family(ef_group)
+                    return self._build_fallback_event_family_from_incident(
+                        incident_cluster, all_titles
+                    )
 
-        # Process all groups in parallel
+        # Process all incidents in parallel
         event_families = await asyncio.gather(
             *[
-                process_group_with_semaphore(group, i)
-                for i, group in enumerate(ef_groups)
+                process_incident_with_semaphore(cluster, i)
+                for i, cluster in enumerate(incident_clusters)
             ],
             return_exceptions=True,
         )
 
         # Collect results (filter out exceptions)
         valid_event_families = []
-        successful_groups = 0
+        successful_clusters = 0
 
         for i, result in enumerate(event_families):
             if isinstance(result, Exception):
-                logger.error(f"REDUCE: Group {i + 1} exception: {result}")
+                logger.error(f"REDUCE: Incident {i + 1} exception: {result}")
                 # Create fallback EF for exceptions
-                fallback_ef = self._build_fallback_event_family(ef_groups[i])
+                fallback_ef = self._build_fallback_event_family_from_incident(
+                    incident_clusters[i], all_titles
+                )
                 valid_event_families.append(fallback_ef)
             elif isinstance(result, EventFamily):
                 valid_event_families.append(result)
-                successful_groups += 1
+                successful_clusters += 1
             else:
                 logger.error(
-                    f"REDUCE: Group {i + 1} unexpected result type: {type(result)}"
+                    f"REDUCE: Incident {i + 1} unexpected result type: {type(result)}"
                 )
 
         # Log success rate
-        success_rate = successful_groups / len(ef_groups) if ef_groups else 0
+        success_rate = (
+            successful_clusters / len(incident_clusters) if incident_clusters else 0
+        )
         logger.info(
-            f"REDUCE: Completed {successful_groups}/{len(ef_groups)} groups successfully ({success_rate:.1%})"
+            f"REDUCE: Completed {successful_clusters}/{len(incident_clusters)} incidents successfully ({success_rate:.1%})"
         )
 
         logger.info(f"REDUCE: Total Event Families: {len(valid_event_families)}")
         return valid_event_families
 
-    def _build_event_family(
-        self, ef_group: EFGroup, ef_content: ReduceResponse
+    def _build_event_family_from_incident(
+        self,
+        incident_cluster: IncidentCluster,
+        incident_analysis: IncidentAnalysis,
+        all_titles: List[Dict[str, str]],
     ) -> EventFamily:
         """
-        Build EventFamily object from EF group and generated content
+        Build EventFamily object from incident cluster and analysis
 
         Args:
-            ef_group: Original EF group data
-            ef_content: Generated EF title/summary
+            incident_cluster: Original incident cluster
+            incident_analysis: LLM analysis of the incident
+            all_titles: All title data for extracting metadata
 
         Returns:
             EventFamily object ready for database insertion
         """
         from apps.generate.ef_key import generate_ef_key
 
-        # Generate ef_key using existing logic
+        # Get title metadata for this incident
+        title_lookup = {title["id"]: title for title in all_titles}
+        cluster_titles = [
+            title_lookup[title_id]
+            for title_id in incident_cluster.title_ids
+            if title_id in title_lookup
+        ]
+
+        # Extract key actors from all titles in the incident
+        all_actors = set()
+        dates = []
+
+        for title in cluster_titles:
+            # Extract actors
+            title_entities = title.get("extracted_actors") or {}
+            if isinstance(title_entities, dict):
+                actors_list = title_entities.get("actors", [])
+                if isinstance(actors_list, list):
+                    all_actors.update(actors_list)
+
+            # Extract dates
+            pubdate = title.get("pubdate_utc")
+            if pubdate:
+                if isinstance(pubdate, str):
+                    try:
+                        from datetime import datetime
+
+                        dates.append(
+                            datetime.fromisoformat(pubdate.replace("Z", "+00:00"))
+                        )
+                    except ValueError:
+                        pass
+                elif hasattr(pubdate, "year"):  # datetime object
+                    dates.append(pubdate)
+
+        key_actors = sorted(list(all_actors))
+
+        # Calculate temporal scope
+        if dates:
+            temporal_start = min(dates)
+            temporal_end = max(dates)
+        else:
+            from datetime import datetime
+
+            temporal_start = temporal_end = datetime.utcnow()
+
+        # Generate ef_key using LLM-determined theater and event_type
         ef_key = generate_ef_key(
             actors=[],  # Actors ignored in current system
-            primary_theater=ef_group.primary_theater,
-            event_type=ef_group.event_type,
+            primary_theater=incident_analysis.primary_theater,
+            event_type=incident_analysis.event_type,
         )
 
         return EventFamily(
-            title=ef_content.ef_title,
-            summary=ef_content.ef_summary,
-            key_actors=ef_group.key_actors,  # Use extracted key actors from all source titles
-            event_type=ef_group.event_type,
-            primary_theater=ef_group.primary_theater,
+            title=incident_analysis.ef_title,
+            summary=incident_analysis.ef_summary,
+            key_actors=key_actors,
+            event_type=incident_analysis.event_type,
+            primary_theater=incident_analysis.primary_theater,
             ef_key=ef_key,
-            status="active",
-            event_start=ef_group.temporal_scope_start,
-            event_end=ef_group.temporal_scope_end,
-            source_title_ids=ef_group.title_ids,
-            confidence_score=0.85,  # Default confidence for MAP/REDUCE approach
-            coherence_reason=f"MAP/REDUCE generated EF for {len(ef_group.title_ids)} titles in {ef_group.primary_theater}/{ef_group.event_type}",
-            processing_notes="Generated via MAP/REDUCE pipeline",
+            status="seed",  # Phase 1: Start as seed, promote to active later
+            event_start=temporal_start,
+            event_end=temporal_end,
+            source_title_ids=incident_cluster.title_ids,
+            confidence_score=0.90,  # Higher confidence for incident-based approach
+            coherence_reason=f"Incident clustering generated EF for '{incident_cluster.incident_name}' with {len(incident_cluster.title_ids)} titles",
+            processing_notes=f"Generated via MAP/REDUCE incident clustering pipeline: {incident_cluster.rationale}",
+            events=incident_analysis.events,  # Include extracted events timeline
         )
 
-    def _build_fallback_event_family(self, ef_group: EFGroup) -> EventFamily:
+    def _build_fallback_event_family_from_incident(
+        self, incident_cluster: IncidentCluster, all_titles: List[Dict[str, str]]
+    ) -> EventFamily:
         """
-        Build fallback EventFamily for failed EF generation
+        Build fallback EventFamily for failed incident analysis
 
         Args:
-            ef_group: Original EF group data
+            incident_cluster: Original incident cluster
+            all_titles: All title data for extracting metadata
 
         Returns:
             EventFamily object with generic content
         """
+        from datetime import datetime
+
         from apps.generate.ef_key import generate_ef_key
 
-        # Generate ef_key using existing logic
+        # Get title metadata for this incident
+        title_lookup = {title["id"]: title for title in all_titles}
+        cluster_titles = [
+            title_lookup[title_id]
+            for title_id in incident_cluster.title_ids
+            if title_id in title_lookup
+        ]
+
+        # Extract basic metadata
+        all_actors = set()
+        dates = []
+
+        for title in cluster_titles:
+            # Extract actors
+            title_entities = title.get("extracted_actors") or {}
+            if isinstance(title_entities, dict):
+                actors_list = title_entities.get("actors", [])
+                if isinstance(actors_list, list):
+                    all_actors.update(actors_list)
+
+            # Extract dates
+            pubdate = title.get("pubdate_utc")
+            if pubdate:
+                if isinstance(pubdate, str):
+                    try:
+                        dates.append(
+                            datetime.fromisoformat(pubdate.replace("Z", "+00:00"))
+                        )
+                    except ValueError:
+                        pass
+                elif hasattr(pubdate, "year"):  # datetime object
+                    dates.append(pubdate)
+
+        key_actors = sorted(list(all_actors))
+
+        # Calculate temporal scope
+        if dates:
+            temporal_start = min(dates)
+            temporal_end = max(dates)
+        else:
+            temporal_start = temporal_end = datetime.utcnow()
+
+        # Use generic fallback classification
+        primary_theater = "GLOBAL_SUMMIT"  # Fallback theater
+        event_type = "Strategy/Tactics"  # Fallback event type
+
+        # Generate ef_key using fallback classification
         ef_key = generate_ef_key(
             actors=[],
-            primary_theater=ef_group.primary_theater,
-            event_type=ef_group.event_type,
+            primary_theater=primary_theater,
+            event_type=event_type,
         )
 
         # Create generic title and summary
-        title = f"{ef_group.primary_theater} {ef_group.event_type} Events"
-        summary = f"Collection of {len(ef_group.title_ids)} {ef_group.event_type.lower()} events in {ef_group.primary_theater} theater"
+        title = (
+            incident_cluster.incident_name[:117] + "..."
+            if len(incident_cluster.incident_name) > 120
+            else incident_cluster.incident_name
+        )
+        summary = (
+            f"Incident analysis failed: {incident_cluster.rationale[:200]}..."
+            if len(incident_cluster.rationale) > 200
+            else incident_cluster.rationale
+        )
 
         return EventFamily(
             title=title,
             summary=summary,
-            key_actors=ef_group.key_actors,  # Use extracted key actors even for fallback
-            event_type=ef_group.event_type,
-            primary_theater=ef_group.primary_theater,
+            key_actors=key_actors,
+            event_type=event_type,
+            primary_theater=primary_theater,
             ef_key=ef_key,
-            status="active",
-            event_start=ef_group.temporal_scope_start,
-            event_end=ef_group.temporal_scope_end,
-            source_title_ids=ef_group.title_ids,
-            confidence_score=0.5,  # Lower confidence for fallback
-            coherence_reason=f"Fallback EF for failed generation: {ef_group.primary_theater}/{ef_group.event_type}",
-            processing_notes="Generated via MAP/REDUCE pipeline (fallback)",
+            status="seed",
+            event_start=temporal_start,
+            event_end=temporal_end,
+            source_title_ids=incident_cluster.title_ids,
+            confidence_score=0.3,  # Low confidence for fallback
+            coherence_reason=f"Fallback EF for failed incident analysis: {incident_cluster.incident_name}",
+            processing_notes=f"Fallback generated via MAP/REDUCE incident clustering pipeline: {incident_cluster.rationale}",
         )

@@ -42,7 +42,7 @@ class EventFamily(BaseModel):
         description="Deterministic key for Event Family merging (16-char hash)",
     )
     status: str = Field(
-        default="active", description="Event Family status (active/merged)"
+        default="seed", description="Event Family status (seed/active/merged)"
     )
     merged_into: Optional[str] = Field(
         default=None, description="UUID of Event Family this was merged into"
@@ -67,6 +67,12 @@ class EventFamily(BaseModel):
         ge=0.0, le=1.0, description="LLM confidence in event coherence"
     )
     coherence_reason: str = Field(description="Why these titles form a coherent event")
+
+    # Events timeline for EF evolution
+    events: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Timeline of discrete events within this EF. Each event: {summary, date, source_title_ids, event_id}",
+    )
 
     # Processing metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)

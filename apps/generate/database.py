@@ -5,6 +5,7 @@ Database interactions for Event Families and Framed Narratives
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
@@ -188,13 +189,13 @@ class Gen1Database:
                     ef_key, status, merged_into, merge_rationale,
                     event_start, event_end, source_title_ids,
                     confidence_score, coherence_reason, created_at, updated_at,
-                    processing_notes
+                    processing_notes, events
                 ) VALUES (
                     :id, :title, :summary, :key_actors, :event_type, :primary_theater,
                     :ef_key, :status, :merged_into, :merge_rationale,
                     :event_start, :event_end, :source_title_ids,
                     :confidence_score, :coherence_reason, :created_at, :updated_at,
-                    :processing_notes
+                    :processing_notes, :events
                 )
                 """
 
@@ -219,6 +220,7 @@ class Gen1Database:
                         "created_at": event_family.created_at,
                         "updated_at": event_family.updated_at,
                         "processing_notes": event_family.processing_notes,
+                        "events": json.dumps(event_family.events),
                     },
                 )
 
@@ -256,7 +258,7 @@ class Gen1Database:
                 existing_query = """
                 SELECT id, title, source_title_ids, key_actors, event_start, event_end
                 FROM event_families 
-                WHERE ef_key = :ef_key AND status = 'active'
+                WHERE ef_key = :ef_key AND status IN ('seed', 'active')
                 LIMIT 1
                 """
 

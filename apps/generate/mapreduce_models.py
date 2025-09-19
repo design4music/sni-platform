@@ -4,11 +4,43 @@ Pydantic models for the new MAP/REDUCE Event Family processing approach
 """
 
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
 
+class IncidentCluster(BaseModel):
+    """Result of MAP phase: titles clustered by strategic incident"""
+
+    incident_name: str = Field(
+        description="Descriptive name for the strategic incident"
+    )
+    title_ids: List[str] = Field(description="List of title UUIDs in this incident")
+    rationale: str = Field(description="Brief explanation of why these belong together")
+
+
+class IncidentClustering(BaseModel):
+    """Response from MAP phase: incident clusters for all titles"""
+
+    clusters: List[IncidentCluster] = Field(
+        description="List of incident clusters identified from titles"
+    )
+
+
+class IncidentAnalysis(BaseModel):
+    """Response from REDUCE phase: complete Event Family for an incident"""
+
+    primary_theater: str = Field(description="Primary theater for the whole incident")
+    event_type: str = Field(description="Primary event type for the whole incident")
+    ef_title: str = Field(description="Strategic Event Family title (≤120 chars)")
+    ef_summary: str = Field(description="Brief strategic context (≤280 chars)")
+    events: List[Dict[str, Any]] = Field(
+        description="Timeline of discrete events within the incident",
+        default_factory=list,
+    )
+
+
+# Legacy models - keeping for backward compatibility
 class TitleClassification(BaseModel):
     """Result of MAP phase: title classified into theater + event_type"""
 
@@ -69,6 +101,9 @@ class ReduceResponse(BaseModel):
 
     ef_title: str = Field(description="Generated Event Family title (≤120 chars)")
     ef_summary: str = Field(description="Generated Event Family summary (≤280 chars)")
+    events: List[Dict[str, Any]] = Field(
+        description="Events timeline array for EF seeds", default_factory=list
+    )
 
 
 class MapReduceResult(BaseModel):
