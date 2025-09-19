@@ -1,0 +1,26 @@
+{
+  "ef_id": "1e49548c-9cd3-4851-8239-edadd1e4bfff",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Brazilian Supreme Court",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "proposed",
+    "time_span": {
+      "start": "2025-09-10",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Tests judicial independence in Brazil's democracy, potentially impacting accountability for anti-democratic actions and setting precedent for future c"
+  },
+  "enriched_at": "2025-09-19 20:49:43.675107",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8308,
+  "status": "completed",
+  "error_message": null
+}

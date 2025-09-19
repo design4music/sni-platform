@@ -1,0 +1,30 @@
+{
+  "ef_id": "99cfd5b8-4b43-48eb-9f8d-cf2f62bbf383",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "US",
+        "role": "initiator"
+      },
+      {
+        "name": "CN",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "High-level dialogue to manage tensions and prevent escalation in critical flashpoints between major powers."
+  },
+  "enriched_at": "2025-09-19 20:51:09.020345",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 6921,
+  "status": "completed",
+  "error_message": null
+}

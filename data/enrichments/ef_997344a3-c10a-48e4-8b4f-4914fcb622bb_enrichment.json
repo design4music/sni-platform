@@ -1,0 +1,30 @@
+{
+  "ef_id": "997344a3-c10a-48e4-8b4f-4914fcb622bb",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "EU",
+        "role": "mediator"
+      },
+      {
+        "name": "Austria",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Major infrastructure failure exposes EU energy security vulnerabilities while legal challenges to green taxonomy highlight policy tensions in energy t"
+  },
+  "enriched_at": "2025-09-19 20:49:00.276453",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8135,
+  "status": "completed",
+  "error_message": null
+}

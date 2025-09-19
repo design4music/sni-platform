@@ -1,0 +1,38 @@
+{
+  "ef_id": "53edcdb7-f163-4067-9424-fabf6e3727ae",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Israel",
+        "role": "target"
+      },
+      {
+        "name": "Hamas",
+        "role": "initiator"
+      },
+      {
+        "name": "Iran",
+        "role": "initiator"
+      },
+      {
+        "name": "Netanyahu",
+        "role": "beneficiary"
+      }
+    ],
+    "policy_status": "null",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Civilian defense capabilities demonstrate community resilience against non-state actors while hostage crisis complicates military strategy against Ham"
+  },
+  "enriched_at": "2025-09-19 20:47:38.743497",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 9044,
+  "status": "completed",
+  "error_message": null
+}

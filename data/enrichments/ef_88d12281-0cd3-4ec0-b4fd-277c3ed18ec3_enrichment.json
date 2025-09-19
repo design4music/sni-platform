@@ -1,0 +1,30 @@
+{
+  "ef_id": "88d12281-0cd3-4ec0-b4fd-277c3ed18ec3",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "South Korea",
+        "role": "initiator"
+      },
+      {
+        "name": "Elderly woman",
+        "role": "beneficiary"
+      }
+    ],
+    "policy_status": "passed",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Addresses historical human rights abuses, strengthens rule of law, and demonstrates judicial accountability for past injustices in South Korea."
+  },
+  "enriched_at": "2025-09-19 20:50:31.404034",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 9099,
+  "status": "completed",
+  "error_message": null
+}

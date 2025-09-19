@@ -1,0 +1,26 @@
+{
+  "ef_id": "db609c34-cec8-45be-9773-5af3417f92b4",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "China",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "China addresses aging population through senior-focused economic development, boosting domestic consumption while managing demographic challenges."
+  },
+  "enriched_at": "2025-09-19 20:46:59.567051",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7969,
+  "status": "completed",
+  "error_message": null
+}

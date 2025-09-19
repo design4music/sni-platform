@@ -1,0 +1,26 @@
+{
+  "ef_id": "23034b78-3432-4560-b844-9939aa5d2aed",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "AI leaders",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "null",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Global coordination on AI governance amid tech competition and regional influence building, setting framework for future AI regulation"
+  },
+  "enriched_at": "2025-09-19 20:50:54.653017",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7411,
+  "status": "completed",
+  "error_message": null
+}

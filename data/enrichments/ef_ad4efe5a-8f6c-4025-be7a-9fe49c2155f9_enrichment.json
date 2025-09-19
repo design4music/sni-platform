@@ -1,0 +1,42 @@
+{
+  "ef_id": "ad4efe5a-8f6c-4025-be7a-9fe49c2155f9",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "RU",
+        "role": "initiator"
+      },
+      {
+        "name": "PL",
+        "role": "target"
+      },
+      {
+        "name": "NATO",
+        "role": "beneficiary"
+      },
+      {
+        "name": "EU",
+        "role": "beneficiary"
+      },
+      {
+        "name": "Zelenski",
+        "role": "beneficiary"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Russian violation of NATO airspace tests alliance resolve, triggers border closures, sanctions, and security reassessment - escalating Ukraine conflic"
+  },
+  "enriched_at": "2025-09-19 20:29:29.214357",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 11675,
+  "status": "completed",
+  "error_message": null
+}

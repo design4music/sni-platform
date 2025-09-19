@@ -1,0 +1,21 @@
+{
+  "ef_id": "5aa8db51-e197-4340-99fc-02c39cc65b26",
+  "enrichment_payload": {
+    "canonical_actors": [],
+    "policy_status": null,
+    "time_span": {
+      "start": null,
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": null
+  },
+  "enriched_at": "2025-09-19 20:46:43.502311",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8345,
+  "status": "failed",
+  "error_message": "1 validation error for Magnitude\nwhat\n  String should have at most 50 characters [type=string_too_long, input_value='percentage mentioned in:...anceles a autos y pr...', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_too_long"
+}

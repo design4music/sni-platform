@@ -1,0 +1,30 @@
+{
+  "ef_id": "90b049fa-4682-434f-9c00-bf80d6dc5e68",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Kenya",
+        "role": "initiator"
+      },
+      {
+        "name": "Hustler Fund defaulters",
+        "role": "target"
+      }
+    ],
+    "policy_status": "enforced",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Government uses financial exclusion as enforcement tool, potentially setting precedent for credit access control in developing economies."
+  },
+  "enriched_at": "2025-09-19 20:50:06.390670",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7968,
+  "status": "completed",
+  "error_message": null
+}

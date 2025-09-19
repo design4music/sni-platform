@@ -1,0 +1,34 @@
+{
+  "ef_id": "560aff25-b826-438a-b56e-640e5626897f",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "US",
+        "role": "initiator"
+      },
+      {
+        "name": "Japan",
+        "role": "initiator"
+      },
+      {
+        "name": "China",
+        "role": "target"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "US-Japan military exercises demonstrate alliance resolve, deter Chinese aggression, and signal commitment to Taiwan Strait security, escalating region"
+  },
+  "enriched_at": "2025-09-19 20:48:28.112230",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8397,
+  "status": "completed",
+  "error_message": null
+}

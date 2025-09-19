@@ -1,0 +1,34 @@
+{
+  "ef_id": "5699876b-e453-4ed9-99a6-c6497e36b925",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "South Korea",
+        "role": "initiator"
+      },
+      {
+        "name": "Egypt",
+        "role": "target"
+      },
+      {
+        "name": "Jo Sumi",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "null",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Cultural diplomacy strengthens bilateral ties, expands South Korea's Middle East influence through soft power, and counters regional competition."
+  },
+  "enriched_at": "2025-09-19 20:45:15.553198",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8754,
+  "status": "completed",
+  "error_message": null
+}

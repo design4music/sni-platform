@@ -1,0 +1,26 @@
+{
+  "ef_id": "568d8a8a-c5ae-4138-be1c-76e5df8aac72",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Japan",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "null",
+    "time_span": {
+      "start": "2025-09-10",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Japan reevaluating US alliance costs amid economic pressures and regional security concerns, potentially signaling strategic recalibration in Asia-Pac"
+  },
+  "enriched_at": "2025-09-19 20:32:44.751798",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7692,
+  "status": "completed",
+  "error_message": null
+}

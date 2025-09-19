@@ -1,0 +1,30 @@
+{
+  "ef_id": "0e47f3bd-4d5c-4c48-b4a8-44c50599e6ca",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "India",
+        "role": "initiator"
+      },
+      {
+        "name": "Pakistan",
+        "role": "target"
+      }
+    ],
+    "policy_status": "null",
+    "time_span": {
+      "start": "2025-09-10",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "India uses sports/media diplomacy to shape Pakistan rivalry narrative in Middle East, leveraging regional cultural platforms for soft power influence."
+  },
+  "enriched_at": "2025-09-19 20:46:51.595984",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8092,
+  "status": "completed",
+  "error_message": null
+}

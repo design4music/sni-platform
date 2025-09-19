@@ -1,0 +1,34 @@
+{
+  "ef_id": "d9f1ed7a-d25a-4d73-bf90-ee6db8b18533",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "RU",
+        "role": "initiator"
+      },
+      {
+        "name": "Belarus",
+        "role": "beneficiary"
+      },
+      {
+        "name": "NATO",
+        "role": "target"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Russia demonstrates nuclear readiness and extended deterrence capability through Belarus, directly challenging NATO's eastern flank and signaling stra"
+  },
+  "enriched_at": "2025-09-19 20:46:01.974809",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8949,
+  "status": "completed",
+  "error_message": null
+}

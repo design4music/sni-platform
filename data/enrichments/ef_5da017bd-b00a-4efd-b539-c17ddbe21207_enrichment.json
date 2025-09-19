@@ -1,0 +1,30 @@
+{
+  "ef_id": "5da017bd-b00a-4efd-b539-c17ddbe21207",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "US",
+        "role": "initiator"
+      },
+      {
+        "name": "Argentina",
+        "role": "target"
+      }
+    ],
+    "policy_status": "enforced",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "US-Argentina migration enforcement cooperation signals shifting regional alliances and US diplomatic influence in LATAM amid Chinese engagement."
+  },
+  "enriched_at": "2025-09-19 20:46:09.898411",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7922,
+  "status": "completed",
+  "error_message": null
+}

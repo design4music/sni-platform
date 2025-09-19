@@ -1,0 +1,26 @@
+{
+  "ef_id": "9b9bc7e8-54b4-4b02-8a70-dfdb4a88a29f",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "CN",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "China expands global health infrastructure to gain geopolitical influence and soft power through health diplomacy"
+  },
+  "enriched_at": "2025-09-19 20:50:38.198674",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 6792,
+  "status": "completed",
+  "error_message": null
+}

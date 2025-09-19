@@ -1,0 +1,26 @@
+{
+  "ef_id": "47c3e701-d0fa-40ec-8dc1-451ea155ce44",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Nigeria",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Major infrastructure failure exacerbates regional instability, humanitarian crisis, and governance challenges in conflict-affected Northeast Nigeria."
+  },
+  "enriched_at": "2025-09-19 20:47:22.329525",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7053,
+  "status": "completed",
+  "error_message": null
+}

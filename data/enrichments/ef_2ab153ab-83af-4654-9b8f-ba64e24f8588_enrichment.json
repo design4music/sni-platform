@@ -1,0 +1,30 @@
+{
+  "ef_id": "2ab153ab-83af-4654-9b8f-ba64e24f8588",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "US",
+        "role": "initiator"
+      },
+      {
+        "name": "South Korea",
+        "role": "target"
+      }
+    ],
+    "policy_status": "enforced",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "US economic actions strain key Asian alliance, potentially weakening regional security architecture and creating openings for China/Russia influence."
+  },
+  "enriched_at": "2025-09-19 20:44:58.088487",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8383,
+  "status": "completed",
+  "error_message": null
+}

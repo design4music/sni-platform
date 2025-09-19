@@ -1,0 +1,30 @@
+{
+  "ef_id": "c3d88718-a1a1-43af-8886-a1b4c89c188f",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Merck",
+        "role": "initiator"
+      },
+      {
+        "name": "UK",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Major pharma investment withdrawal signals UK's declining competitiveness in life sciences sector, potentially impacting biosecurity and medical innov"
+  },
+  "enriched_at": "2025-09-19 20:47:15.274630",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7721,
+  "status": "completed",
+  "error_message": null
+}

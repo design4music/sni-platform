@@ -1,0 +1,34 @@
+{
+  "ef_id": "0a9c590e-c9ee-438b-81cc-bfb1a056cea0",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Kulman Ghising",
+        "role": "initiator"
+      },
+      {
+        "name": "Nepal",
+        "role": "target"
+      },
+      {
+        "name": "India",
+        "role": "beneficiary"
+      }
+    ],
+    "policy_status": "proposed",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "India-educated reformer's potential PM role could shift Nepal's energy policy and regional alignment, affecting India-China influence balance."
+  },
+  "enriched_at": "2025-09-19 20:49:18.706010",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8962,
+  "status": "completed",
+  "error_message": null
+}

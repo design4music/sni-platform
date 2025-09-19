@@ -1,0 +1,46 @@
+{
+  "ef_id": "a8280a51-0e17-4cee-bc22-e7d857f44530",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Kirk",
+        "role": "initiator"
+      },
+      {
+        "name": "Trump",
+        "role": "beneficiary"
+      },
+      {
+        "name": "Musk",
+        "role": "initiator"
+      },
+      {
+        "name": "Ellison",
+        "role": "target"
+      },
+      {
+        "name": "US Senators",
+        "role": "initiator"
+      },
+      {
+        "name": "Zuckerberg",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Conservative media operations influencing US electoral outcomes through coordinated messaging and voter mobilization tactics."
+  },
+  "enriched_at": "2025-09-19 20:45:43.737934",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 10086,
+  "status": "completed",
+  "error_message": null
+}

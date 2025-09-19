@@ -1,0 +1,30 @@
+{
+  "ef_id": "647968d4-1d9b-4a2a-b27c-23c7f787d57c",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "China",
+        "role": "initiator"
+      },
+      {
+        "name": "Taiwan",
+        "role": "target"
+      }
+    ],
+    "policy_status": "in_force",
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Uses environmental governance as pretext to assert maritime control and consolidate territorial claims through non-military means"
+  },
+  "enriched_at": "2025-09-19 20:46:26.337276",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8448,
+  "status": "completed",
+  "error_message": null
+}

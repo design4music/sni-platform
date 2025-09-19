@@ -1,0 +1,38 @@
+{
+  "ef_id": "5f12475e-3d29-4b33-89f7-53f0fea9af54",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Tommaso Ragno",
+        "role": "initiator"
+      },
+      {
+        "name": "Cl\u00e9ment Del\u00e9pine",
+        "role": "initiator"
+      },
+      {
+        "name": "Von der Leyen",
+        "role": "target"
+      },
+      {
+        "name": "EU",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Cultural figures' statements weaponized in European info environment, potentially shaping public perception and undermining institutional credibility "
+  },
+  "enriched_at": "2025-09-19 20:44:23.582288",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 9615,
+  "status": "completed",
+  "error_message": null
+}

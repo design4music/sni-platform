@@ -1,0 +1,30 @@
+{
+  "ef_id": "ff7ec01d-83df-4330-936f-7cce73a92d39",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Slovakia",
+        "role": "initiator"
+      },
+      {
+        "name": "Italy",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-11",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Strengthens EU cultural/economic ties through high-level diplomatic engagement at major international exposition, reinforcing European unity and coope"
+  },
+  "enriched_at": "2025-09-19 20:48:11.296563",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 8321,
+  "status": "completed",
+  "error_message": null
+}

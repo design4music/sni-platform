@@ -1,0 +1,26 @@
+{
+  "ef_id": "6321d9d7-e4ff-468d-8b0a-e65c0d03a05a",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Nigeria",
+        "role": "target"
+      }
+    ],
+    "policy_status": null,
+    "time_span": {
+      "start": "2025-09-10",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "High-profile death in capital undermines public trust in security institutions and governance, potentially destabilizing Africa's largest economy."
+  },
+  "enriched_at": "2025-09-19 20:47:29.696598",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7364,
+  "status": "completed",
+  "error_message": null
+}

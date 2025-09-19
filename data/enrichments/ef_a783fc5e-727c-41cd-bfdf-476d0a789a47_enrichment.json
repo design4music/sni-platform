@@ -1,0 +1,26 @@
+{
+  "ef_id": "a783fc5e-727c-41cd-bfdf-476d0a789a47",
+  "enrichment_payload": {
+    "canonical_actors": [
+      {
+        "name": "Netanyahu",
+        "role": "initiator"
+      }
+    ],
+    "policy_status": "null",
+    "time_span": {
+      "start": "2025-09-10",
+      "end": null
+    },
+    "magnitude": [],
+    "official_sources": [],
+    "why_strategic": "Israeli leader's corruption normalization undermines democratic institutions and regional stability, potentially weakening key US ally in volatile Mid"
+  },
+  "enriched_at": "2025-09-19 20:49:50.973014",
+  "enrichment_version": "v1.0",
+  "sources_found": 0,
+  "tokens_used": 0,
+  "processing_time_ms": 7296,
+  "status": "completed",
+  "error_message": null
+}
