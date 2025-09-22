@@ -13,7 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from loguru import logger
 
-from core.database import (check_database_connection, init_database)
+from core.database import check_database_connection, init_database
 from scripts.setup_database import run_sql_script
 
 
