@@ -359,9 +359,7 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
                 '      "summary": "Factual summary",',
                 '      "key_actors": ["actor1"],',
                 '      "event_type": "Strategy/Tactics",',
-                '      "geography": "UKRAINE",',
-                '      "event_start": "2024-01-01T12:00:00Z",',
-                '      "event_end": "2024-01-01T18:00:00Z",',
+                '      "primary_theater": "THEATER_CODE",',
                 '      "source_title_ids": ["title_id1"],',
                 '      "confidence_score": 0.85,',
                 '      "coherence_reason": "Why coherent"',
@@ -391,8 +389,6 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
         import httpx
 
         # Apply defaults if not specified
-        if max_tokens is None:
-            max_tokens = self.config.llm_max_tokens_generic
         if temperature is None:
             temperature = self.config.llm_temperature
 
@@ -412,9 +408,12 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
                 payload = {
                     "model": self.config.llm_model,
                     "messages": messages,
-                    "max_tokens": max_tokens,
                     "temperature": temperature,
                 }
+
+                # Only add max_tokens if explicitly specified
+                if max_tokens is not None:
+                    payload["max_tokens"] = max_tokens
 
                 async with httpx.AsyncClient(
                     timeout=self.config.llm_timeout_seconds
@@ -512,13 +511,23 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
             # Try to find JSON within markdown code blocks
             import re
 
-            # First, try to extract from markdown code blocks
-            markdown_match = re.search(r"```json\s*(\{.*\})\s*```", text, re.DOTALL)
-            if markdown_match:
-                try:
-                    return json.loads(markdown_match.group(1))
-                except json.JSONDecodeError:
-                    pass
+            # First, try to extract from markdown code blocks (multiple patterns)
+            patterns = [
+                r"```json\s*(.*?)\s*```",  # Standard: ```json ... ```
+                r"```\s*(.*?)\s*```",  # Generic: ``` ... ```
+                r"`json\s*(.*?)\s*`",  # Single backtick: `json ... `
+            ]
+
+            for pattern in patterns:
+                markdown_match = re.search(pattern, text, re.DOTALL)
+                if markdown_match:
+                    try:
+                        json_content = markdown_match.group(1).strip()
+                        # Only try if it looks like JSON (starts with {)
+                        if json_content.startswith("{"):
+                            return json.loads(json_content)
+                    except json.JSONDecodeError:
+                        continue
 
             # Fallback: try to find any JSON object in the text
             json_match = re.search(r"\{.*\}", text, re.DOTALL)
@@ -528,7 +537,7 @@ Respond in JSON format with framed narratives, exact evidence quotes, and analys
                 except json.JSONDecodeError:
                     pass
 
-            raise ValueError(f"No valid JSON found in response: {text[:200]}...")
+            raise ValueError(f"No valid JSON found in response: {text}")
 
 
 # Global client instance

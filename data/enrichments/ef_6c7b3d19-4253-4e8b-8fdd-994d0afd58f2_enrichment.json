@@ -12,15 +12,18 @@
       "start": "2025-09-11",
       "end": null
     },
+    "temporal_pattern": "Recurring severe flooding events across Indonesian archipelago with increasing frequency over past decade",
+    "magnitude_baseline": "Among deadliest recent flooding events in Bali and Flores regions, exceeding typical seasonal monsoon impacts",
+    "systemic_context": "Accelerating climate change impacts on island nations and coastal regions documented by IPCC and UN climate reports",
     "magnitude": [],
     "official_sources": [],
-    "why_strategic": "Demonstrates climate vulnerability in major Southeast Asian nation, highlighting urgent need for regional adaptation strategies and international clim"
+    "why_strategic": "Demonstrates acute vulnerability of archipelagic states to climate change, requiring international adaptation and disaster response coordination"
   },
-  "enriched_at": "2025-09-19 20:51:02.097783",
-  "enrichment_version": "v1.0",
+  "enriched_at": "2025-09-21 12:44:44.687728",
+  "enrichment_version": "v2.0",
   "sources_found": 0,
   "tokens_used": 0,
-  "processing_time_ms": 7443,
+  "processing_time_ms": 10635,
   "status": "completed",
   "error_message": null
 }

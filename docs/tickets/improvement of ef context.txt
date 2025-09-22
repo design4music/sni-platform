@@ -1,0 +1,49 @@
+Macro-link: Tie each EF to a parent arc (even if broad).
+
+Comparables: Name 1–2 past incidents with year/location.
+
+Abnormality note: State explicitly whether this is routine, escalating, or rare.
+
+Concise rewrite: Collapse repetition into a single coherent summary (like we did with the Scarborough Shoal example).
+
+------------------------
+
+Instructions to model:
+
+Macro-link: Suggest the broad storyline this event belongs to (e.g. War in Ukraine, US election cycle, Southeast Asia climate vulnerability). Use 2–5 words, neutral, durable. If unclear, output null.
+Comparables: List up to 2 past incidents (short label + year, e.g. “Jakarta flood 2020”). If none obvious, return [].
+Abnormality: In ≤20 words, state whether this event is routine, rare, escalating, or abnormal relative to pattern.
+Summary: Rewrite EF into a coherent 2–3 sentence narrative, weaving in the macro-link, comparables, and abnormality where relevant.
+
+Return JSON only.
+
+Output format:
+
+New db field "ef_context"
+
+{
+  "macro_link": "string|null",
+  "comparables": ["label YYYY", "..."],
+  "abnormality": "string",
+}
++
+"summary": "2–3 sentences" in our plain text field as is now.
+
+------------------------
+
+Example upgraded EF capsule:
+
+Macro-link: Southeast Asia climate vulnerability
+
+Comparables: Jakarta floods (2020, 2022); Philippines typhoon floods (2021)
+
+Abnormality: Intensity exceeds seasonal averages; adds to growing frequency of extreme rainfall events
+
+Summary:
+Severe flooding in Indonesia underscores rising climate vulnerability in Southeast Asia. Comparable events in Jakarta (2020, 2022) and neighboring countries illustrate a trend toward more frequent, high-impact floods. This episode reinforces concerns over adaptation capacity and regional disaster resilience.
+
+-----------------------
+
+OK, we build centroids as a db table or re-use our arcs table.
+
+

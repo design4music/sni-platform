@@ -1,34 +1,24 @@
 {
   "ef_id": "512ed01a-748c-45e4-8f71-38344a666bef",
   "enrichment_payload": {
-    "canonical_actors": [
-      {
-        "name": "Nepalese Diaspora",
-        "role": "initiator"
-      },
-      {
-        "name": "Australia",
-        "role": "target"
-      },
-      {
-        "name": "Nepal Protesters",
-        "role": "beneficiary"
-      }
-    ],
+    "canonical_actors": [],
     "policy_status": null,
     "time_span": {
-      "start": "2025-09-10",
+      "start": null,
       "end": null
     },
+    "temporal_pattern": null,
+    "magnitude_baseline": null,
+    "systemic_context": null,
     "magnitude": [],
     "official_sources": [],
-    "why_strategic": "Diaspora mobilization demonstrates transnational solidarity networks' ability to influence international attention and pressure host countries on fore"
+    "why_strategic": null
   },
-  "enriched_at": "2025-09-19 20:33:01.079269",
-  "enrichment_version": "v1.0",
+  "enriched_at": "2025-09-21 12:23:34.956074",
+  "enrichment_version": "v2.0",
   "sources_found": 0,
   "tokens_used": 0,
-  "processing_time_ms": 8794,
+  "processing_time_ms": 13707,
   "status": "completed",
   "error_message": null
 }

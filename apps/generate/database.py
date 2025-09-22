@@ -5,6 +5,7 @@ Database interactions for Event Families and Framed Narratives
 
 from __future__ import annotations
 
+import json
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
@@ -109,7 +110,7 @@ class Gen1Database:
         event_family_id: str,
         confidence: float,
         reason: str,
-    ) -> bool:
+    ) -> int:
         """
         Assign titles to an Event Family (Phase 2)
 
@@ -120,14 +121,14 @@ class Gen1Database:
             reason: Reason for assignment
 
         Returns:
-            True if successful, False otherwise
+            Number of titles successfully assigned
         """
         try:
             with get_db_session() as session:
                 # Update titles with Event Family assignment
                 # Cast UUIDs properly for PostgreSQL
                 if not title_ids:
-                    return False
+                    return 0
 
                 # Convert title_ids to proper UUID format for PostgreSQL
                 uuid_list = (
@@ -163,11 +164,11 @@ class Gen1Database:
                     reason=reason[:100],
                 )
 
-                return updated_count > 0
+                return updated_count
 
         except Exception as e:
             logger.error(f"Failed to assign titles to Event Family: {e}")
-            return False
+            return 0
 
     async def save_event_family(self, event_family: EventFamily) -> bool:
         """
@@ -186,15 +187,13 @@ class Gen1Database:
                 INSERT INTO event_families (
                     id, title, summary, key_actors, event_type, primary_theater,
                     ef_key, status, merged_into, merge_rationale,
-                    event_start, event_end, source_title_ids,
-                    confidence_score, coherence_reason, created_at, updated_at,
-                    processing_notes
+                    source_title_ids, confidence_score, coherence_reason, created_at, updated_at,
+                    processing_notes, events
                 ) VALUES (
                     :id, :title, :summary, :key_actors, :event_type, :primary_theater,
                     :ef_key, :status, :merged_into, :merge_rationale,
-                    :event_start, :event_end, :source_title_ids,
-                    :confidence_score, :coherence_reason, :created_at, :updated_at,
-                    :processing_notes
+                    :source_title_ids, :confidence_score, :coherence_reason, :created_at, :updated_at,
+                    :processing_notes, :events
                 )
                 """
 
@@ -211,14 +210,13 @@ class Gen1Database:
                         "status": event_family.status,
                         "merged_into": event_family.merged_into,
                         "merge_rationale": event_family.merge_rationale,
-                        "event_start": event_family.event_start,
-                        "event_end": event_family.event_end,
                         "source_title_ids": event_family.source_title_ids,
                         "confidence_score": event_family.confidence_score,
                         "coherence_reason": event_family.coherence_reason,
                         "created_at": event_family.created_at,
                         "updated_at": event_family.updated_at,
                         "processing_notes": event_family.processing_notes,
+                        "events": json.dumps(event_family.events),
                     },
                 )
 
@@ -254,9 +252,9 @@ class Gen1Database:
 
                 # Check if EF with same ef_key already exists
                 existing_query = """
-                SELECT id, title, source_title_ids, key_actors, event_start, event_end
+                SELECT id, title, source_title_ids, key_actors
                 FROM event_families 
-                WHERE ef_key = :ef_key AND status = 'active'
+                WHERE ef_key = :ef_key AND status IN ('seed', 'active')
                 LIMIT 1
                 """
 
@@ -277,8 +275,7 @@ class Gen1Database:
                     update_query = """
                     UPDATE event_families 
                     SET source_title_ids = :merged_title_ids,
-                        event_start = LEAST(event_start, :new_start),
-                        event_end = GREATEST(COALESCE(event_end, :new_end), :new_end),
+                        updated_at = NOW(),
                         updated_at = NOW(),
                         processing_notes = CONCAT(COALESCE(processing_notes, ''), '; Merged ef_key: ', :new_ef_title)
                     WHERE id = :existing_ef_id
@@ -288,8 +285,7 @@ class Gen1Database:
                         text(update_query),
                         {
                             "merged_title_ids": merged_title_ids,
-                            "new_start": event_family.event_start,
-                            "new_end": event_family.event_end,
+                            # Removed event_start/event_end fields
                             "new_ef_title": event_family.title[
                                 :100
                             ],  # Truncate for notes
@@ -408,10 +404,7 @@ class Gen1Database:
                         key_actors=row.key_actors or [],
                         event_type=row.event_type,
                         geography=row.geography,
-                        event_start=row.event_start,
-                        event_end=row.event_end,
                         source_title_ids=row.source_title_ids or [],
-                        confidence_score=row.confidence_score,
                         coherence_reason=row.coherence_reason,
                         created_at=row.created_at,
                         updated_at=row.updated_at,
@@ -532,11 +525,11 @@ class Gen1Database:
                 ).scalar()
                 stats["framed_narratives_24h"] = fn_recent
 
-                # Average confidence scores
-                avg_confidence = session.execute(
-                    text("SELECT AVG(confidence_score) FROM event_families")
+                # Active event families count
+                active_count = session.execute(
+                    text("SELECT COUNT(*) FROM event_families WHERE status = 'active'")
                 ).scalar()
-                stats["avg_confidence_score"] = float(avg_confidence or 0)
+                stats["active_event_families"] = int(active_count or 0)
 
                 return stats
 

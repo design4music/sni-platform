@@ -7,20 +7,23 @@
         "role": "initiator"
       }
     ],
-    "policy_status": null,
+    "policy_status": "null",
     "time_span": {
       "start": "2025-09-10",
       "end": null
     },
+    "temporal_pattern": "Periodic audience measurement reports following major sporting events, consistent with Globo's long-term broadcasting strategy in Latin America",
+    "magnitude_baseline": "Consistent with Globo's historical dominance in Brazilian and regional sports broadcasting, maintaining position as largest media conglomerate in Lati",
+    "systemic_context": "Ongoing expansion of Brazilian media influence through sports content distribution across Latin American markets",
     "magnitude": [],
     "official_sources": [],
-    "why_strategic": "Brazil expands soft power and cultural influence in Latin America through media dominance in sports broadcasting, shaping regional narratives."
+    "why_strategic": "Brazilian media consolidation through sports broadcasting reinforces cultural influence and market dominance across Latin American region"
   },
-  "enriched_at": "2025-09-19 20:32:52.284048",
-  "enrichment_version": "v1.0",
+  "enriched_at": "2025-09-21 12:28:06.337082",
+  "enrichment_version": "v2.0",
   "sources_found": 0,
   "tokens_used": 0,
-  "processing_time_ms": 7529,
+  "processing_time_ms": 12059,
   "status": "completed",
   "error_message": null
 }

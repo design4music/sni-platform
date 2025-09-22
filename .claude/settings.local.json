@@ -50,7 +50,8 @@
       "Read(/C:\\Users\\Maksim\\Documents\\SNI\\docs\\tickets/**)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\clust1/**)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\ingest/**)"
+      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\ingest/**)",
+      "WebSearch"
     ],
     "deny": []
   }

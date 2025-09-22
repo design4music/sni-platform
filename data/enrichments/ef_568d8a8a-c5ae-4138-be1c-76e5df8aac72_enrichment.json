@@ -5,22 +5,29 @@
       {
         "name": "Japan",
         "role": "initiator"
+      },
+      {
+        "name": "US",
+        "role": "target"
       }
     ],
-    "policy_status": "null",
+    "policy_status": "proposed",
     "time_span": {
       "start": "2025-09-10",
       "end": null
     },
+    "temporal_pattern": "Periodic alliance cost-benefit assessments by Japan occurring approximately every 5-10 years since 1960 US-Japan Security Treaty",
+    "magnitude_baseline": "Standard diplomatic review process within established alliance framework, consistent with historical alliance management practices",
+    "systemic_context": "Ongoing global reassessment of alliance burdensharing and economic-security tradeoffs among US security partners",
     "magnitude": [],
     "official_sources": [],
-    "why_strategic": "Japan reevaluating US alliance costs amid economic pressures and regional security concerns, potentially signaling strategic recalibration in Asia-Pac"
+    "why_strategic": "Potential recalibration of core US-Pacific alliance affecting regional power balance and security architecture"
   },
-  "enriched_at": "2025-09-19 20:32:44.751798",
-  "enrichment_version": "v1.0",
+  "enriched_at": "2025-09-21 12:32:00.287875",
+  "enrichment_version": "v2.0",
   "sources_found": 0,
   "tokens_used": 0,
-  "processing_time_ms": 7692,
+  "processing_time_ms": 12457,
   "status": "completed",
   "error_message": null
 }

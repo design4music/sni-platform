@@ -9,6 +9,10 @@
       {
         "name": "Taiwan",
         "role": "target"
+      },
+      {
+        "name": "China Coast Guard",
+        "role": "initiator"
       }
     ],
     "policy_status": "in_force",
@@ -16,15 +20,18 @@
       "start": "2025-09-11",
       "end": null
     },
+    "temporal_pattern": "Consistent pattern of China establishing administrative and environmental controls in disputed maritime areas since 2012",
+    "magnitude_baseline": "Larger scale than previous fishery patrols, represents formal nature reserve establishment in contested waters",
+    "systemic_context": "China's incremental administrative consolidation in South China Sea through environmental governance and maritime law enforcement",
     "magnitude": [],
     "official_sources": [],
-    "why_strategic": "Uses environmental governance as pretext to assert maritime control and consolidate territorial claims through non-military means"
+    "why_strategic": "Uses environmental governance to establish administrative control and normalize presence in disputed maritime territories"
   },
-  "enriched_at": "2025-09-19 20:46:26.337276",
-  "enrichment_version": "v1.0",
+  "enriched_at": "2025-09-21 12:44:33.096254",
+  "enrichment_version": "v2.0",
   "sources_found": 0,
   "tokens_used": 0,
-  "processing_time_ms": 8448,
+  "processing_time_ms": 12122,
   "status": "completed",
   "error_message": null
 }

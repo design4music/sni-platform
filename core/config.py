@@ -60,7 +60,7 @@ class SNIConfig(BaseSettings):
 
     # LLM Configuration - MAP/REDUCE Parameters
     llm_timeout_seconds: int = Field(default=180, env="LLM_TIMEOUT_SECONDS")
-    llm_max_tokens_generic: int = Field(default=2000, env="LLM_MAX_TOKENS_GENERIC")
+    llm_max_tokens_generic: int = Field(default=4000, env="LLM_MAX_TOKENS_GENERIC")
     llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
     llm_retry_attempts: int = Field(default=3, env="LLM_RETRY_ATTEMPTS")
     llm_retry_backoff: float = Field(default=2.0, env="LLM_RETRY_BACKOFF")

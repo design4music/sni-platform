@@ -188,7 +188,7 @@ def create_enrichment_cli() -> typer.Typer:
                                 - result.created_at.timestamp()
                             ) // 86400
                             logger.info(
-                                f"{i:2d}. {result.title[:60]}... "
+                                f"{i:2d}. {result.title} "
                                 f"({result.title_count} titles, {result.primary_theater}/{result.event_type}, "
                                 f"{age_days:.0f}d old)"
                             )

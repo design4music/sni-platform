@@ -1,21 +1,39 @@
 {
   "ef_id": "3a4328d0-d226-4cbd-b3ae-eb7e2acba120",
   "enrichment_payload": {
-    "canonical_actors": [],
-    "policy_status": null,
+    "canonical_actors": [
+      {
+        "name": "Mexico",
+        "role": "initiator"
+      },
+      {
+        "name": "China",
+        "role": "target"
+      }
+    ],
+    "policy_status": "proposed",
     "time_span": {
-      "start": null,
+      "start": "2025-09-11",
       "end": null
     },
-    "magnitude": [],
+    "temporal_pattern": "First major tariff escalation against Chinese automotive imports by Mexico in current bilateral trade relationship",
+    "magnitude_baseline": "50% tariff represents significant increase from previous automotive import duties, among highest automotive tariffs implemented globally in recent yea",
+    "systemic_context": "Global trend of countries implementing protectionist trade measures and supply chain diversification policies following pandemic-era disruptions",
+    "magnitude": [
+      {
+        "value": 50.0,
+        "unit": "percentage",
+        "what": "percentage: Mexico to raise tariffs on car..."
+      }
+    ],
     "official_sources": [],
-    "why_strategic": null
+    "why_strategic": "Major shift in Mexico's trade policy positioning that could realign North American automotive supply chains and impact China's export strategy"
   },
-  "enriched_at": "2025-09-19 20:44:13.965132",
-  "enrichment_version": "v1.0",
+  "enriched_at": "2025-09-21 12:41:57.393087",
+  "enrichment_version": "v2.0",
   "sources_found": 0,
   "tokens_used": 0,
-  "processing_time_ms": 7943,
-  "status": "failed",
-  "error_message": "1 validation error for Magnitude\nwhat\n  String should have at most 50 characters [type=string_too_long, input_value='percentage mentioned in:...s from China to 50% ...', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.11/v/string_too_long"
+  "processing_time_ms": 12047,
+  "status": "completed",
+  "error_message": null
 }

@@ -23,12 +23,40 @@ class Magnitude(BaseModel):
 
     value: Optional[float] = Field(description="Numeric value")
     unit: str = Field(description="Unit: GW|bcm|$bn|%|troops|casualties")
-    what: str = Field(description="What is being measured", max_length=50)
+    what: str = Field(description="What is being measured")
+
+
+class ComparableEvent(BaseModel):
+    """Strategically relevant comparable event for decision-making context"""
+
+    event_description: str = Field(description="Brief description of comparable event")
+    timeframe: str = Field(description="When it occurred (e.g., '2014', 'Spring 2020')")
+    similarity_reason: str = Field(
+        description="Why this event is strategically comparable (actors, context, implications)"
+    )
+
+
+class EFContext(BaseModel):
+    """Strategic context for Event Family - stored in ef_context JSONB field"""
+
+    macro_link: Optional[str] = Field(
+        default=None, description="Centroid ID this EF belongs to (e.g., 'ARC-UKR')"
+    )
+
+    comparables: List[ComparableEvent] = Field(
+        default=[],
+        max_items=3,
+        description="Up to 3 strategically relevant precedents (1-2 decades, similar actors/context)",
+    )
+
+    abnormality: Optional[str] = Field(
+        default=None, description="What makes this event unusual or significant"
+    )
 
 
 class EnrichmentPayload(BaseModel):
     """
-    Lean 6-field enrichment payload for Event Families
+    Objectivity-first enrichment payload for Event Families
     All fields optional to handle incomplete data gracefully
     """
 
@@ -54,6 +82,18 @@ class EnrichmentPayload(BaseModel):
         description="Event timeframe (YYYY-MM-DD format)",
     )
 
+    temporal_pattern: Optional[str] = Field(
+        default=None, description="Factual frequency/timing of similar events"
+    )
+
+    magnitude_baseline: Optional[str] = Field(
+        default=None, description="Scale vs historical norm in region/domain"
+    )
+
+    systemic_context: Optional[str] = Field(
+        default=None, description="Broader documented trend this fits within"
+    )
+
     magnitude: List[Magnitude] = Field(
         default=[], description="Quantified impact metrics"
     )
@@ -63,7 +103,16 @@ class EnrichmentPayload(BaseModel):
     )
 
     why_strategic: Optional[str] = Field(
-        default=None, max_length=150, description="Strategic significance (≤150 chars)"
+        default=None, description="Objective strategic significance"
+    )
+
+    tags: List[str] = Field(
+        default=[], max_items=3, description="3 tags: 2 thematic + 1 geographic"
+    )
+
+    ef_context: EFContext = Field(
+        default_factory=EFContext,
+        description="Strategic context: macro-link, comparables, abnormality",
     )
 
 
@@ -77,7 +126,7 @@ class EnrichmentRecord(BaseModel):
 
     # Metadata
     enriched_at: datetime = Field(default_factory=datetime.utcnow)
-    enrichment_version: str = Field(default="v1.0")
+    enrichment_version: str = Field(default="v2.0")
     sources_found: int = Field(
         default=0, description="Number of official sources found"
     )

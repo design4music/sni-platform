@@ -7,10 +7,9 @@ Coordinates RSS ingestion → strategic filtering → Event Family generation
 import asyncio
 import json
 import sys
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import typer
 from loguru import logger
@@ -19,8 +18,7 @@ from loguru import logger
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from core.config import get_config
-from core.database import get_db_session
+from core.config import get_config  # noqa: E402
 
 app = typer.Typer(help="SNI-v2 Pipeline Orchestrator")
 config = get_config()
@@ -79,7 +77,6 @@ class PipelineOrchestrator:
 
         try:
             # Run ingestion subprocess
-            import subprocess
 
             cmd = [sys.executable, "-m", "apps.ingest.run_ingestion"]
             if (
@@ -167,52 +164,40 @@ class PipelineOrchestrator:
             return {"status": "error", "error": str(e)}
 
     async def run_phase_3_generate(self) -> Dict:
-        """Phase 3: Event Family Generation (Pass 1 + Pass 2)"""
+        """Phase 3: Event Family Generation via MAP/REDUCE"""
         if not self.config.phase_3_generate_enabled:
             return {"status": "skipped", "reason": "disabled"}
 
-        logger.info("=== PHASE 3: EVENT FAMILY GENERATION ===")
+        logger.info("=== PHASE 3: EVENT FAMILY GENERATION (MAP/REDUCE) ===")
         self.log_status("3_generate", "running")
 
         try:
-            # Run multipass processor subprocess
-            max_titles = getattr(self.config, "phase_3_max_titles", 1000)
+            # Run MAP/REDUCE processor subprocess
+            max_titles = getattr(self.config, "phase_3_max_titles", 500)
 
-            # Pass 1: EF Assembly
-            logger.info("Phase 3A: EF Assembly (Pass 1)")
-            cmd1 = [
+            logger.info(f"Phase 3: MAP/REDUCE EF Generation (max {max_titles} titles)")
+            cmd = [
                 sys.executable,
                 "-m",
-                "apps.generate.multipass_processor",
-                "pass1",
+                "apps.generate.mapreduce_processor",
                 str(max_titles),
             ]
-            process1 = await asyncio.create_subprocess_exec(
-                *cmd1, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            process = await asyncio.create_subprocess_exec(
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
-            stdout1, stderr1 = await process1.communicate()
+            stdout, stderr = await process.communicate()
 
-            if process1.returncode != 0:
-                raise RuntimeError(f"Pass 1 failed: {stderr1.decode()}")
-
-            # Pass 2: Cross-merging & Narratives
-            logger.info("Phase 3B: Cross-merging (Pass 2)")
-            cmd2 = [sys.executable, "-m", "apps.generate.multipass_processor", "pass2"]
-            process2 = await asyncio.create_subprocess_exec(
-                *cmd2, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
-            stdout2, stderr2 = await process2.communicate()
-
-            if process2.returncode != 0:
-                raise RuntimeError(f"Pass 2 failed: {stderr2.decode()}")
+            if process.returncode != 0:
+                raise RuntimeError(f"MAP/REDUCE processing failed: {stderr.decode()}")
 
             result = {
-                "pass1": {"stdout": stdout1.decode(), "stderr": stderr1.decode()},
-                "pass2": {"stdout": stdout2.decode(), "stderr": stderr2.decode()},
+                "stdout": stdout.decode(),
+                "stderr": stderr.decode(),
+                "processing_method": "MAP/REDUCE",
             }
 
             self.log_status("3_generate", "completed", {"result": result})
-            logger.info(f"Phase 3 completed: {result}")
+            logger.info("Phase 3 (MAP/REDUCE) completed successfully")
             return {"status": "success", "result": result}
 
         except Exception as e:
@@ -280,7 +265,7 @@ class PipelineOrchestrator:
         while True:
             try:
                 # Run cycle
-                cycle_result = await self.run_single_cycle()
+                await self.run_single_cycle()
 
                 # Check max cycles limit
                 if (
@@ -438,8 +423,11 @@ def phase3(
             orchestrator.config.phase_3_max_titles = max_titles
 
         if pass_only:
-            # Run specific pass only via subprocess
-            cmd = [sys.executable, "-m", "apps.generate.multipass_processor", pass_only]
+            # Legacy pass system deprecated - use MAP/REDUCE instead
+            logger.warning(
+                f"Pass '{pass_only}' deprecated. Running MAP/REDUCE instead."
+            )
+            cmd = [sys.executable, "-m", "apps.generate.mapreduce_processor"]
             if max_titles:
                 cmd.append(str(max_titles))
 
@@ -455,6 +443,7 @@ def phase3(
                     "status": "success",
                     "stdout": stdout.decode(),
                     "stderr": stderr.decode(),
+                    "method": "MAP/REDUCE",
                 }
 
             print(f"Phase 3 {pass_only} result: {result}")
@@ -463,6 +452,63 @@ def phase3(
             print(f"Phase 3 result: {result}")
 
     asyncio.run(run_phase3())
+
+
+@app.command()
+def phase3_mapreduce(
+    max_titles: int = typer.Option(1000, help="Maximum titles to process"),
+    dry_run: bool = typer.Option(False, help="Dry run mode (no database writes)"),
+):
+    """Phase 3: MAP/REDUCE Event Family Generation (Alternative Implementation)"""
+
+    async def run_mapreduce():
+        try:
+            config = get_config()
+            if not getattr(
+                config, "mapreduce_enabled", True
+            ):  # Default enabled for testing
+                logger.warning(
+                    "MAP/REDUCE processing may be disabled in config. Set MAPREDUCE_ENABLED=true to enable."
+                )
+
+            from apps.generate.mapreduce_processor import MapReduceProcessor
+
+            processor = MapReduceProcessor()
+
+            if dry_run:
+                logger.info("DRY RUN MODE: No database writes will be performed")
+                return
+
+            logger.info(
+                f"Starting MAP/REDUCE processing for up to {max_titles} titles..."
+            )
+            result = await processor.run_pass1_mapreduce(max_titles)
+
+            logger.info("=== MAP/REDUCE RESULTS ===")
+            logger.info(f"Total processing time: {result.total_seconds:.1f}s")
+            logger.info(f"  MAP phase: {result.map_phase_seconds:.1f}s")
+            logger.info(f"  GROUP phase: {result.group_phase_seconds:.1f}s")
+            logger.info(f"  REDUCE phase: {result.reduce_phase_seconds:.1f}s")
+            logger.info(
+                f"Event Families: {result.event_families_created} created, {result.event_families_merged} merged"
+            )
+            logger.info(f"Titles assigned: {result.titles_assigned}")
+            logger.info(
+                f"Success rates: MAP {result.classification_success_rate:.1%}, REDUCE {result.reduce_success_rate:.1%}"
+            )
+
+            if result.total_seconds <= 180:  # 3 minutes
+                logger.info("✓ Performance target achieved: ≤3 minutes")
+            else:
+                logger.warning(
+                    f"✗ Performance target missed: {result.total_seconds:.1f}s > 180s"
+                )
+
+        except Exception as e:
+            logger.error(f"MAP/REDUCE processing failed: {e}")
+            raise typer.Exit(1)
+
+    asyncio.run(run_mapreduce())
 
 
 if __name__ == "__main__":
