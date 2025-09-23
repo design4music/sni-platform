@@ -34,6 +34,56 @@ class PipelineOrchestrator:
         self.error_count = 0
         self.status = {"phase": "idle", "last_run": None, "errors": []}
 
+    async def _run_subprocess_with_timeout(
+        self, cmd: list, timeout_minutes: int, phase_name: str
+    ) -> Dict:
+        """
+        Run subprocess with configurable timeout
+
+        Args:
+            cmd: Command and arguments
+            timeout_minutes: Timeout in minutes
+            phase_name: Phase name for logging
+
+        Returns:
+            Dict with status and result
+        """
+        timeout_seconds = timeout_minutes * 60
+        logger.info(f"{phase_name}: Running command with {timeout_minutes}min timeout")
+
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
+
+            # Use asyncio.wait_for for timeout control
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(), timeout=timeout_seconds
+            )
+
+            if process.returncode != 0:
+                raise RuntimeError(f"{phase_name} failed: {stderr.decode()}")
+
+            return {
+                "status": "success",
+                "result": {"stdout": stdout.decode(), "stderr": stderr.decode()},
+            }
+
+        except asyncio.TimeoutError:
+            # Kill the process if it's still running
+            if process.returncode is None:
+                process.terminate()
+                await process.wait()
+
+            error_msg = f"{phase_name} timed out after {timeout_minutes} minutes"
+            logger.error(error_msg)
+            return {"status": "timeout", "error": error_msg}
+
+        except Exception as e:
+            error_msg = f"{phase_name} failed: {str(e)}"
+            logger.error(error_msg)
+            return {"status": "error", "error": error_msg}
+
     def log_status(self, phase: str, status: str, details: Optional[Dict] = None):
         """Update pipeline status tracking"""
         self.status.update(
@@ -68,36 +118,54 @@ class PipelineOrchestrator:
             )
 
     async def run_phase_1_ingest(self) -> Dict:
-        """Phase 1: RSS Ingestion"""
+        """Phase 1: RSS Ingestion with batch processing and resume capability"""
         if not self.config.phase_1_ingest_enabled:
             return {"status": "skipped", "reason": "disabled"}
 
-        logger.info("=== PHASE 1: RSS INGESTION ===")
+        logger.info("=== PHASE 1: RSS INGESTION (BATCH/RESUME) ===")
         self.log_status("1_ingest", "running")
 
         try:
-            # Run ingestion subprocess
+            # Build command with batch and resume flags
+            cmd = [sys.executable, "apps/ingest/run_ingestion.py"]
 
-            cmd = [sys.executable, "-m", "apps.ingest.run_ingestion"]
+            # Add batch size for timeout mitigation
+            batch_size = getattr(self.config, "phase_1_batch_size", 5000)
+            cmd.extend(["--batch", str(batch_size)])
+
+            # Add resume flag for idempotent operation
+            cmd.append("--resume")
+
+            # Legacy max-feeds parameter (now handled by batch processing)
             if (
                 hasattr(self.config, "phase_1_max_feeds")
                 and self.config.phase_1_max_feeds
             ):
                 cmd.extend(["--max-feeds", str(self.config.phase_1_max_feeds)])
 
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            # Run with shorter timeout (cron-friendly)
+            timeout_minutes = getattr(self.config, "phase_1_timeout_minutes", 30)
+            result = await self._run_subprocess_with_timeout(
+                cmd, timeout_minutes, "Phase 1 (RSS Ingestion - Batch/Resume)"
             )
-            stdout, stderr = await process.communicate()
 
-            if process.returncode != 0:
-                raise RuntimeError(f"Ingestion failed: {stderr.decode()}")
-
-            result = {"stdout": stdout.decode(), "stderr": stderr.decode()}
-
-            self.log_status("1_ingest", "completed", {"result": result})
-            logger.info(f"Phase 1 completed: {result}")
-            return {"status": "success", "result": result}
+            if result["status"] == "success":
+                self.log_status("1_ingest", "completed", {"result": result["result"]})
+                logger.info(f"Phase 1 completed successfully")
+                return result
+            else:
+                # Handle timeout or error
+                self.error_count += 1
+                self.status["errors"].append(
+                    {
+                        "phase": "1_ingest",
+                        "error": result.get("error", "Unknown error"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                self.log_status("1_ingest", "error", {"error": result.get("error")})
+                logger.error(f"Phase 1 failed: {result.get('error')}")
+                return result
 
         except Exception as e:
             self.error_count += 1
@@ -113,42 +181,58 @@ class PipelineOrchestrator:
             return {"status": "error", "error": str(e)}
 
     async def run_phase_2_filter(self) -> Dict:
-        """Phase 2: Strategic Filtering + Entity Extraction"""
+        """Phase 2: Strategic Filtering + Entity Extraction with batch processing and resume capability"""
         if not self.config.phase_2_filter_enabled:
             return {"status": "skipped", "reason": "disabled"}
 
-        logger.info("=== PHASE 2: STRATEGIC FILTERING ===")
+        logger.info("=== PHASE 2: STRATEGIC FILTERING (BATCH/RESUME) ===")
         self.log_status("2_filter", "running")
 
         try:
-            # Run enhanced gate subprocess
-            cmd = [sys.executable, "-m", "apps.filter.run_enhanced_gate"]
+            # Build command with batch and resume flags
+            cmd = [sys.executable, "apps/filter/run_enhanced_gate.py"]
 
+            # Add batch size for timeout mitigation
+            batch_size = getattr(self.config, "phase_2_batch_size", 10000)
+            cmd.extend(["--batch", str(batch_size)])
+
+            # Add resume flag for idempotent operation
+            cmd.append("--resume")
+
+            # Processing window (hours)
+            hours = getattr(self.config, "processing_window_hours", 24)
+            cmd.extend(["--hours", str(hours)])
+
+            # Legacy max-titles parameter (now handled by batch processing)
             if (
                 hasattr(self.config, "phase_2_max_titles")
                 and self.config.phase_2_max_titles
             ):
                 cmd.extend(["--max-titles", str(self.config.phase_2_max_titles)])
 
-            if (
-                hasattr(self.config, "processing_window_hours")
-                and self.config.processing_window_hours
-            ):
-                cmd.extend(["--hours", str(self.config.processing_window_hours)])
-
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            # Run with shorter timeout (cron-friendly)
+            timeout_minutes = getattr(self.config, "phase_2_timeout_minutes", 15)
+            result = await self._run_subprocess_with_timeout(
+                cmd, timeout_minutes, "Phase 2 (Strategic Filtering - Batch/Resume)"
             )
-            stdout, stderr = await process.communicate()
 
-            if process.returncode != 0:
-                raise RuntimeError(f"Enhanced gate failed: {stderr.decode()}")
-
-            result = {"stdout": stdout.decode(), "stderr": stderr.decode()}
-
-            self.log_status("2_filter", "completed", {"result": result})
-            logger.info(f"Phase 2 completed: {result}")
-            return {"status": "success", "result": result}
+            if result["status"] == "success":
+                self.log_status("2_filter", "completed", {"result": result["result"]})
+                logger.info(f"Phase 2 completed successfully")
+                return result
+            else:
+                # Handle timeout or error
+                self.error_count += 1
+                self.status["errors"].append(
+                    {
+                        "phase": "2_filter",
+                        "error": result.get("error", "Unknown error"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                self.log_status("2_filter", "error", {"error": result.get("error")})
+                logger.error(f"Phase 2 failed: {result.get('error')}")
+                return result
 
         except Exception as e:
             self.error_count += 1
@@ -172,33 +256,40 @@ class PipelineOrchestrator:
         self.log_status("3_generate", "running")
 
         try:
-            # Run MAP/REDUCE processor subprocess
+            # Build command
             max_titles = getattr(self.config, "phase_3_max_titles", 500)
-
             logger.info(f"Phase 3: MAP/REDUCE EF Generation (max {max_titles} titles)")
+
             cmd = [
                 sys.executable,
-                "-m",
-                "apps.generate.mapreduce_processor",
+                "apps/generate/mapreduce_processor.py",
                 str(max_titles),
             ]
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+
+            # Run with timeout
+            result = await self._run_subprocess_with_timeout(
+                cmd, self.config.phase_3_timeout_minutes, "Phase 3 (EF Generation)"
             )
-            stdout, stderr = await process.communicate()
 
-            if process.returncode != 0:
-                raise RuntimeError(f"MAP/REDUCE processing failed: {stderr.decode()}")
-
-            result = {
-                "stdout": stdout.decode(),
-                "stderr": stderr.decode(),
-                "processing_method": "MAP/REDUCE",
-            }
-
-            self.log_status("3_generate", "completed", {"result": result})
-            logger.info("Phase 3 (MAP/REDUCE) completed successfully")
-            return {"status": "success", "result": result}
+            if result["status"] == "success":
+                # Add processing method info
+                result["result"]["processing_method"] = "MAP/REDUCE"
+                self.log_status("3_generate", "completed", {"result": result["result"]})
+                logger.info("Phase 3 (MAP/REDUCE) completed successfully")
+                return result
+            else:
+                # Handle timeout or error
+                self.error_count += 1
+                self.status["errors"].append(
+                    {
+                        "phase": "3_generate",
+                        "error": result.get("error", "Unknown error"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                self.log_status("3_generate", "error", {"error": result.get("error")})
+                logger.error(f"Phase 3 failed: {result.get('error')}")
+                return result
 
         except Exception as e:
             self.error_count += 1
@@ -213,6 +304,71 @@ class PipelineOrchestrator:
             logger.error(f"Phase 3 failed: {e}")
             return {"status": "error", "error": str(e)}
 
+    async def run_phase_4_enrich(self) -> Dict:
+        """Phase 4: Event Family Enrichment with batch processing and resume capability"""
+        if not self.config.phase_4_enrich_enabled:
+            return {"status": "skipped", "reason": "disabled"}
+
+        logger.info("=== PHASE 4: EVENT FAMILY ENRICHMENT (BATCH/RESUME) ===")
+        self.log_status("4_enrich", "running")
+
+        try:
+            # Build command with batch and resume flags
+            cmd = [sys.executable, "apps/enrich/cli.py", "enrich-queue"]
+
+            # Add batch size for timeout mitigation
+            batch_size = getattr(self.config, "phase_4_batch_size", 300)
+            cmd.extend(["--batch", str(batch_size)])
+
+            # Add resume flag for idempotent operation
+            cmd.append("--resume")
+
+            # Legacy daily-cap or max-items parameter (now handled by batch processing)
+            if (
+                hasattr(self.config, "phase_4_max_items")
+                and self.config.phase_4_max_items is not None
+            ):
+                # Use explicit max items if specified
+                pass  # Batch size already handles this
+            # Note: --daily-cap is no longer needed with batch processing
+
+            # Run with shorter timeout (cron-friendly)
+            timeout_minutes = getattr(self.config, "phase_4_timeout_minutes", 45)
+            result = await self._run_subprocess_with_timeout(
+                cmd, timeout_minutes, "Phase 4 (EF Enrichment - Batch/Resume)"
+            )
+
+            if result["status"] == "success":
+                self.log_status("4_enrich", "completed", {"result": result["result"]})
+                logger.info(f"Phase 4 completed successfully")
+                return result
+            else:
+                # Handle timeout or error
+                self.error_count += 1
+                self.status["errors"].append(
+                    {
+                        "phase": "4_enrich",
+                        "error": result.get("error", "Unknown error"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                self.log_status("4_enrich", "error", {"error": result.get("error")})
+                logger.error(f"Phase 4 failed: {result.get('error')}")
+                return result
+
+        except Exception as e:
+            self.error_count += 1
+            self.status["errors"].append(
+                {
+                    "phase": "4_enrich",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            self.log_status("4_enrich", "error", {"error": str(e)})
+            logger.error(f"Phase 4 failed: {e}")
+            return {"status": "error", "error": str(e)}
+
     async def run_single_cycle(self) -> Dict:
         """Execute one complete pipeline cycle"""
         self.cycle_count += 1
@@ -223,15 +379,19 @@ class PipelineOrchestrator:
 
         results = {}
 
-        # Execute phases sequentially
+        # Execute phases sequentially (P3 excluded - runs as background worker)
         if self.config.phase_1_ingest_enabled:
             results["phase_1"] = await self.run_phase_1_ingest()
 
         if self.config.phase_2_filter_enabled:
             results["phase_2"] = await self.run_phase_2_filter()
 
-        if self.config.phase_3_generate_enabled:
-            results["phase_3"] = await self.run_phase_3_generate()
+        # Phase 3 (Generate) is now a separate background worker (systemd service)
+        # and is not part of the cron-based pipeline
+        logger.info("Phase 3 (Generate) runs as background worker - skipping")
+
+        if self.config.phase_4_enrich_enabled:
+            results["phase_4"] = await self.run_phase_4_enrich()
 
         # Calculate cycle metrics
         cycle_duration = (datetime.now() - cycle_start).total_seconds()
@@ -310,7 +470,7 @@ def run(
         None, "--interval", help="Minutes between cycles"
     ),
 ):
-    """Run the complete SNI pipeline"""
+    """Run the SNI pipeline (P1, P2, P4) with batch/resume. P3 runs as separate background worker."""
 
     # Override config with CLI parameters
     if daemon is not None:
@@ -509,6 +669,24 @@ def phase3_mapreduce(
             raise typer.Exit(1)
 
     asyncio.run(run_mapreduce())
+
+
+@app.command()
+def phase4(
+    max_items: Optional[int] = typer.Option(
+        None, help="Maximum items to enrich (None = use daily cap)"
+    ),
+):
+    """Run Phase 4: Event Family Enrichment only (seed status EFs)"""
+
+    async def run_phase4():
+        orchestrator = PipelineOrchestrator()
+        if max_items is not None:
+            orchestrator.config.phase_4_max_items = max_items
+        result = await orchestrator.run_phase_4_enrich()
+        print(f"Phase 4 result: {result}")
+
+    asyncio.run(run_phase4())
 
 
 if __name__ == "__main__":

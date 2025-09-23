@@ -15,6 +15,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from apps.enrich.processor import EFEnrichmentProcessor  # noqa: E402
+from core.checkpoint import get_checkpoint_manager  # noqa: E402
 
 
 def create_enrichment_cli() -> typer.Typer:
@@ -31,6 +32,12 @@ def create_enrichment_cli() -> typer.Typer:
         daily_cap: bool = typer.Option(
             False, "--daily-cap", help="Use daily cap limit instead of max_items"
         ),
+        batch: int = typer.Option(
+            None, "--batch", help="Process items in batches of this size (resumable)"
+        ),
+        resume: bool = typer.Option(
+            False, "--resume", help="Resume from last checkpoint"
+        ),
     ):
         """Process enrichment queue with lean context enhancement"""
 
@@ -38,7 +45,23 @@ def create_enrichment_cli() -> typer.Typer:
             try:
                 processor = EFEnrichmentProcessor()
 
-                if daily_cap:
+                # Set up checkpoint manager for resumable operations
+                checkpoint_manager = get_checkpoint_manager("p4_enrich")
+
+                # Load checkpoint state
+                checkpoint_state = checkpoint_manager.load_checkpoint() if resume else {}
+                processed_count = checkpoint_state.get("processed_count", 0)
+                last_ef_id = checkpoint_state.get("last_ef_id", None)
+
+                if resume and checkpoint_state:
+                    logger.info(f"Resuming from checkpoint: {processed_count} items processed, last EF: {last_ef_id}")
+
+                # Determine batch processing vs original logic
+                if batch is not None:
+                    # Batch processing mode with checkpoints
+                    max_process = batch
+                    logger.info(f"Processing batch of {batch} EFs from enrichment queue (resumable)")
+                elif daily_cap:
                     max_process = None  # Use processor's daily cap
                     logger.info(
                         f"Processing enrichment queue with daily cap ({processor.daily_enrichment_cap})"
@@ -49,10 +72,59 @@ def create_enrichment_cli() -> typer.Typer:
                         f"Processing up to {max_items} EFs from enrichment queue"
                     )
 
-                # Process queue
-                results = await processor.process_enrichment_queue(
-                    max_items=max_process
-                )
+                # Get the queue
+                full_queue = await processor.get_enrichment_queue(limit=1000)
+
+                # Filter queue based on checkpoint if resuming
+                if resume and last_ef_id:
+                    try:
+                        last_index = full_queue.index(last_ef_id)
+                        queue_to_process = full_queue[last_index + 1:]
+                        logger.info(f"Resuming after EF {last_ef_id}, {len(queue_to_process)} items remaining")
+                    except ValueError:
+                        queue_to_process = full_queue
+                        logger.warning(f"Last processed EF {last_ef_id} not found in queue, processing from start")
+                else:
+                    queue_to_process = full_queue
+
+                # Apply batch limit if specified
+                if max_process is not None and len(queue_to_process) > max_process:
+                    queue_to_process = queue_to_process[:max_process]
+
+                if not queue_to_process:
+                    logger.info("No items to process (queue empty or all items already processed)")
+                    return
+
+                # Process items one by one with checkpoint updates
+                results = {"processed": 0, "succeeded": 0, "failed": 0}
+
+                for i, ef_id in enumerate(queue_to_process, 1):
+                    logger.info(f"Processing EF {i}/{len(queue_to_process)}: {ef_id}")
+
+                    # Process single EF
+                    result = await processor.enrich_event_family(ef_id)
+
+                    results["processed"] += 1
+                    if result and result.status == "completed":
+                        results["succeeded"] += 1
+                    else:
+                        results["failed"] += 1
+
+                    # Update checkpoint every item
+                    checkpoint_manager.update_progress(
+                        processed_count=processed_count + results["processed"],
+                        last_ef_id=ef_id,
+                        total_succeeded=results["succeeded"],
+                        total_failed=results["failed"]
+                    )
+
+                    # Log progress every 5 items
+                    if i % 5 == 0:
+                        logger.info(f"Progress: {i}/{len(queue_to_process)} processed")
+
+                # Clear checkpoint on successful completion
+                if batch is None:  # Only clear if not in batch mode
+                    checkpoint_manager.clear_checkpoint()
 
                 # Display results
                 logger.info("=== ENRICHMENT RESULTS ===")

@@ -1,0 +1,191 @@
+Me: Let me think aloud a little bit. So we have these four phases. Number one, RSS ingestion. This is rather straightforward and simple. It ingests since the last ingest. The number of items is not stable right now because we do not do ingestion regularly, and currently we have passed like a few days, so I expect like 0,000 items easily, like maybe even 20,000 items. But normally it should be about, I don't know, 2,000 items, and it runs very quickly. Yes, under 10 minutes. So this one has a very clear result and process, and we just need to think how to flag it and also when to run. Yes, it can be cron, it can be once per day, let's say morning, whatever. We decide the time and that's it, and it doesn't have to be synchronized with others. Second phase, filtering. This has very clear database flag. It's either status pending or gated, and what is gated? It has another status, I forgot, it's called, no, not strategic, gate keep, yes, that's it. Gate keep, yes. So if this flag is in the database field is marked, then we have it already done. This can be done anytime, it doesn't have to be synchronized with ingestion or any other phases, just regularly. Again, once a day, for example, and currently we will have like thousands and thousands of pending items because we didn't do it for a while. So it can be an entirely separately run script, it doesn't have to be following RSS ingestion, although the initial idea is that it's like one phase follows another. Then phase three, generation. This is the trickiest. We do batches of 500 titles or maybe of 100 titles, I think of 100 titles. It's relatively time consuming. I'm not sure what is the accurate time, it's wrote 15 minutes for 500 titles, not sure if this is correct, and it's rather complex because inside generation we have also some sub-processes happening. It's a tricky one, we probably want to investigate separately. I imagine that this also is an entirely independent phase that can work basically if there are gated items that have strategic tiers and they are not connected to any AF, then they are potential food for this process. So it can run basically regularly, like daily, anytime, doesn't matter. And finally, enrich, which we just have completed. It's relatively fast, processing speed is quite good, like four or five seconds per four items, and the number of AFs is a great deal smaller than the number of articles. So in the first case we're talking about thousands, now we're talking about couple hundred maybe per run. It's not a very big deal, and it has a very clear flag as well, status seed changes to status active. So this one should be also run daily, anytime, separately. And then there will be next phase, we still haven't generated our FN items, our frame narratives, but that's coming next. So with this information, how would you distribute these processes and how would you make them? Some can run in cron, some can be run from the pipeline, some can run with preset timeouts and just long enough, some might need background process, like generation is particularly long usually. Please consider.
+
+GPT: Love this “keep it simple” thinking. Based on what you described about each phase, here’s a clean, low-stress setup that avoids timeouts and doesn’t require a fancy orchestrator.
+
+# TL;DR plan
+
+* **P1 Ingest (RSS):** hourly cron, small hard timeout, resumable.
+* **P2 Filter (gate-keep):** hourly cron, resumable, can chew through backlog in chunks.
+* **P3 Generate (EF builder):** **one background worker (systemd)** looping batches forever with sane caps.
+* **P4 Enrich:** hourly cron, small batches, resumable.
+* All jobs are **idempotent**, have a **batch size** and **--resume** flag, and are protected by `flock` + `timeout`.
+
+---
+
+## Minimal contract for scripts (so cron/background “just works”)
+
+Each script should accept:
+
+* `--batch N` (max items to process this run)
+* `--resume` (continue from last checkpoint)
+* (optional) `--since "YYYY-MM-DD"` for P1 when catching up
+
+Each script should:
+
+* Write a small checkpoint every M items (`/var/lib/sni/checkpoints/pX.json`)
+* Be safe to re-run (UPSERTs or “processed\_at is null” filters)
+
+---
+
+## Scheduling (server local time)
+
+Staggered to avoid overlap. Adjust minutes if you like.
+
+### Cron entries
+
+```
+# m h  dom mon dow   command
+
+# P1 — RSS Ingest (fast; handles spikes)
+# Hourly at :05; 30m cap to survive huge backlogs; processes up to 5k per run.
+5  *  *   *   *   flock -n /tmp/sni_p1.lock timeout 30m \
+  /usr/bin/python3 /srv/sni/phase1_ingest.py --batch 5000 --resume >> /var/log/sni/p1.log 2>&1
+
+# P2 — Filter (gate-keep) (fast CPU, no LLM)
+# Hourly at :15; 15m cap; processes up to 10k pending.
+15 *  *   *   *   flock -n /tmp/sni_p2.lock timeout 15m \
+  /usr/bin/python3 /srv/sni/phase2_filter.py --batch 10000 --resume >> /var/log/sni/p2.log 2>&1
+
+# P4 — Enrich (LLM, but fewer items than titles)
+# Hourly at :45; 45m cap; processes up to 300 EFs.
+45 *  *   *   *   flock -n /tmp/sni_p4.lock timeout 45m \
+  /usr/bin/python3 /srv/sni/phase4_enrich.py --batch 300 --resume --max-inflight 8 >> /var/log/sni/p4.log 2>&1
+```
+
+### P3 — Generate as a background worker (systemd)
+
+This is your “tricky/long” phase. Let it run steadily in the background, looping 100-item batches with built-in pauses so it doesn’t hog your LLM quota.
+
+**Scripted loop (bash wrapper):**
+
+```bash
+# /srv/sni/p3_worker.sh
+#!/usr/bin/env bash
+set -euo pipefail
+while true; do
+  # Process up to 100 titles per loop; resume from checkpoint.
+  /usr/bin/timeout 25m /usr/bin/python3 /srv/sni/phase3_generate.py --batch 100 --resume --max-inflight 8 || true
+  sleep 60   # brief breather between batches
+done
+```
+
+**systemd unit:**
+
+```
+# /etc/systemd/system/sni-p3-worker.service
+[Unit]
+Description=SNI P3 Generate background worker
+After=network.target
+
+[Service]
+Type=simple
+User=sni
+WorkingDirectory=/srv/sni
+ExecStart=/usr/bin/bash /srv/sni/p3_worker.sh
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/sni/p3.out.log
+StandardError=append:/var/log/sni/p3.err.log
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable it:
+
+```
+sudo systemctl daemon-reload
+sudo systemctl enable --now sni-p3-worker.service
+```
+
+---
+
+## Backlog strategy (when you’ve skipped a few days)
+
+* **P1 Ingest:** temporarily bump `--batch` to e.g. 20000 and let the hourly job catch up over a few hours; or run it manually once:
+  `python3 phase1_ingest.py --batch 50000 --resume`
+* **P2 Filter:** same idea; it’s cheap CPU, you can do `--batch 50000` until the pending queue is small again.
+* **P3 Generate:** background worker will keep chipping away—no need to touch it.
+* **P4 Enrich:** if EF backlog grows, set `--batch 1000` for a day.
+
+---
+
+## Flags / statuses (simple and sufficient)
+
+You already have:
+
+* **Titles**: `status in ('pending','gate_keep')`, plus maybe `strategic_tier`
+* **EFs**: `status in ('seed','active')`
+
+Recommend adding:
+
+* `processed_at` timestamps per phase (nullable)
+* `ef_id` on titles (nullable) so P3 can pick titles where `status='gate_keep' AND strategic_tier IS NOT NULL AND ef_id IS NULL`
+* For P4, pick EFs where `status='seed'`
+
+This keeps selection dead simple and idempotent.
+
+---
+
+## Tiny checkpoint pattern (drop-in)
+
+In each Python phase:
+
+```python
+from pathlib import Path
+import json
+
+CKPT = Path("/var/lib/sni/checkpoints/p3.json")
+
+def load_ckpt():
+    if CKPT.exists():
+        return json.loads(CKPT.read_text())
+    return {"last_id": 0}
+
+def save_ckpt(state):
+    CKPT.parent.mkdir(parents=True, exist_ok=True)
+    tmp = CKPT.with_suffix(".tmp")
+    tmp.write_text(json.dumps(state))
+    tmp.replace(CKPT)
+
+state = load_ckpt()
+# SELECT next batch WHERE id > state["last_id"] ORDER BY id ASC LIMIT :batch
+# ... process items ...
+# after each item:
+state["last_id"] = item.id
+if i % 10 == 0: save_ckpt(state)
+# at end:
+save_ckpt(state)
+```
+
+(For selection that isn’t strictly by `id`, store whatever cursor makes sense: last processed `created_at`, or an array of processed IDs for the current batch.)
+
+---
+
+## Timeouts (simple + predictable)
+
+* Let **cron/systemd** enforce timeouts (`timeout 15m/25m/45m`).
+* Inside scripts, **no extra async complexity** needed right now.
+* If you ever need liveness hints, just print a heartbeat every 30–60s:
+  `print(f"[p3] progress: {done}/{total}")`
+
+---
+
+## Suggested cadence (you can copy-paste as is)
+
+* P1 Ingest: hourly at :05 (`--batch 5000`, 30m cap)
+* P2 Filter: hourly at :15 (`--batch 10000`, 15m cap)
+* P3 Generate: background worker (100 titles per loop, 25m cap per loop)
+* P4 Enrich: hourly at :45 (`--batch 300`, 45m cap)
+
+This gives you continuous flow without tight coupling, recovers from failures automatically, and avoids the original blocking timeouts entirely.
+
+---
+
+If you want, upload any **one** of:
+
+* `phase3_generate.py`
+* `phase4_enrich.py`
+* or your small **config module**
+
+…and I’ll add the `--batch/--resume` and checkpoint logic in the exact style you’re using so you can drop it in.

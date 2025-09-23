@@ -151,16 +151,25 @@ class SNIConfig(BaseSettings):
     daily_enrichment_cap: int = Field(default=100, env="DAILY_ENRICHMENT_CAP")
     enrichment_max_tokens: int = Field(default=200, env="ENRICHMENT_MAX_TOKENS")
     enrichment_temperature: float = Field(default=0.0, env="ENRICHMENT_TEMPERATURE")
+    enrichment_concurrency: int = Field(default=4, env="ENRICHMENT_CONCURRENCY")
 
     # Phase Control (enable/disable individual phases)
     phase_1_ingest_enabled: bool = Field(default=True, env="PHASE_1_INGEST_ENABLED")
     phase_2_filter_enabled: bool = Field(default=True, env="PHASE_2_FILTER_ENABLED")
     phase_3_generate_enabled: bool = Field(default=True, env="PHASE_3_GENERATE_ENABLED")
+    phase_4_enrich_enabled: bool = Field(default=True, env="PHASE_4_ENRICH_ENABLED")
 
     # Phase Limits (for controlled execution)
     phase_1_max_feeds: Optional[int] = Field(default=None, env="PHASE_1_MAX_FEEDS")
     phase_2_max_titles: Optional[int] = Field(default=1000, env="PHASE_2_MAX_TITLES")
     phase_3_max_titles: Optional[int] = Field(default=500, env="PHASE_3_MAX_TITLES")
+    phase_4_max_items: Optional[int] = Field(default=None, env="PHASE_4_MAX_ITEMS")  # None = use daily_enrichment_cap
+
+    # Phase Timeouts (in minutes) - based on realistic expectations
+    phase_1_timeout_minutes: int = Field(default=10, env="PHASE_1_TIMEOUT_MINUTES")  # RSS ingestion: 137 feeds
+    phase_2_timeout_minutes: int = Field(default=5, env="PHASE_2_TIMEOUT_MINUTES")   # Strategic filtering: 1000 titles
+    phase_3_timeout_minutes: int = Field(default=15, env="PHASE_3_TIMEOUT_MINUTES")  # EF generation: 500 titles
+    phase_4_timeout_minutes: int = Field(default=30, env="PHASE_4_TIMEOUT_MINUTES")  # Enrichment: 100 EFs with LLM
 
     # Monitoring and Safety
     pipeline_error_threshold: int = Field(default=3, env="PIPELINE_ERROR_THRESHOLD")

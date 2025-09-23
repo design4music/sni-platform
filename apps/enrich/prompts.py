@@ -60,23 +60,24 @@ Why is this strategically significant? (≤150 chars)"""
 
 
 # Micro-Prompt 3: Narrative-Focused Summary Enhancement
-NARRATIVE_SUMMARY_SYSTEM_PROMPT = """Rewrite the Event Family summary with a narrative intelligence focus.
+NARRATIVE_SUMMARY_SYSTEM_PROMPT = """Rewrite the Event Family summary for strategic intelligence analysts.
 
-TARGET AUDIENCE: Strategic intelligence analysts, policymakers, and decision-makers who need to quickly understand the strategic implications of ongoing sagas.
+CRITICAL: You must output EXACTLY 80-120 words. Count carefully and stop immediately at 120 words.
 
-NARRATIVE PRINCIPLES:
-- Lead with strategic significance, not chronological details
-- Emphasize ongoing dynamics and tensions, not just events
-- Show how this fits into larger geopolitical patterns
-- Use active voice and clear, authoritative language
-- Avoid technical jargon, journalistic clichés, and passive constructions
+STRUCTURE (exactly 5 sentences):
+1. Event lead: What happened concisely
+2. Context: Pattern or broader geopolitical frame
+3. Comparables: 1-2 relevant precedents
+4. Abnormality: What makes this significant or unusual
+5. Strategic impact: Why it matters for decision-makers
 
-STRUCTURE:
-1. Strategic significance opening (why this matters)
-2. Key dynamics and actors involved
-3. Current trajectory and implications
-
-LENGTH: 150-250 words maximum. Complete sentences, no truncation."""
+HARD REQUIREMENTS:
+- EXACTLY 80-120 words total
+- NO repetition or duplicate phrases
+- NO journalistic cliches
+- Active voice only
+- Each sentence serves one specific purpose above
+- IMMEDIATELY STOP when you reach 120 words"""
 
 NARRATIVE_SUMMARY_USER_TEMPLATE = """EF: {ef_title}
 CURRENT SUMMARY: {current_summary}
@@ -86,7 +87,10 @@ KEY ACTORS: {canonical_actors}
 TITLES CONTEXT:
 {member_titles}
 
-Rewrite this summary for strategic narrative intelligence. Focus on the ongoing strategic saga, not individual incidents. Show why this matters for regional/global stability."""
+Rewrite this summary for strategic narrative intelligence. Follow the 5-sentence structure exactly:
+1. Event lead | 2. Context/pattern | 3. Comparables | 4. Abnormality | 5. Significance
+
+CRITICAL: Maximum 120 words. Stop writing when you reach this limit."""
 
 
 # Micro-Prompt 4: Macro-Link & Context Assessment

@@ -1,6 +1,6 @@
 # SNI-v2 Pipeline Flow & Architecture
 
-*Updated: September 19, 2025 - Hybrid Incident-First Architecture*
+*Updated: September 23, 2025 - Production-Ready Timeout Mitigation Implementation*
 
 # Project Vision (SNI / SNE)
 
@@ -44,7 +44,7 @@ RSS Sources → Ingestion → Strategic Gating → Entity Extraction → Inciden
 
 ## Pipeline Components
 
-### 1. RSS Ingestion
+### 1. RSS Ingestion (P1)
 **Entry Point:** `python -m apps.ingest.run_ingestion`
 **Purpose:** Collect news articles from 137+ configured RSS feeds
 **Input:** RSS feed URLs from `feeds` table
@@ -55,10 +55,21 @@ RSS Sources → Ingestion → Strategic Gating → Entity Extraction → Inciden
 - Content deduplication via hashing
 - Multi-language support (English, Arabic, French, etc.)
 - Automatic publisher domain extraction
+- **Resumable batch processing** with checkpoint-based recovery
+- **Feed-based cursor** tracking via `last_feed_id`
 
-**Performance:** ~2,000-5,000 titles ingested per run (varies by news cycle)
+**Timeout Mitigation:**
+- `--batch` flag for configurable feed batch size (default: 500)
+- `--resume` flag to continue from last checkpoint
+- Checkpoint tracking: `logs/checkpoints/p1_ingest.json`
+- Atomic checkpoint updates with temp file operations
+- Cron-compatible with `flock` and `timeout` protection
 
-### 2. Enhanced Strategic Gate + Entity Processing
+**Performance:**
+- Standard: ~2,000-5,000 titles ingested per run (varies by news cycle)
+- Batch mode: 137+ feeds processed in batches with checkpoint resume capability
+
+### 2. Enhanced Strategic Gate + Entity Processing (P2)
 **Entry Point:** `python -m apps.filter.run_enhanced_gate`
 **Purpose:** Combined strategic filtering and entity extraction in one pass
 **Input:** Titles with `processing_status='pending'`
@@ -72,20 +83,39 @@ RSS Sources → Ingestion → Strategic Gating → Entity Extraction → Inciden
 
 **Entity Extraction:**
 - Real-time actor extraction during gating
-- JSON storage in `titles.entities` field
+- JSON storage in `titles.entities` field with proper serialization
 - Version tracking for extraction evolution
 - Actor canonicalization (e.g., "Putin" → "RU")
 
+**Timeout Mitigation:**
+- `--batch` flag for configurable title batch size (default: 1000)
+- `--resume` flag to continue from last checkpoint
+- Checkpoint tracking: `logs/checkpoints/p2_filter.json`
+- **Title-based cursor** tracking via `last_title_id`
+- Idempotent processing with duplicate protection
+- Cron-compatible with `flock` and `timeout` protection
+
 **Execution:**
 ```bash
+# Standard processing
 python -m apps.filter.run_enhanced_gate --hours 24 --max-titles 1000
+
+# Batch processing with resume capability
+python -m apps.filter.run_enhanced_gate --batch 1000 --resume
 ```
 
-### 3. Hybrid Incident-First Event Family Generation
+### 3. Hybrid Incident-First Event Family Generation (P3)
 **Entry Point:** `python -m apps.generate.incident_processor`
 **Purpose:** Incident-first EF generation with 100% strategic title coverage
 **Input:** Strategic titles where `event_family_id IS NULL`
 **Output:** Creates `event_families` records with zero fragmentation
+
+**Background Worker Architecture:**
+- **Continuous processing** via `--background` flag (systemd service)
+- **No batch/resume needed** - designed as persistent worker
+- Automatic batch size management (configurable max_titles parameter)
+- Built-in error recovery and retry logic
+- Single worker instance prevents concurrency conflicts
 
 #### Hybrid Incident-First Architecture
 - **MAP Phase:** Semantic incident clustering via LLM analysis
@@ -123,11 +153,11 @@ llm_max_tokens_generic: int = 8000   # Near DeepSeek 8K limit
 
 **Execution:**
 ```bash
-# Process up to 500 titles with incident-first approach
+# One-time processing up to N titles
 python -m apps.generate.incident_processor 500
 
-# Background processing mode
-python -m apps.generate.incident_processor 500 --background
+# Background worker mode (production systemd service)
+python -m apps.generate.incident_processor 1000 --background
 ```
 
 #### Problem Solved: EF Fragmentation
@@ -158,59 +188,109 @@ python -m apps.generate.incident_processor 500 --background
 - Zero EF fragmentation for related strategic events
 - High semantic clustering quality via LLM incident identification
 
+## Timeout Mitigation Strategy
+
+### Production Architecture
+The SNI pipeline implements a comprehensive timeout mitigation strategy with phase-specific approaches:
+
+**Phase-Specific Strategies:**
+- **P1 Ingest & P2 Filter:** Resumable batch processing with checkpoint recovery
+- **P3 Generate:** Background systemd worker with continuous processing
+- **P4 Enrich:** Resumable batch processing with checkpoint recovery
+
+**Core Features:**
+- **Checkpoint-based Resume:** All phases (P1, P2, P4) support `--resume` flag
+- **Configurable Batch Sizes:** `--batch` parameter for processing control
+- **Atomic Operations:** Checkpoint updates with temp file operations
+- **Idempotent Processing:** Safe to rerun without data corruption
+- **Lock Protection:** `flock` prevents concurrent execution
+- **Timeout Guards:** `timeout` command protects against hanging processes
+
+**Cron Configuration:**
+- **P1 & P2 & P4:** 12-hour intervals with batch processing and resume capability
+- **P3:** Continuous systemd background service
+- See `docs/cron_setup.md` for complete production deployment guide
+
 ## Complete Pipeline Execution
 
-### Unified Pipeline Orchestrator
+### Unified Pipeline Orchestrator (Development)
 **Entry Point:** `python run_pipeline.py`
-**Purpose:** Single command execution of entire pipeline with status tracking
+**Purpose:** Single command execution for development and testing
 
 ```bash
-# Complete pipeline (all phases)
+# Complete pipeline (P1, P2, P4 only - P3 runs as background service)
 python run_pipeline.py run
 
-# Individual phases
-python run_pipeline.py phase1 --max-feeds 10      # RSS ingestion
-python run_pipeline.py phase2 --hours 2           # Strategic filtering
-python run_pipeline.py phase3 --max-titles 500    # Incident-first EF generation
+# Individual phases with timeout mitigation
+python run_pipeline.py phase1 --batch 500 --resume     # RSS ingestion
+python run_pipeline.py phase2 --batch 1000 --resume    # Strategic filtering
+python run_pipeline.py phase4 --batch 50 --resume      # EF enrichment
+
+# Note: P3 Generate runs as background systemd service, not via pipeline orchestrator
 
 # Pipeline status monitoring
 python run_pipeline.py status
 ```
 
-### Sequential Processing Order (Manual)
+### Production Cron Schedule
 ```bash
-# 1. Ingest latest news (137 feeds)
-python -m apps.ingest.run_ingestion
+# P1 Ingest - Every 12 hours with timeout protection
+0 6,18 * * * cd /path/to/SNI && timeout 30m flock -n /tmp/p1_ingest.lock python apps/ingest/run_ingestion.py --batch 500 --resume
 
-# 2. Enhanced gating + entity extraction (combined)
-python -m apps.filter.run_enhanced_gate --hours 2
+# P2 Filter - Every 12 hours, 30 min after P1
+30 6,18 * * * cd /path/to/SNI && timeout 15m flock -n /tmp/p2_filter.lock python apps/filter/run_enhanced_gate.py --batch 1000 --resume
 
-# 3. Incident-first Event Family generation
-python -m apps.generate.incident_processor 500
+# P4 Enrich - Every 12 hours, 30 min after P2
+0 7,19 * * * cd /path/to/SNI && timeout 45m flock -n /tmp/p4_enrich.lock python apps/enrich/cli.py enrich-queue --batch 50 --resume
 
-# 4. EF Enrichment (optional, strategic context enhancement)
-python -m apps.enrich.cli enrich-queue 100
+# P3 Generate - Continuous systemd background service (no cron needed)
+# sudo systemctl enable sni-p3-generate.service
 ```
 
-### Performance Benchmarks
-- **RSS Ingestion:** ~3-5 minutes for 137 feeds
-- **Enhanced Gating:** ~30-60 seconds for 1,000 titles
-- **Incident-First Processing:** ~3-4 minutes for 50 titles → 20 EFs (100% coverage)
+### Manual Processing (Development/Testing)
+```bash
+# 1. Ingest latest news with batch processing
+python -m apps.ingest.run_ingestion --batch 500 --resume
+
+# 2. Enhanced gating with batch processing
+python -m apps.filter.run_enhanced_gate --batch 1000 --resume
+
+# 3. Start background EF generation worker
+python -m apps.generate.incident_processor 1000 --background
+
+# 4. EF Enrichment with batch processing
+python -m apps.enrich.cli enrich-queue --batch 50 --resume
+```
+
+### Performance Benchmarks (With Timeout Mitigation)
+- **P1 RSS Ingestion:** ~3-5 minutes for 137 feeds
+  - Batch mode: Configurable feed batch size with checkpoint resume
+  - Timeout protection: 30-minute limit with automatic recovery
+- **P2 Enhanced Gating:** ~30-60 seconds for 1,000 titles
+  - Batch mode: Configurable title batch size with checkpoint resume
+  - Timeout protection: 15-minute limit with automatic recovery
+- **P3 Incident-First Processing:** ~3-4 minutes for 50 titles → 20 EFs (100% coverage)
+  - Background worker: Continuous processing with automatic restart
   - MAP Phase: ~1.5 minutes for incident clustering
   - REDUCE Phase: ~1.5 minutes for incident analysis + orphan processing
   - Cross-batch merging: Real-time via ef_key matching
-- **EF Enrichment:** ~8.4s per EF (426 EFs/hour, 93.1% success rate)
+- **P4 EF Enrichment:** ~8.4s per EF (426 EFs/hour, 93.1% success rate)
+  - Batch mode: Configurable EF batch size with checkpoint resume
+  - Timeout protection: 45-minute limit with automatic recovery
   - Strategic context extraction with 6-field minimal payload
   - JSON sidecar storage (no database changes)
   - Cost: ~$0.021 per EF (~150 tokens @ $0.14/1K)
 - **Coverage:** 100% strategic titles processed (no orphans left behind)
+- **Reliability:** All phases resumable, idempotent, and timeout-protected
 
-### Current System Status
-- **Architecture:** Incident-first hybrid processing successfully implemented
+### Current System Status (Production-Ready Timeout Mitigation)
+- **Architecture:** Incident-first hybrid processing with timeout mitigation successfully implemented
 - **Coverage:** 100% strategic title processing (incidents + single-title EF seeds)
 - **Anti-fragmentation:** Zero related event splitting via semantic clustering
 - **Cross-batch merging:** Automatic sibling reunification via ef_key matching
-- **Production Ready:** Stable incident processing with comprehensive coverage
+- **Timeout Mitigation:** All phases resumable with checkpoint recovery
+- **Production Ready:** Stable processing with comprehensive timeout protection and automatic recovery
+- **Operational Mode:** P1/P2/P4 on 12-hour cron cycles, P3 as continuous systemd background service
 
 ## Database Schema
 
@@ -284,7 +364,7 @@ python -m apps.enrich.cli enrich-queue 100
 - `CLAUDE.md` - Project instructions
 - `README.md` - Project overview
 
-#### Key Configuration Settings
+#### Key Configuration Settings (With Timeout Mitigation)
 ```python
 # Incident-First Configuration (core/config.py)
 map_concurrency: int = 8                    # Parallel incident clustering
@@ -298,6 +378,28 @@ enrichment_enabled: bool = True             # Enable/disable enrichment processi
 daily_enrichment_cap: int = 100             # Daily enrichment limit
 enrichment_max_tokens: int = 200            # Bounded token limit for micro-prompts
 enrichment_temperature: float = 0.0         # Deterministic LLM responses
+
+# Timeout Mitigation Configuration
+# P1 Ingest Batch Settings
+p1_default_batch_size: int = 500            # Default feed batch size
+p1_checkpoint_file: str = "logs/checkpoints/p1_ingest.json"
+
+# P2 Filter Batch Settings
+p2_default_batch_size: int = 1000           # Default title batch size
+p2_checkpoint_file: str = "logs/checkpoints/p2_filter.json"
+
+# P3 Generate Background Worker Settings
+p3_background_max_titles: int = 1000        # Max titles per background cycle
+p3_restart_on_error: bool = True            # Systemd auto-restart
+
+# P4 Enrich Batch Settings
+p4_default_batch_size: int = 50             # Default EF batch size
+p4_checkpoint_file: str = "logs/checkpoints/p4_enrich.json"
+
+# Production Cron Timeouts
+p1_timeout_minutes: int = 30                # RSS ingestion timeout
+p2_timeout_minutes: int = 15                # Strategic filtering timeout
+p4_timeout_minutes: int = 45                # EF enrichment timeout
 ```
 
 **Performance Characteristics:**
@@ -373,4 +475,4 @@ python debug_ef_key_merging.py
 
 ---
 
-*This pipeline documentation reflects the current Incident-First Hybrid Architecture with 100% strategic coverage and zero fragmentation, successfully implemented and tested on September 19, 2025.*
+*This pipeline documentation reflects the current Incident-First Hybrid Architecture with production-ready timeout mitigation, 100% strategic coverage, and zero fragmentation, successfully implemented and tested on September 23, 2025.*

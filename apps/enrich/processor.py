@@ -3,6 +3,7 @@ EF Enrichment Processor
 Lean micro-prompt system for adding strategic context to Event Families
 """
 
+import asyncio
 import json
 import time
 from datetime import datetime
@@ -77,11 +78,32 @@ class EFEnrichmentProcessor:
             # Initialize enrichment payload
             enrichment = EnrichmentPayload()
 
-            # Step 1: Canonicalize actors + extract policy status (1 LLM call)
-            canonical_data = await self._canonicalize_actors_and_status(
+            # Execute independent LLM calls in parallel for maximum performance
+            logger.debug(
+                f"ENRICH: Starting parallel micro-prompt execution for EF {ef_id}"
+            )
+
+            # Step 1: Extract magnitudes (regex, no LLM - can run immediately)
+            magnitude_data = extract_magnitudes_from_titles(member_titles)
+            enrichment.magnitude = [
+                Magnitude(value=mag["value"], unit=mag["unit"], what=mag["what"])
+                for mag in magnitude_data
+            ]
+
+            # Steps 2-4: Run independent LLM calls in parallel
+            canonical_task = self._canonicalize_actors_and_status(
                 ef_data, member_titles
             )
-            if canonical_data:
+            ef_context_task = self._populate_ef_context_parallel(ef_data, member_titles)
+            sources_task = self._find_official_sources(ef_data, enrichment)
+
+            # Wait for all parallel LLM calls to complete
+            canonical_data, ef_context_data, official_sources = await asyncio.gather(
+                canonical_task, ef_context_task, sources_task, return_exceptions=True
+            )
+
+            # Process canonical_data result
+            if not isinstance(canonical_data, Exception) and canonical_data:
                 enrichment.canonical_actors = canonical_data.get("canonical_actors", [])
                 enrichment.policy_status = canonical_data.get("policy_status")
                 enrichment.time_span = canonical_data.get(
@@ -92,25 +114,29 @@ class EFEnrichmentProcessor:
                 enrichment.systemic_context = canonical_data.get("systemic_context")
                 enrichment.why_strategic = canonical_data.get("why_strategic")
                 enrichment.tags = canonical_data.get("tags", [])
+            elif isinstance(canonical_data, Exception):
+                logger.warning(
+                    f"ENRICH: Canonical data extraction failed: {canonical_data}"
+                )
+                enrichment.canonical_actors = []
+                enrichment.tags = []
 
-            # Step 2: Extract magnitudes from titles (regex, no LLM)
-            magnitude_data = extract_magnitudes_from_titles(member_titles)
-            enrichment.magnitude = [
-                Magnitude(value=mag["value"], unit=mag["unit"], what=mag["what"])
-                for mag in magnitude_data
-            ]
-
-            # Step 3: Centroid matching and ef_context population
-            ef_context_data = await self._populate_ef_context(
-                ef_data, enrichment, member_titles
-            )
-            if ef_context_data:
+            # Process ef_context result
+            if not isinstance(ef_context_data, Exception) and ef_context_data:
                 enrichment.ef_context = ef_context_data
+            elif isinstance(ef_context_data, Exception):
+                logger.warning(
+                    f"ENRICH: EF context population failed: {ef_context_data}"
+                )
 
-            # Step 4: Official sources (placeholder for future web search)
-            enrichment.official_sources = await self._find_official_sources(
-                ef_data, enrichment
-            )
+            # Process official_sources result
+            if not isinstance(official_sources, Exception):
+                enrichment.official_sources = official_sources
+            else:
+                logger.warning(
+                    f"ENRICH: Official sources search failed: {official_sources}"
+                )
+                enrichment.official_sources = []
 
             # Calculate processing metrics
             processing_time_ms = int((time.time() - start_time) * 1000)
@@ -126,9 +152,13 @@ class EFEnrichmentProcessor:
                 status="completed",
             )
 
-            # Create enriched summary paragraph (use narrative prompt if available)
+            # Step 5: Create enriched summary (depends on previous results)
             enriched_summary = await self._create_enriched_summary(
                 ef_data, enrichment, member_titles
+            )
+
+            logger.debug(
+                f"ENRICH: Completed parallel micro-prompt execution for EF {ef_id}"
             )
 
             # Update database with enriched summary, tags, and ef_context
@@ -194,6 +224,104 @@ class EFEnrichmentProcessor:
         except Exception as e:
             logger.error(f"ENRICH: Database error getting EF {ef_id}: {e}")
             return None
+
+    async def _populate_ef_context_parallel(
+        self, ef_data: Dict[str, Any], member_titles: List[Dict[str, Any]]
+    ) -> EFContext:
+        """
+        Populate ef_context using centroid matching (parallel version without canonical_actors dependency)
+        """
+        try:
+            # Use existing actors from ef_data instead of waiting for canonical actors
+            existing_actors = ef_data.get("key_actors", [])
+
+            match_result = self.centroid_matcher.match_centroid(
+                ef_title=ef_data["title"],
+                ef_summary=ef_data["summary"],
+                ef_actors=existing_actors,
+                primary_theater=ef_data["primary_theater"],
+                event_type=ef_data.get("event_type", ""),
+            )
+
+            ef_context = EFContext()
+
+            # High confidence mechanical match
+            if match_result.confidence_score >= 0.7:
+                ef_context.macro_link = match_result.centroid_id
+                logger.debug(
+                    f"ENRICH: High confidence centroid match: {match_result.centroid_id}"
+                )
+
+            # Medium/Low confidence - use LLM for macro-link assessment
+            elif match_result.requires_llm_verification:
+                logger.debug(
+                    f"ENRICH: Using LLM for centroid assessment (score: {match_result.confidence_score:.3f})"
+                )
+
+                # Get top candidates for LLM assessment
+                top_candidates = self.centroid_matcher.get_top_candidates(
+                    ef_title=ef_data["title"],
+                    ef_summary=ef_data["summary"],
+                    ef_actors=[],  # Use empty list to avoid dependency on canonical_actors
+                    primary_theater=ef_data["primary_theater"],
+                    event_type=ef_data.get("event_type", ""),
+                    top_n=5,
+                )
+
+                # Format centroids for LLM prompt
+                available_centroids = []
+                for centroid_id, score, components in top_candidates:
+                    centroid_data = next(
+                        (
+                            c
+                            for c in self.centroid_matcher.centroids
+                            if c["id"] == centroid_id
+                        ),
+                        None,
+                    )
+                    if centroid_data:
+                        available_centroids.append(centroid_data)
+
+                # Build macro-link assessment prompt
+                system_prompt, user_prompt = build_macro_link_prompt(
+                    ef_title=ef_data["title"],
+                    ef_summary=ef_data["summary"],
+                    event_type=ef_data.get("event_type", ""),
+                    primary_theater=ef_data["primary_theater"],
+                    canonical_actors=[],  # Use empty list to avoid dependency
+                    available_centroids=available_centroids,
+                )
+
+                # Call LLM for macro-link assessment
+                response_text = await self.llm_client._call_llm(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    temperature=0.0,
+                )
+
+                # Parse LLM response
+                response_data = self.llm_client._extract_json(response_text)
+                ef_context_data = response_data.get("ef_context", {})
+
+                ef_context.macro_link = ef_context_data.get("macro_link")
+                ef_context.abnormality = ef_context_data.get("abnormality")
+
+                # Parse comparables
+                comparables_data = ef_context_data.get("comparables", [])
+                ef_context.comparables = [
+                    ComparableEvent(
+                        event_description=comp.get("event_description", ""),
+                        timeframe=comp.get("timeframe", ""),
+                        similarity_reason=comp.get("similarity_reason", ""),
+                    )
+                    for comp in comparables_data
+                ]
+
+            return ef_context
+
+        except Exception as e:
+            logger.error(f"ENRICH: EF context population failed: {e}")
+            return EFContext()
 
     async def _get_member_titles(self, ef_id: str) -> List[Dict[str, Any]]:
         """Get member titles for the Event Family"""
@@ -436,7 +564,7 @@ class EFEnrichmentProcessor:
 
     async def process_enrichment_queue(self, max_items: int = None) -> Dict[str, int]:
         """
-        Process enrichment queue with daily caps
+        Process enrichment queue with parallel processing for performance
 
         Args:
             max_items: Maximum items to process (uses daily cap if None)
@@ -447,7 +575,9 @@ class EFEnrichmentProcessor:
         if max_items is None:
             max_items = self.daily_enrichment_cap
 
-        logger.info(f"ENRICH: Starting queue processing (max {max_items} items)")
+        logger.info(
+            f"ENRICH: Starting parallel queue processing (max {max_items} items)"
+        )
 
         # Get enrichment queue
         queue = await self.get_enrichment_queue(limit=max_items)
@@ -455,29 +585,81 @@ class EFEnrichmentProcessor:
             logger.info("ENRICH: No items in enrichment queue")
             return {"processed": 0, "succeeded": 0, "failed": 0}
 
-        logger.info(f"ENRICH: Processing {len(queue)} EFs from queue")
+        logger.info(f"ENRICH: Processing {len(queue)} EFs in parallel")
 
-        # Process queue items
+        # Process queue items in parallel with controlled concurrency
+        return await self._process_queue_parallel(queue)
+
+    async def _process_queue_parallel(self, queue: List[str]) -> Dict[str, int]:
+        """
+        Process queue with parallel EF enrichment using semaphore for concurrency control
+
+        Args:
+            queue: List of EF IDs to process
+
+        Returns:
+            Processing statistics
+        """
+        # Use config-based concurrency (default 4 for LLM-intensive operations)
+        concurrency_limit = getattr(self.config, "enrichment_concurrency", 4)
+        semaphore = asyncio.Semaphore(concurrency_limit)
+
+        logger.info(f"ENRICH: Using concurrency limit of {concurrency_limit}")
+
+        async def process_single_ef(ef_id: str, index: int) -> Dict[str, Any]:
+            """
+            Process single EF with semaphore control
+            """
+            async with semaphore:
+                try:
+                    logger.debug(
+                        f"ENRICH: Processing EF {index + 1}/{len(queue)}: {ef_id}"
+                    )
+                    result = await self.enrich_event_family(ef_id)
+                    return {
+                        "ef_id": ef_id,
+                        "status": (
+                            "success"
+                            if result and result.status == "completed"
+                            else "failed"
+                        ),
+                        "result": result,
+                    }
+                except Exception as e:
+                    logger.error(f"ENRICH: Failed to process EF {ef_id}: {e}")
+                    return {"ef_id": ef_id, "status": "error", "error": str(e)}
+
+        # Execute all EF processing tasks in parallel
+        start_time = time.time()
+        tasks = [process_single_ef(ef_id, i) for i, ef_id in enumerate(queue)]
+        results_list = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Collect statistics
         results = {"processed": 0, "succeeded": 0, "failed": 0}
 
-        for ef_id in queue:
-            try:
-                result = await self.enrich_event_family(ef_id)
+        for i, result in enumerate(results_list):
+            if isinstance(result, Exception):
+                logger.error(f"ENRICH: Exception in task {i}: {result}")
                 results["processed"] += 1
-
-                if result and result.status == "completed":
+                results["failed"] += 1
+            elif isinstance(result, dict):
+                results["processed"] += 1
+                if result["status"] == "success":
                     results["succeeded"] += 1
                 else:
                     results["failed"] += 1
-
-            except Exception as e:
-                logger.error(f"ENRICH: Failed to process EF {ef_id}: {e}")
+            else:
+                logger.error(
+                    f"ENRICH: Unexpected result type for task {i}: {type(result)}"
+                )
                 results["processed"] += 1
                 results["failed"] += 1
 
+        processing_time = time.time() - start_time
         logger.info(
-            f"ENRICH: Queue processing completed - "
-            f"{results['succeeded']}/{results['processed']} succeeded"
+            f"ENRICH: Parallel queue processing completed in {processing_time:.1f}s - "
+            f"{results['succeeded']}/{results['processed']} succeeded "
+            f"(avg {processing_time/len(queue):.1f}s per EF)"
         )
 
         return results
@@ -631,9 +813,13 @@ class EFEnrichmentProcessor:
 
                 # Use LLM response as enhanced summary
                 enhanced_summary = response_text.strip()
-                if (
-                    enhanced_summary and len(enhanced_summary) > 50
-                ):  # Basic quality check
+                if enhanced_summary and len(enhanced_summary) > 50:
+                    # Log word count for monitoring
+                    words = enhanced_summary.split()
+                    if len(words) > 120:
+                        logger.warning(
+                            f"ENRICH: Summary too long ({len(words)} words) - LLM should follow 80-120 word limit"
+                        )
                     return enhanced_summary
 
             # Fallback to original method if no ef_context or LLM fails

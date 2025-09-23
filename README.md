@@ -86,6 +86,12 @@ reduce_concurrency: int = 12                # Parallel incident analysis
 map_batch_size: int = 100                   # Titles per clustering call
 llm_max_tokens_generic: int = 8000          # Near DeepSeek 8K limit
 llm_timeout_seconds: int = 180              # Individual LLM call timeout
+
+# Phase Timeouts (in minutes) - prevents pipeline blocking
+phase_1_timeout_minutes: int = 10           # RSS ingestion: 137 feeds
+phase_2_timeout_minutes: int = 5            # Strategic filtering: 1000 titles
+phase_3_timeout_minutes: int = 15           # EF generation: 500 titles
+phase_4_timeout_minutes: int = 30           # Enrichment: 100 EFs with LLM
 ```
 
 ## 🔄 Processing Pipeline Details
@@ -184,6 +190,12 @@ LLM_API_KEY=your_api_key
 map_concurrency=8          # Parallel incident clustering
 reduce_concurrency=12      # Parallel incident analysis
 map_batch_size=100         # Titles per clustering batch
+
+# Pipeline Timeouts (prevents blocking on long operations)
+PHASE_1_TIMEOUT_MINUTES=10    # RSS ingestion timeout
+PHASE_2_TIMEOUT_MINUTES=5     # Strategic filtering timeout
+PHASE_3_TIMEOUT_MINUTES=15    # EF generation timeout
+PHASE_4_TIMEOUT_MINUTES=30    # Enrichment timeout
 ```
 
 ### Strategic Vocabularies
@@ -325,6 +337,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 2. **Background processes**: Check running processes before starting new ones
 3. **Configuration changes**: Test in development environment first
 4. **Large refactors**: Create feature branches for complex changes
+5. **Architectural changes**: ALWAYS discuss approach with alternatives, pros/cons before implementation
 
 ### Performance Monitoring
 
