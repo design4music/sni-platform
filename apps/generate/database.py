@@ -273,9 +273,8 @@ class Gen1Database:
 
                     # Update existing EF with merged titles and extended time range
                     update_query = """
-                    UPDATE event_families 
+                    UPDATE event_families
                     SET source_title_ids = :merged_title_ids,
-                        updated_at = NOW(),
                         updated_at = NOW(),
                         processing_notes = CONCAT(COALESCE(processing_notes, ''), '; Merged ef_key: ', :new_ef_title)
                     WHERE id = :existing_ef_id

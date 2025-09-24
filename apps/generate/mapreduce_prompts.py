@@ -48,7 +48,9 @@ CLUSTERING PRINCIPLES:
 - Cross-border incidents: Include both origin and target country responses
 - Diplomatic reactions: Include original incident + diplomatic responses
 - Multi-step escalations: Include entire escalation sequence
-- Isolated incidents: Can be single-title clusters
+- Parallel strategic responses: Different actors responding to same underlying situation = ONE cluster
+- Coordinated international pressure: Multiple countries/organizations pressuring same target = ONE cluster
+- Isolated incidents: Can be single-title clusters (only when truly unrelated)
 
 OUTPUT: List of incident clusters with descriptive names and member title IDs."""
 
@@ -57,6 +59,7 @@ INCIDENT_CLUSTERING_USER_TEMPLATE = """Analyze these titles and group them into 
 EXAMPLES of good clustering:
 - Poland Drone Incident: ["Russian drones enter Polish airspace", "Poland closes Belarus border", "UN Security Council called", "EU emergency debate"]
 - Gaza Humanitarian Crisis: ["Israeli strikes on Gaza", "WHO reports casualties", "Qatar mediates ceasefire talks"]
+- Western Pressure on Israel over Gaza: ["UK diplomatic pressure on Israel", "EU economic pressure via payment suspensions", "International pressure mounts against Israeli operations", "French positioning on Gaza genocide classification"]
 - US Election Controversy: ["Assassination attempt on candidate", "Secret Service investigation", "Political reactions"]
 
 INPUT (id | title | date):

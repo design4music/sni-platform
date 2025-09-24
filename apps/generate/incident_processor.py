@@ -128,7 +128,7 @@ class IncidentProcessor:
                     single_cluster = IncidentCluster(
                         incident_name=f"Strategic Event: {title['title'][:50]}...",
                         title_ids=[title["id"]],
-                        rationale="Single strategic title without incident siblings in this batch",
+                        rationale="single title",
                     )
                     single_title_clusters.append(single_cluster)
 
@@ -208,22 +208,29 @@ class IncidentProcessor:
                     ef
                 )
 
+                # Only proceed if upsert was successful
+                if not success:
+                    logger.error(
+                        f"Failed to upsert Event Family '{ef.title}': upsert returned success=False"
+                    )
+                    continue
+
                 if existing_ef_id:
                     # Existing EF was updated (merged)
                     merged_count += 1
                     logger.debug(f"Merged EF with ef_key {ef.ef_key}: {ef.title}")
+                    final_ef_id = existing_ef_id
                 else:
                     # New EF was created
                     created_count += 1
                     logger.debug(f"Created new EF: {ef.title}")
+                    final_ef_id = ef.id
 
                 # Assign titles to the Event Family
-                final_ef_id = existing_ef_id if existing_ef_id else ef.id
                 assigned = await self.db.assign_titles_to_event_family(
                     title_ids=ef.source_title_ids,
                     event_family_id=final_ef_id,
-                    confidence=ef.confidence_score
-                    or 0.85,  # Use EF confidence or default
+                    confidence=ef.confidence_score or 0.85,
                     reason="Incident-based MAP/REDUCE pipeline processing",
                 )
                 titles_assigned += assigned

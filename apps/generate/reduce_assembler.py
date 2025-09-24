@@ -350,8 +350,8 @@ class ReduceAssembler:
             status="seed",  # Phase 1: Start as seed, promote to active later
             source_title_ids=incident_cluster.title_ids,
             confidence_score=0.90,  # Higher confidence for incident-based approach
-            coherence_reason=f"Incident clustering generated EF for '{incident_cluster.incident_name}' with {len(incident_cluster.title_ids)} titles",
-            processing_notes=f"Generated via MAP/REDUCE incident clustering pipeline: {incident_cluster.rationale}",
+            coherence_reason=f"{len(incident_cluster.title_ids)} titles - '{incident_cluster.incident_name}'",
+            processing_notes=incident_cluster.rationale,
             events=incident_analysis.events,  # Include extracted events timeline
         )
 
