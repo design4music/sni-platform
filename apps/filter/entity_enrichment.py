@@ -7,6 +7,7 @@ to populate titles.entities jsonb column for bucketless processing.
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any, Dict, List
 
@@ -15,6 +16,7 @@ from sqlalchemy import text
 
 from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
+from apps.generate.llm_client import Gen1LLMClient
 from core.database import get_db_session
 
 
@@ -32,8 +34,9 @@ class EntityEnrichmentService:
 
     def __init__(self):
         self.taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
+        self.llm_client = Gen1LLMClient()
 
-    def extract_entities_for_title(self, title_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def extract_entities_for_title(self, title_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Extract entities for a single title.
 
@@ -53,15 +56,21 @@ class EntityEnrichmentService:
         if not title_text:
             return self._empty_entities()
 
-        # Use existing taxonomy extractor API
-        # Check if strategic (go lists hit and not blocked by stop lists)
+        # Phase 1: Static taxonomy filtering
         strategic_hit = self.taxonomy_extractor.strategic_first_hit(title_text)
         is_strategic = strategic_hit is not None
 
-        # Get all strategic actors if not blocked by stop words
+        # Get all strategic actors if hit by static taxonomy
         all_entities = []
         if is_strategic:
             all_entities = self.taxonomy_extractor.all_strategic_hits(title_text)
+        else:
+            # Phase 2: LLM review for ambiguous titles (no positive hits)
+            # Only call LLM if no static taxonomy match
+            is_strategic = await self._llm_strategic_review(title_text)
+            if is_strategic:
+                # For LLM-flagged strategic titles, create generic entity placeholder
+                all_entities = ["llm_strategic"]
 
         # For Phase 2A, store all entities (countries, people, orgs) together
         # The API returns mixed entity types, so we simplify to single "actors" field
@@ -79,7 +88,42 @@ class EntityEnrichmentService:
 
         return entities
 
-    def enrich_titles_batch(
+    async def _llm_strategic_review(self, title_text: str) -> bool:
+        """
+        Use LLM to determine if ambiguous title is strategic.
+        Called only for titles that don't match static taxonomy.
+
+        Returns:
+            bool: True if strategic, False if not
+        """
+        try:
+            system_prompt = "Does this relate to politics, economics, technology, society, or environmental risks?"
+            user_prompt = f"'{title_text}' - 0 or 1"
+
+            response = await self.llm_client._call_llm(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                max_tokens=5,
+                temperature=0.0
+            )
+
+            # Parse response - expect "0" or "1"
+            response_clean = response.strip().lower()
+            if "1" in response_clean:
+                logger.debug(f"LLM flagged as strategic: '{title_text[:50]}'")
+                return True
+            elif "0" in response_clean:
+                logger.debug(f"LLM flagged as non-strategic: '{title_text[:50]}'")
+                return False
+            else:
+                logger.warning(f"LLM unexpected response '{response}' for '{title_text[:50]}', defaulting to non-strategic")
+                return False
+
+        except Exception as e:
+            logger.error(f"LLM strategic review failed for '{title_text[:50]}': {e}")
+            return False  # Default to non-strategic on error
+
+    async def enrich_titles_batch(
         self, title_ids: List[str] = None, limit: int = 1000, since_hours: int = 24
     ) -> Dict[str, int]:
         """
@@ -98,6 +142,8 @@ class EntityEnrichmentService:
             "strategic": 0,
             "non_strategic": 0,
             "blocked_by_stop": 0,
+            "llm_calls": 0,
+            "llm_strategic": 0,
             "errors": 0,
         }
 
@@ -135,13 +181,23 @@ class EntityEnrichmentService:
                             "title_display": row.title_display,
                         }
 
-                        # Extract entities
-                        entities = self.extract_entities_for_title(title_data)
+                        # Extract entities (may involve LLM call)
+                        entities = await self.extract_entities_for_title(title_data)
 
-                        # Update database
+                        # Track LLM usage
+                        if "llm_strategic" in entities.get("actors", []):
+                            stats["llm_calls"] += 1
+                            if entities["is_strategic"]:
+                                stats["llm_strategic"] += 1
+
+                        # Update database with simplified fields
+                        is_strategic = entities["is_strategic"]
+
                         update_query = """
-                        UPDATE titles 
-                        SET entities = :entities
+                        UPDATE titles
+                        SET entities = :entities,
+                            gate_keep = :gate_keep,
+                            processing_status = 'gated'
                         WHERE id = :title_id
                         """
 
@@ -149,6 +205,7 @@ class EntityEnrichmentService:
                             text(update_query),
                             {
                                 "entities": json.dumps(entities),
+                                "gate_keep": is_strategic,
                                 "title_id": title_data["id"],
                             },
                         )
@@ -176,8 +233,9 @@ class EntityEnrichmentService:
 
                 logger.info(
                     f"Entity enrichment completed: {stats['processed']} processed, "
-                    f"{stats['strategic']} strategic, {stats['non_strategic']} non-strategic "
-                    f"({stats['blocked_by_stop']} blocked by stop words), {stats['errors']} errors"
+                    f"{stats['strategic']} strategic ({stats['llm_strategic']} via LLM), "
+                    f"{stats['non_strategic']} non-strategic, LLM calls: {stats['llm_calls']}, "
+                    f"{stats['errors']} errors"
                 )
 
         except Exception as e:
@@ -246,7 +304,7 @@ if __name__ == "__main__":
             print(f"  {key}: {value}")
     else:
         # Enrich recent titles
-        stats = service.enrich_titles_batch(since_hours=24, limit=100)
+        stats = asyncio.run(service.enrich_titles_batch(since_hours=24, limit=100))
         print("Entity Enrichment Results:")
         for key, value in stats.items():
             print(f"  {key}: {value}")

@@ -342,7 +342,7 @@ class ReduceAssembler:
 
         return EventFamily(
             title=incident_analysis.ef_title,
-            summary=incident_analysis.ef_summary,
+            summary=incident_analysis.ef_title,  # Use title as summary until P4 enrichment
             key_actors=key_actors,
             event_type=incident_analysis.event_type,
             primary_theater=incident_analysis.primary_theater,

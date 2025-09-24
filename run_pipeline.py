@@ -151,7 +151,7 @@ class PipelineOrchestrator:
 
             if result["status"] == "success":
                 self.log_status("1_ingest", "completed", {"result": result["result"]})
-                logger.info(f"Phase 1 completed successfully")
+                logger.info("Phase 1 completed successfully")
                 return result
             else:
                 # Handle timeout or error
@@ -218,7 +218,7 @@ class PipelineOrchestrator:
 
             if result["status"] == "success":
                 self.log_status("2_filter", "completed", {"result": result["result"]})
-                logger.info(f"Phase 2 completed successfully")
+                logger.info("Phase 2 completed successfully")
                 return result
             else:
                 # Handle timeout or error
@@ -340,7 +340,7 @@ class PipelineOrchestrator:
 
             if result["status"] == "success":
                 self.log_status("4_enrich", "completed", {"result": result["result"]})
-                logger.info(f"Phase 4 completed successfully")
+                logger.info("Phase 4 completed successfully")
                 return result
             else:
                 # Handle timeout or error

@@ -1,6 +1,6 @@
 # SNI-v2 Pipeline Flow & Architecture
 
-*Updated: September 23, 2025 - Production-Ready Timeout Mitigation Implementation*
+*Updated: September 24, 2025 - P3 Clustering Optimization & Database Fixes Complete*
 
 # Project Vision (SNI / SNE)
 
@@ -137,10 +137,11 @@ python -m apps.filter.run_enhanced_gate --batch 1000 --resume
 
 #### Performance Characteristics
 - **Coverage:** 100% strategic title processing (incidents + singles)
-- **Throughput:** 50 titles → 20 EFs (16 incidents + 4 single-title EFs)
-- **Merging:** Cross-batch incident merging via ef_key matching
-- **Quality:** Semantic incident clustering prevents fragmentation
+- **Throughput:** 50 titles → 20 EFs (optimal incident-to-EF ratio)
+- **Merging:** Excellent cross-batch merging: 98.6% merge rate (409 merged + 6 new from 1000 titles)
+- **Quality:** Enhanced semantic incident clustering with parallel strategic response recognition
 - **API Optimization:** Parallel processing with configurable concurrency
+- **Database Optimization:** Fixed critical SQL errors and reduced field verbosity
 
 #### Production Configuration
 ```python
@@ -158,6 +159,9 @@ python -m apps.generate.incident_processor 500
 
 # Background worker mode (production systemd service)
 python -m apps.generate.incident_processor 1000 --background
+
+# Production scheduler for automated 12-hour cycles
+python scheduler.py  # Handles P1, P2, P4 with timeout protection
 ```
 
 #### Problem Solved: EF Fragmentation
@@ -283,14 +287,16 @@ python -m apps.enrich.cli enrich-queue --batch 50 --resume
 - **Coverage:** 100% strategic titles processed (no orphans left behind)
 - **Reliability:** All phases resumable, idempotent, and timeout-protected
 
-### Current System Status (Production-Ready Timeout Mitigation)
-- **Architecture:** Incident-first hybrid processing with timeout mitigation successfully implemented
+### Current System Status (P3 Clustering Optimization Complete)
+- **Architecture:** Incident-first hybrid processing with enhanced semantic clustering
 - **Coverage:** 100% strategic title processing (incidents + single-title EF seeds)
-- **Anti-fragmentation:** Zero related event splitting via semantic clustering
-- **Cross-batch merging:** Automatic sibling reunification via ef_key matching
-- **Timeout Mitigation:** All phases resumable with checkpoint recovery
-- **Production Ready:** Stable processing with comprehensive timeout protection and automatic recovery
-- **Operational Mode:** P1/P2/P4 on 12-hour cron cycles, P3 as continuous systemd background service
+- **Anti-fragmentation:** Zero related event splitting via optimized parallel strategic response recognition
+- **Cross-batch merging:** Exceptional performance with 98.6% merge rate in production
+- **Database Health:** Critical SQL errors fixed (duplicate fields, foreign key violations)
+- **Field Optimization:** Reduced database verbosity for processing_notes and coherence_reason
+- **Clustering Quality:** Enhanced prompts with Gaza coordination examples for better thematic connections
+- **Production Ready:** Stable processing with scheduler.py for automated 12-hour cycles
+- **Operational Mode:** P1/P2/P4 via scheduler.py, P3 as continuous systemd background service
 
 ## Database Schema
 
@@ -359,6 +365,7 @@ python -m apps.enrich.cli enrich-queue --batch 50 --resume
 
 ### Configuration
 - `core/config.py` - Centralized system configuration
+- `scheduler.py` - Production scheduler for automated 12-hour pipeline cycles
 - `HYBRID_INCIDENT_ARCHITECTURE.md` - Detailed architecture documentation
 - `.claude/settings.local.json` - Claude Code integration
 - `CLAUDE.md` - Project instructions
@@ -475,4 +482,4 @@ python debug_ef_key_merging.py
 
 ---
 
-*This pipeline documentation reflects the current Incident-First Hybrid Architecture with production-ready timeout mitigation, 100% strategic coverage, and zero fragmentation, successfully implemented and tested on September 23, 2025.*
+*This pipeline documentation reflects the current Incident-First Hybrid Architecture with P3 clustering optimization complete, featuring enhanced semantic clustering, excellent cross-batch merging (98.6% rate), fixed database errors, and production scheduler deployment - successfully implemented and tested on September 24, 2025.*

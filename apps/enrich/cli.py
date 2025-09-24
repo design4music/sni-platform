@@ -49,18 +49,24 @@ def create_enrichment_cli() -> typer.Typer:
                 checkpoint_manager = get_checkpoint_manager("p4_enrich")
 
                 # Load checkpoint state
-                checkpoint_state = checkpoint_manager.load_checkpoint() if resume else {}
+                checkpoint_state = (
+                    checkpoint_manager.load_checkpoint() if resume else {}
+                )
                 processed_count = checkpoint_state.get("processed_count", 0)
                 last_ef_id = checkpoint_state.get("last_ef_id", None)
 
                 if resume and checkpoint_state:
-                    logger.info(f"Resuming from checkpoint: {processed_count} items processed, last EF: {last_ef_id}")
+                    logger.info(
+                        f"Resuming from checkpoint: {processed_count} items processed, last EF: {last_ef_id}"
+                    )
 
                 # Determine batch processing vs original logic
                 if batch is not None:
                     # Batch processing mode with checkpoints
                     max_process = batch
-                    logger.info(f"Processing batch of {batch} EFs from enrichment queue (resumable)")
+                    logger.info(
+                        f"Processing batch of {batch} EFs from enrichment queue (resumable)"
+                    )
                 elif daily_cap:
                     max_process = None  # Use processor's daily cap
                     logger.info(
@@ -79,11 +85,15 @@ def create_enrichment_cli() -> typer.Typer:
                 if resume and last_ef_id:
                     try:
                         last_index = full_queue.index(last_ef_id)
-                        queue_to_process = full_queue[last_index + 1:]
-                        logger.info(f"Resuming after EF {last_ef_id}, {len(queue_to_process)} items remaining")
+                        queue_to_process = full_queue[last_index + 1 :]
+                        logger.info(
+                            f"Resuming after EF {last_ef_id}, {len(queue_to_process)} items remaining"
+                        )
                     except ValueError:
                         queue_to_process = full_queue
-                        logger.warning(f"Last processed EF {last_ef_id} not found in queue, processing from start")
+                        logger.warning(
+                            f"Last processed EF {last_ef_id} not found in queue, processing from start"
+                        )
                 else:
                     queue_to_process = full_queue
 
@@ -92,7 +102,9 @@ def create_enrichment_cli() -> typer.Typer:
                     queue_to_process = queue_to_process[:max_process]
 
                 if not queue_to_process:
-                    logger.info("No items to process (queue empty or all items already processed)")
+                    logger.info(
+                        "No items to process (queue empty or all items already processed)"
+                    )
                     return
 
                 # Process items one by one with checkpoint updates
@@ -115,7 +127,7 @@ def create_enrichment_cli() -> typer.Typer:
                         processed_count=processed_count + results["processed"],
                         last_ef_id=ef_id,
                         total_succeeded=results["succeeded"],
-                        total_failed=results["failed"]
+                        total_failed=results["failed"],
                     )
 
                     # Log progress every 5 items

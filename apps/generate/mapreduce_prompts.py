@@ -56,6 +56,8 @@ OUTPUT: List of incident clusters with descriptive names and member title IDs.""
 
 INCIDENT_CLUSTERING_USER_TEMPLATE = """Analyze these titles and group them into strategic incident clusters.
 
+CRITICAL: Only use title IDs from the INPUT list below. Do NOT reference any other IDs under any circumstances.
+
 EXAMPLES of good clustering:
 - Poland Drone Incident: ["Russian drones enter Polish airspace", "Poland closes Belarus border", "UN Security Council called", "EU emergency debate"]
 - Gaza Humanitarian Crisis: ["Israeli strikes on Gaza", "WHO reports casualties", "Qatar mediates ceasefire talks"]
@@ -72,7 +74,9 @@ OUTPUT: JSON array of incident clusters:
     "title_ids": ["id1", "id2", "id3"],
     "rationale": "Brief explanation of why these belong together"
   }}
-]"""
+]
+
+REMINDER: Use ONLY the IDs from the INPUT list above."""
 
 # REDUCE Phase Prompts (Pass-1c: Incident Analysis + EF Creation)
 INCIDENT_ANALYSIS_SYSTEM_PROMPT = """Analyze an incident cluster to create a complete Event Family. Your tasks:
@@ -101,7 +105,7 @@ STEP 1: Classify the overall incident
 
 STEP 2: Create Event Family metadata
 - EF Title: Strategic significance (max 120 chars, avoid headlines)
-- EF Summary: Brief strategic context (max 280 chars)
+- EF Summary: [Will be generated during enrichment phase]
 
 STEP 3: Extract event timeline
 - Identify discrete factual events in chronological order

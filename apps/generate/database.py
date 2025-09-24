@@ -45,7 +45,7 @@ class Gen1Database:
                 # Simple query for ALL unassigned strategic titles (corpus-wide)
                 # MULTILINGUAL: Process all languages - system supports multilingual content
                 titles_query = """
-                SELECT 
+                SELECT
                     id,
                     title_display as text,
                     url_gnews as url,
@@ -53,11 +53,10 @@ class Gen1Database:
                     pubdate_utc,
                     detected_language as lang_code,
                     gate_keep as strategic,
-                    gate_actor_hit as gate_actors,
                     entities as extracted_actors,
                     created_at
-                FROM titles 
-                WHERE gate_keep = true 
+                FROM titles
+                WHERE gate_keep = true
                 AND event_family_id IS NULL
                 """
 
@@ -86,7 +85,6 @@ class Gen1Database:
                         "pubdate_utc": row.pubdate_utc,
                         "language": row.lang_code,
                         "strategic": row.strategic,
-                        "gate_actors": row.gate_actors,
                         "actors": row.extracted_actors or [],  # Legacy field
                         "entities": row.extracted_actors,  # Proper entities field for batcher
                         "created_at": row.created_at,
@@ -138,21 +136,16 @@ class Gen1Database:
                 )
 
                 update_query = f"""
-                UPDATE titles 
-                SET event_family_id = :event_family_id,
-                    ef_assignment_confidence = :confidence,
-                    ef_assignment_reason = :reason,
-                    ef_assignment_at = NOW()
+                UPDATE titles
+                SET event_family_id = :event_family_id
                 WHERE id = ANY({uuid_list})
-                AND gate_keep = true 
+                AND gate_keep = true
                 AND event_family_id IS NULL
                 """
 
                 # Build parameters
                 params = {
                     "event_family_id": event_family_id,
-                    "confidence": confidence,
-                    "reason": reason,
                 }
 
                 result = session.execute(text(update_query), params)
@@ -160,8 +153,6 @@ class Gen1Database:
                 updated_count = result.rowcount
                 logger.info(
                     f"Assigned {updated_count} titles to Event Family {event_family_id}",
-                    confidence=confidence,
-                    reason=reason[:100],
                 )
 
                 return updated_count

@@ -140,7 +140,7 @@ async def run_enhanced_gate_processing_batch(
                 }
 
                 # Extract entities (this also determines strategic status)
-                entities = entity_service.extract_entities_for_title(title_data)
+                entities = await entity_service.extract_entities_for_title(title_data)
 
                 # Strategic gate decision based on entities
                 is_strategic = entities["is_strategic"]
@@ -153,36 +153,18 @@ async def run_enhanced_gate_processing_batch(
                         SET
                             gate_keep = :gate_keep,
                             entities = :entities,
-                            gate_reason = :gate_reason,
-                            gate_score = :gate_score,
-                            gate_actor_hit = :gate_actor_hit
+                            processing_status = 'gated'
                         WHERE id = :title_id
                         """
 
-                        # Build gate_reason
-                        if is_strategic:
-                            gate_reason = (
-                                f"Strategic: {len(entities['actors'])} entities"
-                            )
-                            gate_actor_hit = (
-                                entities["actors"][0] if entities["actors"] else None
-                            )
-                        else:
-                            if entities["actors"]:
-                                gate_reason = f"Blocked by stop words: {len(entities['actors'])} entities"
-                                stats["blocked_by_stop"] += 1
-                            else:
-                                gate_reason = "No strategic entities found"
-                            gate_actor_hit = None
+                        if not is_strategic and entities["actors"]:
+                            stats["blocked_by_stop"] += 1
 
                         session.execute(
                             text(update_query),
                             {
                                 "gate_keep": is_strategic,
                                 "entities": json.dumps(entities),
-                                "gate_reason": gate_reason,
-                                "gate_score": 0.8 if is_strategic else 0.2,
-                                "gate_actor_hit": gate_actor_hit,
                                 "title_id": title_data["id"],
                             },
                         )
@@ -331,7 +313,7 @@ async def run_enhanced_gate_processing(
                 }
 
                 # Extract entities (this also determines strategic status)
-                entities = entity_service.extract_entities_for_title(title_data)
+                entities = await entity_service.extract_entities_for_title(title_data)
 
                 # Strategic gate decision based on entities
                 is_strategic = entities["is_strategic"]
@@ -340,40 +322,22 @@ async def run_enhanced_gate_processing(
                     # Update both gate_keep and entities in one query
                     with get_db_session() as session:
                         update_query = """
-                        UPDATE titles 
-                        SET 
+                        UPDATE titles
+                        SET
                             gate_keep = :gate_keep,
                             entities = :entities,
-                            gate_reason = :gate_reason,
-                            gate_score = :gate_score,
-                            gate_actor_hit = :gate_actor_hit
+                            processing_status = 'gated'
                         WHERE id = :title_id
                         """
 
-                        # Build gate_reason
-                        if is_strategic:
-                            gate_reason = (
-                                f"Strategic: {len(entities['actors'])} entities"
-                            )
-                            gate_actor_hit = (
-                                entities["actors"][0] if entities["actors"] else None
-                            )
-                        else:
-                            if entities["actors"]:
-                                gate_reason = f"Blocked by stop words: {len(entities['actors'])} entities"
-                                stats["blocked_by_stop"] += 1
-                            else:
-                                gate_reason = "No strategic entities found"
-                            gate_actor_hit = None
+                        if not is_strategic and entities["actors"]:
+                            stats["blocked_by_stop"] += 1
 
                         session.execute(
                             text(update_query),
                             {
                                 "gate_keep": is_strategic,
                                 "entities": json.dumps(entities),
-                                "gate_reason": gate_reason,
-                                "gate_score": 0.8 if is_strategic else 0.2,
-                                "gate_actor_hit": gate_actor_hit,
                                 "title_id": title_data["id"],
                             },
                         )
