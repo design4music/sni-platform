@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from loguru import logger
 from sqlalchemy import text
 
+from core.config import get_config
 from core.database import get_db_session
 
 
@@ -32,6 +33,7 @@ class CentroidMatcher:
     """
 
     def __init__(self):
+        self.config = get_config()
         self.centroids: List[Dict[str, Any]] = []
         self.actor_variants = self._build_actor_variants()
         self.theater_hierarchy = self._build_theater_hierarchy()
@@ -281,10 +283,10 @@ class CentroidMatcher:
 
         # Determine confidence level and LLM verification need
         requires_llm = False
-        if best_score >= 0.7:
+        if best_score >= self.config.enrichment_confidence_high:
             # High confidence - auto-assign
             confidence_level = "high"
-        elif best_score >= 0.4:
+        elif best_score >= self.config.enrichment_confidence_medium:
             # Medium confidence - needs LLM verification
             confidence_level = "medium"
             requires_llm = True

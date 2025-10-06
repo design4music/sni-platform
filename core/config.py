@@ -192,6 +192,55 @@ class SNIConfig(BaseSettings):
         default=4, env="PHASE_4_CONCURRENCY"
     )  # Parallel enrichment processing
 
+    # Business Logic Thresholds
+    enrichment_confidence_high: float = Field(
+        default=0.7, env="ENRICHMENT_CONFIDENCE_HIGH"
+    )  # Centroid match high confidence threshold
+    enrichment_confidence_medium: float = Field(
+        default=0.4, env="ENRICHMENT_CONFIDENCE_MEDIUM"
+    )  # Centroid match medium confidence threshold
+    enrichment_summary_min_words: int = Field(
+        default=50, env="ENRICHMENT_SUMMARY_MIN_WORDS"
+    )  # Minimum words for valid summary
+    enrichment_summary_max_words: int = Field(
+        default=120, env="ENRICHMENT_SUMMARY_MAX_WORDS"
+    )  # Maximum words in summary before truncation
+    enrichment_keyword_score_bonus: int = Field(
+        default=2, env="ENRICHMENT_KEYWORD_SCORE_BONUS"
+    )  # Points added per strategic keyword match
+    enrichment_max_title_count_score: int = Field(
+        default=10, env="ENRICHMENT_MAX_TITLE_COUNT_SCORE"
+    )  # Cap for title count in priority scoring
+    enrichment_recency_days: int = Field(
+        default=7, env="ENRICHMENT_RECENCY_DAYS"
+    )  # Days to look back for enrichment queue
+
+    ef_title_max_length: int = Field(
+        default=120, env="EF_TITLE_MAX_LENGTH"
+    )  # Maximum characters for EF title
+    ef_summary_max_length: int = Field(
+        default=280, env="EF_SUMMARY_MAX_LENGTH"
+    )  # Maximum characters for EF summary
+
+    map_success_rate_threshold: float = Field(
+        default=0.5, env="MAP_SUCCESS_RATE_THRESHOLD"
+    )  # Minimum success rate for MAP clustering (50%)
+
+    strategic_priority_keywords: list = Field(
+        default_factory=lambda: [
+            "NATO",
+            "nuclear",
+            "sanctions",
+            "invasion",
+            "assassination",
+            "diplomatic",
+            "alliance",
+            "security",
+            "escalation",
+        ],
+        env="STRATEGIC_PRIORITY_KEYWORDS"
+    )  # Keywords that boost EF enrichment priority
+
     # Monitoring and Safety
     pipeline_error_threshold: int = Field(default=3, env="PIPELINE_ERROR_THRESHOLD")
     pipeline_heartbeat_file: str = Field(

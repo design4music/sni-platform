@@ -128,17 +128,17 @@ class ReduceAssembler:
             ef_title = response_data["ef_title"].strip()
             ef_summary = response_data["ef_summary"].strip()
 
-            if len(ef_title) > 120:
+            if len(ef_title) > self.config.ef_title_max_length:
                 logger.warning(
                     f"REDUCE: EF title too long ({len(ef_title)} chars), truncating"
                 )
-                ef_title = ef_title[:117] + "..."
+                ef_title = ef_title[: self.config.ef_title_max_length - 3] + "..."
 
-            if len(ef_summary) > 280:
+            if len(ef_summary) > self.config.ef_summary_max_length:
                 logger.warning(
                     f"REDUCE: EF summary too long ({len(ef_summary)} chars), truncating"
                 )
-                ef_summary = ef_summary[:277] + "..."
+                ef_summary = ef_summary[: self.config.ef_summary_max_length - 3] + "..."
 
             # Validate events
             events = response_data["events"]

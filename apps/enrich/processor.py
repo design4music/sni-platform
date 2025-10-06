@@ -246,7 +246,7 @@ class EFEnrichmentProcessor:
             ef_context = EFContext()
 
             # High confidence mechanical match
-            if match_result.confidence_score >= 0.7:
+            if match_result.confidence_score >= self.config.enrichment_confidence_high:
                 ef_context.macro_link = match_result.centroid_id
                 logger.debug(
                     f"ENRICH: High confidence centroid match: {match_result.centroid_id}"
@@ -524,26 +524,20 @@ class EFEnrichmentProcessor:
 
                     # Calculate priority score
                     days_old = (datetime.utcnow() - result.created_at).days
-                    recency_score = max(0, 7 - days_old)  # Higher for newer
-                    size_score = min(result.title_count, 10)  # Cap at 10
+                    recency_score = max(
+                        0, self.config.enrichment_recency_days - days_old
+                    )  # Higher for newer
+                    size_score = min(
+                        result.title_count, self.config.enrichment_max_title_count_score
+                    )  # Cap scoring
 
                     # Strategic keyword bonus
                     keyword_score = 0
-                    strategic_keywords = [
-                        "NATO",
-                        "nuclear",
-                        "sanctions",
-                        "invasion",
-                        "assassination",
-                        "diplomatic",
-                        "alliance",
-                        "security",
-                        "escalation",
-                    ]
+                    strategic_keywords = self.config.strategic_priority_keywords
                     title_lower = result.title.lower()
                     for keyword in strategic_keywords:
                         if keyword.lower() in title_lower:
-                            keyword_score += 2
+                            keyword_score += self.config.enrichment_keyword_score_bonus
 
                     total_score = recency_score + size_score + keyword_score
                     candidates.append((ef_id, total_score))
@@ -681,7 +675,7 @@ class EFEnrichmentProcessor:
             ef_context = EFContext()
 
             # High confidence mechanical match
-            if match_result.confidence_score >= 0.7:
+            if match_result.confidence_score >= self.config.enrichment_confidence_high:
                 ef_context.macro_link = match_result.centroid_id
                 logger.debug(
                     f"ENRICH: High confidence centroid match: {match_result.centroid_id}"
@@ -807,12 +801,15 @@ class EFEnrichmentProcessor:
 
                 # Use LLM response as enhanced summary
                 enhanced_summary = response_text.strip()
-                if enhanced_summary and len(enhanced_summary) > 50:
+                if (
+                    enhanced_summary
+                    and len(enhanced_summary) > self.config.enrichment_summary_min_words
+                ):
                     # Log word count for monitoring
                     words = enhanced_summary.split()
-                    if len(words) > 120:
+                    if len(words) > self.config.enrichment_summary_max_words:
                         logger.warning(
-                            f"ENRICH: Summary too long ({len(words)} words) - LLM should follow 80-120 word limit"
+                            f"ENRICH: Summary too long ({len(words)} words) - LLM should follow {self.config.enrichment_summary_max_words} word limit"
                         )
                     return enhanced_summary
 

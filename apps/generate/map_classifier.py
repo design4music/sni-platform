@@ -381,7 +381,7 @@ class MapClassifier:
             f"MAP: Completed {successful_batches}/{len(batches)} batches successfully ({success_rate:.1%})"
         )
 
-        if success_rate < 0.5:  # Less than 50% success
+        if success_rate < self.config.map_success_rate_threshold:
             raise Exception(
                 f"MAP incident clustering failed: only {success_rate:.1%} of batches succeeded"
             )
@@ -466,7 +466,7 @@ class MapClassifier:
             f"MAP: Completed {successful_batches}/{len(batches)} batches successfully ({success_rate:.1%})"
         )
 
-        if success_rate < 0.5:  # Less than 50% success
+        if success_rate < self.config.map_success_rate_threshold:
             raise Exception(
                 f"MAP phase failed: only {success_rate:.1%} of batches succeeded"
             )
