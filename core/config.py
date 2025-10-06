@@ -181,6 +181,17 @@ class SNIConfig(BaseSettings):
         default=30, env="PHASE_4_TIMEOUT_MINUTES"
     )  # Enrichment: 100 EFs with LLM
 
+    # Concurrency Settings
+    phase_2_concurrency: int = Field(
+        default=5, env="PHASE_2_CONCURRENCY"
+    )  # Parallel LLM calls for P2 filtering (5-10 recommended)
+    phase_2_mini_batch_size: int = Field(
+        default=100, env="PHASE_2_MINI_BATCH_SIZE"
+    )  # Mini-batch size for parallel processing (memory management)
+    phase_4_concurrency: int = Field(
+        default=4, env="PHASE_4_CONCURRENCY"
+    )  # Parallel enrichment processing
+
     # Monitoring and Safety
     pipeline_error_threshold: int = Field(default=3, env="PIPELINE_ERROR_THRESHOLD")
     pipeline_heartbeat_file: str = Field(

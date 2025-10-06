@@ -20,6 +20,7 @@ sys.path.insert(0, str(project_root))
 
 from apps.filter.entity_enrichment import get_entity_enrichment_service
 from core.checkpoint import get_checkpoint_manager
+from core.config import get_config
 from core.database import get_db_session
 
 
@@ -129,84 +130,118 @@ async def run_enhanced_gate_processing_batch(
             )
             return stats
 
-        # Process each title
-        for i, row in enumerate(titles_to_process, 1):
-            try:
-                title_data = {
-                    "id": str(row.id),
-                    "title_display": row.title_display,
-                    "gate_keep": row.gate_keep,
-                    "entities": row.entities,
-                }
+        # Get parallel processing config
+        config = get_config()
+        concurrency = config.phase_2_concurrency
+        mini_batch_size = config.phase_2_mini_batch_size
+        logger.info(
+            f"Parallel processing enabled: concurrency={concurrency}, mini_batch={mini_batch_size}"
+        )
 
-                # Extract entities (this also determines strategic status)
-                entities = await entity_service.extract_entities_for_title(title_data)
+        # Semaphore for controlled concurrency
+        semaphore = asyncio.Semaphore(concurrency)
 
-                # Strategic gate decision based on entities
-                is_strategic = entities["is_strategic"]
+        async def process_single_title(row):
+            """Process single title with parallel LLM calls"""
+            async with semaphore:
+                try:
+                    title_data = {
+                        "id": str(row.id),
+                        "title_display": row.title_display,
+                        "gate_keep": row.gate_keep,
+                        "entities": row.entities,
+                    }
 
-                if not dry_run:
-                    # Update both gate_keep and entities in one query
-                    with get_db_session() as session:
-                        update_query = """
-                        UPDATE titles
-                        SET
-                            gate_keep = :gate_keep,
-                            entities = :entities,
-                            processing_status = 'gated'
-                        WHERE id = :title_id
-                        """
+                    entities = await entity_service.extract_entities_for_title(
+                        title_data
+                    )
+                    is_strategic = entities["is_strategic"]
 
-                        if not is_strategic and entities["actors"]:
+                    return {
+                        "title_id": title_data["id"],
+                        "is_strategic": is_strategic,
+                        "entities": entities,
+                        "success": True,
+                    }
+                except Exception as e:
+                    logger.error(f"Error processing title {row.id}: {e}")
+                    return {"title_id": str(row.id), "success": False, "error": str(e)}
+
+        # Process in mini-batches
+        for batch_start in range(0, len(titles_to_process), mini_batch_size):
+            batch_end = min(batch_start + mini_batch_size, len(titles_to_process))
+            mini_batch = titles_to_process[batch_start:batch_end]
+
+            # Parallel entity extraction
+            tasks = [process_single_title(row) for row in mini_batch]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Batch database write (single transaction)
+            if not dry_run:
+                with get_db_session() as session:
+                    for result in results:
+                        if isinstance(result, Exception) or not result.get("success"):
+                            stats["errors"] += 1
+                            continue
+
+                        stats["titles_processed"] += 1
+                        if result["is_strategic"]:
+                            stats["strategic_titles"] += 1
+                        else:
+                            stats["non_strategic_titles"] += 1
+
+                        if result["entities"]["actors"]:
+                            stats["entities_extracted"] += 1
+
+                        if not result["is_strategic"] and result["entities"]["actors"]:
                             stats["blocked_by_stop"] += 1
 
                         session.execute(
-                            text(update_query),
+                            text(
+                                """
+                                UPDATE titles
+                                SET gate_keep = :gate_keep,
+                                    entities = :entities,
+                                    processing_status = 'gated'
+                                WHERE id = :title_id
+                                """
+                            ),
                             {
-                                "gate_keep": is_strategic,
-                                "entities": json.dumps(entities),
-                                "title_id": title_data["id"],
+                                "gate_keep": result["is_strategic"],
+                                "entities": json.dumps(result["entities"]),
+                                "title_id": result["title_id"],
                             },
                         )
-                        session.commit()
 
-                # Update stats
-                stats["titles_processed"] += 1
-                if is_strategic:
-                    stats["strategic_titles"] += 1
-                else:
-                    stats["non_strategic_titles"] += 1
+                    session.commit()
+            else:
+                # Dry run - just update stats
+                for result in results:
+                    if isinstance(result, Exception) or not result.get("success"):
+                        stats["errors"] += 1
+                        continue
 
-                if entities["actors"]:
-                    stats["entities_extracted"] += 1
+                    stats["titles_processed"] += 1
+                    if result["is_strategic"]:
+                        stats["strategic_titles"] += 1
+                    else:
+                        stats["non_strategic_titles"] += 1
 
-                # Update checkpoint every 10 items
-                if i % 10 == 0:
-                    checkpoint_manager.update_progress(
-                        processed_count=processed_count + stats["titles_processed"],
-                        last_title_id=title_data["id"],
-                        total_strategic=stats["strategic_titles"],
-                        total_non_strategic=stats["non_strategic_titles"],
-                        total_entities=stats["entities_extracted"],
-                    )
+                    if result["entities"]["actors"]:
+                        stats["entities_extracted"] += 1
 
-                # Log progress every 100 titles
-                if stats["titles_processed"] % 100 == 0:
-                    logger.info(f"Processed {stats['titles_processed']} titles...")
+            # Checkpoint after each mini-batch
+            checkpoint_manager.update_progress(
+                processed_count=processed_count + stats["titles_processed"],
+                last_title_id=str(mini_batch[-1].id),
+                total_strategic=stats["strategic_titles"],
+                total_non_strategic=stats["non_strategic_titles"],
+                total_entities=stats["entities_extracted"],
+            )
 
-            except Exception as e:
-                logger.error(f"Error processing title {row.id}: {e}")
-                stats["errors"] += 1
-
-                # Update checkpoint even on error
-                checkpoint_manager.update_progress(
-                    processed_count=processed_count + stats["titles_processed"],
-                    last_title_id=str(row.id),
-                    total_strategic=stats["strategic_titles"],
-                    total_non_strategic=stats["non_strategic_titles"],
-                    total_entities=stats["entities_extracted"],
-                )
-                continue
+            logger.info(
+                f"Processed {stats['titles_processed']}/{len(titles_to_process)} titles"
+            )
 
         # Final checkpoint update
         if titles_to_process:
