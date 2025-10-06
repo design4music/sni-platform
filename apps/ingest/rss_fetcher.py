@@ -108,7 +108,11 @@ class RSSFetcher:
                     if domain.startswith("www."):
                         domain = domain[4:]
                     publisher_domain = domain
-                except:
+                except (AttributeError, ValueError, TypeError) as e:
+                    # AttributeError: entry.source or entry.source.href missing
+                    # ValueError: invalid URL format
+                    # TypeError: href is not a string
+                    logger.debug(f"Failed to extract domain from entry.source: {e}")
                     pass
 
         # Fallback to feed title only if entry.source missing
