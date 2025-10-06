@@ -34,6 +34,29 @@ class PipelineOrchestrator:
         self.error_count = 0
         self.status = {"phase": "idle", "last_run": None, "errors": []}
 
+    def _safe_decode(self, byte_data: bytes) -> str:
+        """
+        Safely decode bytes with multi-encoding fallback for Windows console output
+        Tries: UTF-8 -> CP1252 (Windows) -> Latin-1 (accepts all bytes)
+        """
+        if not byte_data:
+            return ""
+
+        # Try UTF-8 first (proper encoding)
+        try:
+            return byte_data.decode("utf-8")
+        except UnicodeDecodeError:
+            pass
+
+        # Try CP1252 (Windows console default for international chars)
+        try:
+            return byte_data.decode("cp1252")
+        except UnicodeDecodeError:
+            pass
+
+        # Latin-1 accepts all byte values (fallback)
+        return byte_data.decode("latin-1")
+
     async def _run_subprocess_with_timeout(
         self, cmd: list, timeout_minutes: int, phase_name: str
     ) -> Dict:
@@ -62,11 +85,14 @@ class PipelineOrchestrator:
             )
 
             if process.returncode != 0:
-                raise RuntimeError(f"{phase_name} failed: {stderr.decode()}")
+                raise RuntimeError(f"{phase_name} failed: {self._safe_decode(stderr)}")
 
             return {
                 "status": "success",
-                "result": {"stdout": stdout.decode(), "stderr": stderr.decode()},
+                "result": {
+                    "stdout": self._safe_decode(stdout),
+                    "stderr": self._safe_decode(stderr),
+                },
             }
 
         except asyncio.TimeoutError:

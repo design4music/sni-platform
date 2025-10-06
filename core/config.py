@@ -172,8 +172,8 @@ class SNIConfig(BaseSettings):
         default=10, env="PHASE_1_TIMEOUT_MINUTES"
     )  # RSS ingestion: 137 feeds
     phase_2_timeout_minutes: int = Field(
-        default=5, env="PHASE_2_TIMEOUT_MINUTES"
-    )  # Strategic filtering: 1000 titles
+        default=15, env="PHASE_2_TIMEOUT_MINUTES"
+    )  # Strategic filtering: 10k batch with LLM fallback
     phase_3_timeout_minutes: int = Field(
         default=15, env="PHASE_3_TIMEOUT_MINUTES"
     )  # EF generation: 500 titles
