@@ -172,7 +172,7 @@ class SNIConfig(BaseSettings):
         default=10, env="PHASE_1_TIMEOUT_MINUTES"
     )  # RSS ingestion: 137 feeds
     phase_2_timeout_minutes: int = Field(
-        default=15, env="PHASE_2_TIMEOUT_MINUTES"
+        default=30, env="PHASE_2_TIMEOUT_MINUTES"
     )  # Strategic filtering: 10k batch with LLM fallback
     phase_3_timeout_minutes: int = Field(
         default=15, env="PHASE_3_TIMEOUT_MINUTES"
@@ -183,7 +183,7 @@ class SNIConfig(BaseSettings):
 
     # Concurrency Settings
     phase_2_concurrency: int = Field(
-        default=5, env="PHASE_2_CONCURRENCY"
+        default=10, env="PHASE_2_CONCURRENCY"
     )  # Parallel LLM calls for P2 filtering (5-10 recommended)
     phase_2_mini_batch_size: int = Field(
         default=100, env="PHASE_2_MINI_BATCH_SIZE"
@@ -238,7 +238,7 @@ class SNIConfig(BaseSettings):
             "security",
             "escalation",
         ],
-        env="STRATEGIC_PRIORITY_KEYWORDS"
+        env="STRATEGIC_PRIORITY_KEYWORDS",
     )  # Keywords that boost EF enrichment priority
 
     # Monitoring and Safety
