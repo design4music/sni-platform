@@ -9,7 +9,7 @@ from typing import Dict, List
 
 from loguru import logger
 
-from apps.generate.llm_client import get_gen1_llm_client
+from core.llm_client import get_llm_client
 from apps.generate.mapreduce_models import (IncidentCluster,
                                             IncidentClustering,
                                             TitleClassification)
@@ -27,7 +27,7 @@ class MapClassifier:
 
     def __init__(self, config: SNIConfig):
         self.config = config
-        self.llm_client = get_gen1_llm_client()
+        self.llm_client = get_llm_client()
 
     async def cluster_incidents_batch(
         self, titles: List[Dict[str, str]]

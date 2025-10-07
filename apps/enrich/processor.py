@@ -15,13 +15,9 @@ from sqlalchemy import text
 from apps.enrich.centroid_matcher import CentroidMatcher
 from apps.enrich.models import (CanonicalActor, ComparableEvent, EFContext,
                                 EnrichmentPayload, EnrichmentRecord, Magnitude)
-from apps.enrich.prompts import (build_canonicalize_prompt,
-                                 build_macro_link_prompt,
-                                 build_narrative_summary_prompt,
-                                 extract_magnitudes_from_titles)
-from apps.generate.llm_client import get_gen1_llm_client
 from core.config import get_config
 from core.database import get_db_session
+from core.llm_client import extract_magnitudes_from_titles, get_llm_client
 
 
 class EFEnrichmentProcessor:
@@ -38,7 +34,7 @@ class EFEnrichmentProcessor:
 
     def __init__(self):
         self.config = get_config()
-        self.llm_client = get_gen1_llm_client()
+        self.llm_client = get_llm_client()
         self.centroid_matcher = CentroidMatcher()
 
         # Daily processing limits
@@ -282,8 +278,8 @@ class EFEnrichmentProcessor:
                     if centroid_data:
                         available_centroids.append(centroid_data)
 
-                # Build macro-link assessment prompt
-                system_prompt, user_prompt = build_macro_link_prompt(
+                # Call assess_macro_link method from unified LLM client
+                response_data = await self.llm_client.assess_macro_link(
                     ef_title=ef_data["title"],
                     ef_summary=ef_data["summary"],
                     event_type=ef_data.get("event_type", ""),
@@ -291,16 +287,6 @@ class EFEnrichmentProcessor:
                     canonical_actors=[],  # Use empty list to avoid dependency
                     available_centroids=available_centroids,
                 )
-
-                # Call LLM for macro-link assessment
-                response_text = await self.llm_client._call_llm(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    temperature=0.0,
-                )
-
-                # Parse LLM response
-                response_data = self.llm_client._extract_json(response_text)
                 ef_context_data = response_data.get("ef_context", {})
 
                 ef_context.macro_link = ef_context_data.get("macro_link")
@@ -362,23 +348,13 @@ class EFEnrichmentProcessor:
         Canonicalize actors, extract roles and policy status (Micro-Prompt 1)
         """
         try:
-            # Build canonicalization prompt
-            system_prompt, user_prompt = build_canonicalize_prompt(
+            # Call canonicalize_actors method from unified LLM client
+            response_data = await self.llm_client.canonicalize_actors(
                 ef_title=ef_data["title"],
                 event_type=ef_data["event_type"],
                 primary_theater=ef_data["primary_theater"],
                 member_titles=member_titles,
             )
-
-            # Call LLM with conservative settings - no token limit, rely on prompt instructions
-            response_text = await self.llm_client._call_llm(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                temperature=0.0,  # Deterministic
-            )
-
-            # Parse JSON response
-            response_data = self.llm_client._extract_json(response_text)
 
             # Validate and clean response
             canonical_actors = []
@@ -711,8 +687,8 @@ class EFEnrichmentProcessor:
                     if centroid_data:
                         available_centroids.append(centroid_data)
 
-                # Build macro-link assessment prompt
-                system_prompt, user_prompt = build_macro_link_prompt(
+                # Call assess_macro_link method from unified LLM client
+                response_data = await self.llm_client.assess_macro_link(
                     ef_title=ef_data["title"],
                     ef_summary=ef_data["summary"],
                     event_type=ef_data.get("event_type", ""),
@@ -720,16 +696,6 @@ class EFEnrichmentProcessor:
                     canonical_actors=actor_names,
                     available_centroids=available_centroids,
                 )
-
-                # Call LLM for macro-link assessment
-                response_text = await self.llm_client._call_llm(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    temperature=0.0,
-                )
-
-                # Parse LLM response
-                response_data = self.llm_client._extract_json(response_text)
                 ef_context_data = response_data.get("ef_context", {})
 
                 # Populate ef_context from LLM response
@@ -782,8 +748,8 @@ class EFEnrichmentProcessor:
 
                 actor_names = [actor.name for actor in enrichment.canonical_actors]
 
-                # Build narrative summary prompt
-                system_prompt, user_prompt = build_narrative_summary_prompt(
+                # Call enhance_narrative_summary method from unified LLM client
+                enhanced_summary = await self.llm_client.enhance_narrative_summary(
                     ef_title=ef_data["title"],
                     current_summary=ef_data["summary"],
                     event_type=ef_data.get("event_type", ""),
@@ -791,16 +757,6 @@ class EFEnrichmentProcessor:
                     canonical_actors=actor_names,
                     member_titles=member_titles,
                 )
-
-                # Call LLM for narrative enhancement
-                response_text = await self.llm_client._call_llm(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    temperature=0.1,  # Slight creativity for narrative flow
-                )
-
-                # Use LLM response as enhanced summary
-                enhanced_summary = response_text.strip()
                 if (
                     enhanced_summary
                     and len(enhanced_summary) > self.config.enrichment_summary_min_words

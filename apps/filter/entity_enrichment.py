@@ -17,8 +17,8 @@ from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
 from apps.filter.title_processor_helpers import (update_processing_stats,
                                                  update_title_entities)
-from apps.generate.llm_client import Gen1LLMClient
 from core.database import get_db_session
+from core.llm_client import LLMClient
 
 
 class EntityEnrichmentService:
@@ -35,7 +35,7 @@ class EntityEnrichmentService:
 
     def __init__(self):
         self.taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
-        self.llm_client = Gen1LLMClient()
+        self.llm_client = LLMClient()
 
     async def extract_entities_for_title(
         self, title_data: Dict[str, Any]
@@ -99,34 +99,7 @@ class EntityEnrichmentService:
         Returns:
             bool: True if strategic, False if not
         """
-        try:
-            system_prompt = "Does this relate to politics, economics, technology, society, or environmental risks?"
-            user_prompt = f"'{title_text}' - 0 or 1"
-
-            response = await self.llm_client._call_llm(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                max_tokens=5,
-                temperature=0.0,
-            )
-
-            # Parse response - expect "0" or "1"
-            response_clean = response.strip().lower()
-            if "1" in response_clean:
-                logger.debug(f"LLM flagged as strategic: '{title_text[:50]}'")
-                return True
-            elif "0" in response_clean:
-                logger.debug(f"LLM flagged as non-strategic: '{title_text[:50]}'")
-                return False
-            else:
-                logger.warning(
-                    f"LLM unexpected response '{response}' for '{title_text[:50]}', defaulting to non-strategic"
-                )
-                return False
-
-        except Exception as e:
-            logger.error(f"LLM strategic review failed for '{title_text[:50]}': {e}")
-            return False  # Default to non-strategic on error
+        return await self.llm_client.strategic_review(title_text)
 
     async def enrich_titles_batch(
         self, title_ids: List[str] = None, limit: int = 1000, since_hours: int = 24

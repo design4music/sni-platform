@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from loguru import logger
 
-from apps.generate.llm_client import get_gen1_llm_client
+from core.llm_client import get_llm_client
 from apps.generate.mapreduce_models import IncidentAnalysis, IncidentCluster
 from apps.generate.mapreduce_prompts import build_incident_analysis_prompt
 from apps.generate.models import EventFamily
@@ -24,7 +24,7 @@ class ReduceAssembler:
 
     def __init__(self, config: SNIConfig):
         self.config = config
-        self.llm_client = get_gen1_llm_client()
+        self.llm_client = get_llm_client()
 
     async def analyze_incident_cluster(
         self, incident_cluster: IncidentCluster, all_titles: List[Dict[str, str]]
