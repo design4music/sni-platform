@@ -234,33 +234,6 @@ class MultiVocabTaxonomyExtractor:
         return None
 
 
-# Backwards Compatibility Classes
-class ActorExtractor:
-    """
-    Legacy ActorExtractor wrapper for backwards compatibility.
-    Delegates to MultiVocabTaxonomyExtractor with actors-only vocabulary.
-    """
-
-    def __init__(self, aliases: Dict[str, List[str]]):
-        """Initialize with actors-only vocabulary for backwards compatibility"""
-        self._extractor = MultiVocabTaxonomyExtractor(
-            go_actors=aliases, go_people={}, stop_culture={}, go_taxonomy=None
-        )
-
-    @staticmethod
-    def normalize(text: str) -> str:
-        """Delegate to new extractor's normalize method"""
-        return MultiVocabTaxonomyExtractor.normalize(text)
-
-    def first_hit(self, text: str) -> Optional[str]:
-        """Legacy API - uses new multi-vocab system underneath"""
-        return self._extractor.strategic_first_hit(text)
-
-    def all_hits(self, text: str) -> List[str]:
-        """Legacy API - uses new multi-vocab system underneath"""
-        return self._extractor.all_strategic_hits(text)
-
-
 # Factory Functions
 def create_multi_vocab_taxonomy_extractor() -> MultiVocabTaxonomyExtractor:
     """
@@ -284,19 +257,3 @@ def create_multi_vocab_taxonomy_extractor() -> MultiVocabTaxonomyExtractor:
     go_taxonomy = load_go_taxonomy_aliases(config.go_taxonomy_csv_path)
 
     return MultiVocabTaxonomyExtractor(go_actors, go_people, stop_culture, go_taxonomy)
-
-
-def create_actor_extractor() -> ActorExtractor:
-    """
-    Legacy factory function - maintains backwards compatibility.
-    Creates old-style ActorExtractor with actors.csv only.
-
-    Returns:
-        ActorExtractor instance (legacy wrapper around new system)
-    """
-    from apps.filter.vocab_loader import load_actor_aliases
-    from core.config import get_config
-
-    config = get_config()
-    aliases = load_actor_aliases(config.actors_csv_path)
-    return ActorExtractor(aliases)
