@@ -6,7 +6,6 @@ to populate both gate_keep and titles.entities columns in one pass.
 """
 
 import asyncio
-import json
 import sys
 from pathlib import Path
 from typing import Any, Dict
@@ -18,10 +17,15 @@ from sqlalchemy import text
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from apps.filter.entity_enrichment import get_entity_enrichment_service
-from core.checkpoint import get_checkpoint_manager
-from core.config import get_config
-from core.database import get_db_session
+from apps.filter.entity_enrichment import \
+    get_entity_enrichment_service  # noqa: E402
+from apps.filter.title_processor_helpers import (  # noqa: E402
+    update_processing_stats,
+    update_title_entities,
+)
+from core.checkpoint import get_checkpoint_manager  # noqa: E402
+from core.config import get_config  # noqa: E402
+from core.database import get_db_session  # noqa: E402
 
 
 async def run_enhanced_gate_processing_batch(
@@ -184,33 +188,17 @@ async def run_enhanced_gate_processing_batch(
                             stats["errors"] += 1
                             continue
 
-                        stats["titles_processed"] += 1
-                        if result["is_strategic"]:
-                            stats["strategic_titles"] += 1
-                        else:
-                            stats["non_strategic_titles"] += 1
+                        # Use shared helper for DB update
+                        update_title_entities(
+                            session,
+                            result["title_id"],
+                            result["entities"],
+                            result["is_strategic"],
+                        )
 
-                        if result["entities"]["actors"]:
-                            stats["entities_extracted"] += 1
-
-                        if not result["is_strategic"] and result["entities"]["actors"]:
-                            stats["blocked_by_stop"] += 1
-
-                        session.execute(
-                            text(
-                                """
-                                UPDATE titles
-                                SET gate_keep = :gate_keep,
-                                    entities = :entities,
-                                    processing_status = 'gated'
-                                WHERE id = :title_id
-                                """
-                            ),
-                            {
-                                "gate_keep": result["is_strategic"],
-                                "entities": json.dumps(result["entities"]),
-                                "title_id": result["title_id"],
-                            },
+                        # Use shared helper for stats tracking
+                        update_processing_stats(
+                            stats, result["entities"], result["is_strategic"]
                         )
 
                     session.commit()
@@ -221,14 +209,10 @@ async def run_enhanced_gate_processing_batch(
                         stats["errors"] += 1
                         continue
 
-                    stats["titles_processed"] += 1
-                    if result["is_strategic"]:
-                        stats["strategic_titles"] += 1
-                    else:
-                        stats["non_strategic_titles"] += 1
-
-                    if result["entities"]["actors"]:
-                        stats["entities_extracted"] += 1
+                    # Use shared helper for stats tracking
+                    update_processing_stats(
+                        stats, result["entities"], result["is_strategic"]
+                    )
 
             # Checkpoint after each mini-batch
             checkpoint_manager.update_progress(
@@ -356,37 +340,14 @@ async def run_enhanced_gate_processing(
                 if not dry_run:
                     # Update both gate_keep and entities in one query
                     with get_db_session() as session:
-                        update_query = """
-                        UPDATE titles
-                        SET
-                            gate_keep = :gate_keep,
-                            entities = :entities,
-                            processing_status = 'gated'
-                        WHERE id = :title_id
-                        """
-
-                        if not is_strategic and entities["actors"]:
-                            stats["blocked_by_stop"] += 1
-
-                        session.execute(
-                            text(update_query),
-                            {
-                                "gate_keep": is_strategic,
-                                "entities": json.dumps(entities),
-                                "title_id": title_data["id"],
-                            },
+                        # Use shared helper for DB update
+                        update_title_entities(
+                            session, title_data["id"], entities, is_strategic
                         )
                         session.commit()
 
-                # Update stats
-                stats["titles_processed"] += 1
-                if is_strategic:
-                    stats["strategic_titles"] += 1
-                else:
-                    stats["non_strategic_titles"] += 1
-
-                if entities["actors"]:
-                    stats["entities_extracted"] += 1
+                # Use shared helper for stats tracking
+                update_processing_stats(stats, entities, is_strategic)
 
                 # Log progress every 100 titles
                 if stats["titles_processed"] % 100 == 0:

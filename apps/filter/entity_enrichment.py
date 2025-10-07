@@ -8,7 +8,6 @@ to populate titles.entities jsonb column for bucketless processing.
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any, Dict, List
 
 from loguru import logger
@@ -16,6 +15,8 @@ from sqlalchemy import text
 
 from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
+from apps.filter.title_processor_helpers import (update_processing_stats,
+                                                 update_title_entities)
 from apps.generate.llm_client import Gen1LLMClient
 from core.database import get_db_session
 
@@ -36,7 +37,9 @@ class EntityEnrichmentService:
         self.taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
         self.llm_client = Gen1LLMClient()
 
-    async def extract_entities_for_title(self, title_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def extract_entities_for_title(
+        self, title_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Extract entities for a single title.
 
@@ -104,7 +107,7 @@ class EntityEnrichmentService:
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 max_tokens=5,
-                temperature=0.0
+                temperature=0.0,
             )
 
             # Parse response - expect "0" or "1"
@@ -116,7 +119,9 @@ class EntityEnrichmentService:
                 logger.debug(f"LLM flagged as non-strategic: '{title_text[:50]}'")
                 return False
             else:
-                logger.warning(f"LLM unexpected response '{response}' for '{title_text[:50]}', defaulting to non-strategic")
+                logger.warning(
+                    f"LLM unexpected response '{response}' for '{title_text[:50]}', defaulting to non-strategic"
+                )
                 return False
 
         except Exception as e:
@@ -193,35 +198,13 @@ class EntityEnrichmentService:
                         # Update database with simplified fields
                         is_strategic = entities["is_strategic"]
 
-                        update_query = """
-                        UPDATE titles
-                        SET entities = :entities,
-                            gate_keep = :gate_keep,
-                            processing_status = 'gated'
-                        WHERE id = :title_id
-                        """
-
-                        session.execute(
-                            text(update_query),
-                            {
-                                "entities": json.dumps(entities),
-                                "gate_keep": is_strategic,
-                                "title_id": title_data["id"],
-                            },
+                        # Use shared helper for DB update
+                        update_title_entities(
+                            session, title_data["id"], entities, is_strategic
                         )
 
-                        # Update stats
-                        stats["processed"] += 1
-                        if entities["is_strategic"]:
-                            stats["strategic"] += 1
-                        else:
-                            stats["non_strategic"] += 1
-                            # Check if blocked by stop words
-                            if (
-                                len(entities["actors"]) > 0
-                                or len(entities["people"]) > 0
-                            ):
-                                stats["blocked_by_stop"] += 1
+                        # Use shared helper for stats tracking
+                        update_processing_stats(stats, entities, is_strategic)
 
                     except Exception as e:
                         logger.error(f"Error processing title {row.id}: {e}")

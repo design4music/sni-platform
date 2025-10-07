@@ -12,6 +12,7 @@ sys.path.insert(0, str(project_root))
 
 from apps.filter.entity_enrichment import get_entity_enrichment_service
 
+
 def test_llm_hybrid_filtering():
     """Test that LLM hybrid filtering works for ambiguous titles"""
 
@@ -65,6 +66,7 @@ def test_llm_hybrid_filtering():
     print()
     print("=== TEST COMPLETE ===")
     print("Expected: Ambiguous titles use LLM, static titles use taxonomy")
+
 
 if __name__ == "__main__":
     test_llm_hybrid_filtering()

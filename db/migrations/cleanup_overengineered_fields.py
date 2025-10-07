@@ -16,8 +16,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from core.database import get_db_session
 from sqlalchemy import text
+
+from core.database import get_db_session
+
 
 def run_migration():
     """Remove over-engineered fields from titles table"""
@@ -42,23 +44,34 @@ def run_migration():
         gate_fields = ["gate_score", "gate_actor_hit", "gate_at", "gate_reason"]
         for field in gate_fields:
             try:
-                session.execute(text(f"ALTER TABLE titles DROP COLUMN IF EXISTS {field}"))
+                session.execute(
+                    text(f"ALTER TABLE titles DROP COLUMN IF EXISTS {field}")
+                )
                 print(f"  Removed {field}")
             except Exception as e:
                 print(f"  Warning: Could not remove {field}: {e}")
 
         # Remove EF assignment fields (keep only event_family_id)
-        ef_fields = ["ef_assignment_confidence", "ef_assignment_reason", "ef_assignment_at"]
+        ef_fields = [
+            "ef_assignment_confidence",
+            "ef_assignment_reason",
+            "ef_assignment_at",
+        ]
         for field in ef_fields:
             try:
-                session.execute(text(f"ALTER TABLE titles DROP COLUMN IF EXISTS {field}"))
+                session.execute(
+                    text(f"ALTER TABLE titles DROP COLUMN IF EXISTS {field}")
+                )
                 print(f"  Removed {field}")
             except Exception as e:
                 print(f"  Warning: Could not remove {field}: {e}")
 
         session.commit()
         print("Migration completed successfully.")
-        print("Simplified schema keeps only essential fields: gate_keep (boolean), event_family_id (FK)")
+        print(
+            "Simplified schema keeps only essential fields: gate_keep (boolean), event_family_id (FK)"
+        )
+
 
 if __name__ == "__main__":
     run_migration()

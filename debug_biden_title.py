@@ -10,7 +10,9 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from apps.filter.taxonomy_extractor import create_multi_vocab_taxonomy_extractor
+from apps.filter.taxonomy_extractor import \
+    create_multi_vocab_taxonomy_extractor
+
 
 def debug_title_processing():
     """Debug the Biden-Ukraine title step by step"""
@@ -39,7 +41,7 @@ def debug_title_processing():
     # Check go_actors (countries)
     go_actors_hits = []
     for vocab in extractor.go_vocabs:
-        if hasattr(vocab, 'vocabulary_id') and 'actors' in vocab.vocabulary_id:
+        if hasattr(vocab, "vocabulary_id") and "actors" in vocab.vocabulary_id:
             matches = vocab.search_text(title)
             if matches:
                 go_actors_hits.extend(matches)
@@ -48,7 +50,7 @@ def debug_title_processing():
     # Check go_people
     go_people_hits = []
     for vocab in extractor.go_vocabs:
-        if hasattr(vocab, 'vocabulary_id') and 'people' in vocab.vocabulary_id:
+        if hasattr(vocab, "vocabulary_id") and "people" in vocab.vocabulary_id:
             matches = vocab.search_text(title)
             if matches:
                 go_people_hits.extend(matches)
@@ -57,7 +59,7 @@ def debug_title_processing():
     # Check stop_culture
     stop_hits = []
     for vocab in extractor.stop_vocabs:
-        if hasattr(vocab, 'vocabulary_id') and 'culture' in vocab.vocabulary_id:
+        if hasattr(vocab, "vocabulary_id") and "culture" in vocab.vocabulary_id:
             matches = vocab.search_text(title)
             if matches:
                 stop_hits.extend(matches)
@@ -76,6 +78,7 @@ def debug_title_processing():
             print("REASON: No positive signals from go_actors or go_people")
         else:
             print("REASON: Unknown - investigate further")
+
 
 if __name__ == "__main__":
     debug_title_processing()

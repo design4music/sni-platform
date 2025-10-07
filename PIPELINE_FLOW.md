@@ -69,23 +69,28 @@ RSS Sources → Ingestion → Strategic Gating → Entity Extraction → Inciden
 - Standard: ~2,000-5,000 titles ingested per run (varies by news cycle)
 - Batch mode: 137+ feeds processed in batches with checkpoint resume capability
 
-### 2. Enhanced Strategic Gate + Entity Processing (P2)
+### 2. LLM Hybrid Strategic Gate + Entity Processing (P2)
 **Entry Point:** `python -m apps.filter.run_enhanced_gate`
-**Purpose:** Combined strategic filtering and entity extraction in one pass
+**Purpose:** Two-phase strategic filtering with LLM fallback for ambiguous titles
 **Input:** Titles with `processing_status='pending'`
-**Output:** Updates `gate_keep`, `gate_reason`, `entities`, `gate_score`, `gate_actor_hit`
+**Output:** Updates `gate_keep`, `entities` with strategic determination and extracted actors
 
-**Strategic Filtering Logic:**
-- Actor matching against `actors.csv` (countries, organizations, leaders)
-- People matching against `go_people.csv` (strategic individuals)
-- Content filtering via `stop_culture.csv` (excludes sports, entertainment)
-- Strategic hit rate: ~10-30% depending on news cycle
+**LLM Hybrid Filtering Logic (Phase 1 + Phase 2):**
+- **Phase 1 (Static Taxonomy):** Fast keyword matching against CSV vocabularies
+  - Actor matching: `actors.csv` (countries, organizations, leaders)
+  - People matching: `go_people.csv` (strategic individuals)
+  - Stop filtering: `stop_culture.csv` (excludes sports, entertainment)
+- **Phase 2 (LLM Fallback):** For titles without static taxonomy matches
+  - DeepSeek LLM review with micro-prompt: "Does this relate to politics, economics, technology, society, or environmental risks?"
+  - Cost-effective: ~$0.54/day for 500 ambiguous titles
+  - Handles grammatical variations (e.g., "Ukrainian" vs "Ukraine")
+  - Async integration for proper event loop handling
 
-**Entity Extraction:**
-- Real-time actor extraction during gating
-- JSON storage in `titles.entities` field with proper serialization
-- Version tracking for extraction evolution
-- Actor canonicalization (e.g., "Putin" → "RU")
+**Entity Extraction & Storage:**
+- Combined extraction during strategic filtering (single pass)
+- JSON storage in `titles.entities` with version tracking ("2.0")
+- Structure: `{"actors": [...], "is_strategic": bool, "extraction_version": "2.0"}`
+- LLM-flagged strategic titles get placeholder: `["llm_strategic"]`
 
 **Timeout Mitigation:**
 - `--batch` flag for configurable title batch size (default: 1000)
