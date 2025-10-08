@@ -40,11 +40,7 @@ CREATE TABLE v2_titles (
     
     -- Embeddings (using pgvector)
     title_embedding VECTOR(384),       -- all-MiniLM-L6-v2 embeddings
-    
-    -- Processing status
-    processing_status VARCHAR(20) DEFAULT 'pending',  -- pending/completed/failed
-    processed_at TIMESTAMP,
-    
+
     -- Metadata
     created_at TIMESTAMP DEFAULT NOW(),
     

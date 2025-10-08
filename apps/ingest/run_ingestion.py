@@ -322,10 +322,10 @@ def main():
             title_result = session.execute(
                 text(
                     """
-                SELECT 
+                SELECT
                     COUNT(*) as total_titles,
-                    COUNT(*) FILTER (WHERE processing_status = 'pending') as pending_titles,
-                    COUNT(*) FILTER (WHERE processing_status = 'gated') as gated_titles
+                    COUNT(*) FILTER (WHERE gate_keep IS NULL) as pending_titles,
+                    COUNT(*) FILTER (WHERE gate_keep IS NOT NULL) as gated_titles
                 FROM titles
             """
                 )

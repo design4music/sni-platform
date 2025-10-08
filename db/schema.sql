@@ -75,11 +75,7 @@ CREATE TABLE titles (
     -- Embeddings (using pgvector if available, otherwise JSON)
     title_embedding vector(384),        -- all-MiniLM-L6-v2 embeddings
     title_embedding_json JSONB,         -- Fallback if no pgvector
-    
-    -- Processing status
-    processing_status VARCHAR(20) DEFAULT 'pending',  -- pending/gated/completed/failed
-    processed_at TIMESTAMP,
-    
+
     -- Metadata
     ingested_at TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW(),
@@ -183,11 +179,9 @@ CREATE INDEX idx_titles_published ON titles(pubdate_utc);
 CREATE INDEX idx_titles_hash ON titles(content_hash);
 
 -- Strategic Gate indexes (CLUST-1)
-CREATE INDEX idx_titles_processing_status ON titles(processing_status);
 CREATE INDEX idx_titles_gate_keep ON titles(gate_keep) WHERE gate_keep = true;
 CREATE INDEX idx_titles_gate_reason ON titles(gate_reason);
 CREATE INDEX idx_titles_gate_at ON titles(gate_at);
-CREATE INDEX idx_titles_pending_gate ON titles(processing_status, gate_at) WHERE processing_status = 'pending' AND gate_at IS NULL;
 
 CREATE INDEX idx_buckets_date ON buckets(date_window_start, date_window_end);
 CREATE INDEX idx_events_bucket ON events(bucket_id);

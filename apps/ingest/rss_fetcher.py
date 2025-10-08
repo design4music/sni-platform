@@ -351,12 +351,12 @@ class RSSFetcher:
                             feed_id, title_original, title_display, title_norm, url_gnews,
                             publisher_name, publisher_domain, pubdate_utc,
                             detected_language, language_confidence, content_hash,
-                            processing_status, ingested_at, created_at
+                            ingested_at, created_at
                         ) VALUES (
                             :feed_id, :title_original, :title_display, :title_norm, :url_gnews,
                             :publisher_name, :publisher_domain, :pubdate_utc,
                             :detected_language, :language_confidence, :content_hash,
-                            'pending', NOW(), NOW()
+                            NOW(), NOW()
                         )
                         ON CONFLICT (content_hash, feed_id) DO NOTHING
                         RETURNING id
