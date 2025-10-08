@@ -395,6 +395,60 @@ class PipelineOrchestrator:
             logger.error(f"Phase 4 failed: {e}")
             return {"status": "error", "error": str(e)}
 
+    async def run_phase_5_framing(self) -> Dict:
+        """Phase 5: Framed Narratives Generation"""
+        if not self.config.phase_5_framing_enabled:
+            return {"status": "skipped", "reason": "disabled"}
+
+        logger.info("=== PHASE 5: FRAMED NARRATIVES ===")
+        self.log_status("5_framing", "running")
+
+        try:
+            # Build command
+            cmd = [sys.executable, "apps/generate/run_framing.py", "process"]
+
+            # Add max-items parameter
+            max_items = getattr(self.config, "phase_5_max_items", 50)
+            if max_items:
+                cmd.extend(["--max-items", str(max_items)])
+
+            # Run with timeout
+            timeout_minutes = getattr(self.config, "phase_5_timeout_minutes", 20)
+            result = await self._run_subprocess_with_timeout(
+                cmd, timeout_minutes, "Phase 5 (Framed Narratives)"
+            )
+
+            if result["status"] == "success":
+                self.log_status("5_framing", "completed", {"result": result["result"]})
+                logger.info("Phase 5 completed successfully")
+                return result
+            else:
+                # Handle timeout or error
+                self.error_count += 1
+                self.status["errors"].append(
+                    {
+                        "phase": "5_framing",
+                        "error": result.get("error", "Unknown error"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                self.log_status("5_framing", "error", {"error": result.get("error")})
+                logger.error(f"Phase 5 failed: {result.get('error')}")
+                return result
+
+        except Exception as e:
+            self.error_count += 1
+            self.status["errors"].append(
+                {
+                    "phase": "5_framing",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            self.log_status("5_framing", "error", {"error": str(e)})
+            logger.error(f"Phase 5 failed: {e}")
+            return {"status": "error", "error": str(e)}
+
     async def run_single_cycle(self) -> Dict:
         """Execute one complete pipeline cycle"""
         self.cycle_count += 1
@@ -418,6 +472,9 @@ class PipelineOrchestrator:
 
         if self.config.phase_4_enrich_enabled:
             results["phase_4"] = await self.run_phase_4_enrich()
+
+        if self.config.phase_5_framing_enabled:
+            results["phase_5"] = await self.run_phase_5_framing()
 
         # Calculate cycle metrics
         cycle_duration = (datetime.now() - cycle_start).total_seconds()
@@ -496,7 +553,7 @@ def run(
         None, "--interval", help="Minutes between cycles"
     ),
 ):
-    """Run the SNI pipeline (P1, P2, P4) with batch/resume. P3 runs as separate background worker."""
+    """Run the SNI pipeline (P1, P2, P4, P5) with batch/resume. P3 runs as separate background worker."""
 
     # Override config with CLI parameters
     if daemon is not None:
@@ -713,6 +770,22 @@ def phase4(
         print(f"Phase 4 result: {result}")
 
     asyncio.run(run_phase4())
+
+
+@app.command()
+def phase5(
+    max_items: Optional[int] = typer.Option(None, help="Maximum EFs to process"),
+):
+    """Run Phase 5: Framed Narratives only (active status EFs)"""
+
+    async def run_phase5():
+        orchestrator = PipelineOrchestrator()
+        if max_items is not None:
+            orchestrator.config.phase_5_max_items = max_items
+        result = await orchestrator.run_phase_5_framing()
+        print(f"Phase 5 result: {result}")
+
+    asyncio.run(run_phase5())
 
 
 if __name__ == "__main__":

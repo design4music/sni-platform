@@ -61,6 +61,9 @@ class SNIConfig(BaseSettings):
     # LLM Configuration - MAP/REDUCE Parameters
     llm_timeout_seconds: int = Field(default=180, env="LLM_TIMEOUT_SECONDS")
     llm_max_tokens_generic: int = Field(default=4000, env="LLM_MAX_TOKENS_GENERIC")
+    llm_max_tokens_fn: int = Field(
+        default=4000, env="LLM_MAX_TOKENS_FN"
+    )  # Framed Narratives
     llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
     llm_retry_attempts: int = Field(default=3, env="LLM_RETRY_ATTEMPTS")
     llm_retry_backoff: float = Field(default=2.0, env="LLM_RETRY_BACKOFF")
@@ -153,11 +156,24 @@ class SNIConfig(BaseSettings):
     enrichment_temperature: float = Field(default=0.0, env="ENRICHMENT_TEMPERATURE")
     enrichment_concurrency: int = Field(default=4, env="ENRICHMENT_CONCURRENCY")
 
+    # Framed Narrative Configuration
+    framing_enabled: bool = Field(default=True, env="FRAMING_ENABLED")
+    framing_min_titles: int = Field(
+        default=1, env="FRAMING_MIN_TITLES"
+    )  # Minimum titles to attempt framing
+    framing_max_narratives: int = Field(
+        default=3, env="FRAMING_MAX_NARRATIVES"
+    )  # Maximum frames per EF
+    framing_timeout_seconds: int = Field(
+        default=180, env="FRAMING_TIMEOUT_SECONDS"
+    )  # LLM timeout per EF
+
     # Phase Control (enable/disable individual phases)
     phase_1_ingest_enabled: bool = Field(default=True, env="PHASE_1_INGEST_ENABLED")
     phase_2_filter_enabled: bool = Field(default=True, env="PHASE_2_FILTER_ENABLED")
     phase_3_generate_enabled: bool = Field(default=True, env="PHASE_3_GENERATE_ENABLED")
     phase_4_enrich_enabled: bool = Field(default=True, env="PHASE_4_ENRICH_ENABLED")
+    phase_5_framing_enabled: bool = Field(default=True, env="PHASE_5_FRAMING_ENABLED")
 
     # Phase Limits (for controlled execution)
     phase_1_max_feeds: Optional[int] = Field(default=None, env="PHASE_1_MAX_FEEDS")
@@ -166,6 +182,7 @@ class SNIConfig(BaseSettings):
     phase_4_max_items: Optional[int] = Field(
         default=None, env="PHASE_4_MAX_ITEMS"
     )  # None = use daily_enrichment_cap
+    phase_5_max_items: Optional[int] = Field(default=50, env="PHASE_5_MAX_ITEMS")
 
     # Phase Timeouts (in minutes) - based on realistic expectations
     phase_1_timeout_minutes: int = Field(
@@ -180,6 +197,9 @@ class SNIConfig(BaseSettings):
     phase_4_timeout_minutes: int = Field(
         default=30, env="PHASE_4_TIMEOUT_MINUTES"
     )  # Enrichment: 100 EFs with LLM
+    phase_5_timeout_minutes: int = Field(
+        default=20, env="PHASE_5_TIMEOUT_MINUTES"
+    )  # Framing: 50 EFs with LLM
 
     # Concurrency Settings
     phase_2_concurrency: int = Field(
@@ -191,6 +211,9 @@ class SNIConfig(BaseSettings):
     phase_4_concurrency: int = Field(
         default=4, env="PHASE_4_CONCURRENCY"
     )  # Parallel enrichment processing
+    phase_5_concurrency: int = Field(
+        default=4, env="PHASE_5_CONCURRENCY"
+    )  # Parallel framing processing
 
     # Business Logic Thresholds
     enrichment_confidence_high: float = Field(

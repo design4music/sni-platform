@@ -18,14 +18,11 @@ from typing import Any, Dict, List, Optional
 import httpx
 from loguru import logger
 
-from apps.generate.models import (
-    LLMEventFamilyRequest,
-    LLMEventFamilyResponse,
-    LLMFramedNarrativeRequest,
-    LLMFramedNarrativeResponse,
-)
+from apps.generate.models import (LLMEventFamilyRequest,
+                                  LLMEventFamilyResponse,
+                                  LLMFramedNarrativeRequest,
+                                  LLMFramedNarrativeResponse)
 from core.config import get_config
-
 
 # ============================================================================
 # SECTION 1: PROMPT TEMPLATES
@@ -36,9 +33,7 @@ from core.config import get_config
 # Phase 2: Strategic Filtering
 # -----------------------------------------------------------------------------
 
-STRATEGIC_REVIEW_SYSTEM = (
-    "Does this relate to politics, economics, technology, society, or environmental risks?"
-)
+STRATEGIC_REVIEW_SYSTEM = "Does this relate to politics, economics, technology, society, or environmental risks?"
 STRATEGIC_REVIEW_USER = "'{title}' - 0 or 1"
 
 
@@ -460,7 +455,9 @@ MAGNITUDE_PATTERNS = {
 }
 
 
-def extract_magnitudes_from_titles(titles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def extract_magnitudes_from_titles(
+    titles: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     """
     Extract magnitude information from title text using regex patterns.
 
@@ -487,12 +484,24 @@ def extract_magnitudes_from_titles(titles: List[Dict[str, Any]]) -> List[Dict[st
                     unit = match.group(2) if len(match.groups()) > 1 else mag_type
 
                     # Normalize common abbreviations
-                    if "billion" in match.group(0).lower() or "bn" in match.group(0).lower():
+                    if (
+                        "billion" in match.group(0).lower()
+                        or "bn" in match.group(0).lower()
+                    ):
                         value *= 1000000000
-                        unit = unit.replace("billion", "").replace("bn", "").strip() or "units"
-                    elif "million" in match.group(0).lower() or "mn" in match.group(0).lower():
+                        unit = (
+                            unit.replace("billion", "").replace("bn", "").strip()
+                            or "units"
+                        )
+                    elif (
+                        "million" in match.group(0).lower()
+                        or "mn" in match.group(0).lower()
+                    ):
                         value *= 1000000
-                        unit = unit.replace("million", "").replace("mn", "").strip() or "units"
+                        unit = (
+                            unit.replace("million", "").replace("mn", "").strip()
+                            or "units"
+                        )
 
                     # Use first part of text for context
                     what_text = f"{mag_type}: {text}"
@@ -702,7 +711,9 @@ class LLMClient:
             Parsed response with canonical actors and metadata
         """
         # Build prompt
-        formatted_titles = format_title_list_simple(member_titles, include_date=True, max_titles=5)
+        formatted_titles = format_title_list_simple(
+            member_titles, include_date=True, max_titles=5
+        )
         user_prompt = CANONICALIZE_USER_TEMPLATE.format(
             ef_title=ef_title,
             event_type=event_type,
@@ -745,7 +756,9 @@ class LLMClient:
             Enhanced summary text (80-120 words)
         """
         # Build prompt
-        formatted_titles = format_title_list_simple(member_titles, include_date=True, max_titles=3)
+        formatted_titles = format_title_list_simple(
+            member_titles, include_date=True, max_titles=3
+        )
         actors_text = format_actor_list(canonical_actors)
 
         user_prompt = NARRATIVE_SUMMARY_USER_TEMPLATE.format(
@@ -804,7 +817,9 @@ class LLMClient:
         actors_text = format_actor_list(canonical_actors)
 
         # Build prompt
-        system_prompt = MACRO_LINK_SYSTEM_PROMPT.format(available_centroids=centroids_list)
+        system_prompt = MACRO_LINK_SYSTEM_PROMPT.format(
+            available_centroids=centroids_list
+        )
         user_prompt = MACRO_LINK_USER_TEMPLATE.format(
             ef_title=ef_title,
             ef_summary=ef_summary,
@@ -871,7 +886,7 @@ class LLMClient:
             f"Summary: {ef.summary}",
             f"Key Actors: {', '.join(ef.key_actors)}",
             f"Event Type: {ef.event_type}",
-            f"Geography: {ef.geography or 'Not specified'}",
+            f"Geography: {ef.primary_theater or 'Not specified'}",
             "",
             "HEADLINES TO ANALYZE:",
         ]
@@ -964,7 +979,9 @@ class LLMClient:
                 if max_tokens is not None:
                     payload["max_tokens"] = max_tokens
 
-                async with httpx.AsyncClient(timeout=self.config.llm_timeout_seconds) as client:
+                async with httpx.AsyncClient(
+                    timeout=self.config.llm_timeout_seconds
+                ) as client:
                     response_data = await client.post(
                         f"{self.config.deepseek_api_url}/chat/completions",
                         headers=headers,
@@ -1007,7 +1024,9 @@ class LLMClient:
     # Response Parsing
     # -------------------------------------------------------------------------
 
-    def _parse_event_family_response(self, response_text: str) -> LLMEventFamilyResponse:
+    def _parse_event_family_response(
+        self, response_text: str
+    ) -> LLMEventFamilyResponse:
         """Parse and validate Event Family response from LLM"""
         try:
             # Extract JSON from response
@@ -1028,7 +1047,9 @@ class LLMClient:
             logger.error(f"Failed to parse Event Family JSON response: {e}")
             raise ValueError(f"Invalid JSON in LLM response: {e}")
 
-    def _parse_framed_narrative_response(self, response_text: str) -> LLMFramedNarrativeResponse:
+    def _parse_framed_narrative_response(
+        self, response_text: str
+    ) -> LLMFramedNarrativeResponse:
         """Parse and validate Framed Narrative response from LLM"""
         try:
             # Extract JSON from response
