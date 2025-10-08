@@ -30,8 +30,7 @@ def update_title_entities(
             """
             UPDATE titles
             SET gate_keep = :gate_keep,
-                entities = :entities,
-                processing_status = 'gated'
+                entities = :entities
             WHERE id = :title_id
             """
         ),
