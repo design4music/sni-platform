@@ -449,6 +449,60 @@ class PipelineOrchestrator:
             logger.error(f"Phase 5 failed: {e}")
             return {"status": "error", "error": str(e)}
 
+    async def run_phase_6_rai(self) -> Dict:
+        """Phase 6: RAI (Risk Assessment Intelligence) Analysis"""
+        if not self.config.phase_6_rai_enabled or not self.config.rai_enabled:
+            return {"status": "skipped", "reason": "disabled"}
+
+        logger.info("=== PHASE 6: RAI ANALYSIS ===")
+        self.log_status("6_rai", "running")
+
+        try:
+            # Build command
+            cmd = [sys.executable, "apps/generate/run_rai.py", "process"]
+
+            # Add max-items parameter
+            max_items = getattr(self.config, "phase_6_max_items", 50)
+            if max_items:
+                cmd.extend(["--max-items", str(max_items)])
+
+            # Run with timeout
+            timeout_minutes = getattr(self.config, "phase_6_timeout_minutes", 20)
+            result = await self._run_subprocess_with_timeout(
+                cmd, timeout_minutes, "Phase 6 (RAI Analysis)"
+            )
+
+            if result["status"] == "success":
+                self.log_status("6_rai", "completed", {"result": result["result"]})
+                logger.info("Phase 6 completed successfully")
+                return result
+            else:
+                # Handle timeout or error
+                self.error_count += 1
+                self.status["errors"].append(
+                    {
+                        "phase": "6_rai",
+                        "error": result.get("error", "Unknown error"),
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
+                self.log_status("6_rai", "error", {"error": result.get("error")})
+                logger.error(f"Phase 6 failed: {result.get('error')}")
+                return result
+
+        except Exception as e:
+            self.error_count += 1
+            self.status["errors"].append(
+                {
+                    "phase": "6_rai",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            self.log_status("6_rai", "error", {"error": str(e)})
+            logger.error(f"Phase 6 failed: {e}")
+            return {"status": "error", "error": str(e)}
+
     async def run_single_cycle(self) -> Dict:
         """Execute one complete pipeline cycle"""
         self.cycle_count += 1
@@ -475,6 +529,9 @@ class PipelineOrchestrator:
 
         if self.config.phase_5_framing_enabled:
             results["phase_5"] = await self.run_phase_5_framing()
+
+        if self.config.phase_6_rai_enabled and self.config.rai_enabled:
+            results["phase_6"] = await self.run_phase_6_rai()
 
         # Calculate cycle metrics
         cycle_duration = (datetime.now() - cycle_start).total_seconds()
@@ -786,6 +843,22 @@ def phase5(
         print(f"Phase 5 result: {result}")
 
     asyncio.run(run_phase5())
+
+
+@app.command()
+def phase6(
+    max_items: Optional[int] = typer.Option(None, help="Maximum FNs to process"),
+):
+    """Run Phase 6: RAI Analysis only (active/enriched EFs with FNs)"""
+
+    async def run_phase6():
+        orchestrator = PipelineOrchestrator()
+        if max_items is not None:
+            orchestrator.config.phase_6_max_items = max_items
+        result = await orchestrator.run_phase_6_rai()
+        print(f"Phase 6 result: {result}")
+
+    asyncio.run(run_phase6())
 
 
 if __name__ == "__main__":

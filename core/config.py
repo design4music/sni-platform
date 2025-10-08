@@ -174,6 +174,19 @@ class SNIConfig(BaseSettings):
     phase_3_generate_enabled: bool = Field(default=True, env="PHASE_3_GENERATE_ENABLED")
     phase_4_enrich_enabled: bool = Field(default=True, env="PHASE_4_ENRICH_ENABLED")
     phase_5_framing_enabled: bool = Field(default=True, env="PHASE_5_FRAMING_ENABLED")
+    phase_6_rai_enabled: bool = Field(
+        default=False, env="PHASE_6_RAI_ENABLED"
+    )  # RAI analysis disabled by default
+
+    # RAI (Risk Assessment Intelligence) Configuration
+    rai_api_url: str = Field(
+        default="https://r-a-i.org/analyst.html", env="RAI_API_URL"
+    )
+    rai_api_key: Optional[str] = Field(default=None, env="RAI_API_KEY")
+    rai_timeout_seconds: int = Field(
+        default=60, env="RAI_TIMEOUT_SECONDS"
+    )  # HTTP timeout for RAI service
+    rai_enabled: bool = Field(default=False, env="RAI_ENABLED")  # Global RAI toggle
 
     # Phase Limits (for controlled execution)
     phase_1_max_feeds: Optional[int] = Field(default=None, env="PHASE_1_MAX_FEEDS")
@@ -182,7 +195,12 @@ class SNIConfig(BaseSettings):
     phase_4_max_items: Optional[int] = Field(
         default=None, env="PHASE_4_MAX_ITEMS"
     )  # None = use daily_enrichment_cap
-    phase_5_max_items: Optional[int] = Field(default=50, env="PHASE_5_MAX_ITEMS")
+    phase_5_max_items: Optional[int] = Field(
+        default=50, env="PHASE_5_MAX_ITEMS"
+    )  # Framing: limit EFs per cycle
+    phase_6_max_items: Optional[int] = Field(
+        default=50, env="PHASE_6_MAX_ITEMS"
+    )  # RAI: limit analyses per cycle
 
     # Phase Timeouts (in minutes) - based on realistic expectations
     phase_1_timeout_minutes: int = Field(
@@ -200,6 +218,9 @@ class SNIConfig(BaseSettings):
     phase_5_timeout_minutes: int = Field(
         default=20, env="PHASE_5_TIMEOUT_MINUTES"
     )  # Framing: 50 EFs with LLM
+    phase_6_timeout_minutes: int = Field(
+        default=20, env="PHASE_6_TIMEOUT_MINUTES"
+    )  # RAI Analysis: 50 FNs via HTTP
 
     # Concurrency Settings
     phase_2_concurrency: int = Field(
@@ -214,6 +235,9 @@ class SNIConfig(BaseSettings):
     phase_5_concurrency: int = Field(
         default=4, env="PHASE_5_CONCURRENCY"
     )  # Parallel framing processing
+    phase_6_concurrency: int = Field(
+        default=3, env="PHASE_6_CONCURRENCY"
+    )  # Parallel RAI HTTP requests (conservative for external API)
 
     # Business Logic Thresholds
     enrichment_confidence_high: float = Field(
