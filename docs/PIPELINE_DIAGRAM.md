@@ -16,8 +16,12 @@ View this diagram:
 flowchart TD
     %% External Data Sources
     RSS[(RSS Feeds<br/>~50 sources)]
-    ACTORS[data/actors.csv<br/>Strategic actor vocabulary]
-    MECHANISMS[data/mechanisms.json<br/>Strategic patterns]
+    ACTORS[data/actors.csv<br/>Strategic actors]
+    GO_PEOPLE[data/go_people.csv<br/>Strategic people]
+    STOP_CULTURE[data/stop_culture.csv<br/>Blocked topics]
+    CENTROIDS[data/centroids.json<br/>Semantic patterns]
+    EVENT_TYPES[data/event_types.csv<br/>11 event type enums]
+    THEATERS[data/theaters.csv<br/>16 theater enums]
     RAI_APP[RAI Service<br/>render.com:rai-backend]
 
     %% Database
@@ -34,8 +38,8 @@ flowchart TD
     %% Phase 2: Strategic Filtering
     P2_START[PHASE 2: STRATEGIC FILTERING]
     P2_LOAD[SELECT FROM titles<br/>WHERE gate_keep IS NULL]
-    P2_SEMANTIC[Semantic gate<br/>cosine > 0.70 vs mechanisms]
-    P2_LEXICAL[Lexical matching<br/>actors.csv + mechanisms.json]
+    P2_SEMANTIC[Semantic gate<br/>cosine vs centroids.json]
+    P2_LEXICAL[Multi-vocab matching<br/>GO: actors.csv, go_people.csv<br/>STOP: stop_culture.csv]
     P2_LLM[LLM hybrid validation<br/>DeepSeek confirmation]
     P2_ACCEPT[UPDATE titles<br/>SET gate_keep=true]
     P2_REJECT[UPDATE titles<br/>SET gate_keep=false, gate_reason]
@@ -81,12 +85,16 @@ flowchart TD
 
     DB --> P2_START
     ACTORS --> P2_START
-    MECHANISMS --> P2_START
+    GO_PEOPLE --> P2_START
+    STOP_CULTURE --> P2_START
+    CENTROIDS --> P2_START
     P2_START --> P2_LOAD --> P2_SEMANTIC --> P2_LEXICAL --> P2_LLM
     P2_LLM --> P2_ACCEPT --> DB
     P2_LLM --> P2_REJECT --> DB
 
     DB --> P3_START
+    EVENT_TYPES --> P3_START
+    THEATERS --> P3_START
     P3_START --> P3_QUEUE --> P3_BUCKET --> P3_CLUSTER --> P3_LLM --> P3_EF_KEY --> P3_CHECK
     P3_CHECK -->|Found| P3_MERGE --> DB
     P3_CHECK -->|Not Found| P3_CREATE --> DB
@@ -110,7 +118,7 @@ flowchart TD
     classDef keyProcess fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
 
     class P1_START,P2_START,P3_START,P4_START,P5_START,P6_START phaseClass
-    class RSS,ACTORS,MECHANISMS,RAI_APP dataSource
+    class RSS,ACTORS,GO_PEOPLE,STOP_CULTURE,CENTROIDS,EVENT_TYPES,THEATERS,RAI_APP dataSource
     class DB dbClass
     class P3_EF_KEY,P3_CHECK,P3_MERGE keyProcess
 ```
