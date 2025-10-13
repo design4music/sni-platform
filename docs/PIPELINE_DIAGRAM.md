@@ -50,7 +50,7 @@ flowchart TD
     P3_BUCKET[Semantic clustering<br/>cosine > 0.60 bucketing]
     P3_CLUSTER[Hierarchical merge<br/>cosine > 0.85 threshold]
     P3_LLM[LLM incident analysis<br/>DeepSeek generates ALL fields]
-    P3_EF_KEY[Generate ef_key<br/>SHA256 theater|event_type]
+    P3_EF_KEY[Generate ef_key<br/>SHA256 theater + event_type]
     P3_CHECK[Check existing EF<br/>WHERE ef_key=X<br/>AND status IN seed,active]
     P3_MERGE[MERGE: Update existing EF<br/>extend source_title_ids]
     P3_CREATE[CREATE: INSERT event_families<br/>ALL fields + status=seed]
@@ -137,7 +137,7 @@ flowchart LR
 
     subgraph "EF Key Generation"
         EXTRACT[Extract Parameters<br/>theater = 'UKRAINE'<br/>event_type = 'Diplomacy/Negotiations'<br/>actors = IGNORED]
-        HASH[SHA256 Hash<br/>'UKRAINE|Diplomacy/Negotiations']
+        HASH[SHA256 Hash<br/>UKRAINE + Diplomacy/Negotiations]
         KEY[ef_key = 'a3f8b2c5e7d91a4f'<br/>first 16 chars of hash]
     end
 
