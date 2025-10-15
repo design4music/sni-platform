@@ -20,6 +20,7 @@ from sqlalchemy import text
 
 from core.config import get_config
 from core.database import get_db_session
+from core.neo4j_sync import sync_title_to_neo4j
 
 from .feeds_repo import FeedsRepo
 
@@ -377,8 +378,21 @@ class RSSFetcher:
                         },
                     )
 
-                    if result.fetchone():
+                    row = result.fetchone()
+                    if row:
                         stats["inserted"] += 1
+
+                        # Sync to Neo4j (best-effort, non-blocking)
+                        title_id = row[0]
+                        title_data_for_neo4j = {
+                            "id": title_id,
+                            "title_display": article["title_display"],
+                            "pubdate_utc": article["pubdate_utc"],
+                            "gate_keep": False,
+                            "detected_language": article.get("detected_language"),
+                            "entities": [],
+                        }
+                        sync_title_to_neo4j(title_data_for_neo4j)
                     else:
                         stats["skipped"] += 1
 
