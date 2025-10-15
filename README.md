@@ -2,6 +2,37 @@
 
 A production-ready system that transforms multilingual news headlines into comprehensive Event Families using semantic incident clustering and hybrid processing.
 
+---
+
+## ⚠️ **DEVELOPMENT PRINCIPLE: MINIMAL, FOCUSED IMPLEMENTATION**
+
+**THIS IS A HARD RULE - NOT A SUGGESTION**
+
+### Code Philosophy
+- **Write ONLY what is needed NOW** - Not what might be needed later
+- **No "just in case" features** - No premature abstractions
+- **No overengineering** - Resist the urge to add complexity because you can
+- **50 lines > 200 lines** - Shorter, focused code is always better
+- **If unsure, go simpler** - When in doubt, choose the minimal approach
+
+### Examples of What NOT to Do
+- ❌ Adding wrapper methods that just call existing methods
+- ❌ Implementing features for future steps before they're needed
+- ❌ Creating elaborate class hierarchies when a simple function works
+- ❌ Writing extensive docstrings when the code is self-explanatory
+- ❌ Adding singleton patterns, factory patterns, etc. unless absolutely necessary
+
+### What TO Do Instead
+- ✅ Implement exactly what the current step requires
+- ✅ Use the simplest approach that works
+- ✅ Add features incrementally when actually needed
+- ✅ Keep functions and classes focused on one job
+- ✅ Ask "Can this be simpler?" before writing
+
+**Remember**: This project values working code over perfect code. Ship minimal, iterate if needed.
+
+---
+
 ## 🎯 Core Concept
 
 - **Input**: Strategic news headlines from 137+ RSS feeds
