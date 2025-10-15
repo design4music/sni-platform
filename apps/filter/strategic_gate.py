@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional
 
 from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
-from core.config import get_config
 
 
 @dataclass
@@ -34,25 +33,11 @@ class StrategicGate:
     """Strategic Gate Filter with multi-vocabulary go/stop list logic"""
 
     def __init__(self):
-        self.config = get_config()
-        self._validate_config()
-
-        # Load multi-vocabulary taxonomy extractor
+        # Load multi-vocabulary taxonomy extractor (now DB-backed)
         try:
             self._taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
         except Exception as e:
             raise RuntimeError(f"Failed to load taxonomy vocabularies: {e}")
-
-    def _validate_config(self):
-        """Validate required config parameters exist"""
-        required_attrs = [
-            "actors_csv_path",
-            "go_people_csv_path",
-            "stop_culture_csv_path",
-        ]
-        for attr in required_attrs:
-            if not hasattr(self.config, attr):
-                raise ValueError(f"Missing required config parameter: {attr}")
 
     def filter_title(self, title_text: str) -> GateResult:
         """

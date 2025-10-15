@@ -238,22 +238,20 @@ class MultiVocabTaxonomyExtractor:
 def create_multi_vocab_taxonomy_extractor() -> MultiVocabTaxonomyExtractor:
     """
     Factory function to create enhanced TaxonomyExtractor with multiple vocabularies.
+    Now uses database-backed vocab loader instead of CSV files.
 
     Returns:
         MultiVocabTaxonomyExtractor instance with all loaded vocabularies
     """
-    from apps.filter.vocab_loader import (load_actor_aliases,
-                                          load_go_people_aliases,
-                                          load_go_taxonomy_aliases,
-                                          load_stop_culture_phrases)
-    from core.config import get_config
+    from apps.filter.vocab_loader_db import (load_actor_aliases,
+                                             load_go_people_aliases,
+                                             load_go_taxonomy_aliases,
+                                             load_stop_culture_phrases)
 
-    config = get_config()
-
-    # Load all vocabularies
-    go_actors = load_actor_aliases(config.actors_csv_path)
-    go_people = load_go_people_aliases(config.go_people_csv_path)
-    stop_culture = load_stop_culture_phrases(config.stop_culture_csv_path)
-    go_taxonomy = load_go_taxonomy_aliases(config.go_taxonomy_csv_path)
+    # Load all vocabularies from database (stop_culture still from CSV)
+    go_actors = load_actor_aliases()
+    go_people = load_go_people_aliases()
+    stop_culture = load_stop_culture_phrases()
+    go_taxonomy = load_go_taxonomy_aliases()
 
     return MultiVocabTaxonomyExtractor(go_actors, go_people, stop_culture, go_taxonomy)
