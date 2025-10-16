@@ -70,6 +70,9 @@ class MultiVocabTaxonomyExtractor:
             VocabType, List[Tuple[str, Optional[Pattern], Optional[str], bool]]
         ] = {VocabType.STOP_CULTURE: []}
 
+        # Mapping entity_id -> display name (first alias is name_en from database)
+        self._entity_display_names: Dict[str, str] = {}
+
         # Build patterns for each vocabulary
         self._build_patterns(go_actors, VocabType.GO_ACTORS, is_strategic=True)
         self._build_patterns(go_people, VocabType.GO_PEOPLE, is_strategic=True)
@@ -86,13 +89,16 @@ class MultiVocabTaxonomyExtractor:
             text: Raw text to normalize
 
         Returns:
-            Normalized text (NFKC, lowercase, collapsed whitespace)
+            Normalized text (NFKC, lowercase, collapsed whitespace, no periods)
         """
         if not text:
             return ""
 
         # NFKC Unicode normalization
         text = unicodedata.normalize("NFKC", text)
+
+        # Remove periods (for matching "U.S." to "us", "U.K." to "uk", etc.)
+        text = text.replace(".", "")
 
         # Lowercase and collapse whitespace
         text = re.sub(r"\s+", " ", text.lower()).strip()
@@ -108,6 +114,21 @@ class MultiVocabTaxonomyExtractor:
             or "\u0e00" <= char <= "\u0e7f"  # Thai
             for char in text
         )
+
+    def _is_common_word_false_positive(self, alias_lower: str) -> bool:
+        """
+        Filter out common English words that match entity codes.
+        These cause false positives (e.g., "in" matching India "IN", "who" matching WHO).
+        """
+        common_words = {
+            # 2-letter words
+            "in", "is", "it", "as", "or", "no", "so", "to",
+            "an", "at", "be", "by", "do", "go", "he", "if",
+            "me", "my", "of", "on", "we",
+            # 3-letter words
+            "who", "the", "and", "for", "are", "but", "not"
+        }
+        return alias_lower in common_words
 
     def _build_patterns(
         self, aliases: Dict[str, List[str]], vocab_type: VocabType, is_strategic: bool
@@ -125,8 +146,17 @@ class MultiVocabTaxonomyExtractor:
         pattern_list = []
 
         for entity_id, alias_list in aliases.items():
+            # Store display name (first alias is name_en from database)
+            if is_strategic and alias_list and entity_id not in self._entity_display_names:
+                self._entity_display_names[entity_id] = alias_list[0]
+
             for alias in alias_list:
                 alias_lower = alias.strip().lower()
+
+                # Skip common English words that are false positives (e.g., "in" for India)
+                if self._is_common_word_false_positive(alias_lower):
+                    continue
+
                 # Check if alias contains scripts that need substring matching
                 has_substring_script = self._has_substring_script_chars(alias)
 
@@ -172,7 +202,8 @@ class MultiVocabTaxonomyExtractor:
         for vocab_type, patterns in self._go_patterns.items():
             go_match = self._check_patterns(normalized_text, patterns)
             if go_match:
-                return go_match  # First GO hit wins
+                # Return display name instead of entity_id
+                return self._entity_display_names.get(go_match, go_match)
 
         return None  # No matches -> non-strategic
 
@@ -218,7 +249,9 @@ class MultiVocabTaxonomyExtractor:
 
                 if matched:
                     seen.add(entity_id)
-                    hits.append(entity_id)
+                    # Append display name instead of entity_id
+                    display_name = self._entity_display_names.get(entity_id, entity_id)
+                    hits.append(display_name)
 
         return hits
 
