@@ -71,25 +71,17 @@ class EntityEnrichmentService:
             # Phase 2: LLM review for ambiguous titles (no positive hits)
             # Only call LLM if no static taxonomy match
             is_strategic = await self._llm_strategic_review(title_text)
-            if is_strategic:
-                # For LLM-flagged strategic titles, create generic entity placeholder
-                all_entities = ["llm_strategic"]
+            # If LLM flags as strategic but no entities found, keep empty array
+            # gate_keep=true + entities=[] means strategic without specific actors
 
-        # For Phase 2A, store all entities (countries, people, orgs) together
-        # The API returns mixed entity types, so we simplify to single "actors" field
-        entities = {
-            "actors": all_entities,
-            "is_strategic": is_strategic,
-            "extraction_version": "2.0",
-        }
-
+        # Store just the actors array (gate_keep column tracks strategic status)
         logger.debug(
             f"Extracted entities for '{title_text[:50]}': "
             f"entities={len(all_entities)}, "
             f"strategic={is_strategic}"
         )
 
-        return entities
+        return {"actors": all_entities, "is_strategic": is_strategic}
 
     async def _llm_strategic_review(self, title_text: str) -> bool:
         """
@@ -137,10 +129,10 @@ class EntityEnrichmentService:
                     params = {}
                 else:
                     query = f"""
-                    SELECT id, title_display, entities 
-                    FROM titles 
+                    SELECT id, title_display, entities
+                    FROM titles
                     WHERE created_at >= NOW() - INTERVAL '{since_hours} HOUR'
-                    AND (entities IS NULL OR entities->>'extraction_version' != '2.0')
+                    AND entities IS NULL
                     ORDER BY created_at DESC
                     LIMIT :limit
                     """
@@ -162,14 +154,13 @@ class EntityEnrichmentService:
                         # Extract entities (may involve LLM call)
                         entities = await self.extract_entities_for_title(title_data)
 
-                        # Track LLM usage
-                        if "llm_strategic" in entities.get("actors", []):
-                            stats["llm_calls"] += 1
-                            if entities["is_strategic"]:
-                                stats["llm_strategic"] += 1
-
                         # Update database with simplified fields
                         is_strategic = entities["is_strategic"]
+
+                        # Track LLM usage (strategic without specific entities = LLM decision)
+                        if is_strategic and not entities.get("actors", []):
+                            stats["llm_calls"] += 1
+                            stats["llm_strategic"] += 1
 
                         # Use shared helper for DB update
                         update_title_entities(
@@ -205,15 +196,10 @@ class EntityEnrichmentService:
         try:
             with get_db_session() as session:
                 status_query = """
-                SELECT 
+                SELECT
                     COUNT(*) as total_titles,
                     COUNT(entities) as enriched_titles,
-                    COUNT(CASE WHEN entities->>'is_strategic' = 'true' THEN 1 END) as strategic_titles,
-                    COUNT(CASE WHEN entities->>'extraction_version' = '2.0' THEN 1 END) as v2_enriched,
-                    COUNT(CASE WHEN 
-                        entities->>'is_strategic' = 'false' 
-                        AND (jsonb_array_length(entities->'actors') > 0 OR jsonb_array_length(entities->'people') > 0)
-                    THEN 1 END) as blocked_by_stop
+                    COUNT(CASE WHEN gate_keep = true THEN 1 END) as strategic_titles
                 FROM titles
                 WHERE created_at >= NOW() - INTERVAL '7 DAY'
                 """
@@ -224,8 +210,6 @@ class EntityEnrichmentService:
                     "total_titles": result.total_titles or 0,
                     "enriched_titles": result.enriched_titles or 0,
                     "strategic_titles": result.strategic_titles or 0,
-                    "blocked_by_stop": result.blocked_by_stop or 0,
-                    "v2_enriched": result.v2_enriched or 0,
                     "enrichment_rate": (
                         result.enriched_titles / max(result.total_titles, 1)
                     )
@@ -238,7 +222,7 @@ class EntityEnrichmentService:
 
     def _empty_entities(self) -> Dict[str, Any]:
         """Return empty entities structure."""
-        return {"actors": [], "is_strategic": False, "extraction_version": "2.0"}
+        return {"actors": [], "is_strategic": False}
 
 
 def get_entity_enrichment_service() -> EntityEnrichmentService:

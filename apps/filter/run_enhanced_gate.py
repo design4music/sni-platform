@@ -26,6 +26,7 @@ from apps.filter.title_processor_helpers import (  # noqa: E402
 from core.checkpoint import get_checkpoint_manager  # noqa: E402
 from core.config import get_config  # noqa: E402
 from core.database import get_db_session  # noqa: E402
+from core.neo4j_sync import get_neo4j_sync  # noqa: E402
 
 
 async def run_enhanced_gate_processing_batch(
@@ -89,11 +90,7 @@ async def run_enhanced_gate_processing_batch(
                 entities
             FROM titles
             WHERE created_at >= NOW() - INTERVAL '{hours} HOUR'
-            AND (
-                gate_keep IS NULL
-                OR entities IS NULL
-                OR entities->>'extraction_version' != '2.0'
-            )
+            AND entities IS NULL
             ORDER BY id ASC
             """
 
@@ -202,6 +199,25 @@ async def run_enhanced_gate_processing_batch(
                         )
 
                     session.commit()
+
+                # Sync batch to Neo4j
+                neo4j_sync = get_neo4j_sync()
+                for i, (row, result) in enumerate(zip(mini_batch, results)):
+                    if isinstance(result, Exception) or not result.get("success"):
+                        continue
+                    try:
+                        # Convert actor strings to entity format
+                        entity_list = [{"text": actor, "type": "ACTOR"} for actor in result["entities"].get("actors", [])]
+                        await neo4j_sync.sync_title({
+                            "id": result["title_id"],
+                            "title_display": row.title_display,
+                            "pubdate_utc": None,
+                            "gate_keep": result["is_strategic"],
+                            "detected_language": None,
+                            "entities": entity_list
+                        })
+                    except Exception as e:
+                        logger.warning(f"Neo4j sync failed for {result['title_id']}: {e}")
             else:
                 # Dry run - just update stats
                 for result in results:
@@ -306,11 +322,7 @@ async def run_enhanced_gate_processing(
                 entities
             FROM titles 
             WHERE created_at >= NOW() - INTERVAL '{hours} HOUR'
-            AND (
-                gate_keep IS NULL 
-                OR entities IS NULL 
-                OR entities->>'extraction_version' != '2.0'
-            )
+            AND entities IS NULL
             ORDER BY created_at DESC
             """
 
@@ -345,6 +357,22 @@ async def run_enhanced_gate_processing(
                             session, title_data["id"], entities, is_strategic
                         )
                         session.commit()
+
+                    # Sync to Neo4j with entities
+                    try:
+                        neo4j_sync = get_neo4j_sync()
+                        # Convert actor strings to entity format
+                        entity_list = [{"text": actor, "type": "ACTOR"} for actor in entities.get("actors", [])]
+                        await neo4j_sync.sync_title({
+                            "id": title_data["id"],
+                            "title_display": title_data["title_display"],
+                            "pubdate_utc": None,
+                            "gate_keep": is_strategic,
+                            "detected_language": None,
+                            "entities": entity_list
+                        })
+                    except Exception as e:
+                        logger.warning(f"Neo4j sync failed for {title_data['id']}: {e}")
 
                 # Use shared helper for stats tracking
                 update_processing_stats(stats, entities, is_strategic)

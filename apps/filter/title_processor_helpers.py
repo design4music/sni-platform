@@ -20,11 +20,15 @@ def update_title_entities(
     Args:
         session: SQLAlchemy session
         title_id: Title UUID
-        entities: Extracted entities dict
+        entities: Extracted entities dict with "actors" key
         is_strategic: Strategic gate decision
 
     This is the single source of truth for title entity updates
+    Stores just the actors array (gate_keep column tracks strategic status)
     """
+    # Store just the actors array (minimal format)
+    actors_array = entities.get("actors", [])
+
     session.execute(
         text(
             """
@@ -36,7 +40,7 @@ def update_title_entities(
         ),
         {
             "gate_keep": is_strategic,
-            "entities": json.dumps(entities),
+            "entities": json.dumps(actors_array),
             "title_id": title_id,
         },
     )
