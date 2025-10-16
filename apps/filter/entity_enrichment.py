@@ -19,6 +19,7 @@ from apps.filter.title_processor_helpers import (update_processing_stats,
                                                  update_title_entities)
 from core.database import get_db_session
 from core.llm_client import LLMClient
+from core.neo4j_sync import get_neo4j_sync
 
 
 class EntityEnrichmentService:
@@ -36,6 +37,7 @@ class EntityEnrichmentService:
     def __init__(self):
         self.taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
         self.llm_client = LLMClient()
+        self.neo4j_sync = get_neo4j_sync()
 
     async def extract_entities_for_title(
         self, title_data: Dict[str, Any]
@@ -65,6 +67,9 @@ class EntityEnrichmentService:
 
         # Get all strategic actors if hit by static taxonomy
         all_entities = []
+        neo4j_override = False
+        neo4j_reason = None
+
         if is_strategic:
             all_entities = self.taxonomy_extractor.all_strategic_hits(title_text)
         else:
@@ -74,12 +79,26 @@ class EntityEnrichmentService:
             # If LLM flags as strategic but no entities found, keep empty array
             # gate_keep=true + entities=[] means strategic without specific actors
 
+            # Phase 3: Neo4j network intelligence override
+            # If LLM says non-strategic, check if Neo4j signals suggest otherwise
+            if not is_strategic and title_data.get("id"):
+                neo4j_decision = await self._neo4j_strategic_override(title_data["id"])
+                if neo4j_decision.get("override"):
+                    is_strategic = True
+                    neo4j_override = True
+                    neo4j_reason = neo4j_decision.get("reason")
+                    logger.info(
+                        f"Neo4j override for '{title_text[:50]}': {neo4j_reason}"
+                    )
+
         # Store just the actors array (gate_keep column tracks strategic status)
-        logger.debug(
+        log_msg = (
             f"Extracted entities for '{title_text[:50]}': "
-            f"entities={len(all_entities)}, "
-            f"strategic={is_strategic}"
+            f"entities={len(all_entities)}, strategic={is_strategic}"
         )
+        if neo4j_override:
+            log_msg += f" (Neo4j: {neo4j_reason})"
+        logger.debug(log_msg)
 
         return {"actors": all_entities, "is_strategic": is_strategic}
 
@@ -92,6 +111,65 @@ class EntityEnrichmentService:
             bool: True if strategic, False if not
         """
         return await self.llm_client.strategic_review(title_text)
+
+    async def _neo4j_strategic_override(self, title_id: str) -> Dict[str, Any]:
+        """
+        Use Neo4j network patterns to override LLM decisions for borderline cases.
+
+        Multi-signal scoring approach for sparse entity scenarios:
+        - Signal 1: Entity Centrality (contains hot entities) → +2 points
+        - Signal 2: Strategic Neighborhood (connected to strategic cluster) → +1 point
+        - Signal 3: Ongoing Event (part of temporal pattern) → +1 point
+
+        If total score >= 2, override LLM decision to strategic.
+
+        Args:
+            title_id: Title UUID to analyze
+
+        Returns:
+            Dict with:
+                - override: Boolean, whether to override to strategic
+                - reason: String explanation of override decision
+                - score: Integer strategic score
+        """
+        try:
+            # Get all three Neo4j intelligence signals
+            signals = await self.neo4j_sync.analyze_strategic_signals(title_id)
+
+            strategic_score = 0
+            reasons = []
+
+            # Signal 1: Entity Centrality (how important are my entities?)
+            if signals.get("high_centrality_entities", 0) >= 1:
+                strategic_score += 2
+                centrality_details = signals.get("centrality_details", [])
+                entity_names = [e["entity"] for e in centrality_details[:2]]
+                reasons.append(f"Hot entities: {', '.join(entity_names)}")
+
+            # Signal 2: Strategic Neighborhood (am I near strategic content?)
+            if signals.get("strategic_neighbor_strength", 0) >= 0.3:
+                strategic_score += 1
+                neighbor_count = signals.get("strategic_neighbors", 0)
+                reasons.append(f"Connected to {neighbor_count} strategic titles")
+
+            # Signal 3: Temporal Pattern (is this part of an ongoing story?)
+            if signals.get("ongoing_event", False):
+                strategic_score += 1
+                reasons.append("Part of ongoing event")
+
+            # Decision: override if score >= 2
+            override = strategic_score >= 2
+
+            return {
+                "override": override,
+                "reason": "; ".join(reasons) if reasons else "No strong signals",
+                "score": strategic_score,
+                "signals": signals,
+            }
+
+        except Exception as e:
+            logger.error(f"Neo4j strategic override failed for {title_id}: {e}")
+            return {"override": False, "reason": "Neo4j error", "score": 0}
 
     async def enrich_titles_batch(
         self, title_ids: List[str] = None, limit: int = 1000, since_hours: int = 24

@@ -245,6 +245,301 @@ class Neo4jSync:
             logger.error(f"Failed to expand cluster: {e}")
             return []
 
+    async def get_entity_centrality(
+        self, title_id: str, min_strategic_mentions: int = 2, days_lookback: int = None
+    ) -> tuple[int, List[Dict[str, Any]]]:
+        """
+        Find if title contains highly connected entities.
+
+        Entity centrality measures how "hot" an entity is by counting how many
+        strategic titles have mentioned it recently. An entity mentioned in many
+        strategic stories is more significant than one mentioned only once.
+
+        Args:
+            title_id: Title UUID to analyze
+            min_strategic_mentions: Minimum strategic mentions for entity to be "central"
+            days_lookback: How many days back to count mentions (None = no time limit)
+
+        Returns:
+            Tuple of (count, list of high-centrality entity dicts):
+                - entity: Entity name
+                - type: Entity type
+                - strategic_mentions: Count of strategic titles mentioning this entity
+        """
+        if days_lookback is not None:
+            query = """
+            MATCH (t:Title {id: $title_id})-[:HAS_ENTITY]->(e:Entity)
+
+            // How many strategic titles mention this entity recently?
+            MATCH (e)<-[:HAS_ENTITY]-(strategic:Title {gate_keep: true})
+            WHERE strategic.pubdate >= datetime() - duration({days: $days_lookback})
+
+            WITH e, COUNT(strategic) AS strategic_mentions
+            WHERE strategic_mentions >= $min_strategic_mentions
+
+            RETURN collect({
+                entity: e.name,
+                type: e.type,
+                strategic_mentions: strategic_mentions
+            }) AS high_centrality_entities
+            """
+        else:
+            query = """
+            MATCH (t:Title {id: $title_id})-[:HAS_ENTITY]->(e:Entity)
+
+            // How many strategic titles mention this entity (all time)?
+            MATCH (e)<-[:HAS_ENTITY]-(strategic:Title {gate_keep: true})
+
+            WITH e, COUNT(strategic) AS strategic_mentions
+            WHERE strategic_mentions >= $min_strategic_mentions
+
+            RETURN collect({
+                entity: e.name,
+                type: e.type,
+                strategic_mentions: strategic_mentions
+            }) AS high_centrality_entities
+            """
+
+        try:
+            async with self.driver.session() as session:
+                result = await session.run(
+                    query,
+                    title_id=title_id,
+                    min_strategic_mentions=min_strategic_mentions,
+                    days_lookback=days_lookback,
+                )
+                data = await result.single()
+                entities = data["high_centrality_entities"] if data else []
+                logger.debug(
+                    f"Found {len(entities)} high-centrality entities for title {title_id}"
+                )
+                return len(entities), entities
+
+        except Exception as e:
+            logger.error(f"Failed to get entity centrality for {title_id}: {e}")
+            return 0, []
+
+    async def get_strategic_neighborhood(
+        self, title_id: str, days_lookback: int = None
+    ) -> Dict[str, float]:
+        """
+        Measure how embedded this title is in strategic content networks.
+
+        Strategic neighborhood strength is calculated as the ratio of strategic
+        neighbors to the title's entity count. A high ratio means the title is
+        densely connected to strategic content even with few entities.
+
+        Args:
+            title_id: Title UUID to analyze
+            days_lookback: How many days back to look for strategic neighbors (None = no time limit)
+
+        Returns:
+            Dict with:
+                - strategic_neighbors: Count of strategic titles sharing entities
+                - strategic_neighbor_strength: Neighborhood density ratio (0-1+)
+        """
+        if days_lookback is not None:
+            query = """
+            MATCH (target:Title {id: $title_id})
+
+            // Find strategic titles connected through ANY shared entity
+            MATCH (target)-[:HAS_ENTITY]->(e:Entity)<-[:HAS_ENTITY]-(strategic:Title {gate_keep: true})
+            WHERE strategic.pubdate >= datetime() - duration({days: $days_lookback})
+
+            WITH target, COUNT(DISTINCT strategic) AS strategic_neighbors
+
+            // Also check entity overlap strength
+            MATCH (target)-[:HAS_ENTITY]->(te:Entity)
+            WITH target, strategic_neighbors, COUNT(te) AS target_entity_count
+
+            // Calculate neighborhood density
+            RETURN strategic_neighbors,
+                   CASE WHEN target_entity_count > 0
+                        THEN strategic_neighbors * 1.0 / target_entity_count
+                        ELSE 0
+                   END AS neighbor_density
+            """
+        else:
+            query = """
+            MATCH (target:Title {id: $title_id})
+
+            // Find strategic titles connected through ANY shared entity (all time)
+            MATCH (target)-[:HAS_ENTITY]->(e:Entity)<-[:HAS_ENTITY]-(strategic:Title {gate_keep: true})
+
+            WITH target, COUNT(DISTINCT strategic) AS strategic_neighbors
+
+            // Also check entity overlap strength
+            MATCH (target)-[:HAS_ENTITY]->(te:Entity)
+            WITH target, strategic_neighbors, COUNT(te) AS target_entity_count
+
+            // Calculate neighborhood density
+            RETURN strategic_neighbors,
+                   CASE WHEN target_entity_count > 0
+                        THEN strategic_neighbors * 1.0 / target_entity_count
+                        ELSE 0
+                   END AS neighbor_density
+            """
+
+        try:
+            async with self.driver.session() as session:
+                result = await session.run(
+                    query, title_id=title_id, days_lookback=days_lookback
+                )
+                data = await result.single()
+                if data:
+                    neighborhood = {
+                        "strategic_neighbors": data["strategic_neighbors"],
+                        "strategic_neighbor_strength": data["neighbor_density"],
+                    }
+                    logger.debug(
+                        f"Strategic neighborhood for {title_id}: {neighborhood['strategic_neighbors']} neighbors, "
+                        f"strength {neighborhood['strategic_neighbor_strength']:.2f}"
+                    )
+                    return neighborhood
+                return {"strategic_neighbors": 0, "strategic_neighbor_strength": 0}
+
+        except Exception as e:
+            logger.error(f"Failed to get strategic neighborhood for {title_id}: {e}")
+            return {"strategic_neighbors": 0, "strategic_neighbor_strength": 0}
+
+    async def check_ongoing_event(
+        self, title_id: str, min_sequence_length: int = 3, days_lookback: int = None
+    ) -> bool:
+        """
+        Check if this title fits into an ongoing event pattern.
+
+        Ongoing events are detected by finding entities that appear in multiple
+        strategic titles over a time sequence, forming a temporal story pattern.
+
+        Args:
+            title_id: Title UUID to analyze
+            min_sequence_length: Minimum number of mentions to form a sequence
+            days_lookback: How many days back to look for event patterns (None = no time limit)
+
+        Returns:
+            True if title is part of an ongoing event, False otherwise
+        """
+        if days_lookback is not None:
+            query = """
+            MATCH (target:Title {id: $title_id})-[:HAS_ENTITY]->(e:Entity)
+
+            // Look for event progression patterns
+            MATCH (e)<-[:HAS_ENTITY]-(recent:Title {gate_keep: true})
+            WHERE recent.pubdate >= datetime() - duration({days: $days_lookback})
+              AND recent.id <> $title_id
+
+            WITH e, COUNT(recent) AS recent_mentions
+            WHERE recent_mentions >= 2
+
+            // Check if this forms a temporal sequence
+            MATCH (e)<-[:HAS_ENTITY]-(sequence:Title {gate_keep: true})
+            WHERE sequence.pubdate >= datetime() - duration({days: $days_lookback})
+            WITH e, sequence
+            ORDER BY sequence.pubdate
+            WITH e, collect(sequence.pubdate) AS dates
+            WHERE size(dates) >= $min_sequence_length
+
+            RETURN count(e) AS ongoing_events
+            """
+        else:
+            query = """
+            MATCH (target:Title {id: $title_id})-[:HAS_ENTITY]->(e:Entity)
+
+            // Look for event progression patterns (all time)
+            MATCH (e)<-[:HAS_ENTITY]-(recent:Title {gate_keep: true})
+            WHERE recent.id <> $title_id
+
+            WITH e, COUNT(recent) AS recent_mentions
+            WHERE recent_mentions >= 2
+
+            // Check if this forms a temporal sequence
+            MATCH (e)<-[:HAS_ENTITY]-(sequence:Title {gate_keep: true})
+            WITH e, sequence
+            ORDER BY sequence.pubdate
+            WITH e, collect(sequence.pubdate) AS dates
+            WHERE size(dates) >= $min_sequence_length
+
+            RETURN count(e) AS ongoing_events
+            """
+
+        try:
+            async with self.driver.session() as session:
+                result = await session.run(
+                    query,
+                    title_id=title_id,
+                    min_sequence_length=min_sequence_length,
+                    days_lookback=days_lookback,
+                )
+                data = await result.single()
+                is_ongoing = (data["ongoing_events"] > 0) if data else False
+                logger.debug(
+                    f"Ongoing event check for {title_id}: {'Yes' if is_ongoing else 'No'}"
+                )
+                return is_ongoing
+
+        except Exception as e:
+            logger.error(f"Failed to check ongoing event for {title_id}: {e}")
+            return False
+
+    async def analyze_strategic_signals(
+        self,
+        title_id: str,
+        days_lookback_centrality: int = 3,
+        days_lookback_neighborhood: int = 2,
+        days_lookback_event: int = 7,
+    ) -> Dict[str, Any]:
+        """
+        Combine multiple Neo4j intelligence signals for strategic filtering.
+
+        This method aggregates entity centrality, neighborhood strength, and
+        ongoing event detection into a single strategic score. Use this for
+        P2 enhancement to catch borderline cases with sparse but significant entities.
+
+        Args:
+            title_id: Title UUID to analyze
+            days_lookback_centrality: Days to look back for centrality (None = all time)
+            days_lookback_neighborhood: Days to look back for neighborhood (None = all time)
+            days_lookback_event: Days to look back for events (None = all time)
+
+        Returns:
+            Dict with:
+                - high_centrality_entities: Count of hot entities
+                - centrality_details: List of entity centrality data
+                - strategic_neighbors: Count of connected strategic titles
+                - strategic_neighbor_strength: Neighborhood density ratio
+                - ongoing_event: Boolean, part of temporal event pattern
+        """
+        # Run all three signal queries in parallel
+        centrality_task = self.get_entity_centrality(
+            title_id, days_lookback=days_lookback_centrality
+        )
+        neighborhood_task = self.get_strategic_neighborhood(
+            title_id, days_lookback=days_lookback_neighborhood
+        )
+        ongoing_task = self.check_ongoing_event(
+            title_id, days_lookback=days_lookback_event
+        )
+
+        centrality_count, centrality_entities = await centrality_task
+        neighborhood = await neighborhood_task
+        ongoing_event = await ongoing_task
+
+        signals = {
+            "high_centrality_entities": centrality_count,
+            "centrality_details": centrality_entities,
+            "strategic_neighbors": neighborhood["strategic_neighbors"],
+            "strategic_neighbor_strength": neighborhood["strategic_neighbor_strength"],
+            "ongoing_event": ongoing_event,
+        }
+
+        logger.debug(
+            f"Strategic signals for {title_id}: "
+            f"centrality={centrality_count}, neighbors={neighborhood['strategic_neighbors']}, "
+            f"ongoing={ongoing_event}"
+        )
+
+        return signals
+
 
 # Singleton instance for use across the application
 neo4j_sync: Optional[Neo4jSync] = None
