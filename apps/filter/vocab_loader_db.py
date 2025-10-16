@@ -76,6 +76,80 @@ def load_go_taxonomy_aliases(path: str | None = None) -> Dict[str, List[str]]:
     return {}
 
 
+def _is_usable_short_code(alias: str) -> bool:
+    """
+    Check if a short code/abbreviation is commonly used in news headlines.
+
+    Whitelist of codes that ARE used in real news:
+    - US, USA, UK, UAE - commonly used country abbreviations
+    - UN, EU, NATO, WHO, IMF, WTO - commonly used organizations
+
+    Also filters out ambiguous terms that could refer to multiple entities.
+
+    Args:
+        alias: The alias to check
+
+    Returns:
+        True if the code should be kept, False if it should be filtered out
+    """
+    # Whitelist of commonly-used codes in news headlines
+    usable_codes = {
+        # Countries
+        "US",
+        "USA",
+        "U.S.",
+        "U.S.A.",
+        "UK",
+        "U.K.",
+        "UAE",
+        "U.A.E.",
+        # International Organizations
+        "UN",
+        "EU",
+        "NATO",
+        "WHO",
+        "IMF",
+        "WTO",
+        "OECD",
+        "OPEC",
+        "BRICS",
+        "ASEAN",
+        "G7",
+        "G20",
+        "ICC",
+        "WTO",
+    }
+
+    # Blacklist of ambiguous terms that should never be used as aliases
+    # (e.g., "China" for Taiwan, "America" could mean US or continent)
+    ambiguous_terms = {
+        "China",  # Used for both PRC and Taiwan (ROC)
+        "America",  # Could mean US or the continent
+        "States",  # Too generic
+    }
+
+    # Check blacklist first
+    if alias in ambiguous_terms:
+        return False
+
+    alias_upper = alias.upper().replace(" ", "")
+
+    # If it's in the whitelist, keep it
+    if alias_upper in usable_codes:
+        return True
+
+    # Filter out 2-3 letter all-uppercase codes (ISO codes like "AD", "AND", "ROC")
+    if len(alias) <= 3 and alias.isupper() and alias.isalpha():
+        return False
+
+    # Filter out very short lowercase codes (like "ae" for UAE)
+    if len(alias) <= 2 and alias.islower() and alias.isalpha():
+        return False
+
+    # Keep everything else
+    return True
+
+
 def _load_entities_by_type(entity_types: List[str]) -> Dict[str, List[str]]:
     """
     Load entities from data_entities table by entity_type(s).
@@ -119,13 +193,20 @@ def _load_entities_by_type(entity_types: List[str]) -> Dict[str, List[str]]:
             if name_en:
                 bag.append(name_en)
 
-            # Add aliases from all languages
+            # Add aliases from all languages (filter out problematic short codes)
             if isinstance(aliases_data, dict):
                 for lang, lang_aliases in aliases_data.items():
                     if isinstance(lang_aliases, list):
-                        bag.extend(lang_aliases)
+                        # Filter out ISO codes and short codes that aren't commonly used
+                        filtered_aliases = [
+                            alias
+                            for alias in lang_aliases
+                            if _is_usable_short_code(alias)
+                        ]
+                        bag.extend(filtered_aliases)
 
             # Deduplicate while preserving order, case-insensitive
+            # Keep name_en first (it was added first to bag)
             unique_aliases = []
             seen = set()
             for alias in bag:
@@ -133,8 +214,8 @@ def _load_entities_by_type(entity_types: List[str]) -> Dict[str, List[str]]:
                     unique_aliases.append(alias)
                     seen.add(alias.lower())
 
-            # Sort case-insensitive
-            aliases_dict[entity_id] = sorted(unique_aliases, key=str.lower)
+            # Don't sort - preserve order with name_en first
+            aliases_dict[entity_id] = unique_aliases
 
     return aliases_dict
 
