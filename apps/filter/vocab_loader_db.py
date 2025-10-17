@@ -25,13 +25,19 @@ def load_actor_aliases() -> Dict[str, List[str]]:
     """
     Load actor aliases from data_entities table.
 
+    Includes all strategic entity types: countries, orgs, political parties,
+    companies, militant groups, NGOs, etc. Excludes only PERSON and CAPITAL types.
+
     Returns:
         Dict mapping entity_id to list of all aliases across languages
 
     Example:
         {'US': ['United States', 'USA', 'U.S.', 'Washington', 'Estados Unidos', ...]}
+        {'DEMOCRATIC_PARTY': ['Democratic Party', 'Democrats', ...]}
+        {'META': ['Meta', 'Meta Platforms', 'Facebook Inc.', ...]}
     """
-    return _load_entities_by_type(["COUNTRY", "ORG", "CAPITAL"])
+    # Load ALL entity types except PERSON (loaded separately) and CAPITAL (too specific)
+    return _load_all_actors_except_people()
 
 
 def load_go_people_aliases() -> Dict[str, List[str]]:
@@ -49,31 +55,102 @@ def load_go_people_aliases() -> Dict[str, List[str]]:
 
 def load_stop_culture_phrases(path: str | None = None) -> Dict[str, List[str]]:
     """
-    Load culture/lifestyle stop phrases from CSV (not migrated yet).
-    Falls back to legacy CSV loader for now.
-
-    Args:
-        path: Optional path to stop_culture.csv
+    Load STOP_LIST taxonomy terms from taxonomy_terms table.
+    Includes Culture and Sport categories.
 
     Returns:
-        Dict mapping entity_id to list of all phrases across languages
-    """
-    # Import legacy CSV loader for stop_culture (not in data_entities yet)
-    from apps.filter.vocab_loader import \
-        load_stop_culture_phrases as legacy_loader
+        Dict mapping name_en to list of all phrases across languages
 
-    return legacy_loader(path)
+    Example:
+        {'film festival': ['film festival', 'cannes', 'festival de cine', ...]}
+    """
+    return _load_taxonomy_by_positive_flag(is_positive=False)
 
 
 def load_go_taxonomy_aliases(path: str | None = None) -> Dict[str, List[str]]:
     """
-    Load future go taxonomy aliases (when ready).
-    Currently returns empty dict as this vocabulary isn't defined yet.
+    Load GO_LIST taxonomy terms from taxonomy_terms table.
+    Includes Politics, Economics, Security, Technology, Energy, Health, Environment.
 
     Returns:
-        Empty dict (future-proofing)
+        Dict mapping name_en to list of all aliases across languages
+
+    Example:
+        {'tariff': ['tariff', 'tariffs', 'arancel', '关税', ...]}
     """
-    return {}
+    return _load_taxonomy_by_positive_flag(is_positive=True)
+
+
+def _load_taxonomy_by_positive_flag(is_positive: bool) -> Dict[str, List[str]]:
+    """
+    Load taxonomy terms from taxonomy_terms table filtered by is_positive flag.
+
+    Args:
+        is_positive: If True, load GO_LIST terms. If False, load STOP_LIST terms.
+
+    Returns:
+        Dict mapping name_en to flattened list of all aliases across languages
+    """
+    aliases_dict: Dict[str, List[str]] = {}
+
+    with get_db_session() as session:
+        stmt = text(
+            """
+            SELECT t.name_en, t.terms
+            FROM taxonomy_terms t
+            JOIN taxonomy_categories c ON t.category_id = c.category_id
+            WHERE c.is_positive = :is_positive
+            AND t.is_active = TRUE
+            AND c.is_active = TRUE
+            ORDER BY t.name_en
+            """
+        )
+
+        result = session.execute(stmt, {"is_positive": is_positive})
+
+        for row in result:
+            name_en = row.name_en
+            terms_json = row.terms
+
+            # Parse JSONB terms: {"head_en": "tariff", "aliases": {"en": ["tariff"], "es": ["arancel"], ...}}
+            terms_data = (
+                json.loads(terms_json) if isinstance(terms_json, str) else terms_json
+            )
+
+            if not isinstance(terms_data, dict):
+                continue
+
+            # Flatten all language aliases into a single list
+            bag = []
+
+            # Always include primary English name first
+            if name_en:
+                bag.append(name_en)
+
+            # Extract aliases from all languages
+            aliases_data = terms_data.get("aliases", {})
+            if isinstance(aliases_data, dict):
+                for lang, lang_aliases in aliases_data.items():
+                    if isinstance(lang_aliases, list):
+                        # Filter out very short codes that might be false positives
+                        filtered_aliases = [
+                            alias
+                            for alias in lang_aliases
+                            if _is_usable_short_code(alias)
+                        ]
+                        bag.extend(filtered_aliases)
+
+            # Deduplicate while preserving order, case-insensitive
+            unique_aliases = []
+            seen = set()
+            for alias in bag:
+                if alias and alias.lower() not in seen:
+                    unique_aliases.append(alias)
+                    seen.add(alias.lower())
+
+            aliases_dict[name_en] = unique_aliases
+
+    return aliases_dict
 
 
 def _is_usable_short_code(alias: str) -> bool:
@@ -150,6 +227,76 @@ def _is_usable_short_code(alias: str) -> bool:
     return True
 
 
+def _load_all_actors_except_people() -> Dict[str, List[str]]:
+    """
+    Load ALL actors from data_entities table, excluding PERSON and CAPITAL types.
+
+    This includes: COUNTRY, ORG, PoliticalParty, Company, MilitantGroup, NGO,
+    RegionalOrganization, ThinkTank, CentralBank, and all other non-person types.
+
+    Returns:
+        Dict mapping entity_id to flattened list of all aliases across languages
+    """
+    aliases_dict: Dict[str, List[str]] = {}
+
+    with get_db_session() as session:
+        stmt = text(
+            """
+            SELECT entity_id, name_en, aliases
+            FROM data_entities
+            WHERE entity_type != 'PERSON' AND entity_type != 'CAPITAL'
+            ORDER BY entity_id
+            """
+        )
+
+        result = session.execute(stmt)
+
+        for row in result:
+            entity_id = row.entity_id
+            name_en = row.name_en
+            aliases_json = row.aliases
+
+            # Parse JSONB aliases: {" en": ["USA", "U.S."], "ru": ["США"], ...}
+            aliases_data = (
+                json.loads(aliases_json)
+                if isinstance(aliases_json, str)
+                else aliases_json
+            )
+
+            # Flatten all language aliases into a single list
+            bag = []
+
+            # Always include primary English name first
+            if name_en:
+                bag.append(name_en)
+
+            # Add aliases from all languages (filter out problematic short codes)
+            if isinstance(aliases_data, dict):
+                for lang, lang_aliases in aliases_data.items():
+                    if isinstance(lang_aliases, list):
+                        # Filter out ISO codes and short codes that aren't commonly used
+                        filtered_aliases = [
+                            alias
+                            for alias in lang_aliases
+                            if _is_usable_short_code(alias)
+                        ]
+                        bag.extend(filtered_aliases)
+
+            # Deduplicate while preserving order, case-insensitive
+            # Keep name_en first (it was added first to bag)
+            unique_aliases = []
+            seen = set()
+            for alias in bag:
+                if alias and alias.lower() not in seen:
+                    unique_aliases.append(alias)
+                    seen.add(alias.lower())
+
+            # Don't sort - preserve order with name_en first
+            aliases_dict[entity_id] = unique_aliases
+
+    return aliases_dict
+
+
 def _load_entities_by_type(entity_types: List[str]) -> Dict[str, List[str]]:
     """
     Load entities from data_entities table by entity_type(s).
@@ -221,13 +368,13 @@ def _load_entities_by_type(entity_types: List[str]) -> Dict[str, List[str]]:
 
 
 def get_actor_count() -> int:
-    """Get total number of actors in the database"""
+    """Get total number of actors in the database (excludes PERSON and CAPITAL)"""
     with get_db_session() as session:
         stmt = text(
             """
             SELECT COUNT(*)
             FROM data_entities
-            WHERE entity_type IN ('COUNTRY', 'ORG', 'CAPITAL')
+            WHERE entity_type != 'PERSON' AND entity_type != 'CAPITAL'
             """
         )
         result = session.execute(stmt).scalar()
@@ -259,9 +406,11 @@ def validate_vocabularies() -> Dict[str, any]:
         "db_accessible": False,
         "actors_count": 0,
         "go_people_count": 0,
+        "go_taxonomy_count": 0,
         "stop_culture_count": 0,
         "total_actor_aliases": 0,
         "total_go_people_aliases": 0,
+        "total_go_taxonomy_aliases": 0,
         "total_stop_culture_phrases": 0,
         "errors": [],
     }
@@ -287,7 +436,17 @@ def validate_vocabularies() -> Dict[str, any]:
     except Exception as e:
         results["errors"].append(f"Go people loading error: {e}")
 
-    # Check stop_culture (still CSV-based)
+    # Check GO_LIST taxonomy (database-backed)
+    try:
+        go_taxonomy = load_go_taxonomy_aliases()
+        results["go_taxonomy_count"] = len(go_taxonomy)
+        results["total_go_taxonomy_aliases"] = sum(
+            len(alias_list) for alias_list in go_taxonomy.values()
+        )
+    except Exception as e:
+        results["errors"].append(f"Go taxonomy loading error: {e}")
+
+    # Check STOP_LIST taxonomy (database-backed)
     try:
         culture = load_stop_culture_phrases()
         results["stop_culture_count"] = len(culture)
@@ -310,9 +469,11 @@ if __name__ == "__main__":
     print(f"Database accessible: {validation['db_accessible']}")
     print(f"Actor entities: {validation['actors_count']}")
     print(f"Go people entities: {validation['go_people_count']}")
-    print(f"Stop culture entities: {validation['stop_culture_count']}")
+    print(f"Go taxonomy terms (GO_LIST): {validation['go_taxonomy_count']}")
+    print(f"Stop culture terms (STOP_LIST): {validation['stop_culture_count']}")
     print(f"Total actor aliases: {validation['total_actor_aliases']}")
     print(f"Total go people aliases: {validation['total_go_people_aliases']}")
+    print(f"Total go taxonomy aliases: {validation['total_go_taxonomy_aliases']}")
     print(f"Total stop culture phrases: {validation['total_stop_culture_phrases']}")
 
     if validation["errors"]:
@@ -327,9 +488,32 @@ if __name__ == "__main__":
     print("Sample Actor Entities:")
     actors = load_actor_aliases()
     for entity_id in list(actors.keys())[:5]:
-        print(f"  {entity_id}: {actors[entity_id][:3]}...")
+        # Use ascii encoding to avoid Unicode errors in Windows console
+        aliases_str = (
+            str(actors[entity_id][:3]).encode("ascii", "ignore").decode("ascii")
+        )
+        print(f"  {entity_id}: {aliases_str}...")
 
     print("\nSample People Entities:")
     people = load_go_people_aliases()
     for entity_id in list(people.keys())[:5]:
-        print(f"  {entity_id}: {people[entity_id][:3]}...")
+        aliases_str = (
+            str(people[entity_id][:3]).encode("ascii", "ignore").decode("ascii")
+        )
+        print(f"  {entity_id}: {aliases_str}...")
+
+    print("\nSample GO_LIST Taxonomy Terms:")
+    go_taxonomy = load_go_taxonomy_aliases()
+    for term_name in list(go_taxonomy.keys())[:5]:
+        aliases_str = (
+            str(go_taxonomy[term_name][:3]).encode("ascii", "ignore").decode("ascii")
+        )
+        print(f"  {term_name}: {aliases_str}...")
+
+    print("\nSample STOP_LIST Taxonomy Terms:")
+    stop_taxonomy = load_stop_culture_phrases()
+    for term_name in list(stop_taxonomy.keys())[:5]:
+        aliases_str = (
+            str(stop_taxonomy[term_name][:3]).encode("ascii", "ignore").decode("ascii")
+        )
+        print(f"  {term_name}: {aliases_str}...")
