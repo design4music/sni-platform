@@ -33,8 +33,54 @@ from core.config import get_config
 # Phase 2: Strategic Filtering
 # -----------------------------------------------------------------------------
 
-STRATEGIC_REVIEW_SYSTEM = "Does this relate to politics, economics, technology, society, or environmental risks?"
-STRATEGIC_REVIEW_USER = "'{title}' - 0 or 1"
+STRATEGIC_REVIEW_SYSTEM = """Analyze if this news title has INTERNATIONAL or NATIONAL strategic significance.
+
+STRATEGIC CONTENT (assign strategic=1):
+- International relations & diplomacy (meetings, agreements, conflicts, sanctions)
+- Major domestic politics (elections, policy changes, political crises, legislative actions)
+- Economic policy & trade (central bank decisions, major trade agreements, economic sanctions)
+- Military & security (operations, procurement, defense policy, intelligence)
+- Technology regulation & competition (major tech policy, international tech competition, AI regulation)
+- Energy & climate policy (energy security, climate agreements, resource conflicts)
+
+NON-STRATEGIC CONTENT (assign strategic=0):
+- Local incidents (accidents, crime, traffic, fires) even with casualties
+- Entertainment & sports (unless directly tied to geopolitical tensions or boycotts)
+- Cultural events (festivals, awards, exhibitions)
+- Celebrity news & lifestyle content
+- Routine business news (earnings, appointments without policy impact)
+- Weather & natural disasters (unless creating international policy responses)
+- Generic opinion pieces without specific actors/events
+- Incoherent titles mixing multiple unrelated subjects
+
+ENTITY EXTRACTION:
+If strategic, identify key actors and locations. Infer countries from geographic hints:
+
+US locations: Pentagon, Congress, White House, Tennessee, California, any US state/city
+European: Bundestag/Berlin/Hamburg → Germany, Paris/Élysée → France, Westminster/London → UK
+Asian: Delhi/Lok Sabha → India, Macao/Hong Kong → China, Knesset/Jerusalem → Israel
+African: Joburg/Johannesburg → South Africa, Abuja → Nigeria
+Latin American: Any mention of senators/congress in Spanish/Portuguese context → infer country
+Middle East: Sharm el-Sheikh → Egypt, Doha → Qatar
+
+Organizations: Pentagon → United States (military), Qatari Amiri Diwan → Qatar
+
+COHERENCE CHECK:
+Reject titles that are:
+- Mixed headlines ("Shutdown Politics, Air Traffic, Comey") → strategic=0
+- Too generic without actors ("motivation and involvement") → strategic=0
+- Missing context ("Army rescues hostages" - which army? where?) → strategic=0
+
+OUTPUT FORMAT (valid JSON only):
+{"strategic": 0 or 1, "entities": ["actor1", "location1"]}
+
+If non-strategic, entities should be empty array: []
+If strategic but no specific entities found, entities can be empty but strategic=1
+Use canonical entity names from your knowledge (e.g., "United States" not "USA", "Germany" not "Deutschland")"""
+
+STRATEGIC_REVIEW_USER = """Title: '{title}'
+
+Analyze and respond in JSON format."""
 
 
 # -----------------------------------------------------------------------------
@@ -563,42 +609,73 @@ class LLMClient:
     # Phase 2: Strategic Filtering
     # -------------------------------------------------------------------------
 
-    async def strategic_review(self, title: str) -> bool:
+    async def strategic_review(self, title: str, debug: bool = False) -> Dict[str, Any]:
         """
-        Determine if a title is strategically significant.
+        Determine if a title is strategically significant and extract entities.
 
         Args:
             title: Title text to review
+            debug: If True, request reason field (slower, for debugging)
 
         Returns:
-            True if strategic, False if not
+            Dict with:
+                - is_strategic (bool): True if strategic, False if not
+                - entities (List[str]): Extracted raw entity names (not yet matched to entity_ids)
+                - reason (str, optional): Brief explanation (only if debug=True)
         """
         try:
+            # Adjust max_tokens based on debug mode
+            max_tokens = 150 if debug else 80
+
             user_prompt = STRATEGIC_REVIEW_USER.format(title=title)
             response = await self._call_llm(
                 system_prompt=STRATEGIC_REVIEW_SYSTEM,
                 user_prompt=user_prompt,
-                max_tokens=5,
+                max_tokens=max_tokens,
                 temperature=0.0,
             )
 
-            # Parse response - expect "0" or "1"
-            response_clean = response.strip().lower()
-            if "1" in response_clean:
-                logger.debug(f"LLM flagged as strategic: '{title[:50]}'")
-                return True
-            elif "0" in response_clean:
-                logger.debug(f"LLM flagged as non-strategic: '{title[:50]}'")
-                return False
-            else:
-                logger.warning(
-                    f"LLM unexpected response '{response}' for '{title[:50]}', defaulting to non-strategic"
-                )
-                return False
+            # Parse JSON response
+            try:
+                response_data = self._extract_json(response)
+                is_strategic = bool(response_data.get("strategic", 0))
+                entities = response_data.get("entities", [])
+
+                if is_strategic:
+                    logger.debug(
+                        f"LLM flagged as strategic: '{title[:50]}' | Entities: {entities[:3]}"
+                    )
+                else:
+                    logger.debug(f"LLM flagged as non-strategic: '{title[:50]}'")
+
+                return {
+                    "is_strategic": is_strategic,
+                    "entities": entities if isinstance(entities, list) else [],
+                }
+
+            except (json.JSONDecodeError, ValueError) as parse_error:
+                # Fallback: Try to parse as legacy "0" or "1" format
+                response_clean = response.strip().lower()
+                if "1" in response_clean:
+                    logger.warning(
+                        f"LLM returned legacy format '1' for '{title[:50]}', parsing as strategic"
+                    )
+                    return {"is_strategic": True, "entities": []}
+                elif "0" in response_clean:
+                    logger.warning(
+                        f"LLM returned legacy format '0' for '{title[:50]}', parsing as non-strategic"
+                    )
+                    return {"is_strategic": False, "entities": []}
+                else:
+                    logger.error(
+                        f"Failed to parse LLM response for '{title[:50]}': {parse_error} | "
+                        f"Response: {response[:100]}"
+                    )
+                    return {"is_strategic": False, "entities": []}
 
         except Exception as e:
             logger.error(f"LLM strategic review failed for '{title[:50]}': {e}")
-            return False  # Default to non-strategic on error
+            return {"is_strategic": False, "entities": []}
 
     # -------------------------------------------------------------------------
     # Phase 3: Event Family Generation

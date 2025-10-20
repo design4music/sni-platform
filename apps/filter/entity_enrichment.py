@@ -17,6 +17,8 @@ from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
 from apps.filter.title_processor_helpers import (update_processing_stats,
                                                  update_title_entities)
+from apps.filter.vocab_loader_db import (load_actor_aliases,
+                                         load_go_people_aliases)
 from core.database import get_db_session
 from core.llm_client import LLMClient
 from core.neo4j_sync import get_neo4j_sync
@@ -38,6 +40,10 @@ class EntityEnrichmentService:
         self.taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
         self.llm_client = LLMClient()
         self.neo4j_sync = get_neo4j_sync()
+
+        # Load entity vocabularies for matching LLM-extracted entities
+        self._entity_vocab = None
+        self._entity_lookup = None
 
     async def extract_entities_for_title(
         self, title_data: Dict[str, Any]
@@ -75,7 +81,24 @@ class EntityEnrichmentService:
         else:
             # Phase 2: LLM review for ambiguous titles (no positive hits)
             # Only call LLM if no static taxonomy match
-            is_strategic = await self._llm_strategic_review(title_text)
+            llm_result = await self._llm_strategic_review(title_text)
+            is_strategic = llm_result["is_strategic"]
+
+            # Match LLM-extracted entities against data_entities table
+            llm_raw_entities = llm_result.get("entities", [])
+            if llm_raw_entities:
+                # Match raw LLM strings to canonical entity_ids
+                matched_entity_ids = self._match_llm_entities(llm_raw_entities)
+                if matched_entity_ids:
+                    all_entities.extend(matched_entity_ids)
+                    logger.debug(
+                        f"LLM extracted and matched entities for '{title_text[:50]}': "
+                        f"{llm_raw_entities} → {matched_entity_ids}"
+                    )
+                else:
+                    logger.debug(
+                        f"LLM extracted entities but no matches: {llm_raw_entities}"
+                    )
             # If LLM flags as strategic but no entities found, keep empty array
             # gate_keep=true + entities=[] means strategic without specific actors
 
@@ -102,13 +125,16 @@ class EntityEnrichmentService:
 
         return {"actors": all_entities, "is_strategic": is_strategic}
 
-    async def _llm_strategic_review(self, title_text: str) -> bool:
+    async def _llm_strategic_review(self, title_text: str) -> Dict[str, Any]:
         """
-        Use LLM to determine if ambiguous title is strategic.
+        Use LLM to determine if ambiguous title is strategic and extract entities.
         Called only for titles that don't match static taxonomy.
 
         Returns:
-            bool: True if strategic, False if not
+            Dict with:
+                - is_strategic (bool): True if strategic, False if not
+                - entities (List[str]): Extracted entities/actors
+                - reason (str): Brief explanation of decision
         """
         return await self.llm_client.strategic_review(title_text)
 
@@ -301,6 +327,86 @@ class EntityEnrichmentService:
     def _empty_entities(self) -> Dict[str, Any]:
         """Return empty entities structure."""
         return {"actors": [], "is_strategic": False}
+
+    def _load_entity_vocab(self) -> None:
+        """
+        Load entity vocabularies and build reverse lookup table.
+        Lazy-loaded on first use to avoid database hits on initialization.
+        """
+        if self._entity_lookup is not None:
+            return  # Already loaded
+
+        logger.info("Loading entity vocabulary for LLM entity matching...")
+
+        # Load actors and people from database
+        actors = load_actor_aliases()
+        people = load_go_people_aliases()
+
+        # Combine into single vocabulary
+        self._entity_vocab = {**actors, **people}
+
+        # Build reverse lookup: alias (lowercase) -> entity_id
+        self._entity_lookup = {}
+        for entity_id, aliases in self._entity_vocab.items():
+            for alias in aliases:
+                alias_lower = alias.lower().strip()
+                if alias_lower:
+                    # Store best match (prefer shorter entity_ids for ambiguous aliases)
+                    if alias_lower not in self._entity_lookup or len(entity_id) < len(
+                        self._entity_lookup[alias_lower]
+                    ):
+                        self._entity_lookup[alias_lower] = entity_id
+
+        logger.info(
+            f"Entity vocabulary loaded: {len(self._entity_vocab)} entities, "
+            f"{len(self._entity_lookup)} aliases"
+        )
+
+    def _match_llm_entities(self, llm_entities: List[str]) -> List[str]:
+        """
+        Match LLM-extracted entity strings against data_entities table.
+
+        Args:
+            llm_entities: Raw entity strings from LLM (e.g., ["United States", "Germany"])
+
+        Returns:
+            List of canonical entity_ids (e.g., ["US", "GERMANY"])
+        """
+        if not llm_entities:
+            return []
+
+        # Ensure vocabulary is loaded
+        self._load_entity_vocab()
+
+        matched_entity_ids = []
+        for raw_entity in llm_entities:
+            entity_lower = raw_entity.lower().strip()
+            if not entity_lower:
+                continue
+
+            # Direct match
+            if entity_lower in self._entity_lookup:
+                entity_id = self._entity_lookup[entity_lower]
+                if entity_id not in matched_entity_ids:
+                    matched_entity_ids.append(entity_id)
+                    logger.debug(f"Matched '{raw_entity}' → '{entity_id}'")
+            else:
+                # Partial match: check if raw_entity is contained in any alias
+                found = False
+                for alias, entity_id in self._entity_lookup.items():
+                    if entity_lower in alias or alias in entity_lower:
+                        if entity_id not in matched_entity_ids:
+                            matched_entity_ids.append(entity_id)
+                            logger.debug(
+                                f"Partial matched '{raw_entity}' → '{entity_id}' (via '{alias}')"
+                            )
+                            found = True
+                            break
+
+                if not found:
+                    logger.debug(f"No match found for LLM entity: '{raw_entity}'")
+
+        return matched_entity_ids
 
 
 def get_entity_enrichment_service() -> EntityEnrichmentService:
