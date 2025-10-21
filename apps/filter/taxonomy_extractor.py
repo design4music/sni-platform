@@ -122,11 +122,35 @@ class MultiVocabTaxonomyExtractor:
         """
         common_words = {
             # 2-letter words
-            "in", "is", "it", "as", "or", "no", "so", "to",
-            "an", "at", "be", "by", "do", "go", "he", "if",
-            "me", "my", "of", "on", "we",
+            "in",
+            "is",
+            "it",
+            "as",
+            "or",
+            "no",
+            "so",
+            "to",
+            "an",
+            "at",
+            "be",
+            "by",
+            "do",
+            "go",
+            "he",
+            "if",
+            "me",
+            "my",
+            "of",
+            "on",
+            "we",
             # 3-letter words
-            "who", "the", "and", "for", "are", "but", "not"
+            "who",
+            "the",
+            "and",
+            "for",
+            "are",
+            "but",
+            "not",
         }
         return alias_lower in common_words
 
@@ -147,7 +171,11 @@ class MultiVocabTaxonomyExtractor:
 
         for entity_id, alias_list in aliases.items():
             # Store display name (first alias is name_en from database)
-            if is_strategic and alias_list and entity_id not in self._entity_display_names:
+            if (
+                is_strategic
+                and alias_list
+                and entity_id not in self._entity_display_names
+            ):
                 self._entity_display_names[entity_id] = alias_list[0]
 
             for alias in alias_list:
@@ -215,11 +243,13 @@ class MultiVocabTaxonomyExtractor:
             text: Text to analyze for strategic actors
 
         Returns:
-            List of strategic entity_ids (empty if blocked by stop list)
+            List of strategic entity names (empty if blocked by stop list)
+            Auto-enriched with countries for detected PERSON entities
 
         Logic:
         1. Check STOP lists first (blocks everything)
         2. Collect all GO matches if not blocked
+        3. Auto-add countries for detected people (based on iso_code)
         """
         normalized_text = self.normalize(text)
         if not normalized_text:
@@ -253,7 +283,13 @@ class MultiVocabTaxonomyExtractor:
                     display_name = self._entity_display_names.get(entity_id, entity_id)
                     hits.append(display_name)
 
-        return hits
+        # 3. Auto-add countries for detected people
+        from apps.filter.country_enrichment import \
+            enrich_entities_with_countries
+
+        enriched_hits = enrich_entities_with_countries(hits)
+
+        return enriched_hits
 
     def _check_patterns(self, text: str, patterns: List) -> Optional[str]:
         """Check patterns and return first match entity_id"""

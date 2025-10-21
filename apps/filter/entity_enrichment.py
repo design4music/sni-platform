@@ -77,6 +77,7 @@ class EntityEnrichmentService:
         neo4j_reason = None
 
         if is_strategic:
+            # all_strategic_hits already includes country enrichment
             all_entities = self.taxonomy_extractor.all_strategic_hits(title_text)
         else:
             # Phase 2: LLM review for ambiguous titles (no positive hits)
@@ -87,13 +88,20 @@ class EntityEnrichmentService:
             # Match LLM-extracted entities against data_entities table
             llm_raw_entities = llm_result.get("entities", [])
             if llm_raw_entities:
-                # Match raw LLM strings to canonical entity_ids
-                matched_entity_ids = self._match_llm_entities(llm_raw_entities)
-                if matched_entity_ids:
-                    all_entities.extend(matched_entity_ids)
+                # Match raw LLM strings to canonical entity names (name_en)
+                matched_entity_names = self._match_llm_entities(llm_raw_entities)
+                if matched_entity_names:
+                    # Auto-add countries for detected people (based on iso_code)
+                    from apps.filter.country_enrichment import \
+                        enrich_entities_with_countries
+
+                    enriched_entity_names = enrich_entities_with_countries(
+                        matched_entity_names
+                    )
+                    all_entities.extend(enriched_entity_names)
                     logger.debug(
                         f"LLM extracted and matched entities for '{title_text[:50]}': "
-                        f"{llm_raw_entities} → {matched_entity_ids}"
+                        f"{llm_raw_entities} → {enriched_entity_names}"
                     )
                 else:
                     logger.debug(
@@ -370,7 +378,7 @@ class EntityEnrichmentService:
             llm_entities: Raw entity strings from LLM (e.g., ["United States", "Germany"])
 
         Returns:
-            List of canonical entity_ids (e.g., ["US", "GERMANY"])
+            List of canonical entity names (name_en) (e.g., ["United States", "Germany"])
         """
         if not llm_entities:
             return []
@@ -378,7 +386,9 @@ class EntityEnrichmentService:
         # Ensure vocabulary is loaded
         self._load_entity_vocab()
 
-        matched_entity_ids = []
+        matched_names = []
+        seen_entity_ids = set()  # Track entity_ids to avoid duplicates
+
         for raw_entity in llm_entities:
             entity_lower = raw_entity.lower().strip()
             if not entity_lower:
@@ -387,18 +397,26 @@ class EntityEnrichmentService:
             # Direct match
             if entity_lower in self._entity_lookup:
                 entity_id = self._entity_lookup[entity_lower]
-                if entity_id not in matched_entity_ids:
-                    matched_entity_ids.append(entity_id)
-                    logger.debug(f"Matched '{raw_entity}' → '{entity_id}'")
+                if entity_id not in seen_entity_ids:
+                    # Get canonical name_en (first alias in vocab)
+                    name_en = self._entity_vocab[entity_id][0]
+                    matched_names.append(name_en)
+                    seen_entity_ids.add(entity_id)
+                    logger.debug(
+                        f"Matched '{raw_entity}' → '{name_en}' (entity_id: {entity_id})"
+                    )
             else:
                 # Partial match: check if raw_entity is contained in any alias
                 found = False
                 for alias, entity_id in self._entity_lookup.items():
                     if entity_lower in alias or alias in entity_lower:
-                        if entity_id not in matched_entity_ids:
-                            matched_entity_ids.append(entity_id)
+                        if entity_id not in seen_entity_ids:
+                            # Get canonical name_en (first alias in vocab)
+                            name_en = self._entity_vocab[entity_id][0]
+                            matched_names.append(name_en)
+                            seen_entity_ids.add(entity_id)
                             logger.debug(
-                                f"Partial matched '{raw_entity}' → '{entity_id}' (via '{alias}')"
+                                f"Partial matched '{raw_entity}' → '{name_en}' (entity_id: {entity_id}, via '{alias}')"
                             )
                             found = True
                             break
@@ -406,7 +424,7 @@ class EntityEnrichmentService:
                 if not found:
                     logger.debug(f"No match found for LLM entity: '{raw_entity}'")
 
-        return matched_entity_ids
+        return matched_names
 
 
 def get_entity_enrichment_service() -> EntityEnrichmentService:
