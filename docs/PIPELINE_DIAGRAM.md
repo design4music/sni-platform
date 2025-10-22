@@ -16,13 +16,13 @@ View this diagram:
 flowchart TD
     %% External Data Sources
     RSS[(RSS Feeds<br/>~50 sources)]
-    ACTORS[data/actors.csv<br/>Strategic actors]
-    GO_PEOPLE[data/go_people.csv<br/>Strategic people]
-    STOP_CULTURE[data/stop_culture.csv<br/>Blocked topics]
+    DATA_ENTITIES[(data_entities table<br/>Strategic actors & people<br/>iso_code for country enrichment)]
+    TAXONOMY[(taxonomy_terms table<br/>GO_LIST & STOP_LIST)]
     CENTROIDS[data/centroids.json<br/>Semantic patterns]
     EVENT_TYPES[data/event_types.csv<br/>11 event type enums]
     THEATERS[data/theaters.csv<br/>16 theater enums]
     RAI_APP[RAI Service<br/>render.com:rai-backend]
+    NEO4J[(Neo4j Graph<br/>Entity network intelligence)]
 
     %% Database
     DB[(PostgreSQL<br/>sni_v2)]
@@ -35,14 +35,14 @@ flowchart TD
     P1_EMBED[Generate embeddings<br/>sentence-transformers/all-MiniLM-L6-v2]
     P1_STORE[INSERT INTO titles<br/>gate_keep=NULL, event_family_id=NULL]
 
-    %% Phase 2: Strategic Filtering
+    %% Phase 2: Strategic Filtering + Entity Enrichment
     P2_START[PHASE 2: STRATEGIC FILTERING]
-    P2_LOAD[SELECT FROM titles<br/>WHERE gate_keep IS NULL]
-    P2_SEMANTIC[Semantic gate<br/>cosine vs centroids.json]
-    P2_LEXICAL[Multi-vocab matching<br/>GO: actors.csv, go_people.csv<br/>STOP: stop_culture.csv]
-    P2_LLM[LLM hybrid validation<br/>DeepSeek confirmation]
-    P2_ACCEPT[UPDATE titles<br/>SET gate_keep=true]
-    P2_REJECT[UPDATE titles<br/>SET gate_keep=false, gate_reason]
+    P2_LOAD[SELECT FROM titles<br/>WHERE entities IS NULL]
+    P2_TAXONOMY[Static taxonomy extraction<br/>DB: data_entities + taxonomy_terms<br/>GO_LIST vs STOP_LIST]
+    P2_LLM[LLM strategic review<br/>For ambiguous titles<br/>Extract entities + decision]
+    P2_NEO4J[Neo4j override<br/>Network intelligence<br/>Entity centrality + patterns]
+    P2_COUNTRY[Country enrichment<br/>Auto-add countries<br/>via iso_code field]
+    P2_UPDATE[UPDATE titles<br/>SET gate_keep, entities JSONB<br/>name_en format]
 
     %% Phase 3: Event Family Generation
     P3_START[PHASE 3: GENERATE EVENT FAMILIES]
@@ -84,13 +84,10 @@ flowchart TD
     P1_START --> P1_FETCH --> P1_PARSE --> P1_DEDUP --> P1_EMBED --> P1_STORE --> DB
 
     DB --> P2_START
-    ACTORS --> P2_START
-    GO_PEOPLE --> P2_START
-    STOP_CULTURE --> P2_START
-    CENTROIDS --> P2_START
-    P2_START --> P2_LOAD --> P2_SEMANTIC --> P2_LEXICAL --> P2_LLM
-    P2_LLM --> P2_ACCEPT --> DB
-    P2_LLM --> P2_REJECT --> DB
+    DATA_ENTITIES --> P2_START
+    TAXONOMY --> P2_START
+    NEO4J --> P2_START
+    P2_START --> P2_LOAD --> P2_TAXONOMY --> P2_LLM --> P2_NEO4J --> P2_COUNTRY --> P2_UPDATE --> DB
 
     DB --> P3_START
     EVENT_TYPES --> P3_START
@@ -118,9 +115,9 @@ flowchart TD
     classDef keyProcess fill:#e8f5e9,stroke:#388e3c,stroke-width:3px
 
     class P1_START,P2_START,P3_START,P4_START,P5_START,P6_START phaseClass
-    class RSS,ACTORS,GO_PEOPLE,STOP_CULTURE,CENTROIDS,EVENT_TYPES,THEATERS,RAI_APP dataSource
-    class DB dbClass
-    class P3_EF_KEY,P3_CHECK,P3_MERGE keyProcess
+    class RSS,DATA_ENTITIES,TAXONOMY,CENTROIDS,EVENT_TYPES,THEATERS,RAI_APP dataSource
+    class DB,NEO4J dbClass
+    class P2_COUNTRY,P3_EF_KEY,P3_CHECK,P3_MERGE keyProcess
 ```
 
 ---
@@ -162,6 +159,68 @@ flowchart LR
 
 ---
 
+## Phase 2: Strategic Filtering Flow (Detailed)
+
+**Three-Phase Approach: Static Taxonomy → LLM Review → Neo4j Override**
+
+```mermaid
+flowchart TD
+    TITLE[Title: 'Trump announces new tariffs']
+
+    subgraph "Phase 2A: Static Taxonomy"
+        TAX_CHECK{Taxonomy Match?}
+        TAX_ACTORS[Extract from data_entities<br/>GO_LIST actors & people]
+        TAX_STOP[Check taxonomy_terms<br/>STOP_LIST blocks]
+    end
+
+    subgraph "Phase 2B: LLM Review"
+        LLM_CHECK[LLM Strategic Review<br/>Only if no taxonomy match]
+        LLM_EXTRACT[Extract entities<br/>Match against data_entities]
+    end
+
+    subgraph "Phase 2C: Neo4j Override"
+        NEO4J_CHECK[Check network signals<br/>Entity centrality<br/>Strategic neighborhood<br/>Temporal patterns]
+        NEO4J_SCORE{Score >= 2?}
+    end
+
+    subgraph "Country Enrichment"
+        COUNTRY[Auto-add countries<br/>For entities with iso_code<br/>Works for ALL entity types]
+    end
+
+    RESULT[UPDATE titles<br/>gate_keep + entities JSONB<br/>Format: name_en only]
+
+    TITLE --> TAX_CHECK
+    TAX_CHECK -->|Matched GO_LIST| TAX_ACTORS --> COUNTRY
+    TAX_CHECK -->|Matched STOP_LIST| TAX_STOP --> RESULT
+    TAX_CHECK -->|No Match| LLM_CHECK --> LLM_EXTRACT
+    LLM_EXTRACT -->|Strategic| COUNTRY
+    LLM_EXTRACT -->|Non-Strategic| NEO4J_CHECK
+    NEO4J_CHECK --> NEO4J_SCORE
+    NEO4J_SCORE -->|Yes| COUNTRY
+    NEO4J_SCORE -->|No| RESULT
+    COUNTRY --> RESULT
+```
+
+**Key Features:**
+
+1. **Database-Backed Vocabularies**: No CSV files, all from `data_entities` and `taxonomy_terms` tables
+2. **Entity Naming Consistency**: Always use `name_en` (e.g., "United States" not "US")
+3. **Country Auto-Enrichment**:
+   - "Donald Trump" detected → adds "United States" (via iso_code=US)
+   - "FBI" detected → adds "United States" (via iso_code=US)
+   - Works for ALL entity types (PERSON, ORG, Company, etc.)
+4. **Neo4j Intelligence**: Network patterns override LLM for borderline cases
+5. **LLM Optimization**: Removed "reason" field, reduced from 150 to 80 tokens per request
+
+**Code References:**
+- `apps/filter/entity_enrichment.py` - Main orchestration
+- `apps/filter/taxonomy_extractor.py` - Static GO/STOP matching
+- `apps/filter/country_enrichment.py` - Auto-country via iso_code
+- `apps/filter/vocab_loader_db.py` - Database vocabulary loader
+- `core/neo4j_sync.py` - Network intelligence
+
+---
+
 ## Database Schema
 
 ```mermaid
@@ -176,7 +235,7 @@ erDiagram
         boolean gate_keep "NULL→true/false in P2"
         uuid event_family_id FK "NULL→uuid in P3"
         vector embedding_384
-        jsonb entities
+        jsonb entities "P2: name_en format + auto-country"
         timestamp pubdate_utc
         text gate_reason
         real gate_score
@@ -256,7 +315,7 @@ stateDiagram-v2
 ### P1 → P2 Queue
 ```sql
 SELECT * FROM titles
-WHERE gate_keep IS NULL
+WHERE entities IS NULL
 ORDER BY pubdate_utc DESC
 ```
 
@@ -318,9 +377,15 @@ ORDER BY fn.created_at DESC
 ```yaml
 # Clustering Thresholds
 COSINE_THRESHOLD_DEDUP: 0.95   # P1: Near-duplicate detection
-COSINE_THRESHOLD_GATE: 0.70    # P2: Semantic gate threshold
 COSINE_THRESHOLD_BUCKET: 0.60  # P3: Initial bucketing
 COSINE_THRESHOLD_MERGE: 0.85   # P3: Hierarchical merge
+
+# Phase 2: Strategic Filtering
+P2_TAXONOMY_SOURCE: database    # data_entities + taxonomy_terms
+P2_ENTITY_FORMAT: name_en       # Use full names (not entity_id codes)
+P2_COUNTRY_ENRICHMENT: true     # Auto-add countries via iso_code
+P2_NEO4J_OVERRIDE: enabled      # Network intelligence
+P2_STRATEGIC_SCORE_MIN: 2       # Neo4j multi-signal threshold
 
 # EF Key System (P3)
 EF_KEY_ALGORITHM: SHA256        # Hash function
@@ -334,7 +399,7 @@ PHASE_6_RAI_ENABLED: false     # ✗ Manual only
 # LLM Provider
 LLM_PROVIDER: deepseek
 LLM_MODEL: deepseek-chat
-MAX_TOKENS_PER_REQUEST: 4000
+MAX_TOKENS_PER_REQUEST: 80     # Optimized (no reason field)
 DEEPSEEK_API_URL: https://api.deepseek.com/v1
 
 # RAI Integration
@@ -387,9 +452,14 @@ PHASE_6_CONCURRENCY: 3         # Conservative for external API
 
 ## Code References
 
+- **P2 Entity Enrichment**: `apps/filter/entity_enrichment.py`
+- **P2 Taxonomy Extraction**: `apps/filter/taxonomy_extractor.py`
+- **P2 Country Enrichment**: `apps/filter/country_enrichment.py`
+- **P2 Vocab Loader**: `apps/filter/vocab_loader_db.py`
 - **EF Key Generation**: `apps/generate/ef_key.py:45-76`
 - **EF Upsert Logic**: `apps/generate/database.py:223-290`
 - **P3 Incident Processing**: `apps/generate/incident_processor.py:43-188`
 - **P4 Enrichment**: `apps/enrich/processor.py:130-170`
 - **P5 Framing**: `apps/generate/framing_processor.py:28-90`
 - **P6 RAI**: `apps/generate/rai_processor.py:30-150`
+- **Neo4j Sync**: `core/neo4j_sync.py`
