@@ -179,12 +179,12 @@ class Gen1Database:
                 insert_query = """
                 INSERT INTO event_families (
                     id, title, summary, strategic_purpose, key_actors, event_type, primary_theater,
-                    ef_key, status, merged_into, merge_rationale,
+                    ef_key, status, merged_into, merge_rationale, parent_ef_id,
                     source_title_ids, coherence_reason, created_at, updated_at,
                     processing_notes, events
                 ) VALUES (
                     :id, :title, :summary, :strategic_purpose, :key_actors, :event_type, :primary_theater,
-                    :ef_key, :status, :merged_into, :merge_rationale,
+                    :ef_key, :status, :merged_into, :merge_rationale, :parent_ef_id,
                     :source_title_ids, :coherence_reason, :created_at, :updated_at,
                     :processing_notes, :events
                 )
@@ -204,6 +204,7 @@ class Gen1Database:
                         "status": event_family.status,
                         "merged_into": event_family.merged_into,
                         "merge_rationale": event_family.merge_rationale,
+                        "parent_ef_id": event_family.parent_ef_id,
                         "source_title_ids": event_family.source_title_ids,
                         "coherence_reason": event_family.coherence_reason,
                         "created_at": event_family.created_at,
@@ -244,15 +245,22 @@ class Gen1Database:
                     return success, None
 
                 # Check if EF with same ef_key already exists
+                # Exclude siblings (same parent_ef_id) - they should not merge
                 existing_query = """
-                SELECT id, title, source_title_ids, key_actors
-                FROM event_families 
-                WHERE ef_key = :ef_key AND status IN ('seed', 'active')
+                SELECT id, title, source_title_ids, key_actors, parent_ef_id
+                FROM event_families
+                WHERE ef_key = :ef_key
+                AND status IN ('seed', 'active')
+                AND (parent_ef_id IS NULL OR parent_ef_id != :parent_ef_id OR :parent_ef_id IS NULL)
                 LIMIT 1
                 """
 
                 result = session.execute(
-                    text(existing_query), {"ef_key": event_family.ef_key}
+                    text(existing_query),
+                    {
+                        "ef_key": event_family.ef_key,
+                        "parent_ef_id": event_family.parent_ef_id,
+                    },
                 ).fetchone()
 
                 if result:

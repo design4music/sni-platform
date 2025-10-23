@@ -46,7 +46,7 @@ class EFMerger:
             query = """
             SELECT
                 id, title, strategic_purpose, key_actors,
-                event_type, primary_theater, source_title_ids
+                event_type, primary_theater, source_title_ids, parent_ef_id
             FROM event_families
             WHERE status IN ('seed', 'active')
             AND strategic_purpose IS NOT NULL
@@ -69,6 +69,18 @@ class EFMerger:
 
                     # Pre-filter: must have same event_type
                     if ef1.event_type != ef2.event_type:
+                        continue
+
+                    # Skip siblings (same parent_ef_id) - they were intentionally separated
+                    if (
+                        ef1.parent_ef_id is not None
+                        and ef2.parent_ef_id is not None
+                        and ef1.parent_ef_id == ef2.parent_ef_id
+                    ):
+                        logger.debug(
+                            f"Skipping siblings {str(ef1.id)[:8]}... and {str(ef2.id)[:8]}... "
+                            f"(split from {str(ef1.parent_ef_id)[:8]}...)"
+                        )
                         continue
 
                     # Optional: must have same theater
