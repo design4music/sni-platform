@@ -42,7 +42,7 @@ class EFSplitter:
         """
         with get_db_session() as session:
             # Get EFs with more than threshold titles
-            query = f"""
+            query = """
             SELECT
                 ef.id,
                 ef.title,
@@ -283,6 +283,7 @@ JSON Response:"""
                         primary_theater=original_ef_data["theater"],
                         source_title_ids=narrative["title_ids"],
                         status="seed",  # New split EFs start as seed
+                        parent_ef_id=ef_id,  # Track parent for sibling detection
                         coherence_reason=f"Split from EF {ef_id[:8]}... - {narrative['narrative_name']}",
                         processing_notes=f"P3.5d: Split from mixed EF {ef_id[:8]}...",
                         created_at=datetime.utcnow(),
@@ -300,11 +301,11 @@ JSON Response:"""
                     insert_query = """
                     INSERT INTO event_families (
                         id, title, summary, strategic_purpose, key_actors, event_type, primary_theater,
-                        ef_key, status, source_title_ids, coherence_reason, processing_notes,
+                        ef_key, status, parent_ef_id, source_title_ids, coherence_reason, processing_notes,
                         created_at, updated_at
                     ) VALUES (
                         :id, :title, :summary, :strategic_purpose, :key_actors, :event_type, :primary_theater,
-                        :ef_key, :status, :source_title_ids, :coherence_reason, :processing_notes,
+                        :ef_key, :status, :parent_ef_id, :source_title_ids, :coherence_reason, :processing_notes,
                         :created_at, :updated_at
                     )
                     """
@@ -321,6 +322,7 @@ JSON Response:"""
                             "primary_theater": new_ef.primary_theater,
                             "ef_key": new_ef.ef_key,
                             "status": new_ef.status,
+                            "parent_ef_id": new_ef.parent_ef_id,
                             "source_title_ids": new_ef.source_title_ids,
                             "coherence_reason": new_ef.coherence_reason,
                             "processing_notes": new_ef.processing_notes,
