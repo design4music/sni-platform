@@ -217,8 +217,6 @@ class IncidentProcessor:
         Returns:
             Tuple of (validated_efs, recycled_title_ids)
         """
-        from sqlalchemy import text
-
         # Create title lookup dict
         title_lookup = {t["id"]: t for t in title_data}
 
@@ -312,6 +310,86 @@ class IncidentProcessor:
 
         except Exception as e:
             logger.error(f"Failed to mark titles for recycling: {e}")
+
+    def reset_recycled_titles_to_pending(self, batch_size: Optional[int] = None) -> int:
+        """
+        Reset oldest recycled titles back to pending for retry
+        Strategy: FIFO (oldest first)
+
+        Args:
+            batch_size: Number of titles to retry (default from config)
+
+        Returns:
+            Number of titles reset to pending
+        """
+        from sqlalchemy import text
+
+        if batch_size is None:
+            batch_size = self.config.recycling_retry_batch_size
+
+        try:
+            with get_db_session() as session:
+                update_query = """
+                UPDATE titles
+                SET processing_status = 'pending',
+                    updated_at = NOW()
+                WHERE id IN (
+                    SELECT id FROM titles
+                    WHERE processing_status = 'recycling'
+                    ORDER BY updated_at ASC
+                    LIMIT :batch_size
+                )
+                """
+
+                result = session.execute(text(update_query), {"batch_size": batch_size})
+                session.commit()
+
+                logger.info(
+                    f"Reset {result.rowcount} recycled titles to pending for retry"
+                )
+                return result.rowcount
+
+        except Exception as e:
+            logger.error(f"Failed to reset recycled titles: {e}")
+            return 0
+
+    def expire_old_recycled_to_rejected(self, days: Optional[int] = None) -> int:
+        """
+        Mark old recycled titles as permanently rejected
+        Strategy: Decay timer
+
+        Args:
+            days: Age threshold in days (default from config)
+
+        Returns:
+            Number of titles marked as rejected
+        """
+        from sqlalchemy import text
+
+        if days is None:
+            days = self.config.recycling_expire_days
+
+        try:
+            with get_db_session() as session:
+                update_query = """
+                UPDATE titles
+                SET processing_status = 'rejected',
+                    updated_at = NOW()
+                WHERE processing_status = 'recycling'
+                AND updated_at < NOW() - INTERVAL ':days days'
+                """
+
+                result = session.execute(text(update_query), {"days": days})
+                session.commit()
+
+                logger.info(
+                    f"Marked {result.rowcount} titles as rejected (older than {days} days)"
+                )
+                return result.rowcount
+
+        except Exception as e:
+            logger.error(f"Failed to expire old recycled titles: {e}")
+            return 0
 
     async def _upsert_event_families(self, event_families: List[EventFamily]) -> dict:
         """

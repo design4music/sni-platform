@@ -274,21 +274,26 @@ class PipelineOrchestrator:
             return {"status": "error", "error": str(e)}
 
     async def run_phase_3_generate(self) -> Dict:
-        """Phase 3: Event Family Generation via MAP/REDUCE"""
+        """Phase 3: Event Family Generation via Incident-based MAP/REDUCE + P3.5"""
         if not self.config.phase_3_generate_enabled:
             return {"status": "skipped", "reason": "disabled"}
 
-        logger.info("=== PHASE 3: EVENT FAMILY GENERATION (MAP/REDUCE) ===")
+        logger.info(
+            "=== PHASE 3: EVENT FAMILY GENERATION (INCIDENT MAP/REDUCE + P3.5) ==="
+        )
         self.log_status("3_generate", "running")
 
         try:
             # Build command
             max_titles = getattr(self.config, "phase_3_max_titles", 500)
-            logger.info(f"Phase 3: MAP/REDUCE EF Generation (max {max_titles} titles)")
+            logger.info(
+                f"Phase 3: Incident-based EF Generation (max {max_titles} titles)"
+            )
 
             cmd = [
                 sys.executable,
-                "apps/generate/mapreduce_processor.py",
+                "-m",
+                "apps.generate.incident_processor",
                 str(max_titles),
             ]
 
@@ -513,16 +518,15 @@ class PipelineOrchestrator:
 
         results = {}
 
-        # Execute phases sequentially (P3 excluded - runs as background worker)
+        # Execute phases sequentially
         if self.config.phase_1_ingest_enabled:
             results["phase_1"] = await self.run_phase_1_ingest()
 
         if self.config.phase_2_filter_enabled:
             results["phase_2"] = await self.run_phase_2_filter()
 
-        # Phase 3 (Generate) is now a separate background worker (systemd service)
-        # and is not part of the cron-based pipeline
-        logger.info("Phase 3 (Generate) runs as background worker - skipping")
+        if self.config.phase_3_generate_enabled:
+            results["phase_3"] = await self.run_phase_3_generate()
 
         if self.config.phase_4_enrich_enabled:
             results["phase_4"] = await self.run_phase_4_enrich()
@@ -723,92 +727,15 @@ def phase3(
             orchestrator.config.phase_3_max_titles = max_titles
 
         if pass_only:
-            # Legacy pass system deprecated - use MAP/REDUCE instead
+            # Legacy pass system deprecated - use Incident-based processing instead
             logger.warning(
-                f"Pass '{pass_only}' deprecated. Running MAP/REDUCE instead."
+                f"Pass '{pass_only}' deprecated. Running Incident-based processing instead."
             )
-            cmd = [sys.executable, "-m", "apps.generate.mapreduce_processor"]
-            if max_titles:
-                cmd.append(str(max_titles))
 
-            process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await process.communicate()
-
-            if process.returncode != 0:
-                result = {"status": "error", "error": stderr.decode()}
-            else:
-                result = {
-                    "status": "success",
-                    "stdout": stdout.decode(),
-                    "stderr": stderr.decode(),
-                    "method": "MAP/REDUCE",
-                }
-
-            print(f"Phase 3 {pass_only} result: {result}")
-        else:
-            result = await orchestrator.run_phase_3_generate()
-            print(f"Phase 3 result: {result}")
+        result = await orchestrator.run_phase_3_generate()
+        print(f"Phase 3 result: {result}")
 
     asyncio.run(run_phase3())
-
-
-@app.command()
-def phase3_mapreduce(
-    max_titles: int = typer.Option(1000, help="Maximum titles to process"),
-    dry_run: bool = typer.Option(False, help="Dry run mode (no database writes)"),
-):
-    """Phase 3: MAP/REDUCE Event Family Generation (Alternative Implementation)"""
-
-    async def run_mapreduce():
-        try:
-            config = get_config()
-            if not getattr(
-                config, "mapreduce_enabled", True
-            ):  # Default enabled for testing
-                logger.warning(
-                    "MAP/REDUCE processing may be disabled in config. Set MAPREDUCE_ENABLED=true to enable."
-                )
-
-            from apps.generate.mapreduce_processor import MapReduceProcessor
-
-            processor = MapReduceProcessor()
-
-            if dry_run:
-                logger.info("DRY RUN MODE: No database writes will be performed")
-                return
-
-            logger.info(
-                f"Starting MAP/REDUCE processing for up to {max_titles} titles..."
-            )
-            result = await processor.run_pass1_mapreduce(max_titles)
-
-            logger.info("=== MAP/REDUCE RESULTS ===")
-            logger.info(f"Total processing time: {result.total_seconds:.1f}s")
-            logger.info(f"  MAP phase: {result.map_phase_seconds:.1f}s")
-            logger.info(f"  GROUP phase: {result.group_phase_seconds:.1f}s")
-            logger.info(f"  REDUCE phase: {result.reduce_phase_seconds:.1f}s")
-            logger.info(
-                f"Event Families: {result.event_families_created} created, {result.event_families_merged} merged"
-            )
-            logger.info(f"Titles assigned: {result.titles_assigned}")
-            logger.info(
-                f"Success rates: MAP {result.classification_success_rate:.1%}, REDUCE {result.reduce_success_rate:.1%}"
-            )
-
-            if result.total_seconds <= 180:  # 3 minutes
-                logger.info("✓ Performance target achieved: ≤3 minutes")
-            else:
-                logger.warning(
-                    f"✗ Performance target missed: {result.total_seconds:.1f}s > 180s"
-                )
-
-        except Exception as e:
-            logger.error(f"MAP/REDUCE processing failed: {e}")
-            raise typer.Exit(1)
-
-    asyncio.run(run_mapreduce())
 
 
 @app.command()

@@ -205,6 +205,14 @@ class SNIConfig(BaseSettings):
         default=50, env="P35D_MAX_EFS_PER_CYCLE"
     )  # Limit EFs evaluated per run
 
+    # Recycling Bin Maintenance
+    recycling_retry_batch_size: int = Field(
+        default=50, env="RECYCLING_RETRY_BATCH_SIZE"
+    )  # Titles to retry per batch
+    recycling_expire_days: int = Field(
+        default=30, env="RECYCLING_EXPIRE_DAYS"
+    )  # Days before permanent rejection
+
     # Framed Narrative Configuration
     framing_enabled: bool = Field(default=True, env="FRAMING_ENABLED")
     framing_min_titles: int = Field(
