@@ -54,6 +54,10 @@ class EventFamily(BaseModel):
     merge_rationale: Optional[str] = Field(
         default=None, description="Explanation of why this EF was merged"
     )
+    parent_ef_id: Optional[str] = Field(
+        default=None,
+        description="UUID of parent EF if this was created by P3.5d splitting. Siblings share same parent_ef_id and should not be merged together.",
+    )
 
     # Time boundaries - removed event_start/event_end (unused)
 
