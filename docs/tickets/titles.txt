@@ -1,0 +1,42 @@
+# Titles where entities='[]' and gate_keep=TRUE
+
+SELECT title_display FROM public.titles where entities='[]' and gate_keep=TRUE
+
+## Wrongly assigned "strategic" by LLM
+
+Train cancellations in Cologne and Hamburg: Cable damage and defective signal box (Germany can be identified. Original text in German - this is a local event)
+ACGN fans fuel national day's tourism vigor (entertainment, lifestyle, non-strategic)
+Motivation and involvement: the new levers to boost productivity (there's no actors / theater)
+Milton Leite files criminal complaint and accuses Jockey's lawyers of racism (Brasil, ideally identified as non-strategic)
+Informal traders evicted from Joburg thrift haven as city launches crackdown (Joburg > South Africa, but non-strategic)
+Olympic boost offers squash springboard for bright future (non-strategic)
+First Brands creditor claims as much as $2.3bn has ‘simply vanished’ (non-strategic)
+Ex-FCTA director jailed 24 years for N318m fraud case (Abuja > Nogeria, local politics, likely non-strategic)
+Bus crash in South African mountains kills at least 42 (South African mountains > South Africa, but clearly local incident)
+3 employees of the Qatari Amiri Diwan died in a traffic accident in Sharm el-Sheikh (Qatar, but clearly local incident)
+A day after he revealed his "betrayal." Fire breaks out at Vinicius' house (non-strategic)
+Fürstenzell: Walker discovers human remains in the forest
+Police shoot at man with gun in Düsseldorf center
+Shanghai index hits 10-year high on policy momentum
+Kishore, Edwin emerge champions at Horwitz Bishop Rapid Chess Tournament| Gulf Times
+BR employee takes over 170,000 CDs: "Couldn't stand by and watch it being destroyed"
+Man kills young businesswoman, attempts suicide in Milan
+
+## Title that can be localised by LLM
+
+News outlets broadly reject Pentagon rules before deadline for signing (Pentagon hints at the United States; entity = Pentagon)
+The Justice asked the Chamber of Deputies for authorization to move forward with measures against Espert (Espert > Argentina)
+The AI valuation bubble is now getting silly | Nils Pratley (entity = AI ?)
+Witnesses who could shed light on the cause of deadly Tennessee blast were killed (Tennessee > United States)
+Delhi 2020 riots: police ‘singled me out’, Umar Khalid tells court (Delhi > India)
+30th Macao int'l trade, investment fair to highlight innovation (Macao > China)
+16 people died in a blast at a Tennessee explosives factory early Friday, the sheriff says (Tennessee > United States)
+
+## Indirect location hint in title
+
+“He prayed three times a day" shares father of released soldier Matan Angrest (search shows that this is about an IDF soldier released by Hamas > now entities tags are clear)
+
+## Meaningless titles
+
+Shutdown Politics, Air Traffic Control Issues, Comey Arraignment (can LLM understand that this is a mix of several headlines? We want to filter out such)
+Army rescues 37 hostages, kills 9 terrorists in anti-crime operations (this sounds very strategic but without any connection to a theater it is meaningless)

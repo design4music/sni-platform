@@ -21,7 +21,9 @@ from apps.generate.map_classifier import MapClassifier  # noqa: E402
 from apps.generate.mapreduce_models import MapReduceResult  # noqa: E402
 from apps.generate.models import EventFamily  # noqa: E402
 from apps.generate.reduce_assembler import ReduceAssembler  # noqa: E402
+from apps.generate.seed_validator import get_seed_validator  # noqa: E402
 from core.config import get_config  # noqa: E402
+from core.database import get_db_session  # noqa: E402
 
 
 class IncidentProcessor:
@@ -39,6 +41,7 @@ class IncidentProcessor:
         self.db = get_gen1_database()
         self.mapper = MapClassifier(self.config)
         self.reducer = ReduceAssembler(self.config)
+        self.seed_validator = get_seed_validator()
 
     async def run_incident_processing(
         self, max_titles: Optional[int] = None
@@ -148,9 +151,23 @@ class IncidentProcessor:
                 f"REDUCE phase completed: {len(event_families)} Event Families in {reduce_duration:.1f}s"
             )
 
+            # Step 3.5a: P3.5a Seed Validation - Validate each EF's titles
+            logger.info("Starting P3.5a: Seed validation...")
+            validation_start = time.time()
+
+            validated_efs, recycled_titles = await self._validate_event_family_seeds(
+                event_families, title_data
+            )
+
+            validation_duration = time.time() - validation_start
+            logger.info(
+                f"P3.5a validation complete: {len(validated_efs)}/{len(event_families)} EFs validated, "
+                f"{len(recycled_titles)} titles sent to recycling in {validation_duration:.1f}s"
+            )
+
             # Step 4: Database upsert
             logger.info("Upserting Event Families to database...")
-            upsert_results = await self._upsert_event_families(event_families)
+            upsert_results = await self._upsert_event_families(validated_efs)
 
             # Calculate final results
             total_duration = time.time() - start_time
@@ -186,6 +203,115 @@ class IncidentProcessor:
         except Exception as e:
             logger.error(f"Incident-based processing failed: {e}")
             raise
+
+    async def _validate_event_family_seeds(
+        self, event_families: List[EventFamily], title_data: List[dict]
+    ) -> tuple[List[EventFamily], List[str]]:
+        """
+        P3.5a: Validate each Event Family's seed cluster
+
+        Args:
+            event_families: EF objects from REDUCE phase
+            title_data: All title data for lookup
+
+        Returns:
+            Tuple of (validated_efs, recycled_title_ids)
+        """
+        from sqlalchemy import text
+
+        # Create title lookup dict
+        title_lookup = {t["id"]: t for t in title_data}
+
+        validated_efs = []
+        all_recycled_titles = []
+
+        for ef in event_families:
+            # Prepare seed cluster for validation
+            seed_cluster = []
+            for title_id in ef.source_title_ids:
+                if title_id in title_lookup:
+                    title_obj = title_lookup[title_id]
+                    seed_cluster.append(
+                        {
+                            "id": title_id,
+                            "text": title_obj.get("title", ""),
+                            "entities": title_obj.get("extracted_actors", []),
+                        }
+                    )
+
+            if not seed_cluster:
+                logger.warning(f"EF '{ef.title}' has no valid titles - skipping")
+                continue
+
+            # Validate seed cluster
+            validated_titles, rejected_titles = (
+                self.seed_validator.validate_seed_cluster(
+                    seed_cluster, cluster_id=ef.id[:8]
+                )
+            )
+
+            # Check if we have enough validated titles to create EF
+            if self.seed_validator.should_create_ef(validated_titles):
+                # Update EF with only validated titles
+                ef.source_title_ids = [t["id"] for t in validated_titles]
+                validated_efs.append(ef)
+
+                # Add rejected titles to recycling
+                if rejected_titles:
+                    rejected_ids = [t["id"] for t in rejected_titles]
+                    all_recycled_titles.extend(rejected_ids)
+                    logger.debug(
+                        f"EF '{ef.title[:40]}...' validated with {len(validated_titles)} titles, "
+                        f"{len(rejected_titles)} rejected"
+                    )
+            else:
+                # Not enough validated titles - send ALL titles to recycling
+                all_recycled_titles.extend([t["id"] for t in seed_cluster])
+                logger.info(
+                    f"EF '{ef.title[:40]}...' failed validation "
+                    f"(only {len(validated_titles)} validated, need {self.seed_validator.MIN_CLUSTER_SIZE})"
+                )
+
+        # Mark recycled titles in database
+        if all_recycled_titles:
+            await self._mark_titles_for_recycling(all_recycled_titles)
+
+        return validated_efs, all_recycled_titles
+
+    async def _mark_titles_for_recycling(self, title_ids: List[str]):
+        """
+        Mark titles as 'recycling' for future re-clustering
+
+        Args:
+            title_ids: List of title IDs to mark for recycling
+        """
+        from sqlalchemy import text
+
+        if not title_ids:
+            return
+
+        try:
+            with get_db_session() as session:
+                # Build UUID array for PostgreSQL
+                uuid_list = (
+                    "ARRAY[" + ",".join([f"'{tid}'::uuid" for tid in title_ids]) + "]"
+                )
+
+                update_query = f"""
+                UPDATE titles
+                SET processing_status = 'recycling'
+                WHERE id = ANY({uuid_list})
+                """
+
+                result = session.execute(text(update_query))
+                session.commit()
+
+                logger.info(
+                    f"Marked {result.rowcount} titles for recycling (rejected from seed validation)"
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to mark titles for recycling: {e}")
 
     async def _upsert_event_families(self, event_families: List[EventFamily]) -> dict:
         """

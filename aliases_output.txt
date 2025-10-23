@@ -1,0 +1,48 @@
+
+AD: Andorra
+  ar: ['أندورا']
+  de: ['AND', 'Andorra']
+  en: ['AND', 'AD', 'Principality of Andorra', 'Principality of the Valleys of Andorra', 'Andorra']
+  es: ['AND', 'AD', 'Principado de Andorra', 'Andorra']
+  fr: ['AD', 'la Principauté d’Andorre', "Principauté d'Andorre", 'Andorre']
+  hi: ['अण्डोरा']
+  it: ['Andorra']
+  ja: ['アンドラ公国', 'アンドラ']
+  ru: ['Княжество Андорра', 'Андорра']
+  zh: ['安道尔公国', '安道尔']
+
+AE: UAE
+  ar: ['الإمارات', 'الامارات', 'دولة الإمارات العربية المتحدة', 'الإمارات العربية المتحدة']
+  de: ['VAE', 'Vereinigte Arabische Emirate']
+  en: ['UAE', 'United Arab Emirates', 'Abu Dhabi', 'Emirates', 'ae', 'the United Arab Emirates', 'ARE', 'the Emirates', 'the U.A.E.', 'the UAE', 'U.A.E.']
+  es: ['EAU', 'Emiratos Árabes', 'Emiratos Arabes', 'Emiratos Arabes Unidos', 'Emiratos Árabes Unidos']
+  fr: ['Émirats arabes unis', 'ARE', 'AE', 'É.A.U.', 'Émir. ar. unis', 'Émirats', 'Émirats Arabes Unis', 'les Émirats arabes unis']
+  hi: ['संयुक्त अरब अमीरात']
+  it: ['E.A.U.', 'U.A.E.', 'ARE', 'Emirati Arabi Uniti']
+  ja: ['アラブしゅちょうこくれんぽう', 'アラブ首長国連合', 'ア首連', 'UAE', 'アラブ首長国連邦']
+  ru: ['ОАЭ', 'Арабские Эмираты', 'Объединенные Арабские Эмираты', 'Эмираты', 'Объединённые Арабские Эмираты']
+  zh: ['阿联酋', '阿拉伯聯合大公國', '阿聯酋', '阿拉伯联合酋长国']
+
+TW: Taiwan
+  ar: ['جمهورية الصين', 'تايبيه الصينية', 'تايوان']
+  de: ['Taiwan', 'ROC', 'Chinesische Republik', 'Nationalchina', 'Republik China auf Taiwan', 'Taiwan (Chinesisches Taipei)', 'Zhōnghuá Mínguó', 'Republik China']
+  en: ['Taiwan', 'ROC', 'Taipei', 'TPE', 'Chinese Taipei', 'TWN', 'Formosa', 'Republic of China (Taiwan)', 'Taioan', 'TW', 'Republic of China', 'China, Republic', 'Chunghwa Minkuo', 'Chunghwa Minkwo', 'The ROC', 'Thoi-van', 'Nationalist China', 'Dài-uăng', 'Ilaod', 'Lawlaw', 'Nanasian', 'Tâi-oân', 'Tâi-uân', 'Tai-waan', 'Taivang', 'Taivangʉ', 'Taiwaan', 'Taywan', 'Taywang', 'Teywan', 'Toiˇ Vanˇ', 'Free China', 'Taiwan ROC']
+  es: ['Taiwán', 'China', 'Formosa', 'ROC', 'China libre', 'China ROC', 'Taiwán ROC', 'China Nacionalista', 'Taipéi', 'China Taipei', 'China Taipéi', 'República de China']
+  fr: ['Taïwan', 'Taiwan', 'Formose', 'RDC', 'TW', 'république de Chine', 'Chine nationaliste', 'république nationaliste de Chine']
+  hi: ['ताइवान', 'चीनी गणराज्य']
+  it: ['Cina', 'Formosa', 'Repubblica di Cina (RDC)', 'Taiwan']
+  ja: ['中国', '台湾', '華', '台', 'ROC', '自由中国', '🇹🇼', 'チャイニーズ・タイペイ', 'チャイニーズタイペイ', '中華台北', 'TW', 'TWN', '中華民国']
+  ru: ['Тайвань', 'Китайская Республика Тайвань', 'Чжунхуа Миньго', 'Республика Китай', 'Китайский Тайбэй', 'Китайская Республика (Тайвань)']
+  zh: ['台湾', '台北', '🇹🇼', 'TWN', '三民主義新中國', '中华民国自由地区', '反共中國', '国民党中国', '國府中國', 'ROC', '中华民国（台湾）', '中华民国台湾', '中華民國（臺灣）', '中華民國臺灣', '民國', '台', '台北當局', '台灣', '臺灣', '臺', '民国', '中华民国', '台灣當局', '自由中國', '華', 'TW', '台湾地区', '台澎金马', '臺澎金馬', '臺灣地區', '中国台北', '中国台湾', '中華民國']
+
+US: United States
+  ar: ['أمريكا', 'و م', 'و م أ', 'و.م', 'و.م.أ', 'الولايات المتحدة', 'الولايات المتحدة الأمريكية']
+  de: ['U.S.-Amerika', 'US-Amerika', 'V. S.', 'V. S. A.', 'V.S.', 'V.S.A.', 'die Staaten', 'Staaten von Amerika', 'U. S.', 'U. S. A.', 'United States', 'U.S.A.', 'U.S.', 'Vereinigte Staaten', 'VSA', 'Vereinigte Staaten von Amerika', 'VS', 'Staaten', 'Amerika', 'United States of America', 'America']
+  en: ['United States', 'USA', 'U.S.', 'Washington', 'the States', 'the U.S.', 'the U.S. of A', 'the U.S. of America', 'the U.S.A.', 'the United States of America', 'the US', 'the US of A', 'the US of America', 'U. S.', 'U. S. A.', 'U.S. of America', 'US of A', 'US of America', 'America', 'the United States', 'United States of America', 'the USA', 'Murica', 'U.S.A.', 'Merica']
+  es: ['Estados Unidos', 'EE.UU.', 'EE.UU. de América', 'EEUU', 'Estados Unidos de America', 'los Estados', 'Los Estados Unidos', 'Los Estados Unidos de América', 'EE. UU.', 'EUA', 'Estados Unidos de América']
+  fr: ['États-Unis', 'pays de l’Oncle Sam', 'É-U', 'É-U.', 'E.-U.', 'É.-U.', 'É.-U. A.', 'É.U.', 'Etats-unis', 'États-unis', 'États-Unis d’Amérique', 'ÉU', 'les États', 'les États-Unis d’Amérique', "Pays de l'Oncle Sam", 'States', 'Oncle Sam', 'Etats-Unis', 'Amérique']
+  hi: ['संयुक्त राज्य अमेरिका', 'अमेरिका', 'यू एस', 'यू एस ए', 'यू० एस०', 'यू० एस० ए०', 'संयुक्त राज्य']
+  it: ['Stati Uniti', 'States', 'U.S.A.', "Stati Uniti d'America", 'Yankee', 'America', 'Stati Uniti d’America', 'SUA', 'the States', 'U.S.', 'Unione Americana']
+  ja: ['アメリカ合衆国', '米国', '米', 'アメリカ', '美国', '🇺🇸', '亜墨利加', '亜米利加']
+  ru: ['США', 'Соединённые Штаты', 'Штаты', 'САСШ', 'Северо-Американские Соединённые Штаты', 'Соединённые Государства Америки', 'Соединённые Штаты Америки', 'Америка']
+  zh: ['美国', '美方', '美國', '美利坚合众国', '美利堅合眾國', '花旗国']

@@ -1097,6 +1097,93 @@ class LLMClient:
                     )
                     await asyncio.sleep(delay)
 
+    def _call_llm_sync(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+    ) -> str:
+        """
+        Synchronous version of _call_llm for Phase 3.5 micro-prompts.
+
+        Args:
+            system_prompt: System-level instructions
+            user_prompt: User query/request
+            max_tokens: Maximum tokens to generate (optional)
+            temperature: Sampling temperature (optional)
+
+        Returns:
+            LLM response text
+        """
+        # Apply defaults if not specified
+        if temperature is None:
+            temperature = self.config.llm_temperature
+
+        # Implement retry logic
+        for attempt in range(self.config.llm_retry_attempts):
+            try:
+                headers = {
+                    "Authorization": f"Bearer {self.config.deepseek_api_key}",
+                    "Content-Type": "application/json",
+                }
+
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ]
+
+                payload = {
+                    "model": self.config.llm_model,
+                    "messages": messages,
+                    "temperature": temperature,
+                }
+
+                # Only add max_tokens if explicitly specified
+                if max_tokens is not None:
+                    payload["max_tokens"] = max_tokens
+
+                with httpx.Client(timeout=self.config.llm_timeout_seconds) as client:
+                    response_data = client.post(
+                        f"{self.config.deepseek_api_url}/chat/completions",
+                        headers=headers,
+                        json=payload,
+                    )
+
+                    if response_data.status_code != 200:
+                        raise Exception(
+                            f"LLM API error: {response_data.status_code} - {response_data.text}"
+                        )
+
+                    data = response_data.json()
+                    response = data["choices"][0]["message"]["content"].strip()
+
+                logger.debug(
+                    "LLM sync call successful",
+                    attempt=attempt + 1,
+                    prompt_length=len(user_prompt),
+                    response_length=len(response),
+                )
+
+                return response
+
+            except Exception as e:
+                is_last_attempt = attempt == self.config.llm_retry_attempts - 1
+                if is_last_attempt:
+                    logger.error(
+                        f"LLM sync call failed after {self.config.llm_retry_attempts} attempts: {e}"
+                    )
+                    raise
+                else:
+                    # Exponential backoff
+                    import time
+
+                    delay = (self.config.llm_retry_backoff**attempt) + (0.1 * attempt)
+                    logger.warning(
+                        f"LLM sync call attempt {attempt + 1} failed: {e}. Retrying in {delay:.1f}s"
+                    )
+                    time.sleep(delay)
+
     # -------------------------------------------------------------------------
     # Response Parsing
     # -------------------------------------------------------------------------

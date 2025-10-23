@@ -8,11 +8,11 @@ from typing import Dict, List
 
 from loguru import logger
 
-from core.llm_client import get_llm_client
 from apps.generate.mapreduce_models import IncidentAnalysis, IncidentCluster
 from apps.generate.mapreduce_prompts import build_incident_analysis_prompt
 from apps.generate.models import EventFamily
 from core.config import SNIConfig
+from core.llm_client import get_llm_client
 
 
 class ReduceAssembler:
@@ -83,7 +83,7 @@ class ReduceAssembler:
             incident_analysis = self._parse_incident_analysis_response(response_text)
 
             logger.debug(
-                f"REDUCE: Analyzed incident '{incident_cluster.incident_name}' -> {incident_analysis.primary_theater}/{incident_analysis.event_type} with {len(incident_analysis.events)} events"
+                f"REDUCE: Analyzed incident '{incident_cluster.incident_name}' -> {incident_analysis.event_type} with {len(incident_analysis.events)} events"
             )
             return incident_analysis
 
@@ -112,9 +112,9 @@ class ReduceAssembler:
 
             # Validate required fields
             required_fields = [
-                "primary_theater",
                 "event_type",
                 "ef_title",
+                "strategic_purpose",
                 "ef_summary",
                 "events",
             ]
@@ -159,13 +159,21 @@ class ReduceAssembler:
                             f"Event {i} missing required field '{field}': {event}"
                         )
 
-            # Validate theater and event_type are from allowed lists
-            # Note: We could add validation against THEATERS and EVENT_TYPES here if needed
+            # Validate event_type is from allowed list
+            # Note: We could add validation against EVENT_TYPES here if needed
+
+            # Validate and truncate strategic_purpose if needed
+            strategic_purpose = response_data["strategic_purpose"].strip()
+            if len(strategic_purpose) > 500:  # Max 500 chars for strategic_purpose
+                logger.warning(
+                    f"REDUCE: Strategic purpose too long ({len(strategic_purpose)} chars), truncating"
+                )
+                strategic_purpose = strategic_purpose[:497] + "..."
 
             return IncidentAnalysis(
-                primary_theater=response_data["primary_theater"],
                 event_type=response_data["event_type"],
                 ef_title=ef_title,
+                strategic_purpose=strategic_purpose,
                 ef_summary=ef_summary,
                 events=events,
             )
@@ -286,6 +294,7 @@ class ReduceAssembler:
             EventFamily object ready for database insertion
         """
         from apps.generate.ef_key import generate_ef_key
+        from apps.generate.theater_inference import infer_theater_from_entities
 
         # Get title metadata for this incident
         title_lookup = {title["id"]: title for title in all_titles}
@@ -295,16 +304,25 @@ class ReduceAssembler:
             if title_id in title_lookup
         ]
 
-        # Extract key actors from all titles in the incident
-        all_actors = set()
+        # Extract entities from all titles in the incident (for theater inference)
+        all_entities = []  # With duplicates for frequency analysis
+        all_actors = set()  # Unique actors for key_actors
         dates = []
 
         for title in cluster_titles:
-            # Extract actors
-            title_entities = title.get("extracted_actors") or {}
-            if isinstance(title_entities, dict):
+            # Extract entities for theater inference
+            # Phase 2 stores entities as simple array: ["United States", "China"]
+            title_entities = title.get("extracted_actors") or title.get("entities")
+
+            if isinstance(title_entities, list):
+                # Simple array format from Phase 2
+                all_entities.extend(title_entities)  # Keep duplicates
+                all_actors.update(title_entities)  # Unique set
+            elif isinstance(title_entities, dict):
+                # Legacy dict format: {"actors": [...]}
                 actors_list = title_entities.get("actors", [])
                 if isinstance(actors_list, list):
+                    all_entities.extend(actors_list)
                     all_actors.update(actors_list)
 
             # Extract dates
@@ -333,23 +351,32 @@ class ReduceAssembler:
 
             datetime.utcnow()
 
-        # Generate ef_key using LLM-determined theater and event_type
+        # Infer theater mechanically from entity frequencies
+        primary_theater, theater_confidence = infer_theater_from_entities(
+            all_entities, incident_analysis.event_type
+        )
+
+        logger.debug(
+            f"REDUCE: Inferred theater '{primary_theater}' with {theater_confidence:.0%} confidence for '{incident_cluster.incident_name}'"
+        )
+
+        # Generate ef_key using mechanically-determined theater and LLM event_type
         ef_key = generate_ef_key(
             actors=[],  # Actors ignored in current system
-            primary_theater=incident_analysis.primary_theater,
+            primary_theater=primary_theater,
             event_type=incident_analysis.event_type,
         )
 
         return EventFamily(
             title=incident_analysis.ef_title,
             summary=incident_analysis.ef_title,  # Use title as summary until P4 enrichment
+            strategic_purpose=incident_analysis.strategic_purpose,  # NEW: Phase 1 v2
             key_actors=key_actors,
             event_type=incident_analysis.event_type,
-            primary_theater=incident_analysis.primary_theater,
+            primary_theater=primary_theater,  # Mechanically determined
             ef_key=ef_key,
             status="seed",  # Phase 1: Start as seed, promote to active later
             source_title_ids=incident_cluster.title_ids,
-            confidence_score=0.90,  # Higher confidence for incident-based approach
             coherence_reason=f"{len(incident_cluster.title_ids)} titles - '{incident_cluster.incident_name}'",
             processing_notes=incident_cluster.rationale,
             events=incident_analysis.events,  # Include extracted events timeline
@@ -371,6 +398,7 @@ class ReduceAssembler:
         from datetime import datetime
 
         from apps.generate.ef_key import generate_ef_key
+        from apps.generate.theater_inference import infer_theater_from_entities
 
         # Get title metadata for this incident
         title_lookup = {title["id"]: title for title in all_titles}
@@ -381,15 +409,24 @@ class ReduceAssembler:
         ]
 
         # Extract basic metadata
+        all_entities = []  # With duplicates for theater inference
         all_actors = set()
         dates = []
 
         for title in cluster_titles:
             # Extract actors
-            title_entities = title.get("extracted_actors") or {}
-            if isinstance(title_entities, dict):
+            # Phase 2 stores entities as simple array: ["United States", "China"]
+            title_entities = title.get("extracted_actors") or title.get("entities")
+
+            if isinstance(title_entities, list):
+                # Simple array format from Phase 2
+                all_entities.extend(title_entities)
+                all_actors.update(title_entities)
+            elif isinstance(title_entities, dict):
+                # Legacy dict format: {"actors": [...]}
                 actors_list = title_entities.get("actors", [])
                 if isinstance(actors_list, list):
+                    all_entities.extend(actors_list)
                     all_actors.update(actors_list)
 
             # Extract dates
@@ -414,11 +451,19 @@ class ReduceAssembler:
         else:
             datetime.utcnow()
 
-        # Use generic fallback classification
-        primary_theater = "GLOBAL_SUMMIT"  # Fallback theater
+        # Use fallback event type
         event_type = "Strategy/Tactics"  # Fallback event type
 
-        # Generate ef_key using fallback classification
+        # Try to infer theater mechanically even for fallback
+        primary_theater, theater_confidence = infer_theater_from_entities(
+            all_entities, event_type
+        )
+
+        logger.debug(
+            f"REDUCE: Fallback EF - Inferred theater '{primary_theater}' with {theater_confidence:.0%} confidence"
+        )
+
+        # Generate ef_key using inferred theater and fallback event type
         ef_key = generate_ef_key(
             actors=[],
             primary_theater=primary_theater,
@@ -436,17 +481,20 @@ class ReduceAssembler:
             if len(incident_cluster.rationale) > 200
             else incident_cluster.rationale
         )
+        strategic_purpose = (
+            f"Strategic incident: {incident_cluster.incident_name}"  # Fallback purpose
+        )
 
         return EventFamily(
             title=title,
             summary=summary,
+            strategic_purpose=strategic_purpose,  # Fallback strategic purpose
             key_actors=key_actors,
             event_type=event_type,
-            primary_theater=primary_theater,
+            primary_theater=primary_theater,  # Mechanically inferred
             ef_key=ef_key,
             status="seed",
             source_title_ids=incident_cluster.title_ids,
-            confidence_score=0.3,  # Low confidence for fallback
             coherence_reason=f"Fallback EF for failed incident analysis: {incident_cluster.incident_name}",
             processing_notes=f"Fallback generated via MAP/REDUCE incident clustering pipeline: {incident_cluster.rationale}",
         )

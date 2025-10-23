@@ -1,0 +1,115 @@
+
+IL: Israel
+============================================================
+
+ar:
+  'الكيان الصهيوني'
+  'الدولة العبرية'
+  'دولة إسرائيل'
+  'إسرائيل'
+
+de:
+  'IL'
+  *** 'Staat Israel'
+  *** 'Israel'
+
+en:
+  *** 'Israel'
+  'Jerusalem'
+  *** 'State of Israel'
+  'ISR'
+  'IL'
+  'il'
+  *** 'Yisrael'
+
+es:
+  *** 'Israel'
+  *** 'Estado de Israel'
+
+fr:
+  'Israël'
+  *** 'Israel'
+  'IL'
+  'ISR'
+  'État d'Israël'
+  'État hébreu'
+  'Isr.'
+  'l’État d’Israël'
+
+hi:
+  'इजराइल'
+  'इज़्राइल'
+  'इसराइल'
+  'इस्राइल'
+  'इज़राइल'
+
+it:
+  *** 'Stato d'Israele'
+  *** 'Israele'
+
+ja:
+  'イスラエル国'
+  'イスラエル'
+
+ru:
+  'Израиль'
+  'Государство Израиль'
+
+zh:
+  '以色列'
+
+PS: State of Palestine
+============================================================
+
+ar:
+  'دولة فلسطين'
+  'فلسطين'
+  'السلطة الوطنية الفلسطينية'
+  'الدولة الفلسطينية'
+  'السلطة الفلسطينية'
+
+de:
+  'Staat Palästina'
+  'Palästina'
+
+en:
+  *** 'State of Palestine'
+  *** 'Palestine'
+  'PSE'
+  *** 'Palestinian Authority'
+  *** 'Palestinian National Authority'
+
+es:
+  'Estado de Palestina'
+  'Palestina'
+
+fr:
+  *** 'État de Palestine'
+  'Autorité palestinienne'
+  *** 'Palestine'
+  'Autorité nationale palestinienne'
+  'État palestinien'
+
+hi:
+  'पैलेस्टाइन'
+  'फिलिस्तीन राज्य'
+  'फ़िलिस्तीन राज्य'
+  'फ़िलिस्तीन'
+
+it:
+  'Palestina'
+  'Stato di Palestina'
+
+ja:
+  'パレスチナ国'
+
+ru:
+  'Палестинские территории'
+  'Палестинское государство'
+  'Территория Арабского государства'
+  'Палестина'
+  'Государство Палестина'
+
+zh:
+  '巴勒斯坦國'
+  '巴勒斯坦'

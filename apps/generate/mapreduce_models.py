@@ -30,9 +30,11 @@ class IncidentClustering(BaseModel):
 class IncidentAnalysis(BaseModel):
     """Response from REDUCE phase: complete Event Family for an incident"""
 
-    primary_theater: str = Field(description="Primary theater for the whole incident")
     event_type: str = Field(description="Primary event type for the whole incident")
     ef_title: str = Field(description="Strategic Event Family title (≤120 chars)")
+    strategic_purpose: str = Field(
+        description="One-sentence core narrative that unifies this Event Family"
+    )
     ef_summary: str = Field(description="Brief strategic context (≤280 chars)")
     events: List[Dict[str, Any]] = Field(
         description="Timeline of discrete events within the incident",

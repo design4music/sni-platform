@@ -81,17 +81,23 @@ REMINDER: Use ONLY the IDs from the INPUT list above."""
 # REDUCE Phase Prompts (Pass-1c: Incident Analysis + EF Creation)
 INCIDENT_ANALYSIS_SYSTEM_PROMPT = """Analyze an incident cluster to create a complete Event Family. Your tasks:
 
-1. CLASSIFY the overall strategic incident (assign ONE theater + event_type for the whole incident)
+1. CLASSIFY the event type for this strategic incident
 2. CREATE an Event Family title that captures the strategic significance
-3. EXTRACT a timeline of discrete factual events within the incident
-4. MAINTAIN neutral attribution and factual accuracy
+3. DEFINE the strategic purpose - a one-sentence core narrative that describes what this Event Family is fundamentally about
+4. EXTRACT a timeline of discrete factual events within the incident
+5. MAINTAIN neutral attribution and factual accuracy
+
+The STRATEGIC PURPOSE is critical - it serves as the semantic anchor for future thematic validation. It should be:
+- ONE sentence maximum
+- Captures the core narrative/theme
+- Describes what unifies these events conceptually
+- Used later to validate if new headlines belong to this Event Family
 
 Focus on the STRATEGIC NARRATIVE - what makes this incident significant for intelligence analysis."""
 
 INCIDENT_ANALYSIS_USER_TEMPLATE = """INCIDENT CLUSTER: {incident_name}
 RATIONALE: {rationale}
 
-AVAILABLE THEATERS: {theaters}
 AVAILABLE EVENT_TYPES: {event_types}
 
 TITLES (id | title | date):
@@ -99,13 +105,19 @@ TITLES (id | title | date):
 
 Analyze this strategic incident and create a complete Event Family:
 
-STEP 1: Classify the overall incident
-- What is the PRIMARY theater where this incident has strategic impact?
+STEP 1: Classify the event type
 - What is the PRIMARY event type that best describes this strategic situation?
+- Choose ONE from the AVAILABLE EVENT_TYPES list
 
 STEP 2: Create Event Family metadata
 - EF Title: Strategic significance (max 120 chars, avoid headlines)
-- EF Summary: [Will be generated during enrichment phase]
+- Strategic Purpose: ONE sentence that captures the core narrative
+  Examples:
+    GOOD: "Ongoing military confrontation between Russian forces and Ukrainian defense in eastern territories"
+    GOOD: "Diplomatic efforts to negotiate humanitarian corridors and civilian evacuations in Gaza"
+    GOOD: "International pressure campaigns targeting Israeli military operations through economic and political channels"
+    BAD: "News about the war" (too vague)
+    BAD: "Russia attacks Ukraine while the West imposes sanctions and provides military aid" (too detailed, multiple themes)
 
 STEP 3: Extract event timeline
 - Identify discrete factual events in chronological order
@@ -115,9 +127,9 @@ STEP 3: Extract event timeline
 
 Return JSON only:
 {{
-  "primary_theater": "THEATER_CODE",
   "event_type": "EVENT_TYPE",
   "ef_title": "Strategic Event Family title",
+  "strategic_purpose": "One-sentence core narrative that unifies this Event Family",
   "ef_summary": "Brief strategic context",
   "events": [
     {{
@@ -181,7 +193,6 @@ def build_incident_analysis_prompt(
     user = INCIDENT_ANALYSIS_USER_TEMPLATE.format(
         incident_name=incident_name,
         rationale=rationale,
-        theaters=THEATERS,
         event_types=EVENT_TYPES,
         titles=format_titles_for_incident_analysis(titles),
     )

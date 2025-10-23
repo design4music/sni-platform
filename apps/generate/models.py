@@ -27,6 +27,10 @@ class EventFamily(BaseModel):
     summary: str = Field(
         description="Neutral, factual summary of the ongoing situation"
     )
+    strategic_purpose: Optional[str] = Field(
+        default=None,
+        description="One-sentence core narrative that serves as semantic anchor for thematic validation (Phase 1 EF v2)",
+    )
     key_actors: List[str] = Field(description="Primary actors/entities involved")
     event_type: str = Field(
         description="Event type from standardized taxonomy (Strategy/Tactics, Diplomacy/Negotiations, etc.)"
@@ -59,12 +63,6 @@ class EventFamily(BaseModel):
     )
 
     # Quality indicators
-    confidence_score: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=1.0,
-        description="LLM confidence in Event Family quality",
-    )
     coherence_reason: str = Field(description="Why these titles form a coherent event")
 
     # Events timeline for EF evolution

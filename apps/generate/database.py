@@ -137,7 +137,8 @@ class Gen1Database:
 
                 update_query = f"""
                 UPDATE titles
-                SET event_family_id = :event_family_id
+                SET event_family_id = :event_family_id,
+                    processing_status = 'assigned'
                 WHERE id = ANY({uuid_list})
                 AND gate_keep = true
                 AND event_family_id IS NULL
@@ -149,6 +150,7 @@ class Gen1Database:
                 }
 
                 result = session.execute(text(update_query), params)
+                session.commit()  # Ensure changes are committed
 
                 updated_count = result.rowcount
                 logger.info(
@@ -176,14 +178,14 @@ class Gen1Database:
                 # Insert into event_families table (Phase 2: Updated schema with ef_key system)
                 insert_query = """
                 INSERT INTO event_families (
-                    id, title, summary, key_actors, event_type, primary_theater,
+                    id, title, summary, strategic_purpose, key_actors, event_type, primary_theater,
                     ef_key, status, merged_into, merge_rationale,
-                    source_title_ids, confidence_score, coherence_reason, created_at, updated_at,
+                    source_title_ids, coherence_reason, created_at, updated_at,
                     processing_notes, events
                 ) VALUES (
-                    :id, :title, :summary, :key_actors, :event_type, :primary_theater,
+                    :id, :title, :summary, :strategic_purpose, :key_actors, :event_type, :primary_theater,
                     :ef_key, :status, :merged_into, :merge_rationale,
-                    :source_title_ids, :confidence_score, :coherence_reason, :created_at, :updated_at,
+                    :source_title_ids, :coherence_reason, :created_at, :updated_at,
                     :processing_notes, :events
                 )
                 """
@@ -194,6 +196,7 @@ class Gen1Database:
                         "id": event_family.id,
                         "title": event_family.title,
                         "summary": event_family.summary,
+                        "strategic_purpose": event_family.strategic_purpose,
                         "key_actors": event_family.key_actors,
                         "event_type": event_family.event_type,
                         "primary_theater": event_family.primary_theater,
@@ -202,7 +205,6 @@ class Gen1Database:
                         "merged_into": event_family.merged_into,
                         "merge_rationale": event_family.merge_rationale,
                         "source_title_ids": event_family.source_title_ids,
-                        "confidence_score": event_family.confidence_score,
                         "coherence_reason": event_family.coherence_reason,
                         "created_at": event_family.created_at,
                         "updated_at": event_family.updated_at,

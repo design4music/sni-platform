@@ -156,6 +156,55 @@ class SNIConfig(BaseSettings):
     enrichment_temperature: float = Field(default=0.0, env="ENRICHMENT_TEMPERATURE")
     enrichment_concurrency: int = Field(default=4, env="ENRICHMENT_CONCURRENCY")
 
+    # Phase 3.5: Interpretive Validation & Merging Configuration
+    # P3.5a: Seed Validation - Individual title validation before EF creation
+    p35a_enabled: bool = Field(default=True, env="P35A_ENABLED")
+    p35a_min_cluster_size: int = Field(
+        default=3, env="P35A_MIN_CLUSTER_SIZE"
+    )  # Minimum validated titles to create EF
+    p35a_validation_temperature: float = Field(
+        default=0.0, env="P35A_VALIDATION_TEMPERATURE"
+    )  # Deterministic micro-prompts
+    p35a_validation_max_tokens: int = Field(
+        default=10, env="P35A_VALIDATION_MAX_TOKENS"
+    )  # YES/NO only
+
+    # P3.5b: Cross-Batch Assignment - Assign new titles to existing EFs
+    p35b_enabled: bool = Field(default=True, env="P35B_ENABLED")
+    p35b_assignment_temperature: float = Field(
+        default=0.0, env="P35B_ASSIGNMENT_TEMPERATURE"
+    )  # Deterministic micro-prompts
+    p35b_assignment_max_tokens: int = Field(
+        default=10, env="P35B_ASSIGNMENT_MAX_TOKENS"
+    )  # YES/NO only
+
+    # P3.5c: Interpretive Merging - Semantic EF merging
+    p35c_enabled: bool = Field(default=True, env="P35C_ENABLED")
+    p35c_merge_temperature: float = Field(
+        default=0.0, env="P35C_MERGE_TEMPERATURE"
+    )  # Deterministic micro-prompts
+    p35c_merge_max_tokens: int = Field(
+        default=10, env="P35C_MERGE_MAX_TOKENS"
+    )  # YES/NO only
+    p35c_max_pairs_per_cycle: int = Field(
+        default=20, env="P35C_MAX_PAIRS_PER_CYCLE"
+    )  # Limit pairs evaluated per run
+
+    # P3.5d: Interpretive Splitting - Split mixed-narrative EFs
+    p35d_enabled: bool = Field(default=True, env="P35D_ENABLED")
+    p35d_min_titles_for_split: int = Field(
+        default=3, env="P35D_MIN_TITLES_FOR_SPLIT"
+    )  # Only split EFs with >N titles
+    p35d_split_temperature: float = Field(
+        default=0.3, env="P35D_SPLIT_TEMPERATURE"
+    )  # Slightly creative for narrative detection
+    p35d_split_max_tokens: int = Field(
+        default=4000, env="P35D_SPLIT_MAX_TOKENS"
+    )  # Need full response for split plan
+    p35d_max_efs_per_cycle: int = Field(
+        default=50, env="P35D_MAX_EFS_PER_CYCLE"
+    )  # Limit EFs evaluated per run
+
     # Framed Narrative Configuration
     framing_enabled: bool = Field(default=True, env="FRAMING_ENABLED")
     framing_min_titles: int = Field(

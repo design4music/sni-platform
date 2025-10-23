@@ -1,0 +1,140 @@
+## Implementation Requirements: EF Generation v2.1
+
+### **Core Principle**
+Mechanical clustering suggests, AI validation decides. Every title gets individual validation before EF creation.
+
+### **Required Changes**
+
+#### **1. Modify P3: EF Seed Creation**
+**File:** `incident_processor.py`
+
+**Changes:**
+- After mechanical clustering, DO NOT create EF record yet
+- Store candidate clusters in memory with title objects
+- If a mechanical cluster has only 1 title SET titles.processing_status = 'recycling' (new field to be added to the `titles` table) and do not process further (no P3.5a)
+- Add seed validation step before final EF creation
+
+#### **2. Implement P3.5a: Interpretive Seed Validation**
+**New File:** `seed_validator.py`
+
+**Logic:**
+```python
+def validate_seed_cluster(seed_cluster):
+    # Generate brief theme mechanically
+    entities = get_most_frequent_entities(seed_cluster)  # Top 3 entities
+    brief_theme = " + ".join(entities[:3])
+    
+    validated_titles = []
+    rejected_titles = []
+    
+    # Validate each title individually
+    for title in seed_cluster:
+        prompt = f"""
+You are a strategic analyst. Based on its content, does this headline belong 
+to the same ongoing story as the other headlines in this cluster? 
+The emerging theme appears to be about [{brief_theme}].
+
+Answer only YES or NO.
+
+Headline: {title['text']}
+"""
+        response = llm.micro_prompt(prompt)  # Returns "YES" or "NO"
+        
+        if response == "YES":
+            validated_titles.append(title)
+        else:
+            rejected_titles.append(title)
+    
+    return validated_titles, rejected_titles
+```
+
+**Decision Logic:**
+- If `len(validated_titles) >= MIN_CLUSTER_SIZE` (e.g., 3): Create EF
+- If `len(rejected_titles) > 0`: Send rejects to recycling pool
+
+#### **3. Update P3 Flow**
+**New P3 Sequence:**
+1. Mechanical clustering (current code)
+2. **→ NEW: Seed validation (P3.5a)**
+3. **→ Only if validated: Create EF with strategic_purpose**
+4. **→ Rejected titles: Add to recycling_bin for re-clustering**
+
+#### **4. Implement P3.5c: Interpretive Merging**
+**New File:** `ef_merger.py`
+
+**Logic:**
+- Periodically scan EFs with similar theaters/event_types
+- For candidate EF pairs:
+```python
+prompt = f"""
+Do these two Event Families describe facets of the same broader strategic narrative?
+
+Family 1: {ef1.strategic_purpose}
+Family 2: {ef2.strategic_purpose}
+
+Answer only YES or NO.
+"""
+```
+- If YES: Merge EFs
+
+### **Key Technical Requirements**
+
+- **Individual Validation:** Each title gets separate micro-prompt
+- **Brief Theme:** Mechanical entity frequency analysis (top 3 entities)
+- **Recycling Pool:** Store rejected titles for future clustering cycles
+- **Minimum Cluster Size:** Configurable (suggested: 3 titles)
+- **Micro-prompts Only:** YES/NO answers, no reasoning
+
+### **Integration Points**
+
+- **P3.5a** runs **inside** P3 processing, before EF database commit
+- **P3.5c** runs as **background process** on existing EFs
+- **Recycling bin** feeds back into P3 mechanical clustering
+
+This creates the flow:  
+**P2 → P3 (mechanical) → P3.5a (validation) → EF Creation → P3.5c (merging)**
+
+
+
+### **Required Processing Steps and numbering**
+
+#### **1. P3: Mechanical Seed Creation** (existing)
+- Mechanical clustering creates candidate clusters
+- **Output:** In-memory seed clusters (no DB commit yet)
+
+#### **2. P3.5a: Seed Validation** (NEW)
+- Validate EVERY title in each seed cluster
+- Individual micro-prompts: "Does this title belong to cluster theme?"
+- **Output:** Pure validated clusters + rejected titles (recycling bin)
+
+#### **3. P3: Final EF Creation** (enhanced)
+- Only for validated clusters
+- LLM generates strategic_purpose and final EF fields
+- **Output:** EF records in database
+
+#### **4. P3.5b: Cross-Batch Assignment** (existing `thematic_validator.py`)
+- Assign new incoming titles to existing EFs
+- Uses micro-prompts against EF strategic_purpose
+- **Output:** Titles linked to existing EFs
+
+#### **5. P3.5c: Interpretive Merging** (NEW)
+- Periodically merge semantically similar EFs
+- Micro-prompts: "Do these EFs describe same narrative?"
+- **Output:** Merged EFs
+
+### **Corrected Pipeline Flow:**
+```
+P3 (mechanical clustering)
+→ P3.5a (seed validation) 
+→ P3 (final EF creation) 
+→ P3.5b (cross-batch assignment)
+→ P3.5c (interpretive merging)
+```
+
+**P3.5b** is your existing `thematic_validator.py` that assigns new titles to EFs. **P3.5c** is the new merging process.
+
+So the complete sequence is:
+- **P3** = EF Generation (EXISTING)             incident_processor.py
+- **P3.5a** = Seed validation (NEW)             seed_validator.py
+- **P3.5b** = Cross-batch assignment (EXISTING) thematic_validator.py 
+- **P3.5c** = Interpretive merging (NEW)        ef_merger.py

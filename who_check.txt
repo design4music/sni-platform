@@ -1,0 +1,22 @@
+[
+  "WHO",
+  "منظمة الصحة العالمية",
+  "Weltgesundheitsorganisation der Vereinten Nationen",
+  "Weltgesundheitsorganisation",
+  "World Health Organization",
+  "World Health Organisation",
+  "World Health Organization (WHO)",
+  "Organizacion Mundial de la Salud",
+  "Organización Mundial de la Salud",
+  "Organisation mondiale de la Santé",
+  "विश्व स्वास्थ्य संगठन",
+  "Organizzazione Mondiale della Sanità",
+  "世界保健機関",
+  "Всемирная организация здравоохранения",
+  "世界卫生组织",
+  "世卫",
+  "世卫组织",
+  "世界衛生組織",
+  "世衛組織",
+  "聯合國衛生組織"
+]
