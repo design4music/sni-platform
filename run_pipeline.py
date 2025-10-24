@@ -285,7 +285,7 @@ class PipelineOrchestrator:
 
         try:
             # Build command
-            max_titles = getattr(self.config, "phase_3_max_titles", 500)
+            max_titles = getattr(self.config, "phase_3_max_titles", 1000)
             logger.info(
                 f"Phase 3: Incident-based EF Generation (max {max_titles} titles)"
             )
