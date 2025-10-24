@@ -20,9 +20,7 @@ sys.path.insert(0, str(project_root))
 from apps.filter.entity_enrichment import \
     get_entity_enrichment_service  # noqa: E402
 from apps.filter.title_processor_helpers import (  # noqa: E402
-    update_processing_stats,
-    update_title_entities,
-)
+    update_processing_stats, update_title_entities)
 from core.checkpoint import get_checkpoint_manager  # noqa: E402
 from core.config import get_config  # noqa: E402
 from core.database import get_db_session  # noqa: E402
@@ -207,17 +205,24 @@ async def run_enhanced_gate_processing_batch(
                         continue
                     try:
                         # Convert actor strings to entity format
-                        entity_list = [{"text": actor, "type": "ACTOR"} for actor in result["entities"].get("actors", [])]
-                        await neo4j_sync.sync_title({
-                            "id": result["title_id"],
-                            "title_display": row.title_display,
-                            "pubdate_utc": None,
-                            "gate_keep": result["is_strategic"],
-                            "detected_language": None,
-                            "entities": entity_list
-                        })
+                        entity_list = [
+                            {"text": actor, "type": "ACTOR"}
+                            for actor in result["entities"].get("actors", [])
+                        ]
+                        await neo4j_sync.sync_title(
+                            {
+                                "id": result["title_id"],
+                                "title_display": row.title_display,
+                                "pubdate_utc": None,
+                                "gate_keep": result["is_strategic"],
+                                "detected_language": None,
+                                "entities": entity_list,
+                            }
+                        )
                     except Exception as e:
-                        logger.warning(f"Neo4j sync failed for {result['title_id']}: {e}")
+                        logger.warning(
+                            f"Neo4j sync failed for {result['title_id']}: {e}"
+                        )
             else:
                 # Dry run - just update stats
                 for result in results:
@@ -362,15 +367,20 @@ async def run_enhanced_gate_processing(
                     try:
                         neo4j_sync = get_neo4j_sync()
                         # Convert actor strings to entity format
-                        entity_list = [{"text": actor, "type": "ACTOR"} for actor in entities.get("actors", [])]
-                        await neo4j_sync.sync_title({
-                            "id": title_data["id"],
-                            "title_display": title_data["title_display"],
-                            "pubdate_utc": None,
-                            "gate_keep": is_strategic,
-                            "detected_language": None,
-                            "entities": entity_list
-                        })
+                        entity_list = [
+                            {"text": actor, "type": "ACTOR"}
+                            for actor in entities.get("actors", [])
+                        ]
+                        await neo4j_sync.sync_title(
+                            {
+                                "id": title_data["id"],
+                                "title_display": title_data["title_display"],
+                                "pubdate_utc": None,
+                                "gate_keep": is_strategic,
+                                "detected_language": None,
+                                "entities": entity_list,
+                            }
+                        )
                     except Exception as e:
                         logger.warning(f"Neo4j sync failed for {title_data['id']}: {e}")
 
