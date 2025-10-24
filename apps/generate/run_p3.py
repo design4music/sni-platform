@@ -20,6 +20,7 @@ from apps.generate.database import get_gen1_database  # noqa: E402
 from apps.generate.map_classifier import MapClassifier  # noqa: E402
 from apps.generate.mapreduce_models import MapReduceResult  # noqa: E402
 from apps.generate.models import EventFamily  # noqa: E402
+from apps.generate.p35_pipeline import P35Pipeline  # noqa: E402
 from apps.generate.reduce_assembler import ReduceAssembler  # noqa: E402
 from apps.generate.seed_validator import get_seed_validator  # noqa: E402
 from core.config import get_config  # noqa: E402
@@ -42,6 +43,7 @@ class IncidentProcessor:
         self.mapper = MapClassifier(self.config)
         self.reducer = ReduceAssembler(self.config)
         self.seed_validator = get_seed_validator()
+        self.p35_pipeline = P35Pipeline()
 
     async def run_incident_processing(
         self, max_titles: Optional[int] = None
@@ -168,6 +170,23 @@ class IncidentProcessor:
             # Step 4: Database upsert
             logger.info("Upserting Event Families to database...")
             upsert_results = await self._upsert_event_families(validated_efs)
+
+            # Step 5: P3.5c and P3.5d - Interpretive Intelligence
+            # Note: P3.5b (cross-batch assignment) removed - redundant with P3 core + P3.5c
+            logger.info("Starting P3.5c/d: Interpretive merging and splitting...")
+            p35cd_start = time.time()
+
+            p35_results = await self.p35_pipeline.run_full_pipeline(
+                dry_run=False,
+                max_merge_pairs=self.config.p35c_max_pairs_per_cycle,
+                max_split_efs=self.config.p35d_max_efs_per_cycle,
+            )
+
+            p35cd_duration = time.time() - p35cd_start
+            logger.info(
+                f"P3.5c/d complete: {p35_results['p35c_merge'].get('merged', 0)} merged, "
+                f"{p35_results['p35d_split'].get('split', 0)} split in {p35cd_duration:.1f}s"
+            )
 
             # Calculate final results
             total_duration = time.time() - start_time

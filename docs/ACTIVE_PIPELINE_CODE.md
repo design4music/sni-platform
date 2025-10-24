@@ -10,7 +10,7 @@
 ## Phase 1: RSS Ingestion
 
 **Entry Point:**
-- `apps/ingest/run_ingestion.py` - CLI entry point
+- `apps/ingest/run_p1.py` - CLI entry point
 
 **Core Logic:**
 - `apps/ingest/rss_fetcher.py` - RSS feed fetching
@@ -25,7 +25,7 @@
 ## Phase 2: Strategic Filtering + Entity Enrichment
 
 **Entry Point:**
-- `apps/filter/run_enhanced_gate.py` - CLI entry point
+- `apps/filter/run_p2.py` - CLI entry point
 
 **Core Logic:**
 - `apps/filter/entity_enrichment.py` - Main orchestrator
@@ -47,8 +47,8 @@
 ## Phase 3: Event Family Generation
 
 **Entry Point:**
-- `apps/generate/incident_processor.py` - Incident-based MAP/REDUCE (NEW)
-  - CLI: Run directly as Python module
+- `apps/generate/run_p3.py` - Incident-based MAP/REDUCE
+  - CLI: Run directly as Python module or script
 
 **Core Logic:**
 - `apps/generate/map_classifier.py` - MAP: Incident clustering
@@ -77,7 +77,7 @@
 ## Phase 4: Event Family Enrichment
 
 **Entry Point:**
-- `apps/enrich/cli.py` - CLI entry point (command: `enrich-queue`)
+- `apps/enrich/run_p4.py` - CLI entry point (command: `enrich-queue`)
 
 **Core Logic:**
 - `apps/enrich/processor.py` - EF enrichment processor
@@ -92,7 +92,7 @@
 ## Phase 5: Framed Narratives
 
 **Entry Point:**
-- `apps/generate/run_framing.py` - CLI entry point (command: `process`)
+- `apps/generate/run_p5.py` - CLI entry point (command: `process`)
 
 **Core Logic:**
 - `apps/generate/framing_processor.py` - Framed narrative generation
@@ -106,7 +106,7 @@
 ## Phase 6: RAI Analysis (Manual Only)
 
 **Entry Point:**
-- `apps/generate/run_rai.py` - CLI entry point (command: `process`)
+- `apps/generate/run_p6.py` - CLI entry point (command: `process`)
 
 **Core Logic:**
 - `apps/generate/rai_processor.py` - RAI analysis
@@ -202,23 +202,21 @@ python run_pipeline.py run --daemon --interval 360  # Every 6 hours
 
 ## Issues/Notes for Reorganization
 
-1. **Inconsistent naming:**
-   - `run_ingestion.py` vs `run_enhanced_gate.py` vs `run_framing.py`
-   - Should standardize to `run_<phase>.py`
+1. **✅ FIXED - Naming standardized:**
+   - All phases now use `run_p1.py` through `run_p6.py` format
 
 2. **Legacy files still present:**
    - `apps/filter/strategic_gate.py` (legacy?)
    - `run_phase2_*.py` (old runners)
 
-3. **Phase 3 confusion:**
-   - `incident_processor.py` is the active implementation
-   - `mapreduce_processor.py` referenced in run_pipeline.py but doesn't exist?
-   - Need to clarify which is active
+3. **✅ FIXED - Phase 3 clarified:**
+   - `run_p3.py` is the active implementation (incident-based MAP/REDUCE)
+   - Integrated into pipeline with P3.5a-b-c-d
 
 4. **Data import scripts:**
    - In `apps/data/` but not part of pipeline
    - Should these be in `scripts/` or separate `tools/` directory?
 
-5. **Missing:**
-   - Phase 3 CLI entry point (currently runs as Python module directly)
-   - Clear separation of "pipeline" vs "utilities" vs "data management"
+5. **✅ FIXED - All phases have CLI entry points:**
+   - All phases can be run as `python apps/<module>/run_pN.py`
+   - Clean separation of pipeline scripts

@@ -169,8 +169,9 @@ class SNIConfig(BaseSettings):
         default=10, env="P35A_VALIDATION_MAX_TOKENS"
     )  # YES/NO only
 
-    # P3.5b: Cross-Batch Assignment - Assign new titles to existing EFs
-    p35b_enabled: bool = Field(default=True, env="P35B_ENABLED")
+    # P3.5b: Cross-Batch Assignment - DEPRECATED (redundant with P3 core + P3.5c)
+    # Phase 3 core clusters ALL titles, P3.5c merges duplicates - no need for assignment
+    p35b_enabled: bool = Field(default=False, env="P35B_ENABLED")
     p35b_assignment_temperature: float = Field(
         default=0.0, env="P35B_ASSIGNMENT_TEMPERATURE"
     )  # Deterministic micro-prompts

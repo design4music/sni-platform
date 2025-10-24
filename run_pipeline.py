@@ -153,7 +153,7 @@ class PipelineOrchestrator:
 
         try:
             # Build command with batch and resume flags
-            cmd = [sys.executable, "apps/ingest/run_ingestion.py"]
+            cmd = [sys.executable, "apps/ingest/run_p1.py"]
 
             # Add batch size for timeout mitigation
             batch_size = getattr(self.config, "phase_1_batch_size", 5000)
@@ -216,7 +216,7 @@ class PipelineOrchestrator:
 
         try:
             # Build command with batch and resume flags
-            cmd = [sys.executable, "apps/filter/run_enhanced_gate.py"]
+            cmd = [sys.executable, "apps/filter/run_p2.py"]
 
             # Add batch size for timeout mitigation
             batch_size = getattr(self.config, "phase_2_batch_size", 10000)
@@ -293,7 +293,7 @@ class PipelineOrchestrator:
             cmd = [
                 sys.executable,
                 "-m",
-                "apps.generate.incident_processor",
+                "apps.generate.run_p3",
                 str(max_titles),
             ]
 
@@ -345,7 +345,7 @@ class PipelineOrchestrator:
 
         try:
             # Build command with batch and resume flags
-            cmd = [sys.executable, "apps/enrich/cli.py", "enrich-queue"]
+            cmd = [sys.executable, "apps/enrich/run_p4.py", "enrich-queue"]
 
             # Add batch size for timeout mitigation
             batch_size = getattr(self.config, "phase_4_batch_size", 300)
@@ -410,7 +410,7 @@ class PipelineOrchestrator:
 
         try:
             # Build command
-            cmd = [sys.executable, "apps/generate/run_framing.py", "process"]
+            cmd = [sys.executable, "apps/generate/run_p5.py"]
 
             # Add max-items parameter
             max_items = getattr(self.config, "phase_5_max_items", 50)
@@ -464,7 +464,7 @@ class PipelineOrchestrator:
 
         try:
             # Build command
-            cmd = [sys.executable, "apps/generate/run_rai.py", "process"]
+            cmd = [sys.executable, "apps/generate/run_p6.py", "process"]
 
             # Add max-items parameter
             max_items = getattr(self.config, "phase_6_max_items", 50)

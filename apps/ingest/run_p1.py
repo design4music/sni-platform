@@ -15,12 +15,12 @@ from loguru import logger
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, text  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
 
-from apps.ingest.rss_fetcher import RSSFetcher
-from core.checkpoint import get_checkpoint_manager
-from core.config import get_config
+from apps.ingest.rss_fetcher import RSSFetcher  # noqa: E402
+from core.checkpoint import get_checkpoint_manager  # noqa: E402
+from core.config import get_config  # noqa: E402
 
 
 class IngestionRunner:
