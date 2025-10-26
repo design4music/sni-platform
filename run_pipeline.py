@@ -61,7 +61,7 @@ class PipelineOrchestrator:
         self, cmd: list, timeout_minutes: int, phase_name: str
     ) -> Dict:
         """
-        Run subprocess with configurable timeout
+        Run subprocess with configurable timeout and real-time output streaming
 
         Args:
             cmd: Command and arguments
@@ -73,37 +73,40 @@ class PipelineOrchestrator:
         """
         timeout_seconds = timeout_minutes * 60
         logger.info(f"{phase_name}: Running command with {timeout_minutes}min timeout")
+        logger.info(f"Command: {' '.join(cmd)}")
 
         try:
+            # Stream output to terminal in real-time (no buffering)
             process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+                *cmd,
+                stdout=None,  # Inherit stdout - shows in terminal
+                stderr=None,  # Inherit stderr - shows in terminal
             )
 
-            # Use asyncio.wait_for for timeout control
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=timeout_seconds
-            )
+            # Wait for process with timeout
+            try:
+                returncode = await asyncio.wait_for(
+                    process.wait(), timeout=timeout_seconds
+                )
+            except asyncio.TimeoutError:
+                # Kill the process if it's still running
+                if process.returncode is None:
+                    process.terminate()
+                    await process.wait()
 
-            if process.returncode != 0:
-                raise RuntimeError(f"{phase_name} failed: {self._safe_decode(stderr)}")
+                error_msg = f"{phase_name} timed out after {timeout_minutes} minutes"
+                logger.error(error_msg)
+                return {"status": "timeout", "error": error_msg}
+
+            if returncode != 0:
+                error_msg = f"{phase_name} failed with exit code {returncode}"
+                logger.error(error_msg)
+                return {"status": "error", "error": error_msg}
 
             return {
                 "status": "success",
-                "result": {
-                    "stdout": self._safe_decode(stdout),
-                    "stderr": self._safe_decode(stderr),
-                },
+                "result": {"message": f"{phase_name} completed successfully"},
             }
-
-        except asyncio.TimeoutError:
-            # Kill the process if it's still running
-            if process.returncode is None:
-                process.terminate()
-                await process.wait()
-
-            error_msg = f"{phase_name} timed out after {timeout_minutes} minutes"
-            logger.error(error_msg)
-            return {"status": "timeout", "error": error_msg}
 
         except Exception as e:
             error_msg = f"{phase_name} failed: {str(e)}"
