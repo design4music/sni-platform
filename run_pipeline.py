@@ -182,8 +182,13 @@ class PipelineOrchestrator:
                 self.log_status("1_ingest", "completed", {"result": result["result"]})
                 logger.info("Phase 1 completed successfully")
                 return result
+            elif result["status"] == "timeout":
+                # Handle timeout separately - log as warning, don't count as error
+                self.log_status("1_ingest", "timeout", {"message": result.get("error")})
+                logger.warning(f"Phase 1 timed out: {result.get('error')}")
+                return result
             else:
-                # Handle timeout or error
+                # Handle actual errors
                 self.error_count += 1
                 self.status["errors"].append(
                     {
@@ -249,8 +254,13 @@ class PipelineOrchestrator:
                 self.log_status("2_filter", "completed", {"result": result["result"]})
                 logger.info("Phase 2 completed successfully")
                 return result
+            elif result["status"] == "timeout":
+                # Handle timeout separately - log as warning, don't count as error
+                self.log_status("2_filter", "timeout", {"message": result.get("error")})
+                logger.warning(f"Phase 2 timed out: {result.get('error')}")
+                return result
             else:
-                # Handle timeout or error
+                # Handle actual errors
                 self.error_count += 1
                 self.status["errors"].append(
                     {
@@ -311,8 +321,15 @@ class PipelineOrchestrator:
                 self.log_status("3_generate", "completed", {"result": result["result"]})
                 logger.info("Phase 3 (MAP/REDUCE) completed successfully")
                 return result
+            elif result["status"] == "timeout":
+                # Handle timeout separately - log as warning, don't count as error
+                self.log_status(
+                    "3_generate", "timeout", {"message": result.get("error")}
+                )
+                logger.warning(f"Phase 3 timed out: {result.get('error')}")
+                return result
             else:
-                # Handle timeout or error
+                # Handle actual errors
                 self.error_count += 1
                 self.status["errors"].append(
                     {
@@ -376,8 +393,13 @@ class PipelineOrchestrator:
                 self.log_status("4_enrich", "completed", {"result": result["result"]})
                 logger.info("Phase 4 completed successfully")
                 return result
+            elif result["status"] == "timeout":
+                # Handle timeout separately - log as warning, don't count as error
+                self.log_status("4_enrich", "timeout", {"message": result.get("error")})
+                logger.warning(f"Phase 4 timed out: {result.get('error')}")
+                return result
             else:
-                # Handle timeout or error
+                # Handle actual errors
                 self.error_count += 1
                 self.status["errors"].append(
                     {
@@ -430,8 +452,15 @@ class PipelineOrchestrator:
                 self.log_status("5_framing", "completed", {"result": result["result"]})
                 logger.info("Phase 5 completed successfully")
                 return result
+            elif result["status"] == "timeout":
+                # Handle timeout separately - log as warning, don't count as error
+                self.log_status(
+                    "5_framing", "timeout", {"message": result.get("error")}
+                )
+                logger.warning(f"Phase 5 timed out: {result.get('error')}")
+                return result
             else:
-                # Handle timeout or error
+                # Handle actual errors
                 self.error_count += 1
                 self.status["errors"].append(
                     {
@@ -484,8 +513,13 @@ class PipelineOrchestrator:
                 self.log_status("6_rai", "completed", {"result": result["result"]})
                 logger.info("Phase 6 completed successfully")
                 return result
+            elif result["status"] == "timeout":
+                # Handle timeout separately - log as warning, don't count as error
+                self.log_status("6_rai", "timeout", {"message": result.get("error")})
+                logger.warning(f"Phase 6 timed out: {result.get('error')}")
+                return result
             else:
-                # Handle timeout or error
+                # Handle actual errors
                 self.error_count += 1
                 self.status["errors"].append(
                     {
