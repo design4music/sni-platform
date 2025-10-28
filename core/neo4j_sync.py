@@ -127,6 +127,68 @@ class Neo4jSync:
             logger.error(f"Failed to sync title {title_data.get('id')} to Neo4j: {e}")
             return False
 
+    async def sync_aat_triple(self, title_id: str, aat_triple: Dict[str, str]) -> bool:
+        """
+        Sync Actor-Action-Target triple to Neo4j graph.
+
+        Creates HAS_ACTION relationships between Title and Entity nodes based on
+        the AAT triple extracted from the title. Enables graph-pattern clustering
+        by action relationships (e.g., "who sanctioned whom").
+
+        Args:
+            title_id: Title UUID
+            aat_triple: Dict with "actor", "action", "target" keys (values can be None)
+
+        Returns:
+            True if sync successful, False otherwise
+        """
+        if not aat_triple:
+            return True
+
+        actor = aat_triple.get("actor")
+        action = aat_triple.get("action")
+        target = aat_triple.get("target")
+
+        # Only create relationships if we have action + at least one entity
+        if not action or (not actor and not target):
+            logger.debug(
+                f"Skipping AAT sync for {title_id}: insufficient data (action={action}, actor={actor}, target={target})"
+            )
+            return True
+
+        try:
+            async with self.driver.session() as session:
+                # Sync actor relationship if present
+                if actor:
+                    actor_query = """
+                    MERGE (actor:Entity {name: $actor})
+                    MERGE (t:Title {id: $title_id})
+                    MERGE (t)-[:HAS_ACTION {action: $action, actor_role: 'actor'}]->(actor)
+                    """
+                    await session.run(
+                        actor_query, title_id=title_id, actor=actor, action=action
+                    )
+
+                # Sync target relationship if present
+                if target:
+                    target_query = """
+                    MERGE (target:Entity {name: $target})
+                    MERGE (t:Title {id: $title_id})
+                    MERGE (t)-[:HAS_ACTION {action: $action, actor_role: 'target'}]->(target)
+                    """
+                    await session.run(
+                        target_query, title_id=title_id, target=target, action=action
+                    )
+
+                logger.debug(
+                    f"Synced AAT triple to Neo4j: {title_id} ({actor or 'N/A'}|{action}|{target or 'N/A'})"
+                )
+                return True
+
+        except Exception as e:
+            logger.error(f"Failed to sync AAT triple for {title_id} to Neo4j: {e}")
+            return False
+
     async def find_strategic_neighbors(
         self, title_id: str, threshold: int = 2, days_lookback: int = 2
     ) -> List[Dict[str, Any]]:

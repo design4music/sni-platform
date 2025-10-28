@@ -231,6 +231,13 @@ async def run_enhanced_gate_processing_batch(
                             }
                         )
                     )
+                    # Sync AAT triple for strategic titles
+                    if result["is_strategic"] and result.get("aat_triple"):
+                        neo_tasks.append(
+                            neo4j_sync.sync_aat_triple(
+                                result["title_id"], result["aat_triple"]
+                            )
+                        )
 
                 # Execute all Neo4j syncs in parallel
                 if neo_tasks:
@@ -407,6 +414,11 @@ async def run_enhanced_gate_processing(
                                 "entities": entity_list,
                             }
                         )
+                        # Sync AAT triple for strategic titles
+                        if is_strategic and aat_triple:
+                            await neo4j_sync.sync_aat_triple(
+                                title_data["id"], aat_triple
+                            )
                     except Exception as e:
                         logger.warning(f"Neo4j sync failed for {title_data['id']}: {e}")
 
