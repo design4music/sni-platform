@@ -284,17 +284,11 @@ class ThematicValidator:
         Returns:
             True if fits, False otherwise
         """
-        system_prompt = """You are a strategic news analyst. Your job is to determine if a headline fits a given strategic narrative.
+        from core.llm_client import build_thematic_validation_prompt
 
-Answer with ONLY "YES" or "NO" - no explanation needed."""
-
-        user_prompt = f"""Strategic Purpose: {strategic_purpose}
-
-Headline: {title_text}
-
-Does this headline fit the strategic purpose above?
-
-Answer: """
+        system_prompt, user_prompt = build_thematic_validation_prompt(
+            title_text, strategic_purpose
+        )
 
         try:
             response = self.llm_client._call_llm_sync(

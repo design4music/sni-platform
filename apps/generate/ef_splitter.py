@@ -115,48 +115,7 @@ class EFSplitter:
             Tuple of (should_split: bool, split_plan: Optional[List[Dict]])
             split_plan is list of narrative groups if splitting
         """
-        system_prompt = """You are a strategic intelligence analyst. Analyze a collection of headlines to determine if they describe ONE cohesive strategic narrative or MULTIPLE distinct narratives that should be separated.
-
-Your task:
-1. Review all headlines
-2. Determine if they describe:
-   - ONE narrative (coherent story/theme)
-   - MULTIPLE narratives (distinct stories mixed together)
-
-If MULTIPLE narratives, identify them and group the headlines accordingly.
-
-IMPORTANT - Narrative Naming:
-- Create SPECIFIC, DESCRIPTIVE titles that include:
-  * Specific actors/entities involved (e.g., "Israel", "Hamas", "Trump")
-  * Theater/location context (e.g., "Gaza", "Ukraine", "United States")
-  * Strategic action or purpose (e.g., "Ceasefire Implementation", "Military Operations")
-- BAD: "Economic & Market Reactions" (too generic)
-- GOOD: "Gaza Economic Impact: Oil and Stock Market Reactions to Israel-Hamas Ceasefire"
-- BAD: "Government Shutdown Strategy"
-- GOOD: "Trump Administration Government Shutdown to Advance Policy Objectives"
-
-Respond in JSON format:
-{
-  "should_split": true/false,
-  "rationale": "brief explanation",
-  "narratives": [
-    {
-      "narrative_name": "Specific, descriptive narrative title with actors and theater",
-      "strategic_purpose": "One-sentence strategic purpose",
-      "key_actors": ["Actor1", "Actor2", ...],
-      "title_ids": ["uuid1", "uuid2", ...]
-    },
-    ...
-  ]
-}
-
-For key_actors:
-- Extract the primary actors/entities relevant to THIS specific narrative
-- Include countries, organizations, leaders, groups
-- Only include actors that are central to this narrative's headlines
-- Parent EF may have been over-merged, so don't include irrelevant actors
-
-If should_split is false, narratives can be empty array."""
+        from core.llm_client import build_ef_split_prompt
 
         # Build title list for LLM
         title_list = "\n".join(
@@ -166,15 +125,12 @@ If should_split is false, narratives can be empty array."""
             ]
         )
 
-        user_prompt = f"""Event Family: {ef_data['title']}
-Strategic Purpose: {ef_data['strategic_purpose']}
-
-Headlines ({len(ef_data['titles'])} total):
-{title_list}
-
-Analyze these headlines. Do they describe ONE cohesive narrative or MULTIPLE distinct narratives?
-
-JSON Response:"""
+        system_prompt, user_prompt = build_ef_split_prompt(
+            ef_data["title"],
+            ef_data["strategic_purpose"],
+            title_list,
+            len(ef_data["titles"]),
+        )
 
         try:
             response = self.llm_client._call_llm_sync(

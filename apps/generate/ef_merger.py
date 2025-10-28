@@ -136,17 +136,11 @@ class EFMerger:
         Returns:
             Tuple of (should_merge: bool, reason: Optional[str])
         """
-        system_prompt = """You are a strategic intelligence analyst. Determine if two Event Families describe facets of the same broader strategic narrative.
+        from core.llm_client import build_ef_merge_prompt
 
-Answer with ONLY "YES" or "NO" - no explanation needed."""
-
-        user_prompt = f"""Do these two Event Families describe facets of the same broader strategic narrative?
-
-Event Family 1: {ef1['strategic_purpose']}
-
-Event Family 2: {ef2['strategic_purpose']}
-
-Answer: """
+        system_prompt, user_prompt = build_ef_merge_prompt(
+            ef1["strategic_purpose"], ef2["strategic_purpose"]
+        )
 
         try:
             response = self.llm_client._call_llm_sync(

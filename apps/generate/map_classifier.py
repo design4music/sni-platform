@@ -9,13 +9,12 @@ from typing import Dict, List
 
 from loguru import logger
 
-from core.llm_client import get_llm_client
 from apps.generate.mapreduce_models import (IncidentCluster,
                                             IncidentClustering,
                                             TitleClassification)
-from apps.generate.mapreduce_prompts import (build_classification_prompt,
-                                             build_incident_clustering_prompt)
 from core.config import SNIConfig
+from core.llm_client import (build_classification_prompt,
+                             build_incident_clustering_prompt, get_llm_client)
 
 
 class MapClassifier:

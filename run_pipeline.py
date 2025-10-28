@@ -228,7 +228,17 @@ class PipelineOrchestrator:
 
             # Add batch size for timeout mitigation
             batch_size = getattr(self.config, "phase_2_batch_size", 10000)
-            cmd.extend(["--batch", str(batch_size)])
+
+            # Legacy max-titles parameter (now handled by batch processing)
+            if (
+                hasattr(self.config, "phase_2_max_titles")
+                and self.config.phase_2_max_titles
+            ):
+                # Use max_titles as batch_size for testing
+                batch_size = self.config.phase_2_max_titles
+                cmd.extend(["--max-titles", str(self.config.phase_2_max_titles)])
+            else:
+                cmd.extend(["--batch", str(batch_size)])
 
             # Add resume flag for idempotent operation
             cmd.append("--resume")
@@ -236,13 +246,6 @@ class PipelineOrchestrator:
             # Processing window (hours)
             hours = getattr(self.config, "processing_window_hours", 24)
             cmd.extend(["--hours", str(hours)])
-
-            # Legacy max-titles parameter (now handled by batch processing)
-            if (
-                hasattr(self.config, "phase_2_max_titles")
-                and self.config.phase_2_max_titles
-            ):
-                cmd.extend(["--max-titles", str(self.config.phase_2_max_titles)])
 
             # Run with shorter timeout (cron-friendly)
             timeout_minutes = getattr(self.config, "phase_2_timeout_minutes", 15)

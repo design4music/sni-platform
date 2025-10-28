@@ -30,7 +30,7 @@ from core.config import get_config
 # ============================================================================
 
 # -----------------------------------------------------------------------------
-# Phase 2: Strategic Filtering
+# Phase 2: Strategic Filtering & Entity Extraction
 # -----------------------------------------------------------------------------
 
 STRATEGIC_REVIEW_SYSTEM = """Analyze if this news title has INTERNATIONAL or NATIONAL strategic significance.
@@ -81,6 +81,24 @@ Use canonical entity names from your knowledge (e.g., "United States" not "USA",
 STRATEGIC_REVIEW_USER = """Title: '{title}'
 
 Analyze and respond in JSON format."""
+
+# AAT (Actor-Action-Target) Triple Extraction
+AAT_EXTRACTION_SYSTEM_PROMPT = """Extract the core action relationship from news titles.
+Format: ACTOR|ACTION|TARGET
+
+ACTOR = main entity performing the action
+ACTION = main verb (normalize to simple form: "sanctions" not "imposed sanctions")
+TARGET = entity receiving the action
+
+Examples:
+"US imposes new sanctions on Russia" -> US|sanctions|Russia
+"China warns Taiwan over independence" -> China|warns|Taiwan
+"Belgium vetoes EU aid package for Ukraine" -> Belgium|vetoes|EU
+"EU debates migration policy changes" -> NO_CLEAR_ACTION
+
+Answer with just: ACTOR|ACTION|TARGET or NO_CLEAR_ACTION"""
+
+AAT_EXTRACTION_USER_TEMPLATE = 'Title: "{title}"\nAnswer: '
 
 
 # -----------------------------------------------------------------------------
@@ -314,6 +332,247 @@ Assess macro-link and strategic context. For comparables, focus on recent preced
     "abnormality": "What makes this significant/unusual or null"
   }}
 }}"""
+
+
+# -----------------------------------------------------------------------------
+# MAP/REDUCE Event Family Processing
+# -----------------------------------------------------------------------------
+
+# EVENT_TYPE and THEATER enums (for MAP/REDUCE consistency)
+EVENT_TYPES = [
+    "Strategy/Tactics",
+    "Humanitarian",
+    "Alliances/Geopolitics",
+    "Diplomacy/Negotiations",
+    "Sanctions/Economy",
+    "Domestic Politics",
+    "Procurement/Force-gen",
+    "Tech/Cyber/OSINT",
+    "Legal/ICC",
+    "Information/Media/Platforms",
+    "Energy/Infrastructure",
+]
+
+THEATERS = [
+    "UKRAINE",
+    "GAZA",
+    "TAIWAN_STRAIT",
+    "IRAN_NUCLEAR",
+    "EUROPE_SECURITY",
+    "US_DOMESTIC",
+    "CHINA_TRADE",
+    "MEAST_REGIONAL",
+    "CYBER_GLOBAL",
+    "CLIMATE_GLOBAL",
+    "AFRICA_SECURITY",
+    "KOREA_PENINSULA",
+    "LATAM_REGIONAL",
+    "ARCTIC",
+    "GLOBAL_SUMMIT",
+]
+
+# MAP Phase Prompts (Pass-1a: Incident Clustering)
+INCIDENT_CLUSTERING_SYSTEM_PROMPT = """Identify which titles describe the same strategic incident or situation. Group related titles that represent:
+
+1. SAME CORE INCIDENT: Initial event + direct reactions + consequences
+2. TEMPORAL PROXIMITY: Events within 48 hours that are causally connected
+3. STRATEGIC COHERENCE: Actions, reactions, and responses that form one strategic narrative
+
+CLUSTERING PRINCIPLES:
+- Primary incident + all reactions/responses = ONE cluster
+- Cross-border incidents: Include both origin and target country responses
+- Diplomatic reactions: Include original incident + diplomatic responses
+- Multi-step escalations: Include entire escalation sequence
+- Parallel strategic responses: Different actors responding to same underlying situation = ONE cluster
+- Coordinated international pressure: Multiple countries/organizations pressuring same target = ONE cluster
+- Isolated incidents: Can be single-title clusters (only when truly unrelated)
+
+OUTPUT: List of incident clusters with descriptive names and member title IDs."""
+
+INCIDENT_CLUSTERING_USER_TEMPLATE = """Analyze these titles and group them into strategic incident clusters.
+
+CRITICAL: Only use title IDs from the INPUT list below. Do NOT reference any other IDs under any circumstances.
+
+EXAMPLES of good clustering:
+- Poland Drone Incident: ["Russian drones enter Polish airspace", "Poland closes Belarus border", "UN Security Council called", "EU emergency debate"]
+- Gaza Humanitarian Crisis: ["Israeli strikes on Gaza", "WHO reports casualties", "Qatar mediates ceasefire talks"]
+- Western Pressure on Israel over Gaza: ["UK diplomatic pressure on Israel", "EU economic pressure via payment suspensions", "International pressure mounts against Israeli operations", "French positioning on Gaza genocide classification"]
+- US Election Controversy: ["Assassination attempt on candidate", "Secret Service investigation", "Political reactions"]
+
+INPUT (id | title | date):
+{titles}
+
+OUTPUT: JSON array of incident clusters:
+[
+  {{
+    "incident_name": "Descriptive name for the strategic incident",
+    "title_ids": ["id1", "id2", "id3"],
+    "rationale": "Brief explanation of why these belong together"
+  }}
+]
+
+REMINDER: Use ONLY the IDs from the INPUT list above."""
+
+# REDUCE Phase Prompts (Pass-1c: Incident Analysis + EF Creation)
+INCIDENT_ANALYSIS_SYSTEM_PROMPT = """Analyze an incident cluster to create a complete Event Family. Your tasks:
+
+1. CLASSIFY the event type for this strategic incident
+2. CREATE an Event Family title that captures the strategic significance
+3. DEFINE the strategic purpose - a one-sentence core narrative that describes what this Event Family is fundamentally about
+4. EXTRACT a timeline of discrete factual events within the incident
+5. MAINTAIN neutral attribution and factual accuracy
+
+The STRATEGIC PURPOSE is critical - it serves as the semantic anchor for future thematic validation. It should be:
+- ONE sentence maximum
+- Captures the core narrative/theme
+- Describes what unifies these events conceptually
+- Used later to validate if new headlines belong to this Event Family
+
+Focus on the STRATEGIC NARRATIVE - what makes this incident significant for intelligence analysis."""
+
+INCIDENT_ANALYSIS_USER_TEMPLATE = """INCIDENT CLUSTER: {incident_name}
+RATIONALE: {rationale}
+
+AVAILABLE EVENT_TYPES: {event_types}
+
+TITLES (id | title | date):
+{titles}
+
+Analyze this strategic incident and create a complete Event Family:
+
+STEP 1: Classify the event type
+- What is the PRIMARY event type that best describes this strategic situation?
+- Choose ONE from the AVAILABLE EVENT_TYPES list
+
+STEP 2: Create Event Family metadata
+- EF Title: Strategic significance (max 120 chars, avoid headlines)
+- Strategic Purpose: ONE sentence that captures the core narrative
+  Examples:
+    GOOD: "Ongoing military confrontation between Russian forces and Ukrainian defense in eastern territories"
+    GOOD: "Diplomatic efforts to negotiate humanitarian corridors and civilian evacuations in Gaza"
+    GOOD: "International pressure campaigns targeting Israeli military operations through economic and political channels"
+    BAD: "News about the war" (too vague)
+    BAD: "Russia attacks Ukraine while the West imposes sanctions and provides military aid" (too detailed, multiple themes)
+
+STEP 3: Extract event timeline
+- Identify discrete factual events in chronological order
+- Use neutral language with proper attribution
+- Use exact publication dates provided (YYYY-MM-DD format)
+- Link each event to source title IDs
+
+Return JSON only:
+{{
+  "event_type": "EVENT_TYPE",
+  "ef_title": "Strategic Event Family title",
+  "strategic_purpose": "One-sentence core narrative that unifies this Event Family",
+  "ef_summary": "Brief strategic context",
+  "events": [
+    {{
+      "summary": "Neutral factual description with attribution",
+      "date": "2025-01-18",
+      "source_title_ids": ["uuid1", "uuid2"],
+      "event_id": "evt_001"
+    }}
+  ]
+}}"""
+
+
+# -----------------------------------------------------------------------------
+# Phase 3.5: Micro-Prompts for EF Management
+# -----------------------------------------------------------------------------
+
+# Phase 3.5a: Seed Validation Micro-Prompt
+SEED_VALIDATION_SYSTEM_PROMPT = """You are a strategic analyst. Based on its content, determine if a headline belongs to an ongoing story theme.
+
+Answer with ONLY "YES" or "NO" - no explanation needed."""
+
+SEED_VALIDATION_USER_TEMPLATE = """The emerging theme appears to be about [{brief_theme}].
+
+Does this headline belong to the same ongoing story as this theme?
+
+Headline: {title_text}
+
+Answer: """
+
+# Phase 3.5b: Thematic Validation Micro-Prompt
+THEMATIC_VALIDATION_SYSTEM_PROMPT = """You are a strategic news analyst. Your job is to determine if a headline fits a given strategic narrative.
+
+Answer with ONLY "YES" or "NO" - no explanation needed."""
+
+THEMATIC_VALIDATION_USER_TEMPLATE = """Strategic Purpose: {strategic_purpose}
+
+Headline: {title_text}
+
+Does this headline fit the strategic purpose above?
+
+Answer: """
+
+# Phase 3.5c: EF Merging Micro-Prompt
+EF_MERGE_SYSTEM_PROMPT = """You are a strategic intelligence analyst. Determine if two Event Families describe facets of the same broader strategic narrative.
+
+Answer with ONLY "YES" or "NO" - no explanation needed."""
+
+EF_MERGE_USER_TEMPLATE = """Do these two Event Families describe facets of the same broader strategic narrative?
+
+Event Family 1: {ef1_strategic_purpose}
+
+Event Family 2: {ef2_strategic_purpose}
+
+Answer: """
+
+# Phase 3.5d: EF Splitting Micro-Prompt
+EF_SPLIT_SYSTEM_PROMPT = """You are a strategic intelligence analyst. Analyze a collection of headlines to determine if they describe ONE cohesive strategic narrative or MULTIPLE distinct narratives that should be separated.
+
+Your task:
+1. Review all headlines
+2. Determine if they describe:
+   - ONE narrative (coherent story/theme)
+   - MULTIPLE narratives (distinct stories mixed together)
+
+If MULTIPLE narratives, identify them and group the headlines accordingly.
+
+IMPORTANT - Narrative Naming:
+- Create SPECIFIC, DESCRIPTIVE titles that include:
+  * Specific actors/entities involved (e.g., "Israel", "Hamas", "Trump")
+  * Theater/location context (e.g., "Gaza", "Ukraine", "United States")
+  * Strategic action or purpose (e.g., "Ceasefire Implementation", "Military Operations")
+- BAD: "Economic & Market Reactions" (too generic)
+- GOOD: "Gaza Economic Impact: Oil and Stock Market Reactions to Israel-Hamas Ceasefire"
+- BAD: "Government Shutdown Strategy"
+- GOOD: "Trump Administration Government Shutdown to Advance Policy Objectives"
+
+Respond in JSON format:
+{{
+  "should_split": true/false,
+  "rationale": "brief explanation",
+  "narratives": [
+    {{
+      "narrative_name": "Specific, descriptive narrative title with actors and theater",
+      "strategic_purpose": "One-sentence strategic purpose",
+      "key_actors": ["Actor1", "Actor2", ...],
+      "title_ids": ["uuid1", "uuid2", ...]
+    }},
+    ...
+  ]
+}}
+
+For key_actors:
+- Extract the primary actors/entities relevant to THIS specific narrative
+- Include countries, organizations, leaders, groups
+- Only include actors that are central to this narrative's headlines
+- Parent EF may have been over-merged, so don't include irrelevant actors
+
+If should_split is false, narratives can be empty array."""
+
+EF_SPLIT_USER_TEMPLATE = """Event Family: {ef_title}
+Strategic Purpose: {strategic_purpose}
+
+Headlines ({title_count} total):
+{title_list}
+
+Analyze these headlines. Do they describe ONE cohesive narrative or MULTIPLE distinct narratives?
+
+JSON Response:"""
 
 
 # -----------------------------------------------------------------------------
@@ -567,6 +826,129 @@ def extract_magnitudes_from_titles(
             unique_magnitudes.append(mag)
 
     return unique_magnitudes[:3]  # Limit to 3 most relevant
+
+
+# ============================================================================
+# SECTION 2: PROMPT HELPER FUNCTIONS
+# Functions to build prompts from templates
+# ============================================================================
+
+
+def build_aat_extraction_prompt(title_text: str) -> tuple[str, str]:
+    """Build AAT extraction prompt for a title"""
+    system = AAT_EXTRACTION_SYSTEM_PROMPT
+    user = AAT_EXTRACTION_USER_TEMPLATE.format(title=title_text)
+    return system, user
+
+
+def format_titles_for_clustering(titles: list) -> str:
+    """Format titles for MAP incident clustering prompt"""
+    formatted_lines = []
+    for title in titles:
+        pubdate = title.get("pubdate_utc")
+        if pubdate:
+            if isinstance(pubdate, str):
+                date_str = pubdate.split("T")[0]
+            else:
+                # Handle datetime objects
+                date_str = pubdate.strftime("%Y-%m-%d")
+        else:
+            date_str = "unknown"
+        formatted_lines.append(f"{title['id']} | {title['title']} | {date_str}")
+    return "\n".join(formatted_lines)
+
+
+def format_titles_for_incident_analysis(titles: list) -> str:
+    """Format titles for REDUCE incident analysis prompt"""
+    formatted_lines = []
+    for title in titles:
+        pubdate = title.get("pubdate_utc")
+        if pubdate:
+            if isinstance(pubdate, str):
+                date_str = pubdate.split("T")[0]
+            else:
+                # Handle datetime objects
+                date_str = pubdate.strftime("%Y-%m-%d")
+        else:
+            date_str = "unknown"
+        formatted_lines.append(f"{title['id']} | {title['title']} | {date_str}")
+    return "\n".join(formatted_lines)
+
+
+def build_incident_clustering_prompt(titles: list) -> tuple[str, str]:
+    """Build complete MAP incident clustering prompt"""
+    system = INCIDENT_CLUSTERING_SYSTEM_PROMPT
+    user = INCIDENT_CLUSTERING_USER_TEMPLATE.format(
+        titles=format_titles_for_clustering(titles),
+    )
+    return system, user
+
+
+def build_incident_analysis_prompt(
+    incident_name: str, rationale: str, titles: list
+) -> tuple[str, str]:
+    """Build complete REDUCE incident analysis prompt"""
+    system = INCIDENT_ANALYSIS_SYSTEM_PROMPT
+    user = INCIDENT_ANALYSIS_USER_TEMPLATE.format(
+        incident_name=incident_name,
+        rationale=rationale,
+        event_types=EVENT_TYPES,
+        titles=format_titles_for_incident_analysis(titles),
+    )
+    return system, user
+
+
+def build_seed_validation_prompt(title_text: str, brief_theme: str) -> tuple[str, str]:
+    """Build seed validation micro-prompt"""
+    system = SEED_VALIDATION_SYSTEM_PROMPT
+    user = SEED_VALIDATION_USER_TEMPLATE.format(
+        title_text=title_text, brief_theme=brief_theme
+    )
+    return system, user
+
+
+def build_thematic_validation_prompt(
+    title_text: str, strategic_purpose: str
+) -> tuple[str, str]:
+    """Build thematic validation micro-prompt"""
+    system = THEMATIC_VALIDATION_SYSTEM_PROMPT
+    user = THEMATIC_VALIDATION_USER_TEMPLATE.format(
+        title_text=title_text, strategic_purpose=strategic_purpose
+    )
+    return system, user
+
+
+def build_ef_merge_prompt(
+    ef1_strategic_purpose: str, ef2_strategic_purpose: str
+) -> tuple[str, str]:
+    """Build EF merge micro-prompt"""
+    system = EF_MERGE_SYSTEM_PROMPT
+    user = EF_MERGE_USER_TEMPLATE.format(
+        ef1_strategic_purpose=ef1_strategic_purpose,
+        ef2_strategic_purpose=ef2_strategic_purpose,
+    )
+    return system, user
+
+
+def build_ef_split_prompt(
+    ef_title: str, strategic_purpose: str, title_list: str, title_count: int
+) -> tuple[str, str]:
+    """Build EF split micro-prompt"""
+    system = EF_SPLIT_SYSTEM_PROMPT
+    user = EF_SPLIT_USER_TEMPLATE.format(
+        ef_title=ef_title,
+        strategic_purpose=strategic_purpose,
+        title_list=title_list,
+        title_count=title_count,
+    )
+    return system, user
+
+
+def build_classification_prompt(titles: list) -> tuple[str, str]:
+    """Legacy function - kept for backward compatibility"""
+    system = "Classify titles into theater and event type."
+    user = "Classify these titles:\n" + format_titles_for_clustering(titles)
+    return system, user
 
 
 # ============================================================================

@@ -13,7 +13,6 @@ from typing import Any, Dict, List
 from loguru import logger
 from sqlalchemy import text
 
-from apps.filter.p2_prompts import build_aat_extraction_prompt
 from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
 from apps.filter.title_processor_helpers import (update_processing_stats,
@@ -22,7 +21,7 @@ from apps.filter.vocab_loader_db import (load_actor_aliases,
                                          load_go_people_aliases)
 from core.config import get_config
 from core.database import get_db_session
-from core.llm_client import LLMClient
+from core.llm_client import LLMClient, build_aat_extraction_prompt
 from core.neo4j_sync import get_neo4j_sync
 
 

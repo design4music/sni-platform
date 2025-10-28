@@ -9,10 +9,9 @@ from typing import Dict, List
 from loguru import logger
 
 from apps.generate.mapreduce_models import IncidentAnalysis, IncidentCluster
-from apps.generate.mapreduce_prompts import build_incident_analysis_prompt
 from apps.generate.models import EventFamily
 from core.config import SNIConfig
-from core.llm_client import get_llm_client
+from core.llm_client import build_incident_analysis_prompt, get_llm_client
 
 
 class ReduceAssembler:

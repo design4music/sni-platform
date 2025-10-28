@@ -124,17 +124,11 @@ class SeedValidator:
         Returns:
             True if title fits theme, False otherwise
         """
-        system_prompt = """You are a strategic analyst. Based on its content, determine if a headline belongs to an ongoing story theme.
+        from core.llm_client import build_seed_validation_prompt
 
-Answer with ONLY "YES" or "NO" - no explanation needed."""
-
-        user_prompt = f"""The emerging theme appears to be about [{brief_theme}].
-
-Does this headline belong to the same ongoing story as this theme?
-
-Headline: {title_text}
-
-Answer: """
+        system_prompt, user_prompt = build_seed_validation_prompt(
+            title_text, brief_theme
+        )
 
         try:
             response = self.llm_client._call_llm_sync(
@@ -179,9 +173,6 @@ def get_seed_validator() -> SeedValidator:
 
 # CLI interface for testing
 if __name__ == "__main__":
-    import sys
-    from pathlib import Path
-
     # Test with sample cluster
     sample_cluster = [
         {
