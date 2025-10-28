@@ -141,7 +141,7 @@ async def run_enhanced_gate_processing_batch(
         semaphore = asyncio.Semaphore(concurrency)
 
         async def process_single_title(row):
-            """Process single title with parallel LLM calls"""
+            """Process single title with conditional AAT extraction"""
             async with semaphore:
                 try:
                     title_data = {
@@ -151,15 +151,24 @@ async def run_enhanced_gate_processing_batch(
                         "entities": row.entities,
                     }
 
+                    # Step 1: Entity extraction (determines strategic status)
                     entities = await entity_service.extract_entities_for_title(
                         title_data
                     )
                     is_strategic = entities["is_strategic"]
 
+                    # Step 2: AAT extraction ONLY if strategic
+                    aat_triple = None
+                    if is_strategic:
+                        aat_triple = await entity_service.extract_aat_triple(
+                            title_data["title_display"]
+                        )
+
                     return {
                         "title_id": title_data["id"],
                         "is_strategic": is_strategic,
                         "entities": entities,
+                        "aat_triple": aat_triple,
                         "success": True,
                     }
                 except Exception as e:
@@ -183,12 +192,13 @@ async def run_enhanced_gate_processing_batch(
                             stats["errors"] += 1
                             continue
 
-                        # Use shared helper for DB update
+                        # Use shared helper for DB update (with optional AAT triple)
                         update_title_entities(
                             session,
                             result["title_id"],
                             result["entities"],
                             result["is_strategic"],
+                            result.get("aat_triple"),
                         )
 
                         # Use shared helper for stats tracking
@@ -198,18 +208,19 @@ async def run_enhanced_gate_processing_batch(
 
                     session.commit()
 
-                # Sync batch to Neo4j
+                # Sync batch to Neo4j in parallel
                 neo4j_sync = get_neo4j_sync()
+                neo_tasks = []
                 for i, (row, result) in enumerate(zip(mini_batch, results)):
                     if isinstance(result, Exception) or not result.get("success"):
                         continue
-                    try:
-                        # Convert actor strings to entity format
-                        entity_list = [
-                            {"text": actor, "type": "ACTOR"}
-                            for actor in result["entities"].get("actors", [])
-                        ]
-                        await neo4j_sync.sync_title(
+                    # Convert actor strings to entity format
+                    entity_list = [
+                        {"text": actor, "type": "ACTOR"}
+                        for actor in result["entities"].get("actors", [])
+                    ]
+                    neo_tasks.append(
+                        neo4j_sync.sync_title(
                             {
                                 "id": result["title_id"],
                                 "title_display": row.title_display,
@@ -219,10 +230,16 @@ async def run_enhanced_gate_processing_batch(
                                 "entities": entity_list,
                             }
                         )
-                    except Exception as e:
-                        logger.warning(
-                            f"Neo4j sync failed for {result['title_id']}: {e}"
-                        )
+                    )
+
+                # Execute all Neo4j syncs in parallel
+                if neo_tasks:
+                    neo_results = await asyncio.gather(
+                        *neo_tasks, return_exceptions=True
+                    )
+                    for i, neo_result in enumerate(neo_results):
+                        if isinstance(neo_result, Exception):
+                            logger.warning(f"Neo4j sync failed: {neo_result}")
             else:
                 # Dry run - just update stats
                 for result in results:
@@ -348,18 +365,27 @@ async def run_enhanced_gate_processing(
                     "entities": row.entities,
                 }
 
-                # Extract entities (this also determines strategic status)
+                # Step 1: Extract entities (determines strategic status)
                 entities = await entity_service.extract_entities_for_title(title_data)
-
-                # Strategic gate decision based on entities
                 is_strategic = entities["is_strategic"]
 
+                # Step 2: Extract AAT triple ONLY if strategic
+                aat_triple = None
+                if is_strategic:
+                    aat_triple = await entity_service.extract_aat_triple(
+                        title_data["title_display"]
+                    )
+
                 if not dry_run:
-                    # Update both gate_keep and entities in one query
+                    # Update gate_keep, entities, and AAT triple in one query
                     with get_db_session() as session:
-                        # Use shared helper for DB update
+                        # Use shared helper for DB update (with optional AAT triple)
                         update_title_entities(
-                            session, title_data["id"], entities, is_strategic
+                            session,
+                            title_data["id"],
+                            entities,
+                            is_strategic,
+                            aat_triple,
                         )
                         session.commit()
 

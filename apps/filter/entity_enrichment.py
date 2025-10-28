@@ -13,12 +13,14 @@ from typing import Any, Dict, List
 from loguru import logger
 from sqlalchemy import text
 
+from apps.filter.p2_prompts import build_aat_extraction_prompt
 from apps.filter.taxonomy_extractor import \
     create_multi_vocab_taxonomy_extractor
 from apps.filter.title_processor_helpers import (update_processing_stats,
                                                  update_title_entities)
 from apps.filter.vocab_loader_db import (load_actor_aliases,
                                          load_go_people_aliases)
+from core.config import get_config
 from core.database import get_db_session
 from core.llm_client import LLMClient
 from core.neo4j_sync import get_neo4j_sync
@@ -40,6 +42,7 @@ class EntityEnrichmentService:
         self.taxonomy_extractor = create_multi_vocab_taxonomy_extractor()
         self.llm_client = LLMClient()
         self.neo4j_sync = get_neo4j_sync()
+        self.config = get_config()
 
         # Load entity vocabularies for matching LLM-extracted entities
         self._entity_vocab = None
@@ -132,6 +135,54 @@ class EntityEnrichmentService:
         logger.debug(log_msg)
 
         return {"actors": all_entities, "is_strategic": is_strategic}
+
+    async def extract_aat_triple(self, title_text: str) -> Dict[str, str]:
+        """
+        Extract Actor-Action-Target triple from title.
+
+        This extracts the core semantic structure of a title for graph-pattern clustering.
+        Only called for strategic titles (gate_keep=true) to optimize performance.
+
+        Args:
+            title_text: Title text to analyze
+
+        Returns:
+            Dict with {"actor": str|None, "action": str|None, "target": str|None}
+            All fields are None if extraction fails or no clear action pattern
+        """
+        if not self.config.phase_2_aat_enabled:
+            return {"actor": None, "action": None, "target": None}
+
+        system_prompt, user_prompt = build_aat_extraction_prompt(title_text)
+
+        try:
+            response = await self.llm_client._call_llm(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                max_tokens=self.config.phase_2_aat_max_tokens,
+                temperature=self.config.phase_2_aat_temperature,
+            )
+
+            answer = response.strip()
+
+            if "NO_CLEAR_ACTION" in answer.upper():
+                return {"actor": None, "action": None, "target": None}
+
+            # Parse ACTOR|ACTION|TARGET
+            parts = answer.split("|")
+            if len(parts) == 3:
+                return {
+                    "actor": parts[0].strip() or None,
+                    "action": parts[1].strip().lower() or None,
+                    "target": parts[2].strip() or None,
+                }
+            else:
+                logger.warning(f"Invalid AAT format: {answer}")
+                return {"actor": None, "action": None, "target": None}
+
+        except Exception as e:
+            logger.error(f"AAT extraction failed for '{title_text[:50]}': {e}")
+            return {"actor": None, "action": None, "target": None}
 
     async def _llm_strategic_review(self, title_text: str) -> Dict[str, Any]:
         """

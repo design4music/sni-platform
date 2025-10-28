@@ -282,11 +282,22 @@ class SNIConfig(BaseSettings):
 
     # Concurrency Settings
     phase_2_concurrency: int = Field(
-        default=10, env="PHASE_2_CONCURRENCY"
-    )  # Parallel LLM calls for P2 filtering (5-10 recommended)
+        default=50, env="PHASE_2_CONCURRENCY"
+    )  # Parallel LLM calls for P2 filtering (DeepSeek has no rate limits)
     phase_2_mini_batch_size: int = Field(
         default=100, env="PHASE_2_MINI_BATCH_SIZE"
     )  # Mini-batch size for parallel processing (memory management)
+
+    # Phase 2: AAT (Actor-Action-Target) Triple Extraction
+    phase_2_aat_enabled: bool = Field(
+        default=True, env="PHASE_2_AAT_ENABLED"
+    )  # Enable AAT extraction for strategic titles
+    phase_2_aat_max_tokens: int = Field(
+        default=30, env="PHASE_2_AAT_MAX_TOKENS"
+    )  # Max tokens for AAT extraction
+    phase_2_aat_temperature: float = Field(
+        default=0.0, env="PHASE_2_AAT_TEMPERATURE"
+    )  # Deterministic extraction
     phase_4_concurrency: int = Field(
         default=4, env="PHASE_4_CONCURRENCY"
     )  # Parallel enrichment processing

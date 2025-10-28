@@ -12,38 +12,43 @@ from sqlalchemy import text
 
 
 def update_title_entities(
-    session, title_id: str, entities: Dict[str, Any], is_strategic: bool
+    session,
+    title_id: str,
+    entities: Dict[str, Any],
+    is_strategic: bool,
+    action_triple: Dict[str, str] = None,
 ) -> None:
     """
-    Update title with extracted entities and strategic gate decision
+    Update title with extracted entities, strategic gate decision, and AAT triple
 
     Args:
         session: SQLAlchemy session
         title_id: Title UUID
         entities: Extracted entities dict with "actors" key
         is_strategic: Strategic gate decision
+        action_triple: Optional AAT triple dict with "actor", "action", "target"
 
     This is the single source of truth for title entity updates
-    Stores just the actors array (gate_keep column tracks strategic status)
+    Stores actors array + optional AAT triple (gate_keep column tracks strategic status)
     """
     # Store just the actors array (minimal format)
     actors_array = entities.get("actors", [])
 
-    session.execute(
-        text(
-            """
-            UPDATE titles
-            SET gate_keep = :gate_keep,
-                entities = :entities
-            WHERE id = :title_id
-            """
-        ),
-        {
-            "gate_keep": is_strategic,
-            "entities": json.dumps(actors_array),
-            "title_id": title_id,
-        },
-    )
+    query = """
+        UPDATE titles
+        SET gate_keep = :gate_keep,
+            entities = :entities,
+            action_triple = :action_triple
+        WHERE id = :title_id
+        """
+    params = {
+        "gate_keep": is_strategic,
+        "entities": json.dumps(actors_array),
+        "action_triple": json.dumps(action_triple) if action_triple else None,
+        "title_id": title_id,
+    }
+
+    session.execute(text(query), params)
 
 
 def update_processing_stats(
