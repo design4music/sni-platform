@@ -31,7 +31,7 @@ class Gen1Database:
     ) -> List[Dict[str, Any]]:
         """
         Retrieve ALL unassigned strategic titles for direct EF processing (Phase 2)
-        Simplified approach: process all titles where event_family_id IS NULL
+        Simplified approach: process all titles where event_id IS NULL
 
         Args:
             limit: Maximum number of titles to return (None for all titles)
@@ -57,7 +57,7 @@ class Gen1Database:
                     created_at
                 FROM titles
                 WHERE gate_keep = true
-                AND event_family_id IS NULL
+                AND event_id IS NULL
                 """
 
                 # Add ordering
@@ -137,16 +137,16 @@ class Gen1Database:
 
                 update_query = f"""
                 UPDATE titles
-                SET event_family_id = :event_family_id,
+                SET event_id = :event_id,
                     processing_status = 'assigned'
                 WHERE id = ANY({uuid_list})
                 AND gate_keep = true
-                AND event_family_id IS NULL
+                AND event_id IS NULL
                 """
 
                 # Build parameters
                 params = {
-                    "event_family_id": event_family_id,
+                    "event_id": event_family_id,
                 }
 
                 result = session.execute(text(update_query), params)
@@ -175,9 +175,9 @@ class Gen1Database:
         """
         try:
             with get_db_session() as session:
-                # Insert into event_families table (Phase 2: Updated schema with ef_key system)
+                # Insert into events table (Phase 2: Updated schema with ef_key system)
                 insert_query = """
-                INSERT INTO event_families (
+                INSERT INTO events (
                     id, title, summary, strategic_purpose, key_actors, event_type, primary_theater,
                     ef_key, status, merged_into, merge_rationale, parent_ef_id,
                     source_title_ids, coherence_reason, created_at, updated_at,
@@ -248,7 +248,7 @@ class Gen1Database:
                 # Exclude siblings (same parent_ef_id) - they should not merge
                 existing_query = """
                 SELECT id, title, source_title_ids, key_actors, parent_ef_id
-                FROM event_families
+                FROM events
                 WHERE ef_key = :ef_key
                 AND status IN ('seed', 'active')
                 AND (parent_ef_id IS NULL OR parent_ef_id != :parent_ef_id OR :parent_ef_id IS NULL)
@@ -274,7 +274,7 @@ class Gen1Database:
 
                     # Update existing EF with merged titles and extended time range
                     update_query = """
-                    UPDATE event_families
+                    UPDATE events
                     SET source_title_ids = :merged_title_ids,
                         updated_at = NOW(),
                         processing_notes = CONCAT(COALESCE(processing_notes, ''), '; Merged ef_key: ', :new_ef_title)
@@ -323,11 +323,11 @@ class Gen1Database:
                 # Insert into framed_narratives table
                 insert_query = """
                 INSERT INTO framed_narratives (
-                    id, event_family_id, frame_type, frame_description, stance_summary,
+                    id, event_id, frame_type, frame_description, stance_summary,
                     supporting_headlines, supporting_title_ids, key_language,
                     prevalence_score, evidence_quality, created_at, updated_at
                 ) VALUES (
-                    :id, :event_family_id, :frame_type, :frame_description, :stance_summary,
+                    :id, :event_id, :frame_type, :frame_description, :stance_summary,
                     :supporting_headlines, :supporting_title_ids, :key_language,
                     :prevalence_score, :evidence_quality, :created_at, :updated_at
                 )
@@ -337,7 +337,7 @@ class Gen1Database:
                     text(insert_query),
                     {
                         "id": framed_narrative.id,
-                        "event_family_id": framed_narrative.event_family_id,
+                        "event_id": framed_narrative.event_id,
                         "frame_type": framed_narrative.frame_type,
                         "frame_description": framed_narrative.frame_description,
                         "stance_summary": framed_narrative.stance_summary,
@@ -379,7 +379,7 @@ class Gen1Database:
         """
         try:
             with get_db_session() as session:
-                query = "SELECT * FROM event_families"
+                query = "SELECT * FROM events"
                 params = []
 
                 # Add time filter if specified
@@ -434,8 +434,8 @@ class Gen1Database:
         try:
             with get_db_session() as session:
                 query = """
-                SELECT * FROM framed_narratives 
-                WHERE event_family_id = %s 
+                SELECT * FROM framed_narratives
+                WHERE event_id = %s
                 ORDER BY prevalence_score DESC
                 """
 
@@ -445,7 +445,7 @@ class Gen1Database:
                 for row in results:
                     fn = FramedNarrative(
                         id=str(row.id),
-                        event_family_id=str(row.event_family_id),
+                        event_id=str(row.event_id),
                         frame_type=row.frame_type,
                         frame_description=row.frame_description,
                         stance_summary=row.stance_summary,
@@ -498,9 +498,9 @@ class Gen1Database:
             with get_db_session() as session:
                 stats = {}
 
-                # Count Event Families
+                # Count Events
                 ef_count = session.execute(
-                    text("SELECT COUNT(*) FROM event_families")
+                    text("SELECT COUNT(*) FROM events")
                 ).scalar()
                 stats["event_families_total"] = ef_count
 
@@ -513,7 +513,7 @@ class Gen1Database:
                 # Recent processing (last 24 hours)
                 ef_recent = session.execute(
                     text(
-                        "SELECT COUNT(*) FROM event_families WHERE created_at >= NOW() - INTERVAL '24 hours'"
+                        "SELECT COUNT(*) FROM events WHERE created_at >= NOW() - INTERVAL '24 hours'"
                     )
                 ).scalar()
                 stats["event_families_24h"] = ef_recent
@@ -525,9 +525,9 @@ class Gen1Database:
                 ).scalar()
                 stats["framed_narratives_24h"] = fn_recent
 
-                # Active event families count
+                # Active events count
                 active_count = session.execute(
-                    text("SELECT COUNT(*) FROM event_families WHERE status = 'active'")
+                    text("SELECT COUNT(*) FROM events WHERE status = 'active'")
                 ).scalar()
                 stats["active_event_families"] = int(active_count or 0)
 

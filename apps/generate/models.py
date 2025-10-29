@@ -13,23 +13,22 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
-class EventFamily(BaseModel):
+class Event(BaseModel):
     """
-    Event Family (EF): Long-lived strategic saga spanning multiple incidents
+    Event: Strategic event as primary entity
 
-    An Event Family represents an ongoing strategic saga that absorbs multiple related incidents
-    with overlapping actors in the same primary_theater + event_type.
-    Sagas naturally span weeks/months rather than single events.
+    Represents an individual strategic event. Events can later be assembled into families
+    rather than starting with families as the primary unit.
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    title: str = Field(description="Neutral, descriptive title for the strategic saga")
+    title: str = Field(description="Neutral, descriptive title for the strategic event")
     summary: str = Field(
-        description="Neutral, factual summary of the ongoing situation"
+        description="Neutral, factual summary of the event"
     )
     strategic_purpose: Optional[str] = Field(
         default=None,
-        description="One-sentence core narrative that serves as semantic anchor for thematic validation (Phase 1 EF v2)",
+        description="One-sentence core narrative that serves as semantic anchor for thematic validation",
     )
     key_actors: List[str] = Field(description="Primary actors/entities involved")
     event_type: str = Field(
@@ -40,39 +39,37 @@ class EventFamily(BaseModel):
         description="Theater code from standardized list (UKRAINE, GAZA, EUROPE_SECURITY, etc.)",
     )
 
-    # EF Key system for continuous merging
+    # Event Key system for continuous merging
     ef_key: Optional[str] = Field(
         default=None,
-        description="Deterministic key for Event Family merging (16-char hash)",
+        description="Deterministic key for event merging (16-char hash)",
     )
     status: str = Field(
-        default="seed", description="Event Family status (seed/active/merged)"
+        default="seed", description="Event status (seed/active/merged)"
     )
     merged_into: Optional[str] = Field(
-        default=None, description="UUID of Event Family this was merged into"
+        default=None, description="UUID of event this was merged into"
     )
     merge_rationale: Optional[str] = Field(
-        default=None, description="Explanation of why this EF was merged"
+        default=None, description="Explanation of why this event was merged"
     )
     parent_ef_id: Optional[str] = Field(
         default=None,
-        description="UUID of parent EF if this was created by P3.5d splitting. Siblings share same parent_ef_id and should not be merged together.",
+        description="UUID of parent event if this was created by splitting. Siblings share same parent_ef_id and should not be merged together.",
     )
-
-    # Time boundaries - removed event_start/event_end (unused)
 
     # Source metadata
     source_title_ids: List[str] = Field(
-        description="Title IDs that are part of this event family"
+        description="Title IDs that are part of this event"
     )
 
     # Quality indicators
     coherence_reason: str = Field(description="Why these titles form a coherent event")
 
-    # Events timeline for EF evolution
+    # Events timeline for event evolution
     events: List[Dict[str, Any]] = Field(
         default_factory=list,
-        description="Timeline of discrete events within this EF. Each event: {summary, date, source_title_ids, event_id}",
+        description="Timeline of discrete sub-events within this event. Each: {summary, date, source_title_ids, event_id}",
     )
 
     # Processing metadata
@@ -81,16 +78,20 @@ class EventFamily(BaseModel):
     processing_notes: Optional[str] = Field(default=None)
 
 
+# Backward compatibility alias
+EventFamily = Event
+
+
 class FramedNarrative(BaseModel):
     """
-    Framed Narrative (FN): Stanceful rendering of an Event Family
+    Framed Narrative (FN): Stanceful rendering of an Event
 
     Shows how outlets frame/position the same event. Must cite headline evidence
     and state evaluative/causal framing clearly.
     """
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    event_family_id: str = Field(description="Reference to parent Event Family")
+    event_id: str = Field(description="Reference to parent Event")
 
     # Core narrative content
     frame_type: str = Field(
@@ -135,7 +136,7 @@ class ProcessingResult:
     total_titles_processed: int
 
     # Output artifacts
-    event_families: List[EventFamily]
+    events: List[Event]
     framed_narratives: List[FramedNarrative]
 
     # Quality metrics
@@ -151,29 +152,29 @@ class ProcessingResult:
         """Human-readable summary of processing results"""
         return (
             f"Processed {self.total_titles_processed} titles -> "
-            f"{len(self.event_families)} Event Families, "
+            f"{len(self.events)} Events, "
             f"{len(self.framed_narratives)} Framed Narratives"
         )
 
 
-class LLMEventFamilyRequest(BaseModel):
+class LLMEventRequest(BaseModel):
     """
-    Request structure for LLM Event Family assembly
+    Request structure for LLM Event assembly
     """
 
     # Direct title processing
     title_context: Optional[List[Dict[str, Any]]] = None
 
     processing_instructions: str
-    max_event_families: int = 10
+    max_events: int = 10
 
 
-class LLMEventFamilyResponse(BaseModel):
+class LLMEventResponse(BaseModel):
     """
-    Response structure from LLM Event Family assembly
+    Response structure from LLM Event assembly
     """
 
-    event_families: List[Dict[str, Any]]
+    events: List[Dict[str, Any]]
     processing_reasoning: str
     confidence: float
     warnings: List[str] = Field(default_factory=list)
@@ -184,7 +185,7 @@ class LLMFramedNarrativeRequest(BaseModel):
     Request structure for LLM Framed Narrative generation
     """
 
-    event_family: EventFamily
+    event: Event
     titles_context: List[Dict[str, Any]]
     framing_instructions: str
     max_narratives: int = 3

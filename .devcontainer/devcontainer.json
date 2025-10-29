@@ -3,6 +3,9 @@
   "dockerComposeFile": "../archive/etl_pipeline/docker-compose.yml",
   "service": "api",
   "workspaceFolder": "/app",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind",
+  "overrideCommand": false,
+
   "customizations": {
     "vscode": {
       "extensions": [
@@ -28,5 +31,5 @@
     }
   },
   "forwardPorts": [8000, 5432, 7474, 7687, 6379],
-  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt"
+  "postCreateCommand": "pip install --no-cache-dir -r /app/requirements.txt"
 }
