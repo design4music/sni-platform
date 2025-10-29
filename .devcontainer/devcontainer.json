@@ -1,0 +1,32 @@
+{
+  "name": "SNI-v2 Development",
+  "dockerComposeFile": "../archive/etl_pipeline/docker-compose.yml",
+  "service": "api",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "github.vscode-pull-request-github",
+        "charliermarsh.ruff",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "neo4j.neo4j-vscode"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.ruffEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        }
+      }
+    }
+  },
+  "forwardPorts": [8000, 5432, 7474, 7687, 6379],
+  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt"
+}
