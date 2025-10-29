@@ -18,8 +18,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 from loguru import logger
 
-from apps.generate.models import (LLMEventFamilyRequest,
-                                  LLMEventFamilyResponse,
+from apps.generate.models import (LLMEventRequest,
+                                  LLMEventResponse,
                                   LLMFramedNarrativeRequest,
                                   LLMFramedNarrativeResponse)
 from core.config import get_config
@@ -1064,8 +1064,8 @@ class LLMClient:
     # -------------------------------------------------------------------------
 
     async def assemble_event_families(
-        self, request: LLMEventFamilyRequest
-    ) -> LLMEventFamilyResponse:
+        self, request: LLMEventRequest
+    ) -> LLMEventResponse:
         """
         Assemble Event Families directly from titles.
 
@@ -1094,7 +1094,7 @@ class LLMClient:
             logger.error(f"Event Family assembly failed: {e}")
             raise
 
-    def _build_event_family_prompt(self, request: LLMEventFamilyRequest) -> str:
+    def _build_event_family_prompt(self, request: LLMEventRequest) -> str:
         """Build comprehensive prompt for Event Family generation"""
         prompt_parts = [
             "TASK: Analyze these strategic news titles and identify coherent Event Families.",
@@ -1572,7 +1572,7 @@ class LLMClient:
 
     def _parse_event_family_response(
         self, response_text: str
-    ) -> LLMEventFamilyResponse:
+    ) -> LLMEventResponse:
         """Parse and validate Event Family response from LLM"""
         try:
             # Extract JSON from response
@@ -1582,7 +1582,7 @@ class LLMClient:
             if "event_families" not in response_data:
                 raise ValueError("Missing 'event_families' in LLM response")
 
-            return LLMEventFamilyResponse(
+            return LLMEventResponse(
                 event_families=response_data["event_families"],
                 processing_reasoning=response_data.get("processing_reasoning", ""),
                 confidence=response_data.get("confidence", 0.5),

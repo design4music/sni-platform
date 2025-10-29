@@ -1,6 +1,6 @@
 """
 EF Enrichment Processor
-Lean micro-prompt system for adding strategic context to Event Families
+Lean micro-prompt system for adding strategic context to Events
 """
 
 import asyncio
@@ -42,10 +42,10 @@ class EFEnrichmentProcessor:
 
     async def enrich_event_family(self, ef_id: str) -> Optional[EnrichmentRecord]:
         """
-        Enrich a single Event Family with lean context
+        Enrich a single Event with lean context
 
         Args:
-            ef_id: Event Family UUID
+            ef_id: Event UUID
 
         Returns:
             EnrichmentRecord with enrichment data or None if failed
@@ -55,7 +55,7 @@ class EFEnrichmentProcessor:
         try:
             logger.debug(f"ENRICH: Starting enrichment for EF {ef_id}")
 
-            # Get Event Family data
+            # Get Event data
             ef_data = await self._get_event_family_data(ef_id)
             if not ef_data:
                 logger.warning(f"ENRICH: EF {ef_id} not found")
@@ -189,7 +189,7 @@ class EFEnrichmentProcessor:
             return record
 
     async def _get_event_family_data(self, ef_id: str) -> Optional[Dict[str, Any]]:
-        """Get Event Family metadata from database"""
+        """Get Event metadata from database"""
         try:
             with get_db_session() as session:
                 result = session.execute(
@@ -197,7 +197,7 @@ class EFEnrichmentProcessor:
                         """
                         SELECT id, title, summary, event_type, primary_theater,
                                key_actors, created_at, source_title_ids
-                        FROM event_families
+                        FROM events
                         WHERE id = :ef_id
                     """
                     ),
@@ -310,7 +310,7 @@ class EFEnrichmentProcessor:
             return EFContext()
 
     async def _get_member_titles(self, ef_id: str) -> List[Dict[str, Any]]:
-        """Get member titles for the Event Family"""
+        """Get member titles for the Event"""
         try:
             with get_db_session() as session:
                 results = session.execute(
@@ -319,7 +319,7 @@ class EFEnrichmentProcessor:
                         SELECT id, title_display as text, url_gnews as url,
                                pubdate_utc, publisher_name as source
                         FROM titles
-                        WHERE event_family_id = :ef_id
+                        WHERE event_id = :ef_id
                         ORDER BY pubdate_utc DESC
                     """
                     ),
@@ -416,14 +416,14 @@ class EFEnrichmentProcessor:
 
     async def _update_ef_status(self, ef_id: str, status: str) -> None:
         """
-        Update event_families.status after enrichment
+        Update events.status after enrichment
         """
         try:
             with get_db_session() as session:
                 session.execute(
                     text(
                         """
-                        UPDATE event_families
+                        UPDATE events
                         SET status = :status,
                             updated_at = NOW()
                         WHERE id = :ef_id
@@ -446,7 +446,7 @@ class EFEnrichmentProcessor:
                     text(
                         """
                         SELECT status
-                        FROM event_families
+                        FROM events
                         WHERE id = :ef_id
                         AND status = 'active'
                         """
@@ -483,7 +483,7 @@ class EFEnrichmentProcessor:
                         """
                         SELECT ef.id, ef.title, ef.created_at,
                                (SELECT COUNT(*) FROM titles t WHERE t.event_family_id = ef.id) as title_count
-                        FROM event_families ef
+                        FROM events ef
                         WHERE ef.status = 'seed'
                         AND ef.created_at >= NOW() - INTERVAL '7 days'
                         ORDER BY ef.created_at DESC, title_count DESC
@@ -840,14 +840,14 @@ class EFEnrichmentProcessor:
         self, ef_id: str, enriched_summary: str, tags: List[str], ef_context: EFContext
     ) -> None:
         """
-        Update event_families with enriched summary, tags, and ef_context
+        Update events with enriched summary, tags, and ef_context
         """
         try:
             with get_db_session() as session:
                 session.execute(
                     text(
                         """
-                        UPDATE event_families
+                        UPDATE events
                         SET summary = :enriched_summary,
                             tags = :tags_json,
                             ef_context = :ef_context_json,

@@ -91,7 +91,7 @@ def status():
                     COUNT(*) FILTER (WHERE rai_analysis IS NOT NULL) as analyzed,
                     COUNT(*) as total
                 FROM framed_narratives fn
-                JOIN event_families ef ON fn.event_family_id = ef.id
+                JOIN events ef ON fn.event_id = ef.id
                 WHERE ef.status IN ('active', 'enriched')
             """
                 )
