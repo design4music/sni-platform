@@ -59,7 +59,7 @@ class RAIProcessor:
                     ef.status
 
                 FROM framed_narratives fn
-                JOIN event_families ef ON fn.event_family_id = ef.id
+                JOIN events ef ON fn.event_id = ef.id
                 WHERE fn.rai_analysis IS NULL
                   AND ef.status IN ('active', 'enriched')
                 ORDER BY fn.created_at DESC

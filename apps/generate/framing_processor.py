@@ -48,14 +48,14 @@ class FramingProcessor:
                 ef.summary,
                 ef.source_title_ids,
                 array_length(ef.source_title_ids, 1) as title_count
-            FROM event_families ef
+            FROM events ef
             WHERE ef.status = 'active'  -- Only enriched, high-quality EFs
               AND ef.source_title_ids IS NOT NULL
               AND array_length(ef.source_title_ids, 1) >= :min_titles
               AND NOT EXISTS (
                   SELECT 1
                   FROM framed_narratives fn
-                  WHERE fn.event_family_id = ef.id
+                  WHERE fn.event_id = ef.id
               )  -- Skip EFs that already have framing
             ORDER BY ef.created_at DESC
             LIMIT :limit

@@ -2,7 +2,7 @@
 Phase 3.5: Thematic Validation - Micro-prompt EF assignment
 
 Uses strategic_purpose as semantic anchor to validate if new titles
-belong to existing Event Families using cheap YES/NO micro-prompts.
+belong to existing Events using cheap YES/NO micro-prompts.
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -51,7 +51,7 @@ class ThematicValidator:
             SELECT id, title_display, entities, gate_keep
             FROM titles
             WHERE gate_keep = true
-            AND event_family_id IS NULL
+            AND event_id IS NULL
             """
 
             if max_titles:
@@ -144,7 +144,7 @@ class ThematicValidator:
             # Get all active/seed EFs with matching event_type
             query = """
             SELECT id, title, strategic_purpose, key_actors, primary_theater
-            FROM event_families
+            FROM events
             WHERE event_type = :event_type
             AND status IN ('seed', 'active')
             AND strategic_purpose IS NOT NULL
@@ -307,11 +307,11 @@ class ThematicValidator:
 
     def _assign_title_to_ef(self, title_id: str, ef_id: str) -> bool:
         """
-        Assign title to Event Family in database
+        Assign title to Event in database
 
         Args:
             title_id: Title UUID
-            ef_id: Event Family UUID
+            ef_id: Event UUID
 
         Returns:
             True if successful
@@ -321,10 +321,10 @@ class ThematicValidator:
                 # Update title with EF assignment
                 update_query = """
                 UPDATE titles
-                SET event_family_id = :ef_id
+                SET event_id = :ef_id
                 WHERE id = :title_id
                 AND gate_keep = true
-                AND event_family_id IS NULL
+                AND event_id IS NULL
                 """
 
                 result = session.execute(
@@ -334,7 +334,7 @@ class ThematicValidator:
                 if result.rowcount > 0:
                     # Update EF's source_title_ids
                     update_ef_query = """
-                    UPDATE event_families
+                    UPDATE events
                     SET source_title_ids = array_append(source_title_ids, :title_id::uuid),
                         updated_at = NOW()
                     WHERE id = :ef_id

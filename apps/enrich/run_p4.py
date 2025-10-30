@@ -1,6 +1,6 @@
 """
 EF Enrichment CLI
-Command-line interface for lean Event Family enrichment
+Command-line interface for lean Event enrichment
 """
 
 import asyncio
@@ -20,9 +20,7 @@ from core.checkpoint import get_checkpoint_manager  # noqa: E402
 
 def create_enrichment_cli() -> typer.Typer:
     """Create Typer CLI app for EF enrichment"""
-    app = typer.Typer(
-        help="Event Family Enrichment - Lean Strategic Context Enhancement"
-    )
+    app = typer.Typer(help="Event Enrichment - Lean Strategic Context Enhancement")
 
     @app.command()
     def enrich_queue(
@@ -159,18 +157,18 @@ def create_enrichment_cli() -> typer.Typer:
 
     @app.command()
     def enrich_single(
-        ef_id: str = typer.Argument(..., help="Event Family UUID to enrich"),
+        ef_id: str = typer.Argument(..., help="Event UUID to enrich"),
         show_payload: bool = typer.Option(
             False, "--show-payload", help="Display enrichment payload after processing"
         ),
     ):
-        """Enrich a single Event Family"""
+        """Enrich a single Event"""
 
         async def main():
             try:
                 processor = EFEnrichmentProcessor()
 
-                logger.info(f"Enriching Event Family: {ef_id}")
+                logger.info(f"Enriching Event: {ef_id}")
 
                 # Process single EF
                 result = await processor.enrich_event_family(ef_id)
@@ -258,8 +256,8 @@ def create_enrichment_cli() -> typer.Typer:
                             text(
                                 """
                                 SELECT title, event_type, primary_theater, created_at,
-                                       (SELECT COUNT(*) FROM titles t WHERE t.event_family_id = ef.id) as title_count
-                                FROM event_families ef
+                                       (SELECT COUNT(*) FROM titles t WHERE t.event_id = ef.id) as title_count
+                                FROM events ef
                                 WHERE id = :ef_id
                             """
                             ),
@@ -285,9 +283,9 @@ def create_enrichment_cli() -> typer.Typer:
 
     @app.command()
     def show_enrichment(
-        ef_id: str = typer.Argument(..., help="Event Family UUID"),
+        ef_id: str = typer.Argument(..., help="Event UUID"),
     ):
-        """Display existing enrichment for an Event Family"""
+        """Display existing enrichment for an Event"""
 
         async def main():
             try:

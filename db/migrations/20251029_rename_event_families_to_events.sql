@@ -40,7 +40,7 @@ DROP INDEX IF EXISTS idx_ef_key_active;
 CREATE UNIQUE INDEX idx_event_key_active ON events (ef_key) WHERE status = 'active';
 
 DROP INDEX IF EXISTS idx_event_families_confidence;
-CREATE INDEX idx_events_confidence ON events (confidence_score DESC);
+-- Note: confidence_score column was removed in previous migration, skip index
 
 DROP INDEX IF EXISTS idx_event_families_created_at;
 CREATE INDEX idx_events_created_at ON events (created_at DESC);

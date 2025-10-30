@@ -52,7 +52,7 @@ class EFSplitter:
                 ef.key_actors,
                 ef.source_title_ids,
                 ARRAY_LENGTH(ef.source_title_ids, 1) as title_count
-            FROM event_families ef
+            FROM events ef
             WHERE ef.status IN ('seed', 'active')
             AND ARRAY_LENGTH(ef.source_title_ids, 1) > :min_titles
             ORDER BY ARRAY_LENGTH(ef.source_title_ids, 1) DESC
@@ -255,7 +255,7 @@ class EFSplitter:
 
                     # Insert new EF
                     insert_query = """
-                    INSERT INTO event_families (
+                    INSERT INTO events (
                         id, title, summary, strategic_purpose, key_actors, event_type, primary_theater,
                         ef_key, status, parent_ef_id, source_title_ids, coherence_reason, processing_notes,
                         created_at, updated_at
@@ -298,7 +298,7 @@ class EFSplitter:
 
                     update_titles_query = f"""
                     UPDATE titles
-                    SET event_family_id = :new_ef_id,
+                    SET event_id = :new_ef_id,
                         processing_status = 'assigned'
                     WHERE id = ANY({title_ids_list})
                     """
@@ -317,7 +317,7 @@ class EFSplitter:
                 )
 
                 update_original_query = """
-                UPDATE event_families
+                UPDATE events
                 SET status = 'split',
                     processing_notes = CONCAT(COALESCE(processing_notes, ''), '; ', :split_note),
                     updated_at = NOW()

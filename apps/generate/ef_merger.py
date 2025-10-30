@@ -1,5 +1,5 @@
 """
-Phase 3.5c: Interpretive EF Merging - Merge semantically similar Event Families
+Phase 3.5c: Interpretive EF Merging - Merge semantically similar Events
 
 Uses LLM micro-prompts to detect if two EFs describe the same strategic narrative,
 enabling intelligent merging beyond mechanical ef_key matching.
@@ -17,7 +17,7 @@ from core.llm_client import get_llm_client
 
 class EFMerger:
     """
-    Phase 3.5c: Interpretive merging of semantically similar Event Families
+    Phase 3.5c: Interpretive merging of semantically similar Events
 
     Scans EFs with similar theater/event_type and uses micro-prompts to determine
     if they represent facets of the same broader strategic narrative.
@@ -47,7 +47,7 @@ class EFMerger:
             SELECT
                 id, title, strategic_purpose, key_actors,
                 event_type, primary_theater, source_title_ids, parent_ef_id
-            FROM event_families
+            FROM events
             WHERE status IN ('seed', 'active')
             AND strategic_purpose IS NOT NULL
             ORDER BY created_at DESC
@@ -162,7 +162,7 @@ class EFMerger:
 
     def merge_event_families(self, ef1_id: str, ef2_id: str, reason: str) -> bool:
         """
-        Merge two Event Families in database
+        Merge two Events in database
 
         Merges ef2 into ef1 (ef1 becomes the primary, ef2 marked as merged)
 
@@ -178,12 +178,12 @@ class EFMerger:
             with get_db_session() as session:
                 # Get both EFs
                 ef1 = session.execute(
-                    text("SELECT * FROM event_families WHERE id = :ef_id"),
+                    text("SELECT * FROM events WHERE id = :ef_id"),
                     {"ef_id": ef1_id},
                 ).fetchone()
 
                 ef2 = session.execute(
-                    text("SELECT * FROM event_families WHERE id = :ef_id"),
+                    text("SELECT * FROM events WHERE id = :ef_id"),
                     {"ef_id": ef2_id},
                 ).fetchone()
 
@@ -198,7 +198,7 @@ class EFMerger:
 
                 # Update ef1 with merged data
                 update_query = """
-                UPDATE event_families
+                UPDATE events
                 SET
                     source_title_ids = :merged_titles,
                     updated_at = NOW(),
@@ -224,7 +224,7 @@ class EFMerger:
 
                 # Mark ef2 as merged
                 merge_query = """
-                UPDATE event_families
+                UPDATE events
                 SET
                     status = 'merged',
                     merged_into = :ef1_id,
@@ -245,8 +245,8 @@ class EFMerger:
                 # Update all titles from ef2 to point to ef1
                 titles_update = """
                 UPDATE titles
-                SET event_family_id = :ef1_id
-                WHERE event_family_id = :ef2_id
+                SET event_id = :ef1_id
+                WHERE event_id = :ef2_id
                 """
 
                 result = session.execute(
