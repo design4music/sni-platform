@@ -164,19 +164,26 @@ class EntityEnrichmentService:
 
             answer = response.strip()
 
-            if "NO_CLEAR_ACTION" in answer.upper():
-                return {"actor": None, "action": None, "target": None}
-
             # Parse ACTOR|ACTION|TARGET
             parts = answer.split("|")
             if len(parts) == 3:
+                # Convert "null" string to None, or empty strings to None
+                actor = parts[0].strip()
+                actor = None if actor.lower() == "null" or not actor else actor
+
+                action = parts[1].strip().lower()
+                action = None if action == "null" or not action else action
+
+                target = parts[2].strip()
+                target = None if target.lower() == "null" or not target else target
+
                 return {
-                    "actor": parts[0].strip() or None,
-                    "action": parts[1].strip().lower() or None,
-                    "target": parts[2].strip() or None,
+                    "actor": actor,
+                    "action": action,
+                    "target": target,
                 }
             else:
-                logger.warning(f"Invalid AAT format: {answer}")
+                logger.warning(f"Invalid AAT format (expected 3 parts): {answer}")
                 return {"actor": None, "action": None, "target": None}
 
         except Exception as e:
