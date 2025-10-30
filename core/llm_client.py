@@ -18,8 +18,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 from loguru import logger
 
-from apps.generate.models import (LLMEventFamilyRequest,
-                                  LLMEventFamilyResponse,
+from apps.generate.models import (LLMEventRequest, LLMEventResponse,
                                   LLMFramedNarrativeRequest,
                                   LLMFramedNarrativeResponse)
 from core.config import get_config
@@ -86,83 +85,54 @@ Analyze and respond in JSON format."""
 AAT_EXTRACTION_SYSTEM_PROMPT = """Extract the core action relationship from news titles.
 Format: ACTOR|ACTION|TARGET
 
-ACTOR = main entity performing the action
-ACTION = main verb (normalize to simple form: "sanctions" not "imposed sanctions")
-TARGET = entity receiving the action
+ACTOR = main entity performing the action (person, organization, country, or entity group)
+ACTION = main verb or action phrase (normalize to simple form: "launches", "calls for", "warns")
+TARGET = entity receiving/affected by the action (can be an object, person, organization, or abstract concept)
+
+Rules:
+- Extract whatever is identifiable - partial triples are OK
+- Use "null" for any component that's not present or unclear
+- Be flexible with ACTION - can be verbs or verb phrases ("calls for", "speaks about", "works on")
+- TARGET can be concrete (person/org) or abstract (policy, concept, vision)
+- Only use null|null|null if absolutely nothing can be extracted
 
 Examples:
 "US imposes new sanctions on Russia" -> US|sanctions|Russia
-"China warns Taiwan over independence" -> China|warns|Taiwan
-"Belgium vetoes EU aid package for Ukraine" -> Belgium|vetoes|EU
-"EU debates migration policy changes" -> NO_CLEAR_ACTION
+"Elon Musk launches Wikipedia rival" -> Elon Musk|launches|Wikipedia rival
+"China's trade bullying calls for Article 5" -> China's trade|calls for|Article 5
+"Trump projects peacemaker image" -> Trump|projects|peacemaker image
+"EU debates migration policy" -> EU|debates|migration policy
+"Stock market crashes" -> Stock market|crashes|null
+"Breaking news from Ukraine" -> null|null|Ukraine
+"Opinion: Time for change" -> null|null|null
 
-Answer with just: ACTOR|ACTION|TARGET or NO_CLEAR_ACTION"""
+Answer with just: ACTOR|ACTION|TARGET (using "null" for missing parts)"""
 
 AAT_EXTRACTION_USER_TEMPLATE = 'Title: "{title}"\nAnswer: '
 
 
 # -----------------------------------------------------------------------------
-# Phase 3: Event Family Generation
+# Phase 3: Event Generation
 # -----------------------------------------------------------------------------
 
 EVENT_FAMILY_SYSTEM_PROMPT = """
 **Role**
-You are an expert news analyst. From strategic news titles, assemble long-lived **Event Families (Sagas)** by grouping incidents that share (key_actors + geography + event_type). Do not create families for single incidents; absorb repeated incidents into one family.
+You are an expert news analyst. From multilingual strategic headlines, identify and describe **individual strategic Events** — discrete, time-bounded occurrences of geopolitical significance.
 
-**Key principles**
+**Core definition**
+An Event is a **specific action or development** involving identifiable actors, in a defined place, within a limited time window.
 
-1. **Create Sagas, not single incidents.** Think "Ukraine Conflict Saga," "Gaza Military Operations Saga," "Iran Nuclear Diplomacy Saga."
-2. **Triple key matching: actors + geography + event_type.** Events with same strategic actors, same theater, and same activity type = one Saga.
-3. **Absorb incidents into existing patterns.** If similar actors are doing similar things in the same theater, it's the same ongoing Saga.
-4. **Actor canonicalization.** Treat equivalents as one actor set (e.g., *Lavrov → Russia; Trump → United States*).
-5. **Time spans are expected.** Sagas naturally span weeks or months; temporal gaps don't break the pattern.
+**Event identification criteria**
+1. Same core **action or outcome** (e.g., airstrike, summit, sanctions announcement)
+2. Same **actors** (canonicalized countries, leaders, orgs)
+3. Same **geographic locus** (use extracted geo entities if available; prefer most specific)
+4. Same **time window** (normally within 1-3 days)
 
-**Saga Assembly Criteria (Triple Key Matching)**
+**Event scope**
+Include: military operations, diplomatic meetings, sanctions, elections, major policy decisions, tech or infrastructure incidents.  
+Exclude: sports, culture, routine business, weather, crime, celebrity, entertainment.
 
-* **ACTORS**: Same strategic actors or actor sets (canonicalized equivalents)
-* **GEOGRAPHY**: Same strategic theater (use specific theater codes)
-* **EVENT_TYPE**: Same category of strategic activity
-* **PATTERN**: Repeated or ongoing incidents, not isolated events
-
-**Anti-fragmentation Rule**: If you can group incidents by (actors + geography + event_type), you MUST create one Saga, not multiple families.
-
-**STRATEGIC FOCUS REQUIREMENT**
-
-Only create Event Families for **strategically significant** content. EXCLUDE:
-* Sports events, entertainment, cultural activities (unless directly tied to geopolitical tensions)
-* Weather, natural disasters (unless creating international policy responses)
-* Local crime, accidents, routine business news
-* Celebrity news, lifestyle content
-
-INCLUDE strategic content such as:
-* **Diplomacy & international relations** (meetings, agreements, conflicts)
-* **Military & security operations** (exercises, deployments, conflicts)
-* **Economic policy & trade** (sanctions, agreements, major economic decisions)
-* **Domestic politics** (elections, major policy changes, political crises)
-* **Technology & regulation** (major tech policy, international tech competition)
-
-**MULTILINGUAL PROCESSING**
-
-This system processes content in multiple languages including English, Spanish, French, German, Italian, Portuguese, Indonesian, and others. You MUST:
-
-1. **Cross-language consolidation**: Group titles about the same strategic event regardless of language
-   - Example: English "Putin visits China", Spanish "Putin visita China", French "Poutine visite la Chine" = same EF
-2. **Actor canonicalization across languages**: Standardize actor names to English canonical forms
-   - "Emmanuel Macron" = "Macron" = "Francia" → "France"
-   - "Xi Jinping" = "习近平" = "Cina" → "China"
-   - "Donald Trump" = "Trump" = "Estados Unidos" → "United States"
-3. **Theater/event_type consistency**: Use English taxonomy values regardless of source language
-4. **Summary language**: Always write summaries and titles in English for system consistency
-5. **Language diversity strength**: Multilingual coverage provides richer perspective on global events
-
-CRITICAL REQUIREMENT - TITLE ID USAGE:
-- Each title has an "id" field with a UUID (e.g., "094faf99-124a-47fc-b213-f743497d7f30")
-- In source_title_ids, you MUST use these exact UUID values, NOT array indices
-- DO NOT use numbers like 0, 1, 2, 3 - use the actual "id" field values
-- Example: Use ["094faf99-124a-47fc-b213-f743497d7f30", "a005e6ba-f1e2-4007-9cf7-cd9584c339e1"]
-
-**STANDARDIZED TAXONOMIES - MANDATORY COMPLIANCE**
-
+**Taxonomies**
 EVENT_TYPE must be one of these exact values:
 - Strategy/Tactics: Military strategy and tactical operations
 - Humanitarian: Humanitarian crises and aid operations
@@ -176,36 +146,25 @@ EVENT_TYPE must be one of these exact values:
 - Information/Media/Platforms: Information warfare and media operations
 - Energy/Infrastructure: Energy security and critical infrastructure
 
-GEOGRAPHY must be one of these specific theater codes (choose the most relevant):
-- UKRAINE: Ukraine Conflict Theater (Russia-Ukraine war, border incidents)
-- GAZA: Gaza/Palestine Theater (Israel-Palestine conflict zone)
-- TAIWAN_STRAIT: Taiwan Strait Theater (China-Taiwan tensions, South China Sea)
-- IRAN_NUCLEAR: Iran Nuclear Theater (Nuclear program, sanctions, IAEA)
-- EUROPE_SECURITY: European Security Theater (NATO, EU defense matters)
-- US_DOMESTIC: US Domestic Theater (US internal politics, domestic policy)
-- CHINA_TRADE: China Trade Theater (US-China economic competition)
-- MEAST_REGIONAL: Middle East Regional Theater (Syria, Iraq, Yemen, Gulf states)
-- CYBER_GLOBAL: Global Cyber Theater (State cyber operations, digital warfare)
-- CLIMATE_GLOBAL: Climate/Energy Theater (Energy security, resource conflicts)
-- AFRICA_SECURITY: Africa Security Theater (African conflicts, peacekeeping)
-- KOREA_PENINSULA: Korean Peninsula Theater (North Korea, regional tensions)
-- LATAM_REGIONAL: Latin America Regional Theater (US-Venezuela, US-Mexico border, regional conflicts)
-- ARCTIC: Arctic Theater (Arctic sovereignty, resource competition)
-- GLOBAL_SUMMIT: Global Diplomatic Theater (International summits, multilateral diplomacy)
+**Output fields (JSON)**
+- `event_title` - short clear English headline
+- `event_summary` - one-sentence factual summary
+- `key_actors` - list of canonicalized actors
+- `primary_theater` - most specific extracted geo location
+- `event_type` - from taxonomy above
+- `source_title_ids` - list of UUIDs exactly as given
+- `date_range` - inferred start-end or single date (ISO format)
 
-EVENT FAMILY REQUIREMENTS (EF should answer):
-- WHO: Key actors involved (people, countries, organizations)
-- WHAT: What concrete action/event occurred
-- WHERE: Geographic location/region (if relevant)
-- WHEN: Time window of the event
+**Multilingual processing**
+Group headlines about the same Event across languages. Canonicalize actor and place names to English forms.
 
-QUALITY CRITERIA:
-- Clear temporal coherence within intelligent time window
-- Shared concrete actors/entities (understood contextually)
-- Logical event progression or single significant occurrence
-- Strong evidence from headline language across languages
+**Quality criteria**
+- Clear factual coherence and temporal proximity
+- Shared concrete action and participants
+- Logical single occurrence, not a long saga
 
-Respond in JSON format with event families and reasoning.
+Return JSON array of detected `events`. Keep responses concise and consistent.
+
 """
 
 
@@ -414,21 +373,34 @@ OUTPUT: JSON array of incident clusters:
 REMINDER: Use ONLY the IDs from the INPUT list above."""
 
 # REDUCE Phase Prompts (Pass-1c: Incident Analysis + EF Creation)
-INCIDENT_ANALYSIS_SYSTEM_PROMPT = """Analyze an incident cluster to create a complete Event Family. Your tasks:
+INCIDENT_ANALYSIS_SYSTEM_PROMPT = """Analyze an incident cluster to extract SINGLE TIME-BOUNDED EVENTS (not families or sagas).
 
-1. CLASSIFY the event type for this strategic incident
-2. CREATE an Event Family title that captures the strategic significance
-3. DEFINE the strategic purpose - a one-sentence core narrative that describes what this Event Family is fundamentally about
-4. EXTRACT a timeline of discrete factual events within the incident
-5. MAINTAIN neutral attribution and factual accuracy
+CRITICAL EVENT DEFINITION:
+- Event = ONE discrete occurrence with verifiable microfacts
+- Date range MUST be ≤ 72 hours (ideally single date)
+- If inference spans > 72h → SPLIT into multiple Events
+- NO broad/pluralized phenomena ("efforts", "developments", "positioning")
+- NO near-duplicate events (check for repetition)
 
-The STRATEGIC PURPOSE is critical - it serves as the semantic anchor for future thematic validation. It should be:
-- ONE sentence maximum
-- Captures the core narrative/theme
-- Describes what unifies these events conceptually
-- Used later to validate if new headlines belong to this Event Family
+EVENT TITLE REQUIREMENTS (verifiable microfact):
+- MUST include: Actor + Concrete Action + Specific Place + Date (from pubdate)
+- Examples:
+  GOOD: "Turkey: 7.8 magnitude earthquake strikes Gaziantep region - Feb 6, 2025"
+  GOOD: "Cyclone Montha makes landfall in Odisha, India - March 12, 2025"
+  GOOD: "Amazon announces workforce restructuring (12,000 layoffs) - Jan 15, 2025"
+  BAD: "Turkey earthquake developments" (too broad, vague)
+  BAD: "Ongoing Amazon restructuring efforts" (ongoing = family not event)
+  BAD: "US positioning on Gaza" (positioning = continuous state not event)
 
-Focus on the STRATEGIC NARRATIVE - what makes this incident significant for intelligence analysis."""
+YOUR TASKS:
+1. CLASSIFY event type for each distinct occurrence
+2. EXTRACT timeline of DISCRETE events (≤72h each)
+3. ENSURE each event has verifiable actor + action + place + date
+4. SPLIT if temporal span > 72h
+5. REMOVE near-duplicates (same event reported twice)
+6. DEFINE strategic purpose for the Event Family (the collection of related events)
+
+The STRATEGIC PURPOSE unifies the events conceptually but each event must stand alone as a verifiable occurrence."""
 
 INCIDENT_ANALYSIS_USER_TEMPLATE = """INCIDENT CLUSTER: {incident_name}
 RATIONALE: {rationale}
@@ -438,43 +410,56 @@ AVAILABLE EVENT_TYPES: {event_types}
 TITLES (id | title | date):
 {titles}
 
-Analyze this strategic incident and create a complete Event Family:
+Extract SINGLE TIME-BOUNDED EVENTS from this cluster:
 
-STEP 1: Classify the event type
-- What is the PRIMARY event type that best describes this strategic situation?
-- Choose ONE from the AVAILABLE EVENT_TYPES list
+STEP 1: Identify distinct occurrences
+- Find each DISCRETE event (≤72h span)
+- If titles span > 72h → SPLIT into separate events
+- Remove near-duplicates (e.g., "Turkey quake" appearing twice)
+- Each event must have: Actor + Action + Place + Date
 
-STEP 2: Create Event Family metadata
-- EF Title: Strategic significance (max 120 chars, avoid headlines)
-- Strategic Purpose: ONE sentence that captures the core narrative
-  Examples:
-    GOOD: "Ongoing military confrontation between Russian forces and Ukrainian defense in eastern territories"
-    GOOD: "Diplomatic efforts to negotiate humanitarian corridors and civilian evacuations in Gaza"
-    GOOD: "International pressure campaigns targeting Israeli military operations through economic and political channels"
-    BAD: "News about the war" (too vague)
-    BAD: "Russia attacks Ukraine while the West imposes sanctions and provides military aid" (too detailed, multiple themes)
+STEP 2: For EACH event, create event_title with microfacts
+- Format: "Actor: Concrete action in Specific Place - Date"
+- Examples:
+  "Turkey: 7.8 magnitude earthquake strikes Gaziantep region - Feb 6, 2025"
+  "Amazon: CEO announces 12,000 employee layoffs in Seattle HQ - Jan 15, 2025"
+  "Cyclone Montha: Makes landfall in Odisha coast, India - Mar 12, 2025"
+- AVOID: "US positioning" / "efforts" / "developments" / "ongoing"
+- Date must be from pubdate_utc (use most specific date available)
 
-STEP 3: Extract event timeline
-- Identify discrete factual events in chronological order
-- Use neutral language with proper attribution
-- Use exact publication dates provided (YYYY-MM-DD format)
-- Link each event to source title IDs
+STEP 3: Classify event type
+- Choose ONE PRIMARY type from AVAILABLE EVENT_TYPES for the family
+
+STEP 4: Define Strategic Purpose (for the Event Family collection)
+- ONE sentence capturing what unifies these discrete events
+- Examples:
+  GOOD: "Natural disaster response and humanitarian crisis in Turkey-Syria border region"
+  GOOD: "Corporate restructuring announcement and immediate market reaction"
+  BAD: "Ongoing earthquake developments" (too vague)
+
+STEP 5: Validate temporal bounds
+- Check: Does each event span ≤ 72 hours?
+- If NO → split into multiple events with distinct dates
 
 Return JSON only:
 {{
   "event_type": "EVENT_TYPE",
-  "ef_title": "Strategic Event Family title",
-  "strategic_purpose": "One-sentence core narrative that unifies this Event Family",
-  "ef_summary": "Brief strategic context",
+  "ef_title": "Event Family title (collection of related events)",
+  "strategic_purpose": "One-sentence narrative unifying the events",
+  "ef_summary": "Brief context",
   "events": [
     {{
+      "event_title": "Actor: Action in Place - Date (MUST include all 4 components)",
       "summary": "Neutral factual description with attribution",
       "date": "2025-01-18",
+      "date_range_hours": 24,
       "source_title_ids": ["uuid1", "uuid2"],
       "event_id": "evt_001"
     }}
   ]
-}}"""
+}}
+
+CRITICAL: Each event must be verifiable, time-bounded (≤72h), and include actor/action/place/date in event_title."""
 
 
 # -----------------------------------------------------------------------------
@@ -1064,8 +1049,8 @@ class LLMClient:
     # -------------------------------------------------------------------------
 
     async def assemble_event_families(
-        self, request: LLMEventFamilyRequest
-    ) -> LLMEventFamilyResponse:
+        self, request: LLMEventRequest
+    ) -> LLMEventResponse:
         """
         Assemble Event Families directly from titles.
 
@@ -1094,7 +1079,7 @@ class LLMClient:
             logger.error(f"Event Family assembly failed: {e}")
             raise
 
-    def _build_event_family_prompt(self, request: LLMEventFamilyRequest) -> str:
+    def _build_event_family_prompt(self, request: LLMEventRequest) -> str:
         """Build comprehensive prompt for Event Family generation"""
         prompt_parts = [
             "TASK: Analyze these strategic news titles and identify coherent Event Families.",
@@ -1570,9 +1555,7 @@ class LLMClient:
     # Response Parsing
     # -------------------------------------------------------------------------
 
-    def _parse_event_family_response(
-        self, response_text: str
-    ) -> LLMEventFamilyResponse:
+    def _parse_event_family_response(self, response_text: str) -> LLMEventResponse:
         """Parse and validate Event Family response from LLM"""
         try:
             # Extract JSON from response
@@ -1582,7 +1565,7 @@ class LLMClient:
             if "event_families" not in response_data:
                 raise ValueError("Missing 'event_families' in LLM response")
 
-            return LLMEventFamilyResponse(
+            return LLMEventResponse(
                 event_families=response_data["event_families"],
                 processing_reasoning=response_data.get("processing_reasoning", ""),
                 confidence=response_data.get("confidence", 0.5),

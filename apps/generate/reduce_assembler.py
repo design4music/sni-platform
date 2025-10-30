@@ -147,6 +147,7 @@ class ReduceAssembler:
             # Validate each event structure
             for i, event in enumerate(events):
                 required_event_fields = [
+                    "event_title",  # NEW: verifiable microfact title
                     "summary",
                     "date",
                     "source_title_ids",
@@ -156,6 +157,13 @@ class ReduceAssembler:
                     if field not in event:
                         raise ValueError(
                             f"Event {i} missing required field '{field}': {event}"
+                        )
+
+                # Validate date_range_hours if provided (should be ≤ 72)
+                if "date_range_hours" in event:
+                    if event["date_range_hours"] > 72:
+                        logger.warning(
+                            f"Event {i} has date_range > 72h ({event['date_range_hours']}h) - should be split"
                         )
 
             # Validate event_type is from allowed list
