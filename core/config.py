@@ -369,9 +369,97 @@ class SNIConfig(BaseSettings):
     # Project paths
     project_root: Path = Field(default_factory=lambda: Path(__file__).parent.parent)
 
+    # ========================================================================
+    # SNI v3 Configuration - Simplified Centroid-Based Architecture
+    # ========================================================================
+
+    # V3 Phase Control
+    v3_enabled: bool = Field(default=False, env="V3_ENABLED")
+    v3_phase_1_enabled: bool = Field(default=True, env="V3_PHASE_1_ENABLED")
+    v3_phase_2_enabled: bool = Field(default=True, env="V3_PHASE_2_ENABLED")
+    v3_phase_3_enabled: bool = Field(default=True, env="V3_PHASE_3_ENABLED")
+
+    # V3 Database Tables
+    v3_centroids_table: str = Field(default="centroids_v3", env="V3_CENTROIDS_TABLE")
+    v3_taxonomy_table: str = Field(default="taxonomy_v3", env="V3_TAXONOMY_TABLE")
+    v3_ctm_table: str = Field(default="ctm", env="V3_CTM_TABLE")
+    v3_titles_table: str = Field(default="titles_v3", env="V3_TITLES_TABLE")
+
+    # V3 Phase 2: 3-Pass Centroid Matching (mechanical, no LLM)
+    v3_p2_batch_size: int = Field(
+        default=100, env="V3_P2_BATCH_SIZE"
+    )  # Titles per batch
+    v3_p2_timeout_seconds: int = Field(
+        default=180, env="V3_P2_TIMEOUT_SECONDS"
+    )  # Processing timeout
+
+    # V3 Phase 3: Track Classification and CTM Building
+    v3_p3_temperature: float = Field(
+        default=0.0, env="V3_P3_TEMPERATURE"
+    )  # Deterministic classification
+    v3_p3_max_tokens: int = Field(
+        default=10, env="V3_P3_MAX_TOKENS"
+    )  # Short response (track name only)
+    v3_p3_batch_size: int = Field(
+        default=100, env="V3_P3_BATCH_SIZE"
+    )  # Titles per batch
+    v3_p3_concurrency: int = Field(
+        default=8, env="V3_P3_CONCURRENCY"
+    )  # Parallel LLM calls
+    v3_p3_timeout_seconds: int = Field(
+        default=180, env="V3_P3_TIMEOUT_SECONDS"
+    )  # Processing timeout
+
+    # V3 Tracks (Strategic Domains)
+    v3_tracks: list = Field(
+        default_factory=lambda: [
+            "military",
+            "diplomacy",
+            "economic",
+            "tech_cyber",
+            "humanitarian",
+            "information_media",
+            "legal_regulatory",
+        ],
+        env="V3_TRACKS",
+    )
+
+    # V3 Processing Limits
+    v3_p2_max_titles: Optional[int] = Field(
+        default=1000, env="V3_P2_MAX_TITLES"
+    )  # Phase 2 title limit
+    v3_p3_max_titles: Optional[int] = Field(
+        default=1000, env="V3_P3_MAX_TITLES"
+    )  # Phase 3 title limit
+
     @property
     def database_url(self) -> str:
         return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
+    @property
+    def v3_root_path(self) -> Path:
+        """Root directory for v3 pipeline"""
+        return self.project_root / "v3"
+
+    @property
+    def v3_phase_1_path(self) -> Path:
+        """Phase 1 directory for v3 pipeline"""
+        return self.v3_root_path / "phase_1"
+
+    @property
+    def v3_phase_2_path(self) -> Path:
+        """Phase 2 directory for v3 pipeline"""
+        return self.v3_root_path / "phase_2"
+
+    @property
+    def v3_phase_3_path(self) -> Path:
+        """Phase 3 directory for v3 pipeline"""
+        return self.v3_root_path / "phase_3"
+
+    @property
+    def v3_shared_path(self) -> Path:
+        """Shared utilities directory for v3 pipeline"""
+        return self.v3_root_path / "shared"
 
     @property
     def supported_languages_list(self) -> List[str]:
