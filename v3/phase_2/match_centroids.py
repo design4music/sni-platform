@@ -41,9 +41,9 @@ def normalize_text(text: str) -> str:
 
 
 def is_common_word_false_positive(alias_lower: str) -> bool:
-    """Filter out common English words that cause false positives"""
+    """Filter out common words that cause false positives across languages"""
     common_words = {
-        # 2-letter words
+        # 2-letter words (English)
         "in",
         "is",
         "it",
@@ -65,6 +65,16 @@ def is_common_word_false_positive(alias_lower: str) -> bool:
         "of",
         "on",
         "we",
+        # 2-letter words (Romance languages - articles, prepositions)
+        "il",  # Italian/French article "the"
+        "la",  # Italian/French/Spanish article "the"
+        "le",  # French article "the"
+        "el",  # Spanish article "the"
+        "un",  # Italian/French/Spanish article "a/an"
+        "di",  # Italian preposition "of"
+        "da",  # Italian preposition "from"
+        "al",  # Italian/Spanish preposition "to the"
+        "del",  # Italian/Spanish preposition "of the"
         # 3-letter words
         "who",
         "the",
