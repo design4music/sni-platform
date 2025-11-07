@@ -15,6 +15,7 @@ The v3 pipeline represents a complete redesign of SNI's intelligence processing 
 - **Phase 1**: RSS ingestion with NFKC normalization and incremental fetching ✅
 - **Phase 2**: 3-pass centroid matching (theater → systemic → macro) ✅
 - **Phase 3**: LLM-based track assignment with CTM creation ✅
+- **Phase 3 Enhanced**: Dynamic track configuration system (centroid-specific tracks) ✅
 - **Phase 4**: Events digest extraction + narrative summary generation ✅
 - **Pipeline Daemon**: Production-ready orchestration with adaptive scheduling ✅
 - **Taxonomy**: 1,253 entities with 11,401 multilingual aliases (simplified) ✅
@@ -130,6 +131,79 @@ v3/phase_3/
 - Increments `ctm.title_count`
 
 **Database**: `ctm` table + `titles_v3.ctm_ids` + `titles_v3.track`
+
+### Dynamic Track Configuration System (Phase 3 Enhancement)
+```
+db/
+├── migration_track_configs.py          # Schema + initial configs
+└── link_centroids_to_track_configs.py  # Helper to link centroids
+
+v3/phase_3/
+├── assign_tracks.py                    # Updated for dynamic configs
+└── test_dynamic_tracks.py              # Test suite
+```
+
+**Purpose**: Enable centroid-specific track lists and prompts for precision classification
+
+**Architecture**:
+- **track_configs table**: Stores track lists (TEXT[]) and LLM prompts (TEXT)
+- **centroids_v3.track_config_id**: Links centroids to custom configs (optional)
+- **Default fallback**: All centroids without custom config use `strategic_default`
+- **Priority resolution**: Systemic > Theater > Macro (for multi-centroid titles)
+
+**Track Configurations**:
+
+1. **strategic_default** (10 tracks) - DEFAULT for all centroids
+   - alliances_partnerships, armed_conflict, capabilities_readiness, coercion_pressure
+   - diplomacy_negotiations, economic_competition, governance_internal
+   - information_influence, intelligence_espionage, strategic_positioning
+
+2. **tech_focused** (10 tracks) - For SYS-TECH centroid
+   - ai_ml_development, quantum_computing, semiconductors_hardware
+   - software_platforms, cybersecurity, tech_regulation
+   - business_investment, research_innovation, talent_education, standards_governance
+
+3. **environment_focused** (10 tracks) - For SYS-ENVIRONMENT centroid
+   - climate_policy, emissions_targets, renewable_energy, fossil_fuels
+   - climate_impacts, environmental_disasters, conservation_biodiversity
+   - climate_finance, adaptation_resilience, climate_diplomacy
+
+4. **limited_strategic** (4 tracks) - For quiet countries (e.g., Mongolia)
+   - diplomacy_negotiations, economic_competition
+   - governance_internal, strategic_positioning
+
+**Benefits**:
+- **Precision**: Tech stories get tech tracks (semiconductors, AI), not generic "economic_competition"
+- **Flexibility**: Any centroid can have custom tracks (not restricted to systemic)
+- **Easy editing**: Edit tracks/prompts in DBeaver, no code deployment needed
+- **Granularity control**: Reduce tracks for quiet countries to avoid data fragmentation
+- **Accuracy boost**: 30-40% estimated improvement for systemic centroid classification
+
+**Usage**:
+```sql
+-- Link AI centroid to tech_focused config
+UPDATE centroids_v3
+SET track_config_id = (SELECT id FROM track_configs WHERE name = 'tech_focused')
+WHERE label = 'Artificial Intelligence';
+
+-- Create new custom config
+INSERT INTO track_configs (name, description, tracks, llm_prompt, is_default)
+VALUES (
+    'migration_focused',
+    'Tracks for migration and refugee topics',
+    ARRAY['border_control', 'humanitarian_crisis', 'integration_policy', 'smuggling_trafficking'],
+    'Your custom LLM prompt here...',
+    FALSE
+);
+```
+
+**Phase 3 Logic** (Updated):
+1. Title has `centroid_ids` from Phase 2
+2. Load track config for primary centroid (systemic > theater > macro)
+3. Format LLM prompt with centroid context (`{centroid_label}`, `{primary_theater}`, `{month}`)
+4. LLM classifies using centroid-specific track list
+5. Validate response against allowed tracks
+6. Create CTM and link title
 
 ### Phase 4: CTM Enrichment
 ```
@@ -272,11 +346,35 @@ CREATE TABLE centroids_v3 (
     pass_number INTEGER,
     priority INTEGER,
     item_ids UUID[],
+    track_config_id UUID REFERENCES track_configs(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- pass_number: 1 (theater), 2 (systemic), 3 (macro)
 -- priority: 100 (P1), 10 (P2), 1 (P3)
+-- track_config_id: Optional link to custom track configuration (NULL = use default)
+
+CREATE INDEX idx_centroids_v3_track_config ON centroids_v3(track_config_id);
+```
+
+### track_configs
+```sql
+CREATE TABLE track_configs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    tracks TEXT[] NOT NULL,
+    llm_prompt TEXT NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Example records:
+-- 1. strategic_default (is_default=TRUE): 10 strategic tracks for all centroids
+-- 2. tech_focused: 10 tech-specific tracks for SYS-TECH centroid
+-- 3. environment_focused: 10 climate/environment tracks for SYS-ENVIRONMENT
+-- 4. limited_strategic: 4 tracks for quiet countries with limited activity
 ```
 
 ### ctm
@@ -355,7 +453,29 @@ Titles can belong to multiple CTMs because:
 
 **Impact**: Easier maintenance, fewer false positives, better performance
 
-### 6. Sequential vs Parallel Execution
+### 6. Dynamic Track Configuration System
+
+**Problem**: Single universal track list forced China-AI tech stories into "Economic Competition" when they're really about "Semiconductors" or "AI Development"
+
+**Solution**: Centroid-specific track lists and prompts stored in database
+- Tech centroids get tech tracks (ai_ml, quantum, semiconductors, etc.)
+- Climate centroids get environment tracks (emissions, renewable_energy, etc.)
+- Geographic centroids use strategic default (armed_conflict, diplomacy, etc.)
+- Quiet countries get reduced track set (4 tracks vs 10)
+
+**Benefits**:
+- **30-40% accuracy improvement** for systemic centroids (estimated)
+- **No code deployment** needed to edit tracks/prompts (just DBeaver)
+- **Granularity control** - reduce tracks to avoid data fragmentation
+- **Domain expertise codified** - climate expert defines climate tracks once
+
+**Implementation**:
+- `track_configs` table stores track lists + LLM prompts
+- `centroids_v3.track_config_id` links to custom configs (NULL = default)
+- Phase 3 loads config dynamically based on primary centroid
+- Priority resolution: Systemic > Theater > Macro
+
+### 7. Sequential vs Parallel Execution
 
 **Current**: Sequential execution with adaptive scheduling
 **Future**: May add parallelization if queues back up
@@ -613,6 +733,8 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 - **2024-11-05**: Phase 4 implementation (enrichment)
 - **2024-11-06**: Romance language false positive fixes
 - **2024-11-07**: Pipeline daemon implementation ✅
+- **2024-11-07**: Dynamic track configuration system ✅
+- **2024-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
 - **2024-11-07**: Current status - Ready for production testing
 
 ---
