@@ -1,18 +1,20 @@
 """
-Phase 3: Track Assignment with LLM
+Phase 3: Track Assignment with Dynamic Track Configs
 
-Assigns tracks to titles that have been assigned centroids in Phase 2.
+Assigns tracks to titles using centroid-specific track configurations.
 Creates/updates CTM records and links titles to their CTM.
 
-Primary centroid logic (from Phase 2 centroid_ids array):
-1. One or more matching geo-centroids (e.g., Israel and Palestine) - use first as primary
-2. If none, matching systemic centroid (e.g., "Climate") - use as primary
-3. If none and is_macro, matching superpower centroid (US, CN, RU, EU) - use first as primary
-4. If multiple superpowers, add to each - use first as primary
+Track Resolution Logic:
+1. Get title's centroid_ids from Phase 2
+2. Determine primary centroid (systemic > theater > macro)
+3. Load track config for primary centroid (or use default)
+4. Use centroid-specific prompt and track list for LLM classification
+5. Create CTM (centroid, track, month) and link title
 """
 
 import asyncio
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -21,34 +23,99 @@ import psycopg2
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 
-# Valid tracks
-TRACKS = [
-    "military",
-    "diplomacy",
-    "economic",
-    "tech_cyber",
-    "humanitarian",
-    "information_media",
-    "legal_regulatory",
-]
 
-
-async def get_track_from_llm(title_text: str) -> str:
+def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
     """
-    Use Deepseek to assign a track to a title.
-    Returns one of the 7 valid tracks.
+    Get track configuration for a list of centroids.
+    Prioritizes: systemic > theater > macro
+    Returns track config (tracks, prompt, centroid metadata)
     """
-    system_prompt = """You are a news classifier. Assign this news title to exactly ONE track from this list:
+    if not centroid_ids:
+        raise ValueError("No centroid_ids provided")
 
-1. military - Armed forces, weapons, combat, defense systems, military operations
-2. diplomacy - International relations, treaties, summits, diplomatic visits, negotiations
-3. economic - Trade, sanctions, markets, finance, business, economic policy
-4. tech_cyber - Technology, cybersecurity, digital infrastructure, tech policy
-5. humanitarian - Refugees, aid, disasters, human rights, health crises
-6. information_media - Propaganda, disinformation, media control, information warfare
-7. legal_regulatory - Laws, regulations, court decisions, legal frameworks
+    with conn.cursor() as cur:
+        # Get all centroids with their configs, ordered by priority
+        cur.execute(
+            """
+            SELECT
+                c.id,
+                c.label,
+                c.class,
+                c.primary_theater,
+                c.priority,
+                tc.tracks,
+                tc.llm_prompt
+            FROM centroids_v3 c
+            LEFT JOIN track_configs tc ON c.track_config_id = tc.id
+            WHERE c.id = ANY(%s)
+            ORDER BY
+                CASE c.class
+                    WHEN 'systemic' THEN 1
+                    WHEN 'theater' THEN 2
+                    WHEN 'macro' THEN 3
+                END,
+                c.priority DESC
+        """,
+            (centroid_ids,),
+        )
 
-Respond with ONLY the track name (one word), nothing else."""
+        rows = cur.fetchall()
+
+        if not rows:
+            raise ValueError(f"No centroids found for IDs: {centroid_ids}")
+
+        # First centroid with custom config wins
+        for row in rows:
+            centroid_id, label, cls, theater, priority, tracks, prompt = row
+            if tracks is not None and prompt is not None:
+                # Has custom track config
+                return {
+                    "centroid_id": centroid_id,
+                    "centroid_label": label,
+                    "centroid_class": cls,
+                    "primary_theater": theater or "N/A",
+                    "tracks": tracks,
+                    "prompt": prompt,
+                }
+
+        # No custom configs found, use default
+        cur.execute(
+            """
+            SELECT tracks, llm_prompt
+            FROM track_configs
+            WHERE is_default = TRUE
+        """
+        )
+        default_row = cur.fetchone()
+
+        if not default_row:
+            raise ValueError("No default track config found in database")
+
+        # Use first centroid's metadata with default config
+        first = rows[0]
+        return {
+            "centroid_id": first[0],
+            "centroid_label": first[1],
+            "centroid_class": first[2],
+            "primary_theater": first[3] or "N/A",
+            "tracks": default_row[0],
+            "prompt": default_row[1],
+        }
+
+
+async def get_track_from_llm(
+    title_text: str, track_config: dict, month: str
+) -> str:
+    """
+    Use Deepseek to assign a track to a title using dynamic track config.
+    Returns one of the valid tracks for this centroid.
+    """
+    # Format prompt with context
+    prompt = track_config["prompt"].format(
+        centroid_label=track_config["centroid_label"],
+        primary_theater=track_config["primary_theater"],
+        month=month,
+    )
 
     user_prompt = f'Title: "{title_text}"'
 
@@ -60,11 +127,11 @@ Respond with ONLY the track name (one word), nothing else."""
     payload = {
         "model": config.llm_model,
         "messages": [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": prompt},
             {"role": "user", "content": user_prompt},
         ],
-        "temperature": 0,
-        "max_tokens": 20,
+        "temperature": 0.3,
+        "max_tokens": 30,
     }
 
     async with httpx.AsyncClient(timeout=config.llm_timeout_seconds) as client:
@@ -80,17 +147,22 @@ Respond with ONLY the track name (one word), nothing else."""
         data = response.json()
         track = data["choices"][0]["message"]["content"].strip().lower()
 
-    # Validate track
-    if track not in TRACKS:
-        # Fallback to diplomacy if LLM returns invalid track
-        return "diplomacy"
+    # Validate track against centroid-specific track list
+    valid_tracks = [t.lower() for t in track_config["tracks"]]
+    if track not in valid_tracks:
+        # Fallback to first track if LLM returns invalid track
+        print(
+            f"  WARNING: LLM returned invalid track '{track}', using '{track_config['tracks'][0]}'"
+        )
+        return track_config["tracks"][0]
 
     return track
 
 
-def get_or_create_ctm(conn, centroid_id: str, track: str, month_date: str) -> str:
+def get_or_create_ctm(conn, centroid_id: str, track: str, yyyymm: str) -> str:
     """
     Get existing CTM or create new one.
+    CTM uniqueness: (centroid_id, track, yyyymm)
     Returns CTM id.
     """
     with conn.cursor() as cur:
@@ -101,9 +173,9 @@ def get_or_create_ctm(conn, centroid_id: str, track: str, month_date: str) -> st
             FROM ctm
             WHERE centroid_id = %s
               AND track = %s
-              AND month = %s
+              AND yyyymm = %s
         """,
-            (centroid_id, track, month_date),
+            (centroid_id, track, yyyymm),
         )
         result = cur.fetchone()
 
@@ -113,11 +185,11 @@ def get_or_create_ctm(conn, centroid_id: str, track: str, month_date: str) -> st
         # Create new CTM
         cur.execute(
             """
-            INSERT INTO ctm (centroid_id, track, month, title_count)
+            INSERT INTO ctm (centroid_id, track, yyyymm, title_count)
             VALUES (%s, %s, %s, 0)
             RETURNING id
         """,
-            (centroid_id, track, month_date),
+            (centroid_id, track, yyyymm),
         )
         ctm_id = cur.fetchone()[0]
         conn.commit()
@@ -153,23 +225,29 @@ async def process_batch(max_titles=None):
             )
             titles = cur.fetchall()
 
-        print(f"Processing {len(titles)} titles for track assignment...")
+        print(f"\nPhase 3: Track Assignment")
+        print(f"{'='*60}")
+        print(f"Processing {len(titles)} titles with dynamic track configs...")
 
         assigned_count = 0
         error_count = 0
 
         for title_id, title_text, centroid_ids, pubdate in titles:
             try:
-                # Get track from LLM
-                track = await get_track_from_llm(title_text)
+                # Get track config for this title's centroids
+                track_config = get_track_config_for_centroids(conn, centroid_ids)
 
-                # Get month (first day of month)
-                month_date = pubdate.replace(day=1).date()
+                # Format month for prompt context
+                month = pubdate.strftime("%Y-%m")
+                yyyymm = pubdate.strftime("%Y%m")
+
+                # Get track from LLM using centroid-specific config
+                track = await get_track_from_llm(title_text, track_config, month)
 
                 # Create CTM for each centroid and collect CTM IDs
                 ctm_ids = []
                 for centroid_id in centroid_ids:
-                    ctm_id = get_or_create_ctm(conn, centroid_id, track, month_date)
+                    ctm_id = get_or_create_ctm(conn, centroid_id, track, yyyymm)
                     ctm_ids.append(ctm_id)
 
                     # Increment title count for this CTM
@@ -185,7 +263,6 @@ async def process_batch(max_titles=None):
                         )
 
                 # Update title with track and all CTM IDs (many-to-many)
-                # centroid_ids already set by Phase 2, just add track and ctm_ids
                 with conn.cursor() as cur:
                     cur.execute(
                         """
@@ -205,7 +282,7 @@ async def process_batch(max_titles=None):
                     print(f"  Processed {assigned_count}/{len(titles)}...")
 
             except Exception as e:
-                print(f"Error processing title {title_id}: {e}")
+                print(f"  ERROR processing title {title_id}: {e}")
                 error_count += 1
                 conn.rollback()
                 continue
@@ -213,9 +290,9 @@ async def process_batch(max_titles=None):
         print(f"\n{'='*60}")
         print("RESULTS")
         print(f"{'='*60}")
-        print(f"Total processed:     {len(titles)}")
+        print(f"Total processed:       {len(titles)}")
         print(f"Successfully assigned: {assigned_count}")
-        print(f"Errors:              {error_count}")
+        print(f"Errors:                {error_count}")
 
     finally:
         conn.close()
@@ -225,7 +302,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Phase 3: Assign tracks and create CTMs"
+        description="Phase 3: Assign tracks using dynamic track configs"
     )
     parser.add_argument(
         "--max-titles", type=int, help="Maximum number of titles to process"
