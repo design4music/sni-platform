@@ -13,15 +13,20 @@ Track Resolution Logic:
 """
 
 import asyncio
+import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import httpx
 import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from core.config import config
+
+# Ensure .env is loaded from project root
+project_root = Path(__file__).parent.parent.parent
+os.chdir(project_root)
+
+from core.config import config  # noqa: E402
 
 
 def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
@@ -34,7 +39,7 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
         raise ValueError("No centroid_ids provided")
 
     with conn.cursor() as cur:
-        # Get all centroids with their configs, ordered by priority
+        # Get all centroids with their configs, ordered by class priority
         cur.execute(
             """
             SELECT
@@ -42,7 +47,6 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
                 c.label,
                 c.class,
                 c.primary_theater,
-                c.priority,
                 tc.tracks,
                 tc.llm_prompt
             FROM centroids_v3 c
@@ -54,7 +58,7 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
                     WHEN 'theater' THEN 2
                     WHEN 'macro' THEN 3
                 END,
-                c.priority DESC
+                c.label
         """,
             (centroid_ids,),
         )
@@ -66,7 +70,7 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
 
         # First centroid with custom config wins
         for row in rows:
-            centroid_id, label, cls, theater, priority, tracks, prompt = row
+            centroid_id, label, cls, theater, tracks, prompt = row
             if tracks is not None and prompt is not None:
                 # Has custom track config
                 return {
@@ -103,9 +107,7 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
         }
 
 
-async def get_track_from_llm(
-    title_text: str, track_config: dict, month: str
-) -> str:
+async def get_track_from_llm(title_text: str, track_config: dict, month: str) -> str:
     """
     Use Deepseek to assign a track to a title using dynamic track config.
     Returns one of the valid tracks for this centroid.
@@ -159,11 +161,13 @@ async def get_track_from_llm(
     return track
 
 
-def get_or_create_ctm(conn, centroid_id: str, track: str, yyyymm: str) -> str:
+def get_or_create_ctm(conn, centroid_id: str, track: str, month: str) -> str:
     """
     Get existing CTM or create new one.
-    CTM uniqueness: (centroid_id, track, yyyymm)
+    CTM uniqueness: (centroid_id, track, month)
     Returns CTM id.
+
+    Note: month format is 'YYYY-MM-DD' (first day of month)
     """
     with conn.cursor() as cur:
         # Try to find existing CTM
@@ -173,9 +177,9 @@ def get_or_create_ctm(conn, centroid_id: str, track: str, yyyymm: str) -> str:
             FROM ctm
             WHERE centroid_id = %s
               AND track = %s
-              AND yyyymm = %s
+              AND month = %s
         """,
-            (centroid_id, track, yyyymm),
+            (centroid_id, track, month),
         )
         result = cur.fetchone()
 
@@ -185,16 +189,81 @@ def get_or_create_ctm(conn, centroid_id: str, track: str, yyyymm: str) -> str:
         # Create new CTM
         cur.execute(
             """
-            INSERT INTO ctm (centroid_id, track, yyyymm, title_count)
+            INSERT INTO ctm (centroid_id, track, month, title_count)
             VALUES (%s, %s, %s, 0)
             RETURNING id
         """,
-            (centroid_id, track, yyyymm),
+            (centroid_id, track, month),
         )
         ctm_id = cur.fetchone()[0]
         conn.commit()
 
         return ctm_id
+
+
+async def process_single_title(title_data):
+    """Process a single title (for concurrent execution)"""
+    title_id, title_text, centroid_ids, pubdate = title_data
+
+    # Create new connection for this title (thread-safe)
+    conn = psycopg2.connect(
+        host=config.db_host,
+        port=config.db_port,
+        database=config.db_name,
+        user=config.db_user,
+        password=config.db_password,
+    )
+
+    try:
+        # Get track config for this title's centroids
+        track_config = get_track_config_for_centroids(conn, centroid_ids)
+
+        # Format month for prompt context and CTM
+        month_str = pubdate.strftime("%Y-%m")
+        month_date = pubdate.replace(day=1).date()
+
+        # Get track from LLM using centroid-specific config
+        track = await get_track_from_llm(title_text, track_config, month_str)
+
+        # Create CTM for each centroid and collect CTM IDs
+        ctm_ids = []
+        for centroid_id in centroid_ids:
+            ctm_id = get_or_create_ctm(conn, centroid_id, track, month_date)
+            ctm_ids.append(ctm_id)
+
+            # Increment title count for this CTM
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE ctm
+                    SET title_count = title_count + 1,
+                        updated_at = NOW()
+                    WHERE id = %s
+                """,
+                    (ctm_id,),
+                )
+
+        # Update title with track and all CTM IDs (many-to-many)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE titles_v3
+                SET track = %s,
+                    ctm_ids = %s::uuid[],
+                    updated_at = NOW()
+                WHERE id = %s
+            """,
+                (track, ctm_ids, title_id),
+            )
+
+        conn.commit()
+        return (title_id, True, None)
+
+    except Exception as e:
+        conn.rollback()
+        return (title_id, False, str(e))
+    finally:
+        conn.close()
 
 
 async def process_batch(max_titles=None):
@@ -225,67 +294,39 @@ async def process_batch(max_titles=None):
             )
             titles = cur.fetchall()
 
-        print(f"\nPhase 3: Track Assignment")
-        print(f"{'='*60}")
-        print(f"Processing {len(titles)} titles with dynamic track configs...")
+        print("\nPhase 3: Track Assignment")
+        print("=" * 60)
+        print(
+            f"Processing {len(titles)} titles with concurrency={config.v3_p3_concurrency}..."
+        )
 
         assigned_count = 0
         error_count = 0
 
-        for title_id, title_text, centroid_ids, pubdate in titles:
-            try:
-                # Get track config for this title's centroids
-                track_config = get_track_config_for_centroids(conn, centroid_ids)
+        # Process titles concurrently in batches
+        concurrency = config.v3_p3_concurrency
+        for i in range(0, len(titles), concurrency):
+            batch = titles[i : i + concurrency]
 
-                # Format month for prompt context
-                month = pubdate.strftime("%Y-%m")
-                yyyymm = pubdate.strftime("%Y%m")
+            # Process batch concurrently
+            tasks = [process_single_title(title_data) for title_data in batch]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-                # Get track from LLM using centroid-specific config
-                track = await get_track_from_llm(title_text, track_config, month)
+            # Count results
+            for result in results:
+                if isinstance(result, Exception):
+                    error_count += 1
+                    print(f"  ERROR: {result}")
+                else:
+                    title_id, success, error_msg = result
+                    if success:
+                        assigned_count += 1
+                    else:
+                        error_count += 1
+                        print(f"  ERROR processing {title_id}: {error_msg}")
 
-                # Create CTM for each centroid and collect CTM IDs
-                ctm_ids = []
-                for centroid_id in centroid_ids:
-                    ctm_id = get_or_create_ctm(conn, centroid_id, track, yyyymm)
-                    ctm_ids.append(ctm_id)
-
-                    # Increment title count for this CTM
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            """
-                            UPDATE ctm
-                            SET title_count = title_count + 1,
-                                updated_at = NOW()
-                            WHERE id = %s
-                        """,
-                            (ctm_id,),
-                        )
-
-                # Update title with track and all CTM IDs (many-to-many)
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        UPDATE titles_v3
-                        SET track = %s,
-                            ctm_ids = %s::uuid[],
-                            updated_at = NOW()
-                        WHERE id = %s
-                    """,
-                        (track, ctm_ids, title_id),
-                    )
-
-                conn.commit()
-                assigned_count += 1
-
-                if assigned_count % 10 == 0:
-                    print(f"  Processed {assigned_count}/{len(titles)}...")
-
-            except Exception as e:
-                print(f"  ERROR processing title {title_id}: {e}")
-                error_count += 1
-                conn.rollback()
-                continue
+            # Progress update
+            print(f"  Processed {min(i + concurrency, len(titles))}/{len(titles)}...")
 
         print(f"\n{'='*60}")
         print("RESULTS")

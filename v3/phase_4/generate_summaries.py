@@ -94,11 +94,11 @@ Generate a 150-250 word narrative summary:"""
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        "temperature": 0.5,  # Balanced creativity for narrative flow
-        "max_tokens": 500,
+        "temperature": config.v3_p4_temperature,
+        "max_tokens": config.v3_p4_max_tokens,
     }
 
-    async with httpx.AsyncClient(timeout=config.llm_timeout_seconds) as client:
+    async with httpx.AsyncClient(timeout=config.v3_p4_timeout_seconds) as client:
         response = await client.post(
             f"{config.deepseek_api_url}/chat/completions",
             headers=headers,
@@ -140,9 +140,11 @@ async def process_ctm_batch(max_ctms=None):
                   AND jsonb_array_length(c.events_digest) > 0
                   AND c.summary_text IS NULL
                   AND c.is_frozen = false
+                  AND c.title_count >= %s
                 ORDER BY c.title_count DESC, c.month DESC
                 {limit_clause}
-            """
+            """,
+                (config.v3_p4_min_titles,),
             )
             ctms = cur.fetchall()
 
@@ -179,7 +181,7 @@ async def process_ctm_batch(max_ctms=None):
                 )
 
                 word_count = len(summary.split())
-                print(f"  ✓ Generated summary ({word_count} words)")
+                print(f"  OK: Generated summary ({word_count} words)")
 
                 # Update CTM with summary
                 with conn.cursor() as cur:
@@ -197,7 +199,7 @@ async def process_ctm_batch(max_ctms=None):
                 processed_count += 1
 
             except Exception as e:
-                print(f"  ✗ Error processing CTM {ctm_id}: {e}")
+                print(f"  X Error processing CTM {ctm_id}: {e}")
                 error_count += 1
                 conn.rollback()
                 continue

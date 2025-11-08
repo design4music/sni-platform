@@ -28,7 +28,14 @@ import psycopg2
 from psycopg2.extras import Json
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from core.config import config
+
+# Ensure .env is loaded from project root
+import os
+
+project_root = Path(__file__).parent.parent.parent
+os.chdir(project_root)
+
+from core.config import config  # noqa: E402
 
 
 async def extract_events_from_titles(
@@ -225,15 +232,15 @@ async def process_ctm_batch(max_ctms=None):
                         )
                     conn.commit()
 
-                    print(f"  ✓ Extracted {len(events)} distinct events")
+                    print(f"  OK: Extracted {len(events)} distinct events")
                     total_events += len(events)
                     processed_count += 1
                 else:
-                    print("  ✗ No events extracted")
+                    print("  X: No events extracted")
                     error_count += 1
 
             except Exception as e:
-                print(f"  ✗ Error processing CTM {ctm_id}: {e}")
+                print(f"  X Error processing CTM {ctm_id}: {e}")
                 error_count += 1
                 conn.rollback()
                 continue

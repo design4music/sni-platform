@@ -410,6 +410,20 @@ class SNIConfig(BaseSettings):
         default=180, env="V3_P3_TIMEOUT_SECONDS"
     )  # Processing timeout
 
+    # V3 Phase 4: Summary Generation
+    v3_p4_min_titles: int = Field(
+        default=5, env="V3_P4_MIN_TITLES"
+    )  # Minimum title_count for CTM to generate summary
+    v3_p4_temperature: float = Field(
+        default=0.5, env="V3_P4_TEMPERATURE"
+    )  # Balanced creativity for narrative flow
+    v3_p4_max_tokens: int = Field(
+        default=500, env="V3_P4_MAX_TOKENS"
+    )  # Summary length (~150-250 words)
+    v3_p4_timeout_seconds: int = Field(
+        default=180, env="V3_P4_TIMEOUT_SECONDS"
+    )  # Processing timeout
+
     # V3 Tracks (Strategic Domains)
     v3_tracks: list = Field(
         default_factory=lambda: [
