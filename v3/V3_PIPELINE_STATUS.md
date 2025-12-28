@@ -725,17 +725,17 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 
 ## Project Timeline
 
-- **2024-10**: v3 schema design and migration
-- **2024-11-01**: Phase 1 implementation (RSS ingestion)
-- **2024-11-03**: Phase 2 implementation (centroid matching)
-- **2024-11-04**: Taxonomy simplification (-22.3% aliases)
-- **2024-11-05**: Phase 3 implementation (track assignment)
-- **2024-11-05**: Phase 4 implementation (enrichment)
-- **2024-11-06**: Romance language false positive fixes
-- **2024-11-07**: Pipeline daemon implementation ✅
-- **2024-11-07**: Dynamic track configuration system ✅
-- **2024-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
-- **2024-11-07**: Current status - Ready for production testing
+- **2025-10**: v3 schema design and migration
+- **2025-11-01**: Phase 1 implementation (RSS ingestion)
+- **2025-11-03**: Phase 2 implementation (centroid matching)
+- **2025-11-04**: Taxonomy simplification (-22.3% aliases)
+- **2025-11-05**: Phase 3 implementation (track assignment)
+- **2025-11-05**: Phase 4 implementation (enrichment)
+- **2025-11-06**: Romance language false positive fixes
+- **2025-11-07**: Pipeline daemon implementation ✅
+- **2025-11-07**: Dynamic track configuration system ✅
+- **2025-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
+- **2025-11-07**: Current status - Ready for production testing
 
 ---
 

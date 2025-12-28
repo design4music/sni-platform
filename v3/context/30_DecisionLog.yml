@@ -1,0 +1,66 @@
+decisions:
+
+  - id: D-001
+    date: 2025-11-01
+    type: architectural
+    status: accepted
+    title: Replace Neo4j graph clustering with centroid-based architecture
+    rationale:
+      - Graph clustering was expensive and opaque
+      - PostgreSQL-only architecture reduces complexity
+      - Centroids provide explicit, auditable narrative anchors
+    consequences:
+      - No emergent topic discovery
+      - Manual centroid curation required
+    references:
+      - V3_PIPELINE_STATUS.md
+
+  - id: D-002
+    date: 2025-11-03
+    type: data-model
+    status: accepted
+    title: Adopt CTM (Centroid–Track–Month) as atomic intelligence unit
+    rationale:
+      - Aligns aggregation with strategic time horizons
+      - Prevents narrative drift across months
+      - Simplifies frontend consumption
+    consequences:
+      - Titles are demoted to inputs
+      - CTMs become primary analysis objects
+
+  - id: D-003
+    date: 2025-11-05
+    type: llm-usage
+    status: accepted
+    title: Restrict LLMs to judgment-only tasks
+    rationale:
+      - LLMs are unreliable for structural grouping
+      - Determinism required for clustering
+    scope:
+      - Track assignment
+      - Event extraction
+      - Narrative summarization
+
+  - id: D-004
+    date: 2025-11-06
+    type: quality-control
+    status: accepted
+    title: Introduce stop-word and language false-positive filtering
+    rationale:
+      - Prevent cultural/sport contamination
+      - Eliminate Romance-language alias collisions
+    impact:
+      - Reduced false positives
+      - Cleaner systemic centroids
+
+  - id: D-005
+    date: 2025-11-07
+    type: extensibility
+    status: accepted
+    title: Implement dynamic track configuration system
+    rationale:
+      - One-size-fits-all tracks reduce precision
+      - Domains require domain-specific track vocabularies
+    consequences:
+      - Track logic moves to database
+      - No redeploy required for track edits

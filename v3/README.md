@@ -1,29 +1,16 @@
-# SNI v3 Pipeline
+# SNI v3 Pipeline (Centroid + CTM)
 
-This directory contains the SNI v3 pipeline implementation, which uses centroid-based architecture and CTM (Centroid-Track-Month) aggregation units.
+This branch contains the operational SNI v3 pipeline implementation.
 
-## Architecture
+## Start Here (Mandatory)
 
-SNI v3 replaces the vocabulary-based gating system with mechanical centroid matching:
+Before reading code, inspecting the database, or proposing changes:
+1. Read and follow: `./context/00__README.md`
+2. Then consult: `V3_PIPELINE_STATUS.md` (implementation + schemas + file map)
 
-- **Phase 1**: Title ingestion and cleaning (reuses v2 implementation)
-- **Phase 2**: 3-pass centroid matching (geographic -> systemic -> superpower)
-- **Phase 3**: Track classification and CTM building
+## Operational Notes
+- Development workflow / git hygiene: `DEV_SESSION_PLAYBOOK.md`
 
-## Directory Structure
-
-- `phase_1/` - Title ingestion and cleaning
-- `phase_2/` - Centroid matching logic
-- `phase_3/` - Track classification and CTM building
-- `shared/` - Common utilities and helpers
-
-## Database Tables
-
-- `centroids_v3` - Stable narrative anchors
-- `taxonomy_v3` - Unified lookup table for entities, keywords, institutions
-- `ctm` - Centroid-Track-Month aggregation units
-- `titles_v3` - Simplified title table with centroid/track/CTM linkage
-
-## Documentation
-
-See `/docs/tickets/SNI_v3_Design.md` for complete architectural specification.
+## What to Avoid
+Do not use this README as an architectural reference.
+The authoritative project intent and model live in `./context/`.
