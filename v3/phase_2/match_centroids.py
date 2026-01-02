@@ -31,7 +31,7 @@ from core.config import config
 def normalize_text(text: str) -> str:
     """
     Normalize text using v2 taxonomy_extractor logic.
-    NFKC normalization, lowercase, remove periods, collapse whitespace.
+    NFKC normalization, lowercase, remove periods, normalize dashes, collapse whitespace.
     """
     if not text:
         return ""
@@ -42,6 +42,11 @@ def normalize_text(text: str) -> str:
     # Remove periods (for matching "U.S." to "us", "U.K." to "uk", etc.)
     text = text.replace(".", "")
 
+    # Normalize all dash types to standard hyphen (-, –, —, ―)
+    text = text.replace("–", "-")  # en-dash
+    text = text.replace("—", "-")  # em-dash
+    text = text.replace("―", "-")  # horizontal bar
+
     # Lowercase and collapse whitespace
     text = re.sub(r"\s+", " ", text.lower()).strip()
 
@@ -51,11 +56,24 @@ def normalize_text(text: str) -> str:
 def tokenize_text(text: str) -> set:
     """
     Extract word tokens from normalized text for hash-based matching.
+    Handles hyphenated terms (e.g., "Tu-214", "F-35") and strips possessive suffixes.
     Returns set of individual words.
     """
-    # Split on whitespace and punctuation, keep only alphanumeric sequences
-    tokens = re.findall(r"\b\w+\b", text.lower())
-    return set(tokens)
+    # Extract tokens: word characters with optional internal hyphens
+    # Matches: "word", "Tu-214", "F-35", but not "-word" or "word-"
+    tokens = re.findall(r"\b[\w][\w-]*[\w]\b|\b\w\b", text.lower())
+
+    # Strip possessive suffixes: 's, 's (fancy apostrophe), trailing '
+    cleaned_tokens = set()
+    for token in tokens:
+        # Remove common possessive patterns
+        if token.endswith("'s") or token.endswith("'s"):
+            token = token[:-2]
+        elif token.endswith("'"):
+            token = token[:-1]
+        cleaned_tokens.add(token)
+
+    return cleaned_tokens
 
 
 def is_ascii_only(text: str) -> bool:
