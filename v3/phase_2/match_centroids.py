@@ -1,10 +1,17 @@
 """
-Phase 2: 3-Pass Centroid Matcher
+Phase 2: Accumulative Centroid Matcher
 
 Mechanical matching without LLM gate_keep:
-- Pass 1: Theater centroids (geo/person/org/model from taxonomy)
-- Pass 2: Systemic centroids (anchor/domain/model for global topics)
-- Pass 3: Macro centroids (superpower domestic catch-alls)
+- Match ALL centroids (geo + systemic) accumulative
+- One title can match multiple centroids
+- Enables bilateral relationship tracking and comprehensive event aggregation
+
+Performance optimizations:
+- Pre-tokenization + hash-based matching (O(n) instead of O(n*m))
+- Precompiled regex patterns (compile once, not per title)
+- Script-aware matching (word boundaries for ASCII, substring for others)
+- Stop word fast-fail
+- Batched database updates
 
 Uses proven v2 matching logic from taxonomy_extractor.py
 """
@@ -12,6 +19,7 @@ Uses proven v2 matching logic from taxonomy_extractor.py
 import re
 import sys
 import unicodedata
+from collections import defaultdict
 from pathlib import Path
 
 import psycopg2
@@ -40,6 +48,21 @@ def normalize_text(text: str) -> str:
     return text
 
 
+def tokenize_text(text: str) -> set:
+    """
+    Extract word tokens from normalized text for hash-based matching.
+    Returns set of individual words.
+    """
+    # Split on whitespace and punctuation, keep only alphanumeric sequences
+    tokens = re.findall(r"\b\w+\b", text.lower())
+    return set(tokens)
+
+
+def is_ascii_only(text: str) -> bool:
+    """Check if text contains only ASCII letters, numbers, and spaces"""
+    return all(c.isascii() and (c.isalnum() or c.isspace()) for c in text)
+
+
 def is_common_word_false_positive(alias_lower: str) -> bool:
     """Filter out common words that cause false positives across languages"""
     common_words = {
@@ -66,15 +89,15 @@ def is_common_word_false_positive(alias_lower: str) -> bool:
         "on",
         "we",
         # 2-letter words (Romance languages - articles, prepositions)
-        "il",  # Italian/French article "the"
-        "la",  # Italian/French/Spanish article "the"
-        "le",  # French article "the"
-        "el",  # Spanish article "the"
-        "un",  # Italian/French/Spanish article "a/an"
-        "di",  # Italian preposition "of"
-        "da",  # Italian preposition "from"
-        "al",  # Italian/Spanish preposition "to the"
-        "del",  # Italian/Spanish preposition "of the"
+        "il",
+        "la",
+        "le",
+        "el",
+        "un",
+        "di",
+        "da",
+        "al",
+        "del",
         # 3-letter words
         "who",
         "the",
@@ -100,8 +123,16 @@ def has_substring_script_chars(text: str) -> bool:
 
 def load_taxonomy():
     """
-    Load all active taxonomy items and precompile patterns using v2 logic.
-    Returns precompiled patterns for fast matching.
+    Load all active taxonomy items and build hash-based lookup structures.
+
+    Returns:
+        taxonomy dict with:
+        - stop_words_set: set of stop word tokens (hash lookup)
+        - stop_phrase_patterns: list of (pattern_type, pattern/substring) for stop phrases
+        - single_word_aliases: dict mapping word -> set of centroid_ids
+        - phrase_patterns: list of (compiled_pattern, centroid_ids) for multi-word phrases (ASCII)
+        - phrase_substrings: list of (substring, centroid_ids) for multi-word phrases (non-ASCII)
+        - substring_patterns: list of (substring, centroid_ids) for CJK matching
     """
     conn = psycopg2.connect(
         host=config.db_host,
@@ -112,27 +143,29 @@ def load_taxonomy():
     )
 
     with conn.cursor() as cur:
+        # Load all taxonomy items (label is display-only, not used for matching)
         cur.execute(
             """
-            SELECT id, item_raw, item_type, centroid_ids, aliases
+            SELECT id, is_stop_word, centroid_ids, aliases
             FROM taxonomy_v3
             WHERE is_active = true
         """
         )
-        results = cur.fetchall()
+        taxonomy_results = cur.fetchall()
 
     conn.close()
 
-    taxonomy = {
-        "pass1_patterns": [],  # [(centroid_ids, pattern, alias, use_substring)]
-        "pass2_patterns": [],  # [(centroid_ids, pattern, alias, use_substring)]
-        "pass3_patterns": [],  # [(centroid_ids, pattern, alias, use_substring)] for macro centroids
-        "stop_patterns": [],  # [(pattern, alias, use_substring)] for stop words
-    }
+    # Hash-based structures for O(1) lookup
+    stop_words_set = set()  # Single-word stop terms
+    stop_phrase_patterns = []  # Precompiled patterns/substrings for stop phrases
+    single_word_aliases = defaultdict(set)  # Word -> set of centroid_ids
+    phrase_patterns = []  # (compiled_pattern, centroid_ids) for ASCII multi-word
+    phrase_substrings = []  # (substring, centroid_ids) for non-ASCII multi-word
+    substring_patterns = []  # (substring, centroid_ids) for CJK
 
-    for id, item_raw, item_type, centroid_ids, aliases in results:
-        # Build searchable terms from item_raw + all aliases
-        terms = {normalize_text(item_raw)}
+    for id, is_stop_word, centroid_ids, aliases in taxonomy_results:
+        # Build searchable terms from aliases only (item_raw/label is display-only)
+        terms = set()
         if aliases:
             if isinstance(aliases, dict):
                 # Language-code format
@@ -143,111 +176,121 @@ def load_taxonomy():
                 terms.update(normalize_text(a) for a in aliases)
 
         # Handle stop words
-        if item_type == "stop":
+        if is_stop_word:
             for term in terms:
                 if is_common_word_false_positive(term):
                     continue
-                if has_substring_script_chars(term):
-                    taxonomy["stop_patterns"].append((None, term, True))
+
+                # Single-word stop terms go into hash set
+                if " " not in term and not has_substring_script_chars(term):
+                    stop_words_set.add(term)
+                # Multi-word or CJK stop terms need phrase/substring matching
                 else:
-                    pattern = re.compile(r"\b" + re.escape(term) + r"\b", re.IGNORECASE)
-                    taxonomy["stop_patterns"].append((pattern, None, False))
+                    if has_substring_script_chars(term):
+                        stop_phrase_patterns.append(("substring", term))
+                    elif is_ascii_only(term):
+                        # ASCII phrase - use word boundary regex
+                        pattern = re.compile(
+                            r"\b" + re.escape(term) + r"\b", re.IGNORECASE
+                        )
+                        stop_phrase_patterns.append(("regex", pattern))
+                    else:
+                        # Non-ASCII (Arabic, Devanagari, etc.) - use substring
+                        stop_phrase_patterns.append(("substring", term))
             continue
 
-        # Determine which pass this item belongs to
-        target_list = None
-        if item_type in ("geo", "person", "org", "model"):
-            target_list = taxonomy["pass1_patterns"]
-        elif item_type in ("anchor", "domain"):
-            target_list = taxonomy["pass2_patterns"]
-        elif item_type == "macro":
-            # Macro centroid keywords (for Pass 3 matching)
-            target_list = taxonomy["pass3_patterns"]
+        # Add matching patterns for non-stop-word items
+        if not centroid_ids:
+            continue
 
-        if target_list is not None and centroid_ids:
-            # Precompile patterns for each term using v2 logic
-            for term in terms:
-                # Skip common word false positives
-                if is_common_word_false_positive(term):
-                    continue
+        for term in terms:
+            # Skip common word false positives
+            if is_common_word_false_positive(term):
+                continue
 
-                # Check if term needs substring matching (CJK scripts)
-                if has_substring_script_chars(term):
-                    # Substring matching for CJK
-                    target_list.append((centroid_ids, None, term, True))
-                else:
-                    # Word boundary matching for Latin/Cyrillic
+            # CJK scripts need substring matching (can't tokenize)
+            if has_substring_script_chars(term):
+                substring_patterns.append((term, centroid_ids))
+            # Single-word aliases go into hash map
+            elif " " not in term:
+                single_word_aliases[term].update(centroid_ids)
+            # Multi-word phrases: precompile patterns based on script
+            else:
+                if is_ascii_only(term):
+                    # ASCII phrase - use word boundary regex (precompile)
                     pattern = re.compile(r"\b" + re.escape(term) + r"\b", re.IGNORECASE)
-                    target_list.append((centroid_ids, pattern, None, False))
+                    phrase_patterns.append((pattern, centroid_ids))
+                else:
+                    # Non-ASCII phrase - use substring matching
+                    phrase_substrings.append((term, centroid_ids))
 
-    return taxonomy
+    return {
+        "stop_words_set": stop_words_set,
+        "stop_phrase_patterns": stop_phrase_patterns,
+        "single_word_aliases": dict(single_word_aliases),
+        "phrase_patterns": phrase_patterns,
+        "phrase_substrings": phrase_substrings,
+        "substring_patterns": substring_patterns,
+    }
 
 
 def match_title(title_text, taxonomy):
     """
-    Match title against taxonomy using v2 proven logic with stop word filtering.
-    Returns: (matched_centroids, pass_number)
-    pass_number: 1 for Pass 1 match, 2 for Pass 2 match, 3 for Pass 3 match, 0 for no match/blocked
+    Match title against taxonomy using hash-based lookup.
+
+    Returns: (matched_centroids, match_status)
+    match_status: "blocked_stopword", "no_match", "matched"
     """
     normalized_title = normalize_text(title_text)
+
+    # Step 1: Fast-fail on stop words (hash lookup O(n) where n = words in title)
+    tokens = tokenize_text(normalized_title)
+
+    # Check single-word stop terms (O(1) hash lookup per token)
+    if tokens & taxonomy["stop_words_set"]:
+        return set(), "blocked_stopword"
+
+    # Check multi-word/CJK stop phrases (precompiled patterns)
+    for phrase_type, pattern_or_substring in taxonomy["stop_phrase_patterns"]:
+        if phrase_type == "substring":
+            if pattern_or_substring in normalized_title:
+                return set(), "blocked_stopword"
+        else:  # regex (precompiled)
+            if pattern_or_substring.search(normalized_title):
+                return set(), "blocked_stopword"
+
+    # Step 2: Match against all patterns (hash lookup O(n))
     matched_centroids = set()
-    pass_number = 0
 
-    # Check stop words FIRST (blocks everything if matched)
-    for pattern, alias, use_substring in taxonomy["stop_patterns"]:
-        if use_substring:
-            if alias and alias in normalized_title:
-                return set(), 0  # Blocked by stop word
-        else:
-            if pattern and pattern.search(normalized_title):
-                return set(), 0  # Blocked by stop word
+    # Check single-word aliases (O(1) hash lookup per token)
+    for token in tokens:
+        if token in taxonomy["single_word_aliases"]:
+            matched_centroids.update(taxonomy["single_word_aliases"][token])
 
-    # Pass 1: Theater centroids (geo/person/org/model)
-    for centroid_ids, pattern, alias, use_substring in taxonomy["pass1_patterns"]:
-        if use_substring:
-            # Substring matching for CJK
-            if alias and alias in normalized_title:
-                matched_centroids.update(centroid_ids)
-                pass_number = 1
-        else:
-            # Word boundary matching for Latin/Cyrillic
-            if pattern and pattern.search(normalized_title):
-                matched_centroids.update(centroid_ids)
-                pass_number = 1
+    # Check ASCII multi-word phrases (precompiled regex patterns)
+    for pattern, centroid_ids in taxonomy["phrase_patterns"]:
+        if pattern.search(normalized_title):
+            matched_centroids.update(centroid_ids)
 
-    # Pass 2: Systemic centroids (anchor/domain) - only if Pass 1 didn't match
-    if not matched_centroids:
-        for centroid_ids, pattern, alias, use_substring in taxonomy["pass2_patterns"]:
-            if use_substring:
-                # Substring matching for CJK
-                if alias and alias in normalized_title:
-                    matched_centroids.update(centroid_ids)
-                    pass_number = 2
-            else:
-                # Word boundary matching for Latin/Cyrillic
-                if pattern and pattern.search(normalized_title):
-                    matched_centroids.update(centroid_ids)
-                    pass_number = 2
+    # Check non-ASCII multi-word phrases (substring matching)
+    for substring, centroid_ids in taxonomy["phrase_substrings"]:
+        if substring in normalized_title:
+            matched_centroids.update(centroid_ids)
 
-    # Pass 3: Macro centroids with keyword matching (only if Pass 1 and 2 didn't match)
-    if not matched_centroids:
-        for centroid_ids, pattern, alias, use_substring in taxonomy["pass3_patterns"]:
-            if use_substring:
-                # Substring matching for CJK
-                if alias and alias in normalized_title:
-                    matched_centroids.update(centroid_ids)
-                    pass_number = 3
-            else:
-                # Word boundary matching for Latin/Cyrillic
-                if pattern and pattern.search(normalized_title):
-                    matched_centroids.update(centroid_ids)
-                    pass_number = 3
+    # Check CJK substring patterns
+    for substring, centroid_ids in taxonomy["substring_patterns"]:
+        if substring in normalized_title:
+            matched_centroids.update(centroid_ids)
 
-    return matched_centroids, pass_number
+    # Step 3: Return status
+    if matched_centroids:
+        return matched_centroids, "matched"
+    else:
+        return set(), "no_match"
 
 
 def process_batch(batch_size=100, max_titles=None):
-    """Process a batch of unassigned titles"""
+    """Process titles with batched database updates"""
     conn = psycopg2.connect(
         host=config.db_host,
         port=config.db_port,
@@ -258,12 +301,18 @@ def process_batch(batch_size=100, max_titles=None):
 
     print("Loading taxonomy...")
     taxonomy = load_taxonomy()
-    print(f"  Pass 1 patterns: {len(taxonomy['pass1_patterns'])} patterns")
-    print(f"  Pass 2 patterns: {len(taxonomy['pass2_patterns'])} patterns")
+    print(f"  Stop words (hash): {len(taxonomy['stop_words_set'])} words")
+    print(f"  Stop phrases: {len(taxonomy['stop_phrase_patterns'])} patterns")
     print(
-        f"  Pass 3 patterns: {len(taxonomy['pass3_patterns'])} patterns (macro keywords)"
+        f"  Single-word aliases (hash): {len(taxonomy['single_word_aliases'])} entries"
     )
-    print(f"  Stop patterns: {len(taxonomy['stop_patterns'])} patterns")
+    print(
+        f"  ASCII phrase patterns (precompiled): {len(taxonomy['phrase_patterns'])} patterns"
+    )
+    print(
+        f"  Non-ASCII phrase substrings: {len(taxonomy['phrase_substrings'])} patterns"
+    )
+    print(f"  CJK substring patterns: {len(taxonomy['substring_patterns'])} patterns")
 
     with conn.cursor() as cur:
         # Get pending titles
@@ -281,50 +330,69 @@ def process_batch(batch_size=100, max_titles=None):
 
     print(f"\nProcessing {len(titles)} titles...")
 
-    assigned_count = 0
-    out_of_scope_count = 0
-    pass1_count = 0
-    pass2_count = 0
-    pass3_count = 0
+    # Batch updates
+    matched_updates = []  # (centroid_ids, title_id)
+    out_of_scope_ids = []
+    blocked_stopword_ids = []
+    multi_centroid_count = 0
 
     for title_id, title_text in titles:
         # Match against taxonomy
-        matched_centroids, pass_num = match_title(title_text, taxonomy)
+        matched_centroids, match_status = match_title(title_text, taxonomy)
 
-        if matched_centroids:
-            # Found matches in Pass 1, 2, or 3
-            if pass_num == 1:
-                pass1_count += 1
-            elif pass_num == 2:
-                pass2_count += 1
-            elif pass_num == 3:
-                pass3_count += 1
+        if match_status == "matched":
+            if len(matched_centroids) > 1:
+                multi_centroid_count += 1
+            matched_updates.append((list(matched_centroids), title_id))
+        elif match_status == "blocked_stopword":
+            blocked_stopword_ids.append(title_id)
+        else:  # no_match
+            out_of_scope_ids.append(title_id)
 
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE titles_v3
-                    SET centroid_ids = %s,
-                        processing_status = 'assigned',
-                        updated_at = NOW()
-                    WHERE id = %s
+    # Execute batched updates
+    print("\nExecuting batched database updates...")
+
+    with conn.cursor() as cur:
+        # Batch update matched titles
+        if matched_updates:
+            from psycopg2.extras import execute_batch
+
+            execute_batch(
+                cur,
+                """
+                UPDATE titles_v3
+                SET centroid_ids = %s,
+                    processing_status = 'assigned',
+                    updated_at = NOW()
+                WHERE id = %s
                 """,
-                    (list(matched_centroids), title_id),
-                )
-            assigned_count += 1
-        else:
-            # No matches or blocked by stop word - mark as out of scope
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    UPDATE titles_v3
-                    SET processing_status = 'out_of_scope',
-                        updated_at = NOW()
-                    WHERE id = %s
+                matched_updates,
+                page_size=batch_size,
+            )
+
+        # Batch update out_of_scope titles
+        if out_of_scope_ids:
+            cur.execute(
+                """
+                UPDATE titles_v3
+                SET processing_status = 'out_of_scope',
+                    updated_at = NOW()
+                WHERE id = ANY(%s::uuid[])
                 """,
-                    (title_id,),
-                )
-            out_of_scope_count += 1
+                (out_of_scope_ids,),
+            )
+
+        # Batch update blocked_stopword titles
+        if blocked_stopword_ids:
+            cur.execute(
+                """
+                UPDATE titles_v3
+                SET processing_status = 'blocked_stopword',
+                    updated_at = NOW()
+                WHERE id = ANY(%s::uuid[])
+                """,
+                (blocked_stopword_ids,),
+            )
 
     conn.commit()
     conn.close()
@@ -332,12 +400,13 @@ def process_batch(batch_size=100, max_titles=None):
     print(f"\n{'='*60}")
     print("RESULTS")
     print(f"{'='*60}")
-    print(f"Total processed:     {len(titles)}")
-    print(f"Assigned:            {assigned_count}")
-    print(f"  - Pass 1 (theater):  {pass1_count}")
-    print(f"  - Pass 2 (systemic): {pass2_count}")
-    print(f"  - Pass 3 (macro):    {pass3_count}")
-    print(f"Out of scope:        {out_of_scope_count}")
+    print(f"Total processed:        {len(titles)}")
+    print(f"Matched:                {len(matched_updates)}")
+    print(
+        f"  - Multi-centroid:     {multi_centroid_count} ({100*multi_centroid_count//len(matched_updates) if matched_updates else 0}%)"
+    )
+    print(f"Blocked (stop words):   {len(blocked_stopword_ids)}")
+    print(f"No match (out of scope):{len(out_of_scope_ids)}")
 
 
 if __name__ == "__main__":
@@ -348,7 +417,7 @@ if __name__ == "__main__":
         "--max-titles", type=int, help="Maximum number of titles to process"
     )
     parser.add_argument(
-        "--batch-size", type=int, default=100, help="Batch size for processing"
+        "--batch-size", type=int, default=100, help="Batch size for database updates"
     )
 
     args = parser.parse_args()

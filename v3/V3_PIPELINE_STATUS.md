@@ -1,6 +1,6 @@
 # SNI v3 Pipeline - Project Status & Documentation
 
-**Last Updated**: 2025-11-07
+**Last Updated**: 2026-01-02
 **Status**: Operational - All 4 phases implemented and tested
 **Branch**: `chore/dev-health-initial`
 
@@ -18,7 +18,8 @@ The v3 pipeline represents a complete redesign of SNI's intelligence processing 
 - **Phase 3 Enhanced**: Dynamic track configuration system (centroid-specific tracks) ✅
 - **Phase 4**: Events digest extraction + narrative summary generation ✅
 - **Pipeline Daemon**: Production-ready orchestration with adaptive scheduling ✅
-- **Taxonomy**: 1,253 entities with 11,401 multilingual aliases (simplified) ✅
+- **Taxonomy**: Thematically consolidated multilingual aliases, added centroid ids ✅
+- **Schema Migration**: Simplified taxonomy_v3 structure (is_stop_word boolean, removed obsolete fields) ✅
 
 ---
 
@@ -48,9 +49,10 @@ CTM Table (ready for frontend consumption)
    - `ctm_ids`: ARRAY (many-to-many with CTMs)
    - `track`: Strategic classification via LLM
 
-2. **taxonomy_v3**: Hierarchical entity taxonomy
-   - 1,253 entities across 6 classes (theater, systemic, macro, person, org, stop)
-   - 11,401 multilingual aliases (reduced from 14,667)
+2. **taxonomy_v3**: Consolidated entity taxonomy
+   - 252 entities grouped by centroid affiliation (currently)
+   - Multilingual aliases in JSONB format (en, es, ru, ar, zh, etc.)
+   - Stop words marked with is_stop_word boolean
    - Supports non-Latin scripts (Chinese, Arabic, Cyrillic)
 
 3. **centroids_v3**: Clustering centers with priority weights
@@ -327,13 +329,17 @@ CREATE INDEX idx_titles_v3_ctms ON titles_v3 USING GIN(ctm_ids);
 CREATE TABLE taxonomy_v3 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_raw TEXT UNIQUE NOT NULL,
-    item_type TEXT NOT NULL,
-    category_id UUID,
+    centroid_ids TEXT[] NOT NULL,
     aliases JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    is_stop_word BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Aliases format: {"en": ["alias1", "alias2"], "es": ["alias3"], ...}
+-- centroid_ids: Array of centroid IDs this entity belongs to
+-- is_stop_word: TRUE for blocked patterns (sports, culture, lifestyle)
 ```
 
 ### centroids_v3
