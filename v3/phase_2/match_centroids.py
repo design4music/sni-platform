@@ -28,15 +28,31 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 
 
+def strip_diacritics(text: str) -> str:
+    """
+    Remove Unicode diacritics (accent marks) from text.
+    Example: "Côte d'Ivoire" -> "Cote d'Ivoire"
+    """
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
+    )
+
+
 def normalize_text(text: str) -> str:
     """
     Normalize text using v2 taxonomy_extractor logic.
-    NFKC normalization, lowercase, remove periods, normalize dashes, collapse whitespace.
+    Steps: lowercase, strip diacritics, remove periods, normalize dashes, collapse whitespace.
     """
     if not text:
         return ""
 
-    # NFKC Unicode normalization
+    # Lowercase first
+    text = text.lower()
+
+    # Strip diacritics (Côte d'Ivoire -> Cote d'Ivoire)
+    text = strip_diacritics(text)
+
+    # NFKC Unicode normalization (after diacritic stripping)
     text = unicodedata.normalize("NFKC", text)
 
     # Remove periods (for matching "U.S." to "us", "U.K." to "uk", etc.)
@@ -47,8 +63,8 @@ def normalize_text(text: str) -> str:
     text = text.replace("—", "-")  # em-dash
     text = text.replace("―", "-")  # horizontal bar
 
-    # Lowercase and collapse whitespace
-    text = re.sub(r"\s+", " ", text.lower()).strip()
+    # Collapse whitespace
+    text = re.sub(r"\s+", " ", text).strip()
 
     return text
 
