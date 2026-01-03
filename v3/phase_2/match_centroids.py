@@ -72,14 +72,17 @@ def normalize_text(text: str) -> str:
 def tokenize_text(text: str) -> set:
     """
     Extract word tokens from normalized text for hash-based matching.
-    Handles hyphenated terms (e.g., "Tu-214", "F-35") and strips possessive suffixes.
-    Returns set of individual words.
+    Handles hyphenated terms and compound words:
+    - Preserves full hyphenated terms: "Tu-214", "F-35"
+    - Also splits compounds: "China-made" -> {"china-made", "china", "made"}
+    - Strips possessive suffixes: "Netanyahu's" -> "netanyahu"
+    Returns set of individual words and their components.
     """
     # Extract tokens: word characters with optional internal hyphens
     # Matches: "word", "Tu-214", "F-35", but not "-word" or "word-"
     tokens = re.findall(r"\b[\w][\w-]*[\w]\b|\b\w\b", text.lower())
 
-    # Strip possessive suffixes: 's, 's (fancy apostrophe), trailing '
+    # Strip possessive suffixes and split hyphenated compounds
     cleaned_tokens = set()
     for token in tokens:
         # Remove common possessive patterns
@@ -87,7 +90,17 @@ def tokenize_text(text: str) -> set:
             token = token[:-2]
         elif token.endswith("'"):
             token = token[:-1]
+
+        # Add the full token
         cleaned_tokens.add(token)
+
+        # If token contains hyphen, also add individual parts
+        # This allows "china-made" to match "china" and "us-russian" to match "us" + "russian"
+        if "-" in token:
+            parts = token.split("-")
+            for part in parts:
+                if part:  # Skip empty parts
+                    cleaned_tokens.add(part)
 
     return cleaned_tokens
 
