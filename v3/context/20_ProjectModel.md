@@ -4,7 +4,7 @@
 
 RSS Headlines
 → Phase 1: Ingestion & Cleaning
-→ Phase 2: 3-Pass Centroid Matching
+→ Phase 2: Accumulative Centroid Matching
 → Phase 3: Track Assignment & CTM Creation
 → Phase 4: Enrichment (Events + Summary)
 → Frontend Consumption
@@ -30,22 +30,27 @@ No intelligence is applied here.
 
 **Purpose**: Assign structural narrative anchors.
 
-### 3-Pass Matching
-1. **Theater Pass** (priority 100)
-   - Geographic / geopolitical anchors
-2. **Systemic Pass** (priority 10)
-   - Domains like AI, Climate, Migration
-3. **Macro Pass** (priority 1)
-   - High-level strategic dimensions
+### Accumulative Matching
+- All centroids checked (geographic + systemic)
+- Returns **all matches** (no early-exit)
+- One title → multiple centroids
+- Enables bilateral relationship tracking
 
-### Rules
-- Stop words applied only to systemic pass
-- Romance-language false positives explicitly filtered
-- Matching is alias-based, deterministic, and explainable
+### Implementation
+- Hash-based lookup for single-word aliases
+- Precompiled regex patterns for multi-word phrases
+- Stop word fast-fail (blocks before matching)
+- Script-aware (word boundaries for ASCII, substring for CJK/Arabic)
+- Normalization: diacritics stripped, possessives removed, compounds split
+
+### Matching is:
+- Alias-based, deterministic, and explainable
+- Language-aware (filters Romance false positives)
+- Performance-optimized (handles 2K+ titles/day)
 
 **Output**:
 - `titles_v3.centroid_ids[]`
-- `processing_status='assigned'`
+- `processing_status='assigned'|'blocked_stopword'|'out_of_scope'`
 
 ---
 
