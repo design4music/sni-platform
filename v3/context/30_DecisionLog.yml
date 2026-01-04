@@ -64,3 +64,34 @@ decisions:
     consequences:
       - Track logic moves to database
       - No redeploy required for track edits
+
+  - id: D-006
+    date: 2026-01-02
+    type: architectural
+    status: accepted
+    title: Switch from sequential 3-pass early-exit to accumulative centroid matching
+    rationale:
+      - Sequential passes missed bilateral relationships (Denmark+Trump matched only Denmark)
+      - Early-exit prevented multi-centroid assignment needed for relationship tracking
+      - Accumulative matching enables comprehensive event aggregation per centroid
+      - Supports bilateral relationship queries (all US-Russia interaction events)
+    consequences:
+      - Higher centroid assignments per title (44% multi-centroid vs ~5% before)
+      - Increased CTM volume (more centroids per title → more CTMs)
+      - Pass concept obsolete (all patterns checked regardless of centroid class)
+      - Removed is_macro field from centroids_v3 schema
+    implementation:
+      - Hash-based single-word matching (O(1) lookup, 3600+ aliases)
+      - Precompiled regex patterns (1700+ patterns compiled once)
+      - Script-aware matching (word boundaries for ASCII, substring for CJK/Arabic)
+      - Batched database updates for 2K+ titles/day scale
+      - Hyphenated compound splitting (China-made matches China)
+      - Diacritic normalization (Côte d'Ivoire matches Cote d'Ivoire)
+    performance:
+      - Coverage increased from ~45% to 66.5% on test dataset (872 titles)
+      - Multi-centroid rate: 44% (259/580 matched titles)
+      - Centroid coverage: 77.6% (66/85 centroids matched)
+    references:
+      - Phase 2 implementation: v3/phase_2/match_centroids.py
+      - Taxonomy migration: db/migrate_taxonomy_simplify_schema.py
+      - Schema migration: db/migrate_drop_is_macro.py

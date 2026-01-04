@@ -55,10 +55,9 @@ CTM Table (ready for frontend consumption)
    - Stop words marked with is_stop_word boolean
    - Supports non-Latin scripts (Chinese, Arabic, Cyrillic)
 
-3. **centroids_v3**: Clustering centers with priority weights
-   - 3 passes: theater (P1=100) → systemic (P1=10) → macro (P1=1)
-   - 70 stop words excluded from matching
-   - Real publisher domain + stop word filtering
+3. **centroids_v3**: Clustering centers
+   - Two classes: geo (geographic) and systemic (thematic)
+   - Optional custom track configurations via track_config_id
 
 4. **ctm**: Centroid-Track-Month aggregation units
    - Unique on (centroid_id, track, yyyymm)
@@ -91,21 +90,19 @@ v3/phase_1/
 ### Phase 2: Centroid Matching
 ```
 v3/phase_2/
-└── match_centroids.py          # 3-pass mechanical matching
+└── match_centroids.py          # Accumulative mechanical matching
 ```
 
 **Algorithm**:
-1. **Pass 1 (Theater)**: Match priority=100 centroids (Middle East, China, Russia, etc.)
-2. **Pass 2 (Systemic)**: Match priority=10 centroids (Climate, Migration, AI, etc.)
-3. **Pass 3 (Macro)**: Match priority=1 centroids (Diplomacy, Trade, Military, etc.)
+- Accumulative matching (checks all centroids, returns all matches)
+- Hash-based single-word lookup, precompiled regex patterns
+- Stop word fast-fail, script-aware matching
 
-**Filtering**:
-- Stop word exclusion (70 culture/sport terms)
-- Common word filter (Romance articles: "il", "la", "le", etc.)
-- Publisher domain deduplication
-- NFKC-normalized alias matching
+**Normalization**:
+- Lowercase, strip diacritics, NFKC, remove periods, normalize dashes
+- Tokenization: strip possessives, split hyphenated compounds
 
-**Database**: Updates `titles_v3.centroid_ids` and `processing_status='assigned'`
+**Database**: Updates `titles_v3.centroid_ids` and `processing_status`
 
 ### Phase 3: Track Assignment & CTM Creation
 ```
@@ -345,19 +342,17 @@ CREATE TABLE taxonomy_v3 (
 ### centroids_v3
 ```sql
 CREATE TABLE centroids_v3 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY,
     label TEXT UNIQUE NOT NULL,
     class TEXT NOT NULL,
     primary_theater TEXT,
-    pass_number INTEGER,
-    priority INTEGER,
-    item_ids UUID[],
+    is_active BOOLEAN DEFAULT TRUE,
     track_config_id UUID REFERENCES track_configs(id),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- pass_number: 1 (theater), 2 (systemic), 3 (macro)
--- priority: 100 (P1), 10 (P2), 1 (P3)
+-- class: 'geo' (geographic centroids) or 'systemic' (thematic centroids)
 -- track_config_id: Optional link to custom track configuration (NULL = use default)
 
 CREATE INDEX idx_centroids_v3_track_config ON centroids_v3(track_config_id);
