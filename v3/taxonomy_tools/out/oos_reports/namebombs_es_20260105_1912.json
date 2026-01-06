@@ -1,0 +1,25 @@
+{
+  "run": {
+    "since_hours": 1,
+    "languages": [
+      "en",
+      "fr",
+      "es",
+      "ru"
+    ],
+    "min_oos_support": 1,
+    "min_total_support_map": {
+      "en": 5,
+      "fr": 3,
+      "es": 3,
+      "ru": 3
+    },
+    "timestamp": "2026-01-05T19:12:43.595359"
+  },
+  "language": "es",
+  "totals": {
+    "titles_all": 10,
+    "titles_oos": 0
+  },
+  "candidates": []
+}

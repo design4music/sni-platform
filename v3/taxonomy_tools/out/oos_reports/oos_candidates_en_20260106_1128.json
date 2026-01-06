@@ -1,0 +1,412 @@
+{
+  "run": {
+    "since_hours": 24,
+    "language": "en",
+    "min_total_support": 2,
+    "min_oos_support": 1,
+    "ngram_max": 2,
+    "min_length": 4,
+    "timestamp": "2026-01-06T11:28:46.933962"
+  },
+  "totals": {
+    "titles_all": 675,
+    "titles_oos": 140
+  },
+  "candidates": [
+    {
+      "token": "action plan",
+      "support_all": 3,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen",
+        "China unveils action plan to promote green consumption"
+      ]
+    },
+    {
+      "token": "meets taoiseach",
+      "support_all": 3,
+      "support_oos": 2,
+      "examples_oos": [
+        "Xi meets Taoiseach of Ireland Micheal Martin",
+        "Xi meets Taoiseach of Ireland"
+      ],
+      "examples_all": [
+        "Xi meets Taoiseach of Ireland Micheal Martin",
+        "Xi meets Taoiseach of Ireland",
+        "Chinese President Xi Jinping meets Taoiseach of Ireland, stresses long-term, stable partnership"
+      ]
+    },
+    {
+      "token": "bulletin 4th,",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Video. Latest news bulletin | January 4th, 2026 – Evening",
+        "Video. Latest news bulletin | January 4th, 2026 – Morning"
+      ],
+      "examples_all": [
+        "Video. Latest news bulletin | January 4th, 2026 – Evening",
+        "Video. Latest news bulletin | January 4th, 2026 – Morning"
+      ]
+    },
+    {
+      "token": "business environmen",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "ceremony president",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Xi holds welcome ceremony for ROK President Lee Jae-myung",
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ],
+      "examples_all": [
+        "Xi holds welcome ceremony for ROK President Lee Jae-myung",
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ]
+    },
+    {
+      "token": "countries lead",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Xi says major countries should take lead in abiding by intl law, UN Charter",
+        "President Xi: Major countries should take lead in upholding UN Charter"
+      ],
+      "examples_all": [
+        "Xi says major countries should take lead in abiding by intl law, UN Charter",
+        "President Xi: Major countries should take lead in upholding UN Charter"
+      ]
+    },
+    {
+      "token": "expert: less",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "fraud scandal",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Live updates: Minnesota Gov. Tim Walz won’t seek third term as fraud scandal churns",
+        "Minnesota Gov. Tim Walz ends reelection bid amid welfare fraud scandal"
+      ],
+      "examples_all": [
+        "Live updates: Minnesota Gov. Tim Walz won’t seek third term as fraud scandal churns",
+        "Minnesota Gov. Tim Walz ends reelection bid amid welfare fraud scandal"
+      ]
+    },
+    {
+      "token": "holds welcome",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Xi holds welcome ceremony for ROK President Lee Jae-myung",
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ],
+      "examples_all": [
+        "Xi holds welcome ceremony for ROK President Lee Jae-myung",
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ]
+    },
+    {
+      "token": "improvement business",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "items action",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "less items",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "means improvement",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "minnesota walz",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Live updates: Minnesota Gov. Tim Walz won’t seek third term as fraud scandal churns",
+        "Minnesota Gov. Tim Walz ends reelection bid amid welfare fraud scandal"
+      ],
+      "examples_all": [
+        "Live updates: Minnesota Gov. Tim Walz won’t seek third term as fraud scandal churns",
+        "Minnesota Gov. Tim Walz ends reelection bid amid welfare fraud scandal"
+      ]
+    },
+    {
+      "token": "plan means",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ],
+      "examples_all": [
+        "Expert: Less items of action plan means improvement of business environmen",
+        "Expert: Less items of action plan means improvement of business environmen"
+      ]
+    },
+    {
+      "token": "proposal revise",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "DPP's proposal to revise regulations on cross-Strait relations condemned",
+        "DPP lawmakers' proposal to revise cross-Strait regulations condemned"
+      ],
+      "examples_all": [
+        "DPP's proposal to revise regulations on cross-Strait relations condemned",
+        "DPP lawmakers' proposal to revise cross-Strait regulations condemned"
+      ]
+    },
+    {
+      "token": "taoiseach ireland",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Xi meets Taoiseach of Ireland Micheal Martin",
+        "Xi meets Taoiseach of Ireland"
+      ],
+      "examples_all": [
+        "Xi meets Taoiseach of Ireland Micheal Martin",
+        "Xi meets Taoiseach of Ireland"
+      ]
+    },
+    {
+      "token": "welcome ceremony",
+      "support_all": 2,
+      "support_oos": 2,
+      "examples_oos": [
+        "Xi holds welcome ceremony for ROK President Lee Jae-myung",
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ],
+      "examples_all": [
+        "Xi holds welcome ceremony for ROK President Lee Jae-myung",
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ]
+    },
+    {
+      "token": "president myung",
+      "support_all": 5,
+      "support_oos": 1,
+      "examples_oos": [
+        "President Xi holds welcome ceremony for ROK President Lee Jae Myung"
+      ],
+      "examples_all": [
+        "Pyongyang fires ballistic missiles as South Korean President Lee Jae Myung makes state visit to China",
+        "ROK President Lee Jae Myung arrives in Beijing for state visit",
+        "President Lee Jae Myung stresses importance of ROK-China ties"
+      ]
+    },
+    {
+      "token": "here’s know",
+      "support_all": 4,
+      "support_oos": 1,
+      "examples_oos": [
+        "A month before their 5-year anniversary, an Ohio couple was killed in the home where they exchanged vows. Here’s what we know"
+      ],
+      "examples_all": [
+        "Two of the Middle East’s most powerful countries are facing off in Yemen. Here’s what to know",
+        "A month before their 5-year anniversary, an Ohio couple was killed in the home where they exchanged vows. Here’s what we know",
+        "Venezuelans face uncertainty as the Trump administration’s plans for their country emerge. Here’s what to know"
+      ]
+    },
+    {
+      "token": "fire victims",
+      "support_all": 3,
+      "support_oos": 1,
+      "examples_oos": [
+        "Video. Crans-Montana residents take part in silent march for fire victims"
+      ],
+      "examples_all": [
+        "Pressure mounts for answers over Swiss bar fire after victims identified",
+        "Hundreds march in silence to honour Swiss Alps bar fire victims",
+        "Video. Crans-Montana residents take part in silent march for fire victims"
+      ]
+    },
+    {
+      "token": "care centers",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Minnesota child care centers accused of wrongdoing were operating as expected, report says"
+      ],
+      "examples_all": [
+        "Minnesota governor drops reelection campaign amid controversy over child care centers accused of fraud viral video",
+        "Minnesota child care centers accused of wrongdoing were operating as expected, report says"
+      ]
+    },
+    {
+      "token": "center stage",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Geopolitics take center stage in the new year"
+      ],
+      "examples_all": [
+        "Self-driving tech, AI take center stage at CES as automakers dial back EV plans",
+        "Geopolitics take center stage in the new year"
+      ]
+    },
+    {
+      "token": "centers accused",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Minnesota child care centers accused of wrongdoing were operating as expected, report says"
+      ],
+      "examples_all": [
+        "Minnesota governor drops reelection campaign amid controversy over child care centers accused of fraud viral video",
+        "Minnesota child care centers accused of wrongdoing were operating as expected, report says"
+      ]
+    },
+    {
+      "token": "child care",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Minnesota child care centers accused of wrongdoing were operating as expected, report says"
+      ],
+      "examples_all": [
+        "Minnesota governor drops reelection campaign amid controversy over child care centers accused of fraud viral video",
+        "Minnesota child care centers accused of wrongdoing were operating as expected, report says"
+      ]
+    },
+    {
+      "token": "crash kills",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "G16 highway crash kills four, investigation underway"
+      ],
+      "examples_all": [
+        "Boxer Anthony Joshua 'stable' after car crash kills two in Nigeria",
+        "G16 highway crash kills four, investigation underway"
+      ]
+    },
+    {
+      "token": "data shows",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "ICE shift in tactics leads to soaring number of at-large arrests, data shows"
+      ],
+      "examples_all": [
+        "ICE shift in tactics leads to soaring number of at-large arrests, data shows",
+        "Chevron resumes exports of Venezuelan oil to US after four-day pause, data shows"
+      ]
+    },
+    {
+      "token": "europes stoxx",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Europe's STOXX 600 hits 600 points for first time"
+      ],
+      "examples_all": [
+        "Europe's STOXX breaks 600-mark for first time as Venezuela strikes lift defence shares",
+        "Europe's STOXX 600 hits 600 points for first time"
+      ]
+    },
+    {
+      "token": "investor appetite",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Memory chipmakers rise as global supply shortage whets investor appetite"
+      ],
+      "examples_all": [
+        "Trump's Venezuela gambit tests investor appetite for geopolitical risk",
+        "Memory chipmakers rise as global supply shortage whets investor appetite"
+      ]
+    },
+    {
+      "token": "minnesota governor",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "Why Minnesota Governor Tim Walz is ending his reelection bid"
+      ],
+      "examples_all": [
+        "Minnesota governor drops reelection campaign amid controversy over child care centers accused of fraud viral video",
+        "Why Minnesota Governor Tim Walz is ending his reelection bid"
+      ]
+    },
+    {
+      "token": "worlds biggest",
+      "support_all": 2,
+      "support_oos": 1,
+      "examples_oos": [
+        "CES 2026: All the latest from world's biggest tech show"
+      ],
+      "examples_all": [
+        "CES 2026: All the latest from world's biggest tech show",
+        "BYD overtakes Tesla to become world's biggest EV maker"
+      ]
+    }
+  ]
+}

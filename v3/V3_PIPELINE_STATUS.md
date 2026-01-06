@@ -264,13 +264,49 @@ sudo systemctl enable sni-v3-pipeline
 sudo journalctl -u sni-v3-pipeline -f
 ```
 
+### Taxonomy Tools Suite
+```
+v3/taxonomy_tools/
+├── common.py                      # Shared utilities (Phase 2 normalization reuse)
+├── profile_alias_coverage.py      # Measure alias effectiveness per centroid/language
+├── prune_aliases.py               # Remove redundant aliases (static subsumption)
+├── export_taxonomy_snapshot.py    # Create safety backups
+├── restore_taxonomy_snapshot.py   # Rollback to previous state
+├── namebombs.py                   # Detect emerging proper names in OOS
+└── oos_keyword_candidates.py      # Detect general keywords missing from taxonomy
+```
+
+**Purpose**: Automated analysis and maintenance for taxonomy management
+
+**Key Features**:
+- **Static Subsumption Pruning**: Remove aliases where tokens(A) ⊂ tokens(B) (e.g., "AI" subsumes "AI infrastructure")
+  - Results (2026-01-05): 836 aliases removed (6.5%), 12,077 kept
+- **NameBombs Detector**: Identify proper names (people/orgs/places) leaking into out-of-scope
+  - Supports: EN, FR, ES, RU
+  - Extraction: TitleCase phrases + acronyms
+- **OOS Keyword Candidates**: Detect general keywords/noun phrases missing from taxonomy
+  - English-only, bigram-preferred (unigrams require OOS ≥ 5)
+  - Filters: headline boilerplate, temporal words, proper names
+- **All tools**: Report-only (no auto-writes), designed for daily pipeline integration
+
+**Documentation**: `v3/context/60_TaxonomyTools.md`
+
+**Output Directories** (git-ignored):
+```
+out/
+├── taxonomy_profile/       # Coverage analysis
+├── taxonomy_prune/         # Pruning reports
+├── taxonomy_snapshots/     # Safety backups
+└── oos_reports/            # NameBombs + keyword candidates
+```
+
 ### Database Migrations & Utilities
 ```
 db/
 ├── migration_v3_schema.sql     # Complete v3 schema
 ├── migration_v3_taxonomy.sql   # Taxonomy + aliases
-├── simplify_taxonomy_aliases.py # Removed 3,266 redundant aliases
-├── remove_uncommon_iso_aliases.py # Removed 723 ISO codes
+├── migrate_taxonomy_simplify_schema.py # Removed obsolete fields (iso_code, wikidata_qid, item_type)
+├── migrate_drop_is_macro.py    # Removed is_macro after accumulative matching
 └── debug_italian_matches.py    # Debugging tool for false positives
 ```
 

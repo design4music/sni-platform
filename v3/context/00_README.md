@@ -53,6 +53,21 @@ Only then may Claude Code:
 - Claude Code must not update ProjectContract or ProjectModel
   without explicitly proposing a patch for human approval.
 
+### Major Additions (2026-01-05/06)
+
+**Taxonomy Tools Suite** (`v3/taxonomy_tools/`)
+Automated analysis and maintenance tools for taxonomy management:
+
+- **Static Subsumption Pruner** - Remove redundant aliases (836 pruned, 6.5%)
+- **Coverage Profiler** - Measure alias effectiveness per centroid/language
+- **Snapshot/Restore** - Safety backups for taxonomy state
+- **NameBombs Detector** - Identify emerging proper names leaking into OOS
+- **OOS Keyword Candidates** - Detect general keywords missing from taxonomy
+
+All tools produce **reports only** (no auto-writes). Designed for daily pipeline integration.
+
+**Documentation**: `60_TaxonomyTools.md`
+
 ---
 
 ## Reminder

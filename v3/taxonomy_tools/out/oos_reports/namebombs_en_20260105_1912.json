@@ -1,0 +1,41 @@
+{
+  "run": {
+    "since_hours": 1,
+    "languages": [
+      "en",
+      "fr",
+      "es",
+      "ru"
+    ],
+    "min_oos_support": 1,
+    "min_total_support_map": {
+      "en": 5,
+      "fr": 3,
+      "es": 3,
+      "ru": 3
+    },
+    "timestamp": "2026-01-05T19:12:43.592494"
+  },
+  "language": "en",
+  "totals": {
+    "titles_all": 675,
+    "titles_oos": 140
+  },
+  "candidates": [
+    {
+      "name": "new year",
+      "support_all": 13,
+      "support_oos": 4,
+      "examples_oos": [
+        "Xi's message for New Year widely lauded",
+        "Locajoy Theme Park celebrates New Year and pandas with unique feast",
+        "HKSAR chief executive extends 2026 New Year message"
+      ],
+      "examples_all": [
+        "IN BRIEF: Key takeaways from Vladimir Putin's New Year's address to Russian people",
+        "Putin extends Christmas, New Year greetings to foreign leaders — Kremlin",
+        "Popular Japanese sushi chain pays record $3.2 million for tuna in New Year auction"
+      ]
+    }
+  ]
+}
