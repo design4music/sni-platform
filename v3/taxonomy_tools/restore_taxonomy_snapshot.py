@@ -80,11 +80,13 @@ def restore_taxonomy(snapshot, dry_run=True):
 
             if exists:
                 # Update existing item
+                # Extract first element from centroid_ids array (snapshots have array format)
+                centroid_id = item["centroid_ids"][0] if item["centroid_ids"] else None
                 cur.execute(
                     """
                     UPDATE taxonomy_v3
                     SET item_raw = %s,
-                        centroid_ids = %s,
+                        centroid_id = %s,
                         aliases = %s,
                         is_active = %s,
                         is_stop_word = %s,
@@ -93,7 +95,7 @@ def restore_taxonomy(snapshot, dry_run=True):
                     """,
                     (
                         item["item_raw"],
-                        item["centroid_ids"],
+                        centroid_id,
                         json.dumps(item["aliases"]),
                         item["is_active"],
                         item["is_stop_word"],
@@ -103,16 +105,18 @@ def restore_taxonomy(snapshot, dry_run=True):
                 updated_count += 1
             else:
                 # Insert new item (shouldn't happen in rollback, but handle it)
+                # Extract first element from centroid_ids array (snapshots have array format)
+                centroid_id = item["centroid_ids"][0] if item["centroid_ids"] else None
                 cur.execute(
                     """
                     INSERT INTO taxonomy_v3
-                    (id, item_raw, centroid_ids, aliases, is_active, is_stop_word, created_at, updated_at)
+                    (id, item_raw, centroid_id, aliases, is_active, is_stop_word, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                     """,
                     (
                         item["id"],
                         item["item_raw"],
-                        item["centroid_ids"],
+                        centroid_id,
                         json.dumps(item["aliases"]),
                         item["is_active"],
                         item["is_stop_word"],

@@ -1,6 +1,6 @@
 # SNI v3 Pipeline - Project Status & Documentation
 
-**Last Updated**: 2026-01-02
+**Last Updated**: 2026-01-06
 **Status**: Operational - All 4 phases implemented and tested
 **Branch**: `chore/dev-health-initial`
 
@@ -20,6 +20,7 @@ The v3 pipeline represents a complete redesign of SNI's intelligence processing 
 - **Pipeline Daemon**: Production-ready orchestration with adaptive scheduling ✅
 - **Taxonomy**: Thematically consolidated multilingual aliases, added centroid ids ✅
 - **Schema Migration**: Simplified taxonomy_v3 structure (is_stop_word boolean, removed obsolete fields) ✅
+- **Schema Optimization**: Migrated taxonomy_v3.centroid_ids from ARRAY to VARCHAR(30) (2026-01-06) ✅
 
 ---
 
@@ -50,7 +51,7 @@ CTM Table (ready for frontend consumption)
    - `track`: Strategic classification via LLM
 
 2. **taxonomy_v3**: Consolidated entity taxonomy
-   - 252 entities grouped by centroid affiliation (currently)
+   - 252+ entities, each belonging to ONE centroid (1-to-1 via centroid_id VARCHAR)
    - Multilingual aliases in JSONB format (en, es, ru, ar, zh, etc.)
    - Stop words marked with is_stop_word boolean
    - Supports non-Latin scripts (Chinese, Arabic, Cyrillic)
@@ -362,17 +363,25 @@ CREATE INDEX idx_titles_v3_ctms ON titles_v3 USING GIN(ctm_ids);
 CREATE TABLE taxonomy_v3 (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_raw TEXT UNIQUE NOT NULL,
-    centroid_ids TEXT[] NOT NULL,
     aliases JSONB,
-    is_stop_word BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    is_stop_word BOOLEAN DEFAULT FALSE,
+    centroid_id VARCHAR(30),
+    CONSTRAINT check_centroid_ids_format CHECK (
+        centroid_id IS NULL OR
+        centroid_id ~ '^[A-Z]+(-[A-Z]+)+$'
+    )
 );
 
+CREATE INDEX idx_taxonomy_v3_centroid_ids ON taxonomy_v3(centroid_id)
+WHERE is_active = true;
+
 -- Aliases format: {"en": ["alias1", "alias2"], "es": ["alias3"], ...}
--- centroid_ids: Array of centroid IDs this entity belongs to
+-- centroid_id: Single centroid ID this CSC belongs to (VARCHAR, 1-to-1 relationship)
 -- is_stop_word: TRUE for blocked patterns (sports, culture, lifestyle)
+-- Format: REGION-TOPIC or REGION-SUB-TOPIC (e.g., 'ASIA-CHINA', 'NON-STATE-ISIS')
 ```
 
 ### centroids_v3

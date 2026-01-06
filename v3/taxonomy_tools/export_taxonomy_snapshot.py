@@ -34,11 +34,11 @@ def export_taxonomy(centroid_id=None):
             # Filter by specific centroid
             cur.execute(
                 """
-                SELECT id, item_raw, centroid_ids, aliases, is_active, is_stop_word,
+                SELECT id, item_raw, centroid_id, aliases, is_active, is_stop_word,
                        created_at, updated_at
                 FROM taxonomy_v3
                 WHERE is_active = true
-                  AND %s = ANY(centroid_ids)
+                  AND centroid_id = %s
                 ORDER BY item_raw
                 """,
                 (centroid_id,),
@@ -47,7 +47,7 @@ def export_taxonomy(centroid_id=None):
             # All active taxonomy items
             cur.execute(
                 """
-                SELECT id, item_raw, centroid_ids, aliases, is_active, is_stop_word,
+                SELECT id, item_raw, centroid_id, aliases, is_active, is_stop_word,
                        created_at, updated_at
                 FROM taxonomy_v3
                 WHERE is_active = true
@@ -64,7 +64,7 @@ def export_taxonomy(centroid_id=None):
     for (
         id,
         item_raw,
-        centroid_ids,
+        centroid_id,
         aliases,
         is_active,
         is_stop_word,
@@ -75,7 +75,9 @@ def export_taxonomy(centroid_id=None):
             {
                 "id": str(id),
                 "item_raw": item_raw,
-                "centroid_ids": centroid_ids if centroid_ids else [],
+                "centroid_ids": (
+                    [centroid_id] if centroid_id else []
+                ),  # Keep as array for backward compat
                 "aliases": aliases if aliases else {},
                 "is_active": is_active,
                 "is_stop_word": is_stop_word,

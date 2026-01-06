@@ -176,10 +176,10 @@ def load_taxonomy():
         taxonomy dict with:
         - stop_words_set: set of stop word tokens (hash lookup)
         - stop_phrase_patterns: list of (pattern_type, pattern/substring) for stop phrases
-        - single_word_aliases: dict mapping word -> set of centroid_ids
-        - phrase_patterns: list of (compiled_pattern, centroid_ids) for multi-word phrases (ASCII)
-        - phrase_substrings: list of (substring, centroid_ids) for multi-word phrases (non-ASCII)
-        - substring_patterns: list of (substring, centroid_ids) for CJK matching
+        - single_word_aliases: dict mapping word -> set of centroid_ids (multiple aliases per centroid)
+        - phrase_patterns: list of (compiled_pattern, centroid_id) for multi-word phrases (ASCII)
+        - phrase_substrings: list of (substring, centroid_id) for multi-word phrases (non-ASCII)
+        - substring_patterns: list of (substring, centroid_id) for CJK matching
     """
     conn = psycopg2.connect(
         host=config.db_host,
@@ -193,7 +193,7 @@ def load_taxonomy():
         # Load all taxonomy items (label is display-only, not used for matching)
         cur.execute(
             """
-            SELECT id, is_stop_word, centroid_ids, aliases
+            SELECT id, is_stop_word, centroid_id, aliases
             FROM taxonomy_v3
             WHERE is_active = true
         """
@@ -205,12 +205,14 @@ def load_taxonomy():
     # Hash-based structures for O(1) lookup
     stop_words_set = set()  # Single-word stop terms
     stop_phrase_patterns = []  # Precompiled patterns/substrings for stop phrases
-    single_word_aliases = defaultdict(set)  # Word -> set of centroid_ids
-    phrase_patterns = []  # (compiled_pattern, centroid_ids) for ASCII multi-word
-    phrase_substrings = []  # (substring, centroid_ids) for non-ASCII multi-word
-    substring_patterns = []  # (substring, centroid_ids) for CJK
+    single_word_aliases = defaultdict(
+        set
+    )  # Word -> set of centroid_ids (multiple aliases can map to same centroid)
+    phrase_patterns = []  # (compiled_pattern, centroid_id) for ASCII multi-word
+    phrase_substrings = []  # (substring, centroid_id) for non-ASCII multi-word
+    substring_patterns = []  # (substring, centroid_id) for CJK
 
-    for id, is_stop_word, centroid_ids, aliases in taxonomy_results:
+    for id, is_stop_word, centroid_id, aliases in taxonomy_results:
         # Build searchable terms from aliases only (item_raw/label is display-only)
         terms = set()
         if aliases:
@@ -247,7 +249,7 @@ def load_taxonomy():
             continue
 
         # Add matching patterns for non-stop-word items
-        if not centroid_ids:
+        if not centroid_id:
             continue
 
         for term in terms:
@@ -257,19 +259,19 @@ def load_taxonomy():
 
             # CJK scripts need substring matching (can't tokenize)
             if has_substring_script_chars(term):
-                substring_patterns.append((term, centroid_ids))
+                substring_patterns.append((term, centroid_id))
             # Single-word aliases go into hash map
             elif " " not in term:
-                single_word_aliases[term].update(centroid_ids)
+                single_word_aliases[term].add(centroid_id)
             # Multi-word phrases: precompile patterns based on script
             else:
                 if is_ascii_only(term):
                     # ASCII phrase - use word boundary regex (precompile)
                     pattern = re.compile(r"\b" + re.escape(term) + r"\b", re.IGNORECASE)
-                    phrase_patterns.append((pattern, centroid_ids))
+                    phrase_patterns.append((pattern, centroid_id))
                 else:
                     # Non-ASCII phrase - use substring matching
-                    phrase_substrings.append((term, centroid_ids))
+                    phrase_substrings.append((term, centroid_id))
 
     return {
         "stop_words_set": stop_words_set,
@@ -315,19 +317,19 @@ def match_title(title_text, taxonomy):
             matched_centroids.update(taxonomy["single_word_aliases"][token])
 
     # Check ASCII multi-word phrases (precompiled regex patterns)
-    for pattern, centroid_ids in taxonomy["phrase_patterns"]:
+    for pattern, centroid_id in taxonomy["phrase_patterns"]:
         if pattern.search(normalized_title):
-            matched_centroids.update(centroid_ids)
+            matched_centroids.add(centroid_id)
 
     # Check non-ASCII multi-word phrases (substring matching)
-    for substring, centroid_ids in taxonomy["phrase_substrings"]:
+    for substring, centroid_id in taxonomy["phrase_substrings"]:
         if substring in normalized_title:
-            matched_centroids.update(centroid_ids)
+            matched_centroids.add(centroid_id)
 
     # Check CJK substring patterns
-    for substring, centroid_ids in taxonomy["substring_patterns"]:
+    for substring, centroid_id in taxonomy["substring_patterns"]:
         if substring in normalized_title:
-            matched_centroids.update(centroid_ids)
+            matched_centroids.add(centroid_id)
 
     # Step 3: Return status
     if matched_centroids:

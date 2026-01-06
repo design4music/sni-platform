@@ -51,18 +51,18 @@ def load_aliases_grouped(centroid_filter=None, language_filter=None):
         if centroid_filter:
             cur.execute(
                 """
-                SELECT id, centroid_ids, aliases
+                SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
                   AND is_stop_word = false
-                  AND %s = ANY(centroid_ids)
+                  AND centroid_id = %s
                 """,
                 (centroid_filter,),
             )
         else:
             cur.execute(
                 """
-                SELECT id, centroid_ids, aliases
+                SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
                   AND is_stop_word = false
@@ -76,19 +76,21 @@ def load_aliases_grouped(centroid_filter=None, language_filter=None):
     # Group by (centroid_id, language)
     grouped = defaultdict(list)
 
-    for taxonomy_id, centroid_ids, aliases in taxonomy_items:
+    for taxonomy_id, centroid_id, aliases in taxonomy_items:
         if not aliases or not isinstance(aliases, dict):
             continue
 
-        # Expand to all centroids this item belongs to
-        for centroid_id in centroid_ids or []:
-            for lang, lang_aliases in aliases.items():
-                # Filter by language
-                if language_filter and lang not in language_filter:
-                    continue
+        if not centroid_id:
+            continue
 
-                if lang not in SUPPORTED_LANGUAGES:
-                    continue
+        # Process all language aliases for this centroid
+        for lang, lang_aliases in aliases.items():
+            # Filter by language
+            if language_filter and lang not in language_filter:
+                continue
+
+            if lang not in SUPPORTED_LANGUAGES:
+                continue
 
                 # Add each alias with its normalized form and tokens
                 for alias in lang_aliases:

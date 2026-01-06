@@ -77,7 +77,7 @@ def load_aliases_for_centroid(centroid_id, language_filter):
     Load active aliases for the specified centroid.
 
     Returns:
-        dict: {language: [(alias, normalized_alias, taxonomy_id, centroid_ids), ...]}
+        dict: {language: [(alias, normalized_alias, taxonomy_id, centroid_id), ...]}
     """
     conn = get_db_connection()
 
@@ -86,11 +86,11 @@ def load_aliases_for_centroid(centroid_id, language_filter):
             # Filter by specific centroid
             cur.execute(
                 """
-                SELECT id, centroid_ids, aliases
+                SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
                   AND is_stop_word = false
-                  AND %s = ANY(centroid_ids)
+                  AND centroid_id = %s
                 """,
                 (centroid_id,),
             )
@@ -98,7 +98,7 @@ def load_aliases_for_centroid(centroid_id, language_filter):
             # All active taxonomy items
             cur.execute(
                 """
-                SELECT id, centroid_ids, aliases
+                SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
                   AND is_stop_word = false
@@ -112,8 +112,11 @@ def load_aliases_for_centroid(centroid_id, language_filter):
     # Organize by language
     aliases_by_lang = defaultdict(list)
 
-    for taxonomy_id, centroid_ids, aliases in taxonomy_items:
+    for taxonomy_id, item_centroid_id, aliases in taxonomy_items:
         if not aliases or not isinstance(aliases, dict):
+            continue
+
+        if not item_centroid_id:
             continue
 
         for lang, lang_aliases in aliases.items():
@@ -128,7 +131,7 @@ def load_aliases_for_centroid(centroid_id, language_filter):
             for alias in lang_aliases:
                 normalized = normalize_alias(alias)
                 aliases_by_lang[lang].append(
-                    (alias, normalized, taxonomy_id, centroid_ids)
+                    (alias, normalized, taxonomy_id, item_centroid_id)
                 )
 
     return dict(aliases_by_lang)
@@ -163,7 +166,7 @@ def profile_centroid_language(centroid_id, language, titles, aliases, out_dir):
     alias_stats = {}
     matched_title_ids = set()  # Track overall coverage
 
-    for alias, norm_alias, taxonomy_id, centroid_ids in aliases:
+    for alias, norm_alias, taxonomy_id, item_centroid_id in aliases:
         matches = []
 
         # Match against all titles
@@ -181,7 +184,7 @@ def profile_centroid_language(centroid_id, language, titles, aliases, out_dir):
                 "matched_title_ids_sample": [str(tid) for tid, _ in matches[:10]],
                 "matched_titles_sample": [tdisplay for _, tdisplay in matches[:10]],
                 "taxonomy_id": str(taxonomy_id),
-                "centroid_ids": centroid_ids,
+                "centroid_id": item_centroid_id,
             }
 
     # Sort by match count descending
@@ -239,7 +242,7 @@ def compute_global_overlap(aliases_by_lang, titles_by_centroid, out_dir, min_mat
     alias_overlap = defaultdict(set)  # (alias, lang) -> set of centroid_ids
 
     for lang, aliases in aliases_by_lang.items():
-        for alias, norm_alias, taxonomy_id, centroid_ids in aliases:
+        for alias, norm_alias, taxonomy_id, item_centroid_id in aliases:
             # Check matches across all centroids
             for centroid_id, titles in titles_by_centroid.items():
                 # Filter titles by language
