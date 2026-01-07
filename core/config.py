@@ -393,22 +393,28 @@ class SNIConfig(BaseSettings):
         default=180, env="V3_P2_TIMEOUT_SECONDS"
     )  # Processing timeout
 
-    # V3 Phase 3: Track Classification and CTM Building
+    # V3 Phase 3: Intel Gating + Track Classification with Centroid Batching
+    # Two-stage processing:
+    # Stage 1: Intel gating - LLM sees all titles for a centroid, rejects non-strategic
+    # Stage 2: Track assignment - LLM assigns tracks to strategic titles with full context
     v3_p3_temperature: float = Field(
         default=0.0, env="V3_P3_TEMPERATURE"
     )  # Deterministic classification
-    v3_p3_max_tokens: int = Field(
-        default=10, env="V3_P3_MAX_TOKENS"
-    )  # Short response (track name only)
-    v3_p3_batch_size: int = Field(
-        default=100, env="V3_P3_BATCH_SIZE"
-    )  # Titles per batch
+    v3_p3_max_tokens_gating: int = Field(
+        default=500, env="V3_P3_MAX_TOKENS_GATING"
+    )  # Gating: JSON response with title numbers
+    v3_p3_max_tokens_tracks: int = Field(
+        default=500, env="V3_P3_MAX_TOKENS_TRACKS"
+    )  # Track assignment: JSON response with title:track pairs
+    v3_p3_centroid_batch_size: int = Field(
+        default=50, env="V3_P3_CENTROID_BATCH_SIZE"
+    )  # Max titles per centroid batch for LLM (gating + tracks)
     v3_p3_concurrency: int = Field(
         default=8, env="V3_P3_CONCURRENCY"
-    )  # Parallel LLM calls
+    )  # Parallel centroid group processing
     v3_p3_timeout_seconds: int = Field(
-        default=180, env="V3_P3_TIMEOUT_SECONDS"
-    )  # Processing timeout
+        default=300, env="V3_P3_TIMEOUT_SECONDS"
+    )  # Processing timeout (increased for batch processing)
 
     # V3 Phase 4: Summary Generation
     v3_p4_min_titles: int = Field(

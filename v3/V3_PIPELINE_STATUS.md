@@ -1,7 +1,7 @@
 # SNI v3 Pipeline - Project Status & Documentation
 
-**Last Updated**: 2026-01-06
-**Status**: Operational - All 4 phases implemented and tested
+**Last Updated**: 2026-01-07
+**Status**: Operational - All 4 phases implemented and tested (Phase 3 refactored)
 **Branch**: `chore/dev-health-initial`
 
 ---
@@ -16,6 +16,7 @@ The v3 pipeline represents a complete redesign of SNI's intelligence processing 
 - **Phase 2**: 3-pass centroid matching (theater → systemic → macro) ✅
 - **Phase 3**: LLM-based track assignment with CTM creation ✅
 - **Phase 3 Enhanced**: Dynamic track configuration system (centroid-specific tracks) ✅
+- **Phase 3 Refactored**: Many-to-many title-centroid-track relationships with intel gating (2026-01-07) ✅
 - **Phase 4**: Events digest extraction + narrative summary generation ✅
 - **Pipeline Daemon**: Production-ready orchestration with adaptive scheduling ✅
 - **Taxonomy**: Thematically consolidated multilingual aliases, added centroid ids ✅
@@ -35,7 +36,14 @@ RSS Feeds (Google News)
     ↓
 [Phase 2] Centroid Matching → titles_v3 (centroid_ids assigned, status='assigned')
     ↓
-[Phase 3] Track Assignment → CTM creation (centroid+track+month units)
+[Phase 3] Intel Gating & Track Assignment
+    │
+    ├→ For each centroid in title.centroid_ids:
+    │   ├→ LLM Intel Gating (strategic vs. non-strategic)
+    │   ├→ Rejected → titles_v3.processing_status = 'blocked_llm'
+    │   └→ Strategic → LLM Track Assignment using centroid-specific tracks
+    │        └→ title_assignments (title_id, centroid_id, track, ctm_id)
+    │             └→ CTM creation/update (centroid+track+month units)
     ↓
 [Phase 4] Enrichment → events_digest + summary_text
     ↓
@@ -45,22 +53,28 @@ CTM Table (ready for frontend consumption)
 ### Core Tables
 
 1. **titles_v3**: News headlines with processing metadata
-   - `processing_status`: 'pending' → 'assigned' → 'enriched'
-   - `centroid_ids`: ARRAY (many-to-many with centroids)
-   - `ctm_ids`: ARRAY (many-to-many with CTMs)
-   - `track`: Strategic classification via LLM
+   - `processing_status`: 'pending' → 'assigned' / 'blocked_llm' / 'out_of_scope' / 'blocked_stopword'
+   - `centroid_ids`: ARRAY (many-to-many with centroids from Phase 2)
+   - Note: track and ctm_ids removed (now in title_assignments table)
 
-2. **taxonomy_v3**: Consolidated entity taxonomy
+2. **title_assignments**: Many-to-many junction table for title-centroid-track relationships
+   - `title_id`: Reference to titles_v3
+   - `centroid_id`: Reference to centroids_v3
+   - `track`: Track assigned by LLM for this specific centroid context
+   - `ctm_id`: Reference to CTM
+   - Unique constraint on (title_id, centroid_id) - one track per title per centroid
+
+3. **taxonomy_v3**: Consolidated entity taxonomy
    - 252+ entities, each belonging to ONE centroid (1-to-1 via centroid_id VARCHAR)
    - Multilingual aliases in JSONB format (en, es, ru, ar, zh, etc.)
    - Stop words marked with is_stop_word boolean
    - Supports non-Latin scripts (Chinese, Arabic, Cyrillic)
 
-3. **centroids_v3**: Clustering centers
+4. **centroids_v3**: Clustering centers
    - Two classes: geo (geographic) and systemic (thematic)
    - Optional custom track configurations via track_config_id
 
-4. **ctm**: Centroid-Track-Month aggregation units
+5. **ctm**: Centroid-Track-Month aggregation units
    - Unique on (centroid_id, track, yyyymm)
    - `events_digest`: JSONB array of distinct events
    - `summary_text`: 150-250 word narrative
@@ -105,32 +119,52 @@ v3/phase_2/
 
 **Database**: Updates `titles_v3.centroid_ids` and `processing_status`
 
-### Phase 3: Track Assignment & CTM Creation
+### Phase 3: Intel Gating & Track Assignment (Centroid-Batched)
 ```
 v3/phase_3/
-├── assign_tracks.py            # LLM track classification
+├── assign_tracks_batched.py    # Centroid-batched processing with intel gating
+├── assign_tracks.py            # Legacy single-title processor (deprecated)
 └── test_single_title.py        # Manual testing script
 ```
 
-**Track Classification** (via Deepseek LLM):
-- **Alliances & Partnerships**: NATO expansion, AUKUS, security pacts
-- **Armed Conflict**: Military operations, combat, casualties
-- **Capabilities & Readiness**: Defense budgets, exercises, modernization
-- **Coercion & Pressure**: Sanctions, blockades, cyber attacks
-- **Diplomacy & Negotiations**: Summits, treaties, peace talks
-- **Economic Competition**: Trade wars, tech rivalry, supply chains
-- **Governance & Internal Affairs**: Elections, protests, corruption
-- **Information & Influence**: Propaganda, disinformation, soft power
-- **Intelligence & Espionage**: Surveillance, leaks, spy operations
-- **Strategic Positioning**: Military bases, territorial claims, infrastructure
+**Architecture** (Refactored 2026-01-07):
+- **Centroid-Batched Processing**: Groups titles by ALL their centroids (not just primary)
+- **Batch Size**: 50 titles per centroid batch (configurable via `v3_p3_centroid_batch_size`)
+- **Two-Stage LLM Processing**:
+  1. **Intel Gating**: LLM sees all titles for a centroid batch, rejects non-strategic content
+  2. **Track Assignment**: LLM assigns tracks to strategic titles using centroid-specific track configs
+
+**Intel Gating** (Stage 1):
+- LLM analyzes all titles in batch with full context
+- Rejects: Sports (unless geopolitical), entertainment, human interest, local crime, weather
+- Accepts: Policy, international relations, economic, security, political developments
+- Rejected titles: `processing_status = 'blocked_llm'`
+- Strategic titles: Proceed to Stage 2
+
+**Track Assignment** (Stage 2):
+- Uses centroid-specific track_config (systemic > theater > macro priority)
+- LLM classifies strategic titles using appropriate track list
+- Example tracks (varies by centroid):
+  - **Strategic Default**: alliances_partnerships, armed_conflict, diplomacy_negotiations, etc.
+  - **Tech Focused**: ai_ml_development, semiconductors_hardware, cybersecurity, etc.
+  - **Environment Focused**: climate_policy, renewable_energy, emissions_targets, etc.
+
+**Multi-Centroid Logic**:
+- Title with `['AMERICAS-USA', 'SYS-ENERGY']` is processed TWICE:
+  - Once for AMERICAS-USA (using theater tracks) → e.g., "geo_energy"
+  - Once for SYS-ENERGY (using systemic tracks) → e.g., "energy_coercion"
+- Each analysis uses appropriate track_config for that centroid
+- Results stored in `title_assignments` table (many-to-many)
 
 **CTM Creation**:
 - Unique units: `(centroid_id, track, yyyymm)`
-- Many-to-many: Titles can belong to multiple CTMs
-- Updates `titles_v3.ctm_ids` array
-- Increments `ctm.title_count`
+- Created/updated for each title-centroid-track assignment
+- Increments `ctm.title_count` per assignment
 
-**Database**: `ctm` table + `titles_v3.ctm_ids` + `titles_v3.track`
+**Database**:
+- `title_assignments` table (title_id, centroid_id, track, ctm_id)
+- `ctm` table (centroid+track+month aggregation)
+- `titles_v3.processing_status` updated to 'blocked_llm' for rejected titles
 
 ### Dynamic Track Configuration System (Phase 3 Enhancement)
 ```
@@ -346,16 +380,50 @@ CREATE TABLE titles_v3 (
     pubdate_utc TIMESTAMP WITH TIME ZONE,
     detected_language TEXT,
     processing_status TEXT DEFAULT 'pending',
-    centroid_ids UUID[],
-    ctm_ids UUID[],
-    track TEXT,
+    centroid_ids TEXT[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT titles_v3_processing_status_check CHECK (
+        processing_status = ANY (ARRAY[
+            'pending'::text,
+            'assigned'::text,
+            'out_of_scope'::text,
+            'blocked_stopword'::text,
+            'blocked_llm'::text
+        ])
+    )
 );
 
 CREATE INDEX idx_titles_v3_processing ON titles_v3(processing_status);
 CREATE INDEX idx_titles_v3_centroids ON titles_v3 USING GIN(centroid_ids);
-CREATE INDEX idx_titles_v3_ctms ON titles_v3 USING GIN(ctm_ids);
+
+-- Note: track and ctm_ids columns removed (2026-01-07)
+-- Data now stored in title_assignments table for proper many-to-many relationships
+```
+
+### title_assignments
+```sql
+CREATE TABLE title_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title_id UUID NOT NULL REFERENCES titles_v3(id) ON DELETE CASCADE,
+    centroid_id TEXT NOT NULL REFERENCES centroids_v3(id),
+    track TEXT NOT NULL,
+    ctm_id UUID NOT NULL REFERENCES ctm(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(title_id, centroid_id)
+);
+
+CREATE INDEX idx_title_assignments_title_id ON title_assignments(title_id);
+CREATE INDEX idx_title_assignments_centroid_id ON title_assignments(centroid_id);
+CREATE INDEX idx_title_assignments_ctm_id ON title_assignments(ctm_id);
+CREATE INDEX idx_title_assignments_track ON title_assignments(track);
+
+-- Purpose: Junction table enabling one title to have different tracks for different centroids
+-- Example: "US sanctions Venezuela oil" gets:
+--   - (title_id, AMERICAS-USA, geo_energy, ctm_id_1)
+--   - (title_id, AMERICAS-VENEZUELA, geo_security, ctm_id_2)
+--   - (title_id, SYS-ENERGY, energy_coercion, ctm_id_3)
 ```
 
 ### taxonomy_v3
@@ -460,14 +528,18 @@ CREATE INDEX idx_ctm_frozen ON ctm(is_frozen);
 - Better scalability for high-volume ingestion
 - Cost reduction (no Neo4j license needed)
 
-### 2. Many-to-Many CTM Relationships
+### 2. Many-to-Many Title-Centroid-Track Relationships (Refactored 2026-01-07)
 
-Titles can belong to multiple CTMs because:
-- A China-US trade story touches both geographic theaters
-- An article can have multiple strategic tracks (Diplomacy + Economic Competition)
-- Reality is messy - forcing single assignments loses information
+**Problem**: One track per title forced all centroids to share same classification
 
-**Implementation**: ARRAY columns (`centroid_ids`, `ctm_ids`) for efficient queries
+**Solution**: Junction table (`title_assignments`) - each title analyzed separately for each centroid
+
+**Benefits**:
+- "US sanctions Venezuela oil" → geo_energy (USA), geo_security (Venezuela), energy_coercion (SYS-ENERGY)
+- Each centroid uses its own track_config
+- Logical consistency across different strategic contexts
+
+**Implementation**: UNIQUE(title_id, centroid_id) constraint
 
 ### 3. Stop Word Filtering
 
@@ -521,7 +593,15 @@ Titles can belong to multiple CTMs because:
 - Phase 3 loads config dynamically based on primary centroid
 - Priority resolution: Systemic > Theater > Macro
 
-### 7. Sequential vs Parallel Execution
+### 7. Intel Gating (Phase 3 Enhancement, 2026-01-07)
+
+**Problem**: Non-strategic content leaked through stop words filter
+
+**Solution**: Two-stage LLM processing - gating (strategic vs reject), then track assignment
+
+**Implementation**: `processing_status = 'blocked_llm'` for rejected titles
+
+### 8. Sequential vs Parallel Execution
 
 **Current**: Sequential execution with adaptive scheduling
 **Future**: May add parallelization if queues back up
@@ -781,7 +861,8 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 - **2025-11-07**: Pipeline daemon implementation ✅
 - **2025-11-07**: Dynamic track configuration system ✅
 - **2025-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
-- **2025-11-07**: Current status - Ready for production testing
+- **2026-01-07**: Phase 3 refactoring - many-to-many title-centroid-track relationships + intel gating ✅
+- **2026-01-07**: Current status - Ready for full production testing
 
 ---
 
