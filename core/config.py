@@ -423,6 +423,9 @@ class SNIConfig(BaseSettings):
     v3_p4_min_titles: int = Field(
         default=20, env="V3_P4_MIN_TITLES"
     )  # Minimum title_count for daily Phase 4 processing
+    v3_p4_max_concurrent: int = Field(
+        default=5, env="V3_P4_MAX_CONCURRENT"
+    )  # Max concurrent CTM processing (bounded semaphore)
     v3_p4_temperature: float = Field(
         default=0.5, env="V3_P4_TEMPERATURE"
     )  # Balanced creativity for narrative flow

@@ -21,6 +21,7 @@ Strategy:
 import asyncio
 import json
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -36,6 +37,46 @@ project_root = Path(__file__).parent.parent.parent
 os.chdir(project_root)
 
 from core.config import config  # noqa: E402
+
+
+def validate_and_fix_event_date(event_date_str: str, ctm_month: str) -> tuple[str, str]:
+    """
+    Validate event date falls within reasonable range of CTM month.
+
+    Args:
+        event_date_str: Date string from LLM (YYYY-MM-DD)
+        ctm_month: CTM month string (YYYY-MM)
+
+    Returns:
+        (fixed_date_str, confidence) where confidence is "high" or "low"
+    """
+    try:
+        event_date = datetime.strptime(event_date_str, "%Y-%m-%d")
+        ctm_date = datetime.strptime(ctm_month + "-01", "%Y-%m-%d")
+
+        # Calculate valid range: [month_start - 5 days, month_end + 5 days]
+        month_start = ctm_date
+        # Get last day of month
+        if ctm_date.month == 12:
+            month_end = ctm_date.replace(day=31)
+        else:
+            next_month = ctm_date.replace(month=ctm_date.month + 1, day=1)
+            month_end = next_month - timedelta(days=1)
+
+        valid_start = month_start - timedelta(days=5)
+        valid_end = month_end + timedelta(days=5)
+
+        # Check if date is within valid range
+        if valid_start <= event_date <= valid_end:
+            return event_date_str, "high"
+        else:
+            # Date out of range - clamp to month_start and mark as low confidence
+            return month_start.strftime("%Y-%m-%d"), "low"
+
+    except (ValueError, Exception):
+        # Invalid date format - default to month start
+        ctm_date = datetime.strptime(ctm_month + "-01", "%Y-%m-%d")
+        return ctm_date.strftime("%Y-%m-%d"), "low"
 
 
 async def extract_events_from_titles_single_batch(
@@ -131,17 +172,24 @@ Extract distinct events as JSON array:"""
 
             events = json.loads(events_json)
 
-            # Convert source indices to actual title IDs
+            # Convert source indices to actual title IDs and validate dates
             enriched_events = []
             for event in events:
                 title_ids = [
                     str(titles[idx][0]) for idx in event["source_title_indices"]
                 ]
+
+                # Validate and fix date
+                fixed_date, confidence = validate_and_fix_event_date(
+                    event["date"], month
+                )
+
                 enriched_events.append(
                     {
-                        "date": event["date"],
+                        "date": fixed_date,
                         "summary": event["summary"],
                         "source_title_ids": title_ids,
+                        "date_confidence": confidence,
                     }
                 )
 
@@ -241,7 +289,7 @@ Consolidate into deduplicated timeline:"""
         try:
             consolidated = json.loads(consolidated_json)
 
-            # Map source_event_indices back to title UUIDs
+            # Map source_event_indices back to title UUIDs and validate dates
             final_events = []
             for event in consolidated:
                 combined_title_ids = []
@@ -249,11 +297,17 @@ Consolidate into deduplicated timeline:"""
                     if idx < len(all_events):
                         combined_title_ids.extend(all_events[idx]["source_title_ids"])
 
+                # Validate and fix date in consolidation
+                fixed_date, confidence = validate_and_fix_event_date(
+                    event["date"], month
+                )
+
                 final_events.append(
                     {
-                        "date": event["date"],
+                        "date": fixed_date,
                         "summary": event["summary"],
                         "source_title_ids": combined_title_ids,
+                        "date_confidence": confidence,
                     }
                 )
 
@@ -324,8 +378,89 @@ async def extract_events_from_titles(
         return []
 
 
+async def process_single_ctm(
+    semaphore: asyncio.Semaphore,
+    ctm_id: str,
+    centroid_id: str,
+    track: str,
+    month,
+    title_count: int,
+    centroid_label: str,
+) -> tuple[bool, int]:
+    """
+    Process a single CTM with semaphore for concurrency control.
+
+    Returns:
+        (success, event_count)
+    """
+    async with semaphore:
+        conn = psycopg2.connect(
+            host=config.db_host,
+            port=config.db_port,
+            database=config.db_name,
+            user=config.db_user,
+            password=config.db_password,
+        )
+
+        try:
+            # Fetch titles for this CTM
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT t.id, t.title_display, t.pubdate_utc
+                    FROM title_assignments ta
+                    JOIN titles_v3 t ON ta.title_id = t.id
+                    WHERE ta.ctm_id = %s
+                    ORDER BY t.pubdate_utc ASC
+                """,
+                    (ctm_id,),
+                )
+                titles = cur.fetchall()
+
+            if not titles:
+                print(f"Warning: CTM {ctm_id} has no linked titles, skipping")
+                return False, 0
+
+            print(
+                f"Processing: {centroid_label} / {track} / {month.strftime('%Y-%m')} ({len(titles)} titles)"
+            )
+
+            # Extract events using LLM
+            events = await extract_events_from_titles(
+                centroid_label, track, month.strftime("%Y-%m"), titles
+            )
+
+            if events:
+                # Update CTM with events digest
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        UPDATE ctm
+                        SET events_digest = %s,
+                            updated_at = NOW()
+                        WHERE id = %s
+                    """,
+                        (Json(events), ctm_id),
+                    )
+                conn.commit()
+
+                print(f"  OK: {len(events)} events extracted")
+                return True, len(events)
+            else:
+                print("  X: No events extracted")
+                return False, 0
+
+        except Exception as e:
+            print(f"  X Error: {e}")
+            conn.rollback()
+            return False, 0
+
+        finally:
+            conn.close()
+
+
 async def process_ctm_batch(max_ctms=None):
-    """Process CTMs that need events digest generation"""
+    """Process CTMs concurrently with bounded semaphore"""
 
     conn = psycopg2.connect(
         host=config.db_host,
@@ -337,7 +472,7 @@ async def process_ctm_batch(max_ctms=None):
 
     try:
         with conn.cursor() as cur:
-            # Get CTMs for daily processing (min title threshold, allow re-processing)
+            # Get CTMs for daily processing
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
@@ -354,76 +489,52 @@ async def process_ctm_batch(max_ctms=None):
             )
             ctms = cur.fetchall()
 
-        print(f"Processing {len(ctms)} CTMs for events digest generation...\n")
+        print(
+            f"Processing {len(ctms)} CTMs concurrently (max {config.v3_p4_max_concurrent} at a time)...\n"
+        )
 
+        # Create semaphore for bounded concurrency
+        semaphore = asyncio.Semaphore(config.v3_p4_max_concurrent)
+
+        # Create tasks for all CTMs
+        tasks = [
+            process_single_ctm(
+                semaphore,
+                ctm_id,
+                centroid_id,
+                track,
+                month,
+                title_count,
+                centroid_label,
+            )
+            for ctm_id, centroid_id, track, month, title_count, centroid_label in ctms
+        ]
+
+        # Run all tasks concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Count results
         processed_count = 0
         error_count = 0
         total_events = 0
 
-        for ctm_id, centroid_id, track, month, title_count, centroid_label in ctms:
-            try:
-                # Fetch titles for this CTM via title_assignments junction table
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        SELECT t.id, t.title_display, t.pubdate_utc
-                        FROM title_assignments ta
-                        JOIN titles_v3 t ON ta.title_id = t.id
-                        WHERE ta.ctm_id = %s
-                        ORDER BY t.pubdate_utc ASC
-                    """,
-                        (ctm_id,),
-                    )
-                    titles = cur.fetchall()
-
-                if not titles:
-                    print(f"Warning: CTM {ctm_id} has no linked titles, skipping")
-                    continue
-
-                print(
-                    f"Processing CTM: {centroid_label} / {track} / {month.strftime('%Y-%m')}"
-                )
-                print(f"  {len(titles)} titles")
-
-                # Extract events using LLM
-                events = await extract_events_from_titles(
-                    centroid_label, track, month.strftime("%Y-%m"), titles
-                )
-
-                if events:
-                    # Update CTM with events digest
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            """
-                            UPDATE ctm
-                            SET events_digest = %s,
-                                updated_at = NOW()
-                            WHERE id = %s
-                        """,
-                            (Json(events), ctm_id),
-                        )
-                    conn.commit()
-
-                    print(f"  OK: Extracted {len(events)} distinct events")
-                    total_events += len(events)
-                    processed_count += 1
-                else:
-                    print("  X: No events extracted")
-                    error_count += 1
-
-            except Exception as e:
-                print(f"  X Error processing CTM {ctm_id}: {e}")
+        for result in results:
+            if isinstance(result, Exception):
                 error_count += 1
-                conn.rollback()
-                continue
+            elif result[0]:  # success
+                processed_count += 1
+                total_events += result[1]
+            else:
+                error_count += 1
 
         print(f"\n{'='*60}")
         print("RESULTS")
         print(f"{'='*60}")
-        print(f"Total CTMs:          {len(ctms)}")
+        print(f"Total CTMs:             {len(ctms)}")
         print(f"Successfully processed: {processed_count}")
         print(f"Total events extracted: {total_events}")
-        print(f"Errors:              {error_count}")
+        print(f"Errors:                 {error_count}")
+        print(f"Concurrency level:      {config.v3_p4_max_concurrent}")
 
     finally:
         conn.close()

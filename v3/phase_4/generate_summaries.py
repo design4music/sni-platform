@@ -114,8 +114,77 @@ Generate a 150-250 word narrative summary:"""
         return summary
 
 
+async def process_single_ctm(
+    semaphore: asyncio.Semaphore,
+    ctm_id: str,
+    centroid_id: str,
+    track: str,
+    month,
+    events_digest: list,
+    title_count: int,
+    centroid_label: str,
+    centroid_class: str,
+    primary_theater: str,
+) -> bool:
+    """
+    Process a single CTM with semaphore for concurrency control.
+
+    Returns:
+        success (bool)
+    """
+    async with semaphore:
+        conn = psycopg2.connect(
+            host=config.db_host,
+            port=config.db_port,
+            database=config.db_name,
+            user=config.db_user,
+            password=config.db_password,
+        )
+
+        try:
+            print(
+                f"Processing: {centroid_label} / {track} / {month.strftime('%Y-%m')} ({len(events_digest)} events)"
+            )
+
+            # Generate summary using LLM
+            summary = await generate_summary(
+                centroid_label,
+                centroid_class,
+                primary_theater,
+                track,
+                month.strftime("%Y-%m"),
+                events_digest,
+            )
+
+            word_count = len(summary.split())
+            print(f"  OK: {word_count} words")
+
+            # Update CTM with summary
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE ctm
+                    SET summary_text = %s,
+                        updated_at = NOW()
+                    WHERE id = %s
+                """,
+                    (summary, ctm_id),
+                )
+            conn.commit()
+
+            return True
+
+        except Exception as e:
+            print(f"  X Error: {e}")
+            conn.rollback()
+            return False
+
+        finally:
+            conn.close()
+
+
 async def process_ctm_batch(max_ctms=None):
-    """Process CTMs that need summary generation"""
+    """Process CTMs concurrently with bounded semaphore"""
 
     conn = psycopg2.connect(
         host=config.db_host,
@@ -127,7 +196,7 @@ async def process_ctm_batch(max_ctms=None):
 
     try:
         with conn.cursor() as cur:
-            # Get CTMs for daily processing (allow re-processing)
+            # Get CTMs for daily processing
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
@@ -147,68 +216,62 @@ async def process_ctm_batch(max_ctms=None):
             )
             ctms = cur.fetchall()
 
-        print(f"Processing {len(ctms)} CTMs for summary generation...\n")
+        print(
+            f"Processing {len(ctms)} CTMs concurrently (max {config.v3_p4_max_concurrent} at a time)...\n"
+        )
 
+        # Create semaphore for bounded concurrency
+        semaphore = asyncio.Semaphore(config.v3_p4_max_concurrent)
+
+        # Create tasks for all CTMs
+        tasks = [
+            process_single_ctm(
+                semaphore,
+                ctm_id,
+                centroid_id,
+                track,
+                month,
+                events_digest,
+                title_count,
+                centroid_label,
+                centroid_class,
+                primary_theater,
+            )
+            for (
+                ctm_id,
+                centroid_id,
+                track,
+                month,
+                events_digest,
+                title_count,
+                centroid_label,
+                centroid_class,
+                primary_theater,
+            ) in ctms
+        ]
+
+        # Run all tasks concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Count results
         processed_count = 0
         error_count = 0
 
-        for (
-            ctm_id,
-            centroid_id,
-            track,
-            month,
-            events_digest,
-            title_count,
-            centroid_label,
-            centroid_class,
-            primary_theater,
-        ) in ctms:
-            try:
-                print(
-                    f"Processing CTM: {centroid_label} / {track} / {month.strftime('%Y-%m')}"
-                )
-                print(f"  {len(events_digest)} events, {title_count} titles")
-
-                # Generate summary using LLM
-                summary = await generate_summary(
-                    centroid_label,
-                    centroid_class,
-                    primary_theater,
-                    track,
-                    month.strftime("%Y-%m"),
-                    events_digest,
-                )
-
-                word_count = len(summary.split())
-                print(f"  OK: Generated summary ({word_count} words)")
-
-                # Update CTM with summary
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        UPDATE ctm
-                        SET summary_text = %s,
-                            updated_at = NOW()
-                        WHERE id = %s
-                    """,
-                        (summary, ctm_id),
-                    )
-                conn.commit()
-
-                processed_count += 1
-
-            except Exception as e:
-                print(f"  X Error processing CTM {ctm_id}: {e}")
+        for result in results:
+            if isinstance(result, Exception):
                 error_count += 1
-                conn.rollback()
-                continue
+            elif result:  # success
+                processed_count += 1
+            else:
+                error_count += 1
 
         print(f"\n{'='*60}")
         print("RESULTS")
         print(f"{'='*60}")
-        print(f"Total CTMs:          {len(ctms)}")
+        print(f"Total CTMs:             {len(ctms)}")
         print(f"Successfully processed: {processed_count}")
-        print(f"Errors:              {error_count}")
+        print(f"Errors:                 {error_count}")
+        print(f"Concurrency level:      {config.v3_p4_max_concurrent}")
 
     finally:
         conn.close()
