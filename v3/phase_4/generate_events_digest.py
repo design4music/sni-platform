@@ -191,14 +191,15 @@ async def process_ctm_batch(max_ctms=None):
 
         for ctm_id, centroid_id, track, month, title_count, centroid_label in ctms:
             try:
-                # Fetch titles for this CTM
+                # Fetch titles for this CTM via title_assignments junction table
                 with conn.cursor() as cur:
                     cur.execute(
                         """
-                        SELECT id, title_display, pubdate_utc
-                        FROM titles_v3
-                        WHERE %s = ANY(ctm_ids)
-                        ORDER BY pubdate_utc ASC
+                        SELECT t.id, t.title_display, t.pubdate_utc
+                        FROM title_assignments ta
+                        JOIN titles_v3 t ON ta.title_id = t.id
+                        WHERE ta.ctm_id = %s
+                        ORDER BY t.pubdate_utc ASC
                     """,
                         (ctm_id,),
                     )

@@ -241,7 +241,9 @@ Return ONLY valid JSON with title numbers:
         # Handle any titles not categorized (shouldn't happen, but failsafe)
         for title_id in title_id_map.values():
             if title_id not in gating_results:
-                gating_results[title_id] = "strategic"  # Default to strategic if unclear
+                gating_results[title_id] = (
+                    "strategic"  # Default to strategic if unclear
+                )
 
         return gating_results
 
@@ -285,9 +287,7 @@ async def assign_tracks_batch(
     titles_text = "\n".join(numbered_titles)
 
     # Track assignment prompt (using existing track config prompt as base)
-    tracks_list = "\n".join(
-        [f"- {track}" for track in track_config["tracks"]]
-    )
+    tracks_list = "\n".join([f"- {track}" for track in track_config["tracks"]])
 
     prompt = f"""You are classifying {len(strategic_titles)} strategic news titles for {track_config['centroid_label']}.
 
@@ -471,7 +471,9 @@ async def process_centroid_group(
                 strategic_count = len(strategic_titles)
                 rejected_count = len(rejected_title_ids)
 
-                print(f"    Gating: {strategic_count} strategic, {rejected_count} rejected")
+                print(
+                    f"    Gating: {strategic_count} strategic, {rejected_count} rejected"
+                )
 
                 # Update rejected titles
                 if rejected_title_ids:
@@ -502,7 +504,12 @@ async def process_centroid_group(
 
                     # Update titles with tracks and create CTMs
                     title_errors = 0
-                    for title_id, title_display, centroid_ids, pubdate in strategic_titles:
+                    for (
+                        title_id,
+                        title_display,
+                        centroid_ids,
+                        pubdate,
+                    ) in strategic_titles:
                         if title_id not in track_assignments:
                             title_errors += 1
                             continue
@@ -511,7 +518,9 @@ async def process_centroid_group(
 
                         try:
                             # Create CTM for THIS centroid only
-                            ctm_id = get_or_create_ctm(conn, centroid_id, track, month_date)
+                            ctm_id = get_or_create_ctm(
+                                conn, centroid_id, track, month_date
+                            )
 
                             # Increment title count
                             with conn.cursor() as cur:
@@ -544,7 +553,9 @@ async def process_centroid_group(
                             conn.commit()
 
                         except Exception as title_error:
-                            print(f"    ERROR processing title {title_id}: {title_error}")
+                            print(
+                                f"    ERROR processing title {title_id}: {title_error}"
+                            )
                             conn.rollback()
                             title_errors += 1
 
