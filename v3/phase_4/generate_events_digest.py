@@ -38,7 +38,7 @@ os.chdir(project_root)
 from core.config import config  # noqa: E402
 
 
-async def extract_events_from_titles(
+async def extract_events_from_titles_single_batch(
     centroid_label: str, track: str, month: str, titles: list
 ) -> list:
     """
@@ -153,6 +153,177 @@ Extract distinct events as JSON array:"""
             return []
 
 
+async def consolidate_events(
+    centroid_label: str, track: str, month: str, all_events: list
+) -> list:
+    """
+    Consolidation pass: deduplicate and normalize events from multiple batches.
+
+    Takes events extracted from multiple batches and uses LLM to:
+    - Merge duplicate/similar events
+    - Normalize dates
+    - Combine source_title_ids
+    """
+    # Format events for consolidation
+    events_text = "\n".join(
+        [
+            f"[{i}] {event['date']}: {event['summary']} (sources: {len(event['source_title_ids'])})"
+            for i, event in enumerate(all_events)
+        ]
+    )
+
+    system_prompt = """You are consolidating events from multiple batches into a final deduplicated timeline.
+
+Your task:
+1. Identify duplicate or highly similar events and merge them
+2. Keep the most specific date when merging
+3. Combine source indices for merged events
+4. Preserve all unique events
+5. Return consolidated events in chronological order
+
+Return ONLY a JSON array:
+[{
+  "date": "YYYY-MM-DD",
+  "summary": "Consolidated 1-2 sentence description",
+  "source_event_indices": [0, 1, 2]
+}]
+
+Guidelines:
+- Merge events about the same development even if phrased differently
+- Keep event summaries concise and factual
+- Use the earliest specific date when merging
+- Combine all source indices from merged events"""
+
+    user_prompt = f"""Centroid: {centroid_label}
+Track: {track}
+Month: {month}
+
+Events to consolidate:
+{events_text}
+
+Consolidate into deduplicated timeline:"""
+
+    headers = {
+        "Authorization": f"Bearer {config.deepseek_api_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": config.llm_model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.2,  # Lower for consistency
+        "max_tokens": 3000,  # More tokens for consolidated output
+    }
+
+    async with httpx.AsyncClient(timeout=config.llm_timeout_seconds) as client:
+        response = await client.post(
+            f"{config.deepseek_api_url}/chat/completions",
+            headers=headers,
+            json=payload,
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"LLM API error: {response.status_code} - {response.text}")
+
+        data = response.json()
+        consolidated_json = data["choices"][0]["message"]["content"].strip()
+
+        # Strip markdown code fences
+        if consolidated_json.startswith("```"):
+            consolidated_json = consolidated_json.split("```")[1]
+            if consolidated_json.startswith("json"):
+                consolidated_json = consolidated_json[4:]
+            consolidated_json = consolidated_json.strip()
+
+        try:
+            consolidated = json.loads(consolidated_json)
+
+            # Map source_event_indices back to title UUIDs
+            final_events = []
+            for event in consolidated:
+                combined_title_ids = []
+                for idx in event["source_event_indices"]:
+                    if idx < len(all_events):
+                        combined_title_ids.extend(all_events[idx]["source_title_ids"])
+
+                final_events.append(
+                    {
+                        "date": event["date"],
+                        "summary": event["summary"],
+                        "source_title_ids": combined_title_ids,
+                    }
+                )
+
+            return final_events
+
+        except json.JSONDecodeError as e:
+            print(f"Failed to parse consolidation response: {e}")
+            print(f"Response: {consolidated_json}")
+            return all_events  # Return unmerged events as fallback
+
+
+async def extract_events_from_titles(
+    centroid_label: str, track: str, month: str, titles: list
+) -> list:
+    """
+    Extract events from titles with automatic batching for high-volume CTMs.
+
+    For CTMs with >batch_size titles, uses two-pass approach:
+    1. Extract events from each batch separately
+    2. Consolidation pass to deduplicate across batches
+    """
+    batch_size = config.v3_p4_batch_size
+
+    # Single batch: process directly
+    if len(titles) <= batch_size:
+        return await extract_events_from_titles_single_batch(
+            centroid_label, track, month, titles
+        )
+
+    # Multi-batch: extract + consolidate
+    print(
+        f"  High-volume CTM: splitting {len(titles)} titles into batches of {batch_size}"
+    )
+
+    all_events = []
+    num_batches = (len(titles) + batch_size - 1) // batch_size
+
+    for batch_num in range(num_batches):
+        start_idx = batch_num * batch_size
+        end_idx = min(start_idx + batch_size, len(titles))
+        batch_titles = titles[start_idx:end_idx]
+
+        print(
+            f"  Batch {batch_num + 1}/{num_batches}: processing {len(batch_titles)} titles"
+        )
+
+        batch_events = await extract_events_from_titles_single_batch(
+            centroid_label, track, month, batch_titles
+        )
+
+        if batch_events:
+            all_events.extend(batch_events)
+            print(f"    -> {len(batch_events)} events extracted")
+        else:
+            print("    -> No events extracted")
+
+    print(f"  Total from batches: {len(all_events)} events")
+
+    # Consolidation pass
+    if len(all_events) > 0:
+        print("  Consolidating events across batches...")
+        consolidated_events = await consolidate_events(
+            centroid_label, track, month, all_events
+        )
+        print(f"  Final: {len(consolidated_events)} consolidated events")
+        return consolidated_events
+    else:
+        return []
+
+
 async def process_ctm_batch(max_ctms=None):
     """Process CTMs that need events digest generation"""
 
@@ -166,7 +337,7 @@ async def process_ctm_batch(max_ctms=None):
 
     try:
         with conn.cursor() as cur:
-            # Get CTMs with titles but empty events_digest
+            # Get CTMs for daily processing (min title threshold, allow re-processing)
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
@@ -174,12 +345,12 @@ async def process_ctm_batch(max_ctms=None):
                        cent.label
                 FROM ctm c
                 JOIN centroids_v3 cent ON c.centroid_id = cent.id
-                WHERE c.title_count > 0
-                  AND (c.events_digest = '[]'::jsonb OR c.events_digest IS NULL)
+                WHERE c.title_count >= %s
                   AND c.is_frozen = false
                 ORDER BY c.title_count DESC, c.month DESC
                 {limit_clause}
-            """
+            """,
+                (config.v3_p4_min_titles,),
             )
             ctms = cur.fetchall()
 

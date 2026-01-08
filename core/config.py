@@ -59,7 +59,7 @@ class SNIConfig(BaseSettings):
     )  # No rate limits
 
     # LLM Configuration - MAP/REDUCE Parameters
-    llm_timeout_seconds: int = Field(default=180, env="LLM_TIMEOUT_SECONDS")
+    llm_timeout_seconds: int = Field(default=600, env="LLM_TIMEOUT_SECONDS")
     llm_max_tokens_generic: int = Field(default=4000, env="LLM_MAX_TOKENS_GENERIC")
     llm_max_tokens_fn: int = Field(
         default=4000, env="LLM_MAX_TOKENS_FN"
@@ -416,10 +416,13 @@ class SNIConfig(BaseSettings):
         default=300, env="V3_P3_TIMEOUT_SECONDS"
     )  # Processing timeout (increased for batch processing)
 
-    # V3 Phase 4: Summary Generation
+    # V3 Phase 4: Events Digest and Summary Generation
+    v3_p4_batch_size: int = Field(
+        default=70, env="V3_P4_BATCH_SIZE"
+    )  # Max titles per batch for events extraction (API limit)
     v3_p4_min_titles: int = Field(
-        default=5, env="V3_P4_MIN_TITLES"
-    )  # Minimum title_count for CTM to generate summary
+        default=20, env="V3_P4_MIN_TITLES"
+    )  # Minimum title_count for daily Phase 4 processing
     v3_p4_temperature: float = Field(
         default=0.5, env="V3_P4_TEMPERATURE"
     )  # Balanced creativity for narrative flow

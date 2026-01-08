@@ -13,10 +13,7 @@ from v3.phase_4.generate_summaries import generate_summary
 from v3.taxonomy_tools.common import get_db_connection
 
 CTM_IDS = [
-    "48bc4bcc-7ace-4fda-8b2d-ca33a80adb75",  # SYS-ENERGY / energy_competition
-    "6403b29e-1a8e-47d7-817b-76df34bc37e4",  # EUROPE-GERMANY / geo_politics
-    "f532e408-f3f6-4e86-ba5d-c05d6326fae2",  # NON-STATE-ISIS / geo_security
-    "21688eec-bbb4-4a92-a7c0-09a3ce4e4e82",  # EUROPE-UKRAINE / geo_security
+    "349d1eab-1490-467f-868d-350f4f5fa172",  # AMERICAS-USA / geo_politics / 578 titles
 ]
 
 
