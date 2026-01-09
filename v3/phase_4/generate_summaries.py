@@ -11,6 +11,7 @@ Strategy:
 """
 
 import asyncio
+import json
 import sys
 from pathlib import Path
 
@@ -28,6 +29,8 @@ async def generate_summary(
     track: str,
     month: str,
     events_digest: list,
+    centroid_focus: str,
+    track_focus: str = None,
 ) -> str:
     """
     Generate 150-250 word narrative summary from events digest.
@@ -39,6 +42,8 @@ async def generate_summary(
         track: Track category
         month: Month string (YYYY-MM)
         events_digest: List of event dicts
+        centroid_focus: Centroid-type focus line from track_configs
+        track_focus: Track-specific focus line (optional, GEO only)
 
     Returns:
         Summary text (150-250 words)
@@ -57,24 +62,51 @@ async def generate_summary(
 
     context = "\n".join(context_parts)
 
-    system_prompt = """You are a strategic intelligence analyst writing monthly summary reports.
+    # Build system prompt with dynamic focus lines
+    system_prompt = (
+        """You are a strategic intelligence analyst writing monthly summary reports.
 Generate a cohesive 150-250 word narrative from the provided events timeline.
 
-Requirements:
-- Flow chronologically
-- Highlight key developments
-- Connect related events
-- Provide context for significance
-- Maintain journalistic tone
-- Focus on strategic implications
-- Use present/past tense appropriately
-- Write as a single flowing paragraph or 2-3 short paragraphs
+### Core task
 
-Do NOT:
-- List events as bullet points
-- Include dates in parentheses unless critical
-- Use sensational language
-- Add speculation beyond events"""
+Produce a strategic event synthesis that compresses multiple reports into a coherent factual narrative and derives their strategic implications strictly from the described events.
+
+### Requirements:
+
+* Flow chronologically
+* Highlight key developments
+* Connect related events
+* Provide context for significance
+* Ground all conclusions in explicitly described actions, reactions, or formal statements
+* Derive strategic implications from observable developments (e.g., leverage shifts, capability changes, alignment signals, constraints)
+* Maintain analytic, neutral, non-normative tone
+* Focus on strategic implications
+* Use present/past tense appropriately
+* Write as a single flowing paragraph or two clearly separated paragraphs:
+  * Paragraph 1: What happened (chronological synthesis)
+  * Paragraph 2: Why it matters (strategic implications derived from events)
+
+### Do NOT:
+
+* List events as bullet points
+* Include dates in parentheses unless critical
+* Use sensational or emotive language
+* Infer motives, intent, or future actions unless explicitly stated by an actor
+* Adopt an analyst, editorial, or market-commentary voice
+* Add speculation beyond events
+
+---
+
+### DYNAMIC FOCUS
+
+**Centroid / Structural focus:**
+"""
+        + centroid_focus
+    )
+
+    # Add track focus if provided (GEO only)
+    if track_focus:
+        system_prompt += "\n\n**Domain / Track focus:**\n" + track_focus
 
     user_prompt = f"""{context}
 
@@ -125,6 +157,8 @@ async def process_single_ctm(
     centroid_label: str,
     centroid_class: str,
     primary_theater: str,
+    centroid_focus: str,
+    track_focus: str = None,
 ) -> bool:
     """
     Process a single CTM with semaphore for concurrency control.
@@ -154,6 +188,8 @@ async def process_single_ctm(
                 track,
                 month.strftime("%Y-%m"),
                 events_digest,
+                centroid_focus,
+                track_focus,
             )
 
             word_count = len(summary.split())
@@ -196,15 +232,18 @@ async def process_ctm_batch(max_ctms=None):
 
     try:
         with conn.cursor() as cur:
-            # Get CTMs for daily processing
+            # Get CTMs for daily processing with focus lines from track_configs
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
                 SELECT c.id, c.centroid_id, c.track, c.month,
                        c.events_digest, c.title_count,
-                       cent.label, cent.class, cent.primary_theater
+                       cent.label, cent.class, cent.primary_theater,
+                       tc.llm_summary_centroid_focus,
+                       tc.llm_summary_track_focus
                 FROM ctm c
                 JOIN centroids_v3 cent ON c.centroid_id = cent.id
+                JOIN track_configs tc ON c.track_config_id = tc.id
                 WHERE c.events_digest IS NOT NULL
                   AND jsonb_array_length(c.events_digest) > 0
                   AND c.is_frozen = false
@@ -223,32 +262,51 @@ async def process_ctm_batch(max_ctms=None):
         # Create semaphore for bounded concurrency
         semaphore = asyncio.Semaphore(config.v3_p4_max_concurrent)
 
-        # Create tasks for all CTMs
-        tasks = [
-            process_single_ctm(
-                semaphore,
-                ctm_id,
-                centroid_id,
-                track,
-                month,
-                events_digest,
-                title_count,
-                centroid_label,
-                centroid_class,
-                primary_theater,
+        # Create tasks for all CTMs with focus lines
+        tasks = []
+        for (
+            ctm_id,
+            centroid_id,
+            track,
+            month,
+            events_digest,
+            title_count,
+            centroid_label,
+            centroid_class,
+            primary_theater,
+            centroid_focus,
+            track_focus_jsonb,
+        ) in ctms:
+            # Extract track-specific focus from JSONB if available
+            track_focus = None
+            if track_focus_jsonb and centroid_class == "geo":
+                # Parse JSONB and extract track-specific focus
+                try:
+                    track_focus_map = (
+                        json.loads(track_focus_jsonb)
+                        if isinstance(track_focus_jsonb, str)
+                        else track_focus_jsonb
+                    )
+                    track_focus = track_focus_map.get(track)
+                except (json.JSONDecodeError, TypeError, AttributeError):
+                    pass  # Use None if parsing fails
+
+            tasks.append(
+                process_single_ctm(
+                    semaphore,
+                    ctm_id,
+                    centroid_id,
+                    track,
+                    month,
+                    events_digest,
+                    title_count,
+                    centroid_label,
+                    centroid_class,
+                    primary_theater,
+                    centroid_focus,
+                    track_focus,
+                )
             )
-            for (
-                ctm_id,
-                centroid_id,
-                track,
-                month,
-                events_digest,
-                title_count,
-                centroid_label,
-                centroid_class,
-                primary_theater,
-            ) in ctms
-        ]
 
         # Run all tasks concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)
