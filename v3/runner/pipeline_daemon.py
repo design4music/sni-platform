@@ -155,6 +155,39 @@ class PipelineDaemon:
 
         return (now - last) >= interval
 
+    def monitor_summary_word_counts(self):
+        """Monitor summary word counts to detect length creep"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) as total,
+                        COUNT(CASE WHEN array_length(string_to_array(summary_text, ' '), 1) > 250 THEN 1 END) as over_250,
+                        MAX(array_length(string_to_array(summary_text, ' '), 1)) as max_words,
+                        AVG(array_length(string_to_array(summary_text, ' '), 1))::int as avg_words
+                    FROM ctm
+                    WHERE summary_text IS NOT NULL
+                      AND is_frozen = false
+                """
+                )
+                total, over_250, max_words, avg_words = cur.fetchone()
+
+                print("\nSummary Word Count Monitor:")
+                print(
+                    f"  Total: {total} | Over 250: {over_250} | Max: {max_words} | Avg: {avg_words}"
+                )
+
+                if over_250 > 0:
+                    pct = (over_250 / total * 100) if total > 0 else 0
+                    print(
+                        f"  WARNING: {over_250} summaries ({pct:.1f}%) exceed 250-word target"
+                    )
+
+        finally:
+            conn.close()
+
     def run_phase_with_retry(self, phase_name: str, phase_func, *args, **kwargs):
         """
         Run a phase with retry logic.
@@ -282,6 +315,9 @@ class PipelineDaemon:
                 max_ctms=self.phase4_batch_size,
             )
             self.last_run["phase4"] = time.time()
+
+            # Monitor summary word counts after generation
+            self.monitor_summary_word_counts()
         else:
             if stats["ctms_need_summary"] == 0:
                 print("\nPhase 4.2: Skipping (no CTMs need summary)")
