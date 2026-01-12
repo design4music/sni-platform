@@ -287,7 +287,7 @@ async def process_batch(max_titles=None):
                 FROM titles_v3
                 WHERE processing_status = 'assigned'
                   AND centroid_ids IS NOT NULL
-                  AND track IS NULL
+                  AND id NOT IN (SELECT title_id FROM title_assignments)
                 ORDER BY pubdate_utc DESC
                 {limit_clause}
             """

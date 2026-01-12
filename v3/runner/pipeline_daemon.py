@@ -29,7 +29,7 @@ from core.config import config
 # Import phase modules
 from v3.phase_1.ingest_feeds import run_ingestion
 from v3.phase_2.match_centroids import process_batch as phase2_process
-from v3.phase_3.assign_tracks import process_batch as phase3_process
+from v3.phase_3.assign_tracks_batched import process_batch as phase3_process
 from v3.phase_4.generate_events_digest import \
     process_ctm_batch as phase4_1_process
 from v3.phase_4.generate_summaries import process_ctm_batch as phase4_2_process

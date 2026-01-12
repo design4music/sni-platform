@@ -95,3 +95,55 @@ decisions:
       - Phase 2 implementation: v3/phase_2/match_centroids.py
       - Taxonomy migration: db/migrate_taxonomy_simplify_schema.py
       - Schema migration: db/migrate_drop_is_macro.py
+
+  - id: D-007
+    date: 2026-01-09
+    type: llm-usage
+    status: accepted
+    title: Implement dynamic focus lines for Phase 4.2 summary generation
+    rationale:
+      - Prevent forced narrative coherence across thematically unrelated events
+      - Enable centroid-specific and track-specific guidance for LLM
+      - Address temporal drift (LLM inferring roles/titles from training data)
+    implementation:
+      - track_configs.llm_summary_centroid_focus (TEXT) - structural focus per centroid type
+      - track_configs.llm_summary_track_focus (JSONB) - domain focus per track (GEO only)
+      - Prompt allows 2-4 paragraphs based on natural thematic grouping
+      - Anti-coherence instruction: "Do NOT force unrelated events into false narrative"
+      - Temporal grounding: "Do NOT infer current offices or roles unless explicitly stated"
+    consequences:
+      - More accurate multi-event summaries (e.g., USA humanitarian CTM with Venezuela + domestic)
+      - Reduced hallucination of current political roles
+      - Better thematic separation in complex CTMs
+    references:
+      - v3/phase_4/generate_summaries.py
+      - v3/phase_4/test_summary_single_ctm.py
+      - db/migrations/20260109_add_summary_focus_lines.sql
+
+  - id: D-008
+    date: 2026-01-12
+    type: operational
+    status: accepted
+    title: Complete Phase 4 daemon integration with monitoring
+    rationale:
+      - Phase 4 needed production orchestration alongside Phases 1-3
+      - Summary length creep is a real concern as titles accumulate daily
+      - Need observability for accumulation behavior before over-engineering CTW
+    implementation:
+      - Integrated Phase 4.1 (events) and 4.2 (summaries) into daemon
+      - Added word count monitoring after each Phase 4.2 run
+      - 1-hour interval for Phase 4 (less frequent than matching/assignment)
+      - 50 CTM batch size for enrichment
+      - Fixed SQL bug in assign_tracks.py (line 290: check title_assignments table)
+    testing_plan:
+      - Run daemon for 3-5 consecutive days
+      - Monitor summary word counts (target: 150-250 words)
+      - Track which CTMs grow fastest
+      - Determine if current architecture handles accumulation or if CTW needed
+    consequences:
+      - Full 4-phase pipeline operational in production mode
+      - Data-driven decision on CTM vs CTW architecture
+      - Word count monitoring detects length bloat early
+    references:
+      - v3/runner/pipeline_daemon.py
+      - v3/runner/README.md

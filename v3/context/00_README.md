@@ -18,13 +18,13 @@ Before performing **any** of the following:
 Claude Code **must read and internalize** the following files,
 **in this exact order**:
 
-1. `10__ProjectContract.md`  
+1. `10_ProjectContract.md`
    (What this project is, and what must not drift)
 
-2. `20__ProjectModel.md`  
+2. `20_ProjectModel.md`
    (How the system actually works, conceptually)
 
-3. `30__DecisionLog.yaml`  
+3. `30_DecisionLog.yml`
    (Why key design decisions were made; closed debates)
 
 Only **after** these are read may Claude Code consult:

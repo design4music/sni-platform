@@ -50,7 +50,7 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
                 c.class,
                 c.primary_theater,
                 tc.tracks,
-                tc.llm_prompt
+                tc.llm_track_assignment
             FROM centroids_v3 c
             LEFT JOIN track_configs tc ON c.track_config_id = tc.id
             WHERE c.id = ANY(%s)
@@ -87,7 +87,7 @@ def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
         # No custom configs found, use default
         cur.execute(
             """
-            SELECT tracks, llm_prompt
+            SELECT tracks, llm_track_assignment
             FROM track_configs
             WHERE is_default = TRUE
         """

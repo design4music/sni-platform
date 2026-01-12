@@ -1,7 +1,7 @@
 # SNI v3 Pipeline - Project Status & Documentation
 
-**Last Updated**: 2026-01-07
-**Status**: Operational - All 4 phases implemented and tested (Phase 3 refactored)
+**Last Updated**: 2026-01-12
+**Status**: Production Ready - Full 4-phase daemon operational with monitoring
 **Branch**: `chore/dev-health-initial`
 
 ---
@@ -17,8 +17,9 @@ The v3 pipeline represents a complete redesign of SNI's intelligence processing 
 - **Phase 3**: LLM-based track assignment with CTM creation ✅
 - **Phase 3 Enhanced**: Dynamic track configuration system (centroid-specific tracks) ✅
 - **Phase 3 Refactored**: Many-to-many title-centroid-track relationships with intel gating (2026-01-07) ✅
-- **Phase 4**: Events digest extraction + narrative summary generation ✅
-- **Pipeline Daemon**: Production-ready orchestration with adaptive scheduling ✅
+- **Phase 4.1**: Events digest extraction with batching and consolidation ✅
+- **Phase 4.2**: Summary generation with dynamic focus lines (centroid + track specific) ✅
+- **Pipeline Daemon**: Full 4-phase orchestration with word count monitoring (2026-01-12) ✅
 - **Taxonomy**: Thematically consolidated multilingual aliases, added centroid ids ✅
 - **Schema Migration**: Simplified taxonomy_v3 structure (is_stop_word boolean, removed obsolete fields) ✅
 - **Schema Optimization**: Migrated taxonomy_v3.centroid_ids from ARRAY to VARCHAR(30) (2026-01-06) ✅
@@ -251,14 +252,25 @@ v3/phase_4/
 **Events Digest** (Phase 4.1):
 - LLM extracts distinct events from chronologically ordered titles
 - Deduplicates near-identical reports (e.g., 2 Amazon stories → 1 event)
-- JSONB format: `[{date, summary, source_title_indices}]`
+- JSONB format: `[{date, summary, source_title_ids}]`
+- Two-pass approach: batch extraction + consolidation
 - Tested: 13 titles → 8 distinct events
 
 **Summary Generation** (Phase 4.2):
-- LLM generates cohesive narrative from events digest
-- 150-250 words, journalistic tone, strategic focus
-- Chronological flow with key developments highlighted
-- Tested: 216-word narrative with strategic context
+- LLM generates 150-250 word narrative from events digest
+- **Dynamic focus lines** from `track_configs` table:
+  - `llm_summary_centroid_focus`: Structural guidance (geo vs systemic)
+  - `llm_summary_track_focus`: Track-specific domain guidance (JSONB, GEO only)
+- Anti-coherence instruction: Prevents forcing unrelated events into false narratives
+- Temporal grounding: Prevents LLM from inferring current roles/titles from training data
+- Allows 2-4 paragraphs based on natural thematic grouping
+- Tested: 216-word narrative with proper thematic separation
+
+**Word Count Monitoring**:
+- Daemon tracks summary lengths after each Phase 4.2 run
+- Alerts when summaries exceed 250-word target
+- Monitors: total summaries, over-250 count, max/avg word counts
+- Purpose: Detect length creep as CTMs accumulate titles daily
 
 **Database**: Updates `ctm.events_digest` and `ctm.summary_text`
 
@@ -340,9 +352,13 @@ out/
 db/
 ├── migration_v3_schema.sql     # Complete v3 schema
 ├── migration_v3_taxonomy.sql   # Taxonomy + aliases
-├── migrate_taxonomy_simplify_schema.py # Removed obsolete fields (iso_code, wikidata_qid, item_type)
-├── migrate_drop_is_macro.py    # Removed is_macro after accumulative matching
-└── debug_italian_matches.py    # Debugging tool for false positives
+├── migrations/
+│   ├── 20260109_add_summary_focus_lines.sql  # Add llm_summary_* fields to track_configs
+│   └── 20260107_title_assignments.sql        # Many-to-many title-centroid-track junction
+├── populate_summary_focus_lines.py           # Populate focus line data for all configs
+├── migrate_taxonomy_simplify_schema.py       # Removed obsolete fields (iso_code, wikidata_qid, item_type)
+├── migrate_drop_is_macro.py                  # Removed is_macro after accumulative matching
+└── debug_italian_matches.py                  # Debugging tool for false positives
 ```
 
 ### Testing Scripts
@@ -478,11 +494,19 @@ CREATE TABLE track_configs (
     name TEXT UNIQUE NOT NULL,
     description TEXT,
     tracks TEXT[] NOT NULL,
-    llm_prompt TEXT NOT NULL,
+    llm_track_assignment TEXT NOT NULL,
+    llm_summary_centroid_focus TEXT,
+    llm_summary_track_focus JSONB,
     is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Field purpose:
+-- tracks: Array of track names for this config
+-- llm_track_assignment: Prompt for Phase 3 track assignment
+-- llm_summary_centroid_focus: Structural focus for Phase 4.2 summaries (all centroids)
+-- llm_summary_track_focus: Track-specific focus for Phase 4.2 (JSONB map: {track: focus})
 
 -- Example records:
 -- 1. strategic_default (is_default=TRUE): 10 strategic tracks for all centroids
@@ -655,9 +679,10 @@ CREATE INDEX idx_ctm_frozen ON ctm(is_frozen);
 
 ### Known Issues
 
-1. **Phase 3 Retry Logic**: Currently sync, but phase is async - needs await fix (non-blocking)
+1. **Phase 3 Retry Logic**: Currently sync, but phase is async - needs await fix (non-blocking) ✅ FIXED 2026-01-12
 2. **Phase 4.2 Skip Condition**: If Phase 4.1 runs but 4.2 skipped, timer not updated properly
 3. **Pre-commit Hooks**: black/isort keep reformatting pipeline_daemon.py (used --no-verify for commit)
+4. **SQL Bug in assign_tracks.py**: Line 290 checked non-existent `track` column ✅ FIXED 2026-01-12
 
 ### Future Enhancements
 
@@ -862,7 +887,9 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 - **2025-11-07**: Dynamic track configuration system ✅
 - **2025-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
 - **2026-01-07**: Phase 3 refactoring - many-to-many title-centroid-track relationships + intel gating ✅
-- **2026-01-07**: Current status - Ready for full production testing
+- **2026-01-09**: Phase 4.2 enhancement - dynamic focus lines (centroid + track specific) ✅
+- **2026-01-12**: Phase 4 daemon integration + word count monitoring + SQL bug fixes ✅
+- **2026-01-12**: Current status - Full 4-phase pipeline operational, multi-day testing in progress
 
 ---
 
@@ -876,13 +903,21 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 
 ---
 
-## Post-Holiday Pickup Plan
+## Current Status & Next Steps
 
-1. **Review This Document**: Refresh memory on architecture and status
-2. **Check Queue Depths**: Run monitoring queries to see current state
-3. **Test Daemon**: Run pipeline_daemon.py in development mode for 1 hour
-4. **Review Recent Commits**: Check git log for any changes during absence
-5. **Manual Phase Testing**: Run each phase individually to verify functionality
-6. **Plan Next Steps**: Decide on scaling strategy based on production volume
+### Immediate Status (2026-01-12)
+- ✅ Full 4-phase daemon operational
+- ✅ Phase 4 integration complete with dynamic focus lines
+- ✅ Word count monitoring active
+- ✅ SQL bugs fixed (assign_tracks.py line 290)
+- 🔄 Multi-day testing in progress
 
-**Welcome back! 🎉 The v3 pipeline is ready to roll.**
+### Next Actions
+1. **Monitor Daemon**: Run for 3-5 consecutive days to observe:
+   - Summary word count trends as CTMs accumulate
+   - Which CTMs grow fastest
+   - Whether current architecture handles accumulation
+2. **Data-Driven Decision**: Determine if CTM (monthly) handles accumulation or if CTW (weekly) architecture needed
+3. **Frontend Development**: Begin UI work once pipeline stability confirmed
+
+**The v3 pipeline is production-ready and testing at scale! 🚀**
