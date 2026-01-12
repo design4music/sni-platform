@@ -101,14 +101,14 @@ class PipelineDaemon:
                 )
                 pending_titles = cur.fetchone()[0]
 
-                # Phase 3 queue (assigned titles without track)
+                # Phase 3 queue (assigned titles without track assignment)
                 cur.execute(
                     """
                     SELECT COUNT(*)
                     FROM titles_v3
                     WHERE processing_status = 'assigned'
                       AND centroid_ids IS NOT NULL
-                      AND track IS NULL
+                      AND id NOT IN (SELECT title_id FROM title_assignments)
                 """
                 )
                 titles_need_track = cur.fetchone()[0]
@@ -118,10 +118,11 @@ class PipelineDaemon:
                     """
                     SELECT COUNT(*)
                     FROM ctm
-                    WHERE title_count > 0
-                      AND (events_digest = '[]'::jsonb OR events_digest IS NULL)
+                    WHERE title_count >= %s
+                      AND (events_digest IS NULL OR jsonb_array_length(events_digest) = 0)
                       AND is_frozen = false
-                """
+                """,
+                    (self.config.v3_p4_min_titles,),
                 )
                 ctms_need_events = cur.fetchone()[0]
 
@@ -130,11 +131,13 @@ class PipelineDaemon:
                     """
                     SELECT COUNT(*)
                     FROM ctm
-                    WHERE events_digest IS NOT NULL
+                    WHERE title_count >= %s
+                      AND events_digest IS NOT NULL
                       AND jsonb_array_length(events_digest) > 0
                       AND summary_text IS NULL
                       AND is_frozen = false
-                """
+                """,
+                    (self.config.v3_p4_min_titles,),
                 )
                 ctms_need_summary = cur.fetchone()[0]
 
