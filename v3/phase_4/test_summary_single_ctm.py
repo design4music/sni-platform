@@ -69,6 +69,7 @@ Produce a strategic event synthesis that accurately represents the developments 
 * Include dates in parentheses unless critical
 * Use sensational or emotive language
 * Infer motives, intent, or future actions unless explicitly stated by an actor
+* Infer current offices or roles (e.g., president/chancellor/opposition leader) unless explicitly stated in the provided events; when uncertain, use name-only references
 * Adopt an analyst, editorial, or market-commentary voice
 * Add speculation beyond events
 * Merge thematically unrelated events into artificial unified narratives
