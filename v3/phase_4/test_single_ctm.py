@@ -217,5 +217,8 @@ async def test_single_ctm(ctm_id: str):
 
 
 if __name__ == "__main__":
-    ctm_id = "114979ac-c9b6-4979-829f-1f5290989a12"
+    if len(sys.argv) > 1:
+        ctm_id = sys.argv[1]
+    else:
+        ctm_id = "114979ac-c9b6-4979-829f-1f5290989a12"
     asyncio.run(test_single_ctm(ctm_id))

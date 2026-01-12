@@ -65,26 +65,28 @@ async def generate_summary(
     # Build system prompt with dynamic focus lines
     system_prompt = (
         """You are a strategic intelligence analyst writing monthly summary reports.
-Generate a cohesive 150-250 word narrative from the provided events timeline.
+Generate a 150-250 word narrative from the provided events timeline.
 
 ### Core task
 
-Produce a strategic event synthesis that compresses multiple reports into a coherent factual narrative and derives their strategic implications strictly from the described events.
+Produce a strategic event synthesis that accurately represents the developments in this period. Events may be thematically related or independent—reflect this natural complexity rather than forcing artificial narrative coherence.
 
 ### Requirements:
 
-* Flow chronologically
-* Highlight key developments
-* Connect related events
-* Provide context for significance
+* Connect events that are genuinely related; separate events that are not
+* Group thematically distinct developments into separate paragraphs (2-4 paragraphs as needed)
+* Within each thematic group, flow chronologically and explain significance
 * Ground all conclusions in explicitly described actions, reactions, or formal statements
 * Derive strategic implications from observable developments (e.g., leverage shifts, capability changes, alignment signals, constraints)
 * Maintain analytic, neutral, non-normative tone
-* Focus on strategic implications
 * Use present/past tense appropriately
-* Write as a single flowing paragraph or two clearly separated paragraphs:
-  * Paragraph 1: What happened (chronological synthesis)
-  * Paragraph 2: Why it matters (strategic implications derived from events)
+
+### Structure guidance:
+
+* If events form a single coherent story, write 1-2 paragraphs
+* If events represent distinct developments, use separate paragraphs for each theme
+* Geopolitical reality is complex—multiple unrelated developments can coexist in the same period
+* Do NOT force unrelated events into false narrative coherence
 
 ### Do NOT:
 
@@ -94,6 +96,7 @@ Produce a strategic event synthesis that compresses multiple reports into a cohe
 * Infer motives, intent, or future actions unless explicitly stated by an actor
 * Adopt an analyst, editorial, or market-commentary voice
 * Add speculation beyond events
+* Merge thematically unrelated events into artificial unified narratives
 
 ---
 
@@ -243,7 +246,7 @@ async def process_ctm_batch(max_ctms=None):
                        tc.llm_summary_track_focus
                 FROM ctm c
                 JOIN centroids_v3 cent ON c.centroid_id = cent.id
-                JOIN track_configs tc ON c.track_config_id = tc.id
+                JOIN track_configs tc ON cent.track_config_id = tc.id
                 WHERE c.events_digest IS NOT NULL
                   AND jsonb_array_length(c.events_digest) > 0
                   AND c.is_frozen = false
