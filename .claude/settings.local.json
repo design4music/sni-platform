@@ -51,7 +51,26 @@
       "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\clust1/**)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\ingest/**)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(mkdir:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx create-next-app@latest:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir /B /S /A-D)",
+      "Bash(findstr:*)",
+      "Bash(python db/check_tracks.py:*)",
+      "Bash(timeout 30 npm run dev:*)",
+      "Bash(dir)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then cat .env.local)",
+      "Bash(else echo \".env.local NOT found\")",
+      "Bash(fi)",
+      "Bash(netstat:*)",
+      "Bash(npm run dev)",
+      "Bash(curl:*)",
+      "Bash(npm run check-db:*)",
+      "Bash(node -e:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

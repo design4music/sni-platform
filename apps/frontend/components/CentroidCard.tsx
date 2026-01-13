@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Centroid } from '@/lib/types';
+import { Centroid, formatTimeAgo } from '@/lib/types';
 
 interface CentroidCardProps {
   centroid: Centroid;
@@ -9,6 +9,9 @@ interface CentroidCardProps {
 export default function CentroidCard({ centroid, showClass = false }: CentroidCardProps) {
   const articleCount = centroid.article_count || 0;
   const hasArticles = articleCount > 0;
+  const sourceCount = centroid.source_count || 0;
+  const languageCount = centroid.language_count || 0;
+  const lastUpdated = formatTimeAgo(centroid.last_article_date);
 
   return (
     <Link
@@ -42,7 +45,26 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
             )}
           </div>
           {centroid.description && (
-            <p className="text-sm text-dashboard-text-muted">{centroid.description}</p>
+            <p className="text-sm text-dashboard-text-muted mb-2">{centroid.description}</p>
+          )}
+          {hasArticles && (sourceCount > 0 || languageCount > 0 || lastUpdated) && (
+            <div className="flex flex-wrap gap-3 text-xs text-dashboard-text-muted mt-2">
+              {sourceCount > 0 && (
+                <span title={`${sourceCount} distinct news sources`}>
+                  {sourceCount} sources
+                </span>
+              )}
+              {languageCount > 0 && (
+                <span title={`Coverage in ${languageCount} languages`}>
+                  {languageCount} {languageCount === 1 ? 'language' : 'languages'}
+                </span>
+              )}
+              {lastUpdated && (
+                <span className="text-green-400" title="Latest article">
+                  {lastUpdated}
+                </span>
+              )}
+            </div>
           )}
           {showClass && (
             <span className="text-xs px-2 py-1 rounded bg-dashboard-border text-dashboard-text-muted inline-block mt-2">

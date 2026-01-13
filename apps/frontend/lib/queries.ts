@@ -17,11 +17,32 @@ export async function getCentroidById(id: string): Promise<Centroid | null> {
 
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Promise<Centroid[]> {
   return query<Centroid>(
-    `SELECT c.*, COALESCE(SUM(ctm.title_count), 0)::int as article_count
+    `SELECT
+      c.*,
+      COALESCE((SELECT SUM(title_count) FROM ctm WHERE ctm.centroid_id = c.id), 0)::int as article_count,
+      (
+        SELECT COUNT(DISTINCT t.publisher_name)
+        FROM ctm
+        JOIN title_assignments ta ON ctm.id = ta.ctm_id
+        JOIN titles_v3 t ON ta.title_id = t.id
+        WHERE ctm.centroid_id = c.id AND t.publisher_name IS NOT NULL
+      )::int as source_count,
+      (
+        SELECT COUNT(DISTINCT t.detected_language)
+        FROM ctm
+        JOIN title_assignments ta ON ctm.id = ta.ctm_id
+        JOIN titles_v3 t ON ta.title_id = t.id
+        WHERE ctm.centroid_id = c.id AND t.detected_language IS NOT NULL
+      )::int as language_count,
+      (
+        SELECT MAX(t.pubdate_utc)
+        FROM ctm
+        JOIN title_assignments ta ON ctm.id = ta.ctm_id
+        JOIN titles_v3 t ON ta.title_id = t.id
+        WHERE ctm.centroid_id = c.id
+      ) as last_article_date
      FROM centroids_v3 c
-     LEFT JOIN ctm ON c.id = ctm.centroid_id
      WHERE c.class = $1 AND c.is_active = true
-     GROUP BY c.id
      ORDER BY c.label`,
     [centroidClass]
   );
@@ -29,11 +50,32 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Pr
 
 export async function getCentroidsByTheater(theater: string): Promise<Centroid[]> {
   return query<Centroid>(
-    `SELECT c.*, COALESCE(SUM(ctm.title_count), 0)::int as article_count
+    `SELECT
+      c.*,
+      COALESCE((SELECT SUM(title_count) FROM ctm WHERE ctm.centroid_id = c.id), 0)::int as article_count,
+      (
+        SELECT COUNT(DISTINCT t.publisher_name)
+        FROM ctm
+        JOIN title_assignments ta ON ctm.id = ta.ctm_id
+        JOIN titles_v3 t ON ta.title_id = t.id
+        WHERE ctm.centroid_id = c.id AND t.publisher_name IS NOT NULL
+      )::int as source_count,
+      (
+        SELECT COUNT(DISTINCT t.detected_language)
+        FROM ctm
+        JOIN title_assignments ta ON ctm.id = ta.ctm_id
+        JOIN titles_v3 t ON ta.title_id = t.id
+        WHERE ctm.centroid_id = c.id AND t.detected_language IS NOT NULL
+      )::int as language_count,
+      (
+        SELECT MAX(t.pubdate_utc)
+        FROM ctm
+        JOIN title_assignments ta ON ctm.id = ta.ctm_id
+        JOIN titles_v3 t ON ta.title_id = t.id
+        WHERE ctm.centroid_id = c.id
+      ) as last_article_date
      FROM centroids_v3 c
-     LEFT JOIN ctm ON c.id = ctm.centroid_id
      WHERE c.primary_theater = $1 AND c.is_active = true
-     GROUP BY c.id
      ORDER BY c.label`,
     [theater]
   );

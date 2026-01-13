@@ -163,29 +163,50 @@ async def gate_centroid_batch(
     # Intel gating prompt
     prompt = f"""You are an intelligence analyst reviewing {len(titles_batch)} news titles for {track_config['centroid_label']}.
 
-TASK: Identify which titles contain strategic intelligence value.
+TASK: Identify which titles contain strategic intelligence value. Be INCLUSIVE - when in doubt, mark as strategic.
 
-REJECT if title is primarily about:
-- Sports/athletics (unless geopolitical angle: boycotts, state policy, international disputes)
-- Entertainment/celebrities/culture (unless political angle)
-- Human interest stories without policy impact
-- Local crime (unless pattern indicates systemic instability)
-- Weather/natural disasters (unless strategic economic/political impact)
+STRATEGIC CONTENT (ACCEPT these):
+✓ Government policy, legislation, regulations, executive actions
+✓ International relations, diplomacy, summits, bilateral/multilateral talks
+✓ Military operations, defense, security matters, terrorism
+✓ Economic policy, trade agreements, sanctions, tariffs, major corporate deals
+✓ Energy markets, oil/gas, supply disruptions, infrastructure
+✓ Political protests, elections, government transitions, coups
+✓ Court rulings with policy implications, legal precedents
+✓ Strategic resources (water, minerals, food security)
+✓ Technology with geopolitical implications (semiconductors, AI, cyber)
+✓ Major industrial policy, manufacturing, labor disputes with economic impact
 
-ACCEPT if title relates to:
-- Policy decisions and government actions
-- International relations and diplomacy
-- Economic developments (trade, finance, sanctions)
-- Security, military, or defense matters
-- Political developments and elections
-- Resource control and trade issues
-- Strategic infrastructure
+ACCEPT EXAMPLES:
+- "Trump encourages Iranian protesters; rights group says 2,000 killed" → political unrest + international relations ✓
+- "Oil prices rise on potential Iran supply disruption" → energy markets + geopolitics ✓
+- "Supreme Court skeptical of trans athlete ban arguments" → legal policy ✓
+- "EU-Mercosur trade pact signals limits of Trump diplomacy" → trade + diplomacy ✓
+- "Top Turkish, Iranian diplomats discuss situation" → bilateral diplomacy ✓
+- "Trump's Detroit trip puts manufacturing back in focus" → industrial policy ✓
+
+NON-STRATEGIC CONTENT (REJECT these):
+✗ Pure sports/entertainment (scores, celebrity gossip, award shows)
+✗ Health/wellness tips, recipes, lifestyle advice
+✗ Local crime without systemic implications
+✗ Human interest stories, feel-good news
+✗ Real estate ads, local business openings
+✗ Weather forecasts (unless major disaster with economic impact)
+
+REJECT EXAMPLES:
+- "How to make mulberry tea for health benefits" → lifestyle advice ✗
+- "Local restaurant opens in downtown district" → local business ✗
+- "Celebrity couple announces breakup" → entertainment ✗
+- "Team wins championship game" → sports result ✗
+- "Cheap apartments for rent in city" → real estate ad ✗
 
 Titles:
 {titles_text}
 
 Return ONLY valid JSON with title numbers:
-{{"strategic": [1,3,5], "reject": [2,4,6]}}"""
+{{"strategic": [1,3,5], "reject": [2,4,6]}}
+
+When uncertain, prefer STRATEGIC over reject - we want comprehensive coverage of geopolitical, economic, and policy developments."""
 
     headers = {
         "Authorization": f"Bearer {config.deepseek_api_key}",
@@ -195,7 +216,7 @@ Return ONLY valid JSON with title numbers:
     payload = {
         "model": config.llm_model,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.0,
+        "temperature": 0.2,  # Increased from 0.0 for more flexible strategic assessment
         "max_tokens": config.v3_p3_max_tokens_gating,
     }
 

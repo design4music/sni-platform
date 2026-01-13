@@ -9,6 +9,9 @@ export interface Centroid {
   track_config_id?: string;
   description?: string;
   article_count?: number;
+  source_count?: number;
+  language_count?: number;
+  last_article_date?: Date;
 }
 
 export interface CTM {
@@ -76,3 +79,24 @@ export const REGIONS = {
 } as const;
 
 export type RegionKey = keyof typeof REGIONS;
+
+// Utility function to format relative time
+export function formatTimeAgo(date: Date | null | undefined): string {
+  if (!date) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - new Date(date).getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffHours < 1) {
+    return 'Just now';
+  } else if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  } else if (diffDays < 30) {
+    return `${diffDays}d ago`;
+  } else {
+    const diffMonths = Math.floor(diffDays / 30);
+    return `${diffMonths}mo ago`;
+  }
+}

@@ -11,7 +11,34 @@ interface WorldMapProps {
     id: string;
     label: string;
     iso_codes?: string[];
+    article_count?: number;
   }>;
+}
+
+// Heatmap color function - uses logarithmic scale for better distribution
+// All colors in warm tones (yellow to red) for cohesive look
+function getHeatmapColor(articleCount: number, maxCount: number): string {
+  if (articleCount === 0 || maxCount === 0) {
+    return '#4a4a3a'; // very pale warm gray for no coverage
+  }
+
+  // Use log scale to compress the range and show more color variation
+  // Adding 1 to avoid log(0)
+  const logCount = Math.log10(articleCount + 1);
+  const logMax = Math.log10(maxCount + 1);
+  const intensity = logCount / logMax;
+
+  if (intensity < 0.2) {
+    return '#6b6b4a'; // pale warm brown - minimal (1-10 articles)
+  } else if (intensity < 0.4) {
+    return '#eab308'; // yellow - low (10-50 articles)
+  } else if (intensity < 0.6) {
+    return '#f59e0b'; // orange - medium (50-200 articles)
+  } else if (intensity < 0.8) {
+    return '#f97316'; // dark orange - high (200-500 articles)
+  } else {
+    return '#dc2626'; // red - very high (500+ articles)
+  }
 }
 
 function MapController() {
@@ -41,12 +68,20 @@ export default function WorldMap({ centroids }: WorldMapProps) {
     }
   }, []);
 
-  const isoToCentroid = new Map<string, { id: string; label: string; allIsoCodes: string[] }>();
-  const centroidRef = useRef<Map<string, { id: string; label: string; allIsoCodes: string[] }>>(new Map());
+  const isoToCentroid = new Map<string, { id: string; label: string; allIsoCodes: string[]; articleCount: number }>();
+  const centroidRef = useRef<Map<string, { id: string; label: string; allIsoCodes: string[]; articleCount: number }>>(new Map());
+
+  // Calculate max article count for heatmap scaling
+  const maxArticleCount = Math.max(...centroids.map(c => c.article_count || 0), 1);
 
   centroids.forEach(c => {
     if (c.iso_codes) {
-      const centroidData = { id: c.id, label: c.label, allIsoCodes: c.iso_codes };
+      const centroidData = {
+        id: c.id,
+        label: c.label,
+        allIsoCodes: c.iso_codes,
+        articleCount: c.article_count || 0
+      };
       c.iso_codes.forEach(iso => {
         isoToCentroid.set(iso.toUpperCase(), centroidData);
       });
@@ -107,7 +142,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
           });
         },
         mouseout: (e: any) => {
-          // Reset all countries in this centroid
+          // Reset all countries in this centroid to heatmap color
           const map = e.target._map;
           map.eachLayer((l: any) => {
             if (l.feature && l.feature.properties) {
@@ -121,9 +156,10 @@ export default function WorldMap({ centroids }: WorldMapProps) {
               if (layerIso === 'CN-TW') layerIso = 'TW';
 
               if (centroid.allIsoCodes.includes(layerIso)) {
+                const heatmapColor = getHeatmapColor(centroid.articleCount, maxArticleCount);
                 l.setStyle({
-                  fillColor: '#6b7280',
-                  fillOpacity: 0.5,
+                  fillColor: heatmapColor,
+                  fillOpacity: 0.6,
                 });
               }
             }
@@ -146,19 +182,48 @@ export default function WorldMap({ centroids }: WorldMapProps) {
     if (name === 'Kosovo') iso2 = 'XK';
     if (iso2 === 'CN-TW') iso2 = 'TW';
 
-    const hasCentroid = isoToCentroid.has(iso2);
+    const centroid = isoToCentroid.get(iso2);
+    const heatmapColor = centroid
+      ? getHeatmapColor(centroid.articleCount, maxArticleCount)
+      : '#374151';
 
     return {
-      fillColor: hasCentroid ? '#6b7280' : '#374151',
-      fillOpacity: hasCentroid ? 0.5 : 0.2,
+      fillColor: heatmapColor,
+      fillOpacity: centroid ? 0.6 : 0.2,
       color: '#1f2937',
       weight: 1,
-      cursor: hasCentroid ? 'pointer' : 'default',
+      cursor: centroid ? 'pointer' : 'default',
     };
   };
 
   return (
-    <div className="w-full h-[500px] rounded-lg overflow-hidden">
+    <div className="w-full h-[500px] rounded-lg overflow-hidden relative">
+      {/* Heatmap Legend */}
+      <div className="absolute bottom-4 left-4 bg-dashboard-surface/90 backdrop-blur-sm border border-dashboard-border rounded-lg p-3 z-[1000]">
+        <div className="text-xs font-semibold mb-2 text-dashboard-text">Coverage Intensity</div>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dc2626' }}></div>
+            <span className="text-xs text-dashboard-text-muted">Very High</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
+            <span className="text-xs text-dashboard-text-muted">High</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f59e0b' }}></div>
+            <span className="text-xs text-dashboard-text-muted">Medium</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#eab308' }}></div>
+            <span className="text-xs text-dashboard-text-muted">Low</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#6b6b4a' }}></div>
+            <span className="text-xs text-dashboard-text-muted">Minimal</span>
+          </div>
+        </div>
+      </div>
       <MapContainer
         key="world-map"
         center={[20, 0]}
