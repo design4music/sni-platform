@@ -17,14 +17,24 @@ export async function getCentroidById(id: string): Promise<Centroid | null> {
 
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Promise<Centroid[]> {
   return query<Centroid>(
-    'SELECT * FROM centroids_v3 WHERE class = $1 AND is_active = true ORDER BY label',
+    `SELECT c.*, COALESCE(SUM(ctm.title_count), 0)::int as article_count
+     FROM centroids_v3 c
+     LEFT JOIN ctm ON c.id = ctm.centroid_id
+     WHERE c.class = $1 AND c.is_active = true
+     GROUP BY c.id
+     ORDER BY c.label`,
     [centroidClass]
   );
 }
 
 export async function getCentroidsByTheater(theater: string): Promise<Centroid[]> {
   return query<Centroid>(
-    'SELECT * FROM centroids_v3 WHERE primary_theater = $1 AND is_active = true ORDER BY label',
+    `SELECT c.*, COALESCE(SUM(ctm.title_count), 0)::int as article_count
+     FROM centroids_v3 c
+     LEFT JOIN ctm ON c.id = ctm.centroid_id
+     WHERE c.primary_theater = $1 AND c.is_active = true
+     GROUP BY c.id
+     ORDER BY c.label`,
     [theater]
   );
 }

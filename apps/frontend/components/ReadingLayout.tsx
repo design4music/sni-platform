@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import Logo from './Logo';
-import Link from 'next/link';
+import Navigation from './Navigation';
 
 interface ReadingLayoutProps {
   children: ReactNode;
@@ -10,9 +10,12 @@ interface ReadingLayoutProps {
 export default function ReadingLayout({ children, sidebar }: ReadingLayoutProps) {
   return (
     <div className="min-h-screen bg-reading-bg text-reading-text">
-      <header className="border-b border-reading-border bg-white sticky top-0 z-10">
+      <header className="border-b border-dashboard-border bg-dashboard-surface sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Logo />
+          <div className="flex items-center justify-between">
+            <Logo />
+            <Navigation />
+          </div>
         </div>
       </header>
 

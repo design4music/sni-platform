@@ -7,6 +7,8 @@ export interface Centroid {
   is_active: boolean;
   iso_codes?: string[];
   track_config_id?: string;
+  description?: string;
+  article_count?: number;
 }
 
 export interface CTM {

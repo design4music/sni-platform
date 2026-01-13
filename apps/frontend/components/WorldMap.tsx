@@ -41,14 +41,19 @@ export default function WorldMap({ centroids }: WorldMapProps) {
     }
   }, []);
 
-  const isoToCentroid = new Map<string, { id: string; label: string }>();
+  const isoToCentroid = new Map<string, { id: string; label: string; allIsoCodes: string[] }>();
+  const centroidRef = useRef<Map<string, { id: string; label: string; allIsoCodes: string[] }>>(new Map());
+
   centroids.forEach(c => {
     if (c.iso_codes) {
+      const centroidData = { id: c.id, label: c.label, allIsoCodes: c.iso_codes };
       c.iso_codes.forEach(iso => {
-        isoToCentroid.set(iso.toUpperCase(), { id: c.id, label: c.label });
+        isoToCentroid.set(iso.toUpperCase(), centroidData);
       });
     }
   });
+
+  centroidRef.current = isoToCentroid;
 
   if (!isClient || !geoData) {
     return (
@@ -59,11 +64,18 @@ export default function WorldMap({ centroids }: WorldMapProps) {
   }
 
   const onEachFeature = (feature: any, layer: any) => {
-    const iso2 = feature.properties['ISO3166-1-Alpha-2'];
+    let iso2 = feature.properties['ISO3166-1-Alpha-2'];
+    const name = feature.properties.name;
+
+    // Handle GeoJSON quirks (countries with -99 or wrong codes)
+    if (name === 'France') iso2 = 'FR';
+    if (name === 'Norway') iso2 = 'NO';
+    if (name === 'Kosovo') iso2 = 'XK';
+    if (iso2 === 'CN-TW') iso2 = 'TW';
+
     const centroid = isoToCentroid.get(iso2);
 
     if (centroid) {
-      // Add tooltip with centroid name
       layer.bindTooltip(centroid.label, {
         permanent: false,
         direction: 'center',
@@ -72,15 +84,49 @@ export default function WorldMap({ centroids }: WorldMapProps) {
 
       layer.on({
         mouseover: (e: any) => {
-          e.target.setStyle({
-            fillColor: '#3b82f6',
-            fillOpacity: 0.7,
+          // Highlight all countries in this centroid
+          const map = e.target._map;
+          map.eachLayer((l: any) => {
+            if (l.feature && l.feature.properties) {
+              let layerIso = l.feature.properties['ISO3166-1-Alpha-2'];
+              const layerName = l.feature.properties.name;
+
+              // Apply same normalization
+              if (layerName === 'France') layerIso = 'FR';
+              if (layerName === 'Norway') layerIso = 'NO';
+              if (layerName === 'Kosovo') layerIso = 'XK';
+              if (layerIso === 'CN-TW') layerIso = 'TW';
+
+              if (centroid.allIsoCodes.includes(layerIso)) {
+                l.setStyle({
+                  fillColor: '#3b82f6',
+                  fillOpacity: 0.7,
+                });
+              }
+            }
           });
         },
         mouseout: (e: any) => {
-          e.target.setStyle({
-            fillColor: '#6b7280',
-            fillOpacity: 0.5,
+          // Reset all countries in this centroid
+          const map = e.target._map;
+          map.eachLayer((l: any) => {
+            if (l.feature && l.feature.properties) {
+              let layerIso = l.feature.properties['ISO3166-1-Alpha-2'];
+              const layerName = l.feature.properties.name;
+
+              // Apply same normalization
+              if (layerName === 'France') layerIso = 'FR';
+              if (layerName === 'Norway') layerIso = 'NO';
+              if (layerName === 'Kosovo') layerIso = 'XK';
+              if (layerIso === 'CN-TW') layerIso = 'TW';
+
+              if (centroid.allIsoCodes.includes(layerIso)) {
+                l.setStyle({
+                  fillColor: '#6b7280',
+                  fillOpacity: 0.5,
+                });
+              }
+            }
           });
         },
         click: () => {
@@ -91,7 +137,15 @@ export default function WorldMap({ centroids }: WorldMapProps) {
   };
 
   const style = (feature: any) => {
-    const iso2 = feature.properties['ISO3166-1-Alpha-2'];
+    let iso2 = feature.properties['ISO3166-1-Alpha-2'];
+    const name = feature.properties.name;
+
+    // Handle GeoJSON quirks (countries with -99 or wrong codes)
+    if (name === 'France') iso2 = 'FR';
+    if (name === 'Norway') iso2 = 'NO';
+    if (name === 'Kosovo') iso2 = 'XK';
+    if (iso2 === 'CN-TW') iso2 = 'TW';
+
     const hasCentroid = isoToCentroid.has(iso2);
 
     return {

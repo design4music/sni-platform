@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SNI - Strategic Narrative Intelligence',
-  description: 'AI-generated global news narratives presented in a structured, navigable way',
+  title: 'WorldBrief - Understand the world. Briefly.',
+  description: 'AI-generated global news narratives organized by strategic actors and themes',
 };
 
 export default function RootLayout({

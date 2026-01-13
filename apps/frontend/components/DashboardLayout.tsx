@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import Logo from './Logo';
-import Link from 'next/link';
+import Navigation from './Navigation';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,19 +10,12 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children, title, sidebar }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-dashboard-bg text-dashboard-text">
-      <header className="border-b border-dashboard-border bg-dashboard-surface">
+    <div className="min-h-screen bg-dashboard-surface text-dashboard-text bg-texture-grid">
+      <header className="border-b border-dashboard-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Logo />
-            <nav className="flex gap-6">
-              <Link href="/" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                Home
-              </Link>
-              <Link href="/global" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                Global
-              </Link>
-            </nav>
+            <Navigation />
           </div>
         </div>
       </header>
