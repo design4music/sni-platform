@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+/* Leaflet overrides for dark theme */
+.leaflet-container {
+  background: #0a0e1a !important;
+}
+
+.leaflet-control-zoom {
+  display: none !important;
+}
+
+/* Reading mode typography */
+.prose {
+  @apply text-reading-text;
+}
+
+.prose h1 {
+  @apply text-4xl font-bold mb-4;
+}
+
+.prose h2 {
+  @apply text-3xl font-bold mb-3 mt-8;
+}
+
+.prose h3 {
+  @apply text-2xl font-semibold mb-2 mt-6;
+}
+
+.prose p {
+  @apply mb-4 leading-relaxed;
+}
+
+.prose ul {
+  @apply list-disc pl-6 mb-4;
+}
+
+.prose li {
+  @apply mb-2;
+}
+
+.prose a {
+  @apply text-blue-600 hover:text-blue-800 underline;
+}
