@@ -3,7 +3,7 @@ import TrackCard from '@/components/TrackCard';
 import {
   getCentroidById,
   getTrackSummaryByCentroid,
-  getAllCentroids,
+  getOverlappingCentroids,
 } from '@/lib/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -24,8 +24,7 @@ export default async function CentroidPage({ params }: CentroidPageProps) {
 
   const trackData = await getTrackSummaryByCentroid(centroid.id);
   const tracks = trackData.map(t => t.track).sort();
-  const allCentroids = await getAllCentroids();
-  const otherCentroids = allCentroids.filter(c => c.id !== centroid.id).slice(0, 10);
+  const overlappingCentroids = await getOverlappingCentroids(centroid.id);
 
   const sidebar = (
     <div className="space-y-6">
@@ -50,17 +49,20 @@ export default async function CentroidPage({ params }: CentroidPageProps) {
         </div>
       </div>
 
-      {otherCentroids.length > 0 && (
+      {overlappingCentroids.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3">Other Centroids</h3>
+          <h3 className="text-lg font-semibold mb-3">More Countries and Topics</h3>
           <div className="space-y-2">
-            {otherCentroids.map(c => (
+            {overlappingCentroids.map(c => (
               <Link
                 key={c.id}
                 href={`/c/${c.id}`}
-                className="block text-sm text-dashboard-text-muted hover:text-dashboard-text transition"
+                className="block text-sm hover:text-dashboard-text transition"
               >
-                {c.label}
+                <span className="text-dashboard-text-muted">{c.label}</span>
+                <span className="text-xs text-dashboard-text-muted ml-2">
+                  ({c.overlap_count} shared)
+                </span>
               </Link>
             ))}
           </div>

@@ -1,7 +1,7 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import CentroidCard from '@/components/CentroidCard';
 import MapSection from '@/components/MapSection';
-import { getCentroidsByClass } from '@/lib/queries';
+import { getCentroidsByClass, getAllActiveFeeds } from '@/lib/queries';
 import { REGIONS } from '@/lib/types';
 import Link from 'next/link';
 
@@ -10,9 +10,16 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const systemicCentroids = await getCentroidsByClass('systemic');
   const geoCentroids = await getCentroidsByClass('geo');
+  const feeds = await getAllActiveFeeds();
 
-  const globalGeoCentroids = geoCentroids.filter(c => !c.primary_theater);
-  const geoCentroidsWithMap = geoCentroids.filter(c => c.iso_codes && c.iso_codes.length > 0);
+  // Non-State Actors are geo centroids with IDs starting with "NON-STATE-"
+  const nonStateActors = geoCentroids.filter(c => c.id.startsWith('NON-STATE-'));
+  const geoCentroidsWithMap = geoCentroids.filter(
+    c => c.iso_codes && c.iso_codes.length > 0 && !c.id.startsWith('NON-STATE-')
+  );
+
+  // Get sample feeds for preview (12 feeds from different outlets)
+  const sampleFeeds = feeds.slice(0, 12);
 
   return (
     <DashboardLayout>
@@ -56,18 +63,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Global Geo Centroids */}
-        {globalGeoCentroids.length > 0 && (
-          <section>
-            <h2 className="text-3xl font-bold mb-6">Global Non-State Actors</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {globalGeoCentroids.map(centroid => (
-                <CentroidCard key={centroid.id} centroid={centroid} />
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Regions */}
         <section>
           <h2 className="text-3xl font-bold mb-6">Regional Intelligence</h2>
@@ -80,6 +75,48 @@ export default async function HomePage() {
               >
                 <h3 className="text-xl font-semibold">{label}</h3>
               </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Non-State Actors */}
+        {nonStateActors.length > 0 && (
+          <section>
+            <h2 className="text-3xl font-bold mb-6">Non-State Actors</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {nonStateActors.map(centroid => (
+                <CentroidCard key={centroid.id} centroid={centroid} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Sources Preview */}
+        <section>
+          <div className="flex items-end justify-between mb-6">
+            <div>
+              <h2 className="text-3xl font-bold">Our Sources</h2>
+              <p className="text-dashboard-text-muted mt-2">
+                {feeds.length}+ international news sources across all regions
+              </p>
+            </div>
+            <Link
+              href="/sources"
+              className="text-blue-400 hover:text-blue-300 underline text-sm"
+            >
+              View all sources
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {sampleFeeds.map(feed => (
+              <div
+                key={feed.id}
+                className="bg-dashboard-surface border border-dashboard-border rounded p-3 text-center"
+              >
+                <p className="text-sm text-dashboard-text-muted truncate">
+                  {feed.name}
+                </p>
+              </div>
             ))}
           </div>
         </section>

@@ -49,6 +49,13 @@ export default function Navigation() {
         )}
       </div>
 
+      <Link
+        href="/sources"
+        className="text-dashboard-text-muted hover:text-dashboard-text transition"
+      >
+        Sources
+      </Link>
+
       <div
         className="relative"
         onMouseEnter={() => setShowComingSoon(true)}

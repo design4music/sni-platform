@@ -50,13 +50,26 @@ export interface TitleAssignment {
   ctm_id: string;
 }
 
+export interface Feed {
+  id: string;
+  name: string;
+  url: string;
+  language_code: string;
+  country_code?: string;
+  source_domain?: string;
+  is_active: boolean;
+}
+
 // Track is a string - actual values come from database
 export type Track = string;
 
 // Convert track slug to human-readable label
 export function getTrackLabel(track: string): string {
+  // Remove "geo_" prefix if present (geographic tracks)
+  const withoutPrefix = track.replace(/^geo_/, '');
+
   // Convert underscore to space and title case each word
-  return track
+  return withoutPrefix
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');

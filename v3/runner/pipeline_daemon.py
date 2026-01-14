@@ -44,7 +44,7 @@ class PipelineDaemon:
         self.cycle_count = 0
 
         # Intervals (in seconds)
-        self.phase1_interval = 3600  # 1 hour - RSS feeds
+        self.phase1_interval = 43200  # 12 hours - RSS feeds
         self.phase2_interval = 300  # 5 minutes - Fast matching
         self.phase3_interval = 600  # 10 minutes - LLM track assignment
         self.phase4_interval = 3600  # 1 hour - Enrichment (can wait)
@@ -113,7 +113,7 @@ class PipelineDaemon:
                 )
                 titles_need_track = cur.fetchone()[0]
 
-                # Phase 4.1 queue (CTMs without events digest)
+                # Phase 4.1 queue (CTMs without events digest, prioritize empty first)
                 cur.execute(
                     """
                     SELECT COUNT(*)
@@ -126,7 +126,8 @@ class PipelineDaemon:
                 )
                 ctms_need_events = cur.fetchone()[0]
 
-                # Phase 4.2 queue (CTMs with events but no summary)
+                # Phase 4.2 queue (CTMs with events but no summary OR need update)
+                # Prioritize: 1) NULL summaries first, 2) then existing if not updated in 24h
                 cur.execute(
                     """
                     SELECT COUNT(*)
@@ -134,7 +135,10 @@ class PipelineDaemon:
                     WHERE title_count >= %s
                       AND events_digest IS NOT NULL
                       AND jsonb_array_length(events_digest) > 0
-                      AND summary_text IS NULL
+                      AND (
+                          summary_text IS NULL
+                          OR (summary_text IS NOT NULL AND updated_at < NOW() - INTERVAL '24 hours')
+                      )
                       AND is_frozen = false
                 """,
                     (self.config.v3_p4_min_titles,),
@@ -187,6 +191,188 @@ class PipelineDaemon:
                     print(
                         f"  WARNING: {over_250} summaries ({pct:.1f}%) exceed 250-word target"
                     )
+
+        finally:
+            conn.close()
+
+    def print_full_statistics(self):
+        """Print comprehensive pipeline statistics"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                print("\n" + "=" * 70)
+                print("FULL PIPELINE STATISTICS")
+                print("=" * 70)
+
+                # Phase 1 Stats: Titles by date
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) as total_titles,
+                        COUNT(CASE WHEN DATE(created_at) = CURRENT_DATE THEN 1 END) as today,
+                        COUNT(CASE WHEN created_at >= NOW() - INTERVAL '7 days' THEN 1 END) as last_7_days,
+                        COUNT(CASE WHEN created_at >= NOW() - INTERVAL '30 days' THEN 1 END) as last_30_days
+                    FROM titles_v3
+                """
+                )
+                total_titles, today, last_7, last_30 = cur.fetchone()
+                print("\nPHASE 1 - RSS INGESTION:")
+                print(f"  Total titles in DB: {total_titles:,}")
+                print(f"  Ingested today: {today:,}")
+                print(f"  Last 7 days: {last_7:,}")
+                print(f"  Last 30 days: {last_30:,}")
+
+                # Phase 2 Stats: Processing status breakdown
+                cur.execute(
+                    """
+                    SELECT
+                        processing_status,
+                        COUNT(*) as count
+                    FROM titles_v3
+                    GROUP BY processing_status
+                    ORDER BY count DESC
+                """
+                )
+                print("\nPHASE 2 - CENTROID MATCHING:")
+                print("  Processing status breakdown:")
+                for status, count in cur.fetchall():
+                    pct = (count / total_titles * 100) if total_titles > 0 else 0
+                    print(f"    {status}: {count:,} ({pct:.1f}%)")
+
+                # Multi-centroid assignment rate
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) as total_matched,
+                        COUNT(CASE WHEN array_length(centroid_ids, 1) > 1 THEN 1 END) as multi_centroid
+                    FROM titles_v3
+                    WHERE centroid_ids IS NOT NULL AND array_length(centroid_ids, 1) > 0
+                """
+                )
+                total_matched, multi = cur.fetchone()
+                if total_matched > 0:
+                    multi_pct = multi / total_matched * 100
+                    print(f"  Multi-centroid assignments: {multi:,} ({multi_pct:.1f}%)")
+
+                # Phase 3 Stats: Track assignments and CTMs
+                cur.execute(
+                    """
+                    SELECT COUNT(DISTINCT title_id) FROM title_assignments
+                """
+                )
+                titles_with_tracks = cur.fetchone()[0]
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) FROM title_assignments
+                """
+                )
+                total_assignments = cur.fetchone()[0]
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) FROM ctm
+                """
+                )
+                total_ctms = cur.fetchone()[0]
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) FROM ctm WHERE title_count > 0
+                """
+                )
+                active_ctms = cur.fetchone()[0]
+
+                print("\nPHASE 3 - TRACK ASSIGNMENT & CTM CREATION:")
+                print(f"  Titles with track assignments: {titles_with_tracks:,}")
+                print(
+                    f"  Total title-centroid-track assignments: {total_assignments:,}"
+                )
+                print(f"  Total CTMs created: {total_ctms:,}")
+                print(f"  Active CTMs (title_count > 0): {active_ctms:,}")
+
+                # Track distribution
+                cur.execute(
+                    """
+                    SELECT track, COUNT(*) as count
+                    FROM title_assignments
+                    GROUP BY track
+                    ORDER BY count DESC
+                    LIMIT 10
+                """
+                )
+                print("  Top 10 tracks by assignment count:")
+                for track, count in cur.fetchall():
+                    print(f"    {track}: {count:,}")
+
+                # Phase 4 Stats: Enrichment
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) as total_active,
+                        COUNT(CASE WHEN events_digest IS NOT NULL AND jsonb_array_length(events_digest) > 0 THEN 1 END) as with_events,
+                        COUNT(CASE WHEN summary_text IS NOT NULL THEN 1 END) as with_summary
+                    FROM ctm
+                    WHERE title_count > 0 AND is_frozen = false
+                """
+                )
+                total_active, with_events, with_summary = cur.fetchone()
+
+                print("\nPHASE 4 - CTM ENRICHMENT:")
+                print(f"  Active CTMs: {total_active:,}")
+                print(
+                    f"  With events digest: {with_events:,} ({with_events/total_active*100:.1f}%)"
+                    if total_active > 0
+                    else "  With events digest: 0"
+                )
+                print(
+                    f"  With summary: {with_summary:,} ({with_summary/total_active*100:.1f}%)"
+                    if total_active > 0
+                    else "  With summary: 0"
+                )
+
+                # Summary word count stats
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) as total,
+                        MIN(array_length(string_to_array(summary_text, ' '), 1)) as min_words,
+                        MAX(array_length(string_to_array(summary_text, ' '), 1)) as max_words,
+                        AVG(array_length(string_to_array(summary_text, ' '), 1))::int as avg_words,
+                        COUNT(CASE WHEN array_length(string_to_array(summary_text, ' '), 1) > 250 THEN 1 END) as over_250
+                    FROM ctm
+                    WHERE summary_text IS NOT NULL AND is_frozen = false
+                """
+                )
+                total_sum, min_w, max_w, avg_w, over_250 = cur.fetchone()
+                if total_sum and total_sum > 0:
+                    print(
+                        f"  Summary word counts: Min={min_w} | Avg={avg_w} | Max={max_w}"
+                    )
+                    print(
+                        f"  Over 250 words: {over_250} ({over_250/total_sum*100:.1f}%)"
+                    )
+
+                # Centroid coverage
+                cur.execute(
+                    """
+                    SELECT
+                        COUNT(*) as total_centroids,
+                        COUNT(CASE WHEN id IN (SELECT DISTINCT centroid_id FROM ctm WHERE title_count > 0) THEN 1 END) as with_ctms
+                    FROM centroids_v3
+                    WHERE is_active = true
+                """
+                )
+                total_centroids, with_ctms = cur.fetchone()
+                print("\nCENTROID COVERAGE:")
+                print(f"  Total active centroids: {total_centroids}")
+                print(
+                    f"  Centroids with active CTMs: {with_ctms} ({with_ctms/total_centroids*100:.1f}%)"
+                    if total_centroids > 0
+                    else "  Centroids with active CTMs: 0"
+                )
+
+                print("=" * 70)
 
         finally:
             conn.close()
@@ -330,6 +516,9 @@ class PipelineDaemon:
         print(f"Cycle {self.cycle_count} completed in {cycle_duration:.1f}s")
         print(f"{'='*70}")
 
+        # Print full statistics after cycle completion
+        self.print_full_statistics()
+
     async def run(self):
         """Main daemon loop"""
         print(f"{'#'*70}")
@@ -337,10 +526,18 @@ class PipelineDaemon:
         print(f"# {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'#'*70}")
         print("\nConfiguration:")
-        print(f"  Phase 1 interval: {self.phase1_interval}s (RSS ingestion)")
-        print(f"  Phase 2 interval: {self.phase2_interval}s (centroid matching)")
-        print(f"  Phase 3 interval: {self.phase3_interval}s (track assignment)")
-        print(f"  Phase 4 interval: {self.phase4_interval}s (enrichment)")
+        print(
+            f"  Phase 1 interval: {self.phase1_interval}s ({self.phase1_interval/3600:.1f} hours - RSS ingestion)"
+        )
+        print(
+            f"  Phase 2 interval: {self.phase2_interval}s ({self.phase2_interval/60:.0f} minutes - centroid matching)"
+        )
+        print(
+            f"  Phase 3 interval: {self.phase3_interval}s ({self.phase3_interval/60:.0f} minutes - track assignment)"
+        )
+        print(
+            f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/3600:.0f} hour - enrichment)"
+        )
         print("\nBatch Sizes:")
         print(f"  Phase 2: {self.phase2_batch_size} titles")
         print(f"  Phase 3: {self.phase3_batch_size} CTMs")

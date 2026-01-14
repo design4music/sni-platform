@@ -237,6 +237,7 @@ async def process_ctm_batch(max_ctms=None):
     try:
         with conn.cursor() as cur:
             # Get CTMs for daily processing with focus lines from track_configs
+            # Prioritize: 1) NULL summaries first, 2) then existing if not updated in 24h
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
@@ -252,7 +253,14 @@ async def process_ctm_batch(max_ctms=None):
                   AND jsonb_array_length(c.events_digest) > 0
                   AND c.is_frozen = false
                   AND c.title_count >= %s
-                ORDER BY c.title_count DESC, c.month DESC
+                  AND (
+                      c.summary_text IS NULL
+                      OR (c.summary_text IS NOT NULL AND c.updated_at < NOW() - INTERVAL '24 hours')
+                  )
+                ORDER BY
+                  (c.summary_text IS NULL) DESC,
+                  c.title_count DESC,
+                  c.month DESC
                 {limit_clause}
             """,
                 (config.v3_p4_min_titles,),

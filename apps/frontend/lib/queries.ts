@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -183,4 +183,60 @@ export async function getTrackSummaryByCentroid(
     latestMonth: r.latest_month,
     totalTitles: r.title_count,
   }));
+}
+
+export async function getAllActiveFeeds(): Promise<Feed[]> {
+  return query<Feed>(
+    `SELECT id, name, url, language_code, country_code, source_domain, is_active
+     FROM feeds
+     WHERE is_active = true
+     ORDER BY country_code, name`
+  );
+}
+
+export async function getOverlappingCentroids(centroidId: string): Promise<Array<Centroid & { overlap_count: number }>> {
+  return query<Centroid & { overlap_count: number }>(
+    `SELECT
+      c.id, c.label, c.class, c.primary_theater,
+      COUNT(DISTINCT t.id) as overlap_count
+     FROM centroids_v3 c
+     JOIN title_assignments ta1 ON c.id = ta1.centroid_id
+     JOIN titles_v3 t ON ta1.title_id = t.id
+     WHERE t.id IN (
+       SELECT title_id
+       FROM title_assignments
+       WHERE centroid_id = $1
+     )
+     AND c.id != $1
+     AND c.is_active = true
+     GROUP BY c.id, c.label, c.class, c.primary_theater
+     ORDER BY overlap_count DESC
+     LIMIT 10`,
+    [centroidId]
+  );
+}
+
+export async function getOverlappingCentroidsForTrack(
+  centroidId: string,
+  track: string
+): Promise<Array<Centroid & { overlap_count: number }>> {
+  return query<Centroid & { overlap_count: number }>(
+    `SELECT
+      c.id, c.label, c.class, c.primary_theater,
+      COUNT(DISTINCT t.id) as overlap_count
+     FROM centroids_v3 c
+     JOIN title_assignments ta1 ON c.id = ta1.centroid_id AND ta1.track = $2
+     JOIN titles_v3 t ON ta1.title_id = t.id
+     WHERE t.id IN (
+       SELECT title_id
+       FROM title_assignments
+       WHERE centroid_id = $1 AND track = $2
+     )
+     AND c.id != $1
+     AND c.is_active = true
+     GROUP BY c.id, c.label, c.class, c.primary_theater
+     ORDER BY overlap_count DESC
+     LIMIT 10`,
+    [centroidId, track]
+  );
 }

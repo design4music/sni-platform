@@ -472,7 +472,7 @@ async def process_ctm_batch(max_ctms=None):
 
     try:
         with conn.cursor() as cur:
-            # Get CTMs for daily processing
+            # Get CTMs for daily processing - prioritize empty events_digest first
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
@@ -481,6 +481,7 @@ async def process_ctm_batch(max_ctms=None):
                 FROM ctm c
                 JOIN centroids_v3 cent ON c.centroid_id = cent.id
                 WHERE c.title_count >= %s
+                  AND (c.events_digest IS NULL OR jsonb_array_length(c.events_digest) = 0)
                   AND c.is_frozen = false
                 ORDER BY c.title_count DESC, c.month DESC
                 {limit_clause}

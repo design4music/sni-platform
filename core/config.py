@@ -421,7 +421,7 @@ class SNIConfig(BaseSettings):
         default=70, env="V3_P4_BATCH_SIZE"
     )  # Max titles per batch for events extraction (API limit)
     v3_p4_min_titles: int = Field(
-        default=20, env="V3_P4_MIN_TITLES"
+        default=30, env="V3_P4_MIN_TITLES"
     )  # Minimum title_count for daily Phase 4 processing
     v3_p4_max_concurrent: int = Field(
         default=5, env="V3_P4_MAX_CONCURRENT"

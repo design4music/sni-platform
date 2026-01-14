@@ -7,7 +7,9 @@ export const dynamic = 'force-dynamic';
 export default async function GlobalPage() {
   const systemicCentroids = await getCentroidsByClass('systemic');
   const geoCentroids = await getCentroidsByClass('geo');
-  const globalGeoCentroids = geoCentroids.filter(c => !c.primary_theater);
+
+  // Non-State Actors are geo centroids with IDs starting with "NON-STATE-"
+  const nonStateActors = geoCentroids.filter(c => c.id.startsWith('NON-STATE-'));
 
   return (
     <DashboardLayout title="Global Centroids">
@@ -24,14 +26,14 @@ export default async function GlobalPage() {
           </div>
         </section>
 
-        {globalGeoCentroids.length > 0 && (
+        {nonStateActors.length > 0 && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">Global Non-State Actors</h2>
+            <h2 className="text-2xl font-bold mb-4">Non-State Actors</h2>
             <p className="text-dashboard-text-muted mb-6">
               International organizations and non-state entities
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {globalGeoCentroids.map(centroid => (
+              {nonStateActors.map(centroid => (
                 <CentroidCard key={centroid.id} centroid={centroid} showClass />
               ))}
             </div>

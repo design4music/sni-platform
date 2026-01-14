@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import Logo from './Logo';
 import Navigation from './Navigation';
+import Footer from './Footer';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -36,6 +37,8 @@ export default function DashboardLayout({ children, title, sidebar }: DashboardL
           )}
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
