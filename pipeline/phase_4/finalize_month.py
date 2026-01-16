@@ -17,8 +17,8 @@ from psycopg2.extras import Json
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.config import config
-from v3.phase_4.generate_events_digest import extract_events_from_titles
-from v3.phase_4.generate_summaries import generate_summary
+from pipeline.phase_4.generate_events_digest import extract_events_from_titles
+from pipeline.phase_4.generate_summaries import generate_summary
 
 
 async def finalize_month(target_month: str = None):

@@ -5,7 +5,7 @@ Production daemon running Phases 1-4 on configurable intervals.
 ## Usage
 
 ```bash
-python v3/runner/pipeline_daemon.py
+python pipeline/runner/pipeline_daemon.py
 ```
 
 Press Ctrl+C to stop gracefully.

@@ -413,7 +413,7 @@ titles (current)           →      titles_v3 (simplified)
 
 ### Folder Structure
 ```
-/v3/
+/pipeline/
   /phase_1/           # Ingestion (reuse /apps/ingest/ or copy)
     run_p1_v3.py
 
@@ -487,9 +487,9 @@ V3_TRACK_CONCURRENCY = 10
    - Set `processing_status='out_of_scope'`
 
 **Key Files:**
-- `/v3/phase_2/centroid_matcher.py`
-- `/v3/phase_2/taxonomy_loader_v3.py`
-- `/v3/phase_2/run_p2_v3.py`
+- `/pipeline/phase_2/centroid_matcher.py`
+- `/pipeline/phase_2/taxonomy_loader_v3.py`
+- `/pipeline/phase_2/run_p2_v3.py`
 
 ---
 
@@ -516,9 +516,9 @@ V3_TRACK_CONCURRENCY = 10
    - Update CTM metadata (`first_title_date`, `last_title_date`)
 
 **Key Files:**
-- `/v3/phase_3/track_classifier.py`
-- `/v3/phase_3/ctm_builder.py`
-- `/v3/phase_3/run_p3_v3.py`
+- `/pipeline/phase_3/track_classifier.py`
+- `/pipeline/phase_3/ctm_builder.py`
+- `/pipeline/phase_3/run_p3_v3.py`
 
 ---
 
@@ -572,7 +572,7 @@ ORDER BY ctm_month DESC;
 ### Immediate (Week 1)
 1. ✅ Design database schema (this document)
 2. ⏳ Create database migration script
-3. ⏳ Create `/v3/` folder structure
+3. ⏳ Create `/pipeline/` folder structure
 4. ⏳ Add v3 configuration to `core/config.py`
 
 ### Short-term (Week 2-3)
@@ -589,7 +589,7 @@ ORDER BY ctm_month DESC;
 ### Long-term (Month 2+)
 1. ⏳ Adapt Phase 4-6 to work with CTMs
 2. ⏳ Deprecate v2 pipeline
-3. ⏳ Rename `/v3/` → `/pipeline/`
+3. ⏳ Rename `/pipeline/` → `/pipeline/`
 
 ---
 

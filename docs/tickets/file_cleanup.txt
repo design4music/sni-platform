@@ -7,7 +7,7 @@ You are Claude Code acting as a repository surgery assistant. Goal: execute “P
 CONTEXT:
 Current repo root: /SNI
 Key current paths:
-- Current pipeline (active): /SNI/v3/
+- Current pipeline (active): /SNI/pipeline/
 - Frontend: /apps/frontend/
 - Shared config: /SNI/core/config.py (contains legacy + v3 mixed)
 - /SNI/db/ contains a lot of files that seems to be mostly one time use or checks.
@@ -15,7 +15,7 @@ Key current paths:
 
 TARGET END STATE (structure):
 /SNI/
-  /pipeline/              (renamed from /v3/)
+  /pipeline/              (renamed from /pipeline/)
     /phase_1/
     /phase_2/
     /phase_3/
@@ -38,7 +38,7 @@ TARGET END STATE (structure):
 REQUESTED OUTCOMES:
 1) Prepare a safe plan and execute it with minimal changes:
    - Create a new git branch: chore/priority0-clean-cut
-   - Rename /v3/ to /pipeline/ (git mv).
+   - Rename /pipeline/ to /pipeline/ (git mv).
 2) Update imports, scripts, and references from “v3/...” to “pipeline/...”.
    - Ensure CLI commands and daemon references still work (runner, phases).
 3) Clean /core/config.py:

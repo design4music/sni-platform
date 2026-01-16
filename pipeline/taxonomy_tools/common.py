@@ -2,7 +2,7 @@
 Taxonomy Tools - Common Utilities
 
 Shared normalization and matching functions extracted from Phase 2.
-These functions must stay in sync with v3/phase_2/match_centroids.py
+These functions must stay in sync with pipeline/phase_2/match_centroids.py
 to ensure taxonomy compiler outputs match actual runtime behavior.
 """
 

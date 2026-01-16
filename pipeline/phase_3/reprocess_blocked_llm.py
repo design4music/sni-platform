@@ -10,7 +10,7 @@ This script:
    - Creates CTMs and title_assignments
 
 Usage:
-    python v3/phase_3/reprocess_blocked_llm.py
+    python pipeline/phase_3/reprocess_blocked_llm.py
 """
 
 import asyncio
@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import config
-from v3.phase_3.assign_tracks_batched import (assign_tracks_batch,
+from pipeline.phase_3.assign_tracks_batched import (assign_tracks_batch,
                                               gate_centroid_batch,
                                               get_track_config_for_centroids)
 

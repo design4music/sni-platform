@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from v3.phase_4.generate_events_digest import extract_events_from_titles
-from v3.taxonomy_tools.common import get_db_connection
+from pipeline.phase_4.generate_events_digest import extract_events_from_titles
+from pipeline.taxonomy_tools.common import get_db_connection
 
 CTM_ID = "349d1eab-1490-467f-868d-350f4f5fa172"  # USA geo_politics, 578 titles
 
