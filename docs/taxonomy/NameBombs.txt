@@ -1,0 +1,209 @@
+# FINAL SPEC (v1): NameBombs (EN/FR/ES/RU only)
+
+## Objective
+
+Detect **emerging proper names** (people / organizations / places) that:
+
+* appear frequently in the incoming corpus (EN/FR/ES/RU)
+* **leak into out-of-scope** titles at least once
+* are not already present as taxonomy aliases (exact normalized match)
+
+Output is a **report only** (JSON files). No DB writes.
+
+---
+
+## Languages
+
+Process only:
+
+* `en`, `fr`, `es`, `ru`
+
+Skip all other languages in v1.
+
+---
+
+## Script
+
+Path:
+
+```
+v3/taxonomy_tools/namebombs.py
+```
+
+---
+
+## CLI
+
+Example:
+
+```bash
+python v3/taxonomy_tools/namebombs.py \
+  --since-hours 24 \
+  --languages en,fr,es,ru \
+  --min-oos-support 1 \
+  --min-total-support-map '{"en":5,"fr":3,"es":3,"ru":3}' \
+  --top 50 \
+  --output-dir out/oos_reports
+```
+
+Defaults:
+
+* `--languages en,fr,es,ru`
+* `--min-oos-support 1`
+* `--min-total-support-map` defaults to the JSON above if omitted
+
+---
+
+## Definitions
+
+### Out-of-scope (OOS)
+
+A title is OOS if it has no matches and no assignments. Use your canonical DB flag:
+
+* Preferred: `processing_status = 'out_of_scope'`
+* Fallback: `centroid_ids IS NULL OR array_length(centroid_ids,1)=0`
+
+### Candidate inclusion rule
+
+Include candidate `N` iff:
+
+```
+support_all(N) ≥ min_total_support(language)
+AND
+support_oos(N) ≥ min_oos_support   (default 1)
+```
+
+Where:
+
+* `support_all(N)` counts titles in that language within window
+* `support_oos(N)` counts OOS titles in that language within window
+
+---
+
+## Extraction logic (single unified logic)
+
+For each title, extract candidates via two mechanisms:
+
+### 1) Multi-word TitleCase phrases (2–4 words)
+
+EN/FR/ES:
+
+```
+([A-Z][a-z]+)(\s+[A-Z][a-z]+){1,3}
+```
+
+RU:
+
+```
+([А-ЯЁ][а-яё]+)(\s+[А-ЯЁ][а-яё]+){1,3}
+```
+
+### 2) Acronyms (2–6 uppercase letters)
+
+EN/FR/ES:
+
+```
+\b[A-Z]{2,6}\b
+```
+
+RU:
+
+```
+\b[А-ЯЁ]{2,6}\b
+```
+
+Plus allow Latin acronyms in RU titles as well (NATO, UN, EU, IMF etc.).
+
+---
+
+## Filters (must apply)
+
+Drop candidate if any of the following:
+
+* single-word TitleCase (too noisy)
+* contains month/day boilerplate (small denylist per language)
+* length < 3 chars after normalization
+* candidate already exists in taxonomy aliases for that language (exact normalized match)
+* candidate is purely numeric / punctuation
+
+Normalization must reuse Phase 2 normalization exactly.
+
+---
+
+## Scoring and ranking
+
+For each candidate `N`:
+
+* compute `support_all`
+* compute `support_oos`
+
+Apply inclusion rule, then rank:
+
+1. `support_all` desc
+2. `support_oos` desc
+3. phrase length desc
+4. alphabetical
+
+---
+
+## Output
+
+One JSON report per language:
+
+```
+out/oos_reports/namebombs_<lang>_<YYYYMMDD_HHMM>.json
+```
+
+Schema:
+
+```json
+{
+  "run": {
+    "since_hours": 24,
+    "languages": ["en","fr","es","ru"],
+    "min_oos_support": 1,
+    "min_total_support_map": {"en":5,"fr":3,"es":3,"ru":3}
+  },
+  "language": "en",
+  "totals": {
+    "titles_all": 3120,
+    "titles_oos": 402
+  },
+  "candidates": [
+    {
+      "name": "John Doe",
+      "support_all": 10,
+      "support_oos": 1,
+      "examples_oos": ["..."],
+      "examples_all": ["...", "..."]
+    }
+  ]
+}
+```
+
+No DB writes.
+
+---
+
+## Phase 2 integration
+
+At end of Phase 2 matching pipeline, run:
+
+```bash
+python v3/taxonomy_tools/namebombs.py --since-hours 24
+```
+
+* Must never modify taxonomy
+* Should not fail pipeline on soft/report errors
+* Produces reports only
+
+---
+
+## Acceptance criteria
+
+* Script runs on daily data without heavy runtime.
+* Output candidates make intuitive sense (“new names in the news”).
+* At least one OOS leakage is required, so you don’t spam yourself with already-covered names.
+* Code stays simple and uniform (one extraction logic).
+
+---

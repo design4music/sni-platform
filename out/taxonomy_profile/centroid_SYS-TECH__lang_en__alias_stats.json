@@ -1,0 +1,288 @@
+{
+  "AI": {
+    "match_count": 17,
+    "normalized_alias": "ai",
+    "matched_title_ids_sample": [
+      "374858ca-b61c-4b4e-9f80-51a97cb77f28",
+      "7e073364-7f4d-4a59-bd11-25e7c4c9d6be",
+      "37209a0b-a298-4fdf-9e59-123290115bf6",
+      "83f41841-e0e2-4361-8457-5d2a8325596e",
+      "271ed164-6594-40c6-840c-d4cb07168210",
+      "0cbf36de-20ed-4cc4-9828-c00578e371fe",
+      "b0ab404d-f368-4289-b798-990ac16f77b8",
+      "e3c14c64-def2-4e3b-84ab-c53875aa99a1",
+      "36fd0505-c89a-4b7d-ade1-94dda6ef5ba2",
+      "8f09635b-1668-44b7-954c-55b5c0397d5a"
+    ],
+    "matched_titles_sample": [
+      "Opinion | The seepage of AI into Christian practice is disturbing",
+      "The AI spending frenzy reaches India, sparking enthusiasm and concern",
+      "Her daughter was unraveling, and she didn’t know why. Then she found the AI chat logs.",
+      "AI breakthrough, personnel training, low unemployment: Putin’s statements",
+      "China issues draft rules to regulate AI with human-like interaction",
+      "India's Coforge to acquire Encora in $2.35 billion deal to boost AI offerings",
+      "Why Christmas tree farms are turning to drones and AI this year",
+      "Paris taken by a coup: How an AI video caused Macron a major headache",
+      "AI slop: Where is the internet heading in 2026?",
+      "Here are 5 ways AI transformed health care in Europe in 2025"
+    ],
+    "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Amazon": {
+    "match_count": 2,
+    "normalized_alias": "amazon",
+    "matched_title_ids_sample": [
+      "d4c7d714-a1c9-464d-a5df-54f7e57dd3c0",
+      "33c56909-4aaa-4f8d-ae6e-4b7897405e65"
+    ],
+    "matched_titles_sample": [
+      "Amazon eyes expanding delivery network after talks with USPS stall",
+      "Amazon halts plans for drone delivery in Italy"
+    ],
+    "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "satellites": {
+    "match_count": 1,
+    "normalized_alias": "satellites",
+    "matched_title_ids_sample": [
+      "a9b15d4a-f4ed-4c2a-8e7e-a6e4016a9a63"
+    ],
+    "matched_titles_sample": [
+      "China's Long March-8A rocket launches internet satellites"
+    ],
+    "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "reusable rockets": {
+    "match_count": 1,
+    "normalized_alias": "reusable rockets",
+    "matched_title_ids_sample": [
+      "29d9de29-ad8f-43f2-9c3a-83d52b859f74"
+    ],
+    "matched_titles_sample": [
+      "Tech Review 2025: Reusable rockets just got real"
+    ],
+    "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Airbus": {
+    "match_count": 1,
+    "normalized_alias": "airbus",
+    "matched_title_ids_sample": [
+      "76d6e663-a442-4b24-b8d8-3ec9988e3fbd"
+    ],
+    "matched_titles_sample": [
+      "Are Russia and India challenging the monopoly of Boeing and Airbus?"
+    ],
+    "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Boeing": {
+    "match_count": 1,
+    "normalized_alias": "boeing",
+    "matched_title_ids_sample": [
+      "76d6e663-a442-4b24-b8d8-3ec9988e3fbd"
+    ],
+    "matched_titles_sample": [
+      "Are Russia and India challenging the monopoly of Boeing and Airbus?"
+    ],
+    "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Roscosmos": {
+    "match_count": 1,
+    "normalized_alias": "roscosmos",
+    "matched_title_ids_sample": [
+      "f0aa7c9e-54eb-46d5-95aa-5397cd8668bb"
+    ],
+    "matched_titles_sample": [
+      "Baikonur spaceport, Soyuz-5 carrier rocket ready for first launch — Roscosmos"
+    ],
+    "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "robotics": {
+    "match_count": 1,
+    "normalized_alias": "robotics",
+    "matched_title_ids_sample": [
+      "b81bd908-6bcb-4437-8ed3-b95cf479271e"
+    ],
+    "matched_titles_sample": [
+      "The Tech Review 2025: China sees breakthroughs in AI and robotics"
+    ],
+    "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "automation": {
+    "match_count": 1,
+    "normalized_alias": "automation",
+    "matched_title_ids_sample": [
+      "5ff1f689-99ea-4148-ad57-165f90d6cbe9"
+    ],
+    "matched_titles_sample": [
+      "Airplane lands itself after in-flight emergency, in a first for aviation automation"
+    ],
+    "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Waymo": {
+    "match_count": 1,
+    "normalized_alias": "waymo",
+    "matched_title_ids_sample": [
+      "7b0d717e-2226-4b67-b0c4-75e30021c4a2"
+    ],
+    "matched_titles_sample": [
+      "Waymo's San Francisco outage raises doubts over robotaxi readiness during crises"
+    ],
+    "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Big Tech": {
+    "match_count": 1,
+    "normalized_alias": "big tech",
+    "matched_title_ids_sample": [
+      "aee8d738-9b93-4367-badc-5ea813f9164b"
+    ],
+    "matched_titles_sample": [
+      "Nvidia, joining Big Tech deal spree, to license Groq technology, hire executives"
+    ],
+    "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Apple": {
+    "match_count": 1,
+    "normalized_alias": "apple",
+    "matched_title_ids_sample": [
+      "91975efe-86e5-4e7e-9089-1dc1fcff69c7"
+    ],
+    "matched_titles_sample": [
+      "Shandong cultivates new apple variety to boost sales"
+    ],
+    "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Instagram": {
+    "match_count": 1,
+    "normalized_alias": "instagram",
+    "matched_title_ids_sample": [
+      "13b995a7-119a-4798-a925-88859cd346e4"
+    ],
+    "matched_titles_sample": [
+      "Leaked documents show Instagram’s plan to win back teens"
+    ],
+    "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "TikTok": {
+    "match_count": 1,
+    "normalized_alias": "tiktok",
+    "matched_title_ids_sample": [
+      "922a32dc-9a47-4ad3-8268-ed7217e7ad90"
+    ],
+    "matched_titles_sample": [
+      "TikTok signs deal to form new U.S. joint venture, investors include Oracle, Silver Lake"
+    ],
+    "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "Oracle": {
+    "match_count": 1,
+    "normalized_alias": "oracle",
+    "matched_title_ids_sample": [
+      "922a32dc-9a47-4ad3-8268-ed7217e7ad90"
+    ],
+    "matched_titles_sample": [
+      "TikTok signs deal to form new U.S. joint venture, investors include Oracle, Silver Lake"
+    ],
+    "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "ChatGPT": {
+    "match_count": 1,
+    "normalized_alias": "chatgpt",
+    "matched_title_ids_sample": [
+      "055a08b5-0a33-4714-8f15-198d5161e8d2"
+    ],
+    "matched_titles_sample": [
+      "74 suicide warnings and 243 mentions of hanging: What ChatGPT said to a suicidal teen"
+    ],
+    "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "NVIDIA": {
+    "match_count": 1,
+    "normalized_alias": "nvidia",
+    "matched_title_ids_sample": [
+      "aee8d738-9b93-4367-badc-5ea813f9164b"
+    ],
+    "matched_titles_sample": [
+      "Nvidia, joining Big Tech deal spree, to license Groq technology, hire executives"
+    ],
+    "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "semiconductors": {
+    "match_count": 1,
+    "normalized_alias": "semiconductors",
+    "matched_title_ids_sample": [
+      "e1dd1d2d-1bef-464e-95db-8b2c78c593db"
+    ],
+    "matched_titles_sample": [
+      "China firmly opposes U.S. tariff hike on Chinese semiconductors"
+    ],
+    "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  },
+  "TSMC": {
+    "match_count": 1,
+    "normalized_alias": "tsmc",
+    "matched_title_ids_sample": [
+      "423029a9-8963-4da1-93cf-f34033d76762"
+    ],
+    "matched_titles_sample": [
+      "TSMC says some facilities evacuated after quake"
+    ],
+    "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+    "centroid_ids": [
+      "SYS-TECH"
+    ]
+  }
+}

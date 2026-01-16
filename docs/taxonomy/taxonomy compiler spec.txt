@@ -1,0 +1,252 @@
+Below is a **minimal, DB-native spec** for Claude Code to implement a “taxonomy compiler” as a set of **manual CLI scripts**, one action at a time. It uses only what exists in v3: `titles_v3`, `taxonomy_v3`, `centroids_v3` (and reuses your Phase 2 normalization/matching semantics). 
+
+The goal is exactly your stated purpose: **a small set of language-native trigger tokens for deterministic headline matching** (not a semantic taxonomy).
+
+---
+
+## Scope and non-goals
+
+### In-scope (critical)
+
+* Measure current alias effectiveness per centroid/language.
+* Deterministically prune redundant aliases (zero incremental coverage).
+* Produce artifacts you can review quickly.
+* Optional: write back by deactivating aliases (never delete).
+
+### Out-of-scope (for now)
+
+* “Smart” semantic rewriting, translations, ontology work.
+* Agent orchestration / multi-agent pipelines.
+* Automatic candidate generation (we can add later, but keep v1 minimal).
+
+---
+
+## Shared assumptions from v3
+
+* Titles live in `titles_v3` with `title_display`, `detected_language`, `processing_status`, `centroid_ids` (UUID[]), etc. 
+* Aliases live in `taxonomy_v3.aliases` as JSONB per language; each taxonomy item can belong to multiple centroids via `taxonomy_v3.centroid_ids` (TEXT[]). 
+* Matching rules already exist in Phase 2 (`v3/phase_2/match_centroids.py`): NFKC normalization, punctuation cleanup, dash normalization, etc. The compiler must call the same normalization/matching functions to avoid divergence. 
+
+---
+
+## Script set (minimal v1)
+
+### 0) `taxonomy_tools/common.py` (shared utilities)
+
+Claude should first extract the exact normalization/matching code from Phase 2 and expose these functions:
+
+* `normalize_title(text: str) -> str`
+* `normalize_alias(text: str) -> str`
+* `title_matches_alias(norm_title: str, norm_alias: str) -> bool`
+
+Also include:
+
+* DB connection helper (reuse `core/config.py` env vars). 
+* language list constant: `["ar","en","de","fr","es","ru","zh","ja","hi"]`
+
+No new logic here—just reuse.
+
+---
+
+## 1) PROFILE — measure coverage and redundancy signals
+
+### Script
+
+`v3/taxonomy_tools/profile_alias_coverage.py`
+
+### Purpose
+
+For a given centroid (or all centroids), compute:
+
+* how many titles in that centroid match each alias (per language)
+* total matched titles per centroid/language
+* high-overlap aliases (aliases that match many titles across many centroids) – optional but very useful
+
+### Inputs (CLI)
+
+* `--centroid-id SYS-TECH` (optional; default all systemic centroids)
+* `--language ar` (optional; default all supported)
+* `--title-status assigned` (default: `assigned` to use titles already centroid-tagged)
+* `--limit-titles 50000` (safety)
+
+### DB reads
+
+* Centroid membership of titles:
+
+  * `titles_v3` where `processing_status='assigned'` (or param) and centroid id present in `centroid_ids`. 
+* Aliases:
+
+  * `taxonomy_v3` where `is_active=true` and `is_stop_word=false`
+  * filter to items containing the target centroid in `taxonomy_v3.centroid_ids` (TEXT[]). 
+
+### Output artifacts
+
+Write JSON (and optionally CSV) to `out/taxonomy_profile/`:
+
+1. `centroid_<id>__lang_<lang>__alias_stats.json`
+
+   * alias → `match_count`, `matched_title_ids_sample` (top 10), `normalized_alias`
+2. `centroid_<id>__lang_<lang>__summary.json`
+
+   * total titles considered
+   * total matched by any alias
+   * coverage ratio
+3. Optional: `global_alias_overlap.json`
+
+   * alias → number of distinct centroids where it matched at least N titles
+
+### Implementation note (performance)
+
+Do not do O(titles × aliases) naïvely for huge sets.
+
+Minimal fast approach:
+
+* Normalize all titles once.
+* For each alias, do substring test on normalized titles.
+* If that’s still heavy, add a cheap prefilter:
+
+  * if alias contains a “rare” token (length ≥ 5 or non-Latin), only scan titles containing that token.
+
+This is sufficient for v1.
+
+---
+
+## 2) PRUNE — deterministic redundancy removal (zero incremental gain)
+
+### Script
+
+`v3/taxonomy_tools/prune_aliases.py`
+
+### Purpose
+
+For each centroid + language, prune aliases that do not add any new matched titles beyond other aliases in the same centroid+language. This enforces your “minimal trigger set” principle.
+
+### Inputs (CLI)
+
+* `--centroid-id SYS-MEDIA` (optional; default all systemic centroids)
+* `--language ar` (optional; default all supported)
+* `--mode dry-run|apply` (default dry-run)
+* `--min-keep 1` (keep at least 1 alias per centroid+language if any exist)
+* `--safety-max-remove 2000` (abort if more would be removed; avoids disasters)
+
+### Deterministic pruning algorithm
+
+For a given centroid+language:
+
+1. Compute match set per alias: `M(alias)` = set(title_id)
+2. Sort aliases by:
+
+   * `|M(alias)|` descending (keep the broadest first)
+   * tie-breaker: shorter alias (primitive bias)
+3. Walk sorted list, maintain `covered_titles`.
+
+   * `gain = |M(alias) - covered_titles|`
+   * if `gain == 0` → mark alias redundant (candidate removal)
+   * else keep; update `covered_titles`
+
+This is the mechanical equivalent of what you keep doing manually (“ceasefire” vs “temporary ceasefire”). It scales across 261 CSCs.
+
+### Writeback strategy (minimal DB changes)
+
+**Do not delete rows.** Only remove alias strings from `taxonomy_v3.aliases[lang]` for that item, or if an item becomes alias-less, set `is_active=false`.
+
+Recommended: only mutate JSONB alias arrays.
+
+* For each `taxonomy_v3` row:
+
+  * load aliases JSONB
+  * compute `new_aliases_lang = old - removed`
+  * update row if changed
+  * update `updated_at=NOW()`
+
+This stays compatible with your existing schema and Phase 2 matcher. 
+
+### Output artifacts
+
+* `out/taxonomy_prune/<timestamp>/prune_report.json`
+
+  * centroid, language
+  * aliases_before_count, aliases_after_count
+  * removed_aliases (list)
+  * kept_aliases (list)
+  * coverage_before, coverage_after (must be equal or higher)
+
+**Hard rule:** `coverage_after` must equal `coverage_before` (since we only remove zero-gain aliases). If it drops, abort.
+
+---
+
+## 3) (Optional but low-effort) EXPORT — snapshot for safety and review
+
+### Script
+
+`v3/taxonomy_tools/export_taxonomy_snapshot.py`
+
+### Purpose
+
+Dump the full active taxonomy (or per centroid) to JSON so you can diff in git and restore quickly.
+
+### Inputs
+
+* `--centroid-id SYS-TECH` optional
+* `--out out/taxonomy_snapshots/<timestamp>.json`
+
+### DB read
+
+`SELECT * FROM taxonomy_v3 WHERE is_active=true;` plus filters. 
+
+---
+
+## 4) (Later, v2) SUGGEST — candidate mining from false negatives
+
+Not requested now, but to keep the roadmap coherent: once pruning is stable, you add `suggest_candidates.py` that looks at titles assigned to a centroid that remain unmatched, extracts n-grams, ranks by incremental coverage and low overlap. Keep it as a separate script so it never pollutes pruning logic.
+
+---
+
+# Minimal operational workflow (human-friendly)
+
+1. Run snapshot:
+
+```bash
+python v3/taxonomy_tools/export_taxonomy_snapshot.py
+```
+
+2. Run profile on one centroid (e.g., SYS-MEDIA) to see baseline:
+
+```bash
+python v3/taxonomy_tools/profile_alias_coverage.py --centroid-id SYS-MEDIA
+```
+
+3. Run prune in dry-run, inspect report:
+
+```bash
+python v3/taxonomy_tools/prune_aliases.py --centroid-id SYS-MEDIA --mode dry-run
+```
+
+4. If report looks sane, apply:
+
+```bash
+python v3/taxonomy_tools/prune_aliases.py --centroid-id SYS-MEDIA --mode apply
+```
+
+This is intentionally boring and safe.
+
+---
+
+## Implementation constraints for Claude Code (important)
+
+* Reuse Phase 2 normalization/matching exactly (don’t re-invent). 
+* No deletions; only JSONB alias edits or `is_active=false`.
+* Always produce artifacts (JSON) for auditability.
+* Default to processing `processing_status='assigned'` titles to avoid mixing in pending ingestion noise. 
+
+---
+
+## What I need from you (only if it’s not obvious in the repo)
+
+Just confirm one thing for Claude (so it doesn’t guess wrong):
+
+* In Phase 2, do you match aliases by **substring on normalized title** (most likely), or by **token-boundary / regex**?
+
+If Claude can read `v3/phase_2/match_centroids.py`, it should not ask you—just reuse that implementation.
+
+

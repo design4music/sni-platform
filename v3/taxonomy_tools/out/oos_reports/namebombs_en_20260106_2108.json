@@ -1,0 +1,487 @@
+{
+  "run": {
+    "since_hours": 24,
+    "languages": [
+      "en",
+      "fr",
+      "es",
+      "ru"
+    ],
+    "min_oos_support": 1,
+    "min_total_support_map": {
+      "en": 5,
+      "fr": 3,
+      "es": 3,
+      "ru": 3
+    },
+    "timestamp": "2026-01-06T21:08:42.322228"
+  },
+  "language": "en",
+  "totals": {
+    "titles_all": 6166,
+    "titles_oos": 1791
+  },
+  "candidates": [
+    {
+      "name": "daily sabah",
+      "support_all": 97,
+      "support_oos": 10,
+      "examples_oos": [
+        "Türkiye returns 40 fugitives from 10 countries: Minister | Daily Sabah",
+        "8 years on, Türkiye marks legacy of actor Münir Özkul | Daily Sabah",
+        "Fenerbahçe eye Super Cup relief as Samsunspor test awaits in Adana | Daily Sabah"
+      ],
+      "examples_all": [
+        "US oil firms to head into Venezuela, Trump says after Maduro captured | Daily Sabah",
+        "Choosing a side: Israeli expansion tests Türkiye in Mideast | Daily Sabah",
+        "Russia’s Medvedev suggests abducting foreign leaders, namely Merz | Daily Sabah"
+      ]
+    },
+    {
+      "name": "new year",
+      "support_all": 89,
+      "support_oos": 30,
+      "examples_oos": [
+        "Fireworks light up the sky to welcome New Year 2026",
+        "UN chief urges world leaders to ‘get priorities straight’ as New Year message calls for peace over war",
+        "Sam Kerr and Kristie Mewis share photos of grand New Year’s Eve wedding"
+      ],
+      "examples_all": [
+        "Fireworks light up the sky to welcome New Year 2026",
+        "UN chief urges world leaders to ‘get priorities straight’ as New Year message calls for peace over war",
+        "Over 500,000 join pro-Palestine march in Istanbul on New Year’s Day"
+      ]
+    },
+    {
+      "name": "gulf times",
+      "support_all": 80,
+      "support_oos": 25,
+      "examples_oos": [
+        "UDST launches three new academic programmes| Gulf Times",
+        "MoECC in cleanup drives at desert sites| Gulf Times",
+        "Ashghal announces completion of first package of Roads and Infrastructure Project| Gulf Times"
+      ],
+      "examples_all": [
+        "UDST launches three new academic programmes| Gulf Times",
+        "Marseille crash to defeat against Nantes| Gulf Times",
+        "‘Qatar indispensable bridge, linking ME with Europe, West’| Gulf Times"
+      ]
+    },
+    {
+      "name": "the times",
+      "support_all": 46,
+      "support_oos": 38,
+      "examples_oos": [
+        "The Times",
+        "- The Times",
+        "The Times"
+      ],
+      "examples_all": [
+        "The Times of Israel | News from Israel, the Middle East and the Jewish World",
+        "The Times",
+        "- The Times"
+      ]
+    },
+    {
+      "name": "security council",
+      "support_all": 25,
+      "support_oos": 1,
+      "examples_oos": [
+        "Security Council: New faces, old tensions as five nations take their seats"
+      ],
+      "examples_all": [
+        "Security Council LIVE: ‘The power of the law must prevail’ amid Venezuela crisis, says Guterres",
+        "Maduro seized, norms tested: Security Council divided as Venezuela crisis deepens",
+        "Security Council: New faces, old tensions as five nations take their seats"
+      ]
+    },
+    {
+      "name": "news agency",
+      "support_all": 20,
+      "support_oos": 20,
+      "examples_oos": [
+        "‌Economy | FarsNews Agency‌ (@Economy_eng) | Fars",
+        "‌Economy | FarsNews Agency‌ (@Economy_eng) | Fars",
+        "‌Politico-Defense | FarsNews Agency‌ (@PoliticoDefense_eng) | Fars"
+      ],
+      "examples_all": [
+        "‌Economy | FarsNews Agency‌ (@Economy_eng) | Fars",
+        "‌Economy | FarsNews Agency‌ (@Economy_eng) | Fars",
+        "‌Politico-Defense | FarsNews Agency‌ (@PoliticoDefense_eng) | Fars"
+      ]
+    },
+    {
+      "name": "hindustan times",
+      "support_all": 19,
+      "support_oos": 10,
+      "examples_oos": [
+        "Madras HC questions urgency in Vijay's Jana Nayagan release, makers say ₹500 crore at stake: CBFC issue explained | Hindustan Times",
+        "Port Hueneme: Reports of active shooter, shooting at naval base in Ventura County | Hindustan Times",
+        "Why is Josh Allen not playing today vs Jets? Bills make bold decision after opening snap | Hindustan Times"
+      ],
+      "examples_all": [
+        "Madras HC questions urgency in Vijay's Jana Nayagan release, makers say ₹500 crore at stake: CBFC issue explained | Hindustan Times",
+        "Port Hueneme: Reports of active shooter, shooting at naval base in Ventura County | Hindustan Times",
+        "Ahead of wedding, Rashmika Mandanna, Vijay Deverakonda spotted returning to India together after Italy vacation | Hindustan Times"
+      ]
+    },
+    {
+      "name": "world news",
+      "support_all": 14,
+      "support_oos": 1,
+      "examples_oos": [
+        "Breaking News, World News and Video from Al Jazeera"
+      ],
+      "examples_all": [
+        "World News in Brief: Escalating violence in Sudan, civilian danger grows in Ukraine, Ethiopia aid cuts",
+        "'Unilateral, bullying actions': China President Xi Jinping's strong remarks amid US Venezuela tensions | World News",
+        "‘Kidnapped since January 3’: What Venezuela’s Nicolas Maduro said in US court hearing | World News"
+      ]
+    },
+    {
+      "name": "foreign affairs",
+      "support_all": 12,
+      "support_oos": 1,
+      "examples_oos": [
+        "Prime Minister and Minister of Foreign Affairs meets Maltese Deputy Prime Minister and Minister for Foreign Affairs| Gulf Times"
+      ],
+      "examples_all": [
+        "Minister of State for Foreign Affairs meets Colombia's Minister of Foreign Affairs| Gulf Times",
+        "Prime Minister and Minister of Foreign Affairs meet Albania's President| Gulf Times",
+        "Minister of State for Foreign Affairs meets Egyptian Ambassador| Gulf Times"
+      ]
+    },
+    {
+      "name": "manchester united",
+      "support_all": 10,
+      "support_oos": 9,
+      "examples_oos": [
+        "Ruben Amorim sacking: Glasner, Maresca and Xavi among early contenders to take over at Manchester United",
+        "Ruben Amorim is gone, but Manchester United’s forever crisis rolls on | Jonathan Wilson",
+        "‘The clown car ditches another driver too soon’: a fan’s view of Manchester United crisis"
+      ],
+      "examples_all": [
+        "Ruben Amorim sacking: Glasner, Maresca and Xavi among early contenders to take over at Manchester United",
+        "Manchester United ratings v Leeds: Cunha leads the way but Sesko disappoints",
+        "Ruben Amorim is gone, but Manchester United’s forever crisis rolls on | Jonathan Wilson"
+      ]
+    },
+    {
+      "name": "anthony joshua",
+      "support_all": 10,
+      "support_oos": 6,
+      "examples_oos": [
+        "Ex-heavyweight champion Anthony Joshua injured in fatal highway crash",
+        "Anthony Joshua accident: Driver charged with reckless driving, granted N5m bail",
+        "Anthony Joshua breaks silence after car crash, pays tribute to deceased friends"
+      ],
+      "examples_all": [
+        "Ex-heavyweight champion Anthony Joshua injured in fatal highway crash",
+        "Anthony Joshua accident: Driver charged with reckless driving, granted N5m bail",
+        "Anthony Joshua breaks silence after car crash, pays tribute to deceased friends"
+      ]
+    },
+    {
+      "name": "delcy rodriguez",
+      "support_all": 10,
+      "support_oos": 1,
+      "examples_oos": [
+        "Who are the key government figures around Delcy Rodriguez?"
+      ],
+      "examples_all": [
+        "Who is Delcy Rodriguez? Maduro's second-in-command sworn in as Venezuela's acting president",
+        "Who is Delcy Rodriguez, the acting president of Venezuela after Maduro’s ouster?",
+        "Delcy Rodriguez swore in as acting president of Venezuela"
+      ]
+    },
+    {
+      "name": "search results",
+      "support_all": 9,
+      "support_oos": 9,
+      "examples_oos": [
+        "Search Results",
+        "Search Results",
+        "Search Results"
+      ],
+      "examples_all": [
+        "Search Results",
+        "Search Results",
+        "Search Results"
+      ]
+    },
+    {
+      "name": "khaleda zia",
+      "support_all": 9,
+      "support_oos": 2,
+      "examples_oos": [
+        "Saudi King, Crown Prince condole over Khaleda Zia's death",
+        "Showbiz stars mourn Khaleda Zia, call her death the end of an era"
+      ],
+      "examples_all": [
+        "Former Bangladesh PM Khaleda Zia dies aged 80 after prolonged illness",
+        "Sheikh Hasina condoles passing of former Bangladesh PM and rival Khaleda Zia",
+        "UAE leaders offer condolences to Bangladesh president over passing of Khaleda Zia"
+      ]
+    },
+    {
+      "name": "mustafizur rahman",
+      "support_all": 8,
+      "support_oos": 4,
+      "examples_oos": [
+        "Rs 9.20 crore at stake? Mustafizur Rahman set to walk away empty-handed after KKR release",
+        "Mustafizur Rahman unlikely to get any compensation after KKR releases him",
+        "Mustafizur Rahman's Reaction To IPL Row Revealed: \"Person Of Different Level\""
+      ],
+      "examples_all": [
+        "Rs 9.20 crore at stake? Mustafizur Rahman set to walk away empty-handed after KKR release",
+        "Excluded from IPL, Bangladesh pacer Mustafizur Rahman joins Pakistan Super League; PSL confirms",
+        "IPL releases Bangladesh pacer Mustafizur Rahman amid political tension"
+      ]
+    },
+    {
+      "name": "general soleimani",
+      "support_all": 8,
+      "support_oos": 3,
+      "examples_oos": [
+        "Beyond the battlefield: General Soleimani’s strategic and diplomatic legacy",
+        "Exclusive | Lebanese Expert: Today we need figures like General Soleimani more than ever",
+        "Ayatollah Khamenei meets families of General Soleimani and other martyrs"
+      ],
+      "examples_all": [
+        "Beyond the battlefield: General Soleimani’s strategic and diplomatic legacy",
+        "People pack General Soleimani’s resting place to mark his 6th martyrdom anniv.",
+        "General Soleimani honored in Kashmir, Kargil"
+      ]
+    },
+    {
+      "name": "prime minister",
+      "support_all": 8,
+      "support_oos": 3,
+      "examples_oos": [
+        "Prime Minister and Minister of Foreign Affairs meets Maltese Deputy Prime Minister and Minister for Foreign Affairs| Gulf Times",
+        "Prime Minister attends opening of 11th UN conference against corruption| Gulf Times",
+        "Opposition chorus grows demanding Prime Minister’s resignation over English module mishap"
+      ],
+      "examples_all": [
+        "Prime Minister and Minister of Foreign Affairs meet Albania's President| Gulf Times",
+        "Prime Minister and Minister of Foreign Affairs receives phone call from Iranian Foreign Minister| Gulf Times",
+        "Prime Minister and Minister of Foreign Affairs meets Maltese Deputy Prime Minister and Minister for Foreign Affairs| Gulf Times"
+      ]
+    },
+    {
+      "name": "daily crossword quickie",
+      "support_all": 7,
+      "support_oos": 7,
+      "examples_oos": [
+        "Daily Crossword Quickie – Mon, 5 Jan",
+        "Daily Crossword Quickie – Wed, 31 Dec",
+        "Daily Crossword Quickie – Wed, 10 Dec"
+      ],
+      "examples_all": [
+        "Daily Crossword Quickie – Mon, 5 Jan",
+        "Daily Crossword Quickie – Wed, 31 Dec",
+        "Daily Crossword Quickie – Wed, 10 Dec"
+      ]
+    },
+    {
+      "name": "zohran mamdani",
+      "support_all": 7,
+      "support_oos": 1,
+      "examples_oos": [
+        "Significance of the Quran at Zohran Mamdani's swearing-in ceremony"
+      ],
+      "examples_all": [
+        "Significance of the Quran at Zohran Mamdani's swearing-in ceremony",
+        "Rama Duwaji puts Middle East designer in spotlight at Zohran Mamdani's inauguration",
+        "Zohran Mamdani sworn in as New York mayor in ‘honour and the privilege of a lifetime’"
+      ]
+    },
+    {
+      "name": "middle east",
+      "support_all": 7,
+      "support_oos": 1,
+      "examples_oos": [
+        "OPINION - New geopolitics of Middle East: A review of 2025 and outlook for 2026"
+      ],
+      "examples_all": [
+        "The Times of Israel | News from Israel, the Middle East and the Jewish World",
+        "Rama Duwaji puts Middle East designer in spotlight at Zohran Mamdani's inauguration",
+        "How demand for elite falcons in the Middle East is driving illegal trade of British birds"
+      ]
+    },
+    {
+      "name": "tim walz",
+      "support_all": 6,
+      "support_oos": 6,
+      "examples_oos": [
+        "Opinion | National spotlight ends Tim Walz’s political career",
+        "Tim Walz says he will not run for third term as Minnesota governor",
+        "Democratic Gov. Tim Walz drops out of the race for Minnesota governor"
+      ],
+      "examples_all": [
+        "Opinion | National spotlight ends Tim Walz’s political career",
+        "Tim Walz says he will not run for third term as Minnesota governor",
+        "Democratic Gov. Tim Walz drops out of the race for Minnesota governor"
+      ]
+    },
+    {
+      "name": "first time",
+      "support_all": 6,
+      "support_oos": 4,
+      "examples_oos": [
+        "KOSPI Breaks 4,500 for First Time",
+        "KOSPI Tops 4,500 for First Time",
+        "KOSPI Breaks 4,500 for First Time in Tuesday's Intrady Trading"
+      ],
+      "examples_all": [
+        "KOSPI Breaks 4,500 for First Time",
+        "KOSPI Tops 4,500 for First Time",
+        "KOSPI Breaks 4,500 for First Time in Tuesday's Intrady Trading"
+      ]
+    },
+    {
+      "name": "ahn sung",
+      "support_all": 6,
+      "support_oos": 2,
+      "examples_oos": [
+        "(2nd LD) Veteran actor Ahn Sung-ki admitted to ICU in critical condition",
+        "Veteran actor Ahn Sung-ki in critical condition"
+      ],
+      "examples_all": [
+        "(2nd LD) Veteran actor Ahn Sung-ki admitted to ICU in critical condition",
+        "(LEAD) Beloved star Ahn Sung-ki, six-decade fixture of Korean cinema, dies at 74",
+        "Beloved star Ahn Sung-ki, six-decade fixture of Korean cinema, dies at 74"
+      ]
+    },
+    {
+      "name": "ruben amorim",
+      "support_all": 5,
+      "support_oos": 5,
+      "examples_oos": [
+        "Ruben Amorim sacking: Glasner, Maresca and Xavi among early contenders to take over at Manchester United",
+        "Ruben Amorim is gone, but Manchester United’s forever crisis rolls on | Jonathan Wilson",
+        "Manchester United sack manager Ruben Amorim after 14-month reign"
+      ],
+      "examples_all": [
+        "Ruben Amorim sacking: Glasner, Maresca and Xavi among early contenders to take over at Manchester United",
+        "Ruben Amorim is gone, but Manchester United’s forever crisis rolls on | Jonathan Wilson",
+        "Manchester United sack manager Ruben Amorim after 14-month reign"
+      ]
+    },
+    {
+      "name": "fire horse",
+      "support_all": 5,
+      "support_oos": 5,
+      "examples_oos": [
+        "Fire Horse vs. Serpent Moon: Why 2026’s First Lunar Cycle Brings ‘Shadow Luck’ to These 3 Birth Dates",
+        "[Graphic News] Year of the Fire Horse",
+        "Takaichi strikes optimistic tone as she looks ahead to Year of the Fire Horse"
+      ],
+      "examples_all": [
+        "Fire Horse vs. Serpent Moon: Why 2026’s First Lunar Cycle Brings ‘Shadow Luck’ to These 3 Birth Dates",
+        "[Graphic News] Year of the Fire Horse",
+        "Takaichi strikes optimistic tone as she looks ahead to Year of the Fire Horse"
+      ]
+    },
+    {
+      "name": "critics choice awards",
+      "support_all": 5,
+      "support_oos": 4,
+      "examples_oos": [
+        "Critics Choice Awards 2025: Timothée Chalamet, Jessie Buckley nab top acting honors",
+        "‘KPop Demon Hunters,’ ‘Squid Game’ Win Prizes at 2026 Critics Choice Awards",
+        "Wagner Moura perde o Critics Choice Awards de melhor ator"
+      ],
+      "examples_all": [
+        "2026 Critics Choice Awards: Leonardo DiCaprio's film 'One Battle After Another' wins top prize",
+        "Critics Choice Awards 2025: Timothée Chalamet, Jessie Buckley nab top acting honors",
+        "‘KPop Demon Hunters,’ ‘Squid Game’ Win Prizes at 2026 Critics Choice Awards"
+      ]
+    },
+    {
+      "name": "pope leo",
+      "support_all": 5,
+      "support_oos": 4,
+      "examples_oos": [
+        "Pope Leo, closing Catholic Holy Year, urges kindness to foreigners",
+        "Pope Leo XIV closes the Holy Door at St Peter's to end Jubilee year",
+        "Pope Leo XIV closes 2025 Holy Year with critique of consumerism and xenophobia"
+      ],
+      "examples_all": [
+        "Pope Leo, closing Catholic Holy Year, urges kindness to foreigners",
+        "Pope Leo XIV closes the Holy Door at St Peter's to end Jubilee year",
+        "Pope Leo XIV closes 2025 Holy Year with critique of consumerism and xenophobia"
+      ]
+    },
+    {
+      "name": "liam rosenior",
+      "support_all": 5,
+      "support_oos": 3,
+      "examples_oos": [
+        "Cesc Fabregas, Liam Rosenior and the coaches who could replace Enzo Maresca at Chelsea",
+        "Chelsea appoint Liam Rosenior as new manager",
+        "Liam Rosenior: Why Chelsea chose 41-year-old Englishman as manager"
+      ],
+      "examples_all": [
+        "Cesc Fabregas, Liam Rosenior and the coaches who could replace Enzo Maresca at Chelsea",
+        "Chelsea appoint Liam Rosenior as new manager",
+        "Liam Rosenior: Why Chelsea chose 41-year-old Englishman as manager"
+      ]
+    },
+    {
+      "name": "stranger things",
+      "support_all": 5,
+      "support_oos": 2,
+      "examples_oos": [
+        "Netflix’s monster hit Stranger Things is finally over. Was it worth it?",
+        "The un-proposal and how ‘Stranger Things’ broke Hollywood tradition"
+      ],
+      "examples_all": [
+        "Netflix’s monster hit Stranger Things is finally over. Was it worth it?",
+        "The un-proposal and how ‘Stranger Things’ broke Hollywood tradition",
+        "'Stranger Things' recap: What worked (and didn't) in the finale"
+      ]
+    },
+    {
+      "name": "president el",
+      "support_all": 5,
+      "support_oos": 2,
+      "examples_oos": [
+        "President El-Sisi Attends Christmas Celebrations",
+        "President El-Sisi sends New Year greetings to Egyptians abroad"
+      ],
+      "examples_all": [
+        "President El-Sisi Attends Christmas Celebrations",
+        "President El-Sisi sends New Year greetings to Egyptians abroad",
+        "President El-Sisi praises Saudi Arabia hosting of South Yemen dialogue conference - Foreign Affairs - Egypt"
+      ]
+    },
+    {
+      "name": "umar khalid",
+      "support_all": 5,
+      "support_oos": 2,
+      "examples_oos": [
+        "Hierarchy of roles: On no bail for Umar Khalid",
+        "\"Evidence Of Criminal Conspiracy\": Umar Khalid, Sharjeel Imam Denied Bail"
+      ],
+      "examples_all": [
+        "Hierarchy of roles: On no bail for Umar Khalid",
+        "Delhi riots case: Supreme Court denies bail to Umar Khalid, Sharjeel Imam, grants relief to five co-accused",
+        "\"Evidence Of Criminal Conspiracy\": Umar Khalid, Sharjeel Imam Denied Bail"
+      ]
+    },
+    {
+      "name": "africa cup",
+      "support_all": 5,
+      "support_oos": 1,
+      "examples_oos": [
+        "Decision to switch Africa Cup to 4-year cycle rankles - Features - AFCON 2025"
+      ],
+      "examples_all": [
+        "Algeria 1-0 DR Congo: Africa Cup of Nations last 16 – as it happened",
+        "AFCON 2025: Senegal come from behind to beat Sudan - Africa Cup of Nations",
+        "AFCON 2025: Morocco under pressure to go far - Africa Cup of Nations"
+      ]
+    }
+  ]
+}

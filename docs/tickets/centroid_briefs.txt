@@ -1,0 +1,70 @@
+You are implementing the Centroid page UI in our Next.js + Tailwind app.
+
+Goal
+- Display the centroid “Geo Brief v0” JSON (stored in centroids_v3.profile_json JSONB) on the Centroid page.
+- Render:
+  1) A “Snapshot” table (label/value rows)
+  2) Accordion sections for: Strategic constants, Current pressures and tensions, How to read current news
+- This is display-only. Do not change generation logic. Do not add new DB tables.
+
+Data contract
+- centroid row includes: centroid_key, label/display_name, profile_json (JSONB) OR profileJson in API.
+- profile_json matches schema_version="geo_brief_v0" and contains:
+  - visuals { flag_iso2, map_units_iso2 }
+  - snapshot: [{label, value}]
+  - sections: [
+      { key, title, intro?, bullets?, default_open?, groups?: [{title, bullets}] }
+    ]
+  - footer_note (string)
+
+Implementation requirements
+1) Backend/API
+- Ensure centroid detail endpoint returns profile_json. If it currently does not, add it.
+- Parse JSON safely (handle null/empty, invalid JSON).
+- If profile_json missing or schema_version mismatched, hide the whole “Background brief” block (no errors shown to user).
+
+2) Centroid page layout changes
+- Add a “Background brief” block below the existing two-column cards section and above the track list (or where it best fits without burying it).
+- The block has:
+  A) Header row: “Background brief” + last updated date if present (updated_at)
+  B) Optional small “meta” line for visuals:
+     - If flag_iso2 present, render a small flag icon (use a lightweight flag approach: emoji flag from ISO2 if possible; otherwise show ISO2 text pill). Do not fetch external images.
+  C) Snapshot table:
+     - Two columns: Label (fixed-width-ish, muted), Value (flex)
+     - Desktop: table layout, Mobile: stacked rows
+  D) Accordion:
+     - One accordion item per section in profile.sections
+     - Title = section.title
+     - Default open uses section.default_open boolean
+     - If section has “intro” + “bullets”: show intro line then bullets list
+     - If section has “groups”: render group title + bullets under each group
+  E) Footer note: muted small text at bottom
+
+3) UI components
+- Use our existing component system (Tailwind). If shadcn/ui is present, use:
+  - Accordion, AccordionItem, AccordionTrigger, AccordionContent
+  - Table (optional) or semantic <table> with Tailwind
+- Typography: make it premium and highly readable:
+  - Clear hierarchy (H2/H3), generous spacing, bullet list readability
+  - Ensure long lines don’t exceed comfortable reading width in this section (e.g., max-w-3xl) while the page overall remains wide.
+  - The page can be dark-themed, but this “Background brief” block should support “Reading Mode” styling:
+    - Provide a light-surface container (slate/neutral) even in dark theme for readability (or a toggle if already exists).
+    - Avoid pure white; use an off-white background with dark text inside the brief container.
+
+4) Edge cases
+- Sections may arrive in any order; preserve order as provided.
+- Some sections may have bullets directly, others only groups, some both.
+- Ensure bullets render safely (no HTML injection).
+- If snapshot missing, omit table and just show accordion.
+- If sections missing, omit accordion and just show snapshot.
+
+5) Acceptance checks
+- For a centroid with profile_json populated (e.g., EUROPE-GERMANY), I can see:
+  - Snapshot table with at least 5 rows
+  - Accordion with 3 items; Reading Guide default open
+  - Footer note displayed
+- For a centroid without profile_json: page still renders normally with no empty placeholders.
+
+Deliverables
+- PR-ready code changes: API + Centroid page + any new components.
+- Keep changes minimal and consistent with existing patterns.

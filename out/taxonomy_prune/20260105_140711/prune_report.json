@@ -1,0 +1,1403 @@
+{
+  "centroid_id": "SYS-TECH",
+  "mode": "dry-run",
+  "timestamp": "2026-01-05T14:07:11.287904",
+  "total_removed": 182,
+  "total_kept": 15,
+  "language_reports": [
+    {
+      "centroid_id": "SYS-TECH",
+      "language": "en",
+      "mode": "dry-run",
+      "aliases_before_count": 197,
+      "aliases_after_count": 15,
+      "removed_count": 182,
+      "coverage_before": 32,
+      "coverage_after": 32,
+      "kept_aliases": [
+        {
+          "alias": "AI",
+          "normalized": "ai",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 17,
+          "incremental_gain": 17
+        },
+        {
+          "alias": "Amazon",
+          "normalized": "amazon",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 2,
+          "incremental_gain": 2
+        },
+        {
+          "alias": "TSMC",
+          "normalized": "tsmc",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "Waymo",
+          "normalized": "waymo",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "Apple",
+          "normalized": "apple",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "Airbus",
+          "normalized": "airbus",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "TikTok",
+          "normalized": "tiktok",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "NVIDIA",
+          "normalized": "nvidia",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "ChatGPT",
+          "normalized": "chatgpt",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "Roscosmos",
+          "normalized": "roscosmos",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "Instagram",
+          "normalized": "instagram",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "satellites",
+          "normalized": "satellites",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "automation",
+          "normalized": "automation",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "semiconductors",
+          "normalized": "semiconductors",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 1,
+          "incremental_gain": 1
+        },
+        {
+          "alias": "reusable rockets",
+          "normalized": "reusable rockets",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 1,
+          "incremental_gain": 1
+        }
+      ],
+      "removed_aliases": [
+        {
+          "alias": "Boeing",
+          "normalized": "boeing",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 1,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Oracle",
+          "normalized": "oracle",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 1,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "NVIDIA",
+          "normalized": "nvidia",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 1,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "robotics",
+          "normalized": "robotics",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 1,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Big Tech",
+          "normalized": "big tech",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 1,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "X",
+          "normalized": "x",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "CDN",
+          "normalized": "cdn",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "AWS",
+          "normalized": "aws",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "ABB",
+          "normalized": "abb",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "GPU",
+          "normalized": "gpu",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "xAI",
+          "normalized": "xai",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "AMD",
+          "normalized": "amd",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "ARM",
+          "normalized": "arm",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "KUKA",
+          "normalized": "kuka",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Meta",
+          "normalized": "meta",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Grok",
+          "normalized": "grok",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "ASML",
+          "normalized": "asml",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Tesla",
+          "normalized": "tesla",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Fanuc",
+          "normalized": "fanuc",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chips",
+          "normalized": "chips",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Intel",
+          "normalized": "intel",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "SpaceX",
+          "normalized": "spacex",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Cruise",
+          "normalized": "cruise",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Google",
+          "normalized": "google",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "OpenAI",
+          "normalized": "openai",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Claude",
+          "normalized": "claude",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Micron",
+          "normalized": "micron",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "YouTube",
+          "normalized": "youtube",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Twitter",
+          "normalized": "twitter",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Mistral",
+          "normalized": "mistral",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "foundry",
+          "normalized": "foundry",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Starlink",
+          "normalized": "starlink",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "big data",
+          "normalized": "big data",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Alphabet",
+          "normalized": "alphabet",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Facebook",
+          "normalized": "facebook",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "WhatsApp",
+          "normalized": "whatsapp",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Snapchat",
+          "normalized": "snapchat",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "LinkedIn",
+          "normalized": "linkedin",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Tim Cook",
+          "normalized": "tim cook",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "DeepSeek",
+          "normalized": "deepseek",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chip ban",
+          "normalized": "chip ban",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Qualcomm",
+          "normalized": "qualcomm",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "IBM Cloud",
+          "normalized": "ibm cloud",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Elon Musk",
+          "normalized": "elon musk",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "antitrust",
+          "normalized": "antitrust",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "user data",
+          "normalized": "user data",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "App Store",
+          "normalized": "app store",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Microsoft",
+          "normalized": "microsoft",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "ByteDance",
+          "normalized": "bytedance",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Elon Musk",
+          "normalized": "elon musk",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Anthropic",
+          "normalized": "anthropic",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chip fabs",
+          "normalized": "chip fabs",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "space race",
+          "normalized": "space race",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Salesforce",
+          "normalized": "salesforce",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Jeff Bezos",
+          "normalized": "jeff bezos",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Sam Altman",
+          "normalized": "sam altman",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "microchips",
+          "normalized": "microchips",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data breach",
+          "normalized": "data breach",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "AI robotics",
+          "normalized": "ai robotics",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "UAV systems",
+          "normalized": "uav systems",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "tech giants",
+          "normalized": "tech giants",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Aleph Alpha",
+          "normalized": "aleph alpha",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chip supply",
+          "normalized": "chip supply",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "space launch",
+          "normalized": "space launch",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "hyperscalers",
+          "normalized": "hyperscalers",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "public cloud",
+          "normalized": "public cloud",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "hybrid cloud",
+          "normalized": "hybrid cloud",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data centers",
+          "normalized": "data centers",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "server farms",
+          "normalized": "server farms",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cloud outage",
+          "normalized": "cloud outage",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Google Cloud",
+          "normalized": "google cloud",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Oracle Cloud",
+          "normalized": "oracle cloud",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data centers",
+          "normalized": "data centers",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Jensen Huang",
+          "normalized": "jensen huang",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Hugging Face",
+          "normalized": "hugging face",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "rocket launch",
+          "normalized": "rocket launch",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "private cloud",
+          "normalized": "private cloud",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "app ecosystem",
+          "normalized": "app ecosystem",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "tech monopoly",
+          "normalized": "tech monopoly",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data monopoly",
+          "normalized": "data monopoly",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Sundar Pichai",
+          "normalized": "sundar pichai",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "compute power",
+          "normalized": "compute power",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "training data",
+          "normalized": "training data",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chip shortage",
+          "normalized": "chip shortage",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "space industry",
+          "normalized": "space industry",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "launch vehicle",
+          "normalized": "launch vehicle",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "remote sensing",
+          "normalized": "remote sensing",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "space security",
+          "normalized": "space security",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "orbital launch",
+          "normalized": "orbital launch",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "LEO satellites",
+          "normalized": "leo satellites",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cloud services",
+          "normalized": "cloud services",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "edge computing",
+          "normalized": "edge computing",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "network outage",
+          "normalized": "network outage",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cyber incident",
+          "normalized": "cyber incident",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "smart mobility",
+          "normalized": "smart mobility",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "automated port",
+          "normalized": "automated port",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "search engines",
+          "normalized": "search engines",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "platform power",
+          "normalized": "platform power",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "platform rules",
+          "normalized": "platform rules",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "model training",
+          "normalized": "model training",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "advanced chips",
+          "normalized": "advanced chips",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Tokyo Electron",
+          "normalized": "tokyo electron",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "low earth orbit",
+          "normalized": "low earth orbit",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Lockheed Martin",
+          "normalized": "lockheed martin",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cloud computing",
+          "normalized": "cloud computing",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cloud dominance",
+          "normalized": "cloud dominance",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Microsoft Azure",
+          "normalized": "microsoft azure",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "robot workforce",
+          "normalized": "robot workforce",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "humanoid robots",
+          "normalized": "humanoid robots",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "delivery robots",
+          "normalized": "delivery robots",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Boston Dynamics",
+          "normalized": "boston dynamics",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "fully automated",
+          "normalized": "fully automated",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Mark Zuckerberg",
+          "normalized": "mark zuckerberg",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "antitrust probe",
+          "normalized": "antitrust probe",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "export controls",
+          "normalized": "export controls",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "EUV lithography",
+          "normalized": "euv lithography",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "commercial space",
+          "normalized": "commercial space",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Northrop Grumman",
+          "normalized": "northrop grumman",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cloud regulation",
+          "normalized": "cloud regulation",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data sovereignty",
+          "normalized": "data sovereignty",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "vehicle autonomy",
+          "normalized": "vehicle autonomy",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "online platforms",
+          "normalized": "online platforms",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "platform control",
+          "normalized": "platform control",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "regulatory probe",
+          "normalized": "regulatory probe",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "compute capacity",
+          "normalized": "compute capacity",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chip fabrication",
+          "normalized": "chip fabrication",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "earth observation",
+          "normalized": "earth observation",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "internet backbone",
+          "normalized": "internet backbone",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data localization",
+          "normalized": "data localization",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "self-driving cars",
+          "normalized": "self-driving cars",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "industrial robots",
+          "normalized": "industrial robots",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "autonomous drones",
+          "normalized": "autonomous drones",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "automated systems",
+          "normalized": "automated systems",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "digital platforms",
+          "normalized": "digital platforms",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "digital dominance",
+          "normalized": "digital dominance",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "foundation models",
+          "normalized": "foundation models",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Applied Materials",
+          "normalized": "applied materials",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "satellite internet",
+          "normalized": "satellite internet",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "service disruption",
+          "normalized": "service disruption",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data center outage",
+          "normalized": "data center outage",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "satellite internet",
+          "normalized": "satellite internet",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "autonomous driving",
+          "normalized": "autonomous driving",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "factory automation",
+          "normalized": "factory automation",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "automated terminal",
+          "normalized": "automated terminal",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "content moderation",
+          "normalized": "content moderation",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "platform influence",
+          "normalized": "platform influence",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "account suspension",
+          "normalized": "account suspension",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "service suspension",
+          "normalized": "service suspension",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "strategic hardware",
+          "normalized": "strategic hardware",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "space-based systems",
+          "normalized": "space-based systems",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "dual-use technology",
+          "normalized": "dual-use technology",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Baikonur Cosmodrome",
+          "normalized": "baikonur cosmodrome",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Amazon Web Services",
+          "normalized": "amazon web services",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "autonomous vehicles",
+          "normalized": "autonomous vehicles",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "platform regulation",
+          "normalized": "platform regulation",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "platform governance",
+          "normalized": "platform governance",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "critical technology",
+          "normalized": "critical technology",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "Samsung Electronics",
+          "normalized": "samsung electronics",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "aerospace technology",
+          "normalized": "aerospace technology",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "space infrastructure",
+          "normalized": "space infrastructure",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "logistics automation",
+          "normalized": "logistics automation",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "automated operations",
+          "normalized": "automated operations",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "advanced lithography",
+          "normalized": "advanced lithography",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "chipmaking equipment",
+          "normalized": "chipmaking equipment",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "military-civil fusion",
+          "normalized": "military-civil fusion",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "data center expansion",
+          "normalized": "data center expansion",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "driverless technology",
+          "normalized": "driverless technology",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "industrial automation",
+          "normalized": "industrial automation",
+          "taxonomy_id": "5f53ab69-aa0c-4f2b-892d-da39c32076b5",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "large language models",
+          "normalized": "large language models",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "digital infrastructure",
+          "normalized": "digital infrastructure",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "social media platforms",
+          "normalized": "social media platforms",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "advanced manufacturing",
+          "normalized": "advanced manufacturing",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "satellite constellation",
+          "normalized": "satellite constellation",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "geospatial intelligence",
+          "normalized": "geospatial intelligence",
+          "taxonomy_id": "33f1ad69-3e90-4817-bb97-35e404ddc819",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "cross-border data flows",
+          "normalized": "cross-border data flows",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "artificial intelligence",
+          "normalized": "artificial intelligence",
+          "taxonomy_id": "8d413ce6-9218-4389-9f65-4d72893f6a03",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "manufacturing equipment",
+          "normalized": "manufacturing equipment",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "semiconductor equipment",
+          "normalized": "semiconductor equipment",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "technology supply chain",
+          "normalized": "technology supply chain",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "content delivery network",
+          "normalized": "content delivery network",
+          "taxonomy_id": "060f6379-533f-4e91-868c-0df924fec06c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "algorithmic amplification",
+          "normalized": "algorithmic amplification",
+          "taxonomy_id": "aa2e771a-7311-48f8-9c0c-cd99062eac57",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        },
+        {
+          "alias": "technology export controls",
+          "normalized": "technology export controls",
+          "taxonomy_id": "f87389a6-9937-4915-b98a-d07956ade58c",
+          "match_count": 0,
+          "reason": "zero_incremental_gain"
+        }
+      ],
+      "timestamp": "2026-01-05T14:07:11.287317"
+    }
+  ]
+}

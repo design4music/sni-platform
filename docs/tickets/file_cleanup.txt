@@ -1,0 +1,77 @@
+You are Claude Code acting as a repository surgery assistant. Goal: execute “Priority 0” cleanup for the World Brief platform while keeping /SNI as the active repo. HARD RULES:
+- Do NOT delete anything unless explicitly instructed. Prefer moving to /attic/.
+- Avoid expensive refactors. Focus on renames, path updates, docs consolidation, and removal of unused config entries.
+- Keep the pipeline operational: after changes, the v3 pipeline must still run end-to-end locally.
+- Be mechanical-first: no new architectures, no overengineering. Make minimal changes.
+
+CONTEXT:
+Current repo root: /SNI
+Key current paths:
+- Current pipeline (active): /SNI/v3/
+- Frontend: /apps/frontend/
+- Shared config: /SNI/core/config.py (contains legacy + v3 mixed)
+- /SNI/db/ contains a lot of files that seems to be mostly one time use or checks.
+- /SNI/ root needs cleanup too.
+
+TARGET END STATE (structure):
+/SNI/
+  /pipeline/              (renamed from /v3/)
+    /phase_1/
+    /phase_2/
+    /phase_3/
+    /phase_4/
+    /runner/
+    /db/ or /migrations/  (wherever v3 DB migrations live now; keep consistent and archive junk)
+    /docs/context/        (moved/merged into /docs/; see below)
+  /apps/frontend/                  
+  /core/
+    config.py             (clean: only what pipeline + frontend actually uses)
+  /docs/                  (root documentation, consolidated context + frontend docs (done))
+  /attic/                 (temporary holding: moved legacy folders/files)
+    /apps/
+    /archive/
+    /misc_legacy/
+  .env.example
+  README.md (short, points to /docs/00_README.md)
+  (other minimal runtime files)
+
+REQUESTED OUTCOMES:
+1) Prepare a safe plan and execute it with minimal changes:
+   - Create a new git branch: chore/priority0-clean-cut
+   - Rename /v3/ to /pipeline/ (git mv).
+2) Update imports, scripts, and references from “v3/...” to “pipeline/...”.
+   - Ensure CLI commands and daemon references still work (runner, phases).
+3) Clean /core/config.py:
+   - Identify which settings are used by the active pipeline and frontend.
+   - Remove legacy/unused constants and sections.
+   - Ensure .env variables referenced match what pipeline uses.
+   - Provide a concise .env.example updated accordingly.
+4) DB cleanup plan (NO destructive DB ops yet):
+   - Produce a short /docs/DB_CLEANUP_PLAN.md describing:
+     - “minimal required tables” for production (titles_v3, taxonomy_v3, centroids_v3, track_configs, ctm, plus any required join/support tables)
+     - suggested approach: new database + apply clean migrations + optional data copy scripts
+     - recommended read-only user for frontend and least-privileged writer for pipeline
+5) Scan other remaining folders. Identify files that might be good candidates for archiving.
+6) Update any path-dependent scripts (service files, runner README, etc.) to new /pipeline path.
+7) Verify:
+   - Provide exact commands to run phase scripts after rename.
+   - Run a quick local sanity check if possible (or at least list commands and expected outputs).
+
+IMPORTANT: Token efficiency
+- Do NOT scan huge files unnecessarily.
+- Stage all current updates first (I moved a lot of files manually and updated documentation). Also a new column was added to centroids_v3 table.
+- First, build an inventory: list directories at /SNI root, list /v3 contents, locate docs in /docs/context.
+- Then implement moves and renames.
+- Then run a targeted search/replace for “v3/” references in:
+  - runner scripts
+  - phase scripts
+  - any README/service docs
+  - Makefile/package scripts if present
+
+DELIVERABLES:
+- A summary of changes made (bullet list).
+- A list of files that can be purged or archived (for human review)
+- A “what remains manual” list for Max (large folder removals, frontend docs merge once provided).
+- A list of commands to validate the pipeline + frontend.
+
+Proceed now.

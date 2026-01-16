@@ -1,0 +1,298 @@
+# SNI FRONTEND — CLAUDE CODE ONE-PROMPT BUILD SPEC (v0)
+
+## ROLE & GOAL
+
+You are building the **SNI (Strategic Narrative Intelligence) frontend application**.
+
+SNI is a **read-only, professional intelligence web application** that presents AI-generated global news narratives in a structured, navigable way.
+
+Your task is to generate the **entire frontend application** according to the specifications below, using the confirmed tech stack and respecting all scope boundaries, navigation rules, and design constraints.
+
+This is **not a prototype UI**; it is a **serious demo-grade application** intended to convey analytical credibility, clarity, and global scope.
+
+---
+
+## TECH STACK (CONFIRMED)
+
+* **Framework:** Next.js (App Router)
+* **Styling:** Tailwind CSS
+* **Database:** PostgreSQL (read-only usage from frontend)
+* **Maps:** Leaflet (GeoJSON polygons only, no basemap tiles)
+* **State:** Client-side where possible; server components allowed where appropriate
+* **No authentication**
+* **No write operations**
+
+---
+
+## CORE PRODUCT PRINCIPLES (NON-NEGOTIABLE)
+
+1. **Primary entity = Centroid**, not country or article
+2. **CTMs are surfaced, not buried**
+3. **Navigation depth is minimized**
+4. **Typography and structure do the work**
+5. **Transparency about AI generation is explicit**
+6. **Regions are UI groupers only, not analytical entities**
+
+---
+
+## GLOBAL NAVIGATION MODEL (LOCKED)
+
+### Primary routes
+
+* `/` — Home
+* `/global` — Global centroids
+* `/region/:region_key` — Region directory (directory only)
+* `/c/:centroid_key` — Centroid page
+* `/c/:centroid_key/t/:track_key?month=YYYY-MM` — Track page (CTM content rendered here)
+
+### Navigation invariants
+
+* Regions **never** display CTMs
+* Map clicks **always** resolve to geo centroids
+* CTM content is rendered **on Track pages**, not separate CTM pages
+* Users reach *current CTM content* in **≤2 clicks from Home**
+
+---
+
+## PAGE-BY-PAGE CONTENT RESPONSIBILITIES
+
+### 1) HOME (`/`)
+
+**Purpose:** Introduce SNI, show global scope, provide navigation entry points
+
+**Must include (top → down):**
+
+1. **Introductory explanation**
+
+   * What SNI is
+   * Why it is a new way of presenting news
+   * Link: “Learn more” → explanation page/section
+2. **AI disclaimer**
+
+   * Clear statement that content is AI-generated
+   * Link: “How it works” → pipeline explanation
+3. **Political map (Leaflet)**
+
+   * Geo centroids only
+   * Hover highlights full centroid group (e.g., Baltics)
+   * Click routes to centroid page
+4. **System Centroids**
+
+   * Cards using centroid label from DB
+5. **Global Geo Centroids (NON-STATE)**
+
+   * Cards only (not on map)
+6. **Region directories**
+
+   * Europe, Asia, Africa, Americas, Oceania, Middle East
+
+**Design mode:** Dashboard (dark)
+
+---
+
+### 2) GLOBAL (`/global`)
+
+**Purpose:** Show global analytical lenses
+
+**Must include:**
+
+* System centroid cards
+* Global geo centroid cards
+* Optional search/filter
+
+**Design mode:** Dashboard (dark)
+
+---
+
+### 3) REGION DIRECTORY (`/region/:region_key`)
+
+**Purpose:** List geo centroids in the region
+
+**Must include:**
+
+* Region header
+* List/grid of geo centroids
+* Each card shows:
+
+  * label
+  * activity hint (if available)
+
+**Must NOT include:**
+
+* Tracks
+* CTMs
+* Summaries
+
+**Design mode:** Dashboard (dark)
+
+---
+
+### 4) CENTROID PAGE (`/c/:centroid_key`)
+
+**Purpose:** Show which tracks matter for this centroid
+
+**Must include:**
+
+* Centroid header (label, type)
+* Track list/grid
+* Each track card shows:
+
+  * track label
+  * latest month
+  * activity indicator
+
+**Sidebar (important):**
+
+* Other tracks for same centroid
+* Same-track links to other centroids (cross-centroid navigation)
+
+**Design mode:** Dashboard (dark)
+
+---
+
+### 5) TRACK PAGE (`/c/:centroid_key/t/:track_key`)
+
+**Purpose:** Present the narrative for this topic and this actor
+
+**This page replaces a separate CTM page.**
+
+**Must include:**
+
+1. **Track header**
+
+   * Centroid + Track
+   * Month selector
+2. **Current CTM content (default = latest month)**
+
+   * Full narrative summary
+   * Events list
+   * Article links
+3. **Historical navigation**
+
+   * Month selector or previous/next
+   * Visible history context
+
+**Sidebar:**
+
+* Other tracks for this centroid
+* Same-track navigation to other centroids
+
+**Design mode:**
+
+* CTM narrative content rendered in **Reading Mode**
+* Surrounding UI remains dashboard-style
+
+---
+
+## DESIGN SYSTEM (STRICT)
+
+### Overall visual tone
+
+* Professional intelligence service
+* High-tech, restrained, editorial
+* No gimmicks
+
+### Layout
+
+* Desktop-first
+* Full-width sections
+* Left-anchored content
+* Right-side utility panel
+* Max width only for long-form reading
+
+### Typography (critical)
+
+* Typography is the primary design feature
+* Excellent readability for long texts
+* Strong hierarchy (title → context → narrative → metadata)
+* Avoid overly thin weights, especially on dark backgrounds
+
+### Themes
+
+* **Dashboard Mode:** dark background, light text
+* **Reading Mode:** light background, dark text
+* These are **page-level templates**, not just a toggle
+
+### Cards
+
+* Clean, consistent card system
+* Used for centroids, tracks, CTMs, events
+* Subtle borders or elevation only
+
+### Logo
+
+* **A logo is expected**
+* Placeholder allowed (text or simple mark)
+* Must be easy to replace later
+* Logo placement should be consistent and reserved
+
+### Media policy
+
+* No photos
+* No illustrations
+* Optional minimal maps/icons only if functional
+
+---
+
+## MAP IMPLEMENTATION (LEAFLET)
+
+* No basemap tiles
+* GeoJSON country polygons only
+* Each polygon has ISO2
+* Mapping: `ISO2 → centroid_key`
+* Regional centroids (e.g., Baltics) highlight all member countries on hover
+* NON-STATE geo centroids are excluded from map
+
+---
+
+## FEATURE BOUNDARIES (LOCKED)
+
+### MUST-HAVE (v0)
+
+* Full navigation model
+* Map navigation
+* Track-based CTM rendering
+* Sidebar cross-navigation
+* Typography-first design
+* AI disclaimer + explanation links
+
+### ALLOWED IF EASY (v0.5)
+
+* Activity indicators
+* Simple search
+* Sorting in lists
+
+### EXPLICITLY OUT OF SCOPE
+
+* User accounts
+* Alerts
+* Editing
+* Comments
+* Predictive analytics
+* Charts beyond minimal indicators
+* Write operations
+
+---
+
+## ACCEPTANCE CRITERIA
+
+The build is acceptable if:
+
+* A user reaches current CTM content in ≤2 clicks from Home
+* CTM narratives are comfortable to read
+* Cross-track and cross-centroid navigation is obvious
+* Global coverage is visually and structurally clear
+* No page feels empty or redundant
+* The application feels credible as an intelligence product
+
+---
+
+## FINAL INSTRUCTION
+
+Generate the **complete frontend application** following this specification exactly.
+Prefer clarity and correctness over visual flair.
+Do not invent features outside this scope.
+However rely on your direct access to the backend code and database. Your first hand knowledge has a high priority in case this spec is inconsistent with our system. 
+
+---
+

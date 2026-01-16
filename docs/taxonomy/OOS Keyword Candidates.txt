@@ -1,0 +1,205 @@
+# FINAL SPEC (v1): OOS Keyword Candidates (EN-only, General Nouns)
+
+## Objective
+
+From **English titles** in the selected time window, identify **candidate keyword tokens/phrases** (general nouns / noun phrases, not proper names) that:
+
+* appear frequently in the overall English corpus, and
+* leak into out-of-scope titles (at least some), indicating taxonomy gaps
+
+Output is a **report only**. No DB writes. Manual approval required.
+
+---
+
+## Unified Candidate Inclusion Rule (locked)
+
+Include candidate `N` iff:
+
+```
+support_all(N) ≥ min_total_support
+AND
+support_oos(N) ≥ min_oos_support
+```
+
+Where:
+
+* `support_all(N)` counts **all English titles** within the time window containing `N`
+* `support_oos(N)` counts **out-of-scope English titles** within the time window containing `N`
+
+---
+
+## Script
+
+Path:
+
+```
+v3/taxonomy_tools/oos_keyword_candidates.py
+```
+
+---
+
+## CLI
+
+Example:
+
+```bash
+python v3/taxonomy_tools/oos_keyword_candidates.py \
+  --since-hours 24 \
+  --min-total-support 5 \
+  --min-oos-support 2 \
+  --ngram-max 2 \
+  --min-length 4 \
+  --top 100 \
+  --output-dir out/oos_reports
+```
+
+Defaults (suggested):
+
+* `--min-total-support 5`
+* `--min-oos-support 2`
+* `--ngram-max 2`
+* `--min-length 4`
+* `--top 100`
+
+(You will tune these empirically.)
+
+---
+
+## Data Selection (DB)
+
+English-only:
+
+* `ALL_EN`: all titles within window where `detected_language='en'`
+* `OOS_EN`: out-of-scope titles within window where `detected_language='en'` and:
+
+  * preferred: `processing_status='out_of_scope'`
+  * fallback: `centroid_ids empty/null`
+
+Fields needed:
+
+* `id`, `title_display`, timestamp, OOS indicator
+
+Normalization:
+
+* reuse Phase 2 normalization exactly.
+
+---
+
+## Candidate Extraction (deterministic)
+
+### 1) Tokenization
+
+From normalized titles:
+
+* split on whitespace
+* strip punctuation around tokens
+
+Keep tokens if:
+
+* length ≥ `min_length`
+* not numeric-only
+* not stopword (EN stoplist + small news boilerplate list)
+
+### 2) N-grams
+
+Generate:
+
+* unigrams
+* bigrams (adjacent token pairs)
+  (Optionally trigrams later, but v1 stops at 2.)
+
+### 3) Filters (critical)
+
+Discard candidate if:
+
+1. It looks like a proper-name candidate (avoid overlap with NameBombs):
+
+   * contains TitleCase tokens in original (optional if you preserve original), OR
+   * matches a 2+ TitleCase phrase pattern in the raw title
+2. It starts/ends with a stopword (for bigrams)
+3. It is already present in taxonomy EN aliases (exact normalized match)
+
+---
+
+## Counting
+
+For each remaining candidate `N`:
+
+* compute `support_all(N)` across `ALL_EN` titles
+* compute `support_oos(N)` across `OOS_EN` titles
+
+Then apply the unified inclusion rule.
+
+---
+
+## Ranking
+
+Sort by:
+
+1. `support_oos` desc (prioritize actual leakage)
+2. `support_all` desc (ensure it’s not a one-off)
+3. bigrams before unigrams when ties (more specific)
+4. alphabetical (stable)
+
+---
+
+## Output
+
+Write:
+
+```
+out/oos_reports/oos_candidates_en_<YYYYMMDD_HHMM>.json
+```
+
+Schema:
+
+```json
+{
+  "run": {
+    "since_hours": 24,
+    "language": "en",
+    "min_total_support": 5,
+    "min_oos_support": 2,
+    "ngram_max": 2,
+    "min_length": 4
+  },
+  "totals": {
+    "titles_all": 675,
+    "titles_oos": 140
+  },
+  "candidates": [
+    {
+      "token": "arms treaty",
+      "support_all": 9,
+      "support_oos": 2,
+      "examples_oos": ["...", "..."],
+      "examples_all": ["...", "..."]
+    }
+  ]
+}
+```
+
+No DB writes.
+
+---
+
+## Phase 2 Integration (recommended)
+
+After Phase 2 completes:
+
+```bash
+python v3/taxonomy_tools/oos_keyword_candidates.py --since-hours 24
+```
+
+This produces a daily “what we are missing” report.
+
+---
+
+## Acceptance Criteria
+
+* Output is short and reviewable (top ~50–100).
+* Candidates are not mostly boilerplate/time words.
+* No taxonomy modifications.
+* Deterministic results on repeated runs for same window.
+
+---

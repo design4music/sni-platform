@@ -1,0 +1,69 @@
+{
+  "run": {
+    "since_hours": 24,
+    "languages": [
+      "en",
+      "fr",
+      "es",
+      "ru"
+    ],
+    "min_oos_support": 1,
+    "min_total_support_map": {
+      "en": 5,
+      "fr": 3,
+      "es": 3,
+      "ru": 3
+    },
+    "timestamp": "2026-01-06T21:08:42.338600"
+  },
+  "language": "es",
+  "totals": {
+    "titles_all": 521,
+    "titles_oos": 217
+  },
+  "candidates": [
+    {
+      "name": "delcy rodr",
+      "support_all": 21,
+      "support_oos": 4,
+      "examples_oos": [
+        "Delcy Rodríguez, entre la supervivencia del régimen y una transición",
+        "Delcy Rodríguez, hija de un mártir de la izquierda y heredera del poder chavista",
+        "Los amores de Delcy Rodríguez: entre el ex marido de Abigail, un libanés al que ha hecho rico y su 'príncipe' Zapatero"
+      ],
+      "examples_all": [
+        "Delcy Rodríguez llama a la cooperación con Estados Unidos mientras Trump exige “acceso a todo” en Venezuela",
+        "Delcy Rodríguez, vicepresidenta de Venezuela: “Hay un solo presidente y es Nicolás Maduro”",
+        "Delcy Rodríguez se instala en el poder en una Venezuela sin Maduro y a la sombra de Trump"
+      ]
+    },
+    {
+      "name": "edmundo gonz",
+      "support_all": 5,
+      "support_oos": 1,
+      "examples_oos": [
+        "Edmundo González habla como presidente y pide la liberación de los presos políticos: \"Ninguna transición democrática es posible mientras haya un solo venezolano encarcelado de manera injusta\""
+      ],
+      "examples_all": [
+        "Edmundo González exige la liberación de todos los presos políticos para “la normalización” de Venezuela",
+        "Bruselas pide una transición en Venezuela que incluya a Corina Machado y Edmundo González",
+        "Edmundo González habla como presidente y pide la liberación de los presos políticos: \"Ninguna transición democrática es posible mientras haya un solo venezolano encarcelado de manera injusta\""
+      ]
+    },
+    {
+      "name": "tren interoce",
+      "support_all": 4,
+      "support_oos": 4,
+      "examples_oos": [
+        "Alistan denuncia por incidente del Tren Interoceánico",
+        "Retiran restos de Tren Interoceánico tras peritajes de FGR",
+        "FGR extrae información de la caja negra del Tren Interoceánico; reitera que habrá reparación integral del daño"
+      ],
+      "examples_all": [
+        "Alistan denuncia por incidente del Tren Interoceánico",
+        "Retiran restos de Tren Interoceánico tras peritajes de FGR",
+        "FGR extrae información de la caja negra del Tren Interoceánico; reitera que habrá reparación integral del daño"
+      ]
+    }
+  ]
+}

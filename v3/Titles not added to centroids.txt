@@ -1,0 +1,142 @@
+Titles not added to centroids
+
+Conservative backlash brews over DEI efforts of U-Va.’s next president
+What we know (and what we don’t) about the Epstein files’ release
+Column | Congress set records in 2025, some more dubious than others
+When robot taxis get stuck, a secret army of humans comes to the rescue
+Files offer details on Epstein’s death in federal custody
+Economic growth surges in late summer, the highest in two years
+Hundreds of residents signed up for FEMA buyouts after Helene. Not one has been approved.
+Opinion | Charlie Kirk was killed on her campus. This is what happened next.
+With more than a million pages to go, Justice struggles with Epstein files
+Bankruptcies soar as companies grapple with inflation, tariffs
+ICE documents reveal plan to hold 80,000 immigrants in warehouses
+Medvedev curious about reasons for unexpectedly conciliatory statements from EU
+IN BRIEF: Fire at enterprise in Tula Region, 172 UAVs, aftermath of overnight attack
+Su-57 fighter jet successfully evades enemy radars and electronic warfare — Chemezov
+Ruble becomes strongest-performing currency in 2025 — Bloomberg
+Eight Tu-214 aircraft may be produced in 2026, 12 in 2027, industry minister says
+Liberation of Kosovtsevo brings area of over 23 sq km under control — security forces
+Baikonur spaceport, Soyuz-5 carrier rocket ready for first launch — Roscosmos
+Sweden better apologize for detaining Russia's Adler vessel — Foreign Ministry
+Kiev loses about 20 battalions in fighting near Vilcha — expert
+Russia to return to global sports in 2026 – football boss
+New corruption scandal erupts in Kiev
+Alcohol killing 800,000 Europeans annually – WHO
+Kiev sacking commanders after loss of key Donbass city – media
+Court allows appeal in dispute over burial of ex-Zambian leader
+Ukraine a corrupt ‘viper’s den’ – Hunter Biden
+Waymo's San Francisco outage raises doubts over robotaxi readiness during crises
+Platinum hits record high on tight supply, EU combustion-engine ban reversal
+Here are 5 ways AI transformed health care in Europe in 2025
+Breakingviews - Chatbots find their voice as audio assistants rise
+This expert predicts superintelligence could make “everybody economically obsolete”
+Silver crosses $77 mark while gold, platinum stretch record highs
+How silver is traded, from stocks and shares to coins and bars
+New York to require social media platforms to display mental health warnings
+Silver rises 9% to hit fresh record high
+Epstein emails reveal 2001 request for 'inappropriate friends' at Balmoral
+Age verification to AI slop: How 2025 redefined social media
+From robot 'girlfriends to AI lipstick': The weirdest tech of 2025
+What does 2026 hold for the world's oceans?
+Europe 2026 salary projections: Countries with the strongest pay rises
+A look back at the health trends that took over social media in 2025
+The EU wants to end the era of national vetoes – but it's complicated
+Crypto ownership is on the rise in Europe: Who’s investing the most?
+A pirate activist group scraped and released Spotify’s entire library
+Denmark demands territorial respect after Trump posts Greenland envoy
+How 2025 became one of the hottest and most divisive climate years
+
+---
+
+## 1. These titles are genuinely strategic — but not “theater-obvious”
+
+Rough categorization of the list:
+
+### A. Governance / institutional power (clearly strategic)
+
+Examples:
+
+* “ICE documents reveal plan to hold 80,000 immigrants in warehouses”
+* “The EU wants to end the era of national vetoes – but it's complicated”
+* “New corruption scandal erupts in Kiev”
+* “Kiev sacking commanders after loss of key Donbass city – media”
+* “Conservative backlash brews over DEI efforts of U-Va.’s next president”
+
+These are **systemic governance signals**, not cultural noise.
+They directly map to:
+
+* governance_internal
+* institutional legitimacy
+* regime stability
+
+They are *exactly* the kind of content SNI is supposed to surface.
+
+---
+
+### B. Economy / finance / material constraints (strategic)
+
+Examples:
+
+* “Bankruptcies soar as companies grapple with inflation, tariffs”
+* “Economic growth surges in late summer, the highest in two years”
+* “Ruble becomes strongest-performing currency in 2025 — Bloomberg”
+* “Platinum hits record high on tight supply, EU combustion-engine ban reversal”
+* “Silver crosses $77 mark while gold, platinum stretch record highs”
+
+These are **macro-economic stress and signal indicators**.
+They are not lifestyle finance.
+
+This content is strategic *even without explicit country names*.
+
+---
+
+### C. Military / security signals (obvious misses)
+
+Examples:
+
+* “Liberation of Kosovtsevo brings area of over 23 sq km under control”
+* “Kiev loses about 20 battalions in fighting near Vilcha”
+* “Eight Tu-214 aircraft may be produced in 2026”
+* “Su-57 fighter jet successfully evades enemy radars”
+* “Baikonur spaceport, Soyuz-5 carrier rocket ready for first launch”
+
+These should **never** be out_of_scope.
+Their exclusion is a **hard centroid coverage failure**, not ambiguity.
+
+---
+
+### D. Tech as strategic infrastructure (not lifestyle tech)
+
+Examples:
+
+* “When robot taxis get stuck, a secret army of humans comes to the rescue”
+* “Waymo's San Francisco outage raises doubts over robotaxi readiness during crises”
+* “Breakingviews - Chatbots find their voice as audio assistants rise”
+* “This expert predicts superintelligence could make ‘everybody economically obsolete’”
+
+These are **systemic technology adoption & resilience signals**, not gadgets.
+
+They belong under:
+
+* SYS-TECH
+* governance / resilience
+* economic competition
+
+---
+
+### E. Information, law, and legitimacy erosion
+
+Examples:
+
+* Epstein file cluster
+* “What we know (and don’t) about the Epstein files’ release”
+* “With more than a million pages to go, Justice struggles with Epstein files”
+
+This is **institutional trust + information management**, not celebrity gossip.
+The fact that it is treated as non-strategic reveals a **category blind spot**.
+
+---
+
+
+
