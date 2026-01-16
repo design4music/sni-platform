@@ -1,5 +1,0 @@
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('energy_production', 'Energy – Production', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('energy_infrastructure', 'Energy – Infrastructure', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('energy_markets', 'Energy – Markets', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('energy_policy', 'Energy – Policy', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('energy_transition', 'Energy – Transition', TRUE) ON CONFLICT (category_id) DO NOTHING;

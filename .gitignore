@@ -32,6 +32,10 @@ env/
 ENV/
 .venv/
 
+# Environment variables
+.env
+.env.local
+
 # IDEs
 .vscode/
 .idea/
@@ -74,9 +78,14 @@ tmp/
 temp/
 *.tmp
 
+# Temporary Claude Code working directories
+tmpclaude-*-cwd
+
 # Backup files
 *.bak
 *.backup
 
-# Archive directories (legacy code, should not be committed)
-archive/
+# Pipeline outputs
+out/*.json
+out/taxonomy_*/
+!out/.gitkeep

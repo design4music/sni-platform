@@ -1,5 +1,0 @@
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('economics_trade', 'Economics – Trade', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('economics_markets', 'Economics – Markets', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('economics_policy', 'Economics – Policy', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('economics_development', 'Economics – Development', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('economics_sanctions', 'Economics – Sanctions', TRUE) ON CONFLICT (category_id) DO NOTHING;

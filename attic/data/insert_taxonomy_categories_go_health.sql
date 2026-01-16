@@ -1,3 +1,0 @@
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('health_pandemic', 'Health – Pandemic', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('health_policy', 'Health – Policy', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('health_systems', 'Health – Systems', TRUE) ON CONFLICT (category_id) DO NOTHING;

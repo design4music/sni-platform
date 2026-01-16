@@ -1,4 +1,0 @@
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('technology_innovation', 'Technology – Innovation', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('technology_infrastructure', 'Technology – Infrastructure', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('technology_policy', 'Technology – Policy', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('technology_emerging_tech', 'Technology – Emerging tech', TRUE) ON CONFLICT (category_id) DO NOTHING;

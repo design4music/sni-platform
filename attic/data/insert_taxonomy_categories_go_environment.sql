@@ -1,3 +1,0 @@
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('environment_climate', 'Environment – Climate', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('environment_policy', 'Environment – Policy', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('environment_disasters', 'Environment – Disasters', TRUE) ON CONFLICT (category_id) DO NOTHING;

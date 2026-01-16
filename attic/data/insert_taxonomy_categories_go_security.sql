@@ -1,3 +1,0 @@
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('security_military', 'Security – Military', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('security_intelligence', 'Security – Intelligence', TRUE) ON CONFLICT (category_id) DO NOTHING;
-INSERT INTO taxonomy_categories (category_id, name_en, is_positive) VALUES ('security_cybersecurity', 'Security – Cybersecurity', TRUE) ON CONFLICT (category_id) DO NOTHING;
