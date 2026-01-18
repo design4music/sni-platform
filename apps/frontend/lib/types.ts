@@ -12,6 +12,32 @@ export interface Centroid {
   source_count?: number;
   language_count?: number;
   last_article_date?: Date;
+  profile_json?: GeoBriefProfile;
+  updated_at?: Date;
+}
+
+export interface GeoBriefProfile {
+  schema_version: string;
+  visuals?: {
+    flag_iso2?: string;
+    map_units_iso2?: string[];
+  };
+  snapshot?: Array<{
+    label: string;
+    value: string;
+  }>;
+  sections?: Array<{
+    key: string;
+    title: string;
+    intro?: string;
+    bullets?: string[];
+    default_open?: boolean;
+    groups?: Array<{
+      title: string;
+      bullets: string[];
+    }>;
+  }>;
+  footer_note?: string;
 }
 
 export interface CTM {

@@ -37,6 +37,101 @@ project_root = Path(__file__).parent.parent.parent
 os.chdir(project_root)
 
 from core.config import config  # noqa: E402
+from pipeline.phase_4.write_events_v3 import \
+    write_events_to_v3_tables  # noqa: E402
+
+
+def mechanical_merge_overlapping_events(
+    events: list, overlap_threshold: float = 0.5
+) -> list:
+    """
+    Mechanically merge events that share significant title overlap.
+
+    If two events share >= overlap_threshold of their titles, merge them.
+    This is pure set logic, no semantic analysis.
+
+    Args:
+        events: List of event dicts with source_title_ids
+        overlap_threshold: Fraction of overlap to trigger merge (default 0.5)
+
+    Returns:
+        List of merged events
+    """
+    if len(events) <= 1:
+        return events
+
+    # Convert to sets for efficient comparison
+    event_sets = [set(e["source_title_ids"]) for e in events]
+
+    # Track which events have been merged
+    merged_into = list(range(len(events)))  # Union-find parent
+
+    def find_root(i):
+        while merged_into[i] != i:
+            merged_into[i] = merged_into[merged_into[i]]  # Path compression
+            i = merged_into[i]
+        return i
+
+    # Check pairwise overlap
+    for i in range(len(events)):
+        for j in range(i + 1, len(events)):
+            set_i = event_sets[i]
+            set_j = event_sets[j]
+
+            if not set_i or not set_j:
+                continue
+
+            intersection = len(set_i & set_j)
+            min_size = min(len(set_i), len(set_j))
+
+            if min_size > 0 and intersection / min_size >= overlap_threshold:
+                # Merge j into i
+                root_i = find_root(i)
+                root_j = find_root(j)
+                if root_i != root_j:
+                    merged_into[root_j] = root_i
+
+    # Build merged events
+    groups = {}
+    for i in range(len(events)):
+        root = find_root(i)
+        if root not in groups:
+            groups[root] = []
+        groups[root].append(i)
+
+    # Create final merged events
+    final_events = []
+    for root, indices in groups.items():
+        if len(indices) == 1:
+            final_events.append(events[indices[0]])
+        else:
+            # Merge multiple events
+            combined_titles = []
+            for idx in indices:
+                combined_titles.extend(events[idx]["source_title_ids"])
+            combined_titles = list(set(combined_titles))  # Dedupe
+
+            # Use earliest date and first event's summary (or longest)
+            dates = [events[idx]["date"] for idx in indices]
+            summaries = [events[idx]["summary"] for idx in indices]
+
+            # Pick best summary (longest non-"Other events" one)
+            best_summary = max(
+                [s for s in summaries if "Other events" not in s] or summaries, key=len
+            )
+
+            final_events.append(
+                {
+                    "date": min(dates),
+                    "summary": best_summary,
+                    "source_title_ids": combined_titles,
+                    "date_confidence": events[indices[0]].get(
+                        "date_confidence", "high"
+                    ),
+                }
+            )
+
+    return final_events
 
 
 def validate_and_fix_event_date(event_date_str: str, ctm_month: str) -> tuple[str, str]:
@@ -103,26 +198,44 @@ async def extract_events_from_titles_single_batch(
     )
 
     system_prompt = """You are analyzing news titles for a specific centroid-track-month combination.
-Extract distinct events from these chronologically ordered titles.
+Extract distinct strategic events from these chronologically ordered titles.
 
-Your task:
-1. Identify unique developments/events (merge near-duplicate reports)
-2. Create 1-2 sentence summaries for each event
-3. Link to source title indices
-4. Use the most specific date available from source titles
+RULES:
 
-Return ONLY a JSON array, no other text:
+1. ONE EVENT = ONE THEME
+   Each event must describe ONE development thread. If a summary would require
+   "and/while/plus/meanwhile" to connect different topics, SPLIT into separate events.
+   Never combine unrelated topics into one event.
+
+2. MINIMUM 2 SOURCES (with exceptions)
+   Events should have 2+ source titles. Create singleton events (1 source) ONLY for:
+   - Policy decisions or official announcements
+   - Legal actions (indictments, rulings, trials)
+   - Major diplomatic moves
+   - Conflict escalation or de-escalation
+   - Deaths of significant figures
+
+3. MANDATORY "OTHER" BUCKET
+   Always create exactly ONE event with summary "OTHER".
+   Assign to "OTHER" any titles about:
+   - Celebrity/entertainment news
+   - Pure opinion/commentary without news content
+   - Tributes, anniversaries, minor gaffes
+   - Isolated local items unrelated to strategic themes
+   - Any title that doesn't fit a real event
+
+4. 100% COVERAGE
+   Every title index (0 to N-1) must appear in exactly one event.
+
+Return ONLY a JSON array:
 [{
   "date": "YYYY-MM-DD",
-  "summary": "1-2 sentence event description",
+  "summary": "1-2 sentence event description OR 'OTHER' for the catch-all bucket",
   "source_title_indices": [0, 1, 2]
 }]
 
-Guidelines:
-- Focus on distinct developments, not repetitive coverage
-- Merge similar reports into single events
-- Keep summaries concise and factual
-- Use journalistic present tense"""
+The "OTHER" event should use the most recent date from its titles.
+Keep real event summaries concise and factual, using journalistic present tense."""
 
     user_prompt = f"""Centroid: {centroid_label}
 Track: {track}
@@ -172,11 +285,24 @@ Extract distinct events as JSON array:"""
 
             events = json.loads(events_json)
 
+            # Validate 100% title coverage
+            all_indices = set()
+            for event in events:
+                all_indices.update(event["source_title_indices"])
+            expected_indices = set(range(len(titles)))
+            missing = expected_indices - all_indices
+            if missing:
+                print(
+                    f"  WARNING: LLM missed {len(missing)} titles: {sorted(missing)[:10]}..."
+                )
+
             # Convert source indices to actual title IDs and validate dates
             enriched_events = []
             for event in events:
                 title_ids = [
-                    str(titles[idx][0]) for idx in event["source_title_indices"]
+                    str(titles[idx][0])
+                    for idx in event["source_title_indices"]
+                    if idx < len(titles)
                 ]
 
                 # Validate and fix date
@@ -184,10 +310,15 @@ Extract distinct events as JSON array:"""
                     event["date"], month
                 )
 
+                # Replace "OTHER" with formatted summary
+                summary = event["summary"]
+                if summary.upper() == "OTHER":
+                    summary = f"{centroid_label} / {track} - Other events"
+
                 enriched_events.append(
                     {
                         "date": fixed_date,
-                        "summary": event["summary"],
+                        "summary": summary,
                         "source_title_ids": title_ids,
                         "date_confidence": confidence,
                     }
@@ -222,12 +353,25 @@ async def consolidate_events(
 
     system_prompt = """You are consolidating events from multiple batches into a final deduplicated timeline.
 
-Your task:
-1. Identify duplicate or highly similar events and merge them
-2. Keep the most specific date when merging
-3. Combine source indices for merged events
-4. Preserve all unique events
-5. Return consolidated events in chronological order
+RULES:
+
+1. AGGRESSIVE MERGING
+   If two events describe the SAME action (same actors, same issue, same time window),
+   they MUST be merged. Prefer fewer, broader events over many near-identical ones.
+   Examples that MUST merge:
+   - "France discusses coordinating..." + "France announces it is working..." = same event
+   - "Trial opens for X" + "X's trial begins" = same event
+
+2. ONE EVENT = ONE THEME
+   Each consolidated event must describe ONE development thread.
+   If merging would create a composite event, keep them separate.
+
+3. PRESERVE "Other events" BUCKET
+   Any event with summary containing "Other events" is a catch-all bucket.
+   Merge all such buckets into ONE "Other events" entry.
+
+4. 100% COVERAGE
+   Every event index (0 to N-1) must appear in exactly one consolidated event.
 
 Return ONLY a JSON array:
 [{
@@ -236,11 +380,7 @@ Return ONLY a JSON array:
   "source_event_indices": [0, 1, 2]
 }]
 
-Guidelines:
-- Merge events about the same development even if phrased differently
-- Keep event summaries concise and factual
-- Use the earliest specific date when merging
-- Combine all source indices from merged events"""
+Use the earliest specific date when merging. Keep summaries concise and factual."""
 
     user_prompt = f"""Centroid: {centroid_label}
 Track: {track}
@@ -311,6 +451,14 @@ Consolidate into deduplicated timeline:"""
                     }
                 )
 
+            # Mechanical post-merge for any remaining overlapping events
+            before_merge = len(final_events)
+            final_events = mechanical_merge_overlapping_events(final_events)
+            if len(final_events) < before_merge:
+                print(
+                    f"  Mechanical merge: {before_merge} -> {len(final_events)} events"
+                )
+
             return final_events
 
         except json.JSONDecodeError as e:
@@ -319,23 +467,186 @@ Consolidate into deduplicated timeline:"""
             return all_events  # Return unmerged events as fallback
 
 
+async def polish_events(
+    centroid_label: str, track: str, month: str, events: list
+) -> list:
+    """
+    Final lightweight LLM pass to polish event list.
+
+    Operates on events (not titles), so it's cheap and has global visibility.
+    Tasks:
+    - Merge any remaining duplicates
+    - Absorb low-value singletons into related events or "Other events"
+    - Ensure every event is single-theme
+    - Keep "Other events" as catch-all sink
+    """
+    if len(events) <= 3:
+        return events  # Too few events to polish
+
+    # Format events for polishing
+    events_text = "\n".join(
+        [
+            f"[{i}] {event['date']}: {event['summary']} ({len(event['source_title_ids'])} sources)"
+            for i, event in enumerate(events)
+        ]
+    )
+
+    system_prompt = """You are polishing a list of extracted events for final presentation.
+
+TASKS:
+1. MERGE remaining duplicates (same action, same actors, same timeframe)
+2. ABSORB low-value singletons (1 source) into related multi-source events
+   - If no related event exists, move singleton to "Other events" bucket
+   - Exception: keep high-salience singletons (policy, legal, diplomatic, conflict)
+3. SPLIT any composite events (multiple themes in one summary)
+4. PRESERVE "Other events" bucket - merge all "Other events" entries into one
+
+TARGET: 8-15 real events + 1 "Other events" bucket for a typical month.
+
+Return ONLY a JSON array:
+[{
+  "summary": "Event summary (keep original wording if unchanged)",
+  "source_event_indices": [0, 1, 2],
+  "action": "keep" | "merge" | "absorb_into_other"
+}]
+
+Every input event index must appear exactly once. Use "absorb_into_other" to move
+low-value content to the "Other events" bucket."""
+
+    user_prompt = f"""Centroid: {centroid_label}
+Track: {track}
+Month: {month}
+
+Events to polish:
+{events_text}
+
+Return polished event list:"""
+
+    headers = {
+        "Authorization": f"Bearer {config.deepseek_api_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": config.llm_model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.2,
+        "max_tokens": 2000,
+    }
+
+    async with httpx.AsyncClient(timeout=config.llm_timeout_seconds) as client:
+        response = await client.post(
+            f"{config.deepseek_api_url}/chat/completions",
+            headers=headers,
+            json=payload,
+        )
+
+        if response.status_code != 200:
+            print(f"  Polish pass failed: {response.status_code}")
+            return events  # Return unpolished
+
+        data = response.json()
+        polished_json = data["choices"][0]["message"]["content"].strip()
+
+        # Strip markdown code fences
+        if polished_json.startswith("```"):
+            polished_json = polished_json.split("```")[1]
+            if polished_json.startswith("json"):
+                polished_json = polished_json[4:]
+            polished_json = polished_json.strip()
+
+        try:
+            polished = json.loads(polished_json)
+
+            # Build final events
+            final_events = []
+            other_event_titles = []
+            other_event_date = None
+
+            for item in polished:
+                if item.get("action") == "absorb_into_other":
+                    # Collect titles for "Other events"
+                    for idx in item["source_event_indices"]:
+                        if idx < len(events):
+                            other_event_titles.extend(events[idx]["source_title_ids"])
+                            if (
+                                other_event_date is None
+                                or events[idx]["date"] > other_event_date
+                            ):
+                                other_event_date = events[idx]["date"]
+                else:
+                    # Keep or merge - combine titles
+                    combined_titles = []
+                    earliest_date = None
+                    for idx in item["source_event_indices"]:
+                        if idx < len(events):
+                            combined_titles.extend(events[idx]["source_title_ids"])
+                            if (
+                                earliest_date is None
+                                or events[idx]["date"] < earliest_date
+                            ):
+                                earliest_date = events[idx]["date"]
+
+                    # Check if this is the "Other events" bucket
+                    if "Other events" in item["summary"]:
+                        other_event_titles.extend(combined_titles)
+                        if other_event_date is None or earliest_date > other_event_date:
+                            other_event_date = earliest_date
+                    else:
+                        final_events.append(
+                            {
+                                "date": earliest_date or events[0]["date"],
+                                "summary": item["summary"],
+                                "source_title_ids": list(set(combined_titles)),
+                                "date_confidence": "high",
+                            }
+                        )
+
+            # Add consolidated "Other events" bucket if it has titles
+            if other_event_titles:
+                final_events.append(
+                    {
+                        "date": other_event_date or month + "-01",
+                        "summary": f"{centroid_label} / {track} - Other events",
+                        "source_title_ids": list(set(other_event_titles)),
+                        "date_confidence": "low",
+                    }
+                )
+
+            print(f"  Polish pass: {len(events)} -> {len(final_events)} events")
+            return final_events
+
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"  Polish pass parse error: {e}")
+            return events  # Return unpolished
+
+
 async def extract_events_from_titles(
     centroid_label: str, track: str, month: str, titles: list
-) -> list:
+) -> tuple[list, int]:
     """
     Extract events from titles with automatic batching for high-volume CTMs.
 
     For CTMs with >batch_size titles, uses two-pass approach:
     1. Extract events from each batch separately
     2. Consolidation pass to deduplicate across batches
+
+    Returns:
+        (events, batch_count) tuple
     """
     batch_size = config.v3_p4_batch_size
 
     # Single batch: process directly
     if len(titles) <= batch_size:
-        return await extract_events_from_titles_single_batch(
+        events = await extract_events_from_titles_single_batch(
             centroid_label, track, month, titles
         )
+        # Apply polish pass for quality control
+        events = await polish_events(centroid_label, track, month, events)
+        return events, 1
 
     # Multi-batch: extract + consolidate
     print(
@@ -372,10 +683,16 @@ async def extract_events_from_titles(
         consolidated_events = await consolidate_events(
             centroid_label, track, month, all_events
         )
-        print(f"  Final: {len(consolidated_events)} consolidated events")
-        return consolidated_events
+        print(f"  After consolidation: {len(consolidated_events)} events")
+
+        # Apply polish pass for quality control
+        polished_events = await polish_events(
+            centroid_label, track, month, consolidated_events
+        )
+        print(f"  Final: {len(polished_events)} polished events")
+        return polished_events, num_batches
     else:
-        return []
+        return [], num_batches
 
 
 async def process_single_ctm(
@@ -426,13 +743,14 @@ async def process_single_ctm(
             )
 
             # Extract events using LLM
-            events = await extract_events_from_titles(
+            events, batch_count = await extract_events_from_titles(
                 centroid_label, track, month.strftime("%Y-%m"), titles
             )
 
             if events:
-                # Update CTM with events digest
+                # Dual-write: Update both JSONB and v3 tables
                 with conn.cursor() as cur:
+                    # Write to JSONB (existing system)
                     cur.execute(
                         """
                         UPDATE ctm
@@ -442,9 +760,17 @@ async def process_single_ctm(
                     """,
                         (Json(events), ctm_id),
                     )
+
+                # Write to v3 tables (new system - parallel implementation)
+                events_written = write_events_to_v3_tables(
+                    conn, ctm_id, events, batch_count
+                )
+
                 conn.commit()
 
-                print(f"  OK: {len(events)} events extracted")
+                print(
+                    f"  OK: {len(events)} events extracted, {events_written} new events in v3 tables"
+                )
                 return True, len(events)
             else:
                 print("  X: No events extracted")

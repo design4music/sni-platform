@@ -1,5 +1,8 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event } from './types';
+
+// Feature flag: Use events_v3 tables instead of JSONB
+const USE_EVENTS_V3 = process.env.USE_EVENTS_V3 === 'true';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -9,7 +12,7 @@ export async function getAllCentroids(): Promise<Centroid[]> {
 
 export async function getCentroidById(id: string): Promise<Centroid | null> {
   const results = await query<Centroid>(
-    'SELECT * FROM centroids_v3 WHERE id = $1 AND is_active = true',
+    'SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id, description, profile_json, updated_at FROM centroids_v3 WHERE id = $1 AND is_active = true',
     [id]
   );
   return results[0] || null;
@@ -90,6 +93,38 @@ export async function getCTMsByCentroid(centroidId: string): Promise<CTM[]> {
   );
 }
 
+/**
+ * Fetch events from events_v3 normalized tables
+ * Returns events in same format as events_digest JSONB
+ */
+async function getEventsFromV3(ctmId: string): Promise<Event[]> {
+  const results = await query<{
+    id: string;
+    date: string;
+    summary: string;
+    source_title_ids: string[];
+  }>(
+    `SELECT
+      e.id,
+      e.date::text as date,
+      e.summary,
+      array_agg(evt.title_id ORDER BY evt.title_id) as source_title_ids
+    FROM events_v3 e
+    LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
+    WHERE e.ctm_id = $1
+    GROUP BY e.id, e.date, e.summary
+    ORDER BY e.date DESC`,
+    [ctmId]
+  );
+
+  return results.map(r => ({
+    date: r.date,
+    summary: r.summary,
+    event_id: r.id,
+    source_title_ids: r.source_title_ids.filter(id => id !== null),
+  }));
+}
+
 export async function getCTM(
   centroidId: string,
   track: string,
@@ -110,7 +145,15 @@ export async function getCTM(
   }
 
   const results = await query<CTM>(queryText, params);
-  return results[0] || null;
+  const ctm = results[0] || null;
+
+  // Feature flag: Use events_v3 tables instead of JSONB
+  if (ctm && USE_EVENTS_V3) {
+    // Fetch events from normalized tables and populate events_digest
+    ctm.events_digest = await getEventsFromV3(ctm.id);
+  }
+
+  return ctm;
 }
 
 export async function getCTMMonths(centroidId: string, track: string): Promise<string[]> {

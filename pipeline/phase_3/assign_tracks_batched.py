@@ -532,6 +532,9 @@ async def process_centroid_group(
                         pubdate,
                     ) in strategic_titles:
                         if title_id not in track_assignments:
+                            print(
+                                f"    WARNING: No track assigned for title {title_id}: {title_display[:60]}..."
+                            )
                             title_errors += 1
                             continue
 
@@ -555,17 +558,14 @@ async def process_centroid_group(
                                     (ctm_id,),
                                 )
 
-                            # Insert into title_assignments (or update if exists)
+                            # Insert into title_assignments (skip if already exists)
                             with conn.cursor() as cur:
                                 cur.execute(
                                     """
                                     INSERT INTO title_assignments (title_id, centroid_id, track, ctm_id)
                                     VALUES (%s, %s, %s, %s)
-                                    ON CONFLICT (title_id, centroid_id)
-                                    DO UPDATE SET
-                                        track = EXCLUDED.track,
-                                        ctm_id = EXCLUDED.ctm_id,
-                                        updated_at = NOW()
+                                    ON CONFLICT (title_id, centroid_id, track)
+                                    DO NOTHING
                                 """,
                                     (title_id, centroid_id, track, ctm_id),
                                 )
@@ -610,17 +610,20 @@ async def process_batch(max_titles=None):
 
     try:
         # Load titles needing processing
-        # Note: With new multi-track model, we process all 'assigned' titles
-        # The ON CONFLICT in INSERT handles re-processing gracefully
+        # Only process titles not yet in title_assignments to avoid re-processing
         with conn.cursor() as cur:
             limit_clause = f"LIMIT {max_titles}" if max_titles else ""
             cur.execute(
                 f"""
-                SELECT id, title_display, centroid_ids, pubdate_utc
-                FROM titles_v3
-                WHERE processing_status = 'assigned'
-                  AND centroid_ids IS NOT NULL
-                ORDER BY pubdate_utc DESC
+                SELECT t.id, t.title_display, t.centroid_ids, t.pubdate_utc
+                FROM titles_v3 t
+                WHERE t.processing_status = 'assigned'
+                  AND t.centroid_ids IS NOT NULL
+                  AND NOT EXISTS (
+                    SELECT 1 FROM title_assignments ta
+                    WHERE ta.title_id = t.id
+                  )
+                ORDER BY t.pubdate_utc DESC
                 {limit_clause}
             """
             )

@@ -7,9 +7,10 @@ interface DashboardLayoutProps {
   children: ReactNode;
   title?: string;
   sidebar?: ReactNode;
+  fullWidthContent?: ReactNode;
 }
 
-export default function DashboardLayout({ children, title, sidebar }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, title, sidebar, fullWidthContent }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-dashboard-surface text-dashboard-text bg-texture-grid">
       <header className="border-b border-dashboard-border">
@@ -36,6 +37,12 @@ export default function DashboardLayout({ children, title, sidebar }: DashboardL
             </aside>
           )}
         </div>
+
+        {fullWidthContent && (
+          <div className="mt-8">
+            {fullWidthContent}
+          </div>
+        )}
       </main>
 
       <Footer />

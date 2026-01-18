@@ -1,5 +1,6 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import TrackCard from '@/components/TrackCard';
+import GeoBriefSection from '@/components/GeoBriefSection';
 import {
   getCentroidById,
   getTrackSummaryByCentroid,
@@ -72,8 +73,19 @@ export default async function CentroidPage({ params }: CentroidPageProps) {
   );
 
   return (
-    <DashboardLayout title={centroid.label} sidebar={sidebar}>
-      <div className="space-y-6">
+    <DashboardLayout
+      title={centroid.label}
+      sidebar={sidebar}
+      fullWidthContent={
+        centroid.profile_json ? (
+          <GeoBriefSection
+            profile={centroid.profile_json}
+            updatedAt={centroid.updated_at}
+          />
+        ) : undefined
+      }
+    >
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold mb-4">Strategic Tracks</h2>
           <p className="text-dashboard-text-muted mb-6">
