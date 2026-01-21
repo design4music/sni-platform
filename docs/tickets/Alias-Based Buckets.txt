@@ -1,0 +1,175 @@
+# Alias-Based Buckets
+
+**Goal**
+Replace unreliable global LLM clustering with **deterministic alias-based bucketing**, then run LLM only inside coherent buckets.
+Target test CTM: **USA / geo_economy / current month**.
+
+---
+
+### 1) Phase 2 — store alias evidence (required)
+
+When a title matches a centroid via an alias, store the **normalized alias string**.
+
+Minimal:
+
+* `titles_v3.match_aliases TEXT[]` (normalized aliases that caused any match)
+  OR
+* table `title_alias_hits(title_id, centroid_id, alias_norm)`
+
+No keyword IDs. Aliases only.
+
+---
+
+### 2) Build GEO buckets (mechanical)
+
+For each title in the CTM, compute other GEO centroids (excluding USA):
+
+* `|G| = 0` → **Domestic**
+* `|G| = 1` → **Bilateral: US–X**
+* `|G| ≥ 2` → **Multilateral** - Multilateral titles are absorbed into the dominant bilateral bucket when possible.  US–Russia–Ukraine → US–Russia or US–Ukraine (whichever dominates)
+
+---
+
+### 3) Alias sub-buckets inside each GEO bucket
+
+Inside each GEO bucket:
+
+1. Group titles by `alias_norm`.
+2. If a title has multiple aliases → assign it to the alias bucket with **largest current count** (“biggest wins”).
+3. Rank alias buckets by size.
+4. Keep **top 15** alias buckets; everything else → **rest**.
+
+No thresholds for now.
+
+---
+
+### 4) Persist alias buckets as events (incremental)
+
+For each top-15 alias bucket:
+
+* Upsert `events_v3` with unique key:
+
+  * `ctm_id`
+  * `geo_bucket` (domestic / bilateral:US–X / multilateral)
+  * `alias_norm`
+* Attach new titles only (no deletions).
+
+Summary (no LLM):
+
+```
+{Centroid}/{Track}: {alias_norm} — {Month} ({N} sources)
+```
+
+Rewrite summary with LLM **only if ≥10 new titles arrived**.
+
+---
+
+### 5) LLM events from “rest” (no Key Events concept)
+
+For each **rest** bucket (per GEO bucket or per bilateral):
+
+* Run existing LLM extraction in 70-title batches.
+* Persist events normally.
+* These are just **events**, not “Key”.
+
+---
+
+### 6) UI (important)
+
+No **Key Events** section.
+No **Other events** section.
+
+CTM page structure:
+
+* **Domestic**
+* **Bilateral** (US–China, US–EU, US–Russia, …)
+* **Multilateral**
+
+Inside each:
+
+* Alias sub-buckets (e.g. *sanctions*, *maduro*, *elon musk*)
+* LLM-generated events from remaining titles
+
+---
+
+### 7) Test procedure
+
+1. Delete Phase-4 events for **USA / geo_economy** CTM.
+2. Re-run Phase 2 → 4 with this logic.
+3. Verify:
+
+   * Obvious clusters appear (US–Taiwan, US–China, sanctions, tariffs, etc.)
+   * No giant "Other" lists
+   * LLM events are coherent inside buckets
+
+---
+
+### 8) Cost Analysis (Jan 2026)
+
+**Current match_centroids.py logic (lines 311-332):**
+```python
+# Single-word: hash lookup O(1) per token
+for token in tokens:
+    if token in taxonomy["single_word_aliases"]:
+        matched_centroids.update(...)  # HERE: 'token' IS the alias
+
+# Phrase patterns: regex O(k) where k = patterns
+for pattern, centroid_id in taxonomy["phrase_patterns"]:
+    if pattern.search(normalized_title):
+        matched_centroids.add(centroid_id)  # Pattern has source alias
+```
+
+**Change required:**
+Return `{centroid_id: [aliases]}` instead of `{centroid_id}`.
+~15 lines changed. Zero performance impact - we already iterate aliases.
+
+**Storage options:**
+
+| Option | Schema | Size/title | Query cost |
+|--------|--------|------------|------------|
+| A. JSONB column | `matched_aliases JSONB` | ~100 bytes | O(1) |
+| B. Junction table | `title_alias_hits` | ~50 bytes * N | JOIN |
+| C. Query-time | None | 0 | ~1ms/title |
+
+**Volume (USA geo_economy):**
+- 1,514 titles with centroids
+- Avg 2-3 aliases per title
+- Total: ~4,500 alias hits = ~200KB storage
+
+**Backfill cost:**
+- Reprocess ~50K titles through Phase 2
+- ~30 min one-time run
+- No LLM cost
+
+**Recommendation:** Option A (JSONB) - simplest, fast, negligible storage.
+
+---
+
+### 9) Implementation Checklist
+
+- [x] Add `matched_aliases JSONB` to titles_v3 (migration 20260120)
+- [x] Update `match_title()` to return aliases
+- [x] Update Phase 2 batch processor to store aliases
+- [x] Backfill existing titles (db/backfill_matched_aliases.py) - 20,149 titles
+- [x] Update `geo_precluster.py` to group by alias (`_compute_alias_subgroups`)
+- [x] Update `create_alias_events()` to use alias labels
+- [x] Frontend: show alias name instead of systemic ID
+
+### 10) Results (USA geo_economy, Jan 2026)
+
+Before (systemic grouping):
+- 280 events, ~40% LLM reduction
+
+After (alias grouping):
+- 118 events, ~80% LLM reduction
+- Nordic: 188/218 titles -> ONE "Greenland" event
+- China: 102/135 titles -> ONE "China" event
+- Domestic: 744/912 alias-tagged, only 168 to LLM
+
+### 11) Known Issues / Future Work
+
+- Generic aliases like "us", "trump" create overly broad groups
+- Language variants (greenland/groenlandia/gronland) should merge
+- Consider alias filtering or minimum specificity threshold
+
+---

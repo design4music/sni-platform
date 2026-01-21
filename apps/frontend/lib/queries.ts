@@ -95,7 +95,7 @@ export async function getCTMsByCentroid(centroidId: string): Promise<CTM[]> {
 
 /**
  * Fetch events from events_v3 normalized tables
- * Returns events in same format as events_digest JSONB
+ * Returns events in same format as events_digest JSONB with bucket metadata
  */
 async function getEventsFromV3(ctmId: string): Promise<Event[]> {
   const results = await query<{
@@ -103,16 +103,20 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     date: string;
     summary: string;
     source_title_ids: string[];
+    event_type: string | null;
+    bucket_key: string | null;
   }>(
     `SELECT
       e.id,
       e.date::text as date,
       e.summary,
+      e.event_type,
+      e.bucket_key,
       array_agg(evt.title_id ORDER BY evt.title_id) as source_title_ids
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
     WHERE e.ctm_id = $1
-    GROUP BY e.id, e.date, e.summary
+    GROUP BY e.id, e.date, e.summary, e.event_type, e.bucket_key
     ORDER BY e.date DESC`,
     [ctmId]
   );
@@ -122,6 +126,8 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     summary: r.summary,
     event_id: r.id,
     source_title_ids: r.source_title_ids.filter(id => id !== null),
+    event_type: r.event_type as Event['event_type'],
+    bucket_key: r.bucket_key,
   }));
 }
 

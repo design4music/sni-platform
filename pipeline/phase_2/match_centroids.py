@@ -23,6 +23,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import psycopg2
+from psycopg2.extras import Json
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
@@ -268,7 +269,9 @@ def load_taxonomy():
                 if is_ascii_only(term):
                     # ASCII phrase - use word boundary regex (precompile)
                     pattern = re.compile(r"\b" + re.escape(term) + r"\b", re.IGNORECASE)
-                    phrase_patterns.append((pattern, centroid_id))
+                    phrase_patterns.append(
+                        (pattern, centroid_id, term)
+                    )  # Include alias
                 else:
                     # Non-ASCII phrase - use substring matching
                     phrase_substrings.append((term, centroid_id))
@@ -287,8 +290,10 @@ def match_title(title_text, taxonomy):
     """
     Match title against taxonomy using hash-based lookup.
 
-    Returns: (matched_centroids, match_status)
-    match_status: "blocked_stopword", "no_match", "matched"
+    Returns: (matched_centroids, matched_aliases, match_status)
+    - matched_centroids: set of centroid IDs
+    - matched_aliases: set of normalized alias strings that triggered matches
+    - match_status: "blocked_stopword", "no_match", "matched"
     """
     normalized_title = normalize_text(title_text)
 
@@ -297,45 +302,50 @@ def match_title(title_text, taxonomy):
 
     # Check single-word stop terms (O(1) hash lookup per token)
     if tokens & taxonomy["stop_words_set"]:
-        return set(), "blocked_stopword"
+        return set(), set(), "blocked_stopword"
 
     # Check multi-word/CJK stop phrases (precompiled patterns)
     for phrase_type, pattern_or_substring in taxonomy["stop_phrase_patterns"]:
         if phrase_type == "substring":
             if pattern_or_substring in normalized_title:
-                return set(), "blocked_stopword"
+                return set(), set(), "blocked_stopword"
         else:  # regex (precompiled)
             if pattern_or_substring.search(normalized_title):
-                return set(), "blocked_stopword"
+                return set(), set(), "blocked_stopword"
 
     # Step 2: Match against all patterns (hash lookup O(n))
     matched_centroids = set()
+    matched_aliases = set()
 
     # Check single-word aliases (O(1) hash lookup per token)
     for token in tokens:
         if token in taxonomy["single_word_aliases"]:
             matched_centroids.update(taxonomy["single_word_aliases"][token])
+            matched_aliases.add(token)
 
     # Check ASCII multi-word phrases (precompiled regex patterns)
-    for pattern, centroid_id in taxonomy["phrase_patterns"]:
+    for pattern, centroid_id, alias_norm in taxonomy["phrase_patterns"]:
         if pattern.search(normalized_title):
             matched_centroids.add(centroid_id)
+            matched_aliases.add(alias_norm)
 
     # Check non-ASCII multi-word phrases (substring matching)
     for substring, centroid_id in taxonomy["phrase_substrings"]:
         if substring in normalized_title:
             matched_centroids.add(centroid_id)
+            matched_aliases.add(substring)
 
     # Check CJK substring patterns
     for substring, centroid_id in taxonomy["substring_patterns"]:
         if substring in normalized_title:
             matched_centroids.add(centroid_id)
+            matched_aliases.add(substring)
 
     # Step 3: Return status
     if matched_centroids:
-        return matched_centroids, "matched"
+        return matched_centroids, matched_aliases, "matched"
     else:
-        return set(), "no_match"
+        return set(), set(), "no_match"
 
 
 def process_batch(batch_size=100, max_titles=None):
@@ -380,19 +390,23 @@ def process_batch(batch_size=100, max_titles=None):
     print(f"\nProcessing {len(titles)} titles...")
 
     # Batch updates
-    matched_updates = []  # (centroid_ids, title_id)
+    matched_updates = []  # (centroid_ids, matched_aliases_json, title_id)
     out_of_scope_ids = []
     blocked_stopword_ids = []
     multi_centroid_count = 0
 
     for title_id, title_text in titles:
         # Match against taxonomy
-        matched_centroids, match_status = match_title(title_text, taxonomy)
+        matched_centroids, matched_aliases, match_status = match_title(
+            title_text, taxonomy
+        )
 
         if match_status == "matched":
             if len(matched_centroids) > 1:
                 multi_centroid_count += 1
-            matched_updates.append((list(matched_centroids), title_id))
+            # Store aliases as JSON array
+            aliases_json = Json(sorted(matched_aliases)) if matched_aliases else None
+            matched_updates.append((list(matched_centroids), aliases_json, title_id))
         elif match_status == "blocked_stopword":
             blocked_stopword_ids.append(title_id)
         else:  # no_match
@@ -411,6 +425,7 @@ def process_batch(batch_size=100, max_titles=None):
                 """
                 UPDATE titles_v3
                 SET centroid_ids = %s,
+                    matched_aliases = %s,
                     processing_status = 'assigned',
                     updated_at = NOW()
                 WHERE id = %s

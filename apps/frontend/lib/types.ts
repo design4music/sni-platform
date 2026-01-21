@@ -56,6 +56,10 @@ export interface Event {
   summary: string;
   event_id?: string;
   source_title_ids?: string[];
+  event_type?: 'bilateral' | 'other_international' | 'domestic' | null;
+  bucket_key?: string | null;
+  alias?: string | null;
+  is_alias_group?: boolean;
 }
 
 export interface Title {

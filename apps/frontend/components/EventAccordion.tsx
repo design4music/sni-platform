@@ -11,9 +11,10 @@ interface EventAccordionProps {
   };
   allTitles: Title[];
   index: number;
+  compact?: boolean;
 }
 
-export default function EventAccordion({ event, allTitles, index }: EventAccordionProps) {
+export default function EventAccordion({ event, allTitles, index, compact = false }: EventAccordionProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Get related titles for this event
@@ -22,6 +23,55 @@ export default function EventAccordion({ event, allTitles, index }: EventAccordi
     : [];
 
   const hasRelatedTitles = relatedTitles.length > 0;
+
+  if (compact) {
+    return (
+      <div className="py-2">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-sm text-dashboard-text">
+              <span className="text-dashboard-text-muted mr-2">{event.date}</span>
+              {event.summary}
+            </p>
+          </div>
+          {hasRelatedTitles && (
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex-shrink-0 text-xs text-dashboard-text-muted hover:text-dashboard-text transition"
+              aria-expanded={isOpen}
+            >
+              {isOpen ? '−' : '+'} {relatedTitles.length}
+            </button>
+          )}
+        </div>
+        {isOpen && hasRelatedTitles && (
+          <div className="mt-2 pl-4 space-y-1">
+            {relatedTitles.slice(0, 5).map(title => (
+              <div key={title.id} className="text-xs text-dashboard-text-muted">
+                {title.url_gnews ? (
+                  <a
+                    href={title.url_gnews}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300"
+                  >
+                    {title.title_display}
+                  </a>
+                ) : (
+                  <span>{title.title_display}</span>
+                )}
+              </div>
+            ))}
+            {relatedTitles.length > 5 && (
+              <p className="text-xs text-dashboard-text-muted">
+                +{relatedTitles.length - 5} more sources
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="border-l-4 border-blue-500 pl-4">
