@@ -220,12 +220,21 @@ VALUES (
 
 ### Phase 4: CTM Enrichment
 ```
-v3/phase_4/
+pipeline/phase_4/
 ├── generate_events_digest.py   # Extract distinct events from titles
+├── generate_events_geo.py      # Geo CTM event extraction with pre-clustering
+├── geo_precluster.py           # Mechanical routing: bilateral/domestic/other
 ├── generate_summaries.py       # Generate 150-250 word narratives
-├── test_events_single_ctm.py   # Test events extraction
-└── test_summary_single_ctm.py  # Test summary generation
+└── test_*.py                   # Test scripts
 ```
+
+**Geo Pre-Clustering** (2026-01-21):
+- Routes titles by geo counterparty: bilateral (US-China), domestic, other_international
+- Within each bucket, groups by matched alias (top 15 per bucket)
+- Alias groups become mechanical events (no LLM needed)
+- Only untagged titles get LLM extraction
+- Schema: `titles_v3.matched_aliases JSONB` stores which aliases triggered match
+- Results: 80% LLM reduction (118 events vs 280 for USA geo_economy)
 
 **Events Digest** (Phase 4.1):
 - LLM extracts distinct events from chronologically ordered titles
@@ -798,6 +807,7 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 - **2026-01-09**: Phase 4.2 enhancement - dynamic focus lines (centroid + track specific) ✅
 - **2026-01-12**: Phase 4 daemon integration + word count monitoring + SQL bug fixes ✅
 - **2026-01-12**: Current status - Full 4-phase pipeline operational, multi-day testing in progress
+- **2026-01-21**: Phase 4 geo pre-clustering + alias-based bucketing (80% LLM reduction)
 
 ---
 
