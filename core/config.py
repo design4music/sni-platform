@@ -70,6 +70,9 @@ class SNIConfig(BaseSettings):
     v3_p4_max_tokens: int = Field(default=500, env="V3_P4_MAX_TOKENS")
     v3_p4_timeout_seconds: int = Field(default=180, env="V3_P4_TIMEOUT_SECONDS")
 
+    # Events Generation (bucket pass-through, no clustering yet)
+    events_min_ctm_titles: int = Field(default=10, env="EVENTS_MIN_CTM_TITLES")
+
     # Database Tables
     v3_centroids_table: str = Field(default="centroids_v3", env="V3_CENTROIDS_TABLE")
     v3_taxonomy_table: str = Field(default="taxonomy_v3", env="V3_TAXONOMY_TABLE")
@@ -78,7 +81,9 @@ class SNIConfig(BaseSettings):
 
     # Language Support
     primary_language: str = Field(default="en", env="PRIMARY_LANGUAGE")
-    supported_languages: str = Field(default="en,es,fr,de,ru,zh,ar", env="SUPPORTED_LANGUAGES")
+    supported_languages: str = Field(
+        default="en,es,fr,de,ru,zh,ar", env="SUPPORTED_LANGUAGES"
+    )
 
     # Project paths
     project_root: Path = Field(default_factory=lambda: Path(__file__).parent.parent)

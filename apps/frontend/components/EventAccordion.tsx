@@ -45,8 +45,8 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
           )}
         </div>
         {isOpen && hasRelatedTitles && (
-          <div className="mt-2 pl-4 space-y-1">
-            {relatedTitles.slice(0, 5).map(title => (
+          <div className="mt-2 pl-4 space-y-1 max-h-96 overflow-y-auto">
+            {relatedTitles.map(title => (
               <div key={title.id} className="text-xs text-dashboard-text-muted">
                 {title.url_gnews ? (
                   <a
@@ -62,11 +62,6 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
                 )}
               </div>
             ))}
-            {relatedTitles.length > 5 && (
-              <p className="text-xs text-dashboard-text-muted">
-                +{relatedTitles.length - 5} more sources
-              </p>
-            )}
           </div>
         )}
       </div>

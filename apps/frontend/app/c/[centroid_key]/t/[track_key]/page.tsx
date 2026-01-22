@@ -168,7 +168,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         </div>
       )}
 
-      {/* Events split into Key Events (domestic) and Activity Overview (bilateral/multilateral) */}
+      {/* Events split into Domestic and International sections */}
       {(() => {
         const allEvents = ctm.events_digest || [];
 
@@ -176,52 +176,34 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         const countTitles = (events: typeof allEvents) =>
           events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 
-        // Helper to check if event is a storyline
-        const isStoryline = (e: typeof allEvents[0]) =>
-          e.summary.startsWith('[Storyline]');
+        // Helper to check if event is "Other Coverage" bucket
+        const isOtherCoverage = (e: typeof allEvents[0]) =>
+          e.summary.startsWith('[Storyline]') || e.summary.startsWith('Other ') || e.is_alias_group === true;
 
-        // Helper to check if event is a systemic group
-        const isAliasGroup = (e: typeof allEvents[0]) =>
-          e.is_alias_group === true || (e.summary.startsWith('[') && !isStoryline(e) && e.summary.includes('] '));
-
-        // Parse systemic event summary: "[Theme] LABEL - N sources" -> theme
-        const getAliasLabel = (summary: string) => {
-          const match = summary.match(/^\[([^\]]+)\]/);
-          return match ? match[1] : 'Other';
-        };
-
-        // Key Events: domestic events that are NOT storyline and NOT systemic
-        const keyEvents = allEvents.filter(
-          e => (!e.event_type || e.event_type === 'domestic') && !isStoryline(e) && !isAliasGroup(e)
+        // Domestic events (no event_type or domestic)
+        const domesticEvents = allEvents.filter(
+          e => !e.event_type || e.event_type === 'domestic'
         );
+        const domesticMainEvents = domesticEvents.filter(e => !isOtherCoverage(e));
+        const domesticOther = domesticEvents.filter(e => isOtherCoverage(e));
 
-        // Domestic systemic groups (mechanical events)
-        const domesticAlias = allEvents.filter(
-          e => e.event_type === 'domestic' && isAliasGroup(e)
-        );
-
-        // Domestic storyline (ungrouped domestic titles)
-        const domesticStoryline = allEvents.find(
-          e => e.event_type === 'domestic' && isStoryline(e)
-        );
-
-        // Activity Overview: bilateral and other_international bucket events
-        const activityEvents = allEvents.filter(
+        // International: bilateral and other_international
+        const internationalEvents = allEvents.filter(
           e => e.event_type === 'bilateral' || e.event_type === 'other_international'
         );
 
-        // Group activity events by bucket_key for bilateral
-        const bilateralGroups: Record<string, typeof activityEvents> = {};
-        const otherInternationalEvents: typeof activityEvents = [];
+        // Group bilateral events by bucket_key
+        const bilateralGroups: Record<string, typeof internationalEvents> = {};
+        const otherInternational: typeof internationalEvents = [];
 
-        activityEvents.forEach(event => {
+        internationalEvents.forEach(event => {
           if (event.event_type === 'bilateral' && event.bucket_key) {
             if (!bilateralGroups[event.bucket_key]) {
               bilateralGroups[event.bucket_key] = [];
             }
             bilateralGroups[event.bucket_key].push(event);
-          } else if (event.event_type === 'other_international') {
-            otherInternationalEvents.push(event);
+          } else {
+            otherInternational.push(event);
           }
         });
 
@@ -232,60 +214,35 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
         return (
           <>
-            {/* Key Events section */}
-            {(keyEvents.length > 0 || domesticAlias.length > 0) && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-2">Key Events</h2>
+            {/* Domestic section */}
+            {domesticEvents.length > 0 && (
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold mb-2">Domestic</h2>
                 <p className="text-sm text-dashboard-text-muted mb-4">
-                  {keyEvents.length + domesticAlias.length} items | {countTitles([...keyEvents, ...domesticAlias])} sources
+                  {domesticMainEvents.length} events | {countTitles(domesticEvents)} sources
                 </p>
 
-                {/* Domestic systemic groups at the top */}
-                {domesticAlias.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3 text-dashboard-text-muted">By Theme</h3>
-                    <div className="space-y-2">
-                      {domesticAlias.map((event, idx) => (
-                        <EventAccordion
-                          key={`domestic-sys-${idx}`}
-                          event={{
-                            ...event,
-                            summary: `${getAliasLabel(event.summary)} (${event.source_title_ids?.length || 0} sources)`
-                          }}
-                          allTitles={titles}
-                          index={idx}
-                          compact
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Main events */}
+                <div className="space-y-3">
+                  {domesticMainEvents.map((event, idx) => (
+                    <EventAccordion
+                      key={`domestic-${idx}`}
+                      event={event}
+                      allTitles={titles}
+                      index={idx}
+                    />
+                  ))}
+                </div>
 
-                {/* LLM-extracted events */}
-                {keyEvents.length > 0 && (
-                  <div className="space-y-4">
-                    {domesticAlias.length > 0 && (
-                      <h3 className="text-lg font-semibold mb-3 text-dashboard-text-muted">Specific Events</h3>
-                    )}
-                    {keyEvents.map((event, idx) => (
-                      <EventAccordion
-                        key={`key-${idx}`}
-                        event={event}
-                        allTitles={titles}
-                        index={idx}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Domestic storyline */}
-                {domesticStoryline && domesticStoryline.source_title_ids && (
+                {/* Other Domestic Events */}
+                {domesticOther.length > 0 && (
                   <div className="mt-6 pt-4 border-t border-dashboard-border">
                     <EventAccordion
-                      key="domestic-storyline"
+                      key="domestic-other"
                       event={{
-                        ...domesticStoryline,
-                        summary: `Other domestic coverage (${domesticStoryline.source_title_ids.length} sources)`
+                        date: domesticOther[0]?.date || '',
+                        summary: `Other Domestic Events (${countTitles(domesticOther)} sources)`,
+                        source_title_ids: domesticOther.flatMap(e => e.source_title_ids || [])
                       }}
                       allTitles={titles}
                       index={999}
@@ -295,62 +252,46 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               </div>
             )}
 
-            {/* Activity Overview section */}
-            {activityEvents.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-2">Activity Overview</h2>
+            {/* International section */}
+            {internationalEvents.length > 0 && (
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold mb-2">International</h2>
                 <p className="text-sm text-dashboard-text-muted mb-6">
-                  {activityEvents.length} items | {countTitles(activityEvents)} sources |{' '}
-                  Coverage of {centroid.label}&apos;s interactions with other countries
+                  {internationalEvents.filter(e => !isOtherCoverage(e)).length} events | {countTitles(internationalEvents)} sources
                 </p>
 
-                {/* Bilateral groups */}
-                {sortedBilateralEntries.map(([counterparty, events]) => {
-                  const aliasEvents = events.filter(e => isAliasGroup(e));
-                  const llmEvents = events.filter(e => !isStoryline(e) && !isAliasGroup(e));
-                  const storyline = events.find(e => isStoryline(e));
-                  const groupTitleCount = countTitles(events);
+                {/* Bilateral groups by country */}
+                {sortedBilateralEntries.map(([bucketKey, events]) => {
+                  const mainEvents = events.filter(e => !isOtherCoverage(e));
+                  const otherEvents = events.filter(e => isOtherCoverage(e));
                   // Extract country name from bucket_key like "ASIA-CHINA" -> "China"
-                  const countryName = counterparty.split('-').pop() || counterparty;
+                  const countryName = bucketKey.split('-').pop() || bucketKey;
 
                   return (
-                    <div key={counterparty} className="mb-6">
+                    <div key={bucketKey} className="mb-6">
                       <h3 className="text-lg font-semibold mb-3">
                         {countryName}
                         <span className="text-sm font-normal text-dashboard-text-muted ml-2">
-                          {aliasEvents.length + llmEvents.length} items | {groupTitleCount} sources
+                          {mainEvents.length} events | {countTitles(events)} sources
                         </span>
                       </h3>
                       <div className="space-y-2 pl-4 border-l-2 border-dashboard-border">
-                        {/* Systemic groups first */}
-                        {aliasEvents.map((event, idx) => (
+                        {mainEvents.map((event, idx) => (
                           <EventAccordion
-                            key={`bilateral-${counterparty}-sys-${idx}`}
-                            event={{
-                              ...event,
-                              summary: `${getAliasLabel(event.summary)} (${event.source_title_ids?.length || 0} sources)`
-                            }}
-                            allTitles={titles}
-                            index={idx}
-                            compact
-                          />
-                        ))}
-                        {/* LLM-extracted events */}
-                        {llmEvents.map((event, idx) => (
-                          <EventAccordion
-                            key={`bilateral-${counterparty}-${idx}`}
+                            key={`bilateral-${bucketKey}-${idx}`}
                             event={event}
                             allTitles={titles}
                             index={idx}
                             compact
                           />
                         ))}
-                        {storyline && storyline.source_title_ids && storyline.source_title_ids.length > 0 && (
+                        {otherEvents.length > 0 && (
                           <EventAccordion
-                            key={`bilateral-${counterparty}-storyline`}
+                            key={`bilateral-${bucketKey}-other`}
                             event={{
-                              ...storyline,
-                              summary: `Other ${countryName} coverage (${storyline.source_title_ids.length} sources)`
+                              date: otherEvents[0]?.date || '',
+                              summary: `Other ${countryName} Coverage (${countTitles(otherEvents)} sources)`,
+                              source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
                             }}
                             allTitles={titles}
                             index={998}
@@ -362,37 +303,21 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   );
                 })}
 
-                {/* Other International News */}
-                {otherInternationalEvents.length > 0 && (() => {
-                  const aliasEvents = otherInternationalEvents.filter(e => isAliasGroup(e));
-                  const llmEvents = otherInternationalEvents.filter(e => !isStoryline(e) && !isAliasGroup(e));
-                  const storyline = otherInternationalEvents.find(e => isStoryline(e));
-                  const groupTitleCount = countTitles(otherInternationalEvents);
+                {/* Other International */}
+                {otherInternational.length > 0 && (() => {
+                  const mainEvents = otherInternational.filter(e => !isOtherCoverage(e));
+                  const otherEvents = otherInternational.filter(e => isOtherCoverage(e));
 
                   return (
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold mb-3">
-                        Other International News
+                        Other International
                         <span className="text-sm font-normal text-dashboard-text-muted ml-2">
-                          {aliasEvents.length + llmEvents.length} items | {groupTitleCount} sources
+                          {mainEvents.length} events | {countTitles(otherInternational)} sources
                         </span>
                       </h3>
                       <div className="space-y-2 pl-4 border-l-2 border-dashboard-border">
-                        {/* Systemic groups first */}
-                        {aliasEvents.map((event, idx) => (
-                          <EventAccordion
-                            key={`other-intl-sys-${idx}`}
-                            event={{
-                              ...event,
-                              summary: `${getAliasLabel(event.summary)} (${event.source_title_ids?.length || 0} sources)`
-                            }}
-                            allTitles={titles}
-                            index={idx}
-                            compact
-                          />
-                        ))}
-                        {/* LLM-extracted events */}
-                        {llmEvents.map((event, idx) => (
+                        {mainEvents.map((event, idx) => (
                           <EventAccordion
                             key={`other-intl-${idx}`}
                             event={event}
@@ -401,12 +326,13 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                             compact
                           />
                         ))}
-                        {storyline && storyline.source_title_ids && storyline.source_title_ids.length > 0 && (
+                        {otherEvents.length > 0 && (
                           <EventAccordion
-                            key="other-intl-storyline"
+                            key="other-intl-other"
                             event={{
-                              ...storyline,
-                              summary: `Other international coverage (${storyline.source_title_ids.length} sources)`
+                              date: otherEvents[0]?.date || '',
+                              summary: `Other Coverage (${countTitles(otherEvents)} sources)`,
+                              source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
                             }}
                             allTitles={titles}
                             index={997}
@@ -423,45 +349,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         );
       })()}
 
-      {/* Unassigned Source Articles (titles not linked to any event) */}
-      {(() => {
-        const assignedTitleIds = new Set(
-          ctm.events_digest?.flatMap(e => e.source_title_ids || []) || []
-        );
-        const unassignedTitles = titles.filter(t => !assignedTitleIds.has(t.id));
-
-        return unassignedTitles.length > 0 ? (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Other Sources</h2>
-            <div className="space-y-3">
-              {unassignedTitles.map(title => (
-                <div key={title.id} className="pb-3 border-b border-dashboard-border">
-                  {title.url_gnews ? (
-                    <a
-                      href={title.url_gnews}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 font-medium"
-                    >
-                      {title.title_display}
-                    </a>
-                  ) : (
-                    <p className="font-medium text-dashboard-text">{title.title_display}</p>
-                  )}
-                  <div className="text-sm text-dashboard-text-muted mt-1">
-                    {title.publisher_name && <span>{title.publisher_name}</span>}
-                    {title.pubdate_utc && (
-                      <span className="ml-2">
-                        {new Date(title.pubdate_utc).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null;
-      })()}
 
       {/* AI disclaimer */}
       <div className="mt-12 pt-8 border-t border-dashboard-border">

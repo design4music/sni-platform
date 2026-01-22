@@ -1,8 +1,8 @@
 # WorldBrief (SNI) v3 Pipeline - Project Status & Documentation
 
-**Last Updated**: 2026-01-12
-**Status**: Production Ready - Full 4-phase daemon operational with monitoring
-**Branch**: `chore/dev-health-initial`
+**Last Updated**: 2026-01-22
+**Status**: Production Ready - Pipeline operational, events clustering TODO
+**Branch**: `main`
 
 ---
 
@@ -221,27 +221,25 @@ VALUES (
 ### Phase 4: CTM Enrichment
 ```
 pipeline/phase_4/
-├── generate_events_digest.py   # Extract distinct events from titles
-├── generate_events_geo.py      # Geo CTM event extraction with pre-clustering
-├── geo_precluster.py           # Mechanical routing: bilateral/domestic/other
+├── generate_events_spike.py    # Bucket pass-through (no clustering yet)
+├── generate_events_digest.py   # Legacy events extraction (deprecated)
 ├── generate_summaries.py       # Generate 150-250 word narratives
-└── test_*.py                   # Test scripts
+├── finalize_month.py           # Month finalization
+├── run_specific_ctms.py        # Utility for specific CTM processing
+└── write_events_v3.py          # Events v3 writer
 ```
 
-**Geo Pre-Clustering** (2026-01-21):
-- Routes titles by geo counterparty: bilateral (US-China), domestic, other_international
-- Within each bucket, groups by matched alias (top 15 per bucket)
-- Alias groups become mechanical events (no LLM needed)
-- Only untagged titles get LLM extraction
-- Schema: `titles_v3.matched_aliases JSONB` stores which aliases triggered match
-- Results: 80% LLM reduction (118 events vs 280 for USA geo_economy)
+**Current Architecture** (2026-01-22):
+- Bucket structure determined upstream by alias matching (no hardcoded keywords)
+- `generate_events_spike.py` creates one coverage event per bucket
+- Bucket types: domestic, bilateral (by country), other_international
+- Clustering within buckets is TODO (requires proper event detection)
+- No semantic hardcoding in code - all driven by database/config
 
-**Events Digest** (Phase 4.1):
-- LLM extracts distinct events from chronologically ordered titles
-- Deduplicates near-identical reports (e.g., 2 Amazon stories → 1 event)
-- JSONB format: `[{date, summary, source_title_ids}]`
-- Two-pass approach: batch extraction + consolidation
-- Tested: 13 titles → 8 distinct events
+**Events Digest** (Legacy):
+- Previously used LLM to extract distinct events
+- Replaced by simpler bucket pass-through for now
+- Event clustering to be redesigned with better approach
 
 **Summary Generation** (Phase 4.2):
 - LLM generates 150-250 word narrative from events digest
@@ -805,9 +803,10 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 - **2025-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
 - **2026-01-07**: Phase 3 refactoring - many-to-many title-centroid-track relationships + intel gating ✅
 - **2026-01-09**: Phase 4.2 enhancement - dynamic focus lines (centroid + track specific) ✅
-- **2026-01-12**: Phase 4 daemon integration + word count monitoring + SQL bug fixes ✅
-- **2026-01-12**: Current status - Full 4-phase pipeline operational, multi-day testing in progress
+- **2026-01-12**: Phase 4 daemon integration + word count monitoring + SQL bug fixes
 - **2026-01-21**: Phase 4 geo pre-clustering + alias-based bucketing (80% LLM reduction)
+- **2026-01-22**: Code cleanup - removed deprecated labelers, simplified to bucket pass-through
+- **2026-01-22**: Current status - Events clustering redesign needed (current: 1 event per bucket)
 
 ---
 
@@ -823,19 +822,21 @@ PHASE4_SUMMARY_TEMPERATURE = 0.5
 
 ## Current Status & Next Steps
 
-### Immediate Status (2026-01-12)
-- ✅ Full 4-phase daemon operational
-- ✅ Phase 4 integration complete with dynamic focus lines
-- ✅ Word count monitoring active
-- ✅ SQL bugs fixed (assign_tracks.py line 290)
-- 🔄 Multi-day testing in progress
+### Immediate Status (2026-01-22)
+- Full 4-phase daemon operational
+- Phase 4 simplified to bucket pass-through (no clustering)
+- Frontend displays coverage events per bucket
+- Deprecated code removed (labelers, geo_precluster, test files)
+
+### Architecture Decisions
+- **No hardcoded semantic rules** - bucket assignment from alias matching
+- **Config-driven thresholds** - events_min_ctm_titles in core/config.py
+- **Events clustering TODO** - current approach lumps unrelated titles
+- **Next step**: Design proper event detection (temporal + semantic)
 
 ### Next Actions
-1. **Monitor Daemon**: Run for 3-5 consecutive days to observe:
-   - Summary word count trends as CTMs accumulate
-   - Which CTMs grow fastest
-   - Whether current architecture handles accumulation
-2. **Data-Driven Decision**: Determine if CTM (monthly) handles accumulation or if CTW (weekly) architecture needed
-3. **Frontend Development**: Begin UI work once pipeline stability confirmed
-
-**The v3 pipeline is production-ready and testing at scale! 🚀**
+1. **Event Clustering Design**: Need algorithm to distinguish events like:
+   - "Trump tariff on AI chips" vs "Musk suing OpenAI" vs "Nvidia announcements"
+   - All share keywords but are 3 distinct events
+2. **Temporal Analysis**: Use pubdate clustering + title similarity
+3. **Frontend Polish**: Improve coverage event display
