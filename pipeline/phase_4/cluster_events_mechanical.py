@@ -372,7 +372,11 @@ def cluster_titles(
                 event["target_inst"] = target_inst
                 events.append(event)
 
-    # Sort by title count descending
+    # Mark catch-all events and sort by title count
+    for e in events:
+        # UNKNOWN without entity = catch-all
+        e["is_catchall"] = e["actor"] == "UNKNOWN" and not e.get("actor_entity")
+
     events.sort(key=lambda e: -e["title_count"])
     return events
 
@@ -503,11 +507,19 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
         # Insert event
         cur.execute(
             """
-            INSERT INTO events_v3 (ctm_id, date, summary, event_type, bucket_key, source_batch_count)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO events_v3 (ctm_id, date, summary, event_type, bucket_key, source_batch_count, is_catchall)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
-            (ctm_id, event_date, summary, event_type, bucket_key, e["title_count"]),
+            (
+                ctm_id,
+                event_date,
+                summary,
+                event_type,
+                bucket_key,
+                e["title_count"],
+                e.get("is_catchall", False),
+            ),
         )
         event_id = cur.fetchone()[0]
 
