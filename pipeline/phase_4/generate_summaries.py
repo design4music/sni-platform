@@ -1,10 +1,10 @@
 """
 Phase 4.2: Summary Text Generation
 
-Generates 150-250 word narrative summaries for CTMs based on their events digest.
+Generates 150-250 word narrative summaries for CTMs based on their events.
 
 Strategy:
-1. Read events_digest from CTM
+1. Read events from events_v3 table
 2. Get centroid metadata for context
 3. Use LLM to generate cohesive narrative
 4. Store in summary_text field
@@ -20,6 +20,21 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+
+
+def get_events_for_ctm(conn, ctm_id: str) -> list:
+    """Fetch events from events_v3 for a CTM."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT date::text, summary
+            FROM events_v3
+            WHERE ctm_id = %s
+            ORDER BY date DESC
+            """,
+            (ctm_id,),
+        )
+        return [{"date": row[0], "summary": row[1]} for row in cur.fetchall()]
 
 
 async def generate_summary(
@@ -242,17 +257,17 @@ async def process_ctm_batch(max_ctms=None):
             cur.execute(
                 f"""
                 SELECT c.id, c.centroid_id, c.track, c.month,
-                       c.events_digest, c.title_count,
+                       c.title_count,
                        cent.label, cent.class, cent.primary_theater,
                        tc.llm_summary_centroid_focus,
-                       tc.llm_summary_track_focus
+                       tc.llm_summary_track_focus,
+                       (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id) as event_count
                 FROM ctm c
                 JOIN centroids_v3 cent ON c.centroid_id = cent.id
                 JOIN track_configs tc ON cent.track_config_id = tc.id
-                WHERE c.events_digest IS NOT NULL
-                  AND jsonb_array_length(c.events_digest) > 0
-                  AND c.is_frozen = false
+                WHERE c.is_frozen = false
                   AND c.title_count >= %s
+                  AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
                   AND (
                       c.summary_text IS NULL
                       OR (c.summary_text IS NOT NULL AND c.updated_at < NOW() - INTERVAL '24 hours')
@@ -281,14 +296,17 @@ async def process_ctm_batch(max_ctms=None):
             centroid_id,
             track,
             month,
-            events_digest,
             title_count,
             centroid_label,
             centroid_class,
             primary_theater,
             centroid_focus,
             track_focus_jsonb,
+            event_count,
         ) in ctms:
+            # Fetch events from events_v3
+            events = get_events_for_ctm(conn, ctm_id)
+
             # Extract track-specific focus from JSONB if available
             track_focus = None
             if track_focus_jsonb and centroid_class == "geo":
@@ -310,7 +328,7 @@ async def process_ctm_batch(max_ctms=None):
                     centroid_id,
                     track,
                     month,
-                    events_digest,
+                    events,
                     title_count,
                     centroid_label,
                     centroid_class,

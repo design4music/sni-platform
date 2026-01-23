@@ -23,9 +23,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import config
-from pipeline.phase_3.assign_tracks_batched import (assign_tracks_batch,
-                                              gate_centroid_batch,
-                                              get_track_config_for_centroids)
+from pipeline.phase_3.assign_tracks_batched import (
+    assign_tracks_batch, gate_centroid_batch, get_track_config_for_centroids)
 
 
 async def reprocess_blocked_titles():
@@ -208,9 +207,9 @@ async def reprocess_blocked_titles():
                                             """
                                             INSERT INTO ctm (
                                                 centroid_id, track, month,
-                                                title_count, events_digest, is_frozen
+                                                title_count, is_frozen
                                             )
-                                            VALUES (%s, %s, %s, 1, '[]'::jsonb, false)
+                                            VALUES (%s, %s, %s, 1, false)
                                             RETURNING id
                                         """,
                                             (centroid_id, track, month_date),

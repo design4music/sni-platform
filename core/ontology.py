@@ -185,6 +185,125 @@ ACTOR FORMAT: Use country prefix for state actors
 
 
 # =============================================================================
+# TARGET NORMALIZATION RULES - For consistent clustering
+# =============================================================================
+
+TARGET_RULES = """
+TARGET NORMALIZATION (CRITICAL FOR CLUSTERING):
+
+1. COUNTRIES -> ISO 2-LETTER CODE:
+   - France, French government, FR_EXECUTIVE -> FR
+   - China, Beijing, Chinese -> CN
+   - Iran, Tehran, Iranian -> IR
+   - India, New Delhi -> IN
+   - Denmark, Danish -> DK
+   - Greenland -> GL (special case, use GL not DK)
+
+2. REGIONS -> CANONICAL NAME:
+   - Europe, European nations, EU countries, European countries -> EU
+   - European Union institutions -> EU
+   - NATO members, NATO allies -> NATO
+   - BRICS nations -> BRICS
+   - G7 countries -> G7
+
+3. MULTI-TARGET -> COMMA-SEPARATED CODES (alphabetical):
+   - "sanctions on Russia and China" -> CN,RU
+   - "aid to Ukraine and Israel" -> IL,UA
+   - Maximum 3 targets; if more, use most prominent
+
+4. INSTITUTIONS AS TARGETS -> ACTOR FORMAT:
+   - "pressure on the Fed" -> US_CENTRAL_BANK
+   - "criticism of Congress" -> US_LEGISLATURE
+   - "sanctions on Russian military" -> RU_ARMED_FORCES
+
+5. DESCRIPTIVE PHRASES -> CORE ENTITY ONLY:
+   - "Iran's trading partners" -> IR (the action is about Iran)
+   - "countries opposing Greenland takeover" -> null (too vague, omit target)
+   - "European allies" -> EU
+
+6. TERRITORIES/DISPUTES:
+   - Taiwan -> TW
+   - Greenland -> GL
+   - Gaza, Palestinian territories -> PS
+   - Crimea, Donbas -> UA (contested, use internationally recognized)
+
+7. OMIT TARGET (use null) WHEN:
+   - Target is vague ("various countries", "the world")
+   - Target is the same as actor's country (domestic policy)
+   - No clear external target exists
+
+COMMON MAPPINGS:
+   EU_COUNTRIES, EUROPEAN_NATIONS, EUROPE -> EU
+   FRANCE, FR_EXECUTIVE, FRENCH -> FR
+   IRAN, IRANIAN, TEHRAN -> IR
+   GREENLAND, DANISH_TERRITORY -> GL
+   CHINA, CHINESE, BEIJING -> CN
+   RUSSIA, RUSSIAN, MOSCOW, KREMLIN -> RU
+"""
+
+
+def get_target_rules_for_prompt() -> str:
+    """Return target normalization rules for LLM prompt."""
+    return TARGET_RULES
+
+
+# =============================================================================
+# GEO ALIAS MAPPINGS - For mechanical bucket inference
+# =============================================================================
+
+# Maps common geographic aliases to ISO codes
+# Used when alias appears but target wasn't extracted
+GEO_ALIAS_TO_ISO = {
+    # Territories
+    "greenland": "GL",
+    "taiwan": "TW",
+    "gaza": "PS",
+    # Major countries (lowercase)
+    "china": "CN",
+    "chinese": "CN",
+    "beijing": "CN",
+    "russia": "RU",
+    "russian": "RU",
+    "moscow": "RU",
+    "kremlin": "RU",
+    "india": "IN",
+    "indian": "IN",
+    "france": "FR",
+    "french": "FR",
+    "macron": "FR",
+    "germany": "DE",
+    "german": "DE",
+    "japan": "JP",
+    "japanese": "JP",
+    "korea": "KR",
+    "korean": "KR",
+    "iran": "IR",
+    "iranian": "IR",
+    "tehran": "IR",
+    "venezuela": "VE",
+    "venezuelan": "VE",
+    "cuba": "CU",
+    "cuban": "CU",
+    "mexico": "MX",
+    "mexican": "MX",
+    "canada": "CA",
+    "canadian": "CA",
+    "brazil": "BR",
+    "brazilian": "BR",
+    "denmark": "DK",
+    "danish": "DK",
+    "uk": "UK",
+    "britain": "UK",
+    "british": "UK",
+    # Regional blocs
+    "europe": "EU",
+    "european": "EU",
+    "nato": "NATO",
+    "mercosur": "MERCOSUR",
+}
+
+
+# =============================================================================
 # PROMPT BUILDING HELPERS
 # =============================================================================
 

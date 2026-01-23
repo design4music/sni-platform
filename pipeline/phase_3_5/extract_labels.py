@@ -13,6 +13,7 @@ import argparse
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -25,7 +26,8 @@ from core.config import config
 from core.ontology import (ONTOLOGY_VERSION, PRIORITY_RULES,
                            get_action_classes_for_prompt,
                            get_actors_for_prompt, get_domains_for_prompt,
-                           validate_action_class, validate_domain)
+                           get_target_rules_for_prompt, validate_action_class,
+                           validate_domain)
 
 # =============================================================================
 # SYSTEM PROMPT
@@ -37,7 +39,7 @@ LABEL FORMAT: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
 - ACTOR: The primary institutional actor (with country prefix for state actors)
 - ACTION_CLASS: The type of action from the ontology (see below)
 - DOMAIN: The thematic domain
-- TARGET: Optional target actor/entity (if applicable)
+- TARGET: Optional target actor/entity - MUST use normalized format (see TARGET rules below)
 
 ONTOLOGY VERSION: ELO_v2.0
 
@@ -52,25 +54,42 @@ CONTROLLED ACTOR TYPES:
 
 {priority_rules}
 
+{target_rules}
+
 EXAMPLES:
 
 Title: "Biden signs $95 billion foreign aid package for Ukraine, Israel"
-Label: US_EXECUTIVE -> RESOURCE_ALLOCATION -> FOREIGN_POLICY -> UKRAINE,ISRAEL
+Label: US_EXECUTIVE -> RESOURCE_ALLOCATION -> FOREIGN_POLICY -> IL,UA
 
 Title: "Fed raises interest rates by 25 basis points"
 Label: US_CENTRAL_BANK -> POLICY_CHANGE -> ECONOMY
 
 Title: "Russian forces capture key town in eastern Ukraine"
-Label: RU_ARMED_FORCES -> MILITARY_OPERATION -> SECURITY -> UKRAINE
+Label: RU_ARMED_FORCES -> MILITARY_OPERATION -> SECURITY -> UA
 
 Title: "EU imposes new sanctions on Russian oil exports"
-Label: EU -> SANCTION_ENFORCEMENT -> ECONOMY -> RUSSIA
+Label: EU -> SANCTION_ENFORCEMENT -> ECONOMY -> RU
+
+Title: "Trump threatens tariffs on European countries over Greenland"
+Label: US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> EU
+
+Title: "Trump threatens tariffs on France over wine"
+Label: US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> FR
+
+Title: "Trump drops tariff threat on EU after Greenland deal"
+Label: US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> EU
+
+Title: "Iran sanctions tightened, affecting trading partners"
+Label: US_EXECUTIVE -> SANCTION_ENFORCEMENT -> FOREIGN_POLICY -> IR
 
 Title: "Thousands protest against pension reform in Paris"
 Label: FR_POPULATION -> COLLECTIVE_PROTEST -> SOCIETY
 
 Title: "Supreme Court strikes down affirmative action in college admissions"
 Label: US_JUDICIARY -> LEGAL_RULING -> GOVERNANCE
+
+Title: "Trump pressures Fed to lower interest rates"
+Label: US_EXECUTIVE -> POLITICAL_PRESSURE -> ECONOMY -> US_CENTRAL_BANK
 
 OUTPUT FORMAT:
 Return a JSON array with objects for each title:
@@ -89,6 +108,7 @@ IMPORTANT:
 - Use country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_, etc.
 - For IGOs use: UN, NATO, EU, AU, ASEAN (no prefix)
 - For unknown/unclear actors use: UNKNOWN
+- TARGET MUST be normalized: use ISO codes (FR not FRANCE), canonical names (EU not EU_COUNTRIES)
 - conf (confidence) should be 0.0-1.0 based on how clear the title is
 - If multiple actions apply, choose the highest-tier (lowest number) action
 - Return ONLY valid JSON, no explanations
@@ -107,6 +127,7 @@ def build_system_prompt() -> str:
         domains=get_domains_for_prompt(),
         actors=get_actors_for_prompt(),
         priority_rules=PRIORITY_RULES,
+        target_rules=get_target_rules_for_prompt(),
     )
 
 
@@ -282,18 +303,9 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
             )
             domain = "GOVERNANCE"
 
-        # Build event label string
-        if target:
-            event_label = "{} -> {} -> {} -> {}".format(
-                actor, action_class, domain, target
-            )
-        else:
-            event_label = "{} -> {} -> {}".format(actor, action_class, domain)
-
         results.append(
             {
                 "title_id": title_id,
-                "event_label": event_label,
                 "actor": actor,
                 "action_class": action_class,
                 "domain": domain,
@@ -393,13 +405,12 @@ def write_labels_to_db(conn, labels: list[dict]) -> int:
 
     insert_sql = """
         INSERT INTO title_labels (
-            title_id, event_label, actor, action_class, domain, target,
+            title_id, actor, action_class, domain, target,
             label_version, confidence
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s
         )
         ON CONFLICT (title_id) DO UPDATE SET
-            event_label = EXCLUDED.event_label,
             actor = EXCLUDED.actor,
             action_class = EXCLUDED.action_class,
             domain = EXCLUDED.domain,
@@ -416,7 +427,6 @@ def write_labels_to_db(conn, labels: list[dict]) -> int:
                 insert_sql,
                 (
                     label["title_id"],
-                    label["event_label"],
                     label["actor"],
                     label["action_class"],
                     label["domain"],
@@ -440,13 +450,36 @@ def write_labels_to_db(conn, labels: list[dict]) -> int:
 # =============================================================================
 
 
+def process_batch_worker(batch_info: tuple) -> dict:
+    """Worker function for parallel batch processing."""
+    batch_num, batch, total_batches = batch_info
+
+    try:
+        labels = extract_labels_batch(batch)
+        return {
+            "batch_num": batch_num,
+            "success": True,
+            "labels": labels,
+            "count": len(labels) if labels else 0,
+        }
+    except Exception as e:
+        logger.error("Batch {} failed: {}".format(batch_num, e))
+        return {
+            "batch_num": batch_num,
+            "success": False,
+            "labels": [],
+            "count": 0,
+            "error": str(e)[:100],
+        }
+
+
 def process_titles(
     max_titles: int = None,
     centroid_filter: str = None,
     track_filter: str = None,
     dry_run: bool = False,
 ):
-    """Main entry point for label extraction."""
+    """Main entry point for label extraction with parallel processing."""
     conn = psycopg2.connect(
         host=config.db_host,
         port=config.db_port,
@@ -475,40 +508,65 @@ def process_titles(
     print("Found {} unlabeled titles".format(len(titles)))
     if dry_run:
         print("(DRY RUN - no database writes)")
-    print()
 
-    # Process in batches
+    # Prepare batches
     batch_size = config.v3_p35_batch_size
-    total_labeled = 0
+    concurrency = config.v3_p35_concurrency
     total_batches = (len(titles) + batch_size - 1) // batch_size
 
+    batches = []
     for batch_num in range(total_batches):
         start_idx = batch_num * batch_size
         end_idx = min(start_idx + batch_size, len(titles))
         batch = titles[start_idx:end_idx]
+        batches.append((batch_num + 1, batch, total_batches))
 
-        print(
-            "Batch {}/{} ({} titles)...".format(
-                batch_num + 1, total_batches, len(batch)
-            )
+    print(
+        "Processing {} batches with {} parallel workers...".format(
+            total_batches, concurrency
         )
+    )
+    print()
 
-        try:
-            labels = extract_labels_batch(batch)
+    # Process in parallel
+    total_labeled = 0
+    errors = 0
+    start_time = time.time()
 
-            if labels and not dry_run:
-                inserted = write_labels_to_db(conn, labels)
-                total_labeled += inserted
-                print("  -> Labeled {} titles".format(inserted))
-            elif labels:
-                print("  -> Would label {} titles".format(len(labels)))
-                total_labeled += len(labels)
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+        futures = {executor.submit(process_batch_worker, b): b for b in batches}
+
+        for future in as_completed(futures):
+            result = future.result()
+            batch_num = result["batch_num"]
+
+            if result["success"]:
+                labels = result["labels"]
+                if labels and not dry_run:
+                    inserted = write_labels_to_db(conn, labels)
+                    total_labeled += inserted
+                    print(
+                        "Batch {}/{}: {} labels".format(
+                            batch_num, total_batches, inserted
+                        )
+                    )
+                elif labels:
+                    total_labeled += len(labels)
+                    print(
+                        "Batch {}/{}: would label {}".format(
+                            batch_num, total_batches, len(labels)
+                        )
+                    )
             else:
-                print("  -> No labels extracted")
+                errors += 1
+                print(
+                    "Batch {}/{}: ERROR - {}".format(
+                        batch_num, total_batches, result.get("error", "unknown")
+                    )
+                )
 
-        except Exception as e:
-            logger.error("Batch {} failed: {}".format(batch_num + 1, e))
-            print("  -> ERROR: {}".format(str(e)[:50]))
+    elapsed = time.time() - start_time
+    rate = len(titles) / elapsed if elapsed > 0 else 0
 
     print()
     print("=" * 60)
@@ -516,6 +574,8 @@ def process_titles(
     print("=" * 60)
     print("Titles processed: {}".format(len(titles)))
     print("Labels created: {}".format(total_labeled))
+    print("Errors: {}".format(errors))
+    print("Time: {:.1f}s ({:.1f} titles/sec)".format(elapsed, rate))
     if centroid_filter:
         print("Centroid filter: {}".format(centroid_filter))
     if track_filter:

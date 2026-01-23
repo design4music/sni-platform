@@ -70,7 +70,9 @@
       "Bash(curl:*)",
       "Bash(npm run check-db:*)",
       "Bash(node -e:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(python:*)",
+      "Bash(\"C:/Program Files/PostgreSQL/17/bin/psql.exe\" -U postgres -d sni -c \"\nSELECT actor, COUNT\\(*\\) as cnt\nFROM title_labels\nGROUP BY actor\nORDER BY cnt DESC\nLIMIT 20;\")"
     ],
     "deny": []
   }

@@ -1,9 +1,6 @@
 import { query } from './db';
 import { Centroid, CTM, Title, TitleAssignment, Feed, Event } from './types';
 
-// Feature flag: Use events_v3 tables instead of JSONB
-const USE_EVENTS_V3 = process.env.USE_EVENTS_V3 === 'true';
-
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
     'SELECT * FROM centroids_v3 WHERE is_active = true ORDER BY class, label'
@@ -153,9 +150,7 @@ export async function getCTM(
   const results = await query<CTM>(queryText, params);
   const ctm = results[0] || null;
 
-  // Feature flag: Use events_v3 tables instead of JSONB
-  if (ctm && USE_EVENTS_V3) {
-    // Fetch events from normalized tables and populate events_digest
+  if (ctm) {
     ctm.events_digest = await getEventsFromV3(ctm.id);
   }
 

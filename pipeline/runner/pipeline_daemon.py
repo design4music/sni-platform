@@ -29,10 +29,10 @@ from core.config import config
 # Import phase modules
 from pipeline.phase_1.ingest_feeds import run_ingestion
 from pipeline.phase_2.match_centroids import process_batch as phase2_process
-from pipeline.phase_3.assign_tracks_batched import process_batch as phase3_process
-from pipeline.phase_4.generate_events_digest import \
-    process_ctm_batch as phase4_1_process
-from pipeline.phase_4.generate_summaries import process_ctm_batch as phase4_2_process
+from pipeline.phase_3.assign_tracks_batched import \
+    process_batch as phase3_process
+from pipeline.phase_4.generate_summaries import \
+    process_ctm_batch as phase4_summaries
 
 
 class PipelineDaemon:
@@ -113,33 +113,18 @@ class PipelineDaemon:
                 )
                 titles_need_track = cur.fetchone()[0]
 
-                # Phase 4.1 queue (CTMs without events digest, prioritize empty first)
+                # Phase 4 queue (CTMs with events but no summary OR need update)
                 cur.execute(
                     """
                     SELECT COUNT(*)
-                    FROM ctm
-                    WHERE title_count >= %s
-                      AND (events_digest IS NULL OR jsonb_array_length(events_digest) = 0)
-                      AND is_frozen = false
-                """,
-                    (self.config.v3_p4_min_titles,),
-                )
-                ctms_need_events = cur.fetchone()[0]
-
-                # Phase 4.2 queue (CTMs with events but no summary OR need update)
-                # Prioritize: 1) NULL summaries first, 2) then existing if not updated in 24h
-                cur.execute(
-                    """
-                    SELECT COUNT(*)
-                    FROM ctm
-                    WHERE title_count >= %s
-                      AND events_digest IS NOT NULL
-                      AND jsonb_array_length(events_digest) > 0
+                    FROM ctm c
+                    WHERE c.title_count >= %s
+                      AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
                       AND (
-                          summary_text IS NULL
-                          OR (summary_text IS NOT NULL AND updated_at < NOW() - INTERVAL '24 hours')
+                          c.summary_text IS NULL
+                          OR (c.summary_text IS NOT NULL AND c.updated_at < NOW() - INTERVAL '24 hours')
                       )
-                      AND is_frozen = false
+                      AND c.is_frozen = false
                 """,
                     (self.config.v3_p4_min_titles,),
                 )
@@ -148,7 +133,6 @@ class PipelineDaemon:
                 return {
                     "pending_titles": pending_titles,
                     "titles_need_track": titles_need_track,
-                    "ctms_need_events": ctms_need_events,
                     "ctms_need_summary": ctms_need_summary,
                 }
         finally:
@@ -310,9 +294,9 @@ class PipelineDaemon:
                     """
                     SELECT
                         COUNT(*) as total_active,
-                        COUNT(CASE WHEN events_digest IS NOT NULL AND jsonb_array_length(events_digest) > 0 THEN 1 END) as with_events,
+                        COUNT(CASE WHEN EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id) THEN 1 END) as with_events,
                         COUNT(CASE WHEN summary_text IS NOT NULL THEN 1 END) as with_summary
-                    FROM ctm
+                    FROM ctm c
                     WHERE title_count > 0 AND is_frozen = false
                 """
                 )
@@ -321,9 +305,9 @@ class PipelineDaemon:
                 print("\nPHASE 4 - CTM ENRICHMENT:")
                 print(f"  Active CTMs: {total_active:,}")
                 print(
-                    f"  With events digest: {with_events:,} ({with_events/total_active*100:.1f}%)"
+                    f"  With events: {with_events:,} ({with_events/total_active*100:.1f}%)"
                     if total_active > 0
-                    else "  With events digest: 0"
+                    else "  With events: 0"
                 )
                 print(
                     f"  With summary: {with_summary:,} ({with_summary/total_active*100:.1f}%)"
@@ -427,8 +411,7 @@ class PipelineDaemon:
         print("\nQueue Status:")
         print(f"  Pending titles (Phase 2):    {stats['pending_titles']}")
         print(f"  Titles need track (Phase 3): {stats['titles_need_track']}")
-        print(f"  CTMs need events (Phase 4.1): {stats['ctms_need_events']}")
-        print(f"  CTMs need summary (Phase 4.2): {stats['ctms_need_summary']}")
+        print(f"  CTMs need summary (Phase 4): {stats['ctms_need_summary']}")
 
         # Phase 1: RSS Ingestion (if interval elapsed)
         if self.should_run_phase("phase1"):
@@ -479,28 +462,11 @@ class PipelineDaemon:
                 )
                 print(f"\nPhase 3: Skipping (next run in {next_run}s)")
 
-        # Phase 4.1: Events Digest (if interval elapsed and work available)
-        if self.should_run_phase("phase4") and stats["ctms_need_events"] > 0:
-            await self.run_phase_with_retry(
-                "Phase 4.1: Events Digest",
-                phase4_1_process,
-                max_ctms=self.phase4_batch_size,
-            )
-            # Don't update last_run yet - wait for Phase 4.2
-        else:
-            if stats["ctms_need_events"] == 0:
-                print("\nPhase 4.1: Skipping (no CTMs need events)")
-            else:
-                next_run = int(
-                    self.phase4_interval - (time.time() - self.last_run["phase4"])
-                )
-                print(f"\nPhase 4.1: Skipping (next run in {next_run}s)")
-
-        # Phase 4.2: Summaries (if interval elapsed and work available)
+        # Phase 4: Summary Generation (if interval elapsed and work available)
         if self.should_run_phase("phase4") and stats["ctms_need_summary"] > 0:
             await self.run_phase_with_retry(
-                "Phase 4.2: Summary Generation",
-                phase4_2_process,
+                "Phase 4: Summary Generation",
+                phase4_summaries,
                 max_ctms=self.phase4_batch_size,
             )
             self.last_run["phase4"] = time.time()
@@ -509,7 +475,12 @@ class PipelineDaemon:
             self.monitor_summary_word_counts()
         else:
             if stats["ctms_need_summary"] == 0:
-                print("\nPhase 4.2: Skipping (no CTMs need summary)")
+                print("\nPhase 4: Skipping (no CTMs need summary)")
+            else:
+                next_run = int(
+                    self.phase4_interval - (time.time() - self.last_run["phase4"])
+                )
+                print(f"\nPhase 4: Skipping (next run in {next_run}s)")
 
         cycle_duration = time.time() - cycle_start
         print(f"\n{'='*70}")

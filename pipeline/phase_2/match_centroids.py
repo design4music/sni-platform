@@ -28,6 +28,42 @@ from psycopg2.extras import Json
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 
+# =============================================================================
+# CANONICAL ALIAS MAPPING
+# =============================================================================
+# Maps language variants to canonical (English) form for clustering.
+# Add new mappings here as needed. Format: "variant": "canonical"
+# =============================================================================
+CANONICAL_ALIASES = {
+    # Greenland variants
+    "groenlandia": "greenland",  # Spanish/Italian
+    "groenland": "greenland",  # French/Dutch
+    "gronland": "greenland",  # German (without umlaut)
+    "grönland": "greenland",  # German (with umlaut)
+    "grønland": "greenland",  # Danish/Norwegian
+    "гренландия": "greenland",  # Russian
+    "格陵兰": "greenland",  # Chinese
+    "جرينلاند": "greenland",  # Arabic
+    # Tariffs variants
+    "dazi": "tariffs",  # Italian
+    "aranceles": "tariffs",  # Spanish
+    "droits de douane": "tariffs",  # French
+    "zolle": "tariffs",  # German (Zölle)
+    "zoll": "tariffs",  # German singular
+    "tarifas": "tariffs",  # Portuguese
+    "тарифы": "tariffs",  # Russian
+    "关税": "tariffs",  # Chinese
+    # Federal Reserve variants
+    "reserva federal": "federal reserve",  # Spanish
+    "fed": "fed",  # Keep as-is (already canonical)
+    # Add more as discovered...
+}
+
+
+def canonicalize_alias(alias: str) -> str:
+    """Map alias to canonical form, or return as-is if no mapping exists."""
+    return CANONICAL_ALIASES.get(alias, alias)
+
 
 def strip_diacritics(text: str) -> str:
     """
@@ -341,9 +377,10 @@ def match_title(title_text, taxonomy):
             matched_centroids.add(centroid_id)
             matched_aliases.add(substring)
 
-    # Step 3: Return status
+    # Step 3: Canonicalize aliases and return
     if matched_centroids:
-        return matched_centroids, matched_aliases, "matched"
+        canonical_aliases = {canonicalize_alias(a) for a in matched_aliases}
+        return matched_centroids, canonical_aliases, "matched"
     else:
         return set(), set(), "no_match"
 

@@ -17,7 +17,7 @@ from core.config import config
 from pipeline.phase_2.match_centroids import load_taxonomy, match_title
 
 
-def backfill_aliases(batch_size=500, limit=None):
+def backfill_aliases(batch_size=500, limit=None, force=False):
     conn = psycopg2.connect(
         host=config.db_host,
         port=config.db_port,
@@ -32,15 +32,24 @@ def backfill_aliases(batch_size=500, limit=None):
 
     # Count titles to process
     with conn.cursor() as cur:
-        cur.execute(
+        if force:
+            cur.execute(
+                """
+                SELECT COUNT(*) FROM titles_v3
+                WHERE processing_status = 'assigned'
             """
-            SELECT COUNT(*) FROM titles_v3
-            WHERE processing_status = 'assigned'
-              AND matched_aliases IS NULL
-        """
-        )
+            )
+        else:
+            cur.execute(
+                """
+                SELECT COUNT(*) FROM titles_v3
+                WHERE processing_status = 'assigned'
+                  AND matched_aliases IS NULL
+            """
+            )
         total = cur.fetchone()[0]
-        print(f"\nTitles to backfill: {total}")
+        mode = "FORCE regenerate" if force else "backfill"
+        print(f"\nTitles to {mode}: {total}")
 
     if limit:
         total = min(total, limit)
@@ -52,16 +61,28 @@ def backfill_aliases(batch_size=500, limit=None):
     while processed < total:
         # Fetch batch
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, title_display
-                FROM titles_v3
-                WHERE processing_status = 'assigned'
-                  AND matched_aliases IS NULL
-                LIMIT %s
-            """,
-                (batch_size,),
-            )
+            if force:
+                cur.execute(
+                    """
+                    SELECT id, title_display
+                    FROM titles_v3
+                    WHERE processing_status = 'assigned'
+                    ORDER BY id
+                    OFFSET %s LIMIT %s
+                """,
+                    (processed, batch_size),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT id, title_display
+                    FROM titles_v3
+                    WHERE processing_status = 'assigned'
+                      AND matched_aliases IS NULL
+                    LIMIT %s
+                """,
+                    (batch_size,),
+                )
             titles = cur.fetchall()
 
         if not titles:
@@ -94,7 +115,8 @@ def backfill_aliases(batch_size=500, limit=None):
         pct = (processed / total) * 100
         print(f"  Processed: {processed}/{total} ({pct:.1f}%) - Updated: {updated}")
 
-    print(f"\nDone. Updated {updated} titles with matched_aliases.")
+    action = "regenerated" if force else "backfilled"
+    print(f"\nDone. {action.title()} {updated} titles with matched_aliases.")
     conn.close()
 
 
@@ -104,6 +126,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, help="Limit titles to process")
     parser.add_argument("--batch-size", type=int, default=500)
+    parser.add_argument(
+        "--force", action="store_true", help="Regenerate ALL aliases (not just NULL)"
+    )
     args = parser.parse_args()
 
-    backfill_aliases(batch_size=args.batch_size, limit=args.limit)
+    backfill_aliases(batch_size=args.batch_size, limit=args.limit, force=args.force)
