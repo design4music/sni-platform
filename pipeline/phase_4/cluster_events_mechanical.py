@@ -149,48 +149,46 @@ def assign_bucket(title: dict, centroid_id: str) -> str:
 
 # Actor types that should be clustered by entity (not by action)
 # These need LLM to extract the specific entity name
-ENTITY_ACTORS = {"CORPORATION", "ARMED_GROUP", "NGO", "MEDIA_OUTLET"}
+ENTITY_ACTORS = {"CORPORATION", "ARMED_GROUP", "NGO", "MEDIA_OUTLET", "UNKNOWN"}
 
 # Actor suffixes where the actor itself IS the entity (consolidate all actions)
 # e.g., US_CENTRAL_BANK is always "the Fed" - all their actions are one event
 CONSOLIDATED_ACTOR_SUFFIXES = {"_CENTRAL_BANK"}
 
-# Invalid entity values that should be ignored (not specific companies)
-INVALID_ENTITIES = {
-    # Trump-related (should be US_EXECUTIVE, not CORPORATION)
-    "TRUMP", "TRUMP ADMINISTRATION", "TRUMP MEDIA GROUP",
-    "TRUMP ORGANIZATION", "TRUMP STORE",
-    # Collective/generic terms (not specific companies)
-    "WALL STREET", "TECH FIRMS", "STARTUP", "SILICON VALLEY",
-    "PRIVATE EQUITY", "HEDGE FUND", "HEDGE FUNDS",
-    "RARE-EARTH MAGNET MAKER", "TECH GIANT", "TECH GIANTS",
-    "BIG TECH", "BANKS", "AUTOMAKER", "AUTOMAKERS",
-    # Institutions that are not corporations
-    "FED", "FEDERAL RESERVE", "ECB", "CENTRAL BANK",
+# Known corporate entities for target-based grouping
+# When action is LEGAL_CONTESTATION and target matches, group with corporation
+KNOWN_CORPORATE_TARGETS = {
+    "META",
+    "OPENAI",
+    "NVIDIA",
+    "APPLE",
+    "GOOGLE",
+    "AMAZON",
+    "MICROSOFT",
+    "TESLA",
+    "BOEING",
+    "JPMORGAN",
+    "GOLDMAN SACHS",
+    "BLACKROCK",
+    "SPACEX",
+    "NETFLIX",
+    "DISNEY",
+    "EXXON",
+    "CHEVRON",
+    "WALMART",
+    "INTEL",
+    "AMD",
 }
 
-
-def normalize_entity(entity: str) -> str:
-    """Normalize entity names for consistency."""
-    if not entity:
-        return None
-
-    entity = entity.upper().strip()
-
-    # Skip invalid entities
-    if entity in INVALID_ENTITIES:
-        return None
-
-    # Normalize common variations
-    normalizations = {
-        "GOLDMAN": "GOLDMAN SACHS",
-        "JPMORGAN CHASE": "JPMORGAN",
-        "JP MORGAN": "JPMORGAN",
-        "ALPHABET": "GOOGLE",  # Parent company -> common name
-        "ALPHABET INC": "GOOGLE",
-    }
-
-    return normalizations.get(entity, entity)
+# Institutional targets that warrant sub-clustering
+# When these are targets, split events by target for clearer narrative
+INSTITUTIONAL_TARGETS = {
+    "US_CENTRAL_BANK",
+    "US_JUDICIARY",
+    "US_LEGISLATURE",
+    "EU_CENTRAL_BANK",
+    "CN_CENTRAL_BANK",
+}
 
 
 def should_consolidate_actor(actor: str) -> bool:
@@ -207,14 +205,16 @@ def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
     Consolidation rules:
     1. ENTITY_ACTORS (CORPORATION, etc.) with valid entity -> group by entity
     2. CONSOLIDATED_ACTOR_SUFFIXES (_CENTRAL_BANK) -> group by actor (all actions)
-    3. All other actors -> group by action_class
+    3. LEGAL_CONTESTATION with corporate target -> group with corporation
+    4. Institutional target (US_CENTRAL_BANK, etc.) -> sub-cluster by target
+    5. All other actors -> group by action_class
     """
     clusters = defaultdict(list)
     for t in titles:
         actor = t["actor"]
         action = t["action_class"]
-        raw_entity = t.get("actor_entity")
-        entity = normalize_entity(raw_entity) if raw_entity else None
+        entity = t.get("actor_entity")  # Trust LLM output directly
+        target = t.get("target")
 
         # Rule 1: Entity-based actors with valid entity -> one event per entity
         if actor in ENTITY_ACTORS and entity:
@@ -222,7 +222,17 @@ def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
         # Rule 2: Consolidated actors (e.g., XX_CENTRAL_BANK) -> one event per actor
         elif should_consolidate_actor(actor):
             key = (actor, None, None)  # Both entity and action are None
-        # Rule 3: Standard grouping by action
+        # Rule 3: LEGAL_CONTESTATION targeting a known corporation -> group with corp
+        elif action == "LEGAL_CONTESTATION" and target:
+            target_upper = target.upper()
+            if target_upper in KNOWN_CORPORATE_TARGETS:
+                key = ("CORPORATION", target_upper, None)
+            else:
+                key = (actor, None, action)
+        # Rule 4: Institutional target -> sub-cluster by (actor, action, target)
+        elif target and target in INSTITUTIONAL_TARGETS:
+            key = (actor, None, action, target)
+        # Rule 5: Standard grouping by action
         else:
             key = (actor, None, action)
 
@@ -329,7 +339,14 @@ def cluster_titles(
         # Step 2: Label clustering within bucket
         label_clusters = cluster_by_labels(bucket_titles, min_label_cluster)
 
-        for (actor, entity, action), label_titles in label_clusters.items():
+        for key, label_titles in label_clusters.items():
+            # Unpack key - can be 3-tuple or 4-tuple
+            if len(key) == 4:
+                actor, entity, action, target_inst = key
+            else:
+                actor, entity, action = key
+                target_inst = None
+
             # Step 3: For large UNKNOWN clusters, split by spike
             if actor == "UNKNOWN" and len(label_titles) >= unknown_split_threshold:
                 spike_days = detect_spike_days(label_titles)
@@ -337,21 +354,23 @@ def cluster_titles(
                     groups = split_by_spike(label_titles, spike_days, min_label_cluster)
                     for i, group in enumerate(groups):
                         is_spike = any(t["pub_date"] in spike_days for t in group)
-                        events.append(
-                            create_event(
-                                bucket_name, actor, entity, action, group, is_spike
-                            )
+                        event = create_event(
+                            bucket_name, actor, entity, action, group, is_spike
                         )
+                        event["target_inst"] = target_inst
+                        events.append(event)
                 else:
-                    events.append(
-                        create_event(bucket_name, actor, entity, action, label_titles)
+                    event = create_event(
+                        bucket_name, actor, entity, action, label_titles
                     )
+                    event["target_inst"] = target_inst
+                    events.append(event)
             else:
-                events.append(
-                    create_event(
-                        bucket_name, actor, entity, action, label_titles, False
-                    )
+                event = create_event(
+                    bucket_name, actor, entity, action, label_titles, False
                 )
+                event["target_inst"] = target_inst
+                events.append(event)
 
     # Sort by title count descending
     events.sort(key=lambda e: -e["title_count"])
@@ -396,6 +415,9 @@ def print_cluster_report(events: list[dict], max_events: int = 30):
             # For entity-grouped events (action=None), show "news summary" instead
             if e.get("action_class"):
                 label = "%s -> %s" % (actor_display, e["action_class"])
+                # Add target institution if present
+                if e.get("target_inst"):
+                    label = "%s -> %s" % (label, e["target_inst"])
             else:
                 label = "%s (news summary)" % actor_display
 
@@ -461,9 +483,13 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
 
         # For entity-grouped events (action=None), use "news summary" format
         if e.get("action_class"):
+            action_str = e["action_class"]
+            # Add target institution if present
+            if e.get("target_inst"):
+                action_str = "%s -> %s" % (action_str, e["target_inst"])
             summary = "%s -> %s (%d titles)%s" % (
                 actor_display,
-                e["action_class"],
+                action_str,
                 e["title_count"],
                 spike_tag,
             )

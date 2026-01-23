@@ -23,11 +23,16 @@ import psycopg2
 from loguru import logger
 
 from core.config import config
-from core.ontology import (ONTOLOGY_VERSION, PRIORITY_RULES,
-                           get_action_classes_for_prompt,
-                           get_actors_for_prompt, get_domains_for_prompt,
-                           get_target_rules_for_prompt, validate_action_class,
-                           validate_domain)
+from core.ontology import (
+    ONTOLOGY_VERSION,
+    PRIORITY_RULES,
+    get_action_classes_for_prompt,
+    get_actors_for_prompt,
+    get_domains_for_prompt,
+    get_target_rules_for_prompt,
+    validate_action_class,
+    validate_domain,
+)
 
 # =============================================================================
 # SYSTEM PROMPT
@@ -125,21 +130,38 @@ IMPORTANT:
 - Return ONLY valid JSON, no explanations
 
 ENTITY EXTRACTION RULES (CRITICAL):
-- ONLY for generic actors: CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET
+
+FOR CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET:
 - ONLY extract globally recognized brand names you know from training data
 - Use the company's common stock ticker name: NVIDIA, APPLE, JPMORGAN, BOEING, META, GOOGLE, AMAZON
 - Use null if: no specific company, multiple companies, or generic industry reference
 
-VALID entities (real global brands):
+VALID corporate entities (real global brands):
   NVIDIA, APPLE, MICROSOFT, GOOGLE, AMAZON, META, TESLA, BOEING, JPMORGAN,
-  GOLDMAN SACHS, BLACKROCK, OPENAI, SPACEX, NETFLIX, DISNEY, EXXON, CHEVRON
+  GOLDMAN SACHS, BLACKROCK, OPENAI, SPACEX, NETFLIX, DISNEY, EXXON, CHEVRON,
+  MORGAN STANLEY, WALMART, COSTCO, TARGET, FORD, GM, TOYOTA, SAMSUNG, TSMC, INTEL, AMD
 
-INVALID - use null instead:
+INVALID corporate entities - use null instead:
   - Descriptive phrases: "tech firms", "automakers", "fund managers", "hedge funds"
   - Collectives: "Wall Street", "Silicon Valley", "Big Tech", "banks"
   - People as corporations: "Trump", "Musk", "Bezos" (use EXECUTIVE or CORPORATION with real company)
   - Unknown/generic: "startup", "private equity", "German investments"
   - Institutions: "Fed", "central bank" (use XX_CENTRAL_BANK actor instead)
+
+FOR UNKNOWN ACTOR - extract subject entity when clear:
+- If the title is ABOUT a specific company (even if no actor): use actor=CORPORATION with entity
+- If the title is ABOUT stock market/indices: entity=STOCK_MARKET
+  (stock exchange, NYSE, Nasdaq, Dow Jones, S&P 500, market rally, stocks rise/fall, Wall Street trading)
+- If the title is ABOUT a commodity price: entity=GOLD, SILVER, OIL, DOLLAR, BITCOIN, etc.
+  (gold prices, silver rally, oil futures, dollar strength, crypto markets)
+- If no clear subject: entity=null
+
+EXAMPLES for UNKNOWN with entity:
+- "Gold prices hit record high amid uncertainty" -> UNKNOWN, entity: GOLD
+- "Stocks rally on Fed comments" -> UNKNOWN, entity: STOCK_MARKET
+- "Wall Street closes higher" -> UNKNOWN, entity: STOCK_MARKET
+- "Dollar weakens against euro" -> UNKNOWN, entity: DOLLAR
+- "Morgan Stanley beats earnings expectations" -> CORPORATION, entity: MORGAN STANLEY
 """
 
 

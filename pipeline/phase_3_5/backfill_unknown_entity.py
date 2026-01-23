@@ -1,12 +1,15 @@
 """
-Re-extract actor_entity for CORPORATION (and similar) labels using improved prompt.
+Re-extract actor_entity for UNKNOWN labels to identify subject topics.
 
-This script re-labels ALL titles with ENTITY_ACTORS, not just those missing entities.
-The improved prompt should produce cleaner results (no "Wall Street", "tech firms", etc.)
+This script re-labels UNKNOWN titles to extract:
+- STOCK_MARKET for stock/market news
+- GOLD, SILVER, OIL, DOLLAR for commodity/currency news
+- Reclassifies company-focused titles to CORPORATION with entity
 """
 
 import argparse
 import json
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -19,9 +22,6 @@ import psycopg2
 
 from core.config import config
 
-# Actor types that need entity extraction
-ENTITY_ACTORS = ["CORPORATION", "ARMED_GROUP", "NGO", "MEDIA_OUTLET"]
-
 
 def get_connection():
     return psycopg2.connect(
@@ -33,28 +33,27 @@ def get_connection():
     )
 
 
-def load_titles_for_relabeling(
-    conn, max_titles: int = None, force_all: bool = False
+def load_unknown_titles(
+    conn, max_titles: int = None, action_filter: str = None
 ) -> list[dict]:
-    """Load titles with ENTITY_ACTORS for re-labeling."""
+    """Load titles with UNKNOWN actor for re-labeling."""
     cur = conn.cursor()
 
-    placeholders = ",".join(["%s"] * len(ENTITY_ACTORS))
+    where_clause = "tl.actor = 'UNKNOWN'"
+    params = []
 
-    # If force_all, re-label everything; otherwise only missing entities
-    if force_all:
-        where_clause = "tl.actor IN ({})".format(placeholders)
-    else:
-        where_clause = "tl.actor IN ({}) AND tl.actor_entity IS NULL".format(
-            placeholders
-        )
+    if action_filter:
+        where_clause += " AND tl.action_class = %s"
+        params.append(action_filter)
 
-    limit_sql = "LIMIT %s" if max_titles else ""
-    params = ENTITY_ACTORS + ([max_titles] if max_titles else [])
+    limit_sql = ""
+    if max_titles:
+        limit_sql = "LIMIT %s"
+        params.append(max_titles)
 
     cur.execute(
         """
-        SELECT tl.title_id, t.title_display, tl.actor
+        SELECT tl.title_id, t.title_display, tl.action_class
         FROM title_labels tl
         JOIN titles_v3 t ON t.id = tl.title_id
         WHERE {}
@@ -67,44 +66,44 @@ def load_titles_for_relabeling(
     )
 
     rows = cur.fetchall()
-    return [{"id": str(r[0]), "title_display": r[1], "actor": r[2]} for r in rows]
+    return [
+        {"id": str(r[0]), "title_display": r[1], "action_class": r[2]} for r in rows
+    ]
 
 
-# Improved prompt - matches the guidance in extract_labels.py
-SYSTEM_PROMPT = """You extract the specific named entity from news titles about companies/organizations.
+SYSTEM_PROMPT = """You analyze news titles to identify the primary subject when the actor is unclear.
 
-Given a title and actor type, identify the PRIMARY named entity.
+Given titles currently labeled as UNKNOWN actor, determine:
+1. If about a SPECIFIC COMPANY -> change actor to CORPORATION with entity name
+2. If about STOCK MARKET/indices -> keep UNKNOWN, entity = STOCK_MARKET
+3. If about a COMMODITY price -> keep UNKNOWN, entity = commodity name
+4. If no clear subject -> keep UNKNOWN, entity = null
 
 RULES:
-- ONLY extract globally recognized brand names
-- Use common stock ticker names: NVIDIA, APPLE, JPMORGAN, BOEING, META, GOOGLE, AMAZON
-- Return entity name in UPPERCASE
-- Return null if NO specific company is identifiable
+- STOCK_MARKET: stock exchange, NYSE, Nasdaq, Dow Jones, S&P 500, market rally, stocks, Wall Street trading, bourse
+- GOLD: gold prices, gold rally, bullion, precious metals (gold focus)
+- SILVER: silver prices, silver rally
+- OIL: oil prices, crude, petroleum, Brent, WTI
+- DOLLAR: US dollar, dollar index, greenback, dollar strength/weakness
+- BITCOIN: bitcoin, crypto prices, cryptocurrency markets
 
-VALID entities (real global brands):
-  NVIDIA, APPLE, MICROSOFT, GOOGLE, AMAZON, META, TESLA, BOEING, JPMORGAN,
-  GOLDMAN SACHS, BLACKROCK, OPENAI, SPACEX, NETFLIX, DISNEY, EXXON, CHEVRON,
-  WALMART, COSTCO, TARGET, FORD, GM, TOYOTA, SAMSUNG, TSMC, INTEL, AMD
-
-Return null for:
-  - Descriptive phrases: "tech firms", "automakers", "fund managers", "hedge funds"
-  - Collectives: "Wall Street", "Silicon Valley", "Big Tech", "banks"
-  - People: "Trump", "Musk", "Bezos" (these are not companies)
-  - Generic: "startup", "private equity", "German investments"
-  - Institutions: "Fed", "central bank" (these use XX_CENTRAL_BANK actor)
+For CORPORATION reclassification:
+- Only if a SPECIFIC named company is the subject
+- Use stock ticker names: NVIDIA, APPLE, JPMORGAN, MORGAN STANLEY, GOLDMAN SACHS, etc.
+- NOT for generic "tech firms", "banks", "Wall Street" (these are STOCK_MARKET or null)
 
 OUTPUT FORMAT:
-[{"idx": 1, "entity": "NVIDIA"}, {"idx": 2, "entity": null}]
+[{"idx": 1, "actor": "UNKNOWN", "entity": "STOCK_MARKET"}, {"idx": 2, "actor": "CORPORATION", "entity": "JPMORGAN"}, {"idx": 3, "actor": "UNKNOWN", "entity": null}]
 
 Return ONLY valid JSON, no explanations."""
 
 
 def build_user_prompt(titles_batch: list[dict]) -> str:
     """Build user prompt for entity extraction."""
-    lines = ["Extract the primary named entity from these titles:", ""]
+    lines = ["Identify the primary subject for these UNKNOWN-actor titles:", ""]
 
     for i, title in enumerate(titles_batch, 1):
-        lines.append("{}. [{}] {}".format(i, title["actor"], title["title_display"]))
+        lines.append("{}. {}".format(i, title["title_display"]))
 
     return "\n".join(lines)
 
@@ -123,7 +122,7 @@ def call_llm(user_prompt: str) -> str:
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.1,
-        "max_tokens": 1000,
+        "max_tokens": 1500,
     }
 
     with httpx.Client(timeout=30) as client:
@@ -142,10 +141,8 @@ def call_llm(user_prompt: str) -> str:
         return data["choices"][0]["message"]["content"].strip()
 
 
-def parse_entity_response(response: str, titles_batch: list[dict]) -> dict:
-    """Parse entity extraction response. Returns {title_id: entity_or_none}."""
-    import re
-
+def parse_response(response: str, titles_batch: list[dict]) -> dict:
+    """Parse entity extraction response. Returns {title_id: (actor, entity)}."""
     # Try to extract JSON
     try:
         items = json.loads(response.strip())
@@ -164,39 +161,46 @@ def parse_entity_response(response: str, titles_batch: list[dict]) -> dict:
     results = {}
     for item in items:
         idx = item.get("idx")
+        actor = item.get("actor", "UNKNOWN")
         entity = item.get("entity")
         if idx and 1 <= idx <= len(titles_batch):
             title_id = titles_batch[idx - 1]["id"]
-            # Normalize: uppercase and strip, or None
-            if entity and entity.lower() != "null":
-                results[title_id] = entity.upper().strip()
+            # Normalize
+            if actor:
+                actor = actor.upper().strip()
+            if entity and str(entity).lower() != "null":
+                entity = entity.upper().strip()
             else:
-                results[title_id] = None
+                entity = None
+            results[title_id] = (actor, entity)
 
     return results
 
 
-def update_entities_in_db(conn, entities: dict) -> int:
-    """Update actor_entity in database (can set to NULL)."""
-    if not entities:
-        return 0
+def update_labels_in_db(conn, updates: dict) -> tuple[int, int]:
+    """Update actor and actor_entity in database. Returns (updated, reclassified)."""
+    if not updates:
+        return 0, 0
 
     cur = conn.cursor()
     updated = 0
+    reclassified = 0
 
-    for title_id, entity in entities.items():
+    for title_id, (actor, entity) in updates.items():
         cur.execute(
             """
             UPDATE title_labels
-            SET actor_entity = %s, updated_at = NOW()
+            SET actor = %s, actor_entity = %s, updated_at = NOW()
             WHERE title_id = %s
         """,
-            (entity, title_id),
+            (actor, entity, title_id),
         )
         updated += cur.rowcount
+        if actor == "CORPORATION":
+            reclassified += 1
 
     conn.commit()
-    return updated
+    return updated, reclassified
 
 
 def process_batch(batch_info: tuple) -> dict:
@@ -206,59 +210,60 @@ def process_batch(batch_info: tuple) -> dict:
     try:
         user_prompt = build_user_prompt(batch)
         response = call_llm(user_prompt)
-        entities = parse_entity_response(response, batch)
+        updates = parse_response(response, batch)
 
-        # Count non-null entities
-        valid_count = sum(1 for e in entities.values() if e is not None)
+        # Count stats
+        entity_count = sum(1 for (a, e) in updates.values() if e is not None)
+        corp_count = sum(1 for (a, e) in updates.values() if a == "CORPORATION")
 
         return {
             "batch_num": batch_num,
             "success": True,
-            "entities": entities,
-            "total": len(entities),
-            "valid": valid_count,
+            "updates": updates,
+            "total": len(updates),
+            "with_entity": entity_count,
+            "reclassified": corp_count,
         }
     except Exception as e:
         return {
             "batch_num": batch_num,
             "success": False,
-            "entities": {},
+            "updates": {},
             "total": 0,
-            "valid": 0,
+            "with_entity": 0,
+            "reclassified": 0,
             "error": str(e)[:100],
         }
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Re-extract actor_entity for CORPORATION labels"
+        description="Re-extract entity for UNKNOWN actor titles"
     )
     parser.add_argument("--max-titles", type=int, help="Maximum titles to process")
     parser.add_argument(
+        "--action", type=str, help="Filter by action_class (e.g., ECONOMIC_DISRUPTION)"
+    )
+    parser.add_argument(
         "--dry-run", action="store_true", help="Don't write to database"
     )
-    parser.add_argument("--batch-size", type=int, default=20, help="Batch size")
+    parser.add_argument("--batch-size", type=int, default=25, help="Batch size")
     parser.add_argument("--concurrency", type=int, default=3, help="Parallel workers")
-    parser.add_argument(
-        "--force-all",
-        action="store_true",
-        help="Re-label ALL entity actors, not just missing",
-    )
     args = parser.parse_args()
 
     conn = get_connection()
 
-    print("Loading titles for entity extraction...")
-    titles = load_titles_for_relabeling(conn, args.max_titles, args.force_all)
+    print("Loading UNKNOWN titles for entity extraction...")
+    titles = load_unknown_titles(conn, args.max_titles, args.action)
 
     if not titles:
         print("No titles to process.")
         conn.close()
         return
 
-    print("Found {} titles".format(len(titles)))
-    if args.force_all:
-        print("(FORCE ALL - re-labeling everything)")
+    print("Found {} UNKNOWN titles".format(len(titles)))
+    if args.action:
+        print("Action filter: {}".format(args.action))
     if args.dry_run:
         print("(DRY RUN)")
 
@@ -273,8 +278,8 @@ def main():
     print("Processing {} batches...".format(total_batches))
 
     total_processed = 0
-    total_valid = 0
-    total_null = 0
+    total_with_entity = 0
+    total_reclassified = 0
     errors = 0
     start_time = time.time()
 
@@ -286,20 +291,22 @@ def main():
             batch_num = result["batch_num"]
 
             if result["success"]:
-                entities = result["entities"]
-                valid = result["valid"]
-                null_count = result["total"] - valid
+                updates = result["updates"]
 
                 if not args.dry_run:
-                    update_entities_in_db(conn, entities)
+                    update_labels_in_db(conn, updates)
 
                 total_processed += result["total"]
-                total_valid += valid
-                total_null += null_count
+                total_with_entity += result["with_entity"]
+                total_reclassified += result["reclassified"]
 
                 print(
-                    "Batch {}/{}: {} valid, {} null".format(
-                        batch_num, total_batches, valid, null_count
+                    "Batch {}/{}: {} processed, {} with entity, {} -> CORPORATION".format(
+                        batch_num,
+                        total_batches,
+                        result["total"],
+                        result["with_entity"],
+                        result["reclassified"],
                     )
                 )
             else:
@@ -317,8 +324,11 @@ def main():
     print("SUMMARY")
     print("=" * 60)
     print("Titles processed: {}".format(total_processed))
-    print("Valid entities: {}".format(total_valid))
-    print("Null (no company): {}".format(total_null))
+    print("With entity (STOCK_MARKET, GOLD, etc.): {}".format(total_with_entity))
+    print("Reclassified to CORPORATION: {}".format(total_reclassified))
+    print(
+        "Still UNKNOWN with null entity: {}".format(total_processed - total_with_entity)
+    )
     print("Errors: {}".format(errors))
     print("Time: {:.1f}s".format(elapsed))
 
