@@ -148,7 +148,12 @@ def assign_bucket(title: dict, centroid_id: str) -> str:
 
 
 # Actor types that should be clustered by entity (not by action)
+# These need LLM to extract the specific entity name
 ENTITY_ACTORS = {"CORPORATION", "ARMED_GROUP", "NGO", "MEDIA_OUTLET"}
+
+# Actor suffixes where the actor itself IS the entity (consolidate all actions)
+# e.g., US_CENTRAL_BANK is always "the Fed" - all their actions are one event
+CONSOLIDATED_ACTOR_SUFFIXES = {"_CENTRAL_BANK"}
 
 # Invalid entity values that should be ignored (not specific companies)
 INVALID_ENTITIES = {
@@ -188,12 +193,21 @@ def normalize_entity(entity: str) -> str:
     return normalizations.get(entity, entity)
 
 
+def should_consolidate_actor(actor: str) -> bool:
+    """Check if actor should have all actions consolidated into one event."""
+    for suffix in CONSOLIDATED_ACTOR_SUFFIXES:
+        if actor.endswith(suffix):
+            return True
+    return False
+
+
 def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
     """Cluster titles by (actor, action) or (actor, entity) for entity actors.
 
-    For ENTITY_ACTORS (CORPORATION, etc.), groups ALL actions for one entity together.
-    This creates ONE event per company summarizing all their news.
-    For state actors, groups by action_class as before.
+    Consolidation rules:
+    1. ENTITY_ACTORS (CORPORATION, etc.) with valid entity -> group by entity
+    2. CONSOLIDATED_ACTOR_SUFFIXES (_CENTRAL_BANK) -> group by actor (all actions)
+    3. All other actors -> group by action_class
     """
     clusters = defaultdict(list)
     for t in titles:
@@ -202,12 +216,15 @@ def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
         raw_entity = t.get("actor_entity")
         entity = normalize_entity(raw_entity) if raw_entity else None
 
-        # For entity-based actors with valid entity: group by entity only
-        # This creates ONE event per company (e.g., "Nvidia news summary")
+        # Rule 1: Entity-based actors with valid entity -> one event per entity
         if actor in ENTITY_ACTORS and entity:
-            key = (actor, entity, None)  # None for action = all actions combined
+            key = (actor, entity, None)
+        # Rule 2: Consolidated actors (e.g., XX_CENTRAL_BANK) -> one event per actor
+        elif should_consolidate_actor(actor):
+            key = (actor, None, None)  # Both entity and action are None
+        # Rule 3: Standard grouping by action
         else:
-            key = (actor, None, action)  # None for entity = standard grouping
+            key = (actor, None, action)
 
         clusters[key].append(t)
 

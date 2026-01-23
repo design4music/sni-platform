@@ -122,8 +122,24 @@ IMPORTANT:
 - TARGET MUST be normalized: use ISO codes (FR not FRANCE), canonical names (EU not EU_COUNTRIES)
 - conf (confidence) should be 0.0-1.0 based on how clear the title is
 - If multiple actions apply, choose the highest-tier (lowest number) action
-- ENTITY: For generic actors (CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET), specify the named entity in UPPERCASE (e.g., NVIDIA, JPMORGAN, ISIS). Use null for state actors.
 - Return ONLY valid JSON, no explanations
+
+ENTITY EXTRACTION RULES (CRITICAL):
+- ONLY for generic actors: CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET
+- ONLY extract globally recognized brand names you know from training data
+- Use the company's common stock ticker name: NVIDIA, APPLE, JPMORGAN, BOEING, META, GOOGLE, AMAZON
+- Use null if: no specific company, multiple companies, or generic industry reference
+
+VALID entities (real global brands):
+  NVIDIA, APPLE, MICROSOFT, GOOGLE, AMAZON, META, TESLA, BOEING, JPMORGAN,
+  GOLDMAN SACHS, BLACKROCK, OPENAI, SPACEX, NETFLIX, DISNEY, EXXON, CHEVRON
+
+INVALID - use null instead:
+  - Descriptive phrases: "tech firms", "automakers", "fund managers", "hedge funds"
+  - Collectives: "Wall Street", "Silicon Valley", "Big Tech", "banks"
+  - People as corporations: "Trump", "Musk", "Bezos" (use EXECUTIVE or CORPORATION with real company)
+  - Unknown/generic: "startup", "private equity", "German investments"
+  - Institutions: "Fed", "central bank" (use XX_CENTRAL_BANK actor instead)
 """
 
 
