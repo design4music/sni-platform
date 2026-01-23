@@ -46,7 +46,7 @@ def load_titles_with_labels(conn, centroid_id: str, track: str) -> list[dict]:
         """
         SELECT
             t.id, t.title_display, t.matched_aliases, DATE(t.pubdate_utc) as pub_date,
-            tl.actor, tl.action_class, tl.domain, tl.target
+            tl.actor, tl.action_class, tl.domain, tl.target, tl.actor_entity
         FROM (
             SELECT DISTINCT ON (title_display)
                 id, title_display, matched_aliases, pubdate_utc
@@ -76,6 +76,7 @@ def load_titles_with_labels(conn, centroid_id: str, track: str) -> list[dict]:
             "action_class": r[5],
             "domain": r[6],
             "target": r[7],
+            "actor_entity": r[8],
         }
         for r in rows
     ]
@@ -146,11 +147,28 @@ def assign_bucket(title: dict, centroid_id: str) -> str:
     return "domestic"
 
 
+# Actor types that should be sub-clustered by specific entity
+ENTITY_ACTORS = {"CORPORATION", "ARMED_GROUP", "NGO", "MEDIA_OUTLET"}
+
+
 def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
-    """Cluster titles by (actor, action_class)."""
+    """Cluster titles by (actor, actor_entity, action_class).
+
+    For ENTITY_ACTORS (CORPORATION, etc.), uses actor_entity for finer grouping.
+    For state actors, actor_entity is ignored.
+    """
     clusters = defaultdict(list)
     for t in titles:
-        key = (t["actor"], t["action_class"])
+        actor = t["actor"]
+        action = t["action_class"]
+        entity = t.get("actor_entity")
+
+        # Use entity for specific actor types, otherwise just actor
+        if actor in ENTITY_ACTORS and entity:
+            key = (actor, entity, action)
+        else:
+            key = (actor, None, action)
+
         clusters[key].append(t)
 
     # Filter by min size
@@ -196,6 +214,7 @@ def split_by_spike(
 def create_event(
     bucket_name: str,
     actor: str,
+    actor_entity: str,
     action: str,
     titles: list[dict],
     is_spike_group: bool = False,
@@ -214,6 +233,7 @@ def create_event(
     return {
         "bucket": bucket_name,
         "actor": actor,
+        "actor_entity": actor_entity,
         "action_class": action,
         "aliases": top_aliases,
         "title_count": len(titles),
@@ -252,7 +272,7 @@ def cluster_titles(
         # Step 2: Label clustering within bucket
         label_clusters = cluster_by_labels(bucket_titles, min_label_cluster)
 
-        for (actor, action), label_titles in label_clusters.items():
+        for (actor, entity, action), label_titles in label_clusters.items():
             # Step 3: For large UNKNOWN clusters, split by spike
             if actor == "UNKNOWN" and len(label_titles) >= unknown_split_threshold:
                 spike_days = detect_spike_days(label_titles)
@@ -261,15 +281,19 @@ def cluster_titles(
                     for i, group in enumerate(groups):
                         is_spike = any(t["pub_date"] in spike_days for t in group)
                         events.append(
-                            create_event(bucket_name, actor, action, group, is_spike)
+                            create_event(
+                                bucket_name, actor, entity, action, group, is_spike
+                            )
                         )
                 else:
                     events.append(
-                        create_event(bucket_name, actor, action, label_titles)
+                        create_event(bucket_name, actor, entity, action, label_titles)
                     )
             else:
                 events.append(
-                    create_event(bucket_name, actor, action, label_titles, False)
+                    create_event(
+                        bucket_name, actor, entity, action, label_titles, False
+                    )
                 )
 
     # Sort by title count descending
@@ -307,9 +331,13 @@ def print_cluster_report(events: list[dict], max_events: int = 30):
 
         for e in bucket_events[:10]:  # Top 10 per bucket
             spike_marker = " [SPIKE]" if e["spike_days"] else ""
+            # Show entity for CORPORATION etc.
+            actor_display = e["actor"]
+            if e.get("actor_entity"):
+                actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
             print(
                 "%3d | %s -> %s%s"
-                % (e["title_count"], e["actor"], e["action_class"], spike_marker)
+                % (e["title_count"], actor_display, e["action_class"], spike_marker)
             )
             if e["aliases"]:
                 print("     aliases: %s" % e["aliases"][:5])
@@ -366,8 +394,11 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
 
         # Generate placeholder summary (actor -> action with title count)
         spike_tag = " [SPIKE]" if e["spike_days"] else ""
+        actor_display = e["actor"]
+        if e.get("actor_entity"):
+            actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
         summary = "%s -> %s (%d titles)%s" % (
-            e["actor"],
+            actor_display,
             e["action_class"],
             e["title_count"],
             spike_tag,

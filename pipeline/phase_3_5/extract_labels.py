@@ -40,6 +40,7 @@ LABEL FORMAT: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
 - ACTION_CLASS: The type of action from the ontology (see below)
 - DOMAIN: The thematic domain
 - TARGET: Optional target actor/entity - MUST use normalized format (see TARGET rules below)
+- ACTOR_ENTITY: For generic actors (CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET), the specific named entity
 
 ONTOLOGY VERSION: ELO_v2.0
 
@@ -91,6 +92,15 @@ Label: US_JUDICIARY -> LEGAL_RULING -> GOVERNANCE
 Title: "Trump pressures Fed to lower interest rates"
 Label: US_EXECUTIVE -> POLITICAL_PRESSURE -> ECONOMY -> US_CENTRAL_BANK
 
+Title: "Nvidia reports record revenue amid AI chip demand"
+Label: CORPORATION -> ECONOMIC_DISRUPTION -> ECONOMY (actor_entity: NVIDIA)
+
+Title: "SpaceX launches new batch of Starlink satellites"
+Label: CORPORATION -> INFRASTRUCTURE_DEVELOPMENT -> TECHNOLOGY (actor_entity: SPACEX)
+
+Title: "ISIS claims responsibility for attack in Syria"
+Label: ARMED_GROUP -> MILITARY_OPERATION -> SECURITY (actor_entity: ISIS)
+
 OUTPUT FORMAT:
 Return a JSON array with objects for each title:
 [
@@ -100,6 +110,7 @@ Return a JSON array with objects for each title:
     "action": "ACTION_CLASS",
     "domain": "DOMAIN",
     "target": "TARGET_OR_NULL",
+    "entity": "SPECIFIC_ENTITY_OR_NULL",
     "conf": 0.9
   }}
 ]
@@ -111,6 +122,7 @@ IMPORTANT:
 - TARGET MUST be normalized: use ISO codes (FR not FRANCE), canonical names (EU not EU_COUNTRIES)
 - conf (confidence) should be 0.0-1.0 based on how clear the title is
 - If multiple actions apply, choose the highest-tier (lowest number) action
+- ENTITY: For generic actors (CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET), specify the named entity in UPPERCASE (e.g., NVIDIA, JPMORGAN, ISIS). Use null for state actors.
 - Return ONLY valid JSON, no explanations
 """
 
@@ -283,7 +295,12 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
         action_class = item.get("action", "SECURITY_INCIDENT")
         domain = item.get("domain", "GOVERNANCE")
         target = item.get("target")
+        actor_entity = item.get("entity")
         confidence = item.get("conf", 1.0)
+
+        # Normalize actor_entity
+        if actor_entity:
+            actor_entity = actor_entity.upper().strip()
 
         # Validate action_class
         if not validate_action_class(action_class):
@@ -310,6 +327,7 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
                 "action_class": action_class,
                 "domain": domain,
                 "target": target,
+                "actor_entity": actor_entity,
                 "confidence": min(max(float(confidence), 0.0), 1.0),
             }
         )
@@ -406,15 +424,16 @@ def write_labels_to_db(conn, labels: list[dict]) -> int:
     insert_sql = """
         INSERT INTO title_labels (
             title_id, actor, action_class, domain, target,
-            label_version, confidence
+            actor_entity, label_version, confidence
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s
         )
         ON CONFLICT (title_id) DO UPDATE SET
             actor = EXCLUDED.actor,
             action_class = EXCLUDED.action_class,
             domain = EXCLUDED.domain,
             target = EXCLUDED.target,
+            actor_entity = EXCLUDED.actor_entity,
             label_version = EXCLUDED.label_version,
             confidence = EXCLUDED.confidence,
             updated_at = NOW()
@@ -431,6 +450,7 @@ def write_labels_to_db(conn, labels: list[dict]) -> int:
                     label["action_class"],
                     label["domain"],
                     label["target"],
+                    label.get("actor_entity"),
                     ONTOLOGY_VERSION,
                     label["confidence"],
                 ),
