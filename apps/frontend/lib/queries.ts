@@ -102,6 +102,8 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     source_title_ids: string[];
     event_type: string | null;
     bucket_key: string | null;
+    source_batch_count: number;
+    is_catchall: boolean;
   }>(
     `SELECT
       e.id,
@@ -109,12 +111,14 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
       e.summary,
       e.event_type,
       e.bucket_key,
+      e.source_batch_count,
+      e.is_catchall,
       array_agg(evt.title_id ORDER BY evt.title_id) as source_title_ids
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
     WHERE e.ctm_id = $1
-    GROUP BY e.id, e.date, e.summary, e.event_type, e.bucket_key
-    ORDER BY e.date DESC`,
+    GROUP BY e.id, e.date, e.summary, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
+    ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
   );
 
@@ -125,6 +129,8 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     source_title_ids: r.source_title_ids.filter(id => id !== null),
     event_type: r.event_type as Event['event_type'],
     bucket_key: r.bucket_key,
+    source_count: r.source_batch_count,
+    is_catchall: r.is_catchall,
   }));
 }
 

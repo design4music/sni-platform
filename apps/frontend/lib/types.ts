@@ -60,6 +60,8 @@ export interface Event {
   bucket_key?: string | null;
   alias?: string | null;
   is_alias_group?: boolean;
+  source_count?: number;
+  is_catchall?: boolean;
 }
 
 export interface Title {
