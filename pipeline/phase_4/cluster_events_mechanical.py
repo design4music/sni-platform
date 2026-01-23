@@ -147,27 +147,67 @@ def assign_bucket(title: dict, centroid_id: str) -> str:
     return "domestic"
 
 
-# Actor types that should be sub-clustered by specific entity
+# Actor types that should be clustered by entity (not by action)
 ENTITY_ACTORS = {"CORPORATION", "ARMED_GROUP", "NGO", "MEDIA_OUTLET"}
+
+# Invalid entity values that should be ignored (not specific companies)
+INVALID_ENTITIES = {
+    # Trump-related (should be US_EXECUTIVE, not CORPORATION)
+    "TRUMP", "TRUMP ADMINISTRATION", "TRUMP MEDIA GROUP",
+    "TRUMP ORGANIZATION", "TRUMP STORE",
+    # Collective/generic terms (not specific companies)
+    "WALL STREET", "TECH FIRMS", "STARTUP", "SILICON VALLEY",
+    "PRIVATE EQUITY", "HEDGE FUND", "HEDGE FUNDS",
+    "RARE-EARTH MAGNET MAKER", "TECH GIANT", "TECH GIANTS",
+    "BIG TECH", "BANKS", "AUTOMAKER", "AUTOMAKERS",
+    # Institutions that are not corporations
+    "FED", "FEDERAL RESERVE", "ECB", "CENTRAL BANK",
+}
+
+
+def normalize_entity(entity: str) -> str:
+    """Normalize entity names for consistency."""
+    if not entity:
+        return None
+
+    entity = entity.upper().strip()
+
+    # Skip invalid entities
+    if entity in INVALID_ENTITIES:
+        return None
+
+    # Normalize common variations
+    normalizations = {
+        "GOLDMAN": "GOLDMAN SACHS",
+        "JPMORGAN CHASE": "JPMORGAN",
+        "JP MORGAN": "JPMORGAN",
+        "ALPHABET": "GOOGLE",  # Parent company -> common name
+        "ALPHABET INC": "GOOGLE",
+    }
+
+    return normalizations.get(entity, entity)
 
 
 def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
-    """Cluster titles by (actor, actor_entity, action_class).
+    """Cluster titles by (actor, action) or (actor, entity) for entity actors.
 
-    For ENTITY_ACTORS (CORPORATION, etc.), uses actor_entity for finer grouping.
-    For state actors, actor_entity is ignored.
+    For ENTITY_ACTORS (CORPORATION, etc.), groups ALL actions for one entity together.
+    This creates ONE event per company summarizing all their news.
+    For state actors, groups by action_class as before.
     """
     clusters = defaultdict(list)
     for t in titles:
         actor = t["actor"]
         action = t["action_class"]
-        entity = t.get("actor_entity")
+        raw_entity = t.get("actor_entity")
+        entity = normalize_entity(raw_entity) if raw_entity else None
 
-        # Use entity for specific actor types, otherwise just actor
+        # For entity-based actors with valid entity: group by entity only
+        # This creates ONE event per company (e.g., "Nvidia news summary")
         if actor in ENTITY_ACTORS and entity:
-            key = (actor, entity, action)
+            key = (actor, entity, None)  # None for action = all actions combined
         else:
-            key = (actor, None, action)
+            key = (actor, None, action)  # None for entity = standard grouping
 
         clusters[key].append(t)
 
@@ -335,10 +375,14 @@ def print_cluster_report(events: list[dict], max_events: int = 30):
             actor_display = e["actor"]
             if e.get("actor_entity"):
                 actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
-            print(
-                "%3d | %s -> %s%s"
-                % (e["title_count"], actor_display, e["action_class"], spike_marker)
-            )
+
+            # For entity-grouped events (action=None), show "news summary" instead
+            if e.get("action_class"):
+                label = "%s -> %s" % (actor_display, e["action_class"])
+            else:
+                label = "%s (news summary)" % actor_display
+
+            print("%3d | %s%s" % (e["title_count"], label, spike_marker))
             if e["aliases"]:
                 print("     aliases: %s" % e["aliases"][:5])
             print("     dates: %s to %s" % e["date_range"])
@@ -392,17 +436,26 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
         # Use most recent date from titles
         event_date = e["date_range"][1]
 
-        # Generate placeholder summary (actor -> action with title count)
+        # Generate placeholder summary
         spike_tag = " [SPIKE]" if e["spike_days"] else ""
         actor_display = e["actor"]
         if e.get("actor_entity"):
             actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
-        summary = "%s -> %s (%d titles)%s" % (
-            actor_display,
-            e["action_class"],
-            e["title_count"],
-            spike_tag,
-        )
+
+        # For entity-grouped events (action=None), use "news summary" format
+        if e.get("action_class"):
+            summary = "%s -> %s (%d titles)%s" % (
+                actor_display,
+                e["action_class"],
+                e["title_count"],
+                spike_tag,
+            )
+        else:
+            summary = "%s news (%d titles)%s" % (
+                actor_display,
+                e["title_count"],
+                spike_tag,
+            )
 
         # Insert event
         cur.execute(
