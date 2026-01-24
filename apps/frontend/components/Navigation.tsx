@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getTrackLabel, Track } from '@/lib/types';
 
 const REGIONS = [
@@ -26,6 +27,11 @@ export default function Navigation({ centroidLabel, centroidId, otherTracks, cur
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileRegionsOpen, setMobileRegionsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -127,9 +133,9 @@ export default function Navigation({ centroidLabel, centroidId, otherTracks, cur
         </div>
       </div>
 
-      {/* Mobile Full-Screen Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-dashboard-bg z-50 flex flex-col">
+      {/* Mobile Full-Screen Menu - Portal to escape header stacking context */}
+      {mounted && mobileMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex flex-col" style={{ backgroundColor: '#0a0e1a' }}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-dashboard-border">
             <span className="text-xl font-bold text-dashboard-text">Menu</span>
@@ -234,7 +240,8 @@ export default function Navigation({ centroidLabel, centroidId, otherTracks, cur
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
