@@ -32,22 +32,10 @@ export default async function HomePage() {
             Explore what's happening across the world—clearly, quickly, and in context.
           </p>
           <div className="flex gap-4">
-            <Link href="#how-it-works" className="text-blue-400 hover:text-blue-300 underline">
+            <Link href="/disclaimer" className="text-blue-400 hover:text-blue-300 underline">
               How it works
             </Link>
           </div>
-        </section>
-
-        {/* AI Disclaimer */}
-        <section className="bg-dashboard-surface border border-dashboard-border rounded-lg p-6 max-w-3xl">
-          <h2 className="text-xl font-semibold mb-2">AI-Generated Content</h2>
-          <p className="text-dashboard-text-muted">
-            Summaries are AI-generated from aggregated reporting. Source links are provided for verification.{' '}
-            <Link href="#how-it-works" className="text-blue-400 hover:text-blue-300 underline">
-              Learn how WorldBrief works
-            </Link>
-            .
-          </p>
         </section>
 
         {/* Map */}
@@ -121,31 +109,36 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* How it works */}
-        <section id="how-it-works" className="max-w-3xl">
-          <h2 className="text-3xl font-bold mb-6">How WorldBrief Works</h2>
-          <div className="space-y-4 text-dashboard-text-muted">
-            <p>
-              <strong className="text-dashboard-text">1. Ingestion:</strong> WorldBrief continuously monitors global news sources via RSS feeds,
-              capturing thousands of articles daily across multiple languages.
-            </p>
-            <p>
-              <strong className="text-dashboard-text">2. Strategic Filtering:</strong> Articles are filtered for strategic relevance
-              using taxonomy matching and AI-powered gating, focusing on geopolitical, security, and economic developments.
-            </p>
-            <p>
-              <strong className="text-dashboard-text">3. Centroid Assignment:</strong> Strategic articles are assigned to centroids
-              (countries, regions, or thematic lenses) and classified into tracks (military, diplomacy, economic, etc.).
-            </p>
-            <p>
-              <strong className="text-dashboard-text">4. Narrative Generation:</strong> AI synthesizes monthly summaries and event
-              timelines for each centroid-track combination, creating structured intelligence narratives.
-            </p>
-            <p>
-              <strong className="text-dashboard-text">5. Presentation:</strong> You navigate these narratives through an intuitive
-              interface organized by actor, theme, and time.
-            </p>
+        {/* How it works - merged with metrics and disclaimer */}
+        <section id="how-it-works" className="border-t border-dashboard-border pt-12">
+          {/* Metrics strip */}
+          <div className="grid grid-cols-3 gap-8 mb-8 text-center">
+            <div>
+              <p className="text-4xl md:text-5xl font-bold text-dashboard-text">{feeds.length}+</p>
+              <p className="text-sm text-dashboard-text-muted mt-1">RSS feeds</p>
+            </div>
+            <div>
+              <p className="text-4xl md:text-5xl font-bold text-dashboard-text">20+</p>
+              <p className="text-sm text-dashboard-text-muted mt-1">languages</p>
+            </div>
+            <div>
+              <p className="text-4xl md:text-5xl font-bold text-dashboard-text">5,000+</p>
+              <p className="text-sm text-dashboard-text-muted mt-1">articles / day</p>
+            </div>
           </div>
+
+          {/* Short description */}
+          <p className="text-center text-dashboard-text-muted max-w-2xl mx-auto mb-6">
+            WorldBrief aggregates global reporting, filters for strategic relevance, and synthesizes it into structured briefings by geography and theme.
+          </p>
+
+          {/* AI disclaimer line */}
+          <p className="text-center text-sm text-dashboard-text-muted/70">
+            All summaries are AI-generated.{' '}
+            <Link href="/disclaimer" className="text-blue-400/70 hover:text-blue-300 underline">
+              Learn more about our method
+            </Link>
+          </p>
         </section>
       </div>
     </DashboardLayout>
