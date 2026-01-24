@@ -1,294 +1,524 @@
-# WorldBrief (SNI) v3 Pipeline - Project Status & Documentation
+# WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-01-22
-**Status**: Production Ready - Pipeline operational, events clustering TODO
+**Last Updated**: 2026-01-24
+**Status**: Production - Full 6-phase pipeline operational
 **Branch**: `main`
 
 ---
 
 ## Executive Summary
 
-The v3 pipeline represents a complete redesign of SNI's intelligence processing system, moving from Neo4j graph clustering to a PostgreSQL-native centroid-based architecture. The system is **fully operational** with all phases implemented, tested, and ready for production deployment via daemon orchestration.
+The v3 pipeline processes news headlines through 6 phases to produce intelligence CTMs (Centroid-Track-Month units) with structured events and narrative summaries. The system uses a PostgreSQL-native architecture with LLM-based classification and entity extraction.
 
-### Key Achievements
-
-- **Phase 1**: RSS ingestion with NFKC normalization and incremental fetching ✅
-- **Phase 2**: 3-pass centroid matching (theater → systemic → macro) ✅
-- **Phase 3**: LLM-based track assignment with CTM creation ✅
-- **Phase 3 Enhanced**: Dynamic track configuration system (centroid-specific tracks) ✅
-- **Phase 3 Refactored**: Many-to-many title-centroid-track relationships with intel gating (2026-01-07) ✅
-- **Phase 4.1**: Events digest extraction with batching and consolidation ✅
-- **Phase 4.2**: Summary generation with dynamic focus lines (centroid + track specific) ✅
-- **Pipeline Daemon**: Full 4-phase orchestration with word count monitoring (2026-01-12) ✅
-- **Taxonomy**: Thematically consolidated multilingual aliases, added centroid ids ✅
-- **Schema Migration**: Simplified taxonomy_v3 structure (is_stop_word boolean, removed obsolete fields) ✅
-- **Schema Optimization**: Migrated taxonomy_v3.centroid_ids from ARRAY to VARCHAR(30) (2026-01-06) ✅
-
----
-
-## Architecture Overview
-
-### Data Flow
+### Pipeline Flow
 
 ```
 RSS Feeds (Google News)
-    ↓
-[Phase 1] Ingestion → titles_v3 (processing_status='pending')
-    ↓
-[Phase 2] Centroid Matching → titles_v3 (centroid_ids assigned, status='assigned')
-    ↓
-[Phase 3] Intel Gating & Track Assignment
-    │
-    ├→ For each centroid in title.centroid_ids:
-    │   ├→ LLM Intel Gating (strategic vs. non-strategic)
-    │   ├→ Rejected → titles_v3.processing_status = 'blocked_llm'
-    │   └→ Strategic → LLM Track Assignment using centroid-specific tracks
-    │        └→ title_assignments (title_id, centroid_id, track, ctm_id)
-    │             └→ CTM creation/update (centroid+track+month units)
-    ↓
-[Phase 4] Enrichment → events_digest + summary_text
-    ↓
-CTM Table (ready for frontend consumption)
+    |
+[Phase 1] Ingestion --> titles_v3 (processing_status='pending')
+    |
+[Phase 2] Centroid Matching --> titles_v3 (centroid_ids assigned, status='assigned')
+    |
+[Phase 3] Intel Gating + Track Assignment --> title_assignments + ctm
+    |
+[Phase 3.5] Label Extraction (ELO v2.0) --> title_labels
+    |
+[Phase 4] Mechanical Event Clustering --> events_v3 + event_v3_titles
+    |
+[Phase 4.5a] Event Summary Generation --> events_v3.summary (narrative)
+    |
+[Phase 4.5b] CTM Digest Generation --> ctm.summary_text
+    |
+Frontend (Next.js) <-- READ-ONLY
 ```
-
-### Core Tables
-
-1. **titles_v3**: News headlines with processing metadata
-   - `processing_status`: 'pending' → 'assigned' / 'blocked_llm' / 'out_of_scope' / 'blocked_stopword'
-   - `centroid_ids`: ARRAY (many-to-many with centroids from Phase 2)
-   - Note: track and ctm_ids removed (now in title_assignments table)
-
-2. **title_assignments**: Many-to-many junction table for title-centroid-track relationships
-   - `title_id`: Reference to titles_v3
-   - `centroid_id`: Reference to centroids_v3
-   - `track`: Track assigned by LLM for this specific centroid context
-   - `ctm_id`: Reference to CTM
-   - Unique constraint on (title_id, centroid_id) - one track per title per centroid
-
-3. **taxonomy_v3**: Consolidated entity taxonomy
-   - 252+ entities, each belonging to ONE centroid (1-to-1 via centroid_id VARCHAR)
-   - Multilingual aliases in JSONB format (en, es, ru, ar, zh, etc.)
-   - Stop words marked with is_stop_word boolean
-   - Supports non-Latin scripts (Chinese, Arabic, Cyrillic)
-
-4. **centroids_v3**: Clustering centers
-   - Two classes: geo (geographic) and systemic (thematic)
-   - Optional custom track configurations via track_config_id
-
-5. **ctm**: Centroid-Track-Month aggregation units
-   - Unique on (centroid_id, track, yyyymm)
-   - `events_digest`: JSONB array of distinct events
-   - `summary_text`: 150-250 word narrative
-   - `title_count`: Real-time count of associated titles
-   - `is_frozen`: Lock for historical stability
 
 ---
 
-## File Map
+## Phase 1: RSS Ingestion
 
-### Phase 1: RSS Ingestion
-```
-v3/phase_1/
-├── feeds_repo.py               # Feed metadata management (ETag, Last-Modified)
-├── rss_fetcher.py              # RSS parsing, NFKC normalization, deduplication
-└── ingest_feeds.py             # CLI runner for Phase 1
-```
+**Script**: `pipeline/phase_1/ingest_feeds.py`
+**Daemon Interval**: 12 hours
+**Purpose**: Fetch headlines from Google News RSS feeds
 
-**Key Features**:
-- NFKC Unicode normalization
-- Real publisher extraction from Google News
-- Conditional GET with ETag/Last-Modified
-- Watermark-based incremental fetching
-- Inserts with `processing_status='pending'`
+### Processing
 
-**Database**: `titles_v3` table
+1. Load active feeds from `feeds` table
+2. Fetch RSS with conditional GET (ETag/Last-Modified)
+3. Parse entries with feedparser
+4. Apply NFKC Unicode normalization
+5. Extract real publisher from Google News redirect
+6. Insert to `titles_v3` with `processing_status='pending'`
 
-### Phase 2: Centroid Matching
-```
-v3/phase_2/
-└── match_centroids.py          # Accumulative mechanical matching
-```
+### Key Features
 
-**Algorithm**:
-- Accumulative matching (checks all centroids, returns all matches)
-- Hash-based single-word lookup, precompiled regex patterns
-- Stop word fast-fail, script-aware matching
+- Watermark-based incremental fetching (avoids duplicates)
+- NFKC normalization for consistent matching
+- Publisher extraction from Google News URLs
+- Lookback window: `lookback_days` config (default: 3)
 
-**Normalization**:
-- Lowercase, strip diacritics, NFKC, remove periods, normalize dashes
-- Tokenization: strip possessives, split hyphenated compounds
+### Database
 
-**Database**: Updates `titles_v3.centroid_ids` and `processing_status`
-
-### Phase 3: Intel Gating & Track Assignment (Centroid-Batched)
-```
-v3/phase_3/
-├── assign_tracks_batched.py    # Centroid-batched processing with intel gating
-├── assign_tracks.py            # Legacy single-title processor (deprecated)
-└── test_single_title.py        # Manual testing script
-```
-
-**Architecture** (Refactored 2026-01-07):
-- **Centroid-Batched Processing**: Groups titles by ALL their centroids (not just primary)
-- **Batch Size**: 50 titles per centroid batch (configurable via `v3_p3_centroid_batch_size`)
-- **Two-Stage LLM Processing**:
-  1. **Intel Gating**: LLM sees all titles for a centroid batch, rejects non-strategic content
-  2. **Track Assignment**: LLM assigns tracks to strategic titles using centroid-specific track configs
-
-**Intel Gating** (Stage 1):
-- LLM analyzes all titles in batch with full context
-- Rejects: Sports (unless geopolitical), entertainment, human interest, local crime, weather
-- Accepts: Policy, international relations, economic, security, political developments
-- Rejected titles: `processing_status = 'blocked_llm'`
-- Strategic titles: Proceed to Stage 2
-
-**Track Assignment** (Stage 2):
-- Uses centroid-specific track_config (systemic > theater > macro priority)
-- LLM classifies strategic titles using appropriate track list
-- Example tracks (varies by centroid):
-  - **Strategic Default**: alliances_partnerships, armed_conflict, diplomacy_negotiations, etc.
-  - **Tech Focused**: ai_ml_development, semiconductors_hardware, cybersecurity, etc.
-  - **Environment Focused**: climate_policy, renewable_energy, emissions_targets, etc.
-
-**Multi-Centroid Logic**:
-- Title with `['AMERICAS-USA', 'SYS-ENERGY']` is processed TWICE:
-  - Once for AMERICAS-USA (using theater tracks) → e.g., "geo_energy"
-  - Once for SYS-ENERGY (using systemic tracks) → e.g., "energy_coercion"
-- Each analysis uses appropriate track_config for that centroid
-- Results stored in `title_assignments` table (many-to-many)
-
-**CTM Creation**:
-- Unique units: `(centroid_id, track, yyyymm)`
-- Created/updated for each title-centroid-track assignment
-- Increments `ctm.title_count` per assignment
-
-**Database**:
-- `title_assignments` table (title_id, centroid_id, track, ctm_id)
-- `ctm` table (centroid+track+month aggregation)
-- `titles_v3.processing_status` updated to 'blocked_llm' for rejected titles
-
-### Dynamic Track Configuration System (Phase 3 Enhancement)
-```
-db/
-├── migration_track_configs.py          # Schema + initial configs
-└── link_centroids_to_track_configs.py  # Helper to link centroids
-
-v3/phase_3/
-├── assign_tracks.py                    # Updated for dynamic configs
-└── test_dynamic_tracks.py              # Test suite
-```
-
-**Purpose**: Enable centroid-specific track lists and prompts for precision classification
-
-**Architecture**:
-- **track_configs table**: Stores track lists (TEXT[]) and LLM prompts (TEXT)
-- **centroids_v3.track_config_id**: Links centroids to custom configs (optional)
-- **Default fallback**: All centroids without custom config use `strategic_default`
-- **Priority resolution**: Systemic > Theater > Macro (for multi-centroid titles)
-
-**Track Configurations**:
-
-track_configs table stores track lists (TEXT[]) and LLM prompts (TEXT) that vary by centroid_id.
-
-**Benefits**: precision, flexibility, easy editing, granularity control, accuracy boost
-
-**Usage**:
+**Table**: `titles_v3`
 ```sql
--- Link AI centroid to tech_focused config
-UPDATE centroids_v3
-SET track_config_id = (SELECT id FROM track_configs WHERE name = 'tech_focused')
-WHERE label = 'Artificial Intelligence';
-
--- Create new custom config
-INSERT INTO track_configs (name, description, tracks, llm_prompt, is_default)
-VALUES (
-    'migration_focused',
-    'Tracks for migration and refugee topics',
-    ARRAY['border_control', 'humanitarian_crisis', 'integration_policy', 'smuggling_trafficking'],
-    'Your custom LLM prompt here...',
-    FALSE
-);
+id UUID PRIMARY KEY
+title_display TEXT NOT NULL       -- The headline
+url_gnews TEXT NOT NULL           -- Google News URL
+publisher_name TEXT               -- Extracted publisher
+pubdate_utc TIMESTAMP WITH TIME ZONE
+detected_language TEXT
+processing_status TEXT DEFAULT 'pending'
+centroid_ids TEXT[]               -- Assigned in Phase 2
+matched_aliases TEXT[]            -- Aliases that matched (Phase 2)
+created_at, updated_at TIMESTAMPTZ
 ```
 
-**Phase 3 Logic** (Updated):
-1. Title has `centroid_ids` from Phase 2
-2. Load track config for primary centroid (systemic > theater > macro)
-3. Format LLM prompt with centroid context (`{centroid_label}`, `{primary_theater}`, `{month}`)
-4. LLM classifies using centroid-specific track list
-5. Validate response against allowed tracks
-6. Create CTM and link title
+**Processing Status Values**:
+- `pending`: Awaiting Phase 2 centroid matching
+- `assigned`: Matched to centroids, awaiting Phase 3
+- `out_of_scope`: No centroid match (taxonomy gap)
+- `blocked_stopword`: Matched stop word (sports, entertainment)
+- `blocked_llm`: Rejected by intel gating (Phase 3)
 
-### Phase 4: CTM Enrichment
-```
-pipeline/phase_4/
-├── generate_events_spike.py    # Bucket pass-through (no clustering yet)
-├── generate_events_digest.py   # Legacy events extraction (deprecated)
-├── generate_summaries.py       # Generate 150-250 word narratives
-├── finalize_month.py           # Month finalization
-├── run_specific_ctms.py        # Utility for specific CTM processing
-└── write_events_v3.py          # Events v3 writer
-```
+---
 
-**Current Architecture** (2026-01-22):
-- Bucket structure determined upstream by alias matching (no hardcoded keywords)
-- `generate_events_spike.py` creates one coverage event per bucket
-- Bucket types: domestic, bilateral (by country), other_international
-- Clustering within buckets is TODO (requires proper event detection)
-- No semantic hardcoding in code - all driven by database/config
+## Phase 2: Centroid Matching
 
-**Events Digest** (Legacy):
-- Previously used LLM to extract distinct events
-- Replaced by simpler bucket pass-through for now
-- Event clustering to be redesigned with better approach
+**Script**: `pipeline/phase_2/match_centroids.py`
+**Daemon Interval**: 5 minutes
+**Purpose**: Match headlines to centroids via taxonomy aliases
 
-**Summary Generation** (Phase 4.2):
-- LLM generates 150-250 word narrative from events digest
-- **Dynamic focus lines** from `track_configs` table:
-  - `llm_summary_centroid_focus`: Structural guidance (geo vs systemic)
-  - `llm_summary_track_focus`: Track-specific domain guidance (JSONB, GEO only)
-- Anti-coherence instruction: Prevents forcing unrelated events into false narratives
-- Temporal grounding: Prevents LLM from inferring current roles/titles from training data
-- Allows 2-4 paragraphs based on natural thematic grouping
-- Tested: 216-word narrative with proper thematic separation
+### Algorithm
 
-**Word Count Monitoring**:
-- Daemon tracks summary lengths after each Phase 4.2 run
-- Alerts when summaries exceed 250-word target
-- Monitors: total summaries, over-250 count, max/avg word counts
-- Purpose: Detect length creep as CTMs accumulate titles daily
+1. Load `taxonomy_v3` aliases (all languages) into memory
+2. Build hash map for single-word lookup
+3. Precompile regex patterns for multi-word aliases
+4. For each pending title:
+   - Normalize: lowercase, strip diacritics, NFKC, remove periods
+   - Tokenize: strip possessives, split hyphenated compounds
+   - Check stop words first (fast-fail to `blocked_stopword`)
+   - Match against all centroids (accumulative)
+5. Update `titles_v3.centroid_ids` and `matched_aliases`
+6. Set `processing_status='assigned'` or `out_of_scope`
 
-**Database**: Updates `ctm.events_digest` and `ctm.summary_text`
+### Normalization Rules
 
-### Pipeline Orchestration
-```
-v3/runner/
-├── pipeline_daemon.py          # Main orchestration daemon
-├── sni-v3-pipeline.service     # systemd service file
-└── README.md                   # Deployment documentation
+```python
+# Text normalization
+title = unicodedata.normalize('NFKC', title.lower())
+title = unidecode.unidecode(title)  # Strip diacritics
+title = title.replace('.', '')      # Remove periods
+title = re.sub(r'-+', '-', title)   # Normalize dashes
+
+# Tokenization
+tokens = re.split(r'[\s]+', title)
+tokens = [t.rstrip("'s") for t in tokens]  # Strip possessives
 ```
 
-**Daemon Configuration**:
-- **Phase 1 Interval**: 3600s (1 hour) - RSS feeds don't update faster
-- **Phase 2 Interval**: 300s (5 minutes) - Fast mechanical matching
-- **Phase 3 Interval**: 600s (10 minutes) - LLM rate limits
-- **Phase 4 Interval**: 3600s (1 hour) - Enrichment can wait
+### Configuration
 
-**Batch Sizes**:
-- **Phase 2**: 500 titles per run
-- **Phase 3**: 100 CTMs per run
-- **Phase 4**: 50 CTMs per run
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `v3_p2_batch_size` | 100 | Titles per batch |
+| `v3_p2_max_titles` | 1000 | Max titles per run |
+| `v3_p2_timeout_seconds` | 180 | Timeout per batch |
 
-**Features**:
-- Queue monitoring (real-time depth checks)
-- Adaptive scheduling (skips phases with no work)
-- Graceful shutdown (SIGTERM/SIGINT)
-- Retry logic (3 attempts, exponential backoff)
-- Logging for observability
+### Database
 
-**Running**:
+**Table**: `taxonomy_v3`
+```sql
+id UUID PRIMARY KEY
+item_raw TEXT UNIQUE NOT NULL     -- Entity name (canonical)
+aliases JSONB                     -- {"en": ["alias1"], "es": ["alias2"], ...}
+is_active BOOLEAN DEFAULT TRUE
+is_stop_word BOOLEAN DEFAULT FALSE
+centroid_id VARCHAR(30)           -- Links to centroids_v3.id
+```
+
+**Table**: `centroids_v3`
+```sql
+id TEXT PRIMARY KEY               -- e.g., 'AMERICAS-USA', 'SYS-TECH'
+label TEXT UNIQUE NOT NULL        -- Human-readable name
+class TEXT NOT NULL               -- 'geo' or 'systemic'
+primary_theater TEXT              -- e.g., 'AMERICAS', 'EUROPE' (geo only)
+is_active BOOLEAN DEFAULT TRUE
+track_config_id UUID              -- Links to track_configs
+```
+
+---
+
+## Phase 3: Intel Gating & Track Assignment
+
+**Script**: `pipeline/phase_3/assign_tracks_batched.py`
+**Daemon Interval**: 10 minutes
+**Purpose**: Filter non-strategic content and assign tracks via LLM
+
+### Two-Stage Processing
+
+**Stage 1: Intel Gating**
+- LLM evaluates batch of titles for strategic relevance
+- Rejects: Sports, entertainment, human interest, local crime, weather
+- Accepts: Policy, international relations, economic, security, political
+- Rejected titles: `processing_status='blocked_llm'`
+
+**Stage 2: Track Assignment**
+- For strategic titles, LLM assigns track using centroid-specific config
+- Uses `track_configs` table for per-centroid track lists
+- Creates `title_assignments` entries linking title-centroid-track-ctm
+
+### Multi-Centroid Logic
+
+A title with `centroid_ids = ['AMERICAS-USA', 'SYS-ENERGY']` is processed twice:
+- Once for AMERICAS-USA using geo track config -> e.g., `geo_energy`
+- Once for SYS-ENERGY using systemic track config -> e.g., `energy_coercion`
+
+### Configuration
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `v3_p3_centroid_batch_size` | 50 | Titles per centroid batch |
+| `v3_p3_concurrency` | 8 | Parallel LLM calls |
+| `v3_p3_temperature` | 0.0 | LLM temperature |
+| `v3_p3_max_tokens_gating` | 500 | Max tokens for gating |
+| `v3_p3_max_tokens_tracks` | 500 | Max tokens for track assignment |
+
+### Database
+
+**Table**: `title_assignments`
+```sql
+id UUID PRIMARY KEY
+title_id UUID NOT NULL REFERENCES titles_v3(id)
+centroid_id TEXT NOT NULL REFERENCES centroids_v3(id)
+track TEXT NOT NULL               -- e.g., 'geo_economy', 'geo_security'
+ctm_id UUID NOT NULL REFERENCES ctm(id)
+created_at, updated_at TIMESTAMPTZ
+UNIQUE(title_id, centroid_id)     -- One track per title per centroid
+```
+
+**Table**: `ctm` (Centroid-Track-Month)
+```sql
+id UUID PRIMARY KEY
+centroid_id UUID NOT NULL
+track TEXT NOT NULL
+month DATE NOT NULL               -- First day of month
+title_count INTEGER DEFAULT 0
+events_digest JSONB DEFAULT '[]'  -- Legacy, use events_v3 instead
+summary_text TEXT                 -- Generated in Phase 4.5b
+is_frozen BOOLEAN DEFAULT FALSE   -- Lock for historical stability
+UNIQUE(centroid_id, track, month)
+```
+
+**Table**: `track_configs`
+```sql
+id UUID PRIMARY KEY
+name TEXT UNIQUE NOT NULL         -- e.g., 'strategic_default', 'tech_focused'
+description TEXT
+tracks TEXT[] NOT NULL            -- Available tracks for this config
+llm_track_assignment TEXT         -- Prompt for Phase 3 assignment
+llm_summary_centroid_focus TEXT   -- Focus line for Phase 4.5 summaries
+llm_summary_track_focus JSONB     -- Track-specific focus {track: focus}
+is_default BOOLEAN DEFAULT FALSE
+```
+
+---
+
+## Phase 3.5: Label Extraction (ELO v2.0)
+
+**Script**: `pipeline/phase_3_5/extract_labels.py`
+**Daemon Interval**: 10 minutes
+**Purpose**: Extract structured event labels using Event Label Ontology
+
+### Label Format
+
+```
+ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
+```
+
+Examples:
+- `US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> EU`
+- `RU_ARMED_FORCES -> MILITARY_OPERATION -> SECURITY -> UA`
+- `US_CENTRAL_BANK -> POLICY_CHANGE -> ECONOMY`
+- `CORPORATION -> ECONOMIC_DISRUPTION -> ECONOMY (actor_entity: NVIDIA)`
+
+### Ontology Structure
+
+**Actors** (with country prefixes):
+- State: `XX_EXECUTIVE`, `XX_LEGISLATURE`, `XX_JUDICIARY`, `XX_CENTRAL_BANK`, `XX_ARMED_FORCES`
+- IGOs: `UN`, `NATO`, `EU`, `AU`, `ASEAN`
+- Generic: `CORPORATION`, `ARMED_GROUP`, `NGO`, `MEDIA_OUTLET`, `UNKNOWN`
+
+**Action Classes (7-tier hierarchy)**:
+| Tier | Actions |
+|------|---------|
+| T1: Formal Decision | LEGAL_RULING, LEGISLATIVE_DECISION, POLICY_CHANGE, REGULATORY_ACTION |
+| T2: Coercive | MILITARY_OPERATION, LAW_ENFORCEMENT_OPERATION, SANCTION_ENFORCEMENT |
+| T3: Resource | RESOURCE_ALLOCATION, INFRASTRUCTURE_DEVELOPMENT, CAPABILITY_TRANSFER |
+| T4: Coordination | ALLIANCE_COORDINATION, STRATEGIC_REALIGNMENT, MULTILATERAL_ACTION |
+| T5: Pressure | POLITICAL_PRESSURE, ECONOMIC_PRESSURE, DIPLOMATIC_PRESSURE, INFORMATION_INFLUENCE |
+| T6: Contestation | LEGAL_CONTESTATION, INSTITUTIONAL_RESISTANCE, COLLECTIVE_PROTEST |
+| T7: Incidents | SECURITY_INCIDENT, SOCIAL_INCIDENT, ECONOMIC_DISRUPTION |
+
+**Domains**: GOVERNANCE, ECONOMY, SECURITY, FOREIGN_POLICY, SOCIETY, TECHNOLOGY, MEDIA
+
+### Configuration
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `v3_p35_batch_size` | 50 | Titles per LLM batch |
+| `v3_p35_concurrency` | 5 | Parallel workers |
+| `v3_p35_temperature` | 0.1 | LLM temperature |
+| `v3_p35_max_tokens` | 4000 | Max tokens per batch |
+
+### Database
+
+**Table**: `title_labels`
+```sql
+title_id UUID PRIMARY KEY REFERENCES titles_v3(id)
+actor TEXT NOT NULL               -- e.g., 'US_EXECUTIVE', 'CORPORATION'
+action_class TEXT NOT NULL        -- From ACTION_CLASSES ontology
+domain TEXT NOT NULL              -- From DOMAINS ontology
+target TEXT                       -- Optional target (ISO code or entity)
+actor_entity TEXT                 -- For CORPORATION: specific company name
+label_version TEXT DEFAULT 'ELO_v2.0'
+confidence FLOAT DEFAULT 1.0
+created_at, updated_at TIMESTAMPTZ
+```
+
+---
+
+## Phase 4: Mechanical Event Clustering
+
+**Script**: `pipeline/phase_4/cluster_events_mechanical.py`
+**Daemon Interval**: 30 minutes
+**Purpose**: Cluster labeled titles into events using entity-centric grouping
+
+### Clustering Hierarchy
+
+1. **Bucket Assignment**: Split by geographic scope
+   - `domestic`: Home country events
+   - `bilateral_XX`: Events involving foreign country XX
+
+2. **Entity-Centric Clustering** (takes priority):
+   - Institutional entities (US_CENTRAL_BANK, US_JUDICIARY) -> one event per institution
+   - Corporate entities (NVIDIA, META) -> one event per corporation
+
+3. **Action-Based Clustering** (fallback):
+   - Group by (actor, action_class) tuple
+   - Minimum cluster size: 3 titles
+
+4. **Spike Detection**:
+   - Large UNKNOWN clusters split by activity spikes
+   - Threshold: 2x average daily volume
+
+### Entity Grouping Rules
+
+**Institutional Entities** (cluster ALL actions together):
+```python
+INSTITUTIONAL_ENTITIES = {
+    "US_CENTRAL_BANK", "US_JUDICIARY", "US_LEGISLATURE",
+    "EU_CENTRAL_BANK", "CN_CENTRAL_BANK", "UK_CENTRAL_BANK", "JP_CENTRAL_BANK"
+}
+```
+
+**Corporate Entities** (from actor_entity or known targets):
+```python
+KNOWN_CORPORATE_TARGETS = {
+    "META", "OPENAI", "NVIDIA", "APPLE", "GOOGLE", "AMAZON", "MICROSOFT",
+    "TESLA", "BOEING", "JPMORGAN", "SPACEX", "NETFLIX", "DISNEY", ...
+}
+```
+
+### Algorithm Flow
+
+```python
+def cluster_titles(titles, centroid_id):
+    # Step 1: Assign buckets
+    buckets = defaultdict(list)
+    for t in titles:
+        bucket = assign_bucket(t, centroid_id)  # Uses target, actor, aliases
+        buckets[bucket].append(t)
+
+    # Step 2: Cluster within each bucket
+    events = []
+    for bucket_name, bucket_titles in buckets.items():
+        # Entity-centric grouping
+        for key, cluster in cluster_by_labels(bucket_titles).items():
+            if key[0] == "INSTITUTION":
+                # All Fed news in one event
+                events.append(create_event(bucket_name, key[1], None, None, cluster))
+            elif key[0] == "CORPORATION":
+                # All NVIDIA news in one event
+                events.append(create_event(bucket_name, "CORPORATION", key[1], None, cluster))
+            else:
+                # Standard (actor, action) grouping
+                events.append(create_event(bucket_name, key[1], None, key[2], cluster))
+
+    return events
+```
+
+### Database
+
+**Table**: `events_v3`
+```sql
+id UUID PRIMARY KEY
+ctm_id UUID NOT NULL REFERENCES ctm(id)
+date DATE NOT NULL                -- Most recent title date
+summary TEXT NOT NULL             -- Mechanical label or LLM narrative
+event_type VARCHAR(20)            -- 'bilateral', 'domestic', 'other_international'
+bucket_key VARCHAR(100)           -- For bilateral: country code (e.g., 'CN')
+source_batch_count INT DEFAULT 1  -- Title count
+is_catchall BOOLEAN DEFAULT FALSE -- UNKNOWN without entity
+created_at, updated_at TIMESTAMPTZ
+```
+
+**Table**: `event_v3_titles`
+```sql
+event_id UUID REFERENCES events_v3(id)
+title_id UUID REFERENCES titles_v3(id)
+PRIMARY KEY (event_id, title_id)
+```
+
+---
+
+## Phase 4.5a: Event Summary Generation
+
+**Script**: `pipeline/phase_4/generate_event_summaries_4_5a.py`
+**Daemon**: Integrated with Phase 4
+**Purpose**: Generate 1-3 sentence narrative summaries for event clusters
+
+### Process
+
+1. Identify events with mechanical labels (contain `->` or `titles)`)
+2. Fetch all titles for each event
+3. LLM generates 1-3 sentence summary from headlines
+4. Update `events_v3.summary` with narrative text
+
+### LLM Prompt (Key Points)
+
+```
+You are a news analyst. Summarize these headlines into 1-3 concise sentences.
+
+Requirements:
+- Extract key facts: who, what, where, specific figures/names
+- Write as if describing events directly (not "headlines report...")
+- Capture the arc if there's progression (threat -> escalation -> resolution)
+- Neutral, factual tone
+- 1-3 sentences only (30-60 words)
+- Use names ONLY as they appear in headlines
+
+Do NOT:
+- Mention "headlines", "articles", "reports"
+- Add role descriptions like "President", "former President", "Chancellor"
+- Infer current political offices - they may be outdated
+- Use any descriptive titles not explicitly in the headlines
+```
+
+---
+
+## Phase 4.5b: CTM Digest Generation
+
+**Script**: `pipeline/phase_4/generate_summaries_4_5.py`
+**Daemon Interval**: 1 hour
+**Purpose**: Generate 150-250 word monthly digest from event summaries
+
+### Process
+
+1. Query CTMs with events but no summary (or stale > 24h)
+2. Fetch event summaries for each CTM
+3. LLM generates cohesive digest weighted by source counts
+4. Update `ctm.summary_text`
+
+### Input Format
+
+```
+Event Summaries:
+
+[137 sources] Trump threatened 25% tariffs on EU goods over Greenland...
+[45 sources] Fed raised interest rates by 25 basis points amid inflation...
+[23 sources] Senate passed $95 billion foreign aid package...
+```
+
+### LLM Prompt (Key Points)
+
+```
+Generate a 150-250 word narrative digest from the provided event summaries.
+
+Requirements:
+- Synthesize into cohesive monthly digest
+- Weight by source count: [137 sources] >> [12 sources]
+- Group thematically (2-4 paragraphs)
+- Maintain analytic, neutral tone
+- Preserve key details: names, figures, outcomes
+
+Do NOT:
+- List events as bullet points
+- Include source counts in output
+- Add role descriptions ("President", "Chancellor")
+- Speculate beyond summaries
+```
+
+### Configuration
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `v3_p4_min_titles` | 30 | Min titles for summary |
+| `v3_p4_max_concurrent` | 5 | Parallel LLM calls |
+| `v3_p4_temperature` | 0.5 | LLM temperature |
+| `v3_p4_max_tokens` | 500 | Max tokens per summary |
+
+---
+
+## Pipeline Daemon
+
+**Script**: `pipeline/runner/pipeline_daemon.py`
+**Purpose**: Orchestrate all phases with configurable intervals
+
+### Phase Intervals
+
+| Phase | Interval | Description |
+|-------|----------|-------------|
+| Phase 1 | 12 hours | RSS ingestion |
+| Phase 2 | 5 minutes | Centroid matching |
+| Phase 3 | 10 minutes | Intel gating + track assignment |
+| Phase 3.5 | 10 minutes | Label extraction |
+| Phase 4 | 30 minutes | Event clustering |
+| Phase 4.5 | 1 hour | Summary generation |
+
+### Features
+
+- Sequential execution with interval-based scheduling
+- Queue monitoring (skips phase if no work available)
+- Graceful shutdown on SIGTERM/SIGINT
+- Retry logic with exponential backoff (3 attempts)
+- Full statistics after each cycle
+- Word count monitoring for summaries
+
+### Queue Monitoring Queries
+
+```sql
+-- Phase 2 queue
+SELECT COUNT(*) FROM titles_v3 WHERE processing_status = 'pending';
+
+-- Phase 3 queue
+SELECT COUNT(*) FROM titles_v3
+WHERE processing_status = 'assigned'
+  AND id NOT IN (SELECT title_id FROM title_assignments);
+
+-- Phase 3.5 queue
+SELECT COUNT(*) FROM titles_v3 t
+WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE ta.title_id = t.id)
+  AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id);
+
+-- Phase 4.5 queue
+SELECT COUNT(*) FROM ctm c
+WHERE EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
+  AND (summary_text IS NULL OR updated_at < NOW() - INTERVAL '24 hours');
+```
+
+### Running
+
 ```bash
 # Development
-python v3/runner/pipeline_daemon.py
+python pipeline/runner/pipeline_daemon.py
 
 # Production (systemd)
 sudo systemctl start sni-v3-pipeline
@@ -296,547 +526,201 @@ sudo systemctl enable sni-v3-pipeline
 sudo journalctl -u sni-v3-pipeline -f
 ```
 
-### Taxonomy Tools Suite
-```
-v3/taxonomy_tools/
-├── common.py                      # Shared utilities (Phase 2 normalization reuse)
-├── profile_alias_coverage.py      # Measure alias effectiveness per centroid/language
-├── prune_aliases.py               # Remove redundant aliases (static subsumption)
-├── export_taxonomy_snapshot.py    # Create safety backups
-├── restore_taxonomy_snapshot.py   # Rollback to previous state
-├── namebombs.py                   # Detect emerging proper names in OOS
-└── oos_keyword_candidates.py      # Detect general keywords missing from taxonomy
-```
-
-**Purpose**: Automated analysis and maintenance for taxonomy management
-
-**Key Features**:
-- **Static Subsumption Pruning**: Remove aliases where tokens(A) ⊂ tokens(B) (e.g., "AI" subsumes "AI infrastructure")
-  - Results (2026-01-05): 836 aliases removed (6.5%), 12,077 kept
-- **NameBombs Detector**: Identify proper names (people/orgs/places) leaking into out-of-scope
-  - Supports: EN, FR, ES, RU
-  - Extraction: TitleCase phrases + acronyms
-- **OOS Keyword Candidates**: Detect general keywords/noun phrases missing from taxonomy
-  - English-only, bigram-preferred (unigrams require OOS ≥ 5)
-  - Filters: headline boilerplate, temporal words, proper names
-- **All tools**: Report-only (no auto-writes), designed for daily pipeline integration
-
-**Documentation**: `v3/context/60_TaxonomyTools.md`
-
-**Output Directories** (git-ignored):
-```
-out/
-├── taxonomy_profile/       # Coverage analysis
-├── taxonomy_prune/         # Pruning reports
-├── taxonomy_snapshots/     # Safety backups
-└── oos_reports/            # NameBombs + keyword candidates
-```
-
-### Database Migrations & Utilities
-```
-db/
-├── migration_v3_schema.sql     # Complete v3 schema
-├── migration_v3_taxonomy.sql   # Taxonomy + aliases
-├── migrations/
-│   ├── 20260109_add_summary_focus_lines.sql  # Add llm_summary_* fields to track_configs
-│   └── 20260107_title_assignments.sql        # Many-to-many title-centroid-track junction
-├── populate_summary_focus_lines.py           # Populate focus line data for all configs
-├── migrate_taxonomy_simplify_schema.py       # Removed obsolete fields (iso_code, wikidata_qid, item_type)
-├── migrate_drop_is_macro.py                  # Removed is_macro after accumulative matching
-└── debug_italian_matches.py                  # Debugging tool for false positives
-```
-
-### Testing Scripts
-```
-v3/phase_2/test_matching.py     # Test centroid matching
-v3/phase_3/test_single_title.py # Test track assignment
-v3/phase_4/test_events_single_ctm.py # Test events extraction
-v3/phase_4/test_summary_single_ctm.py # Test summary generation
-```
-
-### Configuration
-```
-core/config.py                  # Centralized configuration
-.env                            # Environment variables (API keys, DB credentials)
-```
-
-**Key Config Sections**:
-- **Database**: Host, port, credentials
-- **Deepseek API**: Base URL, API key, model
-- **HTTP**: Timeout, retries, user agent
-- **RSS**: Max items per feed, lookback days
-- **Phase Settings**: Batch sizes, concurrency limits
-
 ---
 
-## Database Schema
+## Configuration Reference
 
-### titles_v3
-```sql
-CREATE TABLE titles_v3 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title_display TEXT NOT NULL,
-    url_gnews TEXT NOT NULL,
-    publisher_name TEXT,
-    pubdate_utc TIMESTAMP WITH TIME ZONE,
-    detected_language TEXT,
-    processing_status TEXT DEFAULT 'pending',
-    centroid_ids TEXT[],
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    CONSTRAINT titles_v3_processing_status_check CHECK (
-        processing_status = ANY (ARRAY[
-            'pending'::text,
-            'assigned'::text,
-            'out_of_scope'::text,
-            'blocked_stopword'::text,
-            'blocked_llm'::text
-        ])
-    )
-);
+**File**: `core/config.py`
 
-CREATE INDEX idx_titles_v3_processing ON titles_v3(processing_status);
-CREATE INDEX idx_titles_v3_centroids ON titles_v3 USING GIN(centroid_ids);
+### Database
 
--- Note: track and ctm_ids columns removed (2026-01-07)
--- Data now stored in title_assignments table for proper many-to-many relationships
-```
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `db_host` | localhost | PostgreSQL host |
+| `db_port` | 5432 | PostgreSQL port |
+| `db_name` | sni_v2 | Database name |
+| `db_user` | postgres | Database user |
+| `db_password` | - | Database password |
 
-### title_assignments
-```sql
-CREATE TABLE title_assignments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title_id UUID NOT NULL REFERENCES titles_v3(id) ON DELETE CASCADE,
-    centroid_id TEXT NOT NULL REFERENCES centroids_v3(id),
-    track TEXT NOT NULL,
-    ctm_id UUID NOT NULL REFERENCES ctm(id),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(title_id, centroid_id)
-);
+### LLM
 
-CREATE INDEX idx_title_assignments_title_id ON title_assignments(title_id);
-CREATE INDEX idx_title_assignments_centroid_id ON title_assignments(centroid_id);
-CREATE INDEX idx_title_assignments_ctm_id ON title_assignments(ctm_id);
-CREATE INDEX idx_title_assignments_track ON title_assignments(track);
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `llm_provider` | deepseek | LLM provider |
+| `llm_model` | deepseek-chat | Model name |
+| `deepseek_api_url` | https://api.deepseek.com/v1 | API endpoint |
+| `llm_timeout_seconds` | 600 | Request timeout |
+| `llm_retry_attempts` | 3 | Retry count |
+| `llm_retry_backoff` | 2.0 | Backoff multiplier |
 
--- Purpose: Junction table enabling one title to have different tracks for different centroids
--- Example: "US sanctions Venezuela oil" gets:
---   - (title_id, AMERICAS-USA, geo_energy, ctm_id_1)
---   - (title_id, AMERICAS-VENEZUELA, geo_security, ctm_id_2)
---   - (title_id, SYS-ENERGY, energy_coercion, ctm_id_3)
-```
+### Phase-Specific
 
-### taxonomy_v3
-```sql
-CREATE TABLE taxonomy_v3 (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_raw TEXT UNIQUE NOT NULL,
-    aliases JSONB,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    is_stop_word BOOLEAN DEFAULT FALSE,
-    centroid_id VARCHAR(30),
-    CONSTRAINT check_centroid_ids_format CHECK (
-        centroid_id IS NULL OR
-        centroid_id ~ '^[A-Z]+(-[A-Z]+)+$'
-    )
-);
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `v3_p2_batch_size` | 100 | Phase 2 titles per batch |
+| `v3_p3_centroid_batch_size` | 50 | Phase 3 titles per centroid |
+| `v3_p35_batch_size` | 50 | Phase 3.5 titles per batch |
+| `v3_p35_concurrency` | 5 | Phase 3.5 parallel workers |
+| `v3_p4_min_titles` | 30 | Min titles for summary |
 
-CREATE INDEX idx_taxonomy_v3_centroid_ids ON taxonomy_v3(centroid_id)
-WHERE is_active = true;
-
--- Aliases format: {"en": ["alias1", "alias2"], "es": ["alias3"], ...}
--- centroid_id: Single centroid ID this CSC belongs to (VARCHAR, 1-to-1 relationship)
--- is_stop_word: TRUE for blocked patterns (sports, culture, lifestyle)
--- Format: REGION-TOPIC or REGION-SUB-TOPIC (e.g., 'ASIA-CHINA', 'NON-STATE-ISIS')
-```
-
-### centroids_v3
-```sql
-CREATE TABLE centroids_v3 (
-    id TEXT PRIMARY KEY,
-    label TEXT UNIQUE NOT NULL,
-    class TEXT NOT NULL,
-    primary_theater TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
-    track_config_id UUID REFERENCES track_configs(id),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- class: 'geo' (geographic centroids) or 'systemic' (thematic centroids)
--- track_config_id: Optional link to custom track configuration (NULL = use default)
-
-CREATE INDEX idx_centroids_v3_track_config ON centroids_v3(track_config_id);
-```
-
-### track_configs
-```sql
-CREATE TABLE track_configs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT UNIQUE NOT NULL,
-    description TEXT,
-    tracks TEXT[] NOT NULL,
-    llm_track_assignment TEXT NOT NULL,
-    llm_summary_centroid_focus TEXT,
-    llm_summary_track_focus JSONB,
-    is_default BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Field purpose:
--- tracks: Array of track names for this config
--- llm_track_assignment: Prompt for Phase 3 track assignment
--- llm_summary_centroid_focus: Structural focus for Phase 4.2 summaries (all centroids)
--- llm_summary_track_focus: Track-specific focus for Phase 4.2 (JSONB map: {track: focus})
-
--- Example records:
--- 1. strategic_default (is_default=TRUE): 10 strategic tracks for all centroids
--- 2. tech_focused: 10 tech-specific tracks for SYS-TECH centroid
--- 3. environment_focused: 10 climate/environment tracks for SYS-ENVIRONMENT
--- 4. limited_strategic: 4 tracks for quiet countries with limited activity
-```
-
-### ctm
-```sql
-CREATE TABLE ctm (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    centroid_id UUID NOT NULL REFERENCES centroids_v3(id),
-    track TEXT NOT NULL,
-    yyyymm TEXT NOT NULL,
-    title_count INTEGER DEFAULT 0,
-    events_digest JSONB DEFAULT '[]'::jsonb,
-    summary_text TEXT,
-    is_frozen BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(centroid_id, track, yyyymm)
-);
-
-CREATE INDEX idx_ctm_centroid ON ctm(centroid_id);
-CREATE INDEX idx_ctm_month ON ctm(yyyymm);
-CREATE INDEX idx_ctm_frozen ON ctm(is_frozen);
-```
-
----
 ---
 
 ## Frontend (World Brief UI)
 
-### Purpose
-
-The frontend provides structured, readable access to CTM intelligence.
-It is a **pure consumer** of pipeline output.
-
-- No intelligence
-- No mutation
-- No user state
-- No hidden logic
-
-### Technology
-
-- Next.js 14 (App Router)
-- Server-side rendering only
-- PostgreSQL (read-only)
-- No API layer between frontend and DB
+**Location**: `apps/frontend/`
+**Technology**: Next.js 14 (App Router)
 
 ### Route Structure
 
+```
 /
-├── /global
-├── /region/:region_key
-│   └── /c/:centroid_key
-│       └── /t/:track_key?month=YYYY-MM
+|-- /global                        # Systemic centroids
+|-- /region/:region_key            # Geographic region
+|   |-- /c/:centroid_key           # Centroid view
+|       |-- /t/:track_key?month=YYYY-MM  # CTM content
+```
 
-### Page Responsibilities
+### Data Types
 
-- Home: map, system centroids, regions
-- Region: centroids only (no CTMs)
-- Centroid: available tracks (no content)
-- Track: CTM narrative content
+```typescript
+interface CTM {
+  id: string;
+  centroid_id: string;
+  track: Track;
+  month: Date;
+  title_count: number;
+  events_digest: Event[];          // From events_v3
+  summary_text?: string;           // From ctm.summary_text
+  is_frozen: boolean;
+}
 
-### Display Modes
+interface Event {
+  date: string;
+  summary: string;                 // Narrative summary
+  event_type?: 'bilateral' | 'other_international' | 'domestic';
+  bucket_key?: string;             // Country code for bilateral
+  source_count?: number;           // Title count
+  is_catchall?: boolean;           // UNKNOWN without entity
+}
+```
 
-- Dashboard Mode: navigation, dark theme
-- Reading Mode: CTM content, light theme
+### Database Access
 
-### Cross-Navigation
-
-Track pages expose:
-- historical months (same centroid + track)
-- other tracks (same centroid)
-- same track (other centroids)
-
-This creates a **navigable narrative graph** without inference.
-
-### Database Usage
-
-Frontend reads from:
-- centroids_v3
-- ctm
-- titles_v3
-- title_assignments
-
-All access is SELECT-only.
-
-### Operational Notes
-
-- Server-rendered on every request (`force-dynamic`)
-- No caching assumptions
-- Designed for correctness over speed
+Frontend reads from (SELECT-only):
+- `centroids_v3` - Centroid metadata
+- `ctm` - CTM aggregations with summaries
+- `events_v3` - Event data
+- `titles_v3` - Title details
+- `title_assignments` - Title-CTM relationships
 
 ---
 
-## Known Issues & Future Work
+## File Map
 
-### Known Issues
+```
+pipeline/
+|-- phase_1/
+|   |-- ingest_feeds.py            # RSS ingestion
+|   |-- feeds_repo.py              # Feed metadata management
+|   |-- rss_fetcher.py             # RSS parsing utilities
+|
+|-- phase_2/
+|   |-- match_centroids.py         # Centroid matching
+|
+|-- phase_3/
+|   |-- assign_tracks_batched.py   # Intel gating + track assignment
+|
+|-- phase_3_5/
+|   |-- extract_labels.py          # ELO v2.0 label extraction
+|
+|-- phase_4/
+|   |-- cluster_events_mechanical.py  # Entity-centric clustering
+|   |-- generate_event_summaries_4_5a.py  # Event summaries
+|   |-- generate_summaries_4_5.py     # CTM digests
+|
+|-- runner/
+|   |-- pipeline_daemon.py         # Orchestration daemon
 
-1. **Phase 3 Retry Logic**: Currently sync, but phase is async - needs await fix (non-blocking) ✅ FIXED 2026-01-12
-2. **Phase 4.2 Skip Condition**: If Phase 4.1 runs but 4.2 skipped, timer not updated properly
-3. **Pre-commit Hooks**: black/isort keep reformatting pipeline_daemon.py (used --no-verify for commit)
-4. **SQL Bug in assign_tracks.py**: Line 290 checked non-existent `track` column ✅ FIXED 2026-01-12
+core/
+|-- config.py                      # Configuration management
+|-- ontology.py                    # ELO v2.0 definitions
 
-### Future Enhancements
-
-1. **Parallel Phase Execution**: Phases 2-4 can run concurrently (Phase 1 must be sequential)
-2. **Dynamic Batch Sizing**: Adjust batch sizes based on queue depth
-3. **Prometheus Metrics**: Export metrics for monitoring dashboard
-4. **Health Check Endpoint**: HTTP endpoint for load balancer health checks
-5. **Configuration Reload**: Update intervals/batch sizes without restart
-6. **Multiple Daemon Instances**: Distribute work across multiple workers
-7. **Failed Title Tracking**: Separate table for titles that errored out after max retries
-8. **CTM Freezing Logic**: Implement `is_frozen` freeze date logic for historical stability
-
-### Scaling Indicators
-
-**When to Scale**:
-- Phase 2 queue > 10,000 titles → Add concurrent matchers
-- Phase 3 queue > 1,000 CTMs → Increase LLM concurrency
-- Phase 4 queue > 500 CTMs → Run Phase 4 more frequently
-
-**Bottlenecks**:
-- **Phase 1**: RSS fetch time (can parallelize feeds)
-- **Phase 2**: Fast, unlikely bottleneck
-- **Phase 3**: LLM API limits (increase batch size or frequency)
-- **Phase 4**: LLM API limits (increase batch size or frequency)
-
----
-
-## Deployment Checklist
-
-### Development Testing
-- [x] All phases tested individually
-- [x] End-to-end pipeline tested on sample data
-- [x] Daemon runs without crashes for 1+ hour
-- [ ] Test daemon graceful shutdown (SIGTERM)
-- [ ] Test daemon retry logic with simulated failures
-
-### Production Preparation
-- [ ] Review and tune intervals for production volume
-- [ ] Review and tune batch sizes for production volume
-- [ ] Set up log rotation for daemon logs
-- [ ] Configure systemd service on production server
-- [ ] Set up monitoring alerts (queue depths, error rates)
-- [ ] Document runbook for common failure scenarios
-- [ ] Test backup/restore procedures for database
-- [ ] Load test with high-volume RSS feeds
-
-### Post-Deployment Monitoring
-- [ ] Monitor Phase 1 queue (titles_v3.processing_status='pending')
-- [ ] Monitor Phase 2 queue (titles_v3.processing_status='assigned' AND centroid_ids IS NOT NULL)
-- [ ] Monitor Phase 3 queue (titles_v3.track IS NULL AND processing_status='assigned')
-- [ ] Monitor Phase 4.1 queue (ctm.events_digest = '[]' OR events_digest IS NULL)
-- [ ] Monitor Phase 4.2 queue (ctm.summary_text IS NULL AND events_digest IS NOT NULL)
-- [ ] Track cycle durations and identify slow phases
-- [ ] Review error logs for patterns
-- [ ] Validate CTM quality with manual sampling
+db/
+|-- migrations/                    # SQL migrations
+```
 
 ---
 
 ## Quick Reference Commands
 
 ### Manual Phase Execution
+
 ```bash
 # Phase 1: RSS Ingestion
-python v3/phase_1/ingest_feeds.py --max-feeds 10
+python pipeline/phase_1/ingest_feeds.py --max-feeds 10
 
 # Phase 2: Centroid Matching
-python v3/phase_2/match_centroids.py --max-titles 500
+python pipeline/phase_2/match_centroids.py --max-titles 500
 
 # Phase 3: Track Assignment
-python v3/phase_3/assign_tracks.py --max-ctms 100
+python pipeline/phase_3/assign_tracks_batched.py --max-titles 100
 
-# Phase 4.1: Events Digest
-python v3/phase_4/generate_events_digest.py --max-ctms 50
+# Phase 3.5: Label Extraction
+python pipeline/phase_3_5/extract_labels.py --max-titles 200
+python pipeline/phase_3_5/extract_labels.py --centroid AMERICAS-USA --track geo_economy
 
-# Phase 4.2: Summaries
-python v3/phase_4/generate_summaries.py --max-ctms 50
+# Phase 4: Event Clustering
+python pipeline/phase_4/cluster_events_mechanical.py --centroid AMERICAS-USA --track geo_economy
+python pipeline/phase_4/cluster_events_mechanical.py --centroid AMERICAS-USA --track geo_economy --write
+
+# Phase 4.5a: Event Summaries
+python pipeline/phase_4/generate_event_summaries_4_5a.py --max-events 50
+
+# Phase 4.5b: CTM Summaries
+python pipeline/phase_4/generate_summaries_4_5.py --max-ctms 20
 ```
 
-### Queue Monitoring Queries
+### Database Queries
+
 ```sql
--- Phase 2 queue (pending titles)
-SELECT COUNT(*) FROM titles_v3 WHERE processing_status = 'pending';
+-- Pipeline throughput by status
+SELECT processing_status, COUNT(*)
+FROM titles_v3
+GROUP BY processing_status;
 
--- Phase 3 queue (titles need track)
-SELECT COUNT(*) FROM titles_v3
-WHERE processing_status = 'assigned'
-  AND centroid_ids IS NOT NULL
-  AND track IS NULL;
+-- Label distribution by actor
+SELECT actor, COUNT(*)
+FROM title_labels
+GROUP BY actor
+ORDER BY COUNT(*) DESC LIMIT 20;
 
--- Phase 4.1 queue (CTMs need events)
-SELECT COUNT(*) FROM ctm
-WHERE title_count > 0
-  AND (events_digest = '[]'::jsonb OR events_digest IS NULL)
-  AND is_frozen = false;
-
--- Phase 4.2 queue (CTMs need summary)
-SELECT COUNT(*) FROM ctm
-WHERE events_digest IS NOT NULL
-  AND jsonb_array_length(events_digest) > 0
-  AND summary_text IS NULL
-  AND is_frozen = false;
-```
-
-### Daemon Management
-```bash
-# Start daemon
-sudo systemctl start sni-v3-pipeline
-
-# Stop daemon
-sudo systemctl stop sni-v3-pipeline
-
-# Restart daemon
-sudo systemctl restart sni-v3-pipeline
-
-# Check status
-sudo systemctl status sni-v3-pipeline
-
-# View logs (real-time)
-sudo journalctl -u sni-v3-pipeline -f
-
-# View logs (last 100 lines)
-sudo journalctl -u sni-v3-pipeline -n 100
-```
-
-### Database Maintenance
-```bash
-# Connect to database
-psql -U postgres -d sni
-
-# Check table sizes
+-- CTM summary coverage
 SELECT
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
-FROM pg_tables
-WHERE schemaname = 'public'
-ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+  COUNT(*) as total,
+  COUNT(summary_text) as with_summary,
+  COUNT(*) FILTER (WHERE title_count >= 30) as eligible
+FROM ctm WHERE is_frozen = false;
 
-# Vacuum analyze (optimize query planner)
-VACUUM ANALYZE titles_v3;
-VACUUM ANALYZE ctm;
-VACUUM ANALYZE centroids_v3;
-VACUUM ANALYZE taxonomy_v3;
+-- Event type distribution
+SELECT event_type, COUNT(*)
+FROM events_v3
+GROUP BY event_type;
 ```
 
 ---
 
-## Configuration Reference
+## Current Status
 
-### Environment Variables (.env)
-```bash
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=sni
-DB_USER=postgres
-DB_PASSWORD=your_password
+**Operational**: Full pipeline running with daemon orchestration
 
-# Deepseek API
-DEEPSEEK_API_KEY=sk-...
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-chat
+**Recent Improvements** (2026-01-24):
+- Entity-centric clustering (institutions, corporations)
+- Two-tier summary architecture (events -> CTM digest)
+- Role description fix (no inferred titles)
+- All USA tracks processed with new mechanism
 
-# HTTP Settings
-HTTP_TIMEOUT_SEC=30
-HTTP_RETRIES=3
-
-# RSS Settings
-MAX_ITEMS_PER_FEED=100
-LOOKBACK_DAYS=7
-```
-
-### core/config.py Settings
-```python
-# Phase 2: Centroid Matching
-PHASE2_BATCH_SIZE = 500
-PHASE2_CONCURRENCY = 10
-
-# Phase 3: Track Assignment
-PHASE3_BATCH_SIZE = 100
-PHASE3_CONCURRENCY = 5
-PHASE3_TEMPERATURE = 0.3
-
-# Phase 4: Enrichment
-PHASE4_BATCH_SIZE = 50
-PHASE4_EVENTS_TEMPERATURE = 0.3
-PHASE4_SUMMARY_TEMPERATURE = 0.5
-```
-
----
-
-## Project Timeline
-
-- **2025-10**: v3 schema design and migration
-- **2025-11-01**: Phase 1 implementation (RSS ingestion)
-- **2025-11-03**: Phase 2 implementation (centroid matching)
-- **2025-11-04**: Taxonomy simplification (-22.3% aliases)
-- **2025-11-05**: Phase 3 implementation (track assignment)
-- **2025-11-05**: Phase 4 implementation (enrichment)
-- **2025-11-06**: Romance language false positive fixes
-- **2025-11-07**: Pipeline daemon implementation ✅
-- **2025-11-07**: Dynamic track configuration system ✅
-- **2025-11-07**: Comprehensive project documentation (V3_PIPELINE_STATUS.md) ✅
-- **2026-01-07**: Phase 3 refactoring - many-to-many title-centroid-track relationships + intel gating ✅
-- **2026-01-09**: Phase 4.2 enhancement - dynamic focus lines (centroid + track specific) ✅
-- **2026-01-12**: Phase 4 daemon integration + word count monitoring + SQL bug fixes
-- **2026-01-21**: Phase 4 geo pre-clustering + alias-based bucketing (80% LLM reduction)
-- **2026-01-22**: Code cleanup - removed deprecated labelers, simplified to bucket pass-through
-- **2026-01-22**: Current status - Events clustering redesign needed (current: 1 event per bucket)
-
----
-
-## Contacts & Resources
-
-- **Codebase**: C:\Users\Maksim\Documents\SNI
-- **Branch**: chore/dev-health-initial
-- **Database**: PostgreSQL 14+ (sni database)
-- **API Provider**: Deepseek (deepseek-chat model)
-- **Python Version**: 3.11+
-
----
-
-## Current Status & Next Steps
-
-### Immediate Status (2026-01-22)
-- Full 4-phase daemon operational
-- Phase 4 simplified to bucket pass-through (no clustering)
-- Frontend displays coverage events per bucket
-- Deprecated code removed (labelers, geo_precluster, test files)
-
-### Architecture Decisions
-- **No hardcoded semantic rules** - bucket assignment from alias matching
-- **Config-driven thresholds** - events_min_ctm_titles in core/config.py
-- **Events clustering TODO** - current approach lumps unrelated titles
-- **Next step**: Design proper event detection (temporal + semantic)
-
-### Next Actions
-1. **Event Clustering Design**: Need algorithm to distinguish events like:
-   - "Trump tariff on AI chips" vs "Musk suing OpenAI" vs "Nvidia announcements"
-   - All share keywords but are 3 distinct events
-2. **Temporal Analysis**: Use pubdate clustering + title similarity
-3. **Frontend Polish**: Improve coverage event display
+**Next Steps**:
+1. Backfill labels for all existing titles
+2. Refine entity extraction for non-US centroids
+3. Cross-CTM event deduplication
+4. Frontend display enhancements
