@@ -53,7 +53,10 @@ export interface CTM {
 
 export interface Event {
   date: string;
+  first_seen?: string;
+  title?: string;
   summary: string;
+  tags?: string[];
   event_id?: string;
   source_title_ids?: string[];
   event_type?: 'bilateral' | 'other_international' | 'domestic' | null;

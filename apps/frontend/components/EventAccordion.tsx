@@ -6,12 +6,43 @@ import { Title } from '@/lib/types';
 interface EventAccordionProps {
   event: {
     date: string;
+    first_seen?: string;
+    title?: string;
     summary: string;
+    tags?: string[];
     source_title_ids?: string[];
+    source_count?: number;
   };
   allTitles: Title[];
   index: number;
   compact?: boolean;
+}
+
+function TagPill({ tag }: { tag: string }) {
+  return (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 border border-blue-500/30 text-blue-400">
+      {tag}
+    </span>
+  );
+}
+
+function formatDate(dateStr: string): string {
+  // Convert "2026-01-22" to "Jan 22"
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function DateRange({ date, first_seen }: { date: string; first_seen?: string }) {
+  const formattedDate = formatDate(date);
+  if (first_seen && first_seen !== date) {
+    const formattedFirst = formatDate(first_seen);
+    return (
+      <span className="text-dashboard-text-muted">
+        {formattedFirst} — {formattedDate}
+      </span>
+    );
+  }
+  return <span className="text-dashboard-text-muted">{formattedDate}</span>;
 }
 
 export default function EventAccordion({ event, allTitles, index, compact = false }: EventAccordionProps) {
@@ -23,24 +54,48 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
     : [];
 
   const hasRelatedTitles = relatedTitles.length > 0;
+  const sourceCount = event.source_count || relatedTitles.length;
 
   if (compact) {
     return (
       <div className="py-2">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-sm text-dashboard-text">
-              <span className="text-dashboard-text-muted mr-2">{event.date}</span>
-              {event.summary}
+            {/* Date range */}
+            <p className="text-xs mb-1">
+              <DateRange date={event.date} first_seen={event.first_seen} />
             </p>
+            {/* Title if available, otherwise summary */}
+            {event.title ? (
+              <>
+                <p className="text-sm font-medium text-dashboard-text mb-1">
+                  {event.title}
+                </p>
+                <p className="text-sm text-dashboard-text-muted">
+                  {event.summary}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-dashboard-text">
+                {event.summary}
+              </p>
+            )}
+            {/* Tags */}
+            {event.tags && event.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {event.tags.slice(0, 5).map((tag, i) => (
+                  <TagPill key={i} tag={tag} />
+                ))}
+              </div>
+            )}
           </div>
-          {hasRelatedTitles && (
+          {sourceCount > 0 && (
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="flex-shrink-0 text-xs text-dashboard-text-muted hover:text-dashboard-text transition"
               aria-expanded={isOpen}
             >
-              {isOpen ? '−' : '+'} {relatedTitles.length}
+              {isOpen ? '−' : '+'} {sourceCount}
             </button>
           )}
         </div>
@@ -69,19 +124,40 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
   }
 
   return (
-    <div className="border-l-4 border-blue-500 pl-4">
+    <div className="border-l-4 border-blue-500 pl-4 py-2">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
-          <p className="text-sm text-dashboard-text-muted mb-1">{event.date}</p>
-          <p className="text-dashboard-text">{event.summary}</p>
+          {/* Date range */}
+          <p className="text-sm mb-1">
+            <DateRange date={event.date} first_seen={event.first_seen} />
+          </p>
+          {/* Title if available */}
+          {event.title ? (
+            <>
+              <p className="text-lg font-semibold text-dashboard-text mb-1">
+                {event.title}
+              </p>
+              <p className="text-dashboard-text">{event.summary}</p>
+            </>
+          ) : (
+            <p className="text-dashboard-text">{event.summary}</p>
+          )}
+          {/* Tags */}
+          {event.tags && event.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {event.tags.map((tag, i) => (
+                <TagPill key={i} tag={tag} />
+              ))}
+            </div>
+          )}
         </div>
-        {hasRelatedTitles && (
+        {sourceCount > 0 && (
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="flex-shrink-0 text-sm text-blue-400 hover:text-blue-300 transition"
             aria-expanded={isOpen}
           >
-            {isOpen ? '−' : '+'} {relatedTitles.length} {relatedTitles.length === 1 ? 'source' : 'sources'}
+            {isOpen ? '−' : '+'} {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
           </button>
         )}
       </div>

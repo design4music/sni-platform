@@ -1,12 +1,17 @@
 """
-Phase 4.2: Summary Text Generation
+Phase 4.5: Summary Text Generation
 
-Generates 150-250 word narrative summaries for CTMs based on their events.
+Generates 150-250 word narrative summaries for CTMs based on clustered events.
+
+Input: Mechanical event labels from Phase 4 clustering
+  e.g. "US_EXECUTIVE -> ECONOMIC_PRESSURE (137 titles)"
+
+Output: Narrative prose summary for the frontend
 
 Strategy:
-1. Read events from events_v3 table
+1. Read events from events_v3 table (mechanical labels with source counts)
 2. Get centroid metadata for context
-3. Use LLM to generate cohesive narrative
+3. Use LLM to interpret labels and generate cohesive narrative
 4. Store in summary_text field
 """
 
@@ -23,18 +28,54 @@ from core.config import config
 
 
 def get_events_for_ctm(conn, ctm_id: str) -> list:
-    """Fetch events from events_v3 for a CTM."""
+    """Fetch events from events_v3 with their narrative summaries.
+
+    Returns events ordered by importance (non-catchall first, then by count).
+    """
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT date::text, summary
-            FROM events_v3
-            WHERE ctm_id = %s
-            ORDER BY date DESC
+            SELECT e.date::text, e.summary, e.source_batch_count,
+                   e.event_type, e.bucket_key, e.is_catchall
+            FROM events_v3 e
+            WHERE e.ctm_id = %s
+            ORDER BY e.is_catchall ASC, e.source_batch_count DESC
             """,
             (ctm_id,),
         )
-        return [{"date": row[0], "summary": row[1]} for row in cur.fetchall()]
+        events = []
+        for row in cur.fetchall():
+            date, summary, count, event_type, bucket_key, is_catchall = row
+            events.append(
+                {
+                    "date": date,
+                    "summary": summary,
+                    "count": count or 0,
+                    "event_type": event_type,
+                    "bucket_key": bucket_key,
+                    "is_catchall": is_catchall,
+                }
+            )
+
+        return events
+
+
+def format_events_for_digest(events: list) -> str:
+    """Format event summaries for CTM digest generation."""
+    lines = []
+
+    for event in events:
+        # Skip catchall events in summary
+        if event.get("is_catchall"):
+            continue
+
+        count = event.get("count", 0)
+        summary = event.get("summary", "")
+
+        # Format: [count] summary
+        lines.append(f"[{count} sources] {summary}")
+
+    return "\n\n".join(lines)
 
 
 async def generate_summary(
@@ -43,12 +84,12 @@ async def generate_summary(
     primary_theater: str,
     track: str,
     month: str,
-    events_digest: list,
+    events: list,
     centroid_focus: str,
     track_focus: str = None,
 ) -> str:
     """
-    Generate 150-250 word narrative summary from events digest.
+    Generate 150-250 word narrative summary from event summaries.
 
     Args:
         centroid_label: Human-readable centroid name
@@ -56,17 +97,15 @@ async def generate_summary(
         primary_theater: Theater for geo centroids (e.g., 'MIDEAST')
         track: Track category
         month: Month string (YYYY-MM)
-        events_digest: List of event dicts
+        events: List of event dicts with 'summary' field (narrative summaries)
         centroid_focus: Centroid-type focus line from track_configs
         track_focus: Track-specific focus line (optional, GEO only)
 
     Returns:
         Summary text (150-250 words)
     """
-    # Format events timeline
-    events_text = "\n".join(
-        [f"• {event['date']}: {event['summary']}" for event in events_digest]
-    )
+    # Format event summaries for digest
+    events_text = format_events_for_digest(events)
 
     # Build context
     context_parts = [f"Centroid: {centroid_label} ({centroid_class})"]
@@ -80,39 +119,38 @@ async def generate_summary(
     # Build system prompt with dynamic focus lines
     system_prompt = (
         """You are a strategic intelligence analyst writing monthly summary reports.
-Generate a 150-250 word narrative from the provided events timeline.
+Generate a 150-250 word narrative digest from the provided event summaries.
 
-### Core task
+### Input Format
 
-Produce a strategic event synthesis that accurately represents the developments in this period. Events may be thematically related or independent—reflect this natural complexity rather than forcing artificial narrative coherence.
+You receive a list of event summaries, each with a source count indicating significance.
+Higher source counts = more widely covered = more significant.
 
 ### Requirements:
 
-* Connect events that are genuinely related; separate events that are not
-* Group thematically distinct developments into separate paragraphs (2-4 paragraphs as needed)
-* Within each thematic group, flow chronologically and explain significance
-* Ground all conclusions in explicitly described actions, reactions, or formal statements
-* Derive strategic implications from observable developments (e.g., leverage shifts, capability changes, alignment signals, constraints)
+* Synthesize the event summaries into a cohesive monthly digest
+* Weight by source count: [137 sources] >> [12 sources] in importance
+* Group thematically related events into paragraphs (2-4 paragraphs)
 * Maintain analytic, neutral, non-normative tone
-* Use present/past tense appropriately
+* Preserve key details: names, figures, outcomes
 
 ### Structure guidance:
 
-* If events form a single coherent story, write 1-2 paragraphs
-* If events represent distinct developments, use separate paragraphs for each theme
-* Geopolitical reality is complex—multiple unrelated developments can coexist in the same period
-* Do NOT force unrelated events into false narrative coherence
+* Lead with the most significant developments (highest source counts)
+* If events form a single story arc, write unified paragraphs
+* If events are distinct topics, use separate paragraphs
+* Do NOT force unrelated events into false coherence
 
 ### Do NOT:
 
 * List events as bullet points
-* Include dates in parentheses unless critical
+* Include source counts in output
 * Use sensational or emotive language
-* Infer motives, intent, or future actions unless explicitly stated by an actor
-* Infer current offices or roles (e.g., president/chancellor/opposition leader) unless explicitly stated in the provided events; when uncertain, use name-only references
-* Adopt an analyst, editorial, or market-commentary voice
-* Add speculation beyond events
-* Merge thematically unrelated events into artificial unified narratives
+* Add information not present in event summaries
+* Speculate beyond what summaries indicate
+* Add role descriptions like "President", "former President", "Chancellor"
+* Infer political offices - they may be outdated
+* Use descriptive titles not in the source summaries
 
 ---
 
@@ -129,10 +167,11 @@ Produce a strategic event synthesis that accurately represents the developments 
 
     user_prompt = f"""{context}
 
-Events Timeline:
+Event Summaries:
+
 {events_text}
 
-Generate a 150-250 word narrative summary:"""
+Generate a 150-250 word monthly digest:"""
 
     headers = {
         "Authorization": f"Bearer {config.deepseek_api_key}",
@@ -171,7 +210,6 @@ async def process_single_ctm(
     centroid_id: str,
     track: str,
     month,
-    events_digest: list,
     title_count: int,
     centroid_label: str,
     centroid_class: str,
@@ -195,8 +233,20 @@ async def process_single_ctm(
         )
 
         try:
+            # Fetch events with their narrative summaries
+            events = get_events_for_ctm(conn, ctm_id)
+
+            if not events:
+                print(f"Skipping: {centroid_label} / {track} (no events)")
+                return False
+
+            # Count non-catchall events
+            real_events = [e for e in events if not e.get("is_catchall")]
+            total_sources = sum(e.get("count", 0) for e in real_events)
+
             print(
-                f"Processing: {centroid_label} / {track} / {month.strftime('%Y-%m')} ({len(events_digest)} events)"
+                f"Processing: {centroid_label} / {track} / {month.strftime('%Y-%m')} "
+                f"({len(real_events)} events, {total_sources} sources)"
             )
 
             # Generate summary using LLM
@@ -206,7 +256,7 @@ async def process_single_ctm(
                 primary_theater,
                 track,
                 month.strftime("%Y-%m"),
-                events_digest,
+                events,
                 centroid_focus,
                 track_focus,
             )
@@ -304,9 +354,6 @@ async def process_ctm_batch(max_ctms=None):
             track_focus_jsonb,
             event_count,
         ) in ctms:
-            # Fetch events from events_v3
-            events = get_events_for_ctm(conn, ctm_id)
-
             # Extract track-specific focus from JSONB if available
             track_focus = None
             if track_focus_jsonb and centroid_class == "geo":
@@ -328,7 +375,6 @@ async def process_ctm_batch(max_ctms=None):
                     centroid_id,
                     track,
                     month,
-                    events,
                     title_count,
                     centroid_label,
                     centroid_class,
@@ -369,7 +415,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Phase 4.2: Generate summary text for CTMs"
+        description="Phase 4.5: Generate summary text for CTMs from clustered events"
     )
     parser.add_argument(
         "--max-ctms", type=int, help="Maximum number of CTMs to process"

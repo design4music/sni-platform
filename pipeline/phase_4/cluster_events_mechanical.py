@@ -180,14 +180,16 @@ KNOWN_CORPORATE_TARGETS = {
     "AMD",
 }
 
-# Institutional targets that warrant sub-clustering
-# When these are targets, split events by target for clearer narrative
-INSTITUTIONAL_TARGETS = {
+# Institutional entities - cluster ALL titles about this entity together
+# Whether as actor OR as target, they become one event
+INSTITUTIONAL_ENTITIES = {
     "US_CENTRAL_BANK",
     "US_JUDICIARY",
     "US_LEGISLATURE",
     "EU_CENTRAL_BANK",
     "CN_CENTRAL_BANK",
+    "UK_CENTRAL_BANK",
+    "JP_CENTRAL_BANK",
 }
 
 
@@ -199,42 +201,63 @@ def should_consolidate_actor(actor: str) -> bool:
     return False
 
 
-def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
-    """Cluster titles by (actor, action) or (actor, entity) for entity actors.
+def get_institutional_entity(actor: str, target: str) -> str:
+    """Check if actor or target is an institutional entity."""
+    # Check if actor IS an institution
+    if actor in INSTITUTIONAL_ENTITIES:
+        return actor
+    # Check consolidated actor suffixes (e.g., XX_CENTRAL_BANK)
+    for suffix in CONSOLIDATED_ACTOR_SUFFIXES:
+        if actor and actor.endswith(suffix):
+            return actor
+    # Check if target is an institution
+    if target and target in INSTITUTIONAL_ENTITIES:
+        return target
+    return None
 
-    Consolidation rules:
-    1. ENTITY_ACTORS (CORPORATION, etc.) with valid entity -> group by entity
-    2. CONSOLIDATED_ACTOR_SUFFIXES (_CENTRAL_BANK) -> group by actor (all actions)
-    3. LEGAL_CONTESTATION with corporate target -> group with corporation
-    4. Institutional target (US_CENTRAL_BANK, etc.) -> sub-cluster by target
-    5. All other actors -> group by action_class
+
+def get_corporate_entity(actor: str, entity: str, target: str, action: str) -> str:
+    """Check if this title is about a specific corporation."""
+    # Actor is CORPORATION with entity
+    if actor in ENTITY_ACTORS and entity:
+        return entity.upper()
+    # Target is a known corporation (e.g., LEGAL_CONTESTATION -> META)
+    if target:
+        target_upper = target.upper()
+        if target_upper in KNOWN_CORPORATE_TARGETS:
+            return target_upper
+    return None
+
+
+def cluster_by_labels(titles: list[dict], min_cluster_size: int = 3) -> dict:
+    """Cluster titles by entity (for institutions/corporations) or by action.
+
+    Entity-centric clustering (takes priority):
+    1. INSTITUTIONAL entity (as actor OR target) -> one event per institution
+    2. CORPORATE entity (actor_entity OR target) -> one event per corporation
+
+    Action-based clustering (fallback):
+    3. All other actors -> group by action_class
     """
     clusters = defaultdict(list)
     for t in titles:
         actor = t["actor"]
         action = t["action_class"]
-        entity = t.get("actor_entity")  # Trust LLM output directly
+        entity = t.get("actor_entity")
         target = t.get("target")
 
-        # Rule 1: Entity-based actors with valid entity -> one event per entity
-        if actor in ENTITY_ACTORS and entity:
-            key = (actor, entity, None)
-        # Rule 2: Consolidated actors (e.g., XX_CENTRAL_BANK) -> one event per actor
-        elif should_consolidate_actor(actor):
-            key = (actor, None, None)  # Both entity and action are None
-        # Rule 3: LEGAL_CONTESTATION targeting a known corporation -> group with corp
-        elif action == "LEGAL_CONTESTATION" and target:
-            target_upper = target.upper()
-            if target_upper in KNOWN_CORPORATE_TARGETS:
-                key = ("CORPORATION", target_upper, None)
-            else:
-                key = (actor, None, action)
-        # Rule 4: Institutional target -> sub-cluster by (actor, action, target)
-        elif target and target in INSTITUTIONAL_TARGETS:
-            key = (actor, None, action, target)
-        # Rule 5: Standard grouping by action
+        # Rule 1: Institutional entity (actor or target) -> cluster by institution
+        inst_entity = get_institutional_entity(actor, target)
+        if inst_entity:
+            key = ("INSTITUTION", inst_entity)
+        # Rule 2: Corporate entity -> cluster by corporation
         else:
-            key = (actor, None, action)
+            corp_entity = get_corporate_entity(actor, entity, target, action)
+            if corp_entity:
+                key = ("CORPORATION", corp_entity)
+            # Rule 3: Standard grouping by action
+            else:
+                key = ("ACTION", actor, action)
 
         clusters[key].append(t)
 
@@ -340,12 +363,24 @@ def cluster_titles(
         label_clusters = cluster_by_labels(bucket_titles, min_label_cluster)
 
         for key, label_titles in label_clusters.items():
-            # Unpack key - can be 3-tuple or 4-tuple
-            if len(key) == 4:
-                actor, entity, action, target_inst = key
+            # Unpack key based on cluster type
+            cluster_type = key[0]
+
+            if cluster_type == "INSTITUTION":
+                # Entity-centric: ("INSTITUTION", entity_name)
+                actor = key[1]  # The institution name
+                entity = None
+                action = None
+            elif cluster_type == "CORPORATION":
+                # Entity-centric: ("CORPORATION", entity_name)
+                actor = "CORPORATION"
+                entity = key[1]  # The corporation name
+                action = None
             else:
-                actor, entity, action = key
-                target_inst = None
+                # Action-based: ("ACTION", actor, action)
+                actor = key[1]
+                entity = None
+                action = key[2]
 
             # Step 3: For large UNKNOWN clusters, split by spike
             if actor == "UNKNOWN" and len(label_titles) >= unknown_split_threshold:
@@ -357,19 +392,16 @@ def cluster_titles(
                         event = create_event(
                             bucket_name, actor, entity, action, group, is_spike
                         )
-                        event["target_inst"] = target_inst
                         events.append(event)
                 else:
                     event = create_event(
                         bucket_name, actor, entity, action, label_titles
                     )
-                    event["target_inst"] = target_inst
                     events.append(event)
             else:
                 event = create_event(
                     bucket_name, actor, entity, action, label_titles, False
                 )
-                event["target_inst"] = target_inst
                 events.append(event)
 
     # Mark catch-all events and sort by title count
@@ -416,14 +448,11 @@ def print_cluster_report(events: list[dict], max_events: int = 30):
             if e.get("actor_entity"):
                 actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
 
-            # For entity-grouped events (action=None), show "news summary" instead
+            # For entity-grouped events (action=None), show "news" instead
             if e.get("action_class"):
                 label = "%s -> %s" % (actor_display, e["action_class"])
-                # Add target institution if present
-                if e.get("target_inst"):
-                    label = "%s -> %s" % (label, e["target_inst"])
             else:
-                label = "%s (news summary)" % actor_display
+                label = "%s news" % actor_display
 
             print("%3d | %s%s" % (e["title_count"], label, spike_marker))
             if e["aliases"]:
@@ -453,16 +482,159 @@ def get_ctm_id(conn, centroid_id: str, track: str) -> str:
     return str(row[0])
 
 
+def jaccard_similarity(set1: set, set2: set) -> float:
+    """Calculate Jaccard similarity between two sets."""
+    if not set1 or not set2:
+        return 0.0
+    intersection = len(set1 & set2)
+    union = len(set1 | set2)
+    return intersection / union if union > 0 else 0.0
+
+
+def tokenize_for_matching(text: str) -> set:
+    """Tokenize text into words for Jaccard matching."""
+    if not text:
+        return set()
+    # Lowercase, split on non-alphanumeric, filter short words
+    import re
+
+    words = re.split(r"[^a-z0-9]+", text.lower())
+    # Filter stopwords and short words
+    stopwords = {
+        "the",
+        "a",
+        "an",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "and",
+        "or",
+        "is",
+        "are",
+        "was",
+        "were",
+        "has",
+        "have",
+        "had",
+        "be",
+        "been",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "must",
+        "shall",
+        "can",
+        "with",
+        "by",
+        "from",
+        "as",
+        "it",
+        "its",
+        "this",
+        "that",
+        "these",
+        "those",
+        "he",
+        "she",
+        "they",
+        "we",
+        "you",
+        "his",
+        "her",
+        "their",
+        "our",
+        "your",
+    }
+    return {w for w in words if len(w) > 2 and w not in stopwords}
+
+
+def find_matching_event(
+    cur,
+    ctm_id: str,
+    bucket_key: str,
+    event_type: str,
+    new_titles: list[dict],
+    title_threshold: float = 0.4,
+    tag_threshold: float = 0.5,
+) -> dict:
+    """Find an existing event that matches the new cluster.
+
+    Returns event dict if match found, None otherwise.
+    """
+    # Get existing events in same bucket
+    cur.execute(
+        """
+        SELECT e.id, e.title, e.tags, e.date, e.first_seen
+        FROM events_v3 e
+        WHERE e.ctm_id = %s
+          AND e.event_type = %s
+          AND (e.bucket_key = %s OR (e.bucket_key IS NULL AND %s IS NULL))
+          AND e.title IS NOT NULL
+        """,
+        (ctm_id, event_type, bucket_key, bucket_key),
+    )
+    existing_events = cur.fetchall()
+
+    if not existing_events:
+        return None
+
+    # Build word set from new titles
+    new_title_words = set()
+    for t in new_titles:
+        new_title_words |= tokenize_for_matching(t.get("title", ""))
+
+    for event_id, title, tags, date, first_seen in existing_events:
+        # Check title similarity
+        existing_title_words = tokenize_for_matching(title)
+        title_sim = jaccard_similarity(new_title_words, existing_title_words)
+
+        # Tags will be regenerated after merge, so we only match on title words
+
+        if title_sim >= title_threshold:
+            return {
+                "id": event_id,
+                "title": title,
+                "tags": tags,
+                "date": date,
+                "first_seen": first_seen,
+                "similarity": title_sim,
+            }
+
+    return None
+
+
 def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
-    """Write clustered events to events_v3 and event_v3_titles."""
+    """Write clustered events to events_v3 with merge support.
+
+    For each new cluster:
+    1. Check if matching event exists (same bucket, similar titles)
+    2. If match: add new titles to existing event, update date range
+    3. If no match: create new event
+    """
     cur = conn.cursor()
 
-    # Delete existing events for this CTM
-    cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
-    deleted = cur.rowcount
-    print("Deleted %d existing events for CTM" % deleted)
+    # Get existing title IDs for this CTM to avoid duplicates
+    cur.execute(
+        """
+        SELECT evt.title_id
+        FROM event_v3_titles evt
+        JOIN events_v3 e ON evt.event_id = e.id
+        WHERE e.ctm_id = %s
+        """,
+        (ctm_id,),
+    )
+    existing_title_ids = {str(r[0]) for r in cur.fetchall()}
 
-    written = 0
+    created = 0
+    merged = 0
+    titles_added = 0
+
     for e in events:
         # Determine event_type and bucket_key from bucket name
         bucket = e["bucket"]
@@ -476,70 +648,153 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
             event_type = "other_international"
             bucket_key = bucket
 
-        # Use most recent date from titles
-        event_date = e["date_range"][1]
+        # Filter out titles already in existing events
+        new_titles = [t for t in e["titles"] if t["id"] not in existing_title_ids]
 
-        # Generate placeholder summary
-        spike_tag = " [SPIKE]" if e["spike_days"] else ""
-        actor_display = e["actor"]
-        if e.get("actor_entity"):
-            actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
+        if not new_titles:
+            # All titles already assigned to events
+            continue
 
-        # For entity-grouped events (action=None), use "news summary" format
-        if e.get("action_class"):
-            action_str = e["action_class"]
-            # Add target institution if present
-            if e.get("target_inst"):
-                action_str = "%s -> %s" % (action_str, e["target_inst"])
-            summary = "%s -> %s (%d titles)%s" % (
-                actor_display,
-                action_str,
-                e["title_count"],
-                spike_tag,
+        # Check for matching existing event
+        match = find_matching_event(cur, ctm_id, bucket_key, event_type, new_titles)
+
+        if match:
+            # Merge: add new titles to existing event
+            event_id = match["id"]
+
+            for t in new_titles:
+                try:
+                    cur.execute(
+                        "INSERT INTO event_v3_titles (event_id, title_id) VALUES (%s, %s)",
+                        (event_id, t["id"]),
+                    )
+                    existing_title_ids.add(t["id"])
+                    titles_added += 1
+                except Exception:
+                    pass  # Ignore duplicate key errors
+
+            # Update date range and source count
+            new_dates = [t["pub_date"] for t in new_titles if t.get("pub_date")]
+            if new_dates:
+                min_new = min(new_dates)
+                max_new = max(new_dates)
+
+                cur.execute(
+                    """
+                    UPDATE events_v3
+                    SET first_seen = LEAST(first_seen, %s::date),
+                        date = GREATEST(date, %s::date),
+                        source_batch_count = source_batch_count + %s,
+                        title = NULL,
+                        updated_at = NOW()
+                    WHERE id = %s
+                    """,
+                    (min_new, max_new, len(new_titles), event_id),
+                )
+
+            merged += 1
+            print(
+                "  MERGED %d titles into existing event (sim=%.2f)"
+                % (len(new_titles), match["similarity"])
             )
+
         else:
-            summary = "%s news (%d titles)%s" % (
-                actor_display,
-                e["title_count"],
-                spike_tag,
-            )
+            # Create new event
+            event_date = e["date_range"][1]
+            first_seen = e["date_range"][0]
 
-        # Insert event
-        cur.execute(
-            """
-            INSERT INTO events_v3 (ctm_id, date, summary, event_type, bucket_key, source_batch_count, is_catchall)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-            """,
-            (
-                ctm_id,
-                event_date,
-                summary,
-                event_type,
-                bucket_key,
-                e["title_count"],
-                e.get("is_catchall", False),
-            ),
-        )
-        event_id = cur.fetchone()[0]
+            # Generate placeholder summary (will be replaced by LLM in Phase 4.5a)
+            spike_tag = " [SPIKE]" if e["spike_days"] else ""
+            actor_display = e["actor"]
+            if e.get("actor_entity"):
+                actor_display = "%s:%s" % (e["actor"], e["actor_entity"])
 
-        # Insert title links
-        for t in e["titles"]:
+            if e.get("action_class"):
+                summary = "%s -> %s (%d titles)%s" % (
+                    actor_display,
+                    e["action_class"],
+                    len(new_titles),
+                    spike_tag,
+                )
+            else:
+                summary = "%s news (%d titles)%s" % (
+                    actor_display,
+                    len(new_titles),
+                    spike_tag,
+                )
+
             cur.execute(
-                "INSERT INTO event_v3_titles (event_id, title_id) VALUES (%s, %s)",
-                (event_id, t["id"]),
+                """
+                INSERT INTO events_v3 (ctm_id, date, first_seen, summary, event_type, bucket_key, source_batch_count, is_catchall)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    ctm_id,
+                    event_date,
+                    first_seen,
+                    summary,
+                    event_type,
+                    bucket_key,
+                    len(new_titles),
+                    e.get("is_catchall", False),
+                ),
             )
+            event_id = cur.fetchone()[0]
 
-        written += 1
+            for t in new_titles:
+                cur.execute(
+                    "INSERT INTO event_v3_titles (event_id, title_id) VALUES (%s, %s)",
+                    (event_id, t["id"]),
+                )
+                existing_title_ids.add(t["id"])
+
+            created += 1
 
     conn.commit()
-    return written
+
+    print("")
+    print("Events created: %d" % created)
+    print("Events merged:  %d" % merged)
+    print("Titles added:   %d" % titles_added)
+
+    return created + merged
+
+
+def process_ctm(
+    conn, centroid_id: str, track: str, min_label: int = 3, write: bool = False
+):
+    """Process a single CTM for clustering."""
+    titles = load_titles_with_labels(conn, centroid_id, track)
+
+    if len(titles) < min_label:
+        return 0, 0
+
+    events = cluster_titles(titles, centroid_id, min_label_cluster=min_label)
+
+    if not events:
+        return 0, 0
+
+    if write:
+        # Get CTM ID
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id FROM ctm WHERE centroid_id = %s AND track = %s",
+            (centroid_id, track),
+        )
+        row = cur.fetchone()
+        if row:
+            ctm_id = str(row[0])
+            result = write_events_to_db(conn, events, ctm_id)
+            return len(events), result
+
+    return len(events), 0
 
 
 def main():
     parser = argparse.ArgumentParser(description="Mechanical event clustering")
-    parser.add_argument("--centroid", required=True, help="Centroid ID")
-    parser.add_argument("--track", required=True, help="Track name")
+    parser.add_argument("--centroid", help="Centroid ID (omit for all)")
+    parser.add_argument("--track", help="Track name (omit for all tracks)")
     parser.add_argument(
         "--min-label", type=int, default=3, help="Min titles per label cluster"
     )
@@ -548,23 +803,89 @@ def main():
 
     conn = get_connection()
 
-    print("Loading titles for %s / %s..." % (args.centroid, args.track))
-    titles = load_titles_with_labels(conn, args.centroid, args.track)
-    print("Loaded %d titles with labels" % len(titles))
+    # Determine which CTMs to process
+    cur = conn.cursor()
 
-    events = cluster_titles(
-        titles,
-        args.centroid,
-        min_label_cluster=args.min_label,
+    if args.centroid and args.track:
+        # Single CTM mode
+        print("Loading titles for %s / %s..." % (args.centroid, args.track))
+        titles = load_titles_with_labels(conn, args.centroid, args.track)
+        print("Loaded %d titles with labels" % len(titles))
+
+        events = cluster_titles(titles, args.centroid, min_label_cluster=args.min_label)
+        print_cluster_report(events)
+
+        if args.write and events:
+            ctm_id = get_ctm_id(conn, args.centroid, args.track)
+            written = write_events_to_db(conn, events, ctm_id)
+            print("Wrote %d events" % written)
+
+        conn.close()
+        return
+
+    # Build query for CTM selection
+    conditions = ["c.title_count >= 3", "c.is_frozen = false"]
+    params = []
+
+    if args.centroid:
+        conditions.append("c.centroid_id = %s")
+        params.append(args.centroid)
+
+    if args.track:
+        conditions.append("c.track = %s")
+        params.append(args.track)
+
+    query = """
+        SELECT c.centroid_id, c.track, c.title_count
+        FROM ctm c
+        WHERE %s
+        ORDER BY c.title_count DESC
+    """ % " AND ".join(
+        conditions
     )
 
-    print_cluster_report(events)
+    cur.execute(query, tuple(params) if params else None)
+    ctms = cur.fetchall()
 
+    print("Processing %d CTMs..." % len(ctms))
+    print("")
+
+    total_events = 0
+    total_written = 0
+
+    for centroid_id, track, title_count in ctms:
+        print("%s / %s (%d titles)" % (centroid_id, track, title_count), end=" ")
+
+        titles = load_titles_with_labels(conn, centroid_id, track)
+
+        if len(titles) < args.min_label:
+            print("-> skip (no labels)")
+            continue
+
+        events = cluster_titles(titles, centroid_id, min_label_cluster=args.min_label)
+
+        if not events:
+            print("-> 0 events")
+            continue
+
+        if args.write:
+            ctm_id = get_ctm_id(conn, centroid_id, track)
+            written = write_events_to_db(conn, events, ctm_id)
+            total_written += written
+            print("-> %d events" % len(events))
+        else:
+            print("-> %d events (dry run)" % len(events))
+
+        total_events += len(events)
+
+    print("")
+    print("=" * 60)
+    print("TOTAL")
+    print("=" * 60)
+    print("CTMs processed: %d" % len(ctms))
+    print("Events found:   %d" % total_events)
     if args.write:
-        ctm_id = get_ctm_id(conn, args.centroid, args.track)
-        written = write_events_to_db(conn, events, ctm_id)
-        print()
-        print("Wrote %d events to events_v3" % written)
+        print("Events written: %d" % total_written)
 
     conn.close()
 

@@ -1,4 +1,5 @@
 import DashboardLayout from '@/components/DashboardLayout';
+import EventList from '@/components/EventList';
 import EventAccordion from '@/components/EventAccordion';
 import {
   getCentroidById,
@@ -17,6 +18,13 @@ export const dynamic = 'force-dynamic';
 interface TrackPageProps {
   params: Promise<{ centroid_key: string; track_key: string }>;
   searchParams: Promise<{ month?: string }>;
+}
+
+function formatMonthLabel(monthStr: string): string {
+  // Convert "2026-01" to "January 2026"
+  const [year, month] = monthStr.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 export default async function TrackPage({ params, searchParams }: TrackPageProps) {
@@ -46,23 +54,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
   const sidebar = (
     <div className="space-y-6 text-sm">
-      {/* Context Block */}
-      <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-        <h3 className="text-xs uppercase tracking-wide text-dashboard-text-muted mb-3">Context</h3>
-        <div className="space-y-2">
-          <p className="text-dashboard-text font-medium">
-            {centroid.label} · {getTrackLabel(track)}
-          </p>
-          <p className="text-dashboard-text-muted">
-            {currentMonth}
-          </p>
-          <div className="flex gap-4 text-xs text-dashboard-text-muted pt-2">
-            <span>{eventCount} events</span>
-            <span>{actualSourceCount} sources</span>
-          </div>
-        </div>
-      </div>
-
       {/* Month selector */}
       {months.length > 1 && (
         <div>
@@ -88,31 +79,43 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         </div>
       )}
 
-      {/* Other topics for same centroid */}
+      {/* Other Strategic Topics - Redesigned (Desktop only) */}
       {otherTracks.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-3 text-dashboard-text">Other Topics</h3>
-          <div className="space-y-1">
+        <div className="hidden lg:block bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
+          <h3 className="text-xl font-bold mb-1 text-dashboard-text">
+            {centroid.label}
+          </h3>
+          <p className="text-sm text-dashboard-text-muted mb-4">
+            Other Strategic Topics
+          </p>
+          <nav className="space-y-1">
             {otherTracks.map(t => {
               const isCurrent = t === track;
               return isCurrent ? (
-                <span
+                <div
                   key={t}
-                  className="block text-dashboard-text cursor-default opacity-50"
+                  className="block px-4 py-3 rounded-lg bg-blue-600/20 border border-blue-500/40 cursor-default"
                 >
-                  {getTrackLabel(t as Track)}
-                </span>
+                  <span className="text-base font-medium text-blue-400">
+                    {getTrackLabel(t as Track)}
+                  </span>
+                  <span className="ml-2 text-xs text-blue-400/60">(current)</span>
+                </div>
               ) : (
                 <Link
                   key={t}
                   href={`/c/${centroid.id}/t/${t}`}
-                  className="block text-dashboard-text-muted hover:text-dashboard-text transition"
+                  className="block px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border
+                             border border-transparent hover:border-dashboard-border
+                             transition-all duration-150"
                 >
-                  {getTrackLabel(t as Track)}
+                  <span className="text-base font-medium text-dashboard-text hover:text-white transition">
+                    {getTrackLabel(t as Track)}
+                  </span>
                 </Link>
               );
             })}
-          </div>
+          </nav>
         </div>
       )}
 
@@ -140,20 +143,29 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   );
 
   return (
-    <DashboardLayout sidebar={sidebar}>
+    <DashboardLayout
+      sidebar={sidebar}
+      centroidLabel={centroid.label}
+      centroidId={centroid.id}
+      otherTracks={otherTracks}
+      currentTrack={track}
+    >
       {/* Track header */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">
         <div className="mb-4">
           <Link
             href={`/c/${centroid.id}`}
-            className="text-blue-600 hover:text-blue-800 text-sm"
+            className="text-blue-400 hover:text-blue-300 text-sm"
           >
             ← {centroid.label}
           </Link>
         </div>
-        <h1 className="text-4xl font-bold">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">
           {centroid.label}: {getTrackLabel(track)}
         </h1>
+        <p className="text-dashboard-text-muted">
+          {formatMonthLabel(currentMonth)} | {eventCount} events | {actualSourceCount} sources
+        </p>
       </div>
 
       {/* CTM Summary */}
@@ -174,7 +186,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
         // Helper to count titles in events
         const countTitles = (events: typeof allEvents) =>
-          events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
+          events.reduce((sum, e) => sum + (e.source_count || e.source_title_ids?.length || 0), 0);
 
         // Helper to check if event is "Other Coverage" bucket
         const isOtherCoverage = (e: typeof allEvents[0]) =>
@@ -222,17 +234,13 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   {domesticMainEvents.length} events | {countTitles(domesticEvents)} sources
                 </p>
 
-                {/* Main events */}
-                <div className="space-y-3">
-                  {domesticMainEvents.map((event, idx) => (
-                    <EventAccordion
-                      key={`domestic-${idx}`}
-                      event={event}
-                      allTitles={titles}
-                      index={idx}
-                    />
-                  ))}
-                </div>
+                {/* Main events with pagination */}
+                <EventList
+                  events={domesticMainEvents}
+                  allTitles={titles}
+                  initialLimit={10}
+                  keyPrefix="domestic"
+                />
 
                 {/* Other Domestic Events */}
                 {domesticOther.length > 0 && (
@@ -275,28 +283,28 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                           {mainEvents.length} events | {countTitles(events)} sources
                         </span>
                       </h3>
-                      <div className="space-y-2 pl-4 border-l-2 border-dashboard-border">
-                        {mainEvents.map((event, idx) => (
-                          <EventAccordion
-                            key={`bilateral-${bucketKey}-${idx}`}
-                            event={event}
-                            allTitles={titles}
-                            index={idx}
-                            compact
-                          />
-                        ))}
+                      <div className="pl-4 border-l-2 border-dashboard-border">
+                        <EventList
+                          events={mainEvents}
+                          allTitles={titles}
+                          initialLimit={10}
+                          compact
+                          keyPrefix={`bilateral-${bucketKey}`}
+                        />
                         {otherEvents.length > 0 && (
-                          <EventAccordion
-                            key={`bilateral-${bucketKey}-other`}
-                            event={{
-                              date: otherEvents[0]?.date || '',
-                              summary: `Other ${countryName} Coverage (${countTitles(otherEvents)} sources)`,
-                              source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
-                            }}
-                            allTitles={titles}
-                            index={998}
-                            compact
-                          />
+                          <div className="mt-2">
+                            <EventAccordion
+                              key={`bilateral-${bucketKey}-other`}
+                              event={{
+                                date: otherEvents[0]?.date || '',
+                                summary: `Other ${countryName} Coverage (${countTitles(otherEvents)} sources)`,
+                                source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
+                              }}
+                              allTitles={titles}
+                              index={998}
+                              compact
+                            />
+                          </div>
                         )}
                       </div>
                     </div>
@@ -316,28 +324,28 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                           {mainEvents.length} events | {countTitles(otherInternational)} sources
                         </span>
                       </h3>
-                      <div className="space-y-2 pl-4 border-l-2 border-dashboard-border">
-                        {mainEvents.map((event, idx) => (
-                          <EventAccordion
-                            key={`other-intl-${idx}`}
-                            event={event}
-                            allTitles={titles}
-                            index={idx}
-                            compact
-                          />
-                        ))}
+                      <div className="pl-4 border-l-2 border-dashboard-border">
+                        <EventList
+                          events={mainEvents}
+                          allTitles={titles}
+                          initialLimit={10}
+                          compact
+                          keyPrefix="other-intl"
+                        />
                         {otherEvents.length > 0 && (
-                          <EventAccordion
-                            key="other-intl-other"
-                            event={{
-                              date: otherEvents[0]?.date || '',
-                              summary: `Other Coverage (${countTitles(otherEvents)} sources)`,
-                              source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
-                            }}
-                            allTitles={titles}
-                            index={997}
-                            compact
-                          />
+                          <div className="mt-2">
+                            <EventAccordion
+                              key="other-intl-other"
+                              event={{
+                                date: otherEvents[0]?.date || '',
+                                summary: `Other Coverage (${countTitles(otherEvents)} sources)`,
+                                source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
+                              }}
+                              allTitles={titles}
+                              index={997}
+                              compact
+                            />
+                          </div>
                         )}
                       </div>
                     </div>

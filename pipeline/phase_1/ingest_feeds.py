@@ -13,8 +13,7 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-
-from .rss_fetcher import RSSFetcher
+from pipeline.phase_1.rss_fetcher import RSSFetcher
 
 
 def get_active_feeds():

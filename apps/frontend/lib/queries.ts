@@ -98,7 +98,10 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
   const results = await query<{
     id: string;
     date: string;
+    first_seen: string | null;
+    title: string | null;
     summary: string;
+    tags: string[] | null;
     source_title_ids: string[];
     event_type: string | null;
     bucket_key: string | null;
@@ -108,7 +111,10 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     `SELECT
       e.id,
       e.date::text as date,
+      e.first_seen::text as first_seen,
+      e.title,
       e.summary,
+      e.tags,
       e.event_type,
       e.bucket_key,
       e.source_batch_count,
@@ -117,14 +123,17 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
     WHERE e.ctm_id = $1
-    GROUP BY e.id, e.date, e.summary, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
+    GROUP BY e.id, e.date, e.first_seen, e.title, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
     ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
   );
 
   return results.map(r => ({
     date: r.date,
+    first_seen: r.first_seen || undefined,
+    title: r.title || undefined,
     summary: r.summary,
+    tags: r.tags || undefined,
     event_id: r.id,
     source_title_ids: r.source_title_ids.filter(id => id !== null),
     event_type: r.event_type as Event['event_type'],

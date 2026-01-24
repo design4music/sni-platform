@@ -19,11 +19,13 @@ function getCountryFlag(iso2?: string): string {
   return String.fromCodePoint(...codePoints);
 }
 
+type Section = NonNullable<GeoBriefProfile['sections']>[number];
+
 function AccordionItem({
   section,
   defaultOpen = false
 }: {
-  section: GeoBriefProfile['sections'][0];
+  section: Section;
   defaultOpen?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -105,7 +107,7 @@ export default function GeoBriefSection({ profile, updatedAt }: GeoBriefSectionP
         </div>
       </div>
 
-      {hasSnapshot && (
+      {hasSnapshot && profile.snapshot && (
         <div className="px-6 py-6 border-b border-dashboard-border">
           <h3 className="text-lg font-semibold mb-4">Snapshot</h3>
           <table className="w-full">
@@ -128,7 +130,7 @@ export default function GeoBriefSection({ profile, updatedAt }: GeoBriefSectionP
         </div>
       )}
 
-      {hasSections && (
+      {hasSections && profile.sections && (
         <div>
           {profile.sections.map((section, idx) => (
             <AccordionItem

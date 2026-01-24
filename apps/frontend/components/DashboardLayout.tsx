@@ -8,16 +8,35 @@ interface DashboardLayoutProps {
   title?: string;
   sidebar?: ReactNode;
   fullWidthContent?: ReactNode;
+  // For mobile navigation - pass track context
+  centroidLabel?: string;
+  centroidId?: string;
+  otherTracks?: string[];
+  currentTrack?: string;
 }
 
-export default function DashboardLayout({ children, title, sidebar, fullWidthContent }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  title,
+  sidebar,
+  fullWidthContent,
+  centroidLabel,
+  centroidId,
+  otherTracks,
+  currentTrack
+}: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-dashboard-surface text-dashboard-text bg-texture-grid">
-      <header className="border-b border-dashboard-border">
+      <header className="sticky top-0 z-40 border-b border-dashboard-border bg-dashboard-surface/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Logo />
-            <Navigation />
+            <Navigation
+              centroidLabel={centroidLabel}
+              centroidId={centroidId}
+              otherTracks={otherTracks}
+              currentTrack={currentTrack}
+            />
           </div>
         </div>
       </header>

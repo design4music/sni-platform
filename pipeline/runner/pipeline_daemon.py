@@ -2,10 +2,12 @@
 SNI v3 Pipeline Daemon
 
 Orchestrates the complete v3 pipeline with configurable intervals:
-- Phase 1: RSS ingestion (frequent)
-- Phase 2: Centroid matching (frequent)
-- Phase 3: Track assignment & CTM creation (frequent)
-- Phase 4: CTM enrichment (less frequent, can wait)
+- Phase 1: RSS ingestion (12 hours)
+- Phase 2: Centroid matching (5 minutes)
+- Phase 3: Track assignment & CTM creation (10 minutes)
+- Phase 3.5: Label extraction (10 minutes)
+- Phase 4: Event clustering (30 minutes)
+- Phase 4.5: Summary generation (1 hour)
 
 Features:
 - Sequential execution with configurable intervals
@@ -26,13 +28,20 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+
 # Import phase modules
 from pipeline.phase_1.ingest_feeds import run_ingestion
 from pipeline.phase_2.match_centroids import process_batch as phase2_process
-from pipeline.phase_3.assign_tracks_batched import \
-    process_batch as phase3_process
-from pipeline.phase_4.generate_summaries import \
-    process_ctm_batch as phase4_summaries
+from pipeline.phase_3.assign_tracks_batched import process_batch as phase3_process
+from pipeline.phase_3_5.extract_labels import process_titles as phase35_labels
+from pipeline.phase_4.cluster_events_mechanical import (
+    cluster_titles,
+    load_titles_with_labels,
+    write_events_to_db,
+)
+from pipeline.phase_4.generate_summaries_4_5 import (
+    process_ctm_batch as phase45_summaries,
+)
 
 
 class PipelineDaemon:
@@ -47,14 +56,18 @@ class PipelineDaemon:
         self.phase1_interval = 43200  # 12 hours - RSS feeds
         self.phase2_interval = 300  # 5 minutes - Fast matching
         self.phase3_interval = 600  # 10 minutes - LLM track assignment
-        self.phase4_interval = 3600  # 1 hour - Enrichment (can wait)
+        self.phase35_interval = 600  # 10 minutes - Label extraction
+        self.phase4_interval = 1800  # 30 minutes - Event clustering
+        self.phase45_interval = 3600  # 1 hour - Summary generation
 
         # Last run timestamps
         self.last_run = {
             "phase1": 0,
             "phase2": 0,
             "phase3": 0,
+            "phase35": 0,
             "phase4": 0,
+            "phase45": 0,
         }
 
         # Batch sizes
@@ -113,7 +126,29 @@ class PipelineDaemon:
                 )
                 titles_need_track = cur.fetchone()[0]
 
-                # Phase 4 queue (CTMs with events but no summary OR need update)
+                # Phase 3.5 queue (titles with track but no labels)
+                cur.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM titles_v3 t
+                    WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE ta.title_id = t.id)
+                      AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
+                """
+                )
+                titles_need_labels = cur.fetchone()[0]
+
+                # Phase 4 cluster queue (CTMs that may need event regeneration)
+                cur.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM ctm c
+                    WHERE c.title_count >= 3
+                      AND c.is_frozen = false
+                """
+                )
+                ctms_for_clustering = cur.fetchone()[0]
+
+                # Phase 4 summary queue (CTMs with events but no summary OR need update)
                 cur.execute(
                     """
                     SELECT COUNT(*)
@@ -133,6 +168,8 @@ class PipelineDaemon:
                 return {
                     "pending_titles": pending_titles,
                     "titles_need_track": titles_need_track,
+                    "titles_need_labels": titles_need_labels,
+                    "ctms_for_clustering": ctms_for_clustering,
                     "ctms_need_summary": ctms_need_summary,
                 }
         finally:
@@ -361,6 +398,37 @@ class PipelineDaemon:
         finally:
             conn.close()
 
+    def run_event_clustering(self):
+        """Run event clustering for all active unfrozen CTMs"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Get all unfrozen CTMs with enough titles
+                cur.execute(
+                    """
+                    SELECT id, centroid_id, track, TO_CHAR(month, 'YYYY-MM') as month
+                    FROM ctm
+                    WHERE title_count >= 3 AND is_frozen = false
+                    ORDER BY month DESC
+                    """
+                )
+                ctms = cur.fetchall()
+
+            print(f"Processing {len(ctms)} CTMs for event clustering...")
+            processed = 0
+            for ctm_id, centroid_id, track, month in ctms:
+                titles = load_titles_with_labels(centroid_id, track, month)
+                if len(titles) >= 3:
+                    events = cluster_titles(titles)
+                    if events:
+                        write_events_to_db(ctm_id, events)
+                        processed += 1
+
+            print(f"Clustered events for {processed} CTMs")
+
+        finally:
+            conn.close()
+
     def run_phase_with_retry(self, phase_name: str, phase_func, *args, **kwargs):
         """
         Run a phase with retry logic.
@@ -409,9 +477,11 @@ class PipelineDaemon:
         # Get queue stats
         stats = self.get_queue_stats()
         print("\nQueue Status:")
-        print(f"  Pending titles (Phase 2):    {stats['pending_titles']}")
-        print(f"  Titles need track (Phase 3): {stats['titles_need_track']}")
-        print(f"  CTMs need summary (Phase 4): {stats['ctms_need_summary']}")
+        print(f"  Pending titles (Phase 2):      {stats['pending_titles']}")
+        print(f"  Titles need track (Phase 3):   {stats['titles_need_track']}")
+        print(f"  Titles need labels (Phase 3.5): {stats['titles_need_labels']}")
+        print(f"  CTMs for clustering (Phase 4):  {stats['ctms_for_clustering']}")
+        print(f"  CTMs need summary (Phase 4):    {stats['ctms_need_summary']}")
 
         # Phase 1: RSS Ingestion (if interval elapsed)
         if self.should_run_phase("phase1"):
@@ -462,25 +532,55 @@ class PipelineDaemon:
                 )
                 print(f"\nPhase 3: Skipping (next run in {next_run}s)")
 
-        # Phase 4: Summary Generation (if interval elapsed and work available)
-        if self.should_run_phase("phase4") and stats["ctms_need_summary"] > 0:
-            await self.run_phase_with_retry(
-                "Phase 4: Summary Generation",
-                phase4_summaries,
-                max_ctms=self.phase4_batch_size,
+        # Phase 3.5: Label Extraction (if interval elapsed and work available)
+        if self.should_run_phase("phase35") and stats["titles_need_labels"] > 0:
+            self.run_phase_with_retry(
+                "Phase 3.5: Label Extraction",
+                phase35_labels,
+                max_titles=200,
+            )
+            self.last_run["phase35"] = time.time()
+        else:
+            if stats["titles_need_labels"] == 0:
+                print("\nPhase 3.5: Skipping (no titles need labels)")
+            else:
+                next_run = int(
+                    self.phase35_interval - (time.time() - self.last_run["phase35"])
+                )
+                print(f"\nPhase 3.5: Skipping (next run in {next_run}s)")
+
+        # Phase 4: Event Clustering (if interval elapsed)
+        if self.should_run_phase("phase4"):
+            self.run_phase_with_retry(
+                "Phase 4: Event Clustering",
+                self.run_event_clustering,
             )
             self.last_run["phase4"] = time.time()
+        else:
+            next_run = int(
+                self.phase4_interval - (time.time() - self.last_run["phase4"])
+            )
+            print(f"\nPhase 4: Skipping (next run in {next_run}s)")
+
+        # Phase 4.5: Summary Generation (if interval elapsed and work available)
+        if self.should_run_phase("phase45") and stats["ctms_need_summary"] > 0:
+            await self.run_phase_with_retry(
+                "Phase 4.5: Summary Generation",
+                phase45_summaries,
+                max_ctms=self.phase4_batch_size,
+            )
+            self.last_run["phase45"] = time.time()
 
             # Monitor summary word counts after generation
             self.monitor_summary_word_counts()
         else:
             if stats["ctms_need_summary"] == 0:
-                print("\nPhase 4: Skipping (no CTMs need summary)")
+                print("\nPhase 4.5: Skipping (no CTMs need summary)")
             else:
                 next_run = int(
-                    self.phase4_interval - (time.time() - self.last_run["phase4"])
+                    self.phase45_interval - (time.time() - self.last_run["phase45"])
                 )
-                print(f"\nPhase 4: Skipping (next run in {next_run}s)")
+                print(f"\nPhase 4.5: Skipping (next run in {next_run}s)")
 
         cycle_duration = time.time() - cycle_start
         print(f"\n{'='*70}")
@@ -507,12 +607,14 @@ class PipelineDaemon:
             f"  Phase 3 interval: {self.phase3_interval}s ({self.phase3_interval/60:.0f} minutes - track assignment)"
         )
         print(
-            f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/3600:.0f} hour - enrichment)"
+            f"  Phase 3.5 interval: {self.phase35_interval}s ({self.phase35_interval/60:.0f} minutes - label extraction)"
         )
-        print("\nBatch Sizes:")
-        print(f"  Phase 2: {self.phase2_batch_size} titles")
-        print(f"  Phase 3: {self.phase3_batch_size} CTMs")
-        print(f"  Phase 4: {self.phase4_batch_size} CTMs")
+        print(
+            f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/60:.0f} minutes - event clustering)"
+        )
+        print(
+            f"  Phase 4.5 interval: {self.phase45_interval}s ({self.phase45_interval/3600:.0f} hour - summary generation)"
+        )
         print("\nPress Ctrl+C to shutdown gracefully\n")
 
         while self.running:
