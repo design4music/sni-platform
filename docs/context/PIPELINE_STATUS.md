@@ -309,6 +309,11 @@ created_at, updated_at TIMESTAMPTZ
    - Large UNKNOWN clusters split by activity spikes
    - Threshold: 2x average daily volume
 
+5. **Jaccard Merge** (pending implementation):
+   - Compare new event titles/tags with existing events in same bucket
+   - Merge if Jaccard similarity > threshold (0.4)
+   - Prevents duplicate events across pipeline runs
+
 ### Entity Grouping Rules
 
 **Institutional Entities** (cluster ALL actions together):
@@ -362,7 +367,10 @@ def cluster_titles(titles, centroid_id):
 id UUID PRIMARY KEY
 ctm_id UUID NOT NULL REFERENCES ctm(id)
 date DATE NOT NULL                -- Most recent title date
-summary TEXT NOT NULL             -- Mechanical label or LLM narrative
+first_seen DATE                   -- Earliest title date (for date ranges)
+title TEXT                        -- LLM-generated headline (5-15 words)
+summary TEXT NOT NULL             -- LLM narrative (30-60 words)
+tags TEXT[]                       -- LLM-extracted entity/topic tags
 event_type VARCHAR(20)            -- 'bilateral', 'domestic', 'other_international'
 bucket_key VARCHAR(100)           -- For bilateral: country code (e.g., 'CN')
 source_batch_count INT DEFAULT 1  -- Title count
@@ -383,33 +391,55 @@ PRIMARY KEY (event_id, title_id)
 
 **Script**: `pipeline/phase_4/generate_event_summaries_4_5a.py`
 **Daemon**: Integrated with Phase 4
-**Purpose**: Generate 1-3 sentence narrative summaries for event clusters
+**Purpose**: Generate structured event data: title, summary, and tags
+
+### Output Structure
+
+LLM generates JSON for each event cluster:
+```json
+{
+  "title": "Short headline (5-15 words)",
+  "summary": "1-3 sentence narrative (30-60 words)",
+  "tags": ["entity1", "entity2", "topic1", "topic2", "topic3"]
+}
+```
 
 ### Process
 
-1. Identify events with mechanical labels (contain `->` or `titles)`)
+1. Identify events needing enrichment (no title or mechanical labels)
 2. Fetch all titles for each event
-3. LLM generates 1-3 sentence summary from headlines
-4. Update `events_v3.summary` with narrative text
+3. LLM generates structured JSON with title, summary, tags
+4. Update `events_v3` with title, summary, tags, first_seen
+
+### Tag Categories
+
+Tags capture key entities and topics for deduplication and filtering:
+- People: Names of key figures mentioned
+- Organizations: Companies, agencies, institutions
+- Places: Countries, cities, regions (beyond the centroid)
+- Topics: Key themes (tariffs, sanctions, elections, etc.)
 
 ### LLM Prompt (Key Points)
 
 ```
-You are a news analyst. Summarize these headlines into 1-3 concise sentences.
+You are a news analyst. Generate structured event data from headlines.
+
+OUTPUT FORMAT (JSON):
+{
+  "title": "Short headline (5-15 words)",
+  "summary": "1-3 sentence narrative (30-60 words)",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
+}
 
 Requirements:
-- Extract key facts: who, what, where, specific figures/names
-- Write as if describing events directly (not "headlines report...")
-- Capture the arc if there's progression (threat -> escalation -> resolution)
-- Neutral, factual tone
-- 1-3 sentences only (30-60 words)
+- Title: Concise headline capturing the core event
+- Summary: Extract key facts, neutral tone, no "reports say"
+- Tags: 3-5 tags for entities, places, topics
 - Use names ONLY as they appear in headlines
 
 Do NOT:
-- Mention "headlines", "articles", "reports"
-- Add role descriptions like "President", "former President", "Chancellor"
-- Infer current political offices - they may be outdated
-- Use any descriptive titles not explicitly in the headlines
+- Add role descriptions ("President", "Chancellor")
+- Infer political offices - they may be outdated
 ```
 
 ---
@@ -596,7 +626,10 @@ interface CTM {
 
 interface Event {
   date: string;
-  summary: string;                 // Narrative summary
+  first_seen?: string;             // Earliest title date
+  title?: string;                  // LLM-generated headline
+  summary: string;                 // LLM narrative summary
+  tags?: string[];                 // Entity/topic tags
   event_type?: 'bilateral' | 'other_international' | 'domestic';
   bucket_key?: string;             // Country code for bilateral
   source_count?: number;           // Title count
@@ -718,9 +751,12 @@ GROUP BY event_type;
 - Two-tier summary architecture (events -> CTM digest)
 - Role description fix (no inferred titles)
 - All USA tracks processed with new mechanism
+- Event enrichment: title, tags, first_seen columns added to events_v3
+- Phase 4.5a generates structured JSON (title, summary, tags)
+- Frontend: event titles, tag pills, date ranges, pagination
 
 **Next Steps**:
-1. Backfill labels for all existing titles
-2. Refine entity extraction for non-US centroids
-3. Cross-CTM event deduplication
-4. Frontend display enhancements
+1. Jaccard similarity merge: deduplicate events using title/tag overlap
+2. Backfill labels for all existing titles
+3. Refine entity extraction for non-US centroids
+4. Cross-CTM event deduplication
