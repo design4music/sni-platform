@@ -50,7 +50,10 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
   const currentMonth = month || months[0];
   const eventCount = ctm.events_digest?.length || 0;
-  const actualSourceCount = titles.length;
+  // Count sources from events (what's actually displayed in sections)
+  const actualSourceCount = (ctm.events_digest || []).reduce(
+    (sum, e) => sum + (e.source_title_ids?.length || 0), 0
+  );
 
   const sidebar = (
     <div className="space-y-6 text-sm">
@@ -240,9 +243,9 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
           );
         }
 
-        // Helper to count titles in events
+        // Helper to count titles in events - prefer actual linked titles over stored count
         const countTitles = (events: typeof allEvents) =>
-          events.reduce((sum, e) => sum + (e.source_count || e.source_title_ids?.length || 0), 0);
+          events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 
         // Helper to check if event is "Other Coverage" bucket
         const isOtherCoverage = (e: typeof allEvents[0]) =>

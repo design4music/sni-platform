@@ -226,14 +226,16 @@ export async function getTrackSummaryByCentroid(
 ): Promise<Array<{ track: string; latestMonth: string; totalTitles: number }>> {
   const results = await query<{ track: string; latest_month: string; title_count: number }>(
     `SELECT
-      track,
-      TO_CHAR(MAX(month), 'YYYY-MM') as latest_month,
-      SUM(title_count) as title_count
-    FROM ctm
-    WHERE centroid_id = $1
-      AND is_frozen = false
-    GROUP BY track
-    ORDER BY MAX(month) DESC`,
+      c.track,
+      TO_CHAR(MAX(c.month), 'YYYY-MM') as latest_month,
+      COUNT(DISTINCT evt.title_id)::int as title_count
+    FROM ctm c
+    LEFT JOIN events_v3 e ON c.id = e.ctm_id
+    LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
+    WHERE c.centroid_id = $1
+      AND c.is_frozen = false
+    GROUP BY c.track
+    ORDER BY MAX(c.month) DESC`,
     [centroidId]
   );
 
