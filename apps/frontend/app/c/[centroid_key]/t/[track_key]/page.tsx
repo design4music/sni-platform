@@ -11,7 +11,7 @@ import {
 } from '@/lib/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getTrackLabel, Track } from '@/lib/types';
+import { getTrackLabel, getCountryName, Track } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -183,6 +183,62 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       {/* Events split into Domestic and International sections */}
       {(() => {
         const allEvents = ctm.events_digest || [];
+        const homeIsoCodes = new Set(centroid.iso_codes || []);
+
+        // No events - show fallback content
+        if (allEvents.length === 0) {
+          // Has titles but no events - show raw titles
+          if (titles.length > 0) {
+            return (
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold mb-2">Sources</h2>
+                <p className="text-sm text-dashboard-text-muted mb-4">
+                  {titles.length} articles collected - event clustering pending
+                </p>
+                <div className="space-y-2">
+                  {titles.slice(0, 50).map((title) => (
+                    <div key={title.id} className="py-2 border-b border-dashboard-border/50">
+                      {title.url_gnews ? (
+                        <a
+                          href={title.url_gnews}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-dashboard-text hover:text-blue-400 transition"
+                        >
+                          {title.title_display}
+                        </a>
+                      ) : (
+                        <span className="text-dashboard-text">{title.title_display}</span>
+                      )}
+                      {title.publisher_name && (
+                        <span className="text-dashboard-text-muted text-sm ml-2">
+                          - {title.publisher_name}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                  {titles.length > 50 && (
+                    <p className="text-dashboard-text-muted text-sm pt-2">
+                      ... and {titles.length - 50} more
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          // No events AND no titles - show unavailable message
+          return (
+            <div className="mb-10 py-12 text-center">
+              <div className="text-dashboard-text-muted">
+                <p className="text-lg mb-2">No coverage available for this topic</p>
+                <p className="text-sm">
+                  Check back later or explore other topics for {centroid.label}
+                </p>
+              </div>
+            </div>
+          );
+        }
 
         // Helper to count titles in events
         const countTitles = (events: typeof allEvents) =>
@@ -192,16 +248,20 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         const isOtherCoverage = (e: typeof allEvents[0]) =>
           e.summary.startsWith('[Storyline]') || e.summary.startsWith('Other ') || e.is_alias_group === true;
 
-        // Domestic events (no event_type or domestic)
+        // Helper to check if bilateral event is actually domestic (bucket_key matches home ISO)
+        const isBilateralToSelf = (e: typeof allEvents[0]) =>
+          e.event_type === 'bilateral' && e.bucket_key && homeIsoCodes.has(e.bucket_key);
+
+        // Domestic events: no event_type, domestic, OR bilateral to self
         const domesticEvents = allEvents.filter(
-          e => !e.event_type || e.event_type === 'domestic'
+          e => !e.event_type || e.event_type === 'domestic' || isBilateralToSelf(e)
         );
         const domesticMainEvents = domesticEvents.filter(e => !isOtherCoverage(e));
         const domesticOther = domesticEvents.filter(e => isOtherCoverage(e));
 
-        // International: bilateral and other_international
+        // International: bilateral (not to self) and other_international
         const internationalEvents = allEvents.filter(
-          e => e.event_type === 'bilateral' || e.event_type === 'other_international'
+          e => (e.event_type === 'bilateral' && !isBilateralToSelf(e)) || e.event_type === 'other_international'
         );
 
         // Group bilateral events by bucket_key
@@ -272,8 +332,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 {sortedBilateralEntries.map(([bucketKey, events]) => {
                   const mainEvents = events.filter(e => !isOtherCoverage(e));
                   const otherEvents = events.filter(e => isOtherCoverage(e));
-                  // Extract country name from bucket_key like "ASIA-CHINA" -> "China"
-                  const countryName = bucketKey.split('-').pop() || bucketKey;
+                  const countryName = getCountryName(bucketKey);
 
                   return (
                     <div key={bucketKey} className="mb-6">
@@ -358,13 +417,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       })()}
 
 
-      {/* AI disclaimer */}
-      <div className="mt-12 pt-8 border-t border-dashboard-border">
-        <p className="text-sm text-dashboard-text-muted italic">
-          This narrative was generated by AI based on {ctm.title_count} source articles.
-          All content should be independently verified for critical applications.
-        </p>
-      </div>
     </DashboardLayout>
   );
 }

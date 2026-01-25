@@ -128,6 +128,67 @@ export const REGIONS = {
 
 export type RegionKey = keyof typeof REGIONS;
 
+// ISO code to country name mapping
+const ISO_TO_COUNTRY: Record<string, string> = {
+  // Major powers & orgs
+  US: 'United States', CN: 'China', RU: 'Russia', GB: 'United Kingdom', UK: 'United Kingdom',
+  EU: 'European Union',
+  DE: 'Germany', FR: 'France', JP: 'Japan', IN: 'India', BR: 'Brazil',
+  // Europe
+  IT: 'Italy', ES: 'Spain', PL: 'Poland', NL: 'Netherlands', BE: 'Belgium',
+  SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', AT: 'Austria',
+  CH: 'Switzerland', PT: 'Portugal', GR: 'Greece', CZ: 'Czechia', RO: 'Romania',
+  HU: 'Hungary', IE: 'Ireland', SK: 'Slovakia', BG: 'Bulgaria', HR: 'Croatia',
+  RS: 'Serbia', UA: 'Ukraine', BY: 'Belarus', LT: 'Lithuania', LV: 'Latvia',
+  EE: 'Estonia', SI: 'Slovenia', BA: 'Bosnia', AL: 'Albania', MK: 'North Macedonia',
+  ME: 'Montenegro', XK: 'Kosovo', MD: 'Moldova', LU: 'Luxembourg', MT: 'Malta',
+  CY: 'Cyprus', IS: 'Iceland', GL: 'Greenland',
+  // Middle East
+  IL: 'Israel', SA: 'Saudi Arabia', IR: 'Iran', TR: 'Turkey', AE: 'UAE',
+  EG: 'Egypt', IQ: 'Iraq', SY: 'Syria', JO: 'Jordan', LB: 'Lebanon',
+  KW: 'Kuwait', QA: 'Qatar', BH: 'Bahrain', OM: 'Oman', YE: 'Yemen',
+  PS: 'Palestine',
+  // Asia
+  KR: 'South Korea', KP: 'North Korea', TW: 'Taiwan', HK: 'Hong Kong',
+  SG: 'Singapore', MY: 'Malaysia', ID: 'Indonesia', TH: 'Thailand',
+  VN: 'Vietnam', PH: 'Philippines', MM: 'Myanmar', KH: 'Cambodia',
+  LA: 'Laos', BD: 'Bangladesh', PK: 'Pakistan', AF: 'Afghanistan',
+  NP: 'Nepal', LK: 'Sri Lanka', MN: 'Mongolia', KZ: 'Kazakhstan',
+  UZ: 'Uzbekistan', TM: 'Turkmenistan', KG: 'Kyrgyzstan', TJ: 'Tajikistan',
+  AZ: 'Azerbaijan', GE: 'Georgia', AM: 'Armenia',
+  // Africa
+  ZA: 'South Africa', NG: 'Nigeria', KE: 'Kenya', ET: 'Ethiopia',
+  GH: 'Ghana', TZ: 'Tanzania', UG: 'Uganda', DZ: 'Algeria', MA: 'Morocco',
+  TN: 'Tunisia', LY: 'Libya', SD: 'Sudan', SS: 'South Sudan', AO: 'Angola',
+  MZ: 'Mozambique', ZW: 'Zimbabwe', ZM: 'Zambia', BW: 'Botswana',
+  NA: 'Namibia', SN: 'Senegal', CI: 'Ivory Coast', CM: 'Cameroon',
+  CD: 'DR Congo', CG: 'Congo', RW: 'Rwanda', MG: 'Madagascar',
+  MU: 'Mauritius', ML: 'Mali', NE: 'Niger', BF: 'Burkina Faso',
+  // Americas
+  CA: 'Canada', MX: 'Mexico', AR: 'Argentina', CL: 'Chile', CO: 'Colombia',
+  PE: 'Peru', VE: 'Venezuela', EC: 'Ecuador', BO: 'Bolivia', PY: 'Paraguay',
+  UY: 'Uruguay', CU: 'Cuba', DO: 'Dominican Republic', HT: 'Haiti',
+  GT: 'Guatemala', HN: 'Honduras', SV: 'El Salvador', NI: 'Nicaragua',
+  CR: 'Costa Rica', PA: 'Panama', JM: 'Jamaica', TT: 'Trinidad',
+  PR: 'Puerto Rico', BS: 'Bahamas', BB: 'Barbados', GY: 'Guyana', SR: 'Suriname',
+  // Oceania
+  AU: 'Australia', NZ: 'New Zealand', PG: 'Papua New Guinea', FJ: 'Fiji',
+};
+
+// Get full country name from ISO code or bucket key
+export function getCountryName(codeOrBucketKey: string): string {
+  // If it's a bucket key like "ASIA-CN" or "EUROPE-DE", extract the ISO code
+  const parts = codeOrBucketKey.split('-');
+  const isoCode = parts.length > 1 ? parts[parts.length - 1] : codeOrBucketKey;
+
+  // Look up in mapping, fall back to the code itself (title-cased)
+  const name = ISO_TO_COUNTRY[isoCode.toUpperCase()];
+  if (name) return name;
+
+  // If not found, title-case whatever we have
+  return isoCode.charAt(0).toUpperCase() + isoCode.slice(1).toLowerCase();
+}
+
 // Utility function to format relative time
 export function formatTimeAgo(date: Date | null | undefined): string {
   if (!date) return '';
