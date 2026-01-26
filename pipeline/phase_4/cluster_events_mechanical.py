@@ -82,17 +82,30 @@ def load_titles_with_labels(conn, centroid_id: str, track: str) -> list[dict]:
     ]
 
 
-def get_geo_bucket_from_aliases(aliases: list, home_prefix: str) -> str:
+def load_centroid_iso_codes(conn, centroid_id: str) -> set:
+    """Load iso_codes for a centroid from centroids_v3."""
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT iso_codes FROM centroids_v3 WHERE id = %s",
+        (centroid_id,),
+    )
+    row = cur.fetchone()
+    if row and row[0]:
+        return set(row[0])
+    return set()
+
+
+def get_geo_bucket_from_aliases(aliases: list, home_iso_codes: set) -> str:
     """
     Check if aliases suggest a geographic bucket.
     Uses GEO_ALIAS_TO_ISO from ontology.
-    Returns bucket name or None.
+    Returns bucket name or None if ISO is in home_iso_codes (domestic).
     """
     for alias in aliases:
         alias_lower = str(alias).lower()
         if alias_lower in GEO_ALIAS_TO_ISO:
             iso = GEO_ALIAS_TO_ISO[alias_lower]
-            if iso != home_prefix and iso != "US":  # Don't bucket to home country
+            if iso not in home_iso_codes:
                 return "bilateral_%s" % iso
     return None
 
@@ -110,36 +123,55 @@ def extract_country_from_actor(actor: str) -> str:
     return None
 
 
-def assign_bucket(title: dict, centroid_id: str) -> str:
-    """Assign title to bucket based on target, actor nationality, OR aliases."""
+def assign_bucket(title: dict, home_iso_codes: set) -> str:
+    """Assign title to bucket based on target, actor nationality, OR aliases.
+
+    Args:
+        title: Title dict with actor, target, aliases
+        home_iso_codes: Set of ISO codes that are "domestic" for this centroid
+
+    Returns:
+        "domestic" or "bilateral_{ISO}"
+    """
     target = title["target"]
     actor = title["actor"]
     aliases = title.get("aliases", [])
 
-    # Extract home country from centroid (AMERICAS-USA -> US)
-    centroid_country = centroid_id.split("-")[-1]
-    home_prefix = "US" if centroid_country == "USA" else centroid_country[:2]
-
     # 1. Check target first - explicit foreign target = bilateral
     if target and target != "-":
-        # Home country institutions as target = domestic
-        if target.startswith(home_prefix + "_") or target == home_prefix:
-            pass  # Fall through to check actor/aliases
-        # ISO codes or regional blocs = bilateral
-        elif len(target) == 2 or target in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
+        # Check if target is a country code
+        if len(target) == 2:
+            if target in home_iso_codes:
+                pass  # Domestic - fall through
+            else:
+                return "bilateral_%s" % target
+        # Check if target starts with a home country prefix (e.g., "US_EXECUTIVE")
+        elif "_" in target:
+            target_country = target.split("_")[0]
+            if len(target_country) == 2 and target_country not in home_iso_codes:
+                return "bilateral_%s" % target_country
+        # Regional blocs = bilateral
+        elif target in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
             return "bilateral_%s" % target
-        # Multi-target: use first
+        # Multi-target: use first foreign one
         elif "," in target:
-            first = target.split(",")[0]
-            return "bilateral_%s" % first
+            for t in target.split(","):
+                t = t.strip()
+                if len(t) == 2 and t not in home_iso_codes:
+                    return "bilateral_%s" % t
 
     # 2. Check actor nationality - foreign actor = bilateral by actor origin
     actor_country = extract_country_from_actor(actor)
-    if actor_country and actor_country != home_prefix:
-        return "bilateral_%s" % actor_country
+    if actor_country:
+        if actor_country in home_iso_codes:
+            pass  # Domestic actor - fall through
+        elif len(actor_country) == 2:
+            return "bilateral_%s" % actor_country
+        elif actor_country in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
+            return "bilateral_%s" % actor_country
 
     # 3. Check aliases for geographic signals (e.g., "greenland" -> bilateral_GL)
-    alias_bucket = get_geo_bucket_from_aliases(aliases, home_prefix)
+    alias_bucket = get_geo_bucket_from_aliases(aliases, home_iso_codes)
     if alias_bucket:
         return alias_bucket
 
@@ -340,6 +372,7 @@ def create_event(
 def cluster_titles(
     titles: list[dict],
     centroid_id: str,
+    home_iso_codes: set,
     min_label_cluster: int = 3,
     unknown_split_threshold: int = 50,
 ) -> list[dict]:
@@ -348,13 +381,18 @@ def cluster_titles(
     1. Assign buckets (by target, actor nationality, OR geographic aliases)
     2. Within bucket: cluster by (actor, action_class)
     3. For large UNKNOWN clusters: split by spike days
+
+    Args:
+        titles: List of title dicts with labels
+        centroid_id: Centroid ID (e.g., 'MIDEAST-MAGHREB')
+        home_iso_codes: Set of ISO codes that are "domestic" for this centroid
     """
     events = []
 
-    # Step 1: Bucket assignment (now uses aliases via GEO_ALIAS_TO_ISO)
+    # Step 1: Bucket assignment using centroid's iso_codes
     buckets = defaultdict(list)
     for t in titles:
-        bucket = assign_bucket(t, centroid_id)
+        bucket = assign_bucket(t, home_iso_codes)
         buckets[bucket].append(t)
 
     # Process each bucket
@@ -560,14 +598,18 @@ def find_matching_event(
     bucket_key: str,
     event_type: str,
     new_titles: list[dict],
-    title_threshold: float = 0.4,
-    tag_threshold: float = 0.5,
+    headline_threshold: float = 0.35,
+    tag_threshold: float = 0.4,
 ) -> dict:
     """Find an existing event that matches the new cluster.
 
+    Uses two matching strategies:
+    1. Compare raw headlines (new cluster vs existing event's source headlines)
+    2. Compare typed tags if available (person:X, org:Y matches are strong signals)
+
     Returns event dict if match found, None otherwise.
     """
-    # Get existing events in same bucket
+    # Get existing events in same bucket with their tags
     cur.execute(
         """
         SELECT e.id, e.title, e.tags, e.date, e.first_seen
@@ -575,7 +617,6 @@ def find_matching_event(
         WHERE e.ctm_id = %s
           AND e.event_type = %s
           AND (e.bucket_key = %s OR (e.bucket_key IS NULL AND %s IS NULL))
-          AND e.title IS NOT NULL
         """,
         (ctm_id, event_type, bucket_key, bucket_key),
     )
@@ -584,29 +625,68 @@ def find_matching_event(
     if not existing_events:
         return None
 
-    # Build word set from new titles
-    new_title_words = set()
+    # Build word set from new cluster's raw headlines
+    new_headline_words = set()
     for t in new_titles:
-        new_title_words |= tokenize_for_matching(t.get("title", ""))
+        new_headline_words |= tokenize_for_matching(t.get("title", ""))
 
-    for event_id, title, tags, date, first_seen in existing_events:
-        # Check title similarity
-        existing_title_words = tokenize_for_matching(title)
-        title_sim = jaccard_similarity(new_title_words, existing_title_words)
+    best_match = None
+    best_score = 0.0
 
-        # Tags will be regenerated after merge, so we only match on title words
+    for event_id, llm_title, tags, date, first_seen in existing_events:
+        # Strategy 1: Compare raw headlines
+        # Fetch existing event's source headlines
+        cur.execute(
+            """
+            SELECT t.title_display
+            FROM event_v3_titles evt
+            JOIN titles_v3 t ON evt.title_id = t.id
+            WHERE evt.event_id = %s
+            LIMIT 50
+            """,
+            (event_id,),
+        )
+        existing_headlines = [row[0] for row in cur.fetchall()]
 
-        if title_sim >= title_threshold:
-            return {
+        existing_headline_words = set()
+        for headline in existing_headlines:
+            existing_headline_words |= tokenize_for_matching(headline)
+
+        headline_sim = jaccard_similarity(new_headline_words, existing_headline_words)
+
+        # Strategy 2: Compare typed tags (if existing event has tags)
+        tag_sim = 0.0
+        if tags and len(tags) > 0:
+            # Extract entity tags (person:, org:) - these are high-signal
+            existing_entity_tags = {
+                t for t in tags if t.startswith(("person:", "org:"))
+            }
+            # For new cluster, we don't have tags yet, but we can check if
+            # key entity names appear in new headlines
+            # This is a heuristic until we have proper tag generation
+            for tag in existing_entity_tags:
+                entity_name = tag.split(":", 1)[1] if ":" in tag else tag
+                if entity_name in " ".join(
+                    t.get("title", "").lower() for t in new_titles
+                ):
+                    tag_sim += 0.2  # Boost for entity match
+
+        # Combined score: headline similarity + entity match boost
+        combined_score = headline_sim + min(tag_sim, 0.3)
+
+        if combined_score > best_score and headline_sim >= headline_threshold:
+            best_score = combined_score
+            best_match = {
                 "id": event_id,
-                "title": title,
+                "title": llm_title,
                 "tags": tags,
                 "date": date,
                 "first_seen": first_seen,
-                "similarity": title_sim,
+                "similarity": headline_sim,
+                "combined_score": combined_score,
             }
 
-    return None
+    return best_match
 
 
 def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
@@ -693,9 +773,10 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
                 )
 
             merged += 1
+            combined = match.get("combined_score", match["similarity"])
             print(
-                "  MERGED %d titles into existing event (sim=%.2f)"
-                % (len(new_titles), match["similarity"])
+                "  MERGED %d titles into existing event (headline=%.2f, combined=%.2f)"
+                % (len(new_titles), match["similarity"], combined)
             )
 
         else:
@@ -770,7 +851,11 @@ def process_ctm(
     if len(titles) < min_label:
         return 0, 0
 
-    events = cluster_titles(titles, centroid_id, min_label_cluster=min_label)
+    # Load centroid's iso_codes for bucket assignment
+    home_iso_codes = load_centroid_iso_codes(conn, centroid_id)
+    events = cluster_titles(
+        titles, centroid_id, home_iso_codes, min_label_cluster=min_label
+    )
 
     if not events:
         return 0, 0
@@ -812,7 +897,11 @@ def main():
         titles = load_titles_with_labels(conn, args.centroid, args.track)
         print("Loaded %d titles with labels" % len(titles))
 
-        events = cluster_titles(titles, args.centroid, min_label_cluster=args.min_label)
+        home_iso_codes = load_centroid_iso_codes(conn, args.centroid)
+        print("Home ISO codes: %s" % sorted(home_iso_codes))
+        events = cluster_titles(
+            titles, args.centroid, home_iso_codes, min_label_cluster=args.min_label
+        )
         print_cluster_report(events)
 
         if args.write and events:
@@ -862,7 +951,10 @@ def main():
             print("-> skip (no labels)")
             continue
 
-        events = cluster_titles(titles, centroid_id, min_label_cluster=args.min_label)
+        home_iso_codes = load_centroid_iso_codes(conn, centroid_id)
+        events = cluster_titles(
+            titles, centroid_id, home_iso_codes, min_label_cluster=args.min_label
+        )
 
         if not events:
             print("-> 0 events")
