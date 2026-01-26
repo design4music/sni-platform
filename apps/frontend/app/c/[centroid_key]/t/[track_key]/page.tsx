@@ -50,10 +50,8 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
   const currentMonth = month || months[0];
   const eventCount = ctm.events_digest?.length || 0;
-  // Count sources from events (what's actually displayed in sections)
-  const actualSourceCount = (ctm.events_digest || []).reduce(
-    (sum, e) => sum + (e.source_title_ids?.length || 0), 0
-  );
+  // Count all sources (events + unclustered)
+  const actualSourceCount = titles.length;
 
   const sidebar = (
     <div className="space-y-6 text-sm">
@@ -415,6 +413,55 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 })()}
               </div>
             )}
+
+            {/* Unclustered sources - titles assigned but not in any event */}
+            {(() => {
+              const eventTitleIds = new Set(
+                allEvents.flatMap(e => e.source_title_ids || [])
+              );
+              const unclusteredTitles = titles.filter(t => !eventTitleIds.has(t.id));
+
+              if (unclusteredTitles.length === 0) return null;
+
+              return (
+                <div className="mt-10 pt-6 border-t border-dashboard-border">
+                  <h2 className="text-xl font-bold mb-2 text-dashboard-text-muted">
+                    Other Sources
+                  </h2>
+                  <p className="text-sm text-dashboard-text-muted mb-4">
+                    {unclusteredTitles.length} additional articles not grouped into events
+                  </p>
+                  <div className="space-y-2">
+                    {unclusteredTitles.slice(0, 20).map((title) => (
+                      <div key={title.id} className="py-2 border-b border-dashboard-border/30">
+                        {title.url_gnews ? (
+                          <a
+                            href={title.url_gnews}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-dashboard-text-muted hover:text-blue-400 transition text-sm"
+                          >
+                            {title.title_display}
+                          </a>
+                        ) : (
+                          <span className="text-dashboard-text-muted text-sm">{title.title_display}</span>
+                        )}
+                        {title.publisher_name && (
+                          <span className="text-dashboard-text-muted/60 text-xs ml-2">
+                            - {title.publisher_name}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {unclusteredTitles.length > 20 && (
+                      <p className="text-dashboard-text-muted text-sm pt-2">
+                        ... and {unclusteredTitles.length - 20} more
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </>
         );
       })()}

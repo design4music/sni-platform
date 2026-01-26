@@ -228,10 +228,9 @@ export async function getTrackSummaryByCentroid(
     `SELECT
       c.track,
       TO_CHAR(MAX(c.month), 'YYYY-MM') as latest_month,
-      COUNT(DISTINCT evt.title_id)::int as title_count
+      COUNT(DISTINCT ta.title_id)::int as title_count
     FROM ctm c
-    LEFT JOIN events_v3 e ON c.id = e.ctm_id
-    LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
+    LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
     WHERE c.centroid_id = $1
       AND c.is_frozen = false
     GROUP BY c.track
