@@ -6,7 +6,7 @@ import { Title } from '@/lib/types';
 interface EventAccordionProps {
   event: {
     date: string;
-    first_seen?: string;
+    last_active?: string;
     title?: string;
     summary: string;
     tags?: string[];
@@ -32,17 +32,17 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function DateRange({ date, first_seen }: { date: string; first_seen?: string }) {
-  const formattedDate = formatDate(date);
-  if (first_seen && first_seen !== date) {
-    const formattedFirst = formatDate(first_seen);
+function DateRange({ date, last_active }: { date: string; last_active?: string }) {
+  const formattedFirst = formatDate(date);
+  if (last_active && last_active !== date) {
+    const formattedLast = formatDate(last_active);
     return (
       <span className="text-dashboard-text-muted">
-        {formattedFirst} — {formattedDate}
+        {formattedFirst} — {formattedLast}
       </span>
     );
   }
-  return <span className="text-dashboard-text-muted">{formattedDate}</span>;
+  return <span className="text-dashboard-text-muted">{formattedFirst}</span>;
 }
 
 export default function EventAccordion({ event, allTitles, index, compact = false }: EventAccordionProps) {
@@ -63,7 +63,7 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
           <div className="flex-1">
             {/* Date range */}
             <p className="text-xs mb-1">
-              <DateRange date={event.date} first_seen={event.first_seen} />
+              <DateRange date={event.date} last_active={event.last_active} />
             </p>
             {/* Title if available, otherwise summary */}
             {event.title ? (
@@ -129,7 +129,7 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
         <div className="flex-1">
           {/* Date range */}
           <p className="text-sm mb-1">
-            <DateRange date={event.date} first_seen={event.first_seen} />
+            <DateRange date={event.date} last_active={event.last_active} />
           </p>
           {/* Title if available */}
           {event.title ? (

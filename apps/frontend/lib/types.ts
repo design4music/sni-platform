@@ -53,7 +53,7 @@ export interface CTM {
 
 export interface Event {
   date: string;
-  first_seen?: string;
+  last_active?: string;
   title?: string;
   summary: string;
   tags?: string[];

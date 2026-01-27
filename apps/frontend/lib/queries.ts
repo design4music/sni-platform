@@ -98,7 +98,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
   const results = await query<{
     id: string;
     date: string;
-    first_seen: string | null;
+    last_active: string | null;
     title: string | null;
     summary: string;
     tags: string[] | null;
@@ -111,7 +111,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     `SELECT
       e.id,
       e.date::text as date,
-      e.first_seen::text as first_seen,
+      e.last_active::text as last_active,
       e.title,
       e.summary,
       e.tags,
@@ -123,14 +123,14 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
     WHERE e.ctm_id = $1
-    GROUP BY e.id, e.date, e.first_seen, e.title, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
+    GROUP BY e.id, e.date, e.last_active, e.title, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
     ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
   );
 
   return results.map(r => ({
     date: r.date,
-    first_seen: r.first_seen || undefined,
+    last_active: r.last_active || undefined,
     title: r.title || undefined,
     summary: r.summary,
     tags: r.tags || undefined,
