@@ -155,50 +155,61 @@ def load_titles_with_bucket_info(conn, ctm_id: str) -> list:
 # =============================================================================
 
 
+def is_geo_centroid(centroid_id: str) -> bool:
+    """Check if centroid is geographic (not systemic)."""
+    # SYS-* are systemic centroids (TRADE, TECH, FINANCE, etc.)
+    # NON-STATE-* are organizations (EU, NATO, etc.) - treat as geo for bucketing
+    return not centroid_id.startswith("SYS-")
+
+
 def bucket_titles(titles: list, home_centroid_id: str) -> dict:
     """
     Bucket titles by geography using centroid_ids:
     - Domestic: centroid_ids has ONLY the home centroid
     - International: centroid_ids has multiple centroids
 
-    For titles with 3+ centroids (multilateral), assign to biggest non-local
-    bucket within this CTM.
+    Hierarchy: GEO centroids first, SYS centroids only if no foreign GEO.
+    For multilateral titles, assign to biggest non-local GEO bucket.
     """
     domestic = []
-    bilateral_raw = defaultdict(list)  # centroid_id -> titles (for 2-centroid titles)
+    bilateral_raw = defaultdict(list)  # centroid_id -> titles
     multilateral = []  # titles with 3+ centroids (assigned later)
 
-    # Pass 1: Separate domestic, bilateral (2 centroids), multilateral (3+)
+    # Pass 1: Separate domestic, bilateral, multilateral
     for title in titles:
         centroid_ids = title.get("centroid_ids", [])
+        foreign_all = [c for c in centroid_ids if c != home_centroid_id]
+        foreign_geo = [c for c in foreign_all if is_geo_centroid(c)]
+        foreign_sys = [c for c in foreign_all if not is_geo_centroid(c)]
 
-        if len(centroid_ids) <= 1:
-            # Only home centroid (or none) -> domestic
+        if not foreign_all:
+            # Only home centroid -> domestic
             domestic.append(title)
-        elif len(centroid_ids) == 2:
-            # Bilateral: find the foreign centroid
-            foreign = [c for c in centroid_ids if c != home_centroid_id]
-            if foreign:
-                bilateral_raw[foreign[0]].append(title)
-            else:
-                domestic.append(title)
-        else:
-            # 3+ centroids -> multilateral, defer assignment
+        elif len(foreign_all) == 1:
+            # Single foreign centroid -> bilateral
+            bilateral_raw[foreign_all[0]].append(title)
+        elif foreign_geo:
+            # Multiple centroids with foreign GEO -> defer to pass 2 (use GEO only)
             multilateral.append(title)
+        else:
+            # Multiple SYS centroids only -> use first SYS
+            bilateral_raw[foreign_sys[0]].append(title)
 
-    # Pass 2: Assign multilateral titles to biggest non-local bucket
+    # Pass 2: Assign multilateral titles to biggest foreign GEO bucket
     for title in multilateral:
         centroid_ids = title.get("centroid_ids", [])
-        foreign = [c for c in centroid_ids if c != home_centroid_id]
+        foreign_geo = [
+            c for c in centroid_ids if c != home_centroid_id and is_geo_centroid(c)
+        ]
 
-        if not foreign:
+        if not foreign_geo:
             domestic.append(title)
             continue
 
-        # Find which foreign centroid has the biggest bucket so far
+        # Find which foreign GEO centroid has the biggest bucket so far
         best_centroid = None
         best_count = -1
-        for fc in foreign:
+        for fc in foreign_geo:
             count = len(bilateral_raw.get(fc, []))
             if count > best_count:
                 best_count = count
@@ -207,8 +218,8 @@ def bucket_titles(titles: list, home_centroid_id: str) -> dict:
         if best_centroid:
             bilateral_raw[best_centroid].append(title)
         else:
-            # No existing bucket, use first foreign centroid
-            bilateral_raw[foreign[0]].append(title)
+            # No existing bucket, use first foreign GEO centroid
+            bilateral_raw[foreign_geo[0]].append(title)
 
     # Pass 3: Filter small buckets to "other international"
     bilateral = {}
@@ -349,15 +360,14 @@ class Topic:
             if title["pubdate_utc"]:
                 self.daily_counts[title["pubdate_utc"].date()] += 1
 
-        # Recalculate anchors from merged signals
-        threshold = max(1, len(self.titles) // 2)
-        self.anchor_signals = set()
-        for token, count in self.signal_counts.items():
-            if count >= threshold:
-                sig_type, val = token.split(":", 1)
-                if sig_type == "persons" and val in HIGH_FREQ_PERSONS:
-                    continue
-                self.anchor_signals.add(token)
+        # Union anchors from both topics (preserve identity signals)
+        self.anchor_signals = self.anchor_signals | other.anchor_signals
+        # Remove high-freq persons from anchors
+        self.anchor_signals = {
+            a
+            for a in self.anchor_signals
+            if not (a.startswith("persons:") and a.split(":")[1] in HIGH_FREQ_PERSONS)
+        }
 
         # Update dates
         if other.created_date and (

@@ -245,6 +245,10 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         const countTitles = (events: typeof allEvents) =>
           events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 
+        // Helper to sort events by source count (descending)
+        const sortBySourceCount = (events: typeof allEvents) =>
+          [...events].sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+
         // Helper to check if event is "Other Coverage" bucket
         const isOtherCoverage = (e: typeof allEvents[0]) =>
           e.summary.startsWith('[Storyline]') || e.summary.startsWith('Other ') || e.is_alias_group === true;
@@ -280,9 +284,19 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
           }
         });
 
-        // Sort bilateral groups by title count (descending)
+        // Helper to check if bucket is systemic (SYS-*) vs geographic
+        const isSystemicBucket = (key: string) => key.startsWith('SYS-');
+
+        // Sort bilateral groups: GEO first (by title count), then SYS (by title count)
         const sortedBilateralEntries = Object.entries(bilateralGroups).sort(
-          ([, a], [, b]) => countTitles(b) - countTitles(a)
+          ([keyA, a], [keyB, b]) => {
+            const aIsSys = isSystemicBucket(keyA);
+            const bIsSys = isSystemicBucket(keyB);
+            // GEO before SYS
+            if (aIsSys !== bIsSys) return aIsSys ? 1 : -1;
+            // Within same category, sort by title count
+            return countTitles(b) - countTitles(a);
+          }
         );
 
         return (
@@ -295,9 +309,9 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   {domesticMainEvents.length} events | {countTitles(domesticEvents)} sources
                 </p>
 
-                {/* Main events with pagination */}
+                {/* Main events with pagination - sorted by source count */}
                 <EventList
-                  events={domesticMainEvents}
+                  events={sortBySourceCount(domesticMainEvents)}
                   allTitles={titles}
                   initialLimit={10}
                   keyPrefix="domestic"
@@ -345,7 +359,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                       </h3>
                       <div className="pl-4 border-l-2 border-dashboard-border">
                         <EventList
-                          events={mainEvents}
+                          events={sortBySourceCount(mainEvents)}
                           allTitles={titles}
                           initialLimit={10}
                           compact
@@ -386,7 +400,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                       </h3>
                       <div className="pl-4 border-l-2 border-dashboard-border">
                         <EventList
-                          events={mainEvents}
+                          events={sortBySourceCount(mainEvents)}
                           allTitles={titles}
                           initialLimit={10}
                           compact
