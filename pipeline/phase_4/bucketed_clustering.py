@@ -27,7 +27,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import psycopg2
 
-from core.config import config
+from core.config import (
+    HIGH_FREQ_PERSONS,
+    SIGNAL_TYPES,
+    config,
+    get_track_discriminators,
+    get_track_weights,
+)
 from core.publisher_filter import filter_publisher_signals, load_publisher_patterns
 
 # =============================================================================
@@ -38,54 +44,6 @@ ANCHOR_LOCK_THRESHOLD = 5
 EMERGENCE_THRESHOLD = 3
 JOIN_THRESHOLD = 0.25
 MIN_BILATERAL_TITLES = 5
-
-HIGH_FREQ_PERSONS = {"TRUMP", "BIDEN", "PUTIN", "ZELENSKY", "XI"}
-
-SIGNAL_TYPES = [
-    "persons",
-    "orgs",
-    "places",
-    "commodities",
-    "policies",
-    "systems",
-    "named_events",
-]
-
-TRACK_WEIGHTS = {
-    "geo_economy": {
-        "persons": 1.0,
-        "orgs": 3.0,
-        "places": 1.0,
-        "commodities": 3.0,
-        "policies": 2.0,
-        "systems": 2.0,
-        "named_events": 1.5,
-    },
-    "geo_security": {
-        "persons": 1.5,
-        "orgs": 2.0,
-        "places": 3.0,
-        "commodities": 0.5,
-        "policies": 1.5,
-        "systems": 2.5,
-        "named_events": 1.0,
-    },
-    "default": {
-        "persons": 1.5,
-        "orgs": 1.5,
-        "places": 1.5,
-        "commodities": 1.5,
-        "policies": 1.5,
-        "systems": 1.5,
-        "named_events": 1.5,
-    },
-}
-
-TRACK_DISCRIMINATORS = {
-    "geo_economy": ["orgs", "commodities"],
-    "geo_security": ["places", "systems"],
-    "default": [],
-}
 
 
 # =============================================================================
@@ -561,8 +519,9 @@ def process_ctm(ctm_id: str, dry_run: bool = True):
     home_centroid_id = ctm_info["centroid_id"]
     print("CTM: {} / {}".format(home_centroid_id, ctm_info["track"]))
 
-    weights = TRACK_WEIGHTS.get(ctm_info["track"], TRACK_WEIGHTS["default"])
-    discriminators = TRACK_DISCRIMINATORS.get(ctm_info["track"], [])
+    weights = get_track_weights(ctm_info["track"])
+    # get_track_discriminators returns dict, but this clustering uses list of keys
+    discriminators = list(get_track_discriminators(ctm_info["track"]).keys())
 
     titles = load_titles_with_bucket_info(conn, ctm_id)
     if not titles:

@@ -21,67 +21,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 from loguru import logger
 
-from core.config import config
-
-# =============================================================================
-# TRACK-SPECIFIC WEIGHTING
-# =============================================================================
-
-# Signal weights by track - higher weight = more discriminating for that track
-TRACK_WEIGHTS = {
-    "geo_economy": {
-        "persons": 1.0,  # Moderate - economic actors matter
-        "orgs": 2.0,  # High - companies, central banks key
-        "places": 1.0,  # Moderate
-        "commodities": 3.0,  # Very high - oil, gold, wheat distinguish stories
-        "policies": 2.0,  # High - tariffs, sanctions key
-        "systems": 2.0,  # High - SWIFT, trade systems
-        "named_events": 1.5,  # Moderate - Davos, G20
-    },
-    "geo_security": {
-        "persons": 1.5,  # Moderate - military leaders
-        "orgs": 2.0,  # High - NATO, militaries
-        "places": 3.0,  # Very high - Crimea, Gaza distinguish conflicts
-        "commodities": 0.5,  # Low
-        "policies": 1.5,  # Moderate - defense agreements
-        "systems": 2.5,  # High - S-400, weapons systems
-        "named_events": 1.0,  # Moderate
-    },
-    "geo_politics": {
-        "persons": 2.5,  # Very high - political actors key
-        "orgs": 1.5,  # Moderate - parties, institutions
-        "places": 1.5,  # Moderate
-        "commodities": 0.5,  # Low
-        "policies": 2.0,  # High - elections, legislation
-        "systems": 0.5,  # Low
-        "named_events": 2.0,  # High - elections, summits
-    },
-    "default": {
-        "persons": 1.5,
-        "orgs": 1.5,
-        "places": 1.5,
-        "commodities": 1.5,
-        "policies": 1.5,
-        "systems": 1.5,
-        "named_events": 1.5,
-    },
-}
-
-SIGNAL_TYPES = [
-    "persons",
-    "orgs",
-    "places",
-    "commodities",
-    "policies",
-    "systems",
-    "named_events",
-]
-
-
-def get_weights(track: str) -> dict:
-    """Get signal weights for a track."""
-    return TRACK_WEIGHTS.get(track, TRACK_WEIGHTS["default"])
-
+from core.config import (
+    SIGNAL_TYPES,
+    config,
+    get_track_discriminators,
+    get_track_weights,
+)
+from core.ontology import GEO_ALIAS_TO_ISO
+from core.publisher_filter import filter_publisher_signals, load_publisher_patterns
 
 # =============================================================================
 # DATABASE OPERATIONS
@@ -123,7 +70,9 @@ def load_titles_with_signals(conn, ctm_id: str) -> list:
         JOIN title_assignments ta ON t.id = ta.title_id
         JOIN title_labels tl ON t.id = tl.title_id
         WHERE ta.ctm_id = %s
-          AND tl.persons IS NOT NULL
+          AND (tl.persons IS NOT NULL OR tl.orgs IS NOT NULL OR tl.places IS NOT NULL
+               OR tl.commodities IS NOT NULL OR tl.policies IS NOT NULL
+               OR tl.systems IS NOT NULL OR tl.named_events IS NOT NULL)
         ORDER BY t.pubdate_utc DESC
         """,
         (ctm_id,),
@@ -155,6 +104,21 @@ def load_titles_with_signals(conn, ctm_id: str) -> list:
     return titles
 
 
+def filter_titles_publisher_signals(titles: list, publisher_patterns: set) -> int:
+    """Filter publisher names from orgs in all titles. Modifies in place.
+
+    Returns: count of filtered signals
+    """
+    filtered_count = 0
+    for title in titles:
+        orgs = title.get("orgs", [])
+        if orgs:
+            filtered = filter_publisher_signals(orgs, publisher_patterns)
+            filtered_count += len(orgs) - len(filtered)
+            title["orgs"] = filtered
+    return filtered_count
+
+
 def get_ctm_info(conn, ctm_id: str) -> dict:
     """Get CTM metadata."""
     cur = conn.cursor()
@@ -175,6 +139,115 @@ def get_ctm_info(conn, ctm_id: str) -> dict:
         "track": row[2],
         "month": row[3],
     }
+
+
+# =============================================================================
+# BUCKET ASSIGNMENT (Domestic / Bilateral)
+# =============================================================================
+
+
+def load_centroid_iso_codes(conn, centroid_id: str) -> set:
+    """Load iso_codes for a centroid from centroids_v3."""
+    cur = conn.cursor()
+    cur.execute("SELECT iso_codes FROM centroids_v3 WHERE id = %s", (centroid_id,))
+    row = cur.fetchone()
+    if row and row[0]:
+        return set(row[0])
+    return set()
+
+
+def get_geo_bucket_from_aliases(aliases: list, home_iso_codes: set) -> str:
+    """Check if aliases suggest a geographic bucket using GEO_ALIAS_TO_ISO."""
+    for alias in aliases:
+        alias_lower = str(alias).lower()
+        if alias_lower in GEO_ALIAS_TO_ISO:
+            iso = GEO_ALIAS_TO_ISO[alias_lower]
+            if iso not in home_iso_codes:
+                return iso
+    return None
+
+
+def extract_country_from_actor(actor: str) -> str:
+    """Extract country code from actor like 'CN_EXECUTIVE' -> 'CN'."""
+    if not actor or actor == "UNKNOWN":
+        return None
+    if "_" in actor and len(actor.split("_")[0]) == 2:
+        return actor.split("_")[0]
+    if actor in ["EU", "NATO", "BRICS", "G7", "MERCOSUR", "IGO"]:
+        return actor
+    return None
+
+
+def assign_title_bucket(title: dict, home_iso_codes: set) -> tuple:
+    """Assign a title to bucket based on target, actor, aliases.
+
+    Returns: (event_type, bucket_key)
+        - ("domestic", None)
+        - ("bilateral", "US") or ("bilateral", "EU") etc.
+    """
+    target = title.get("target")
+    actor = title.get("actor")
+    # Use places from signals as pseudo-aliases for bucket detection
+    places = title.get("places", [])
+
+    # 1. Check target first
+    if target and target != "-":
+        if len(target) == 2:
+            if target not in home_iso_codes:
+                return ("bilateral", target)
+        elif "_" in target:
+            target_country = target.split("_")[0]
+            if len(target_country) == 2 and target_country not in home_iso_codes:
+                return ("bilateral", target_country)
+        elif target in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
+            return ("bilateral", target)
+        elif "," in target:
+            for t in target.split(","):
+                t = t.strip()
+                if len(t) == 2 and t not in home_iso_codes:
+                    return ("bilateral", t)
+
+    # 2. Check actor nationality
+    actor_country = extract_country_from_actor(actor)
+    if actor_country:
+        if actor_country not in home_iso_codes:
+            if len(actor_country) == 2:
+                return ("bilateral", actor_country)
+            elif actor_country in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
+                return ("bilateral", actor_country)
+
+    # 3. Check places (from typed signals) for geographic bucket
+    for place in places:
+        bucket_iso = get_geo_bucket_from_aliases([place], home_iso_codes)
+        if bucket_iso:
+            return ("bilateral", bucket_iso)
+
+    return ("domestic", None)
+
+
+def determine_topic_bucket(cluster, home_iso_codes: set) -> tuple:
+    """Determine bucket for a topic cluster based on majority of titles.
+
+    Returns: (event_type, bucket_key)
+    """
+    bucket_counts = Counter()
+
+    for title in cluster.titles:
+        event_type, bucket_key = assign_title_bucket(title, home_iso_codes)
+        if event_type == "bilateral" and bucket_key:
+            bucket_counts[bucket_key] += 1
+        else:
+            bucket_counts["_domestic"] += 1
+
+    if not bucket_counts:
+        return ("domestic", None)
+
+    # Get most common bucket
+    most_common = bucket_counts.most_common(1)[0]
+    if most_common[0] == "_domestic":
+        return ("domestic", None)
+    else:
+        return ("bilateral", most_common[0])
 
 
 # =============================================================================
@@ -284,27 +357,39 @@ class TopicCluster:
         self.titles.append(title)
         self._update_tokens(title)
 
-    def similarity(self, title: dict, weights: dict, idf: dict = None) -> float:
+    def similarity(
+        self, title: dict, weights: dict, idf: dict = None, discriminators: dict = None
+    ) -> float:
         """Compute similarity between title and cluster with IDF dampening.
 
         Uses only typed signals, not ELO labels.
+        Applies discriminator penalties for conflicting signals (e.g., different orgs).
         """
         if not self.token_counts:
             return 0.0
 
+        # Build title tokens grouped by signal type
         title_tokens = set()
+        title_by_type = defaultdict(set)
         for sig_type in SIGNAL_TYPES:
             for val in title.get(sig_type, []):
                 token = "{}:{}".format(
                     sig_type, val.upper() if sig_type == "persons" else val
                 )
                 title_tokens.add(token)
+                title_by_type[sig_type].add(token)
 
         if not title_tokens:
             return 0.0
 
-        # Weighted Jaccard-like similarity
+        # Build cluster tokens grouped by signal type
         cluster_tokens = set(self.token_counts.keys())
+        cluster_by_type = defaultdict(set)
+        for token in cluster_tokens:
+            sig_type = token.split(":")[0]
+            cluster_by_type[sig_type].add(token)
+
+        # Weighted Jaccard-like similarity
         intersection = title_tokens & cluster_tokens
         union = title_tokens | cluster_tokens
 
@@ -325,8 +410,33 @@ class TopicCluster:
 
             weighted_match += base_weight * idf_factor * count_boost
 
-        # Normalize by union size
-        return weighted_match / len(union)
+        base_similarity = weighted_match / len(union)
+
+        # Apply discriminator penalties for conflicting signals
+        # e.g., if cluster's PRIMARY org is FED and title has JPMORGAN (not FED), reject
+        if discriminators:
+            for sig_type, penalty_weight in discriminators.items():
+                cluster_sigs = cluster_by_type.get(sig_type, set())
+                title_sigs = title_by_type.get(sig_type, set())
+
+                if cluster_sigs and title_sigs:
+                    # Get cluster's PRIMARY signal of this type (most common)
+                    cluster_primary = None
+                    max_count = 0
+                    for token in cluster_sigs:
+                        count = self.token_counts.get(token, 0)
+                        if count > max_count:
+                            max_count = count
+                            cluster_primary = token
+
+                    # Check for conflict: title has DIFFERENT orgs than cluster's primary
+                    if cluster_primary and cluster_primary not in title_sigs:
+                        # Cluster has 5+ titles and primary is in 25%+ of them
+                        dominance = max_count / max(len(self.titles), 1)
+                        if len(self.titles) >= 5 and dominance > 0.25:
+                            return 0.0  # Reject - title lacks cluster's primary org
+
+        return max(0.0, base_similarity)
 
     def get_top_tokens(self, n: int = 5) -> list:
         """Get top N tokens by count."""
@@ -341,10 +451,21 @@ class TopicCluster:
 
 
 def cluster_titles(
-    titles: list, weights: dict, min_similarity: float = 0.15, idf: dict = None
+    titles: list,
+    weights: dict,
+    min_similarity: float = 0.15,
+    idf: dict = None,
+    discriminators: dict = None,
 ) -> list:
     """
     Cluster titles into Topics using greedy assignment with IDF dampening.
+
+    Args:
+        titles: List of title dicts with signals
+        weights: Signal type weights
+        min_similarity: Minimum similarity threshold to join cluster
+        idf: IDF weights for token dampening
+        discriminators: Penalty weights for conflicting signal types
 
     Returns: list of TopicCluster objects
     """
@@ -367,7 +488,7 @@ def cluster_titles(
         best_sim = min_similarity
 
         for cluster in clusters:
-            sim = cluster.similarity(title, weights, idf)
+            sim = cluster.similarity(title, weights, idf, discriminators)
             if sim > best_sim:
                 best_sim = sim
                 best_cluster = cluster
@@ -431,7 +552,9 @@ def analyze_clustering(clusters: list, titles: list):
             print("   ... and {} more".format(len(cluster.titles) - 3))
 
 
-def write_topics_to_db(conn, clusters: list, ctm_id: str, min_titles: int = 2) -> int:
+def write_topics_to_db(
+    conn, clusters: list, ctm_id: str, home_iso_codes: set, min_titles: int = 2
+) -> int:
     """
     Write topic clusters to events_v3 table.
 
@@ -441,6 +564,14 @@ def write_topics_to_db(conn, clusters: list, ctm_id: str, min_titles: int = 2) -
 
     cur = conn.cursor()
     written = 0
+    domestic_count = 0
+    bilateral_count = 0
+
+    # Clear old events for this CTM
+    cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
+    deleted = cur.rowcount
+    if deleted > 0:
+        logger.info("Cleared {} old events for CTM".format(deleted))
 
     # Filter clusters by minimum size
     valid_clusters = [c for c in clusters if len(c.titles) >= min_titles]
@@ -458,9 +589,8 @@ def write_topics_to_db(conn, clusters: list, ctm_id: str, min_titles: int = 2) -
             sig_type, value = token.split(":", 1)
             summary_parts.append(value)
 
-        summary = "Topic: {}".format(", ".join(summary_parts[:3]))
-        if len(summary_parts) > 3:
-            summary += " (+{})".format(len(summary_parts) - 3)
+        # Show all keywords (no truncation)
+        summary = "Topic: {}".format(", ".join(summary_parts))
 
         # Create event_id
         event_id = str(uuid.uuid4())
@@ -468,21 +598,29 @@ def write_topics_to_db(conn, clusters: list, ctm_id: str, min_titles: int = 2) -
         # Determine if catchall (large cluster with common signals)
         is_catchall = len(cluster.titles) > 50
 
+        # Determine bucket (domestic vs bilateral)
+        event_type, bucket_key = determine_topic_bucket(cluster, home_iso_codes)
+        if event_type == "bilateral":
+            bilateral_count += 1
+        else:
+            domestic_count += 1
+
         try:
             # Insert event
             cur.execute(
                 """
                 INSERT INTO events_v3 (
-                    id, ctm_id, date, first_seen, summary, event_type,
+                    id, ctm_id, date, first_seen, summary, event_type, bucket_key,
                     source_batch_count, is_catchall, last_active
-                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     event_id,
                     ctm_id,
                     first_date,
                     summary,
-                    "domestic",  # Default - would need bucket logic for bilateral
+                    event_type,
+                    bucket_key,
                     len(cluster.titles),
                     is_catchall,
                     last_date,
@@ -507,6 +645,7 @@ def write_topics_to_db(conn, clusters: list, ctm_id: str, min_titles: int = 2) -
             continue
 
     conn.commit()
+    print("  Domestic: {}, Bilateral: {}".format(domestic_count, bilateral_count))
     return written
 
 
@@ -531,11 +670,20 @@ def process_ctm(
     print("Processing CTM: {} / {}".format(ctm_info["centroid_id"], ctm_info["track"]))
     print("Month: {}".format(ctm_info["month"]))
 
-    # Get weights for this track
-    weights = get_weights(ctm_info["track"])
+    # Load centroid's home ISO codes for bucket assignment
+    home_iso_codes = load_centroid_iso_codes(conn, ctm_info["centroid_id"])
+    print("Home ISO codes: {}".format(sorted(home_iso_codes)))
+
+    # Get weights and discriminators for this track
+    weights = get_track_weights(ctm_info["track"])
+    discriminators = get_track_discriminators(ctm_info["track"])
     print("\nTrack weights: {}".format(ctm_info["track"]))
     for sig_type, weight in weights.items():
         print("  {}: {:.1f}".format(sig_type, weight))
+    if discriminators:
+        print("\nDiscriminators (penalty for conflicting signals):")
+        for sig_type, penalty in discriminators.items():
+            print("  {}: {:.1f}".format(sig_type, penalty))
 
     # Load titles
     print("\nLoading titles with signals...")
@@ -547,6 +695,12 @@ def process_ctm(
         return
 
     print("Found {} titles with signals".format(len(titles)))
+
+    # Filter publisher names from orgs
+    publisher_patterns = load_publisher_patterns(conn)
+    filtered_count = filter_titles_publisher_signals(titles, publisher_patterns)
+    if filtered_count > 0:
+        print("Filtered {} publisher signals from orgs".format(filtered_count))
 
     # Build co-occurrence matrix (for analysis)
     print("\nBuilding co-occurrence matrix...")
@@ -581,7 +735,7 @@ def process_ctm(
             min_similarity
         )
     )
-    clusters = cluster_titles(titles, weights, min_similarity, idf)
+    clusters = cluster_titles(titles, weights, min_similarity, idf, discriminators)
 
     # Analyze
     analyze_clustering(clusters, titles)
@@ -590,7 +744,9 @@ def process_ctm(
         print("\n(DRY RUN - no database writes)")
     else:
         print("\nWriting topics to database...")
-        written = write_topics_to_db(conn, clusters, ctm_id, min_titles=min_titles)
+        written = write_topics_to_db(
+            conn, clusters, ctm_id, home_iso_codes, min_titles=min_titles
+        )
         print("Wrote {} topics (clusters with {}+ titles)".format(written, min_titles))
 
         # Count small clusters not written

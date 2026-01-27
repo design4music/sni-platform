@@ -129,3 +129,83 @@ config = SNIConfig()
 def get_config() -> SNIConfig:
     """Get the global configuration instance"""
     return config
+
+
+# =============================================================================
+# SIGNAL EXTRACTION & CLUSTERING CONSTANTS
+# =============================================================================
+
+# Signal types extracted by Phase 3.5 (ELO) - matches title_labels columns
+SIGNAL_TYPES = [
+    "persons",
+    "orgs",
+    "places",
+    "commodities",
+    "policies",
+    "systems",
+    "named_events",
+]
+
+# High-frequency persons to exclude from clustering anchor signals
+# These appear across many unrelated stories and reduce clustering quality
+HIGH_FREQ_PERSONS = {"TRUMP", "BIDEN", "PUTIN", "ZELENSKY", "XI"}
+
+# Signal weights by track - higher weight = more discriminating for that track
+TRACK_WEIGHTS = {
+    "geo_economy": {
+        "persons": 1.0,  # Moderate - economic actors matter
+        "orgs": 3.0,  # Very high - companies, central banks key
+        "places": 1.0,  # Moderate
+        "commodities": 3.0,  # Very high - oil, gold, wheat distinguish stories
+        "policies": 2.0,  # High - tariffs, sanctions key
+        "systems": 2.0,  # High - SWIFT, trade systems
+        "named_events": 1.5,  # Moderate - Davos, G20
+    },
+    "geo_security": {
+        "persons": 1.5,  # Moderate - military leaders
+        "orgs": 2.0,  # High - NATO, militaries
+        "places": 3.0,  # Very high - Crimea, Gaza distinguish conflicts
+        "commodities": 0.5,  # Low
+        "policies": 1.5,  # Moderate - defense agreements
+        "systems": 2.5,  # High - S-400, weapons systems
+        "named_events": 1.0,  # Moderate
+    },
+    "geo_politics": {
+        "persons": 2.5,  # Very high - political actors key
+        "orgs": 1.5,  # Moderate - parties, institutions
+        "places": 1.5,  # Moderate
+        "commodities": 0.5,  # Low
+        "policies": 2.0,  # High - elections, legislation
+        "systems": 0.5,  # Low
+        "named_events": 2.0,  # High - elections, summits
+    },
+    "default": {
+        "persons": 1.5,
+        "orgs": 1.5,
+        "places": 1.5,
+        "commodities": 1.5,
+        "policies": 1.5,
+        "systems": 1.5,
+        "named_events": 1.5,
+    },
+}
+
+# Discriminator signals by track - different values in these types PENALIZE similarity
+# This prevents merging FED stories with JPMORGAN stories just because both mention TRUMP
+# Values closer to 1.0 = stronger penalty (0.8 = 80% reduction in similarity)
+TRACK_DISCRIMINATORS = {
+    "geo_economy": {"orgs": 0.8, "commodities": 0.5},
+    "geo_security": {"places": 0.7, "systems": 0.5},
+    "geo_politics": {"persons": 0.5},
+    "default": {},
+}
+
+
+def get_track_weights(track: str) -> dict:
+    """Get signal weights for a track."""
+    return TRACK_WEIGHTS.get(track, TRACK_WEIGHTS["default"])
+
+
+def get_track_discriminators(track: str) -> dict:
+    """Get discriminator penalties for a track."""
+    return TRACK_DISCRIMINATORS.get(track, TRACK_DISCRIMINATORS["default"])
