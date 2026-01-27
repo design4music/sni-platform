@@ -16,6 +16,7 @@ import argparse
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -546,13 +547,25 @@ def write_to_db(conn, results: list[dict]) -> int:
 # =============================================================================
 
 
+def process_batch_worker(batch_info: tuple) -> dict:
+    """Worker function for concurrent batch processing."""
+    batch, batch_num, total_batches = batch_info
+    try:
+        results = extract_batch(batch)
+        return {"batch_num": batch_num, "results": results, "error": None}
+    except Exception as e:
+        logger.error("Batch {} failed: {}".format(batch_num, e))
+        return {"batch_num": batch_num, "results": [], "error": str(e)}
+
+
 def process_titles(
     max_titles: int = 200,
     batch_size: int = 25,
     centroid_filter: str = None,
     track_filter: str = None,
+    concurrency: int = 1,
 ) -> dict:
-    """Process titles in batches."""
+    """Process titles in batches with optional concurrency."""
     conn = get_connection()
 
     titles = load_titles_needing_extraction(
@@ -567,36 +580,76 @@ def process_titles(
         conn.close()
         return {"processed": 0, "written": 0}
 
-    logger.info("Processing {} titles in batches of {}".format(len(titles), batch_size))
-
-    total_written = 0
-
+    # Prepare batches
+    batches = []
+    total_batches = (len(titles) + batch_size - 1) // batch_size
     for i in range(0, len(titles), batch_size):
         batch = titles[i : i + batch_size]
         batch_num = (i // batch_size) + 1
-        total_batches = (len(titles) + batch_size - 1) // batch_size
+        batches.append((batch, batch_num, total_batches))
 
-        logger.info(
-            "Batch {}/{}: {} titles".format(batch_num, total_batches, len(batch))
+    logger.info(
+        "Processing {} titles in {} batches (concurrency={})".format(
+            len(titles), total_batches, concurrency
         )
+    )
 
-        try:
-            results = extract_batch(batch)
-            written = write_to_db(conn, results)
-            total_written += written
-            logger.info("  Wrote {} labels+signals".format(written))
-        except Exception as e:
-            logger.error("Batch {} failed: {}".format(batch_num, e))
+    total_written = 0
+    failed_batches = 0
+
+    if concurrency == 1:
+        # Sequential processing
+        for batch_info in batches:
+            batch, batch_num, total = batch_info
+            logger.info("Batch {}/{}: {} titles".format(batch_num, total, len(batch)))
+            result = process_batch_worker(batch_info)
+            if result["results"]:
+                written = write_to_db(conn, result["results"])
+                total_written += written
+                logger.info("  Wrote {} labels+signals".format(written))
+            if result["error"]:
+                failed_batches += 1
+    else:
+        # Concurrent processing
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            futures = {
+                executor.submit(process_batch_worker, batch_info): batch_info[1]
+                for batch_info in batches
+            }
+
+            for future in as_completed(futures):
+                batch_num = futures[future]
+                result = future.result()
+                if result["results"]:
+                    written = write_to_db(conn, result["results"])
+                    total_written += written
+                    logger.info(
+                        "Batch {}/{}: wrote {} labels+signals".format(
+                            batch_num, total_batches, written
+                        )
+                    )
+                if result["error"]:
+                    failed_batches += 1
 
     conn.close()
 
-    return {"processed": len(titles), "written": total_written}
+    logger.info(
+        "Completed: {} written, {} failed batches".format(total_written, failed_batches)
+    )
+    return {
+        "processed": len(titles),
+        "written": total_written,
+        "failed": failed_batches,
+    }
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract labels and signals (v2)")
     parser.add_argument("--max-titles", type=int, default=200, help="Max titles")
     parser.add_argument("--batch-size", type=int, default=25, help="Batch size")
+    parser.add_argument(
+        "--concurrency", type=int, default=1, help="Concurrent batches (1-10)"
+    )
     parser.add_argument("--centroid", type=str, help="Filter by centroid")
     parser.add_argument("--track", type=str, help="Filter by track")
 
@@ -607,6 +660,11 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         centroid_filter=args.centroid,
         track_filter=args.track,
+        concurrency=args.concurrency,
     )
 
-    print("Processed: {}, Written: {}".format(result["processed"], result["written"]))
+    print(
+        "Processed: {}, Written: {}, Failed: {}".format(
+            result["processed"], result["written"], result.get("failed", 0)
+        )
+    )
