@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-01-24
+**Last Updated**: 2026-01-27
 **Status**: Production - Full 6-phase pipeline operational
 **Branch**: `main`
 
@@ -23,7 +23,7 @@ RSS Feeds (Google News)
     |
 [Phase 3.5] Label Extraction (ELO v2.0) --> title_labels
     |
-[Phase 4] Mechanical Event Clustering --> events_v3 + event_v3_titles
+[Phase 4] Signal-Based Topic Clustering --> events_v3 + event_v3_titles (RESEARCH)
     |
 [Phase 4.5a] Event Summary Generation --> events_v3.summary (narrative)
     |
@@ -285,80 +285,79 @@ created_at, updated_at TIMESTAMPTZ
 
 ---
 
-## Phase 4: Mechanical Event Clustering
+## Phase 4: Signal-Based Topic Clustering
 
-**Script**: `pipeline/phase_4/cluster_events_mechanical.py`
+**Status**: RESEARCH IN PROGRESS (2026-01-27)
+**Current Script**: `pipeline/phase_4/incremental_clustering.py`
+**Alternative**: `pipeline/phase_4/cluster_topics.py`
 **Daemon Interval**: 30 minutes
-**Purpose**: Cluster labeled titles into events using entity-centric grouping
+**Purpose**: Cluster titles into topics using typed signals with co-occurrence
 
-### Clustering Hierarchy
+### Research Context
 
-1. **Bucket Assignment**: Split by geographic scope
-   - `domestic`: Home country events
-   - `bilateral_XX`: Events involving foreign country XX
+We are evaluating two signal-based clustering approaches:
 
-2. **Entity-Centric Clustering** (takes priority):
-   - Institutional entities (US_CENTRAL_BANK, US_JUDICIARY) -> one event per institution
-   - Corporate entities (NVIDIA, META) -> one event per corporation
+| Script | Approach | Status |
+|--------|----------|--------|
+| `incremental_clustering.py` | Anchor-based, day-by-day, co-occurrence | **Current focus** |
+| `cluster_topics.py` | IDF-weighted, batch processing | Alternative |
 
-3. **Action-Based Clustering** (fallback):
-   - Group by (actor, action_class) tuple
-   - Minimum cluster size: 3 titles
+Both use typed signals from `title_labels` (persons, orgs, places, commodities, policies, systems, named_events) rather than ELO labels (actor, action_class).
 
-4. **Spike Detection**:
-   - Large UNKNOWN clusters split by activity spikes
-   - Threshold: 2x average daily volume
+### Incremental Clustering (Current)
 
-5. **Jaccard Merge** (pending implementation):
-   - Compare new event titles/tags with existing events in same bucket
-   - Merge if Jaccard similarity > threshold (0.4)
-   - Prevents duplicate events across pipeline runs
+**Key Concept**: Topics form around **anchor signals** that are locked early, then grow via **co-occurring signals**.
 
-### Entity Grouping Rules
+**Example**:
+- Week 1: "FED" + "POWELL" become anchor signals (locked after 5 titles)
+- Week 2: "LIZA COOK" appears alongside "FED" -> added as co-occurring signal
+- Week 3: New titles matching "FED" + "COOK" still join, even if "POWELL" fades
 
-**Institutional Entities** (cluster ALL actions together):
+**Algorithm**:
+1. Process titles chronologically (oldest first)
+2. First 5 titles define **anchor signals** (then locked)
+3. Later titles match via weighted overlap with anchors
+4. Co-occurring signals tracked but don't define topic identity
+5. **Discriminators** reject titles with conflicting key signals (e.g., different orgs in geo_economy)
+
+**Configuration** (from `core/config.py`):
 ```python
-INSTITUTIONAL_ENTITIES = {
-    "US_CENTRAL_BANK", "US_JUDICIARY", "US_LEGISLATURE",
-    "EU_CENTRAL_BANK", "CN_CENTRAL_BANK", "UK_CENTRAL_BANK", "JP_CENTRAL_BANK"
+ANCHOR_LOCK_THRESHOLD = 5      # Titles before anchors lock
+JOIN_THRESHOLD = 0.2           # Minimum similarity to join topic
+HIGH_FREQ_PERSONS = {"TRUMP", "BIDEN", "PUTIN", "ZELENSKY", "XI"}  # Excluded from anchors
+
+TRACK_WEIGHTS = {
+    "geo_economy": {"orgs": 3.0, "commodities": 3.0, "policies": 2.0, ...},
+    "geo_security": {"places": 3.0, "systems": 2.5, ...},
+    ...
+}
+
+TRACK_DISCRIMINATORS = {
+    "geo_economy": {"orgs": 0.8, "commodities": 0.5},  # Penalty for conflicts
+    "geo_security": {"places": 0.7, "systems": 0.5},
+    ...
 }
 ```
 
-**Corporate Entities** (from actor_entity or known targets):
-```python
-KNOWN_CORPORATE_TARGETS = {
-    "META", "OPENAI", "NVIDIA", "APPLE", "GOOGLE", "AMAZON", "MICROSOFT",
-    "TESLA", "BOEING", "JPMORGAN", "SPACEX", "NETFLIX", "DISNEY", ...
-}
+### Manual Execution (Research)
+
+```bash
+# Dry run (see results without saving)
+python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --dry-run
+
+# Write to database
+python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --write
+
+# Alternative approach (for comparison)
+python pipeline/phase_4/cluster_topics.py --centroid AMERICAS-USA --track geo_economy --write
 ```
 
-### Algorithm Flow
+### Bucket Assignment
 
-```python
-def cluster_titles(titles, centroid_id):
-    # Step 1: Assign buckets
-    buckets = defaultdict(list)
-    for t in titles:
-        bucket = assign_bucket(t, centroid_id)  # Uses target, actor, aliases
-        buckets[bucket].append(t)
-
-    # Step 2: Cluster within each bucket
-    events = []
-    for bucket_name, bucket_titles in buckets.items():
-        # Entity-centric grouping
-        for key, cluster in cluster_by_labels(bucket_titles).items():
-            if key[0] == "INSTITUTION":
-                # All Fed news in one event
-                events.append(create_event(bucket_name, key[1], None, None, cluster))
-            elif key[0] == "CORPORATION":
-                # All NVIDIA news in one event
-                events.append(create_event(bucket_name, "CORPORATION", key[1], None, cluster))
-            else:
-                # Standard (actor, action) grouping
-                events.append(create_event(bucket_name, key[1], None, key[2], cluster))
-
-    return events
-```
+Topics are assigned geographic buckets based on title signals:
+- `domestic`: Home country events (matches centroid's ISO codes)
+- `bilateral-XX`: Events involving specific foreign country XX
+- `other_international`: Multi-country or unclear scope
 
 ### Database
 
@@ -667,7 +666,9 @@ pipeline/
 |   |-- extract_labels.py          # ELO v2.0 label extraction
 |
 |-- phase_4/
-|   |-- cluster_events_mechanical.py  # Entity-centric clustering
+|   |-- incremental_clustering.py     # Signal-based clustering (current focus)
+|   |-- cluster_topics.py             # Alternative: IDF-based clustering
+|   |-- cluster_events_mechanical.py  # Legacy: ELO label-based (deprecated)
 |   |-- generate_event_summaries_4_5a.py  # Event summaries
 |   |-- generate_summaries_4_5.py     # CTM digests
 |
@@ -702,9 +703,14 @@ python pipeline/phase_3/assign_tracks_batched.py --max-titles 100
 python pipeline/phase_3_5/extract_labels.py --max-titles 200
 python pipeline/phase_3_5/extract_labels.py --centroid AMERICAS-USA --track geo_economy
 
-# Phase 4: Event Clustering
-python pipeline/phase_4/cluster_events_mechanical.py --centroid AMERICAS-USA --track geo_economy
-python pipeline/phase_4/cluster_events_mechanical.py --centroid AMERICAS-USA --track geo_economy --write
+# Phase 4: Topic Clustering (research - manual execution)
+# Current approach: incremental clustering with anchor signals
+python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --dry-run
+python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --write
+
+# Alternative approach: IDF-weighted clustering
+python pipeline/phase_4/cluster_topics.py --centroid AMERICAS-USA --track geo_economy
+python pipeline/phase_4/cluster_topics.py --centroid AMERICAS-USA --track geo_economy --write
 
 # Phase 4.5a: Event Summaries
 python pipeline/phase_4/generate_event_summaries_4_5a.py --max-events 50
@@ -746,17 +752,20 @@ GROUP BY event_type;
 
 **Operational**: Full pipeline running with daemon orchestration
 
-**Recent Improvements** (2026-01-24):
-- Entity-centric clustering (institutions, corporations)
-- Two-tier summary architecture (events -> CTM digest)
-- Role description fix (no inferred titles)
-- All USA tracks processed with new mechanism
-- Event enrichment: title, tags, first_seen columns added to events_v3
-- Phase 4.5a generates structured JSON (title, summary, tags)
-- Frontend: event titles, tag pills, date ranges, pagination
+**Recent Improvements** (2026-01-27):
+- Signal-based clustering replaces ELO label-based clustering
+- Consolidated signal constants to `core/config.py` (TRACK_WEIGHTS, TRACK_DISCRIMINATORS, etc.)
+- Publisher name removal moved to ingestion time (Phase 1)
+- Dropped 10 obsolete database tables
+- Moved backfill scripts to `db/backfills/`
+
+**Phase 4 Research** (2026-01-27):
+- Evaluating `incremental_clustering.py` (anchor-based) vs `cluster_topics.py` (IDF-based)
+- `incremental_clustering.py` is current focus - uses anchor locking and co-occurrence
+- Both scripts produce good results; incremental approach better models topic evolution
 
 **Next Steps**:
-1. Jaccard similarity merge: deduplicate events using title/tag overlap
-2. Backfill labels for all existing titles
-3. Refine entity extraction for non-US centroids
+1. Refine incremental clustering parameters (thresholds, weights)
+2. Evaluate clustering quality across different centroids/tracks
+3. Finalize Phase 4 approach and integrate with daemon
 4. Cross-CTM event deduplication

@@ -34,13 +34,11 @@ from pipeline.phase_1.ingest_feeds import run_ingestion
 from pipeline.phase_2.match_centroids import process_batch as phase2_process
 from pipeline.phase_3.assign_tracks_batched import process_batch as phase3_process
 from pipeline.phase_3_5.extract_labels import process_titles as phase35_labels
-from pipeline.phase_4.cluster_events_mechanical import (
-    cluster_titles,
-    load_titles_with_labels,
-    write_events_to_db,
-)
 from pipeline.phase_4.generate_summaries_4_5 import (
     process_ctm_batch as phase45_summaries,
+)
+from pipeline.phase_4.incremental_clustering import (
+    process_ctm_for_daemon,
 )
 
 
@@ -399,7 +397,7 @@ class PipelineDaemon:
             conn.close()
 
     def run_event_clustering(self):
-        """Run event clustering for all active unfrozen CTMs"""
+        """Run event clustering for all active unfrozen CTMs using incremental clustering"""
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
@@ -414,17 +412,16 @@ class PipelineDaemon:
                 )
                 ctms = cur.fetchall()
 
-            print(f"Processing {len(ctms)} CTMs for event clustering...")
+            print(f"Processing {len(ctms)} CTMs for incremental clustering...")
             processed = 0
+            total_topics = 0
             for ctm_id, centroid_id, track, month in ctms:
-                titles = load_titles_with_labels(centroid_id, track, month)
-                if len(titles) >= 3:
-                    events = cluster_titles(titles)
-                    if events:
-                        write_events_to_db(ctm_id, events)
-                        processed += 1
+                written = process_ctm_for_daemon(conn, ctm_id, centroid_id, track)
+                if written > 0:
+                    total_topics += written
+                    processed += 1
 
-            print(f"Clustered events for {processed} CTMs")
+            print(f"Clustered {total_topics} topics across {processed} CTMs")
 
         finally:
             conn.close()

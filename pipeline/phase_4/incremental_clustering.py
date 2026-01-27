@@ -592,7 +592,50 @@ def write_topics_to_db(conn, topics: list, ctm_id: str, min_titles: int = 2) -> 
 
 
 # =============================================================================
-# MAIN
+# DAEMON INTERFACE
+# =============================================================================
+
+
+def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> int:
+    """
+    Process a CTM for the pipeline daemon.
+
+    This is the main entry point for daemon integration.
+    Uses an existing connection (daemon manages connections).
+
+    Returns: number of topics written to database
+    """
+    # Load centroid's home ISO codes for bucket assignment
+    home_iso_codes = load_centroid_iso_codes(conn, centroid_id)
+
+    # Get track config
+    weights = get_weights(track)
+    discriminators = get_discriminators(track)
+
+    # Load titles chronologically (oldest first for proper anchor formation)
+    titles = load_titles_chronological(conn, ctm_id)
+
+    if not titles:
+        return 0
+
+    # Filter publisher signals from orgs
+    publisher_patterns = load_publisher_patterns(conn)
+    for title in titles:
+        title["orgs"] = filter_publisher_signals(
+            title.get("orgs", []), publisher_patterns
+        )
+
+    # Cluster incrementally
+    topics = cluster_incrementally(titles, weights, discriminators, home_iso_codes)
+
+    # Write to database
+    written = write_topics_to_db(conn, topics, ctm_id, min_titles=2)
+
+    return written
+
+
+# =============================================================================
+# MAIN (CLI)
 # =============================================================================
 
 
