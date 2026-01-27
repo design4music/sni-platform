@@ -75,10 +75,9 @@ def load_titles_chronological(conn, ctm_id: str) -> list:
     cur.execute(
         """
         SELECT
-            t.id, t.title_display, t.pubdate_utc,
+            t.id, t.title_display, t.pubdate_utc, t.centroid_ids,
             tl.persons, tl.orgs, tl.places, tl.commodities,
-            tl.policies, tl.systems, tl.named_events,
-            tl.target, tl.actor
+            tl.policies, tl.systems, tl.named_events
         FROM titles_v3 t
         JOIN title_assignments ta ON t.id = ta.title_id
         JOIN title_labels tl ON t.id = tl.title_id
@@ -98,15 +97,14 @@ def load_titles_chronological(conn, ctm_id: str) -> list:
                 "id": str(r[0]),
                 "title_display": r[1],
                 "pubdate_utc": r[2],
-                "persons": r[3] or [],
-                "orgs": r[4] or [],
-                "places": r[5] or [],
-                "commodities": r[6] or [],
-                "policies": r[7] or [],
-                "systems": r[8] or [],
-                "named_events": r[9] or [],
-                "target": r[10],
-                "actor": r[11],
+                "centroid_ids": r[3] or [],
+                "persons": r[4] or [],
+                "orgs": r[5] or [],
+                "places": r[6] or [],
+                "commodities": r[7] or [],
+                "policies": r[8] or [],
+                "systems": r[9] or [],
+                "named_events": r[10] or [],
             }
         )
     return titles
@@ -122,41 +120,76 @@ def load_centroid_iso_codes(conn, centroid_id: str) -> set:
     return set()
 
 
-def extract_country_from_actor(actor: str) -> str:
-    """Extract country code from actor like 'CN_EXECUTIVE' -> 'CN'."""
-    if not actor or actor == "UNKNOWN":
-        return None
-    if "_" in actor and len(actor.split("_")[0]) == 2:
-        return actor.split("_")[0]
-    if actor in ["EU", "NATO", "BRICS", "G7", "MERCOSUR", "IGO"]:
-        return actor
-    return None
+# =============================================================================
+# GEOGRAPHIC BUCKETING (using centroid_ids)
+# =============================================================================
+
+MIN_BILATERAL_TITLES = 5
 
 
-def assign_title_bucket(title: dict, home_iso_codes: set) -> tuple:
-    """Assign a title to bucket based on target/actor.
+def is_geo_centroid(centroid_id: str) -> bool:
+    """Check if centroid is geographic (not systemic)."""
+    # GEO centroids have format like AMERICAS-USA, EUROPE-DE
+    # SYS centroids have format like SYS-TECH, SYS-ENERGY
+    return not centroid_id.startswith("SYS-")
 
-    Returns: (event_type, bucket_key)
+
+def bucket_titles_by_centroid(titles: list, home_centroid_id: str) -> dict:
     """
-    target = title.get("target")
-    actor = title.get("actor")
+    Bucket titles by geography using centroid_ids.
 
-    # Check target first
-    if target and target != "-":
-        if len(target) == 2 and target not in home_iso_codes:
-            return ("bilateral", target)
-        elif target in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
-            return ("bilateral", target)
+    - Domestic: centroid_ids has ONLY the home centroid (or home + SYS)
+    - Bilateral: centroid_ids has exactly one foreign GEO centroid
+    - Other International: multiple foreign GEO centroids or small bilateral buckets
 
-    # Check actor nationality
-    actor_country = extract_country_from_actor(actor)
-    if actor_country and actor_country not in home_iso_codes:
-        if len(actor_country) == 2:
-            return ("bilateral", actor_country)
-        elif actor_country in ["NATO", "EU", "BRICS", "G7", "MERCOSUR"]:
-            return ("bilateral", actor_country)
+    GEO centroids take priority over SYS centroids for bucketing.
+    """
+    domestic = []
+    bilateral_raw = defaultdict(list)
+    multilateral = []
 
-    return ("domestic", None)
+    for title in titles:
+        centroid_ids = title.get("centroid_ids", [])
+        foreign_all = [c for c in centroid_ids if c != home_centroid_id]
+        foreign_geo = [c for c in foreign_all if is_geo_centroid(c)]
+
+        if not foreign_geo:
+            # No foreign GEO centroid -> domestic (even if has SYS centroids)
+            domestic.append(title)
+        elif len(foreign_geo) == 1:
+            # Single foreign GEO centroid -> bilateral
+            bilateral_raw[foreign_geo[0]].append(title)
+        else:
+            # Multiple foreign GEO centroids -> defer to pass 2
+            multilateral.append(title)
+
+    # Pass 2: Assign multilateral to biggest foreign GEO bucket
+    bucket_sizes = {k: len(v) for k, v in bilateral_raw.items()}
+    for title in multilateral:
+        centroid_ids = title.get("centroid_ids", [])
+        foreign_geo = [
+            c for c in centroid_ids if c != home_centroid_id and is_geo_centroid(c)
+        ]
+        if foreign_geo:
+            # Assign to biggest bucket among this title's foreign GEOs
+            best = max(foreign_geo, key=lambda c: bucket_sizes.get(c, 0))
+            bilateral_raw[best].append(title)
+            bucket_sizes[best] = bucket_sizes.get(best, 0) + 1
+
+    # Pass 3: Move small bilateral buckets to other_international
+    bilateral = {}
+    other_international = []
+    for centroid_id, ctitles in bilateral_raw.items():
+        if len(ctitles) >= MIN_BILATERAL_TITLES:
+            bilateral[centroid_id] = ctitles
+        else:
+            other_international.extend(ctitles)
+
+    return {
+        "domestic": domestic,
+        "bilateral": bilateral,
+        "other_international": other_international,
+    }
 
 
 def get_ctm_info(conn, ctm_id: str) -> dict:
@@ -187,7 +220,7 @@ def get_ctm_info(conn, ctm_id: str) -> dict:
 class IncrementalTopic:
     """A topic that grows incrementally as titles arrive."""
 
-    def __init__(self, seed_title: dict, topic_id: int, home_iso_codes: set = None):
+    def __init__(self, seed_title: dict, topic_id: int):
         self.id = topic_id
         self.titles = [seed_title]
         self.created_date = (
@@ -204,10 +237,6 @@ class IncrementalTopic:
 
         # Daily title counts for growth tracking
         self.daily_counts = Counter()  # {date: count}
-
-        # Bucket tracking
-        self.home_iso_codes = home_iso_codes or set()
-        self.bucket_counts = Counter()  # {"domestic": N, "IR": M, ...}
 
         # Initialize from seed
         self._add_signals(seed_title)
@@ -245,13 +274,6 @@ class IncrementalTopic:
             day = title["pubdate_utc"].date()
             self.daily_counts[day] += 1
 
-        # Track bucket
-        event_type, bucket_key = assign_title_bucket(title, self.home_iso_codes)
-        if event_type == "bilateral" and bucket_key:
-            self.bucket_counts[bucket_key] += 1
-        else:
-            self.bucket_counts["_domestic"] += 1
-
         # Update anchors if not locked (exclude high-freq persons from anchors)
         if not self.anchors_locked:
             threshold = max(1, len(self.titles) // 2)
@@ -273,15 +295,6 @@ class IncrementalTopic:
             self.emerged_date = (
                 title["pubdate_utc"].date() if title["pubdate_utc"] else None
             )
-
-    def get_bucket(self) -> tuple:
-        """Get dominant bucket for this topic."""
-        if not self.bucket_counts:
-            return ("domestic", None)
-        most_common = self.bucket_counts.most_common(1)[0]
-        if most_common[0] == "_domestic":
-            return ("domestic", None)
-        return ("bilateral", most_common[0])
 
     def add_title(self, title: dict):
         """Add a title to this topic."""
@@ -366,18 +379,18 @@ def cluster_incrementally(
     titles: list,
     weights: dict,
     discriminators: list,
-    home_iso_codes: set = None,
     join_threshold: float = JOIN_THRESHOLD,
 ) -> list:
     """
     Cluster titles incrementally in chronological order.
+
+    Titles should already be filtered to a single bucket before calling this.
 
     Returns: list of IncrementalTopic objects
     """
     if not titles:
         return []
 
-    home_iso_codes = home_iso_codes or set()
     topics = []
     topic_counter = 0
 
@@ -397,7 +410,7 @@ def cluster_incrementally(
         else:
             # Create new topic
             topic_counter += 1
-            new_topic = IncrementalTopic(title, topic_counter, home_iso_codes)
+            new_topic = IncrementalTopic(title, topic_counter)
             topics.append(new_topic)
 
         # Progress logging
@@ -493,10 +506,21 @@ def show_topic_timeline(topics: list):
 # =============================================================================
 
 
-def write_topics_to_db(conn, topics: list, ctm_id: str, min_titles: int = 2) -> tuple:
-    """Write incremental topics to events_v3 table.
+def write_bucketed_topics_to_db(
+    conn, bucketed_topics: dict, ctm_id: str, min_titles: int = 2
+) -> int:
+    """Write bucketed topics to events_v3 table.
 
-    Returns: (written_count, domestic_count, bilateral_count)
+    Args:
+        bucketed_topics: {
+            "domestic": [topics],
+            "bilateral": {"CENTROID-ID": [topics], ...},
+            "other_international": [topics]
+        }
+        ctm_id: CTM ID
+        min_titles: Minimum titles for a topic to be written
+
+    Returns: total written count
     """
     import uuid
 
@@ -508,14 +532,16 @@ def write_topics_to_db(conn, topics: list, ctm_id: str, min_titles: int = 2) -> 
     if deleted > 0:
         print("Cleared {} old events".format(deleted))
 
-    # Filter to emerged topics with minimum titles
-    valid_topics = [t for t in topics if len(t.titles) >= min_titles]
-
     written = 0
     domestic_count = 0
     bilateral_count = 0
 
-    for topic in valid_topics:
+    def write_topic(topic, event_type, bucket_key=None):
+        nonlocal written, domestic_count, bilateral_count
+
+        if len(topic.titles) < min_titles:
+            return
+
         event_id = str(uuid.uuid4())
 
         # Get dates
@@ -532,40 +558,24 @@ def write_topics_to_db(conn, topics: list, ctm_id: str, min_titles: int = 2) -> 
             "Topic: {}".format(", ".join(anchor_values)) if anchor_values else "misc"
         )
 
-        # Get anchor and co-occurring signals as arrays
-        anchor_arr = list(topic.anchor_signals)[:10]
-        cooccur = topic.get_cooccurring_signals()
-        cooccur_arr = [t for t, c in cooccur[:10]]
-
-        # Get bucket
-        event_type, bucket_key = topic.get_bucket()
-        if event_type == "bilateral":
-            bilateral_count += 1
-        else:
-            domestic_count += 1
-
         try:
             cur.execute(
                 """
                 INSERT INTO events_v3 (
-                    id, ctm_id, date, first_seen, summary,
-                    source_batch_count, last_active,
-                    anchor_signals, cooccurring_signals, emerged_date,
-                    event_type, bucket_key
-                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s)
+                    id, ctm_id, date, first_seen, summary, event_type, bucket_key,
+                    source_batch_count, is_catchall, last_active
+                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     event_id,
                     ctm_id,
                     first_date,
                     summary,
-                    len(topic.titles),
-                    last_date,
-                    anchor_arr,
-                    cooccur_arr,
-                    topic.emerged_date,
                     event_type,
                     bucket_key,
+                    len(topic.titles),
+                    False,
+                    last_date,
                 ),
             )
 
@@ -581,10 +591,26 @@ def write_topics_to_db(conn, topics: list, ctm_id: str, min_titles: int = 2) -> 
                 )
 
             written += 1
+            if event_type == "domestic":
+                domestic_count += 1
+            else:
+                bilateral_count += 1
 
         except Exception as e:
             print("Failed to write topic: {}".format(e))
-            continue
+
+    # Write domestic topics
+    for topic in bucketed_topics.get("domestic", []):
+        write_topic(topic, "domestic", None)
+
+    # Write bilateral topics
+    for centroid_key, topics in bucketed_topics.get("bilateral", {}).items():
+        for topic in topics:
+            write_topic(topic, "bilateral", centroid_key)
+
+    # Write other international topics
+    for topic in bucketed_topics.get("other_international", []):
+        write_topic(topic, "other_international", None)
 
     conn.commit()
     print("  Domestic: {}, Bilateral: {}".format(domestic_count, bilateral_count))
@@ -605,9 +631,6 @@ def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> i
 
     Returns: number of topics written to database
     """
-    # Load centroid's home ISO codes for bucket assignment
-    home_iso_codes = load_centroid_iso_codes(conn, centroid_id)
-
     # Get track config
     weights = get_weights(track)
     discriminators = get_discriminators(track)
@@ -625,11 +648,37 @@ def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> i
             title.get("orgs", []), publisher_patterns
         )
 
-    # Cluster incrementally
-    topics = cluster_incrementally(titles, weights, discriminators, home_iso_codes)
+    # STAGE 1: Bucket by centroid_ids (geo-bucketing first)
+    buckets = bucket_titles_by_centroid(titles, centroid_id)
+
+    # STAGE 2: Cluster incrementally within each bucket
+    bucketed_topics = {"domestic": [], "bilateral": {}, "other_international": []}
+
+    # Domestic
+    if buckets["domestic"]:
+        domestic_sorted = sorted(buckets["domestic"], key=lambda t: t["pubdate_utc"])
+        bucketed_topics["domestic"] = cluster_incrementally(
+            domestic_sorted, weights, discriminators
+        )
+
+    # Bilateral (per country)
+    for foreign_centroid, btitles in buckets["bilateral"].items():
+        bilateral_sorted = sorted(btitles, key=lambda t: t["pubdate_utc"])
+        bucketed_topics["bilateral"][foreign_centroid] = cluster_incrementally(
+            bilateral_sorted, weights, discriminators
+        )
+
+    # Other international
+    if buckets["other_international"]:
+        other_sorted = sorted(
+            buckets["other_international"], key=lambda t: t["pubdate_utc"]
+        )
+        bucketed_topics["other_international"] = cluster_incrementally(
+            other_sorted, weights, discriminators
+        )
 
     # Write to database
-    written = write_topics_to_db(conn, topics, ctm_id, min_titles=2)
+    written = write_bucketed_topics_to_db(conn, bucketed_topics, ctm_id, min_titles=2)
 
     return written
 
@@ -640,7 +689,7 @@ def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> i
 
 
 def process_ctm(ctm_id: str, dry_run: bool = True):
-    """Process CTM with incremental clustering."""
+    """Process CTM with incremental clustering (geo-bucketed first)."""
     conn = get_connection()
 
     ctm_info = get_ctm_info(conn, ctm_id)
@@ -649,12 +698,9 @@ def process_ctm(ctm_id: str, dry_run: bool = True):
         conn.close()
         return
 
-    print("Processing CTM: {} / {}".format(ctm_info["centroid_id"], ctm_info["track"]))
+    centroid_id = ctm_info["centroid_id"]
+    print("Processing CTM: {} / {}".format(centroid_id, ctm_info["track"]))
     print("Month: {}".format(ctm_info["month"]))
-
-    # Load centroid's home ISO codes for bucket assignment
-    home_iso_codes = load_centroid_iso_codes(conn, ctm_info["centroid_id"])
-    print("Home ISO codes: {}".format(sorted(home_iso_codes)))
 
     weights = get_weights(ctm_info["track"])
     discriminators = get_discriminators(ctm_info["track"])
@@ -668,7 +714,11 @@ def process_ctm(ctm_id: str, dry_run: bool = True):
     print("  Discriminators: {}".format(discriminators))
     print("  Join threshold: {}".format(JOIN_THRESHOLD))
     print("  Anchor lock after: {} titles".format(ANCHOR_LOCK_THRESHOLD))
-    print("  High-freq persons (dampened): {}".format(sorted(HIGH_FREQ_PERSONS)))
+    print(
+        "  High-freq persons (excluded from anchors): {}".format(
+            sorted(HIGH_FREQ_PERSONS)
+        )
+    )
 
     # Load titles chronologically
     print("\nLoading titles (oldest first)...")
@@ -694,17 +744,89 @@ def process_ctm(ctm_id: str, dry_run: bool = True):
             title.get("orgs", []), publisher_patterns
         )
 
-    # Cluster incrementally
-    print("\nClustering incrementally...")
-    topics = cluster_incrementally(titles, weights, discriminators, home_iso_codes)
+    # STAGE 1: Bucket by centroid_ids (geo-bucketing first)
+    print("\n--- STAGE 1: Geographic Bucketing ---")
+    buckets = bucket_titles_by_centroid(titles, centroid_id)
+    print("Domestic: {} titles".format(len(buckets["domestic"])))
+    for c in sorted(buckets["bilateral"], key=lambda x: -len(buckets["bilateral"][x])):
+        print("  Bilateral {}: {} titles".format(c, len(buckets["bilateral"][c])))
+    print("Other International: {} titles".format(len(buckets["other_international"])))
 
-    # Analyze
-    analyze_topics(topics)
-    show_topic_timeline(topics)
+    # STAGE 2: Cluster incrementally within each bucket
+    print("\n--- STAGE 2: Incremental Clustering per Bucket ---")
+    bucketed_topics = {"domestic": [], "bilateral": {}, "other_international": []}
+
+    # Domestic
+    if buckets["domestic"]:
+        domestic_sorted = sorted(buckets["domestic"], key=lambda t: t["pubdate_utc"])
+        print("\nClustering DOMESTIC ({} titles)...".format(len(domestic_sorted)))
+        bucketed_topics["domestic"] = cluster_incrementally(
+            domestic_sorted, weights, discriminators
+        )
+        emerged = sum(1 for t in bucketed_topics["domestic"] if t.emerged_date)
+        print(
+            "  -> {} topics ({} emerged)".format(
+                len(bucketed_topics["domestic"]), emerged
+            )
+        )
+
+    # Bilateral (per country)
+    for foreign_centroid in sorted(
+        buckets["bilateral"], key=lambda x: -len(buckets["bilateral"][x])
+    ):
+        btitles = buckets["bilateral"][foreign_centroid]
+        bilateral_sorted = sorted(btitles, key=lambda t: t["pubdate_utc"])
+        print(
+            "\nClustering BILATERAL {} ({} titles)...".format(
+                foreign_centroid, len(bilateral_sorted)
+            )
+        )
+        bucketed_topics["bilateral"][foreign_centroid] = cluster_incrementally(
+            bilateral_sorted, weights, discriminators
+        )
+        emerged = sum(
+            1 for t in bucketed_topics["bilateral"][foreign_centroid] if t.emerged_date
+        )
+        print(
+            "  -> {} topics ({} emerged)".format(
+                len(bucketed_topics["bilateral"][foreign_centroid]), emerged
+            )
+        )
+
+    # Other international
+    if buckets["other_international"]:
+        other_sorted = sorted(
+            buckets["other_international"], key=lambda t: t["pubdate_utc"]
+        )
+        print(
+            "\nClustering OTHER INTERNATIONAL ({} titles)...".format(len(other_sorted))
+        )
+        bucketed_topics["other_international"] = cluster_incrementally(
+            other_sorted, weights, discriminators
+        )
+        emerged = sum(
+            1 for t in bucketed_topics["other_international"] if t.emerged_date
+        )
+        print(
+            "  -> {} topics ({} emerged)".format(
+                len(bucketed_topics["other_international"]), emerged
+            )
+        )
+
+    # Summary
+    print("\n--- RESULTS ---")
+    total_topics = (
+        len(bucketed_topics["domestic"])
+        + sum(len(t) for t in bucketed_topics["bilateral"].values())
+        + len(bucketed_topics["other_international"])
+    )
+    print("Total topics: {}".format(total_topics))
 
     if not dry_run:
         print("\nWriting to database...")
-        written = write_topics_to_db(conn, topics, ctm_id, min_titles=2)
+        written = write_bucketed_topics_to_db(
+            conn, bucketed_topics, ctm_id, min_titles=2
+        )
         print("Wrote {} topics (with 2+ titles)".format(written))
     else:
         print("\n(DRY RUN - use --write to save)")
