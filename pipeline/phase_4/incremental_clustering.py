@@ -535,11 +535,29 @@ def write_bucketed_topics_to_db(
     written = 0
     domestic_count = 0
     bilateral_count = 0
+    catchall_count = 0
+
+    # Track ungrouped titles per bucket for catchall events
+    ungrouped = {
+        "domestic": [],
+        "bilateral": {},  # centroid_key -> [titles]
+        "other_international": [],
+    }
 
     def write_topic(topic, event_type, bucket_key=None):
+        """Write a topic if it meets min_titles, otherwise collect for catchall."""
         nonlocal written, domestic_count, bilateral_count
 
         if len(topic.titles) < min_titles:
+            # Collect for catchall
+            if event_type == "domestic":
+                ungrouped["domestic"].extend(topic.titles)
+            elif event_type == "bilateral":
+                if bucket_key not in ungrouped["bilateral"]:
+                    ungrouped["bilateral"][bucket_key] = []
+                ungrouped["bilateral"][bucket_key].extend(topic.titles)
+            else:
+                ungrouped["other_international"].extend(topic.titles)
             return
 
         event_id = str(uuid.uuid4())
@@ -599,6 +617,56 @@ def write_bucketed_topics_to_db(
         except Exception as e:
             print("Failed to write topic: {}".format(e))
 
+    def write_catchall(titles, event_type, bucket_key=None):
+        """Write a catchall 'Other coverage' event for ungrouped titles."""
+        nonlocal written, catchall_count
+
+        if not titles:
+            return
+
+        event_id = str(uuid.uuid4())
+
+        dates = [t["pubdate_utc"] for t in titles if t.get("pubdate_utc")]
+        first_date = min(dates).date() if dates else None
+        last_date = max(dates).date() if dates else None
+
+        try:
+            cur.execute(
+                """
+                INSERT INTO events_v3 (
+                    id, ctm_id, date, first_seen, summary, event_type, bucket_key,
+                    source_batch_count, is_catchall, last_active
+                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    event_id,
+                    ctm_id,
+                    first_date,
+                    "Other coverage",
+                    event_type,
+                    bucket_key,
+                    len(titles),
+                    True,
+                    last_date,
+                ),
+            )
+
+            for title in titles:
+                cur.execute(
+                    """
+                    INSERT INTO event_v3_titles (event_id, title_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (event_id, title["id"]),
+                )
+
+            written += 1
+            catchall_count += 1
+
+        except Exception as e:
+            print("Failed to write catchall: {}".format(e))
+
     # Write domestic topics
     for topic in bucketed_topics.get("domestic", []):
         write_topic(topic, "domestic", None)
@@ -612,8 +680,18 @@ def write_bucketed_topics_to_db(
     for topic in bucketed_topics.get("other_international", []):
         write_topic(topic, "other_international", None)
 
+    # Write catchall events for ungrouped titles
+    write_catchall(ungrouped["domestic"], "domestic", None)
+    for centroid_key, titles in ungrouped["bilateral"].items():
+        write_catchall(titles, "bilateral", centroid_key)
+    write_catchall(ungrouped["other_international"], "other_international", None)
+
     conn.commit()
-    print("  Domestic: {}, Bilateral: {}".format(domestic_count, bilateral_count))
+    print(
+        "  Domestic: {}, Bilateral: {}, Catchalls: {}".format(
+            domestic_count, bilateral_count, catchall_count
+        )
+    )
     return written
 
 
