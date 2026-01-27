@@ -33,7 +33,7 @@ from core.config import config
 from pipeline.phase_1.ingest_feeds import run_ingestion
 from pipeline.phase_2.match_centroids import process_batch as phase2_process
 from pipeline.phase_3.assign_tracks_batched import process_batch as phase3_process
-from pipeline.phase_3_5.extract_labels import process_titles as phase35_labels
+from pipeline.phase_3_5.extract_labels import process_titles as phase35_extract
 from pipeline.phase_4.generate_summaries_4_5 import (
     process_ctm_batch as phase45_summaries,
 )
@@ -476,7 +476,7 @@ class PipelineDaemon:
         print("\nQueue Status:")
         print(f"  Pending titles (Phase 2):      {stats['pending_titles']}")
         print(f"  Titles need track (Phase 3):   {stats['titles_need_track']}")
-        print(f"  Titles need labels (Phase 3.5): {stats['titles_need_labels']}")
+        print(f"  Titles need extraction (Phase 3.5): {stats['titles_need_labels']}")
         print(f"  CTMs for clustering (Phase 4):  {stats['ctms_for_clustering']}")
         print(f"  CTMs need summary (Phase 4):    {stats['ctms_need_summary']}")
 
@@ -529,11 +529,11 @@ class PipelineDaemon:
                 )
                 print(f"\nPhase 3: Skipping (next run in {next_run}s)")
 
-        # Phase 3.5: Label Extraction (if interval elapsed and work available)
+        # Phase 3.5: Label + Signal Extraction (if interval elapsed and work available)
         if self.should_run_phase("phase35") and stats["titles_need_labels"] > 0:
             self.run_phase_with_retry(
-                "Phase 3.5: Label Extraction",
-                phase35_labels,
+                "Phase 3.5: Label + Signal Extraction",
+                phase35_extract,
                 max_titles=200,
             )
             self.last_run["phase35"] = time.time()
@@ -604,7 +604,7 @@ class PipelineDaemon:
             f"  Phase 3 interval: {self.phase3_interval}s ({self.phase3_interval/60:.0f} minutes - track assignment)"
         )
         print(
-            f"  Phase 3.5 interval: {self.phase35_interval}s ({self.phase35_interval/60:.0f} minutes - label extraction)"
+            f"  Phase 3.5 interval: {self.phase35_interval}s ({self.phase35_interval/60:.0f} minutes - label + signal extraction)"
         )
         print(
             f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/60:.0f} minutes - event clustering)"

@@ -1,8 +1,11 @@
 """
-Phase 3.5: Event Label Extraction
+Phase 3.5: Combined Label + Signal Extraction (v2)
 
-Extracts structured event labels from titles using ELO (Event Label Ontology) v2.0.
-Labels follow: PRIMARY_ACTOR -> ACTION_CLASS -> DOMAIN (-> OPTIONAL_TARGET)
+Extracts structured event labels AND typed signals in a single LLM call.
+Replaces separate extract_labels.py and extract_signals.py.
+
+Labels: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
+Signals: persons, orgs, places, commodities, policies, systems, named_events
 
 Usage:
     python pipeline/phase_3_5/extract_labels.py --max-titles 100
@@ -13,7 +16,6 @@ import argparse
 import json
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -35,19 +37,14 @@ from core.ontology import (
 )
 
 # =============================================================================
-# SYSTEM PROMPT
+# SYSTEM PROMPT (MERGED LABELS + SIGNALS)
 # =============================================================================
 
-SYSTEM_PROMPT = """You are an expert news analyst. Your task is to extract structured event labels from news titles.
+SYSTEM_PROMPT = """You are an expert news analyst. Extract structured event labels AND typed signals from news titles.
 
-LABEL FORMAT: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
-- ACTOR: The primary institutional actor (with country prefix for state actors)
-- ACTION_CLASS: The type of action from the ontology (see below)
-- DOMAIN: The thematic domain
-- TARGET: Optional target actor/entity - MUST use normalized format (see TARGET rules below)
-- ACTOR_ENTITY: For generic actors (CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET), the specific named entity
+## PART 1: EVENT LABEL
 
-ONTOLOGY VERSION: ELO_v2.0
+Format: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
 
 ACTION CLASSES (7-tier hierarchy - lower tier = higher priority):
 {action_classes}
@@ -55,113 +52,90 @@ ACTION CLASSES (7-tier hierarchy - lower tier = higher priority):
 DOMAINS:
 {domains}
 
-CONTROLLED ACTOR TYPES:
+ACTOR TYPES:
 {actors}
 
 {priority_rules}
 
 {target_rules}
 
-EXAMPLES:
+## PART 2: SIGNALS
 
-Title: "Biden signs $95 billion foreign aid package for Ukraine, Israel"
-Label: US_EXECUTIVE -> RESOURCE_ALLOCATION -> FOREIGN_POLICY -> IL,UA
+Extract these typed signals from each title:
+- persons: Named people. LAST_NAME only, uppercase (TRUMP, POWELL, ZELENSKY)
+- orgs: Organizations, companies, armed groups. Uppercase (NATO, FED, NVIDIA, HAMAS)
+- places: Sub-national locations. Title case (Crimea, Gaza, Greenland)
+- commodities: Traded goods/resources. Lowercase (oil, gold, semiconductors)
+- policies: Policy types or agreements. Lowercase (tariffs, sanctions, JCPOA)
+- systems: Technical systems, platforms. Original case (SWIFT, Nord Stream)
+- named_events: Summits, conferences. Title case (G20 Summit, COP28)
 
-Title: "Fed raises interest rates by 25 basis points"
-Label: US_CENTRAL_BANK -> POLICY_CHANGE -> ECONOMY
+SIGNAL RULES:
+- ENGLISH ONLY - translate foreign terms (oro->gold, Pekin->Beijing)
+- Use canonical forms: tariff/trade war->tariffs, chip/semiconductor->semiconductors
+- NO PUBLISHERS as orgs (WSJ, Reuters, BBC, CNN)
+- NO COUNTRIES as places (handled via ISO codes in target)
+- Companies go in orgs: NVIDIA, APPLE, OPENAI, META, TESLA, BOEING
+- Armed groups go in orgs: HAMAS, ISIS, HEZBOLLAH, SDF
 
-Title: "Russian forces capture key town in eastern Ukraine"
-Label: RU_ARMED_FORCES -> MILITARY_OPERATION -> SECURITY -> UA
+## OUTPUT FORMAT
 
-Title: "EU imposes new sanctions on Russian oil exports"
-Label: EU -> SANCTION_ENFORCEMENT -> ECONOMY -> RU
-
-Title: "Trump threatens tariffs on European countries over Greenland"
-Label: US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> EU
-
-Title: "Trump threatens tariffs on France over wine"
-Label: US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> FR
-
-Title: "Trump drops tariff threat on EU after Greenland deal"
-Label: US_EXECUTIVE -> ECONOMIC_PRESSURE -> FOREIGN_POLICY -> EU
-
-Title: "Iran sanctions tightened, affecting trading partners"
-Label: US_EXECUTIVE -> SANCTION_ENFORCEMENT -> FOREIGN_POLICY -> IR
-
-Title: "Thousands protest against pension reform in Paris"
-Label: FR_POPULATION -> COLLECTIVE_PROTEST -> SOCIETY
-
-Title: "Supreme Court strikes down affirmative action in college admissions"
-Label: US_JUDICIARY -> LEGAL_RULING -> GOVERNANCE
-
-Title: "Trump pressures Fed to lower interest rates"
-Label: US_EXECUTIVE -> POLITICAL_PRESSURE -> ECONOMY -> US_CENTRAL_BANK
-
-Title: "Nvidia reports record revenue amid AI chip demand"
-Label: CORPORATION -> ECONOMIC_DISRUPTION -> ECONOMY (actor_entity: NVIDIA)
-
-Title: "SpaceX launches new batch of Starlink satellites"
-Label: CORPORATION -> INFRASTRUCTURE_DEVELOPMENT -> TECHNOLOGY (actor_entity: SPACEX)
-
-Title: "ISIS claims responsibility for attack in Syria"
-Label: ARMED_GROUP -> MILITARY_OPERATION -> SECURITY (actor_entity: ISIS)
-
-OUTPUT FORMAT:
-Return a JSON array with objects for each title:
+Return JSON array:
 [
   {{
     "idx": 1,
-    "actor": "ACTOR_WITH_PREFIX",
-    "action": "ACTION_CLASS",
-    "domain": "DOMAIN",
-    "target": "TARGET_OR_NULL",
-    "entity": "SPECIFIC_ENTITY_OR_NULL",
-    "conf": 0.9
+    "actor": "US_EXECUTIVE",
+    "action": "POLICY_CHANGE",
+    "domain": "ECONOMY",
+    "target": "CN",
+    "conf": 0.9,
+    "persons": ["TRUMP"],
+    "orgs": [],
+    "places": [],
+    "commodities": [],
+    "policies": ["tariffs"],
+    "systems": [],
+    "named_events": []
   }}
 ]
 
+## EXAMPLES
+
+Title: "Trump threatens tariffs on EU over Greenland"
+-> actor: US_EXECUTIVE, action: ECONOMIC_PRESSURE, domain: FOREIGN_POLICY, target: EU
+-> persons: ["TRUMP"], orgs: ["EU"], places: ["Greenland"], policies: ["tariffs"]
+
+Title: "Fed raises interest rates by 25 basis points"
+-> actor: US_CENTRAL_BANK, action: POLICY_CHANGE, domain: ECONOMY, target: null
+-> persons: [], orgs: ["FED"], policies: []
+
+Title: "Nvidia reports record revenue amid AI chip demand"
+-> actor: CORPORATION, action: ECONOMIC_DISRUPTION, domain: ECONOMY, target: null
+-> orgs: ["NVIDIA"], commodities: ["semiconductors"]
+
+Title: "ISIS claims responsibility for attack in Syria"
+-> actor: ARMED_GROUP, action: MILITARY_OPERATION, domain: SECURITY, target: SY
+-> orgs: ["ISIS"], places: []
+
+Title: "Gold prices hit record high amid uncertainty"
+-> actor: UNKNOWN, action: MARKET_MOVEMENT, domain: ECONOMY, target: null
+-> commodities: ["gold"]
+
+Title: "Zelensky meets Biden at G20 Summit"
+-> actor: UA_EXECUTIVE, action: DIPLOMATIC_ENGAGEMENT, domain: FOREIGN_POLICY, target: US
+-> persons: ["ZELENSKY", "BIDEN"], named_events: ["G20 Summit"]
+
+Title: "Russia cuts gas flow through Nord Stream"
+-> actor: RU_EXECUTIVE, action: ECONOMIC_PRESSURE, domain: ECONOMY, target: EU
+-> commodities: ["gas"], systems: ["Nord Stream"]
+
 IMPORTANT:
-- Use country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_, etc.
-- For IGOs use: UN, NATO, EU, AU, ASEAN (no prefix)
-- For unknown/unclear actors use: UNKNOWN
-- TARGET MUST be normalized: use ISO codes (FR not FRANCE), canonical names (EU not EU_COUNTRIES)
-- conf (confidence) should be 0.0-1.0 based on how clear the title is
-- If multiple actions apply, choose the highest-tier (lowest number) action
+- Use country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_
+- For IGOs: UN, NATO, EU, AU, ASEAN (no prefix)
+- TARGET uses ISO codes (FR not FRANCE) or canonical names (EU, NATO)
+- conf (confidence) 0.0-1.0 based on clarity
 - Return ONLY valid JSON, no explanations
-
-ENTITY EXTRACTION RULES (CRITICAL):
-
-FOR CORPORATION, ARMED_GROUP, NGO, MEDIA_OUTLET:
-- ONLY extract globally recognized brand names you know from training data
-- Use the company's common stock ticker name: NVIDIA, APPLE, JPMORGAN, BOEING, META, GOOGLE, AMAZON
-- Use null if: no specific company, multiple companies, or generic industry reference
-
-VALID corporate entities (real global brands):
-  NVIDIA, APPLE, MICROSOFT, GOOGLE, AMAZON, META, TESLA, BOEING, JPMORGAN,
-  GOLDMAN SACHS, BLACKROCK, OPENAI, SPACEX, NETFLIX, DISNEY, EXXON, CHEVRON,
-  MORGAN STANLEY, WALMART, COSTCO, TARGET, FORD, GM, TOYOTA, SAMSUNG, TSMC, INTEL, AMD
-
-INVALID corporate entities - use null instead:
-  - Descriptive phrases: "tech firms", "automakers", "fund managers", "hedge funds"
-  - Collectives: "Wall Street", "Silicon Valley", "Big Tech", "banks"
-  - People as corporations: "Trump", "Musk", "Bezos" (use EXECUTIVE or CORPORATION with real company)
-  - Unknown/generic: "startup", "private equity", "German investments"
-  - Institutions: "Fed", "central bank" (use XX_CENTRAL_BANK actor instead)
-
-FOR UNKNOWN ACTOR - extract subject entity when clear:
-- If the title is ABOUT a specific company (even if no actor): use actor=CORPORATION with entity
-- If the title is ABOUT stock market/indices: entity=STOCK_MARKET
-  (stock exchange, NYSE, Nasdaq, Dow Jones, S&P 500, market rally, stocks rise/fall, Wall Street trading)
-- If the title is ABOUT a commodity price: entity=GOLD, SILVER, OIL, DOLLAR, BITCOIN, etc.
-  (gold prices, silver rally, oil futures, dollar strength, crypto markets)
-- If no clear subject: entity=null
-
-EXAMPLES for UNKNOWN with entity:
-- "Gold prices hit record high amid uncertainty" -> UNKNOWN, entity: GOLD
-- "Stocks rally on Fed comments" -> UNKNOWN, entity: STOCK_MARKET
-- "Wall Street closes higher" -> UNKNOWN, entity: STOCK_MARKET
-- "Dollar weakens against euro" -> UNKNOWN, entity: DOLLAR
-- "Morgan Stanley beats earnings expectations" -> CORPORATION, entity: MORGAN STANLEY
+- Empty arrays [] for signal types with no matches
 """
 
 
@@ -183,16 +157,14 @@ def build_system_prompt() -> str:
 
 def build_user_prompt(titles_batch: list[dict]) -> str:
     """Build user prompt with numbered list of titles."""
-    lines = ["Extract structured event labels for these titles:", ""]
+    lines = ["Extract event labels and signals for these titles:", ""]
 
     for i, title in enumerate(titles_batch, 1):
         text = title.get("title_display", title.get("text", ""))
         lines.append("{}. {}".format(i, text))
 
     lines.append("")
-    lines.append(
-        "Return JSON array with labels for each title (idx matches the number above)."
-    )
+    lines.append("Return JSON array with labels and signals for each title.")
 
     return "\n".join(lines)
 
@@ -256,8 +228,8 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
             time.sleep(delay)
 
 
-def extract_labels_batch(titles_batch: list[dict]) -> list[dict]:
-    """Extract labels for a batch of titles via LLM."""
+def extract_batch(titles_batch: list[dict]) -> list[dict]:
+    """Extract labels and signals for a batch of titles via LLM."""
     system_prompt = build_system_prompt()
     user_prompt = build_user_prompt(titles_batch)
 
@@ -309,7 +281,7 @@ def extract_json_from_response(text: str) -> list:
 
 
 def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
-    """Parse LLM response and validate against ontology."""
+    """Parse LLM response and validate."""
     try:
         items = extract_json_from_response(response)
     except Exception as e:
@@ -328,17 +300,12 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
         title = idx_to_title[idx]
         title_id = str(title.get("id"))
 
-        # Extract and validate fields
+        # Extract and validate label fields
         actor = normalize_actor(item.get("actor", "UNKNOWN"))
         action_class = item.get("action", "SECURITY_INCIDENT")
         domain = item.get("domain", "GOVERNANCE")
         target = item.get("target")
-        actor_entity = item.get("entity")
         confidence = item.get("conf", 1.0)
-
-        # Normalize actor_entity
-        if actor_entity:
-            actor_entity = actor_entity.upper().strip()
 
         # Validate action_class
         if not validate_action_class(action_class):
@@ -358,19 +325,58 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
             )
             domain = "GOVERNANCE"
 
+        # Extract signals (default to empty arrays)
+        persons = normalize_signal_list(item.get("persons", []), uppercase=True)
+        orgs = normalize_signal_list(item.get("orgs", []), uppercase=True)
+        places = normalize_signal_list(item.get("places", []))
+        commodities = normalize_signal_list(item.get("commodities", []), lowercase=True)
+        policies = normalize_signal_list(item.get("policies", []), lowercase=True)
+        systems = normalize_signal_list(item.get("systems", []))
+        named_events = normalize_signal_list(item.get("named_events", []))
+
         results.append(
             {
                 "title_id": title_id,
+                # Labels
                 "actor": actor,
                 "action_class": action_class,
                 "domain": domain,
                 "target": target,
-                "actor_entity": actor_entity,
                 "confidence": min(max(float(confidence), 0.0), 1.0),
+                # Signals
+                "persons": persons,
+                "orgs": orgs,
+                "places": places,
+                "commodities": commodities,
+                "policies": policies,
+                "systems": systems,
+                "named_events": named_events,
             }
         )
 
     return results
+
+
+def normalize_signal_list(
+    values: list, uppercase: bool = False, lowercase: bool = False
+) -> list:
+    """Normalize a list of signal values."""
+    if not values or not isinstance(values, list):
+        return []
+
+    result = []
+    for v in values:
+        if not v or not isinstance(v, str):
+            continue
+        v = v.strip()
+        if uppercase:
+            v = v.upper()
+        elif lowercase:
+            v = v.lower()
+        if v and v not in result:
+            result.append(v)
+
+    return result
 
 
 def normalize_actor(actor_raw: str) -> str:
@@ -407,16 +413,26 @@ def normalize_actor(actor_raw: str) -> str:
 # =============================================================================
 
 
-def load_unlabeled_titles(
+def get_connection():
+    return psycopg2.connect(
+        host=config.db_host,
+        port=config.db_port,
+        database=config.db_name,
+        user=config.db_user,
+        password=config.db_password,
+    )
+
+
+def load_titles_needing_extraction(
     conn,
     max_titles: int = None,
     centroid_filter: str = None,
     track_filter: str = None,
 ) -> list[dict]:
-    """Load titles that don't have labels yet."""
+    """Load titles that need label+signal extraction."""
     cur = conn.cursor()
 
-    # Build filter conditions for title_assignments subquery
+    # Build filter conditions
     ta_conditions = ["ta.title_id = t.id"]
     params = []
 
@@ -435,11 +451,19 @@ def load_unlabeled_titles(
         limit_sql = "LIMIT %s"
         params.append(max_titles)
 
+    # Select titles without labels OR without signals
     query = """
         SELECT t.id, t.title_display
         FROM titles_v3 t
         WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE {})
-          AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
+          AND (
+            NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
+            OR EXISTS (
+                SELECT 1 FROM title_labels tl
+                WHERE tl.title_id = t.id
+                  AND tl.persons IS NULL
+            )
+          )
         ORDER BY t.pubdate_utc DESC
         {}
     """.format(
@@ -452,51 +476,65 @@ def load_unlabeled_titles(
     return [{"id": str(r[0]), "title_display": r[1]} for r in rows]
 
 
-def write_labels_to_db(conn, labels: list[dict]) -> int:
-    """Write labels to database with upsert."""
-    if not labels:
+def write_to_db(conn, results: list[dict]) -> int:
+    """Write labels and signals to database."""
+    if not results:
         return 0
 
     cur = conn.cursor()
 
+    # Upsert with all fields including signals
     insert_sql = """
         INSERT INTO title_labels (
             title_id, actor, action_class, domain, target,
-            actor_entity, label_version, confidence
+            label_version, confidence,
+            persons, orgs, places, commodities, policies, systems, named_events
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         ON CONFLICT (title_id) DO UPDATE SET
             actor = EXCLUDED.actor,
             action_class = EXCLUDED.action_class,
             domain = EXCLUDED.domain,
             target = EXCLUDED.target,
-            actor_entity = EXCLUDED.actor_entity,
             label_version = EXCLUDED.label_version,
             confidence = EXCLUDED.confidence,
+            persons = EXCLUDED.persons,
+            orgs = EXCLUDED.orgs,
+            places = EXCLUDED.places,
+            commodities = EXCLUDED.commodities,
+            policies = EXCLUDED.policies,
+            systems = EXCLUDED.systems,
+            named_events = EXCLUDED.named_events,
             updated_at = NOW()
     """
 
     inserted = 0
-    for label in labels:
+    for r in results:
         try:
             cur.execute(
                 insert_sql,
                 (
-                    label["title_id"],
-                    label["actor"],
-                    label["action_class"],
-                    label["domain"],
-                    label["target"],
-                    label.get("actor_entity"),
+                    r["title_id"],
+                    r["actor"],
+                    r["action_class"],
+                    r["domain"],
+                    r["target"],
                     ONTOLOGY_VERSION,
-                    label["confidence"],
+                    r["confidence"],
+                    r["persons"],
+                    r["orgs"],
+                    r["places"],
+                    r["commodities"],
+                    r["policies"],
+                    r["systems"],
+                    r["named_events"],
                 ),
             )
             inserted += 1
         except Exception as e:
-            logger.warning(
-                "Failed to insert label for {}: {}".format(label["title_id"][:8], e)
+            logger.error(
+                "Failed to insert label for {}: {}".format(r["title_id"][:8], e)
             )
 
     conn.commit()
@@ -504,178 +542,71 @@ def write_labels_to_db(conn, labels: list[dict]) -> int:
 
 
 # =============================================================================
-# MAIN PROCESSING
+# MAIN
 # =============================================================================
 
 
-def process_batch_worker(batch_info: tuple) -> dict:
-    """Worker function for parallel batch processing."""
-    batch_num, batch, total_batches = batch_info
-
-    try:
-        labels = extract_labels_batch(batch)
-        return {
-            "batch_num": batch_num,
-            "success": True,
-            "labels": labels,
-            "count": len(labels) if labels else 0,
-        }
-    except Exception as e:
-        logger.error("Batch {} failed: {}".format(batch_num, e))
-        return {
-            "batch_num": batch_num,
-            "success": False,
-            "labels": [],
-            "count": 0,
-            "error": str(e)[:100],
-        }
-
-
 def process_titles(
-    max_titles: int = None,
+    max_titles: int = 200,
+    batch_size: int = 25,
     centroid_filter: str = None,
     track_filter: str = None,
-    dry_run: bool = False,
-):
-    """Main entry point for label extraction with parallel processing."""
-    conn = psycopg2.connect(
-        host=config.db_host,
-        port=config.db_port,
-        database=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
-    )
+) -> dict:
+    """Process titles in batches."""
+    conn = get_connection()
 
-    # Get effective max_titles
-    effective_max = max_titles or config.v3_p35_max_titles
-
-    # Load titles
-    logger.info("Loading unlabeled titles...")
-    titles = load_unlabeled_titles(
+    titles = load_titles_needing_extraction(
         conn,
-        max_titles=effective_max,
+        max_titles=max_titles,
         centroid_filter=centroid_filter,
         track_filter=track_filter,
     )
 
     if not titles:
-        print("No unlabeled titles found matching filters.")
+        logger.info("No titles need extraction")
         conn.close()
-        return
+        return {"processed": 0, "written": 0}
 
-    print("Found {} unlabeled titles".format(len(titles)))
-    if dry_run:
-        print("(DRY RUN - no database writes)")
+    logger.info("Processing {} titles in batches of {}".format(len(titles), batch_size))
 
-    # Prepare batches
-    batch_size = config.v3_p35_batch_size
-    concurrency = config.v3_p35_concurrency
-    total_batches = (len(titles) + batch_size - 1) // batch_size
+    total_written = 0
 
-    batches = []
-    for batch_num in range(total_batches):
-        start_idx = batch_num * batch_size
-        end_idx = min(start_idx + batch_size, len(titles))
-        batch = titles[start_idx:end_idx]
-        batches.append((batch_num + 1, batch, total_batches))
+    for i in range(0, len(titles), batch_size):
+        batch = titles[i : i + batch_size]
+        batch_num = (i // batch_size) + 1
+        total_batches = (len(titles) + batch_size - 1) // batch_size
 
-    print(
-        "Processing {} batches with {} parallel workers...".format(
-            total_batches, concurrency
+        logger.info(
+            "Batch {}/{}: {} titles".format(batch_num, total_batches, len(batch))
         )
-    )
-    print()
 
-    # Process in parallel
-    total_labeled = 0
-    errors = 0
-    start_time = time.time()
-
-    with ThreadPoolExecutor(max_workers=concurrency) as executor:
-        futures = {executor.submit(process_batch_worker, b): b for b in batches}
-
-        for future in as_completed(futures):
-            result = future.result()
-            batch_num = result["batch_num"]
-
-            if result["success"]:
-                labels = result["labels"]
-                if labels and not dry_run:
-                    inserted = write_labels_to_db(conn, labels)
-                    total_labeled += inserted
-                    print(
-                        "Batch {}/{}: {} labels".format(
-                            batch_num, total_batches, inserted
-                        )
-                    )
-                elif labels:
-                    total_labeled += len(labels)
-                    print(
-                        "Batch {}/{}: would label {}".format(
-                            batch_num, total_batches, len(labels)
-                        )
-                    )
-            else:
-                errors += 1
-                print(
-                    "Batch {}/{}: ERROR - {}".format(
-                        batch_num, total_batches, result.get("error", "unknown")
-                    )
-                )
-
-    elapsed = time.time() - start_time
-    rate = len(titles) / elapsed if elapsed > 0 else 0
-
-    print()
-    print("=" * 60)
-    print("SUMMARY")
-    print("=" * 60)
-    print("Titles processed: {}".format(len(titles)))
-    print("Labels created: {}".format(total_labeled))
-    print("Errors: {}".format(errors))
-    print("Time: {:.1f}s ({:.1f} titles/sec)".format(elapsed, rate))
-    if centroid_filter:
-        print("Centroid filter: {}".format(centroid_filter))
-    if track_filter:
-        print("Track filter: {}".format(track_filter))
+        try:
+            results = extract_batch(batch)
+            written = write_to_db(conn, results)
+            total_written += written
+            logger.info("  Wrote {} labels+signals".format(written))
+        except Exception as e:
+            logger.error("Batch {} failed: {}".format(batch_num, e))
 
     conn.close()
 
+    return {"processed": len(titles), "written": total_written}
 
-# =============================================================================
-# CLI
-# =============================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Phase 3.5: Extract structured event labels from titles"
-    )
-    parser.add_argument(
-        "--max-titles",
-        type=int,
-        help="Maximum titles to process",
-    )
-    parser.add_argument(
-        "--centroid",
-        type=str,
-        help="Filter by centroid ID (e.g., AMERICAS-USA)",
-    )
-    parser.add_argument(
-        "--track",
-        type=str,
-        help="Filter by track (e.g., geo_economy)",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Don't write to database, just show what would happen",
-    )
+    parser = argparse.ArgumentParser(description="Extract labels and signals (v2)")
+    parser.add_argument("--max-titles", type=int, default=200, help="Max titles")
+    parser.add_argument("--batch-size", type=int, default=25, help="Batch size")
+    parser.add_argument("--centroid", type=str, help="Filter by centroid")
+    parser.add_argument("--track", type=str, help="Filter by track")
 
     args = parser.parse_args()
 
-    process_titles(
+    result = process_titles(
         max_titles=args.max_titles,
+        batch_size=args.batch_size,
         centroid_filter=args.centroid,
         track_filter=args.track,
-        dry_run=args.dry_run,
     )
+
+    print("Processed: {}, Written: {}".format(result["processed"], result["written"]))
