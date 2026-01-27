@@ -80,11 +80,8 @@ def load_titles_chronological(conn, ctm_id: str) -> list:
             tl.policies, tl.systems, tl.named_events
         FROM titles_v3 t
         JOIN title_assignments ta ON t.id = ta.title_id
-        JOIN title_labels tl ON t.id = tl.title_id
+        LEFT JOIN title_labels tl ON t.id = tl.title_id
         WHERE ta.ctm_id = %s
-          AND (tl.persons IS NOT NULL OR tl.orgs IS NOT NULL OR tl.places IS NOT NULL
-               OR tl.commodities IS NOT NULL OR tl.policies IS NOT NULL
-               OR tl.systems IS NOT NULL OR tl.named_events IS NOT NULL)
         ORDER BY t.pubdate_utc ASC
         """,
         (ctm_id,),
