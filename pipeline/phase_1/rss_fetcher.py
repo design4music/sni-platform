@@ -27,6 +27,7 @@ from langdetect import DetectorFactory, detect
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from core.publisher_filter import clean_title_display, load_title_cleaning_patterns
 
 from .feeds_repo import FeedsRepo
 
@@ -44,6 +45,8 @@ class RSSFetcher:
         self.session.headers.update(
             {"User-Agent": "SNI-v3 RSS Fetcher/1.0 (Headlines Analysis)"}
         )
+        # Load publisher patterns for title cleaning (lazy load on first use)
+        self._title_cleaning_patterns = None
 
     def get_connection(self):
         """Get database connection"""
@@ -54,6 +57,19 @@ class RSSFetcher:
             user=self.config.db_user,
             password=self.config.db_password,
         )
+
+    def get_title_cleaning_patterns(self) -> set:
+        """Load title cleaning patterns (lazy, cached)"""
+        if self._title_cleaning_patterns is None:
+            conn = self.get_connection()
+            try:
+                self._title_cleaning_patterns = load_title_cleaning_patterns(conn)
+                print(
+                    f"Loaded {len(self._title_cleaning_patterns)} title cleaning patterns"
+                )
+            finally:
+                conn.close()
+        return self._title_cleaning_patterns
 
     def normalize_title(
         self, title: str, publisher_name: str = None
@@ -275,6 +291,10 @@ class RSSFetcher:
                     title_display, hash_base = self.normalize_title(
                         title_original, publisher_name
                     )
+
+                    # Clean publisher artifacts from title
+                    patterns = self.get_title_cleaning_patterns()
+                    title_display = clean_title_display(title_display, patterns)
 
                     # Language detection
                     detected_language = self.detect_language(title_display)
