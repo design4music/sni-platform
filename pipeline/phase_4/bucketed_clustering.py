@@ -340,6 +340,72 @@ class Topic:
             if t not in self.anchor_signals
         ][:8]
 
+    def merge_from(self, other: "Topic"):
+        """Absorb another topic into this one."""
+        for title in other.titles:
+            self.titles.append(title)
+            for token in self._extract_tokens(title):
+                self.signal_counts[token] += 1
+            if title["pubdate_utc"]:
+                self.daily_counts[title["pubdate_utc"].date()] += 1
+
+        # Recalculate anchors from merged signals
+        threshold = max(1, len(self.titles) // 2)
+        self.anchor_signals = set()
+        for token, count in self.signal_counts.items():
+            if count >= threshold:
+                sig_type, val = token.split(":", 1)
+                if sig_type == "persons" and val in HIGH_FREQ_PERSONS:
+                    continue
+                self.anchor_signals.add(token)
+
+        # Update dates
+        if other.created_date and (
+            not self.created_date or other.created_date < self.created_date
+        ):
+            self.created_date = other.created_date
+        if other.emerged_date and (
+            not self.emerged_date or other.emerged_date < self.emerged_date
+        ):
+            self.emerged_date = other.emerged_date
+        if self.emerged_date is None and len(self.titles) >= EMERGENCE_THRESHOLD:
+            dates = [t["pubdate_utc"] for t in self.titles if t["pubdate_utc"]]
+            if dates:
+                self.emerged_date = min(dates).date()
+
+
+def merge_topics_pass(topics: list) -> list:
+    """
+    Post-clustering merge: combine topics that share anchor signals.
+    Topics sharing 1+ anchor are merged (larger absorbs smaller).
+    """
+    if len(topics) <= 1:
+        return topics
+
+    merged = []
+    absorbed = set()
+
+    # Sort by size descending (larger topics absorb smaller)
+    sorted_topics = sorted(topics, key=lambda t: -len(t.titles))
+
+    for i, topic_a in enumerate(sorted_topics):
+        if i in absorbed:
+            continue
+
+        for j, topic_b in enumerate(sorted_topics[i + 1 :], start=i + 1):
+            if j in absorbed:
+                continue
+
+            # Check for shared anchors
+            shared = topic_a.anchor_signals & topic_b.anchor_signals
+            if shared:
+                topic_a.merge_from(topic_b)
+                absorbed.add(j)
+
+        merged.append(topic_a)
+
+    return merged
+
 
 def cluster_bucket(titles: list, weights: dict, discriminators: list) -> list:
     if not titles:
@@ -516,27 +582,28 @@ def process_ctm(ctm_id: str, dry_run: bool = True):
         print("  {}: {}".format(c, len(buckets["bilateral"][c])))
     print("Other Intl: {}".format(len(buckets["other_international"])))
 
-    # STAGE 2: Cluster
-    print("\n--- STAGE 2: Topic Clustering ---")
+    # STAGE 2: Cluster + Merge
+    print("\n--- STAGE 2: Topic Clustering + Merge ---")
     all_results = {"domestic": [], "bilateral": {}, "other_international": []}
 
-    all_results["domestic"] = cluster_bucket(
-        buckets["domestic"], weights, discriminators
-    )
+    domestic_topics = cluster_bucket(buckets["domestic"], weights, discriminators)
+    all_results["domestic"] = merge_topics_pass(domestic_topics)
     analyze_bucket("DOMESTIC", all_results["domestic"])
 
     for country in sorted(
         buckets["bilateral"], key=lambda x: -len(buckets["bilateral"][x])
     ):
-        all_results["bilateral"][country] = cluster_bucket(
+        bilateral_topics = cluster_bucket(
             buckets["bilateral"][country], weights, discriminators
         )
+        all_results["bilateral"][country] = merge_topics_pass(bilateral_topics)
         analyze_bucket("BILATERAL", all_results["bilateral"][country], country)
 
     if buckets["other_international"]:
-        all_results["other_international"] = cluster_bucket(
+        other_topics = cluster_bucket(
             buckets["other_international"], weights, discriminators
         )
+        all_results["other_international"] = merge_topics_pass(other_topics)
         analyze_bucket("OTHER INTL", all_results["other_international"])
 
     if not dry_run:
