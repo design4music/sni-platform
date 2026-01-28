@@ -107,6 +107,22 @@ SIGNAL RULES:
 - Companies go in orgs: NVIDIA, APPLE, OPENAI, META, TESLA, BOEING
 - Armed groups go in orgs: HAMAS, ISIS, HEZBOLLAH, SDF
 
+## PART 3: ENTITY COUNTRIES
+
+For persons, orgs, places, AND systems, identify their PRIMARY country association using ISO 2-letter codes.
+
+entity_countries: {{"ENTITY_NAME": "ISO_CODE", ...}}
+
+RULES:
+- Politicians/officials -> their country of office (JAISHANKAR->IN, RUBIO->US, MACRON->FR)
+- Companies -> headquarters country (TSMC->TW, SAMSUNG->KR, BOEING->US)
+- Sub-national places -> parent country (Crimea->UA, Bavaria->DE, Greenland->DK)
+- Systems/infrastructure -> owner country (Nord Stream->RU, SWIFT->BE, Starlink->US, BeiDou->CN)
+- IGOs -> use org code (NATO->NATO, EU->EU, UN->UN)
+- Armed groups -> use special codes (HAMAS->PS, HEZBOLLAH->LB, ISIS->ISIS)
+- Only include entities you're confident about (>80%)
+- Skip entities that are already country names (US, China, etc.)
+
 ## OUTPUT FORMAT
 
 Return JSON array:
@@ -124,7 +140,8 @@ Return JSON array:
     "commodities": [],
     "policies": ["tariffs"],
     "systems": [],
-    "named_events": []
+    "named_events": [],
+    "entity_countries": {{"TRUMP": "US"}}
   }}
 ]
 
@@ -195,28 +212,114 @@ Generate a 150-250 word monthly digest:"""
 # PHASE 4.5A: EVENT SUMMARY GENERATION
 # =============================================================================
 
-EVENT_SUMMARY_SYSTEM_PROMPT = """You are a strategic intelligence analyst generating structured event data.
+EVENT_SUMMARY_SYSTEM_PROMPT = """You explain news topics in plain, conversational language for a general audience.
 
-For each event cluster, generate:
-1. **Title** (5-15 words): Core event description, factual, no sensationalism
-2. **Summary** (1-3 sentences, 30-60 words): Key facts, actors, outcomes
-3. **Tags** (4-8 tags): Typed tags in format type:value (lowercase)
+## YOUR TASK
 
-Tag types:
-- person: Last name only (person:trump, person:zelensky)
-- org: Short names (org:nato, org:fed, org:nvidia)
-- place: ISO-style (place:us, place:ua, place:greenland)
-- topic: Action keywords (topic:tariffs, topic:sanctions, topic:military)
-- event: Specific types (event:summit, event:election, event:protest)
+Generate a title and summary that helps someone quickly understand what this news topic is about.
 
-RULES:
-- NO generic tags (news, update, breaking)
-- NO role descriptions in titles
-- NO speculation or interpretation
-- Factual, neutral tone only"""
+## OUTPUT FORMAT
 
-EVENT_SUMMARY_USER_PROMPT = """Event cluster with {num_titles} titles:
+Return JSON:
+{
+  "title": "Short descriptive title (5-12 words)",
+  "summary": "Conversational explanation (see structure rules below)"
+}
+
+## TITLE RULES
+- Describe the core story in plain language
+- No jargon, no abbreviations (write "Federal Reserve" not "Fed" on first mention)
+- Focus on WHAT happened, not just WHO
+
+## SUMMARY RULES
+
+**Length**: Scale with topic size
+- Small topics (< 20 sources): 2-3 sentences
+- Medium topics (20-100 sources): 1-2 paragraphs
+- Large topics (100+ sources): 2-3 paragraphs with key sub-stories
+
+**Tone**: Write like you're explaining to a smart friend who doesn't follow the news
+- Use simple, direct language
+- Briefly explain who unfamiliar people are based on context from headlines
+- Example: "Powell, the Federal Reserve chair..." or "Dimon, who runs JPMorgan..."
+
+**Structure by topic type**:
+
+1. COHERENT STORY (headlines about one event/development):
+   Write 2-3 SHORT paragraphs. Use blank lines between paragraphs.
+   - Paragraph 1: What happened (the core event)
+   - Paragraph 2: Key reactions, consequences, or context
+   - Paragraph 3 (if needed): Outcome or current status
+
+2. MULTI-STORY TOPIC (company updates, brand roundups, policy collections):
+   If headlines cover 3+ DISTINCT sub-stories about the same entity, use this format:
+
+   One sentence overview of what connects these stories.
+
+   - **First thread**: 1-2 sentences describing this development
+   - **Second thread**: 1-2 sentences describing this development
+   - **Third thread**: 1-2 sentences describing this development
+
+   USE BULLETS WHEN: Headlines mention the same company/person but cover DIFFERENT events
+   (e.g., "Amazon layoffs" + "Amazon new store" + "Amazon mining deal" = 3 bullets)
+
+FORMATTING RULES:
+- Use blank lines between paragraphs
+- Use markdown bullet points (- ) for multi-story lists
+- Use **bold** for the thread label in each bullet
+- If only 2 distinct threads, use 2 paragraphs instead of bullets
+
+**What to include**:
+- Key facts, numbers, and outcomes from headlines
+- Context that helps understand WHY this matters
+- Distinct sub-stories when the topic covers multiple developments
+
+**What to AVOID**:
+- Don't invent information not in the headlines
+- Don't force unrelated headlines into false coherence
+- Don't use phrases like "amid growing concerns" or "sparking debate"
+- No sensationalism or editorializing
+
+**CRITICAL - NO ROLE DESCRIPTIONS**:
+- NEVER write "President Trump", "Former President Trump", "CEO Dimon", etc.
+- Use ONLY the bare name: "Trump", "Dimon", "Powell", "Musk"
+- If context is needed, derive it from headlines: "Powell, who chairs the Fed" NOT "Fed Chair Powell"
+- Your training data is OUTDATED - a "former" president may now be current, a CEO may have resigned
+- When in doubt, use just the last name with NO title or role prefix"""
+
+EVENT_SUMMARY_USER_PROMPT = """Topic cluster ({num_titles} sources):
 
 {titles_text}
 
-Generate structured event data (title, summary, tags):"""
+Backbone signals (what grouped these headlines):
+{backbone_signals}
+
+IMPORTANT: Focus ONLY on headlines that are primarily about the backbone signals above.
+If a headline just tangentially mentions a signal but is really about something else (e.g., a headline mentioning "Davos" but focusing on housing policy), ignore it.
+The summary should describe the MAIN story that the majority of headlines share.
+
+Generate JSON with title and summary:"""
+
+
+# =============================================================================
+# PHASE 4.2: TOPIC AGGREGATION
+# =============================================================================
+
+TOPIC_MERGE_PROMPT = """You are an intelligence analyst reviewing topic clusters for potential merging.
+
+Your task: Decide if topics should be MERGED (same story) or KEPT SEPARATE (different contexts).
+
+MERGE when:
+- Topics cover the SAME event from different sources/languages
+- Topics are about the SAME entity doing the SAME thing
+- Headlines are essentially duplicates or translations
+
+KEEP SEPARATE when:
+- Topics share entities but have DIFFERENT contexts
+  Example: "Gold prices rise" vs "Fed independence concerns" - both mention FED but different stories
+- Topics have overlapping signals but cover DIFFERENT events
+  Example: "Trump tariffs on EU" vs "Trump Greenland deal" - both have TRUMP but different topics
+- One topic is a SUBSET theme of another
+  Example: "Fed rate hike" is separate from "Powell testimony on inflation"
+
+Return JSON: {"decision": "MERGE" or "SEPARATE", "reason": "brief explanation"}"""

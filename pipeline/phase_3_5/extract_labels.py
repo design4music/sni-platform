@@ -233,6 +233,9 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
         systems = normalize_signal_list(item.get("systems", []))
         named_events = normalize_signal_list(item.get("named_events", []))
 
+        # Extract entity_countries (entity -> ISO code mapping)
+        entity_countries = normalize_entity_countries(item.get("entity_countries", {}))
+
         results.append(
             {
                 "title_id": title_id,
@@ -250,6 +253,8 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
                 "policies": policies,
                 "systems": systems,
                 "named_events": named_events,
+                # Entity country associations
+                "entity_countries": entity_countries,
             }
         )
 
@@ -274,6 +279,27 @@ def normalize_signal_list(
             v = v.lower()
         if v and v not in result:
             result.append(v)
+
+    return result
+
+
+def normalize_entity_countries(raw: dict) -> dict:
+    """Normalize entity_countries dict (entity -> ISO code mapping)."""
+    if not raw or not isinstance(raw, dict):
+        return {}
+
+    result = {}
+    for entity, code in raw.items():
+        if not entity or not code:
+            continue
+        # Normalize entity name (uppercase for consistency)
+        entity = str(entity).strip().upper()
+        # Normalize ISO code (uppercase, strip)
+        code = str(code).strip().upper()
+        # Skip empty or invalid
+        if len(code) < 2 or len(code) > 10:
+            continue
+        result[entity] = code
 
     return result
 
@@ -327,9 +353,30 @@ def load_titles_needing_extraction(
     max_titles: int = None,
     centroid_filter: str = None,
     track_filter: str = None,
+    backfill_entity_countries: bool = False,
+    title_ids_filter: list = None,
 ) -> list[dict]:
     """Load titles that need label+signal extraction."""
     cur = conn.cursor()
+
+    # If specific title_ids provided, just load those
+    if title_ids_filter:
+        # Convert to list of strings if needed
+        ids = [str(tid) for tid in title_ids_filter[:max_titles] if tid]
+        if not ids:
+            return []
+
+        cur.execute(
+            """
+            SELECT t.id, t.title_display
+            FROM titles_v3 t
+            WHERE t.id = ANY(%s::uuid[])
+            ORDER BY t.pubdate_utc DESC
+            """,
+            (ids,),
+        )
+        rows = cur.fetchall()
+        return [{"id": str(r[0]), "title_display": r[1]} for r in rows]
 
     # Build filter conditions
     ta_conditions = ["ta.title_id = t.id"]
@@ -350,24 +397,41 @@ def load_titles_needing_extraction(
         limit_sql = "LIMIT %s"
         params.append(max_titles)
 
-    # Select titles without labels OR without signals
-    query = """
-        SELECT t.id, t.title_display
-        FROM titles_v3 t
-        WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE {})
-          AND (
-            NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
-            OR EXISTS (
+    if backfill_entity_countries:
+        # Select titles with labels but missing entity_countries
+        query = """
+            SELECT t.id, t.title_display
+            FROM titles_v3 t
+            WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE {})
+              AND EXISTS (
                 SELECT 1 FROM title_labels tl
                 WHERE tl.title_id = t.id
-                  AND tl.persons IS NULL
-            )
-          )
-        ORDER BY t.pubdate_utc DESC
-        {}
-    """.format(
-        ta_where, limit_sql
-    )
+                  AND (tl.entity_countries IS NULL OR tl.entity_countries = '{{}}'::jsonb)
+              )
+            ORDER BY t.pubdate_utc DESC
+            {}
+        """.format(
+            ta_where, limit_sql
+        )
+    else:
+        # Select titles without labels OR without signals
+        query = """
+            SELECT t.id, t.title_display
+            FROM titles_v3 t
+            WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE {})
+              AND (
+                NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
+                OR EXISTS (
+                    SELECT 1 FROM title_labels tl
+                    WHERE tl.title_id = t.id
+                      AND tl.persons IS NULL
+                )
+              )
+            ORDER BY t.pubdate_utc DESC
+            {}
+        """.format(
+            ta_where, limit_sql
+        )
 
     cur.execute(query, params)
     rows = cur.fetchall()
@@ -382,14 +446,15 @@ def write_to_db(conn, results: list[dict]) -> int:
 
     cur = conn.cursor()
 
-    # Upsert with all fields including signals
+    # Upsert with all fields including signals and entity_countries
     insert_sql = """
         INSERT INTO title_labels (
             title_id, actor, action_class, domain, target,
             label_version, confidence,
-            persons, orgs, places, commodities, policies, systems, named_events
+            persons, orgs, places, commodities, policies, systems, named_events,
+            entity_countries
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         ON CONFLICT (title_id) DO UPDATE SET
             actor = EXCLUDED.actor,
@@ -405,12 +470,16 @@ def write_to_db(conn, results: list[dict]) -> int:
             policies = EXCLUDED.policies,
             systems = EXCLUDED.systems,
             named_events = EXCLUDED.named_events,
+            entity_countries = EXCLUDED.entity_countries,
             updated_at = NOW()
     """
 
     inserted = 0
     for r in results:
         try:
+            # Convert entity_countries dict to JSON for JSONB column
+            entity_countries_json = json.dumps(r.get("entity_countries", {}))
+
             cur.execute(
                 insert_sql,
                 (
@@ -428,6 +497,7 @@ def write_to_db(conn, results: list[dict]) -> int:
                     r["policies"],
                     r["systems"],
                     r["named_events"],
+                    entity_countries_json,
                 ),
             )
             inserted += 1
@@ -462,6 +532,8 @@ def process_titles(
     centroid_filter: str = None,
     track_filter: str = None,
     concurrency: int = 1,
+    backfill_entity_countries: bool = False,
+    title_ids_filter: list = None,
 ) -> dict:
     """Process titles in batches with optional concurrency."""
     conn = get_connection()
@@ -471,6 +543,8 @@ def process_titles(
         max_titles=max_titles,
         centroid_filter=centroid_filter,
         track_filter=track_filter,
+        backfill_entity_countries=backfill_entity_countries,
+        title_ids_filter=title_ids_filter,
     )
 
     if not titles:
@@ -550,6 +624,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--centroid", type=str, help="Filter by centroid")
     parser.add_argument("--track", type=str, help="Filter by track")
+    parser.add_argument(
+        "--backfill-entity-countries",
+        action="store_true",
+        help="Re-extract titles missing entity_countries",
+    )
 
     args = parser.parse_args()
 
@@ -559,6 +638,7 @@ if __name__ == "__main__":
         centroid_filter=args.centroid,
         track_filter=args.track,
         concurrency=args.concurrency,
+        backfill_entity_countries=args.backfill_entity_countries,
     )
 
     print(
