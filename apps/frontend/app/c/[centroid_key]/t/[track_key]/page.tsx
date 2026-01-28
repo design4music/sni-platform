@@ -251,7 +251,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
         // Helper to check if event is "Other Coverage" bucket
         const isOtherCoverage = (e: typeof allEvents[0]) =>
-          e.summary.startsWith('[Storyline]') || e.summary.startsWith('Other ') || e.is_alias_group === true;
+          e.summary.startsWith('[Storyline]') || e.summary.startsWith('Other ') || e.is_catchall === true;
 
         // Helper to check if bilateral event is actually domestic (bucket_key matches home ISO)
         const isBilateralToSelf = (e: typeof allEvents[0]) =>

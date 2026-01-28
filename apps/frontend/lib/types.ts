@@ -62,7 +62,6 @@ export interface Event {
   event_type?: 'bilateral' | 'other_international' | 'domestic' | null;
   bucket_key?: string | null;
   alias?: string | null;
-  is_alias_group?: boolean;
   source_count?: number;
   is_catchall?: boolean;
 }

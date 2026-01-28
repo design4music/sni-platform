@@ -6,8 +6,11 @@ Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 2: Centroid matching (5 minutes)
 - Phase 3: Track assignment & CTM creation (10 minutes)
 - Phase 3.5: Label extraction (10 minutes)
+- Phase 3.6: Entity centroid backfill (after 3.5)
 - Phase 4: Event clustering (30 minutes)
-- Phase 4.5: Summary generation (1 hour)
+- Phase 4.1: Topic aggregation - LLM merge/cleanup (after 4)
+- Phase 4.5a: Event summaries - readable text per event (after 4.1)
+- Phase 4.5: CTM summary generation (1 hour)
 
 Features:
 - Sequential execution with configurable intervals
@@ -28,12 +31,19 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from db.backfills.backfill_entity_centroids import (
+    backfill_entity_centroids as phase36_backfill,
+)
 
 # Import phase modules
 from pipeline.phase_1.ingest_feeds import run_ingestion
 from pipeline.phase_2.match_centroids import process_batch as phase2_process
 from pipeline.phase_3.assign_tracks_batched import process_batch as phase3_process
 from pipeline.phase_3_5.extract_labels import process_titles as phase35_extract
+from pipeline.phase_4.aggregate_topics import process_ctm as phase41_aggregate
+from pipeline.phase_4.generate_event_summaries_4_5a import (
+    process_events as phase45a_event_summaries,
+)
 from pipeline.phase_4.generate_summaries_4_5 import (
     process_ctm_batch as phase45_summaries,
 )
@@ -412,7 +422,7 @@ class PipelineDaemon:
                 )
                 ctms = cur.fetchall()
 
-            print(f"Processing {len(ctms)} CTMs for incremental clustering...")
+            print("Processing {} CTMs for incremental clustering...".format(len(ctms)))
             processed = 0
             total_topics = 0
             for ctm_id, centroid_id, track, month in ctms:
@@ -421,7 +431,67 @@ class PipelineDaemon:
                     total_topics += written
                     processed += 1
 
-            print(f"Clustered {total_topics} topics across {processed} CTMs")
+            print("Clustered {} topics across {} CTMs".format(total_topics, processed))
+
+        finally:
+            conn.close()
+
+    def run_topic_aggregation(self):
+        """Run topic aggregation (LLM merge/cleanup) for all active unfrozen CTMs"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Get CTMs that have events and need aggregation
+                cur.execute(
+                    """
+                    SELECT id, centroid_id, track
+                    FROM ctm
+                    WHERE title_count >= 3 AND is_frozen = false
+                      AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = ctm.id)
+                    ORDER BY title_count DESC
+                    """
+                )
+                ctms = cur.fetchall()
+
+            print("Processing {} CTMs for topic aggregation...".format(len(ctms)))
+            for ctm_id, centroid_id, track in ctms:
+                try:
+                    phase41_aggregate(ctm_id=ctm_id, dry_run=False)
+                except Exception as e:
+                    print("  Aggregation failed for {}: {}".format(ctm_id[:8], e))
+
+        finally:
+            conn.close()
+
+    async def run_event_summaries(self, max_events: int = 100):
+        """Generate summaries for events that need them"""
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                # Count events needing summaries (have "Topic:" or no title)
+                cur.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM events_v3 e
+                    JOIN ctm c ON c.id = e.ctm_id
+                    WHERE c.is_frozen = false
+                      AND (e.title IS NULL OR e.summary LIKE 'Topic:%%')
+                    """
+                )
+                needs_summary = cur.fetchone()[0]
+
+            if needs_summary == 0:
+                print("No events need summaries")
+                return
+
+            print(
+                "Generating summaries for up to {} events ({} need summaries)...".format(
+                    max_events, needs_summary
+                )
+            )
+            await phase45a_event_summaries(
+                max_events=max_events, force_regenerate=False
+            )
 
         finally:
             conn.close()
@@ -537,6 +607,13 @@ class PipelineDaemon:
                 max_titles=200,
             )
             self.last_run["phase35"] = time.time()
+
+            # Phase 3.6: Entity->Country->Centroid backfill (runs after label extraction)
+            self.run_phase_with_retry(
+                "Phase 3.6: Entity Centroid Backfill",
+                phase36_backfill,
+                batch_size=500,
+            )
         else:
             if stats["titles_need_labels"] == 0:
                 print("\nPhase 3.5: Skipping (no titles need labels)")
@@ -552,12 +629,26 @@ class PipelineDaemon:
                 "Phase 4: Event Clustering",
                 self.run_event_clustering,
             )
+
+            # Phase 4.1: Topic Aggregation (LLM merge/cleanup)
+            self.run_phase_with_retry(
+                "Phase 4.1: Topic Aggregation",
+                self.run_topic_aggregation,
+            )
+
+            # Phase 4.5a: Event Summaries (generate readable text per event)
+            await self.run_phase_with_retry(
+                "Phase 4.5a: Event Summaries",
+                self.run_event_summaries,
+                max_events=100,
+            )
+
             self.last_run["phase4"] = time.time()
         else:
             next_run = int(
                 self.phase4_interval - (time.time() - self.last_run["phase4"])
             )
-            print(f"\nPhase 4: Skipping (next run in {next_run}s)")
+            print("\nPhase 4: Skipping (next run in {})".format(next_run))
 
         # Phase 4.5: Summary Generation (if interval elapsed and work available)
         if self.should_run_phase("phase45") and stats["ctms_need_summary"] > 0:
