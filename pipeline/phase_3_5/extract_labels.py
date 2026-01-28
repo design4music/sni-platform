@@ -36,109 +36,7 @@ from core.ontology import (
     validate_action_class,
     validate_domain,
 )
-
-# =============================================================================
-# SYSTEM PROMPT (MERGED LABELS + SIGNALS)
-# =============================================================================
-
-SYSTEM_PROMPT = """You are an expert news analyst. Extract structured event labels AND typed signals from news titles.
-
-## PART 1: EVENT LABEL
-
-Format: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
-
-ACTION CLASSES (7-tier hierarchy - lower tier = higher priority):
-{action_classes}
-
-DOMAINS:
-{domains}
-
-ACTOR TYPES:
-{actors}
-
-{priority_rules}
-
-{target_rules}
-
-## PART 2: SIGNALS
-
-Extract these typed signals from each title:
-- persons: Named people. LAST_NAME only, uppercase (TRUMP, POWELL, ZELENSKY)
-- orgs: Organizations, companies, armed groups. Uppercase (NATO, FED, NVIDIA, HAMAS)
-- places: Sub-national locations. Title case (Crimea, Gaza, Greenland)
-- commodities: Traded goods/resources. Lowercase (oil, gold, semiconductors)
-- policies: Policy types or agreements. Lowercase (tariffs, sanctions, JCPOA)
-- systems: Technical systems, platforms. Original case (SWIFT, Nord Stream)
-- named_events: Summits, conferences. Title case (G20 Summit, COP28)
-
-SIGNAL RULES:
-- ENGLISH ONLY - translate foreign terms (oro->gold, Pekin->Beijing)
-- Use canonical forms: tariff/trade war->tariffs, chip/semiconductor->semiconductors
-- NO PUBLISHERS as orgs (WSJ, Reuters, BBC, CNN)
-- NO COUNTRIES as places (handled via ISO codes in target)
-- Companies go in orgs: NVIDIA, APPLE, OPENAI, META, TESLA, BOEING
-- Armed groups go in orgs: HAMAS, ISIS, HEZBOLLAH, SDF
-
-## OUTPUT FORMAT
-
-Return JSON array:
-[
-  {{
-    "idx": 1,
-    "actor": "US_EXECUTIVE",
-    "action": "POLICY_CHANGE",
-    "domain": "ECONOMY",
-    "target": "CN",
-    "conf": 0.9,
-    "persons": ["TRUMP"],
-    "orgs": [],
-    "places": [],
-    "commodities": [],
-    "policies": ["tariffs"],
-    "systems": [],
-    "named_events": []
-  }}
-]
-
-## EXAMPLES
-
-Title: "Trump threatens tariffs on EU over Greenland"
--> actor: US_EXECUTIVE, action: ECONOMIC_PRESSURE, domain: FOREIGN_POLICY, target: EU
--> persons: ["TRUMP"], orgs: ["EU"], places: ["Greenland"], policies: ["tariffs"]
-
-Title: "Fed raises interest rates by 25 basis points"
--> actor: US_CENTRAL_BANK, action: POLICY_CHANGE, domain: ECONOMY, target: null
--> persons: [], orgs: ["FED"], policies: []
-
-Title: "Nvidia reports record revenue amid AI chip demand"
--> actor: CORPORATION, action: ECONOMIC_DISRUPTION, domain: ECONOMY, target: null
--> orgs: ["NVIDIA"], commodities: ["semiconductors"]
-
-Title: "ISIS claims responsibility for attack in Syria"
--> actor: ARMED_GROUP, action: MILITARY_OPERATION, domain: SECURITY, target: SY
--> orgs: ["ISIS"], places: []
-
-Title: "Gold prices hit record high amid uncertainty"
--> actor: UNKNOWN, action: MARKET_MOVEMENT, domain: ECONOMY, target: null
--> commodities: ["gold"]
-
-Title: "Zelensky meets Biden at G20 Summit"
--> actor: UA_EXECUTIVE, action: DIPLOMATIC_ENGAGEMENT, domain: FOREIGN_POLICY, target: US
--> persons: ["ZELENSKY", "BIDEN"], named_events: ["G20 Summit"]
-
-Title: "Russia cuts gas flow through Nord Stream"
--> actor: RU_EXECUTIVE, action: ECONOMIC_PRESSURE, domain: ECONOMY, target: EU
--> commodities: ["gas"], systems: ["Nord Stream"]
-
-IMPORTANT:
-- Use country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_
-- For IGOs: UN, NATO, EU, AU, ASEAN (no prefix)
-- TARGET uses ISO codes (FR not FRANCE) or canonical names (EU, NATO)
-- conf (confidence) 0.0-1.0 based on clarity
-- Return ONLY valid JSON, no explanations
-- Empty arrays [] for signal types with no matches
-"""
-
+from core.prompts import LABEL_SIGNAL_EXTRACTION_PROMPT
 
 # =============================================================================
 # PROMPT BUILDING
@@ -147,7 +45,7 @@ IMPORTANT:
 
 def build_system_prompt() -> str:
     """Build the complete system prompt with ontology."""
-    return SYSTEM_PROMPT.format(
+    return LABEL_SIGNAL_EXTRACTION_PROMPT.format(
         action_classes=get_action_classes_for_prompt(),
         domains=get_domains_for_prompt(),
         actors=get_actors_for_prompt(),

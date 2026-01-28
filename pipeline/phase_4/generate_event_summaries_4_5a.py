@@ -22,44 +22,7 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-
-SYSTEM_PROMPT = """You are a news analyst. Generate structured event data from headlines.
-
-OUTPUT FORMAT (JSON):
-{
-  "title": "Short headline (5-15 words)",
-  "summary": "1-3 sentence narrative (30-60 words)",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
-}
-
-TITLE REQUIREMENTS:
-- 5-15 words, captures the core event
-- Start with the main actor or subject
-- Include key specifics (country, action, target)
-- No quotes, no sensational language
-
-SUMMARY REQUIREMENTS:
-- 1-3 sentences, 30-60 words
-- Extract key facts: who, what, where, specific figures/names
-- Write as if describing events directly (not "headlines report...")
-- Capture the arc if there's progression (threat -> escalation -> resolution)
-- Neutral, factual tone
-- Use names ONLY as they appear in headlines
-
-TAGS REQUIREMENTS:
-- 3-7 lowercase single-word or hyphenated tags
-- Include: main actors, countries, action type, key topics
-- Examples: "tariffs", "oil-tanker", "seizure", "venezuela", "sanctions", "fed", "interest-rates"
-- NO generic tags like "news", "update", "report"
-
-Do NOT:
-- Mention "headlines", "articles", "reports", or "coverage"
-- Add role descriptions like "President", "former President", "Chancellor"
-- Infer current political offices - they may be outdated
-- Use any descriptive titles not explicitly in the headlines
-- Add speculation or analysis
-
-Return ONLY valid JSON, no markdown, no explanation."""
+from core.prompts import EVENT_SUMMARY_SYSTEM_PROMPT
 
 
 def get_events_needing_summaries(
@@ -197,7 +160,7 @@ Generate JSON with title, summary, and tags:""" % (
     payload = {
         "model": config.llm_model,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": EVENT_SUMMARY_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.3,
@@ -228,14 +191,29 @@ Generate JSON with title, summary, and tags:""" % (
 
         # Normalize tags: lowercase, strip, filter empty
         tags = [str(t).lower().strip() for t in tags if t]
-        tags = [
-            t for t in tags if t and t not in ("news", "update", "report", "article")
-        ]
+
+        # Filter out generic tags and validate format
+        generic_tags = {"news", "update", "report", "article", "coverage", "headlines"}
+        valid_prefixes = {"person", "org", "place", "topic", "event"}
+
+        normalized_tags = []
+        for tag in tags:
+            if tag in generic_tags:
+                continue
+            # If tag has valid prefix, keep as-is
+            if ":" in tag:
+                prefix = tag.split(":")[0]
+                if prefix in valid_prefixes:
+                    normalized_tags.append(tag)
+                    continue
+            # Legacy format (no prefix) - try to infer type or add as topic
+            if tag and len(tag) > 1:
+                normalized_tags.append("topic:%s" % tag)
 
         return {
             "title": title,
             "summary": summary,
-            "tags": tags,
+            "tags": normalized_tags,
         }
 
 

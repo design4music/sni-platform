@@ -16,11 +16,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import httpx
+from apps.generate.models import (
+    LLMEventRequest,
+    LLMEventResponse,
+    LLMFramedNarrativeRequest,
+    LLMFramedNarrativeResponse,
+)
 from loguru import logger
 
-from apps.generate.models import (LLMEventRequest, LLMEventResponse,
-                                  LLMFramedNarrativeRequest,
-                                  LLMFramedNarrativeResponse)
 from core.config import get_config
 
 # ============================================================================

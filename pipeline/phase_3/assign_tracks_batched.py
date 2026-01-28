@@ -29,6 +29,7 @@ project_root = Path(__file__).parent.parent.parent
 os.chdir(project_root)
 
 from core.config import config  # noqa: E402
+from core.prompts import INTEL_GATING_PROMPT, TRACK_ASSIGNMENT_PROMPT  # noqa: E402
 
 
 def get_track_config_for_centroids(conn, centroid_ids: list) -> dict:
@@ -160,53 +161,12 @@ async def gate_centroid_batch(
 
     titles_text = "\n".join(numbered_titles)
 
-    # Intel gating prompt
-    prompt = f"""You are an intelligence analyst reviewing {len(titles_batch)} news titles for {track_config['centroid_label']}.
-
-TASK: Identify which titles contain strategic intelligence value. Be INCLUSIVE - when in doubt, mark as strategic.
-
-STRATEGIC CONTENT (ACCEPT these):
-✓ Government policy, legislation, regulations, executive actions
-✓ International relations, diplomacy, summits, bilateral/multilateral talks
-✓ Military operations, defense, security matters, terrorism
-✓ Economic policy, trade agreements, sanctions, tariffs, major corporate deals
-✓ Energy markets, oil/gas, supply disruptions, infrastructure
-✓ Political protests, elections, government transitions, coups
-✓ Court rulings with policy implications, legal precedents
-✓ Strategic resources (water, minerals, food security)
-✓ Technology with geopolitical implications (semiconductors, AI, cyber)
-✓ Major industrial policy, manufacturing, labor disputes with economic impact
-
-ACCEPT EXAMPLES:
-- "Trump encourages Iranian protesters; rights group says 2,000 killed" → political unrest + international relations ✓
-- "Oil prices rise on potential Iran supply disruption" → energy markets + geopolitics ✓
-- "Supreme Court skeptical of trans athlete ban arguments" → legal policy ✓
-- "EU-Mercosur trade pact signals limits of Trump diplomacy" → trade + diplomacy ✓
-- "Top Turkish, Iranian diplomats discuss situation" → bilateral diplomacy ✓
-- "Trump's Detroit trip puts manufacturing back in focus" → industrial policy ✓
-
-NON-STRATEGIC CONTENT (REJECT these):
-✗ Pure sports/entertainment (scores, celebrity gossip, award shows)
-✗ Health/wellness tips, recipes, lifestyle advice
-✗ Local crime without systemic implications
-✗ Human interest stories, feel-good news
-✗ Real estate ads, local business openings
-✗ Weather forecasts (unless major disaster with economic impact)
-
-REJECT EXAMPLES:
-- "How to make mulberry tea for health benefits" → lifestyle advice ✗
-- "Local restaurant opens in downtown district" → local business ✗
-- "Celebrity couple announces breakup" → entertainment ✗
-- "Team wins championship game" → sports result ✗
-- "Cheap apartments for rent in city" → real estate ad ✗
-
-Titles:
-{titles_text}
-
-Return ONLY valid JSON with title numbers:
-{{"strategic": [1,3,5], "reject": [2,4,6]}}
-
-When uncertain, prefer STRATEGIC over reject - we want comprehensive coverage of geopolitical, economic, and policy developments."""
+    # Intel gating prompt (from core/prompts.py)
+    prompt = INTEL_GATING_PROMPT.format(
+        num_titles=len(titles_batch),
+        centroid_label=track_config["centroid_label"],
+        titles_text=titles_text,
+    )
 
     headers = {
         "Authorization": f"Bearer {config.deepseek_api_key}",
@@ -307,23 +267,16 @@ async def assign_tracks_batch(
 
     titles_text = "\n".join(numbered_titles)
 
-    # Track assignment prompt (using existing track config prompt as base)
-    tracks_list = "\n".join([f"- {track}" for track in track_config["tracks"]])
+    # Track assignment prompt (from core/prompts.py)
+    tracks_list = "\n".join(["- {}".format(track) for track in track_config["tracks"]])
 
-    prompt = f"""You are classifying {len(strategic_titles)} strategic news titles for {track_config['centroid_label']}.
-
-Choose the ONE best track for each title based on its dominant theme.
-
-Tracks:
-{tracks_list}
-
-Context: {track_config['centroid_label']} | {month}
-
-Titles:
-{titles_text}
-
-Return ONLY valid JSON mapping title numbers to tracks:
-{{"1": "track_name", "2": "track_name", "3": "track_name"}}"""
+    prompt = TRACK_ASSIGNMENT_PROMPT.format(
+        num_titles=len(strategic_titles),
+        centroid_label=track_config["centroid_label"],
+        tracks_list=tracks_list,
+        month=month,
+        titles_text=titles_text,
+    )
 
     headers = {
         "Authorization": f"Bearer {config.deepseek_api_key}",

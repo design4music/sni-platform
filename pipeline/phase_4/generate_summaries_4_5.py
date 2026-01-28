@@ -25,6 +25,7 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT, CTM_SUMMARY_USER_PROMPT
 
 
 def get_events_for_ctm(conn, ctm_id: str) -> list:
@@ -117,61 +118,15 @@ async def generate_summary(
     context = "\n".join(context_parts)
 
     # Build system prompt with dynamic focus lines
-    system_prompt = (
-        """You are a strategic intelligence analyst writing monthly summary reports.
-Generate a 150-250 word narrative digest from the provided event summaries.
-
-### Input Format
-
-You receive a list of event summaries, each with a source count indicating significance.
-Higher source counts = more widely covered = more significant.
-
-### Requirements:
-
-* Synthesize the event summaries into a cohesive monthly digest
-* Weight by source count: [137 sources] >> [12 sources] in importance
-* Group thematically related events into paragraphs (2-4 paragraphs)
-* Maintain analytic, neutral, non-normative tone
-* Preserve key details: names, figures, outcomes
-
-### Structure guidance:
-
-* Lead with the most significant developments (highest source counts)
-* If events form a single story arc, write unified paragraphs
-* If events are distinct topics, use separate paragraphs
-* Do NOT force unrelated events into false coherence
-
-### Do NOT:
-
-* List events as bullet points
-* Include source counts in output
-* Use sensational or emotive language
-* Add information not present in event summaries
-* Speculate beyond what summaries indicate
-* Add role descriptions like "President", "former President", "Chancellor"
-* Infer political offices - they may be outdated
-* Use descriptive titles not in the source summaries
-
----
-
-### DYNAMIC FOCUS
-
-**Centroid / Structural focus:**
-"""
-        + centroid_focus
-    )
+    system_prompt = CTM_SUMMARY_SYSTEM_PROMPT.format(centroid_focus=centroid_focus)
 
     # Add track focus if provided (GEO only)
     if track_focus:
         system_prompt += "\n\n**Domain / Track focus:**\n" + track_focus
 
-    user_prompt = f"""{context}
-
-Event Summaries:
-
-{events_text}
-
-Generate a 150-250 word monthly digest:"""
+    user_prompt = CTM_SUMMARY_USER_PROMPT.format(
+        context=context, events_text=events_text
+    )
 
     headers = {
         "Authorization": f"Bearer {config.deepseek_api_key}",
