@@ -440,12 +440,19 @@ class PipelineDaemon:
         finally:
             conn.close()
 
-    def run_topic_aggregation(self):
-        """Run topic aggregation (LLM merge/cleanup) for all active unfrozen CTMs"""
+    def run_topic_aggregation(self, max_ctms: int = 5):
+        """
+        Run topic aggregation (LLM merge/cleanup) for active unfrozen CTMs.
+
+        IMPORTANT: Limits to max_ctms per cycle to avoid blocking the pipeline.
+        Each CTM can generate up to 45 LLM calls (20 merge + 25 cleanup reviews).
+        With 5 CTMs max = ~225 LLM calls per cycle, manageable in 30min interval.
+        """
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
                 # Get CTMs that have events and need aggregation
+                # Prioritize by title_count (largest CTMs first)
                 cur.execute(
                     """
                     SELECT id, centroid_id, track
@@ -453,13 +460,24 @@ class PipelineDaemon:
                     WHERE title_count >= 3 AND is_frozen = false
                       AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = ctm.id)
                     ORDER BY title_count DESC
-                    """
+                    LIMIT %s
+                    """,
+                    (max_ctms,),
                 )
                 ctms = cur.fetchall()
 
-            print("Processing {} CTMs for topic aggregation...".format(len(ctms)))
+            if not ctms:
+                print("No CTMs need aggregation")
+                return
+
+            print(
+                "Processing {} CTMs for topic aggregation (limited to {})...".format(
+                    len(ctms), max_ctms
+                )
+            )
             for ctm_id, centroid_id, track in ctms:
                 try:
+                    print("  Aggregating {} / {}...".format(centroid_id, track))
                     phase41_aggregate(ctm_id=ctm_id, dry_run=False)
                 except Exception as e:
                     print("  Aggregation failed for {}: {}".format(ctm_id[:8], e))
