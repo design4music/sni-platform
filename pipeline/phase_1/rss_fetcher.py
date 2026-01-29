@@ -368,7 +368,8 @@ class RSSFetcher:
         try:
             with conn.cursor() as cur:
                 for article in articles:
-                    # UPSERT: Insert only if content_hash doesn't exist
+                    # UPSERT: Insert only if exact title doesn't exist
+                    # Strict dedup: same title_display = duplicate (regardless of publisher)
                     # Also check tombstone table to prevent re-ingesting purged titles
                     cur.execute(
                         """
@@ -380,8 +381,6 @@ class RSSFetcher:
                         WHERE NOT EXISTS (
                             SELECT 1 FROM titles_v3
                             WHERE title_display = %s
-                              AND publisher_name = %s
-                              AND pubdate_utc::date = %s::date
                         )
                         AND NOT EXISTS (
                             SELECT 1 FROM titles_purged
@@ -395,10 +394,8 @@ class RSSFetcher:
                             article["publisher_name"],
                             article["pubdate_utc"],
                             article["detected_language"],
-                            # Deduplication check
+                            # Strict deduplication: same title = duplicate
                             article["title_display"],
-                            article["publisher_name"],
-                            article["pubdate_utc"],
                             # Tombstone check
                             article["url_gnews"],
                         ),
