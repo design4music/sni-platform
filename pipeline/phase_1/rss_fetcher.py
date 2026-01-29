@@ -369,6 +369,7 @@ class RSSFetcher:
             with conn.cursor() as cur:
                 for article in articles:
                     # UPSERT: Insert only if content_hash doesn't exist
+                    # Also check tombstone table to prevent re-ingesting purged titles
                     cur.execute(
                         """
                         INSERT INTO titles_v3 (
@@ -382,6 +383,10 @@ class RSSFetcher:
                               AND publisher_name = %s
                               AND pubdate_utc::date = %s::date
                         )
+                        AND NOT EXISTS (
+                            SELECT 1 FROM titles_purged
+                            WHERE url_hash = md5(%s)
+                        )
                         RETURNING id
                     """,
                         (
@@ -394,6 +399,8 @@ class RSSFetcher:
                             article["title_display"],
                             article["publisher_name"],
                             article["pubdate_utc"],
+                            # Tombstone check
+                            article["url_gnews"],
                         ),
                     )
 

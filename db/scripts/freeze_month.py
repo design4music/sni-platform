@@ -4,7 +4,9 @@ CTM Monthly Freeze Script
 Freezes all CTMs for a given month:
 1. Generates LLM summaries for large CTMs (>=30 titles) without summaries
 2. Assigns canned text for small CTMs (<30 titles) without summaries
-3. Sets is_frozen=true for all CTMs of the target month
+3. Generates centroid-level cross-track summaries
+4. Purges rejected titles to tombstone table (prevents re-ingestion)
+5. Sets is_frozen=true for all CTMs of the target month
 
 Usage:
     # Manual freeze for specific month
@@ -24,11 +26,14 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import psycopg2
 
 from core.config import config
+from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT
 
 # Threshold for "large" CTMs that get LLM summaries
 LARGE_CTM_THRESHOLD = 30
@@ -259,6 +264,235 @@ def freeze_month(conn, month: str, dry_run: bool) -> int:
     return frozen
 
 
+def get_centroids_needing_summary(conn, month: str) -> list:
+    """Get centroids that have CTMs for this month but no centroid summary."""
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT DISTINCT c.centroid_id, cent.label
+        FROM ctm c
+        JOIN centroids_v3 cent ON c.centroid_id = cent.id
+        WHERE TO_CHAR(c.month, 'YYYY-MM') = %s
+          AND c.title_count > 0
+          AND NOT EXISTS (
+              SELECT 1 FROM centroid_monthly_summaries cms
+              WHERE cms.centroid_id = c.centroid_id
+                AND TO_CHAR(cms.month, 'YYYY-MM') = %s
+          )
+        ORDER BY cent.label
+        """,
+        (month, month),
+    )
+    return cur.fetchall()
+
+
+def get_centroid_track_summaries(conn, centroid_id: str, month: str) -> list:
+    """Get all track summaries for a centroid in a given month."""
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT c.track, c.summary_text, c.title_count,
+               (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id) as event_count
+        FROM ctm c
+        WHERE c.centroid_id = %s
+          AND TO_CHAR(c.month, 'YYYY-MM') = %s
+          AND c.title_count > 0
+          AND c.summary_text IS NOT NULL
+        ORDER BY c.title_count DESC
+        """,
+        (centroid_id, month),
+    )
+    return cur.fetchall()
+
+
+async def generate_centroid_summary(
+    centroid_id: str, centroid_label: str, month: str, track_summaries: list
+) -> str:
+    """Generate a cross-track summary for a centroid using LLM."""
+    # Build input from track summaries
+    lines = [
+        "Generate a concise overview summary (150-200 words) for {} in {}.".format(
+            centroid_label, month
+        ),
+        "",
+        "This summary should synthesize the key developments across all tracks below.",
+        "Focus on the most significant events and their interconnections.",
+        "",
+        "TRACK SUMMARIES:",
+        "",
+    ]
+
+    for track, summary, title_count, event_count in track_summaries:
+        track_label = track.replace("geo_", "").replace("_", " ").title()
+        lines.append(
+            "--- {} ({} articles, {} topics) ---".format(
+                track_label, title_count, event_count
+            )
+        )
+        lines.append(summary[:500] if summary else "No summary available.")
+        lines.append("")
+
+    prompt = "\n".join(lines)
+
+    headers = {
+        "Authorization": "Bearer {}".format(config.deepseek_api_key),
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "model": config.llm_model,
+        "messages": [
+            {"role": "system", "content": CTM_SUMMARY_SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.3,
+        "max_tokens": 400,
+    }
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.post(
+            "{}/chat/completions".format(config.deepseek_api_url),
+            headers=headers,
+            json=payload,
+        )
+
+        if response.status_code != 200:
+            raise Exception("LLM API error: {}".format(response.status_code))
+
+        data = response.json()
+        return data["choices"][0]["message"]["content"].strip()
+
+
+async def generate_centroid_summaries(conn, month: str, dry_run: bool) -> int:
+    """Generate cross-track summaries for all centroids in the month."""
+    centroids = get_centroids_needing_summary(conn, month)
+
+    if not centroids:
+        print("  No centroids need summary")
+        return 0
+
+    print("  Generating summaries for {} centroids...".format(len(centroids)))
+
+    if dry_run:
+        for centroid_id, label in centroids[:5]:
+            print("    [DRY-RUN] {}".format(label))
+        if len(centroids) > 5:
+            print("    ... and {} more".format(len(centroids) - 5))
+        return len(centroids)
+
+    generated = 0
+    for centroid_id, label in centroids:
+        try:
+            track_summaries = get_centroid_track_summaries(conn, centroid_id, month)
+
+            if not track_summaries:
+                print("    Skipping {} (no track summaries)".format(label))
+                continue
+
+            summary = await generate_centroid_summary(
+                centroid_id, label, month, track_summaries
+            )
+
+            # Calculate totals
+            total_events = sum(ts[3] for ts in track_summaries)
+
+            # Insert into database
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO centroid_monthly_summaries
+                    (centroid_id, month, summary_text, track_count, total_events)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (centroid_id, month) DO UPDATE
+                SET summary_text = EXCLUDED.summary_text,
+                    track_count = EXCLUDED.track_count,
+                    total_events = EXCLUDED.total_events
+                """,
+                (
+                    centroid_id,
+                    month + "-01",
+                    summary,
+                    len(track_summaries),
+                    total_events,
+                ),
+            )
+            conn.commit()
+
+            print("    OK: {} ({} tracks)".format(label, len(track_summaries)))
+            generated += 1
+
+        except Exception as e:
+            print("    X Error for {}: {}".format(label, e))
+
+    return generated
+
+
+def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
+    """Move rejected titles to tombstone table and delete from titles_v3."""
+    cur = conn.cursor()
+
+    # Count rejected titles for this month
+    cur.execute(
+        """
+        SELECT processing_status, COUNT(*)
+        FROM titles_v3
+        WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s
+          AND processing_status IN ('out_of_scope', 'blocked_llm')
+        GROUP BY processing_status
+        """,
+        (month,),
+    )
+    status_counts = dict(cur.fetchall())
+
+    total_rejected = sum(status_counts.values())
+
+    if total_rejected == 0:
+        print("  No rejected titles to purge")
+        return {"purged": 0, "by_status": {}}
+
+    print("  Found {} rejected titles:".format(total_rejected))
+    for status, count in status_counts.items():
+        print("    {}: {}".format(status, count))
+
+    if dry_run:
+        print("  [DRY-RUN] Would purge {} titles".format(total_rejected))
+        return {"purged": total_rejected, "by_status": status_counts}
+
+    # Step 1: Copy to tombstone table
+    cur.execute(
+        """
+        INSERT INTO titles_purged (url_hash, original_title, source_domain, reason)
+        SELECT
+            md5(url_gnews),
+            LEFT(title_display, 500),
+            source_domain,
+            processing_status
+        FROM titles_v3
+        WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s
+          AND processing_status IN ('out_of_scope', 'blocked_llm')
+        ON CONFLICT (url_hash) DO NOTHING
+        """,
+        (month,),
+    )
+    tombstoned = cur.rowcount
+
+    # Step 2: Delete from titles_v3
+    cur.execute(
+        """
+        DELETE FROM titles_v3
+        WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s
+          AND processing_status IN ('out_of_scope', 'blocked_llm')
+        """,
+        (month,),
+    )
+    deleted = cur.rowcount
+
+    conn.commit()
+    print("  Purged {} titles ({} added to tombstone)".format(deleted, tombstoned))
+
+    return {"purged": deleted, "by_status": status_counts}
+
+
 def get_previous_month() -> str:
     """Get the previous month in YYYY-MM format."""
     today = datetime.now(timezone.utc)
@@ -344,8 +578,19 @@ async def main():
     print("\nStep 2: Canned summaries for small CTMs")
     apply_canned_summaries(conn, target_month, dry_run)
 
-    # Step 3: Freeze all CTMs
-    print("\nStep 3: Freeze all CTMs")
+    # Step 3: Generate centroid-level cross-track summaries
+    print("\nStep 3: Centroid cross-track summaries")
+    if args.skip_llm:
+        print("  Skipped (--skip-llm)")
+    else:
+        await generate_centroid_summaries(conn, target_month, dry_run)
+
+    # Step 4: Purge rejected titles to tombstone
+    print("\nStep 4: Purge rejected titles")
+    purge_rejected_titles(conn, target_month, dry_run)
+
+    # Step 5: Freeze all CTMs
+    print("\nStep 5: Freeze all CTMs")
     freeze_month(conn, target_month, dry_run)
 
     # Final stats
