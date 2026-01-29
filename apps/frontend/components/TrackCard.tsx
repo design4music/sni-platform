@@ -10,7 +10,7 @@ interface TrackCardProps {
   hasHistoricalData?: boolean;
 }
 
-function getTrackIcon(track: string) {
+export function getTrackIcon(track: string) {
   const trackLower = track.toLowerCase();
 
   // Military & Security

@@ -14,6 +14,8 @@ interface DashboardLayoutProps {
   otherTracks?: string[];
   currentTrack?: string;
   currentMonth?: string;
+  // For mobile month selector
+  availableMonths?: string[];
 }
 
 export default function DashboardLayout({
@@ -25,7 +27,8 @@ export default function DashboardLayout({
   centroidId,
   otherTracks,
   currentTrack,
-  currentMonth
+  currentMonth,
+  availableMonths
 }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-dashboard-surface text-dashboard-text bg-texture-grid">
@@ -39,6 +42,8 @@ export default function DashboardLayout({
               otherTracks={otherTracks}
               currentTrack={currentTrack}
               currentMonth={currentMonth}
+              availableMonths={availableMonths}
+              trackForMonths={currentTrack}
             />
           </div>
         </div>
