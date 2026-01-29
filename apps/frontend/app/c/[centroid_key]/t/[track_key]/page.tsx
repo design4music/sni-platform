@@ -6,6 +6,7 @@ import TableOfContents, { TocSection } from '@/components/TableOfContents';
 import MobileTocButton from '@/components/MobileTocButton';
 import {
   getCentroidById,
+  getCentroidsByIds,
   getCTM,
   getCTMMonths,
   getTitlesByCTM,
@@ -110,6 +111,11 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       return countTitles(b) - countTitles(a);
     }
   );
+
+  // Fetch centroid records for bucket keys (needed for multi-country groups like NORDIC)
+  const bucketKeys = Object.keys(bilateralGroups);
+  const bucketCentroids = await getCentroidsByIds(bucketKeys);
+  const bucketCentroidMap = new Map(bucketCentroids.map(c => [c.id, c]));
 
   // Compute unclustered titles
   const eventTitleIds = new Set(allEvents.flatMap(e => e.source_title_ids || []));
@@ -394,13 +400,16 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               {sortedBilateralEntries.map(([bucketKey, events], index) => {
                 const mainEvents = events.filter(e => !isOtherCoverage(e));
                 const otherEvents = events.filter(e => isOtherCoverage(e));
+                const bucketCentroid = bucketCentroidMap.get(bucketKey);
+                const countryLabel = bucketCentroid?.label || getCountryName(bucketKey);
+                const isoCodes = bucketCentroid?.iso_codes || [getIsoFromBucketKey(bucketKey)];
 
                 return (
                   <CountryAccordion
                     key={bucketKey}
                     bucketKey={bucketKey}
-                    countryName={getCountryName(bucketKey)}
-                    isoCode={getIsoFromBucketKey(bucketKey)}
+                    countryName={countryLabel}
+                    isoCodes={isoCodes}
                     mainEvents={mainEvents}
                     otherEvents={otherEvents}
                     allTitles={titles}
@@ -419,7 +428,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   <CountryAccordion
                     bucketKey="other"
                     countryName="Other International"
-                    isoCode=""
+                    isoCodes={[]}
                     mainEvents={mainEvents}
                     otherEvents={otherEvents}
                     allTitles={titles}

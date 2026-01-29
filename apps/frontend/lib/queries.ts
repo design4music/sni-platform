@@ -15,6 +15,14 @@ export async function getCentroidById(id: string): Promise<Centroid | null> {
   return results[0] || null;
 }
 
+export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
+  if (ids.length === 0) return [];
+  return query<Centroid>(
+    'SELECT id, label, class, primary_theater, is_active, iso_codes FROM centroids_v3 WHERE id = ANY($1)',
+    [ids]
+  );
+}
+
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Promise<Centroid[]> {
   return query<Centroid>(
     `SELECT

@@ -8,7 +8,7 @@ import { Event, Title } from '@/lib/types';
 interface CountryAccordionProps {
   bucketKey: string;
   countryName: string;
-  isoCode: string;
+  isoCodes: string[];
   mainEvents: Event[];
   otherEvents: Event[];
   allTitles: Title[];
@@ -27,7 +27,7 @@ function sortBySourceCount(events: Event[]) {
 export default function CountryAccordion({
   bucketKey,
   countryName,
-  isoCode,
+  isoCodes,
   mainEvents,
   otherEvents,
   allTitles,
@@ -36,6 +36,8 @@ export default function CountryAccordion({
 }: CountryAccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
+  const isSingle = isoCodes.length === 1 && isoCodes[0].length === 2;
+
   return (
     <div id={`section-intl-${bucketKey}`} className="mb-3">
       <button
@@ -43,10 +45,22 @@ export default function CountryAccordion({
         className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-dashboard-border/50 hover:bg-dashboard-border transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="text-lg font-semibold text-dashboard-text">
-          {countryName}{isoCode ? ` (${isoCode})` : ''}
+        <span className="text-left">
+          <span className="text-lg font-semibold text-dashboard-text">
+            {isSingle && (
+              <span className="inline-block text-xs font-mono font-normal bg-blue-500/15 text-blue-400 border border-blue-500/30 rounded px-1.5 py-0.5 mr-2 align-middle">
+                {isoCodes[0]}
+              </span>
+            )}
+            {countryName}
+          </span>
+          {isoCodes.length > 1 && (
+            <span className="block text-xs text-dashboard-text-muted mt-0.5">
+              {isoCodes.join(', ')}
+            </span>
+          )}
         </span>
-        <span className="flex items-center gap-3">
+        <span className="flex items-center gap-3 flex-shrink-0">
           <span className="text-sm text-dashboard-text-muted">
             {mainEvents.length} topics | {totalSourceCount} sources
           </span>
