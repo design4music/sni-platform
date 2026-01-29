@@ -328,8 +328,9 @@ def get_events_needing_summaries(
             SELECT e.id, e.ctm_id, e.summary as label, e.bucket_key, e.source_batch_count,
                    e.date, e.first_seen
             FROM events_v3 e
+            JOIN ctm c ON c.id = e.ctm_id
             WHERE %s
-            ORDER BY e.source_batch_count DESC NULLS LAST
+            ORDER BY c.title_count DESC, e.ctm_id, e.source_batch_count DESC NULLS LAST
             %s
         """ % (
             where_clause,
@@ -627,16 +628,42 @@ async def process_events(
             filter_desc.append("force")
         filter_str = " (%s)" % ", ".join(filter_desc) if filter_desc else ""
 
+        # Group events by CTM for ordered processing
+        ctm_groups = {}
+        for event in events:
+            cid = event["ctm_id"]
+            if cid not in ctm_groups:
+                ctm_groups[cid] = []
+            ctm_groups[cid].append(event)
+
+        ctm_count = len(ctm_groups)
         print(
-            "Processing %d events%s (concurrency: %d)...\n"
-            % (len(events), filter_str, concurrency)
+            "Processing %d events across %d CTMs%s (concurrency: %d)...\n"
+            % (len(events), ctm_count, filter_str, concurrency)
         )
 
         semaphore = asyncio.Semaphore(concurrency)
 
-        tasks = [process_event(semaphore, conn, event) for event in events]
+        # Process CTM-by-CTM: complete one CTM before starting the next
+        results = []
+        for ctm_idx, (ctm_id_key, ctm_events) in enumerate(ctm_groups.items(), 1):
+            # Look up centroid/track for logging
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT centroid_id, track FROM ctm WHERE id = %s",
+                    (ctm_id_key,),
+                )
+                row = cur.fetchone()
+            ctm_label = "%s / %s" % (row[0], row[1]) if row else ctm_id_key[:8]
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+            print(
+                "[CTM %d/%d] %s (%d events)"
+                % (ctm_idx, ctm_count, ctm_label, len(ctm_events))
+            )
+
+            tasks = [process_event(semaphore, conn, event) for event in ctm_events]
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+            results.extend(batch_results)
 
         success = sum(1 for r in results if r is True)
         errors = len(results) - success
