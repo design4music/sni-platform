@@ -420,22 +420,53 @@ class PipelineDaemon:
             conn.close()
 
     def run_event_clustering(self):
-        """Run event clustering for all active unfrozen CTMs using incremental clustering"""
+        """Run event clustering only for CTMs with NEW titles since last clustering.
+
+        Skips CTMs where title_count hasn't changed to preserve Phase 4.5a enrichment.
+        """
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
-                # Get all unfrozen CTMs with enough titles
+                # Only re-cluster CTMs with new titles since last clustering
                 cur.execute(
                     """
                     SELECT id, centroid_id, track, TO_CHAR(month, 'YYYY-MM') as month
                     FROM ctm
                     WHERE title_count >= 3 AND is_frozen = false
+                      AND (
+                          title_count_at_clustering IS NULL
+                          OR title_count > title_count_at_clustering
+                      )
                     ORDER BY month DESC
                     """
                 )
                 ctms = cur.fetchall()
 
-            print("Processing {} CTMs for incremental clustering...".format(len(ctms)))
+                # Also count skipped for logging
+                cur.execute(
+                    """
+                    SELECT COUNT(*) FROM ctm
+                    WHERE title_count >= 3 AND is_frozen = false
+                      AND title_count_at_clustering IS NOT NULL
+                      AND title_count = title_count_at_clustering
+                    """
+                )
+                skipped = cur.fetchone()[0]
+
+            if not ctms:
+                print(
+                    "No CTMs have new titles - skipping clustering ({} unchanged)".format(
+                        skipped
+                    )
+                )
+                return
+
+            print(
+                "Clustering {} CTMs with new titles ({} unchanged, skipped)...".format(
+                    len(ctms), skipped
+                )
+            )
+
             processed = 0
             total_topics = 0
             for ctm_id, centroid_id, track, month in ctms:
@@ -443,6 +474,14 @@ class PipelineDaemon:
                 if written > 0:
                     total_topics += written
                     processed += 1
+
+                # Mark as clustered at current title_count
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE ctm SET title_count_at_clustering = title_count WHERE id = %s",
+                        (ctm_id,),
+                    )
+                conn.commit()
 
             print("Clustered {} topics across {} CTMs".format(total_topics, processed))
 
