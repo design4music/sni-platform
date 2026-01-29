@@ -6,6 +6,8 @@ interface TrackCardProps {
   track: Track;
   latestMonth?: string;
   titleCount?: number;
+  disabled?: boolean;
+  hasHistoricalData?: boolean;
 }
 
 function getTrackIcon(track: string) {
@@ -91,7 +93,14 @@ function getTrackIcon(track: string) {
   );
 }
 
-export default function TrackCard({ centroidId, track, latestMonth, titleCount }: TrackCardProps) {
+export default function TrackCard({
+  centroidId,
+  track,
+  latestMonth,
+  titleCount,
+  disabled,
+  hasHistoricalData
+}: TrackCardProps) {
   const href = latestMonth
     ? `/c/${centroidId}/t/${track}?month=${latestMonth}`
     : `/c/${centroidId}/t/${track}`;
@@ -99,6 +108,37 @@ export default function TrackCard({ centroidId, track, latestMonth, titleCount }
   const articleCount = titleCount || 0;
   const hasArticles = articleCount > 0;
   const trackLabel = TRACK_LABELS[track].replace(/^Geo\s+/i, '');
+
+  // If disabled, render a non-interactive div instead of Link
+  if (disabled) {
+    return (
+      <div
+        className="block p-6 border border-dashboard-border bg-dashboard-surface rounded-lg opacity-50 cursor-not-allowed"
+      >
+        <div className="flex items-center gap-3 mb-3">
+          <div className="text-dashboard-text-muted">
+            {getTrackIcon(track)}
+          </div>
+          <h3 className="text-lg font-semibold flex-1 text-dashboard-text-muted">{trackLabel}</h3>
+          <span
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium bg-gray-500/10 border-gray-500/30 text-gray-400"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            </svg>
+            <span className="tabular-nums">0</span>
+          </span>
+        </div>
+        <div className="text-sm text-dashboard-text-muted">
+          {hasHistoricalData ? (
+            <span>No coverage this month</span>
+          ) : (
+            <span>No data available</span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Link

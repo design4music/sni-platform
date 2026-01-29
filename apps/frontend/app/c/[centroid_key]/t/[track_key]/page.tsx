@@ -56,9 +56,9 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const sidebar = (
     <div className="space-y-6 text-sm">
       {/* Month selector */}
-      {months.length > 1 && (
+      {months.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold mb-3 text-dashboard-text">Archive</h3>
+          <h3 className="text-lg font-semibold mb-3 text-dashboard-text">View by Month</h3>
           <div className="space-y-1">
             {months.map(m => {
               const isCurrent = m === currentMonth;
@@ -105,7 +105,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               ) : (
                 <Link
                   key={t}
-                  href={`/c/${centroid.id}/t/${t}`}
+                  href={`/c/${centroid.id}/t/${t}?month=${currentMonth}`}
                   className="block px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border
                              border border-transparent hover:border-dashboard-border
                              transition-all duration-150"
@@ -130,7 +130,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             {overlappingCentroids.map(c => (
               <Link
                 key={c.id}
-                href={`/c/${c.id}/t/${track}`}
+                href={`/c/${c.id}/t/${track}?month=${currentMonth}`}
                 className="block text-dashboard-text-muted hover:text-dashboard-text transition"
               >
                 {c.label}
@@ -150,12 +150,13 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       centroidId={centroid.id}
       otherTracks={otherTracks}
       currentTrack={track}
+      currentMonth={currentMonth}
     >
       {/* Track header */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">
         <div className="mb-4">
           <Link
-            href={`/c/${centroid.id}`}
+            href={`/c/${centroid.id}?month=${currentMonth}`}
             className="text-blue-400 hover:text-blue-300 text-sm"
           >
             ← {centroid.label}

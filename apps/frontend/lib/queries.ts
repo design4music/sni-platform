@@ -300,3 +300,70 @@ export async function getOverlappingCentroidsForTrack(
     [centroidId, track]
   );
 }
+
+/**
+ * Get all months that have any CTM data for a centroid (across all tracks)
+ */
+export async function getAvailableMonthsForCentroid(centroidId: string): Promise<string[]> {
+  const results = await query<{ month: string }>(
+    `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month
+     FROM ctm
+     WHERE centroid_id = $1
+     ORDER BY month DESC`,
+    [centroidId]
+  );
+  return results.map(r => r.month);
+}
+
+/**
+ * Get track summary for a specific month
+ */
+export async function getTrackSummaryByCentroidAndMonth(
+  centroidId: string,
+  month: string
+): Promise<Array<{ track: string; titleCount: number }>> {
+  const results = await query<{ track: string; title_count: number }>(
+    `SELECT
+      c.track,
+      COALESCE(c.title_count, 0)::int as title_count
+    FROM ctm c
+    WHERE c.centroid_id = $1
+      AND TO_CHAR(c.month, 'YYYY-MM') = $2
+    ORDER BY c.track`,
+    [centroidId, month]
+  );
+
+  return results.map(r => ({
+    track: r.track,
+    titleCount: r.title_count,
+  }));
+}
+
+/**
+ * Get all configured tracks for a centroid from track_configs
+ */
+export async function getConfiguredTracksForCentroid(centroidId: string): Promise<string[]> {
+  // First try to get tracks from the centroid's assigned track_config
+  const results = await query<{ tracks: string[] }>(
+    `SELECT tc.tracks
+     FROM centroids_v3 c
+     JOIN track_configs tc ON c.track_config_id = tc.id
+     WHERE c.id = $1`,
+    [centroidId]
+  );
+
+  if (results.length > 0 && results[0].tracks) {
+    return results[0].tracks;
+  }
+
+  // Fall back to default track_config
+  const defaultResults = await query<{ tracks: string[] }>(
+    `SELECT tracks FROM track_configs WHERE is_default = TRUE`
+  );
+
+  if (defaultResults.length > 0 && defaultResults[0].tracks) {
+    return defaultResults[0].tracks;
+  }
+
+  return [];
+}

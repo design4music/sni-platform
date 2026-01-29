@@ -20,9 +20,10 @@ interface NavigationProps {
   centroidId?: string;
   otherTracks?: string[];
   currentTrack?: string;
+  currentMonth?: string;
 }
 
-export default function Navigation({ centroidLabel, centroidId, otherTracks, currentTrack }: NavigationProps) {
+export default function Navigation({ centroidLabel, centroidId, otherTracks, currentTrack, currentMonth }: NavigationProps) {
   const [showRegions, setShowRegions] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -226,7 +227,7 @@ export default function Navigation({ centroidLabel, centroidId, otherTracks, cur
                     ) : (
                       <Link
                         key={t}
-                        href={`/c/${centroidId}/t/${t}`}
+                        href={`/c/${centroidId}/t/${t}${currentMonth ? `?month=${currentMonth}` : ''}`}
                         onClick={() => setMobileMenuOpen(false)}
                         className="block px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border transition"
                       >
