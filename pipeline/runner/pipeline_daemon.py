@@ -62,11 +62,14 @@ class PipelineDaemon:
 
         # Intervals (in seconds)
         self.phase1_interval = 43200  # 12 hours - RSS feeds
-        self.phase2_interval = 300  # 5 minutes - Fast matching
+        self.phase2_interval = 900  # 15 minutes - Fast matching (low input rate)
         self.phase3_interval = 600  # 10 minutes - LLM track assignment
         self.phase35_interval = 600  # 10 minutes - Label extraction
         self.phase4_interval = 1800  # 30 minutes - Event clustering
-        self.phase45_interval = 3600  # 1 hour - Summary generation
+        self.phase45a_interval = (
+            self.config.v3_p45a_interval
+        )  # 15 min - Event summaries
+        self.phase45_interval = 3600  # 1 hour - CTM summary generation
 
         # Last run timestamps
         self.last_run = {
@@ -75,6 +78,7 @@ class PipelineDaemon:
             "phase3": 0,
             "phase35": 0,
             "phase4": 0,
+            "phase45a": 0,
             "phase45": 0,
         }
 
@@ -604,7 +608,9 @@ class PipelineDaemon:
             self.run_phase_with_retry(
                 "Phase 3.5: Label + Signal Extraction",
                 phase35_extract,
-                max_titles=200,
+                max_titles=self.config.v3_p35_max_titles,
+                batch_size=self.config.v3_p35_batch_size,
+                concurrency=self.config.v3_p35_concurrency,
             )
             self.last_run["phase35"] = time.time()
 
@@ -636,13 +642,6 @@ class PipelineDaemon:
                 self.run_topic_aggregation,
             )
 
-            # Phase 4.5a: Event Summaries (generate readable text per event)
-            await self.run_phase_with_retry(
-                "Phase 4.5a: Event Summaries",
-                self.run_event_summaries,
-                max_events=100,
-            )
-
             self.last_run["phase4"] = time.time()
         else:
             next_run = int(
@@ -650,10 +649,24 @@ class PipelineDaemon:
             )
             print("\nPhase 4: Skipping (next run in {})".format(next_run))
 
-        # Phase 4.5: Summary Generation (if interval elapsed and work available)
+        # Phase 4.5a: Event Summaries (decoupled, own interval)
+        if self.should_run_phase("phase45a"):
+            await self.run_phase_with_retry(
+                "Phase 4.5a: Event Summaries",
+                self.run_event_summaries,
+                max_events=self.config.v3_p45a_max_events,
+            )
+            self.last_run["phase45a"] = time.time()
+        else:
+            next_run = int(
+                self.phase45a_interval - (time.time() - self.last_run["phase45a"])
+            )
+            print("\nPhase 4.5a: Skipping (next run in {}s)".format(next_run))
+
+        # Phase 4.5b: CTM Summary Generation (if interval elapsed and work available)
         if self.should_run_phase("phase45") and stats["ctms_need_summary"] > 0:
             await self.run_phase_with_retry(
-                "Phase 4.5: Summary Generation",
+                "Phase 4.5b: CTM Summary Generation",
                 phase45_summaries,
                 max_ctms=self.phase4_batch_size,
             )
@@ -701,7 +714,10 @@ class PipelineDaemon:
             f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/60:.0f} minutes - event clustering)"
         )
         print(
-            f"  Phase 4.5 interval: {self.phase45_interval}s ({self.phase45_interval/3600:.0f} hour - summary generation)"
+            f"  Phase 4.5a interval: {self.phase45a_interval}s ({self.phase45a_interval/60:.0f} minutes - event summaries)"
+        )
+        print(
+            f"  Phase 4.5b interval: {self.phase45_interval}s ({self.phase45_interval/3600:.0f} hour - CTM summaries)"
         )
         print("\nPress Ctrl+C to shutdown gracefully\n")
 

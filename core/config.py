@@ -68,7 +68,7 @@ class SNIConfig(BaseSettings):
     v3_p35_batch_size: int = Field(default=50, env="V3_P35_BATCH_SIZE")
     v3_p35_concurrency: int = Field(default=5, env="V3_P35_CONCURRENCY")
     v3_p35_timeout_seconds: int = Field(default=180, env="V3_P35_TIMEOUT_SECONDS")
-    v3_p35_max_titles: Optional[int] = Field(default=None, env="V3_P35_MAX_TITLES")
+    v3_p35_max_titles: int = Field(default=500, env="V3_P35_MAX_TITLES")
 
     # Phase 4: Events Digest and Summary Generation
     v3_p4_batch_size: int = Field(default=70, env="V3_P4_BATCH_SIZE")
@@ -77,6 +77,10 @@ class SNIConfig(BaseSettings):
     v3_p4_temperature: float = Field(default=0.5, env="V3_P4_TEMPERATURE")
     v3_p4_max_tokens: int = Field(default=500, env="V3_P4_MAX_TOKENS")
     v3_p4_timeout_seconds: int = Field(default=180, env="V3_P4_TIMEOUT_SECONDS")
+
+    # Phase 4.5a: Event Summaries
+    v3_p45a_max_events: int = Field(default=500, env="V3_P45A_MAX_EVENTS")
+    v3_p45a_interval: int = Field(default=900, env="V3_P45A_INTERVAL")  # 15 min
 
     # Events Generation (bucket pass-through, no clustering yet)
     events_min_ctm_titles: int = Field(default=10, env="EVENTS_MIN_CTM_TITLES")
