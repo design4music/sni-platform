@@ -763,13 +763,14 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
                     """
                     UPDATE events_v3
                     SET first_seen = LEAST(first_seen, %s::date),
-                        date = GREATEST(date, %s::date),
+                        date = LEAST(date, %s::date),
+                        last_active = GREATEST(COALESCE(last_active, date), %s::date),
                         source_batch_count = source_batch_count + %s,
                         title = NULL,
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (min_new, max_new, len(new_titles), event_id),
+                    (min_new, min_new, max_new, len(new_titles), event_id),
                 )
 
             merged += 1
@@ -806,12 +807,13 @@ def write_events_to_db(conn, events: list[dict], ctm_id: str) -> int:
 
             cur.execute(
                 """
-                INSERT INTO events_v3 (ctm_id, date, first_seen, summary, event_type, bucket_key, source_batch_count, is_catchall)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO events_v3 (ctm_id, date, last_active, first_seen, summary, event_type, bucket_key, source_batch_count, is_catchall)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
                     ctm_id,
+                    first_seen,
                     event_date,
                     first_seen,
                     summary,
