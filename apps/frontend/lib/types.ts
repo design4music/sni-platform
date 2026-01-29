@@ -188,6 +188,12 @@ export function getCountryName(codeOrBucketKey: string): string {
   return isoCode.charAt(0).toUpperCase() + isoCode.slice(1).toLowerCase();
 }
 
+// Extract ISO code from bucket key (e.g., "EUROPE-DE" -> "DE", "SYS-ENERGY" -> "ENERGY")
+export function getIsoFromBucketKey(bucketKey: string): string {
+  const parts = bucketKey.split('-');
+  return parts.length > 1 ? parts[parts.length - 1] : bucketKey;
+}
+
 // Utility function to format relative time
 export function formatTimeAgo(date: Date | null | undefined): string {
   if (!date) return '';

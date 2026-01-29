@@ -1,6 +1,7 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import EventAccordion from '@/components/EventAccordion';
+import CountryAccordion from '@/components/CountryAccordion';
 import TableOfContents, { TocSection } from '@/components/TableOfContents';
 import MobileTocButton from '@/components/MobileTocButton';
 import {
@@ -13,7 +14,7 @@ import {
 } from '@/lib/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getTrackLabel, getCountryName, Track, Event } from '@/lib/types';
+import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event } from '@/lib/types';
 import { getTrackIcon } from '@/components/TrackCard';
 
 export const dynamic = 'force-dynamic';
@@ -130,31 +131,10 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   }
 
   if (internationalEvents.length > 0) {
-    const intlChildren: TocSection[] = [];
-
-    sortedBilateralEntries.forEach(([bucketKey, events]) => {
-      const mainEvents = events.filter(e => !isOtherCoverage(e));
-      intlChildren.push({
-        id: `section-intl-${bucketKey}`,
-        label: getCountryName(bucketKey),
-        count: mainEvents.length
-      });
-    });
-
-    if (otherInternational.length > 0) {
-      const mainEvents = otherInternational.filter(e => !isOtherCoverage(e));
-      intlChildren.push({
-        id: 'section-intl-other',
-        label: 'Other International',
-        count: mainEvents.length
-      });
-    }
-
     tocSections.push({
       id: 'section-international',
       label: 'International',
       count: internationalEvents.filter(e => !isOtherCoverage(e)).length,
-      children: intlChildren
     });
   }
 
@@ -289,7 +269,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
           {centroid.label}: {getTrackLabel(track)}
         </h1>
         <p className="text-dashboard-text-muted">
-          {formatMonthLabel(currentMonth)} | {eventCount} events | {actualSourceCount} sources
+          {formatMonthLabel(currentMonth)} | {eventCount} topics | {actualSourceCount} sources
         </p>
       </div>
 
@@ -327,7 +307,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
           <div className="mb-10">
             <h2 className="text-2xl font-bold mb-2">Sources</h2>
             <p className="text-sm text-dashboard-text-muted mb-4">
-              {titles.length} articles collected - event clustering pending
+              {titles.length} articles collected - topic clustering pending
             </p>
             <div className="space-y-2">
               {titles.slice(0, 50).map((title) => (
@@ -375,7 +355,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             <div id="section-domestic" className="mb-10">
               <h2 className="text-2xl font-bold mb-2">Domestic</h2>
               <p className="text-sm text-dashboard-text-muted mb-4">
-                {domesticMainEvents.length} events | {countTitles(domesticEvents)} sources
+                {domesticMainEvents.length} topics | {countTitles(domesticEvents)} sources
               </p>
 
               <EventList
@@ -391,7 +371,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                     key="domestic-other"
                     event={{
                       date: domesticOther[0]?.date || '',
-                      summary: `Other Domestic Events (${countTitles(domesticOther)} sources)`,
+                      summary: `Other Domestic Coverage (${countTitles(domesticOther)} sources)`,
                       source_title_ids: domesticOther.flatMap(e => e.source_title_ids || [])
                     }}
                     allTitles={titles}
@@ -407,48 +387,26 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             <div id="section-international" className="mb-10">
               <h2 className="text-2xl font-bold mb-2">International</h2>
               <p className="text-sm text-dashboard-text-muted mb-6">
-                {internationalEvents.filter(e => !isOtherCoverage(e)).length} events | {countTitles(internationalEvents)} sources
+                {internationalEvents.filter(e => !isOtherCoverage(e)).length} topics | {countTitles(internationalEvents)} sources
               </p>
 
               {/* Bilateral groups by country */}
-              {sortedBilateralEntries.map(([bucketKey, events]) => {
+              {sortedBilateralEntries.map(([bucketKey, events], index) => {
                 const mainEvents = events.filter(e => !isOtherCoverage(e));
                 const otherEvents = events.filter(e => isOtherCoverage(e));
-                const countryName = getCountryName(bucketKey);
 
                 return (
-                  <div key={bucketKey} id={`section-intl-${bucketKey}`} className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3">
-                      {countryName}
-                      <span className="text-sm font-normal text-dashboard-text-muted ml-2">
-                        {mainEvents.length} events | {countTitles(events)} sources
-                      </span>
-                    </h3>
-                    <div className="pl-4 border-l-2 border-dashboard-border">
-                      <EventList
-                        events={sortBySourceCount(mainEvents)}
-                        allTitles={titles}
-                        initialLimit={10}
-                        compact
-                        keyPrefix={`bilateral-${bucketKey}`}
-                      />
-                      {otherEvents.length > 0 && (
-                        <div className="mt-2">
-                          <EventAccordion
-                            key={`bilateral-${bucketKey}-other`}
-                            event={{
-                              date: otherEvents[0]?.date || '',
-                              summary: `Other ${countryName} Coverage (${countTitles(otherEvents)} sources)`,
-                              source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
-                            }}
-                            allTitles={titles}
-                            index={998}
-                            compact
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <CountryAccordion
+                    key={bucketKey}
+                    bucketKey={bucketKey}
+                    countryName={getCountryName(bucketKey)}
+                    isoCode={getIsoFromBucketKey(bucketKey)}
+                    mainEvents={mainEvents}
+                    otherEvents={otherEvents}
+                    allTitles={titles}
+                    totalSourceCount={countTitles(events)}
+                    defaultOpen={index === 0}
+                  />
                 );
               })}
 
@@ -458,38 +416,16 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 const otherEvents = otherInternational.filter(e => isOtherCoverage(e));
 
                 return (
-                  <div id="section-intl-other" className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3">
-                      Other International
-                      <span className="text-sm font-normal text-dashboard-text-muted ml-2">
-                        {mainEvents.length} events | {countTitles(otherInternational)} sources
-                      </span>
-                    </h3>
-                    <div className="pl-4 border-l-2 border-dashboard-border">
-                      <EventList
-                        events={sortBySourceCount(mainEvents)}
-                        allTitles={titles}
-                        initialLimit={10}
-                        compact
-                        keyPrefix="other-intl"
-                      />
-                      {otherEvents.length > 0 && (
-                        <div className="mt-2">
-                          <EventAccordion
-                            key="other-intl-other"
-                            event={{
-                              date: otherEvents[0]?.date || '',
-                              summary: `Other Coverage (${countTitles(otherEvents)} sources)`,
-                              source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
-                            }}
-                            allTitles={titles}
-                            index={997}
-                            compact
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <CountryAccordion
+                    bucketKey="other"
+                    countryName="Other International"
+                    isoCode=""
+                    mainEvents={mainEvents}
+                    otherEvents={otherEvents}
+                    allTitles={titles}
+                    totalSourceCount={countTitles(otherInternational)}
+                    defaultOpen={sortedBilateralEntries.length === 0}
+                  />
                 );
               })()}
             </div>
@@ -502,7 +438,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 Other Sources
               </h2>
               <p className="text-sm text-dashboard-text-muted mb-4">
-                {unclusteredTitles.length} additional articles not grouped into events
+                {unclusteredTitles.length} additional articles not grouped into topics
               </p>
               <div className="space-y-2">
                 {unclusteredTitles.slice(0, 20).map((title) => (

@@ -44,7 +44,7 @@ export default function EventList({
                      bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30
                      rounded-lg transition-all duration-200"
         >
-          Load {remainingCount} more {remainingCount === 1 ? 'event' : 'events'}
+          Load {remainingCount} more {remainingCount === 1 ? 'topic' : 'topics'}
         </button>
       )}
 
