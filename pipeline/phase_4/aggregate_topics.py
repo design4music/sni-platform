@@ -1359,41 +1359,50 @@ def process_ctm(
     candidates = find_merge_candidates(events, similarity_threshold)
     print("Found {} candidate groups".format(len(candidates)))
 
-    # Step B: LLM review
+    # Step B: LLM review (SKIP if no candidates - saves LLM calls)
     print()
     print("-" * 70)
     print("STEP B: LLM REVIEW")
     print("-" * 70)
 
     merge_decisions = []
-    for i, candidate in enumerate(candidates[:20], 1):  # Limit to 20 reviews
-        event_ids = candidate["events"]
-        print(
-            "Reviewing group {} ({} topics, bucket={})...".format(
-                i, len(event_ids), candidate["bucket_key"]
-            )
-        )
 
-        # Show what's being reviewed
-        for eid in event_ids[:3]:
-            e = events[eid]
+    if not candidates:
+        print("  No merge candidates - skipping LLM review")
+    else:
+        for i, candidate in enumerate(candidates[:20], 1):  # Limit to 20 reviews
+            event_ids = candidate["events"]
             print(
-                "  - [{}] {}".format(e["count"], e["title"][:50] if e["title"] else "?")
-            )
-
-        review = review_merge_with_llm(events, candidate)
-        print("  >> {} - {}".format(review["decision"], review["reason"][:60]))
-
-        if review["decision"] == "MERGE":
-            merge_decisions.append(
-                {"events": candidate["events"], "bucket_key": candidate["bucket_key"]}
-            )
-        elif review["decision"] == "PARTIAL":
-            merge_ids = review.get("merge_ids", [])
-            if len(merge_ids) >= 2:
-                merge_decisions.append(
-                    {"events": merge_ids, "bucket_key": candidate["bucket_key"]}
+                "Reviewing group {} ({} topics, bucket={})...".format(
+                    i, len(event_ids), candidate["bucket_key"]
                 )
+            )
+
+            # Show what's being reviewed
+            for eid in event_ids[:3]:
+                e = events[eid]
+                print(
+                    "  - [{}] {}".format(
+                        e["count"], e["title"][:50] if e["title"] else "?"
+                    )
+                )
+
+            review = review_merge_with_llm(events, candidate)
+            print("  >> {} - {}".format(review["decision"], review["reason"][:60]))
+
+            if review["decision"] == "MERGE":
+                merge_decisions.append(
+                    {
+                        "events": candidate["events"],
+                        "bucket_key": candidate["bucket_key"],
+                    }
+                )
+            elif review["decision"] == "PARTIAL":
+                merge_ids = review.get("merge_ids", [])
+                if len(merge_ids) >= 2:
+                    merge_decisions.append(
+                        {"events": merge_ids, "bucket_key": candidate["bucket_key"]}
+                    )
 
     # Execute merges
     print()
@@ -1484,18 +1493,23 @@ def process_ctm(
         dry_run=dry_run,
     )
 
-    # Show top generic signals
-    if cleanup_result["signal_frequencies"]:
-        print("  Top generic signals (appear in 5+ topics):")
-        for sig, freq in list(cleanup_result["signal_frequencies"].items())[:5]:
-            if freq >= GENERIC_SIGNAL_TOPIC_THRESHOLD:
-                print("    {} -> {} topics".format(sig, freq))
+    if cleanup_result["suspicious_found"] == 0:
+        print("  No suspicious topics - skipping LLM review")
+    else:
+        # Show top generic signals
+        if cleanup_result["signal_frequencies"]:
+            print("  Top generic signals (appear in 5+ topics):")
+            for sig, freq in list(cleanup_result["signal_frequencies"].items())[:5]:
+                if freq >= GENERIC_SIGNAL_TOPIC_THRESHOLD:
+                    print("    {} -> {} topics".format(sig, freq))
 
-    print()
-    print("  Suspicious topics found: {}".format(cleanup_result["suspicious_found"]))
-    print("  Topics reviewed: {}".format(cleanup_result["reviewed"]))
-    print("  Mixed topics detected: {}".format(cleanup_result["mixed_topics"]))
-    print("  Titles reassigned: {}".format(cleanup_result["titles_reassigned"]))
+        print()
+        print(
+            "  Suspicious topics found: {}".format(cleanup_result["suspicious_found"])
+        )
+        print("  Topics reviewed: {}".format(cleanup_result["reviewed"]))
+        print("  Mixed topics detected: {}".format(cleanup_result["mixed_topics"]))
+        print("  Titles reassigned: {}".format(cleanup_result["titles_reassigned"]))
 
     # Step D: Other Coverage reassignment
     print()

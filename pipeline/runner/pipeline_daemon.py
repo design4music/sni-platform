@@ -440,26 +440,33 @@ class PipelineDaemon:
         finally:
             conn.close()
 
-    def run_topic_aggregation(self, max_ctms: int = 5):
+    def run_topic_aggregation(self, max_ctms: int = 10):
         """
-        Run topic aggregation (LLM merge/cleanup) for active unfrozen CTMs.
+        Run topic aggregation (LLM merge/cleanup) for CTMs with NEW content only.
 
-        IMPORTANT: Limits to max_ctms per cycle to avoid blocking the pipeline.
-        Each CTM can generate up to 45 LLM calls (20 merge + 25 cleanup reviews).
-        With 5 CTMs max = ~225 LLM calls per cycle, manageable in 30min interval.
+        INCREMENTAL: Only processes CTMs where title_count increased since last
+        aggregation, or CTMs that were never aggregated.
+
+        Limits to max_ctms per cycle to avoid blocking the pipeline.
         """
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
-                # Get CTMs that have events and need aggregation
-                # Prioritize by title_count (largest CTMs first)
+                # Get CTMs that have NEW content since last aggregation
+                # OR have never been aggregated (last_aggregated_at IS NULL)
                 cur.execute(
                     """
-                    SELECT id, centroid_id, track
+                    SELECT id, centroid_id, track, title_count
                     FROM ctm
                     WHERE title_count >= 3 AND is_frozen = false
                       AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = ctm.id)
-                    ORDER BY title_count DESC
+                      AND (
+                          last_aggregated_at IS NULL
+                          OR title_count > COALESCE(title_count_at_aggregation, 0)
+                      )
+                    ORDER BY
+                        last_aggregated_at NULLS FIRST,
+                        title_count DESC
                     LIMIT %s
                     """,
                     (max_ctms,),
@@ -467,18 +474,36 @@ class PipelineDaemon:
                 ctms = cur.fetchall()
 
             if not ctms:
-                print("No CTMs need aggregation")
+                print("No CTMs need aggregation (all up-to-date)")
                 return
 
             print(
-                "Processing {} CTMs for topic aggregation (limited to {})...".format(
+                "Processing {} CTMs with new content (limit {})...".format(
                     len(ctms), max_ctms
                 )
             )
-            for ctm_id, centroid_id, track in ctms:
+            for ctm_id, centroid_id, track, title_count in ctms:
                 try:
-                    print("  Aggregating {} / {}...".format(centroid_id, track))
+                    print(
+                        "  Aggregating {} / {} ({} titles)...".format(
+                            centroid_id, track, title_count
+                        )
+                    )
                     phase41_aggregate(ctm_id=ctm_id, dry_run=False)
+
+                    # Mark CTM as aggregated with current title count
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            UPDATE ctm
+                            SET last_aggregated_at = NOW(),
+                                title_count_at_aggregation = title_count
+                            WHERE id = %s
+                            """,
+                            (ctm_id,),
+                        )
+                    conn.commit()
+
                 except Exception as e:
                     print("  Aggregation failed for {}: {}".format(ctm_id[:8], e))
 
