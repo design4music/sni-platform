@@ -298,9 +298,24 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         <div id="section-summary" className="mb-8">
           <h2 className="text-2xl font-bold mb-4">Summary</h2>
           <div className="text-lg leading-relaxed space-y-4">
-            {ctm.summary_text.split('\n\n').map((paragraph, idx) => (
-              <p key={idx}>{paragraph}</p>
-            ))}
+            {ctm.summary_text.split('\n\n').flatMap((paragraph, idx) => {
+              const trimmed = paragraph.trim();
+              if (trimmed.startsWith('### ')) {
+                const newlinePos = trimmed.indexOf('\n');
+                const heading = newlinePos === -1 ? trimmed.slice(4) : trimmed.slice(4, newlinePos);
+                const body = newlinePos === -1 ? null : trimmed.slice(newlinePos + 1).trim();
+                const elements = [
+                  <h3 key={`h-${idx}`} className="text-base font-semibold uppercase tracking-wide text-dashboard-text-muted mt-6 first:mt-0">
+                    {heading}
+                  </h3>
+                ];
+                if (body) {
+                  elements.push(<p key={`p-${idx}`}>{body}</p>);
+                }
+                return elements;
+              }
+              return [<p key={idx}>{trimmed}</p>];
+            })}
           </div>
         </div>
       )}
