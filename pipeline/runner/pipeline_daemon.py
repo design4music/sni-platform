@@ -160,18 +160,27 @@ class PipelineDaemon:
                 )
                 ctms_for_clustering = cur.fetchone()[0]
 
-                # Phase 4 summary queue (CTMs with events but no summary OR need update)
+                # Phase 4.5 summary queue: EVENT-DRIVEN regeneration
+                # Regenerate if: no summary, OR new events since last summary
+                # With 24h minimum cooldown to prevent thrashing
                 cur.execute(
                     """
                     SELECT COUNT(*)
                     FROM ctm c
                     WHERE c.title_count >= %s
+                      AND c.is_frozen = false
                       AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
                       AND (
+                          -- Never had a summary
                           c.summary_text IS NULL
-                          OR (c.summary_text IS NOT NULL AND c.updated_at < NOW() - INTERVAL '24 hours')
+                          OR (
+                              -- Has new events since last summary AND cooldown passed
+                              (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id)
+                                  > COALESCE(c.event_count_at_summary, 0)
+                              AND (c.last_summary_at IS NULL
+                                   OR c.last_summary_at < NOW() - INTERVAL '24 hours')
+                          )
                       )
-                      AND c.is_frozen = false
                 """,
                     (self.config.v3_p4_min_titles,),
                 )

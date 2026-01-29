@@ -219,16 +219,19 @@ async def process_single_ctm(
             word_count = len(summary.split())
             print(f"  OK: {word_count} words")
 
-            # Update CTM with summary
+            # Update CTM with summary and track event count for incremental logic
+            event_count = len(events)
             with conn.cursor() as cur:
                 cur.execute(
                     """
                     UPDATE ctm
                     SET summary_text = %s,
-                        updated_at = NOW()
+                        updated_at = NOW(),
+                        last_summary_at = NOW(),
+                        event_count_at_summary = %s
                     WHERE id = %s
                 """,
-                    (summary, ctm_id),
+                    (summary, event_count, ctm_id),
                 )
             conn.commit()
 
@@ -256,8 +259,8 @@ async def process_ctm_batch(max_ctms=None):
 
     try:
         with conn.cursor() as cur:
-            # Get CTMs for daily processing with focus lines from track_configs
-            # Prioritize: 1) NULL summaries first, 2) then existing if not updated in 24h
+            # Get CTMs for EVENT-DRIVEN processing with focus lines from track_configs
+            # Regenerate if: no summary, OR new events appeared (with 24h cooldown)
             limit_clause = f"LIMIT {max_ctms}" if max_ctms else ""
             cur.execute(
                 f"""
@@ -274,8 +277,15 @@ async def process_ctm_batch(max_ctms=None):
                   AND c.title_count >= %s
                   AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
                   AND (
+                      -- Never had a summary
                       c.summary_text IS NULL
-                      OR (c.summary_text IS NOT NULL AND c.updated_at < NOW() - INTERVAL '24 hours')
+                      OR (
+                          -- Has new events since last summary AND cooldown passed
+                          (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id)
+                              > COALESCE(c.event_count_at_summary, 0)
+                          AND (c.last_summary_at IS NULL
+                               OR c.last_summary_at < NOW() - INTERVAL '24 hours')
+                      )
                   )
                 ORDER BY
                   (c.summary_text IS NULL) DESC,
