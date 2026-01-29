@@ -29,8 +29,10 @@ from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT, CTM_SUMMARY_USER_PROMPT
 
 
 def get_events_for_ctm(conn, ctm_id: str) -> list:
-    """Fetch events from events_v3 with their narrative summaries.
+    """Fetch enriched events from events_v3 with their narrative summaries.
 
+    Only returns events that have been enriched by Phase 4.5a (title IS NOT NULL).
+    Catchall events are included for counting but skipped during formatting.
     Returns events ordered by importance (non-catchall first, then by count).
     """
     with conn.cursor() as cur:
@@ -40,6 +42,7 @@ def get_events_for_ctm(conn, ctm_id: str) -> list:
                    e.event_type, e.bucket_key, e.is_catchall
             FROM events_v3 e
             WHERE e.ctm_id = %s
+              AND e.title IS NOT NULL
             ORDER BY e.is_catchall ASC, e.source_batch_count DESC
             """,
             (ctm_id,),
@@ -107,6 +110,12 @@ async def generate_summary(
     """
     # Format event summaries for digest
     events_text = format_events_for_digest(events)
+
+    # Safety: refuse to call LLM with no content (prevents hallucination)
+    if not events_text.strip():
+        raise ValueError(
+            "No non-catchall event summaries to digest - skipping LLM call"
+        )
 
     # Build context
     context_parts = [f"Centroid: {centroid_label} ({centroid_class})"]
@@ -199,6 +208,14 @@ async def process_single_ctm(
             real_events = [e for e in events if not e.get("is_catchall")]
             total_sources = sum(e.get("count", 0) for e in real_events)
 
+            # Skip if no real (non-catchall) events - nothing to summarize
+            if not real_events:
+                print(
+                    f"Skipping: {centroid_label} / {track} / {month.strftime('%Y-%m')} "
+                    "(all events are catchalls - no content to summarize)"
+                )
+                return False
+
             print(
                 f"Processing: {centroid_label} / {track} / {month.strftime('%Y-%m')} "
                 f"({len(real_events)} events, {total_sources} sources)"
@@ -275,7 +292,13 @@ async def process_ctm_batch(max_ctms=None):
                 JOIN track_configs tc ON cent.track_config_id = tc.id
                 WHERE c.is_frozen = false
                   AND c.title_count >= %s
-                  AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
+                  -- Must have non-catchall events with real summaries (Phase 4.5a enriched)
+                  AND EXISTS (
+                      SELECT 1 FROM events_v3 e
+                      WHERE e.ctm_id = c.id
+                        AND e.is_catchall = false
+                        AND e.title IS NOT NULL
+                  )
                   AND (
                       -- Never had a summary
                       c.summary_text IS NULL
