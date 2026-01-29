@@ -163,22 +163,27 @@ Generate a 150-250 word narrative digest from the provided event summaries.
 
 ### Input Format
 
-You receive a list of event summaries, each with a source count indicating significance.
+You receive event summaries grouped into DOMESTIC AFFAIRS and INTERNATIONAL RELATIONS blocks.
+Each summary has a source count indicating significance.
 Higher source counts = more widely covered = more significant.
+If only one block is provided, all events belong to that category.
 
 ### Requirements:
 
 * Synthesize the event summaries into a cohesive monthly digest
 * Weight by source count: [137 sources] >> [12 sources] in importance
-* Group thematically related events into paragraphs (2-4 paragraphs)
 * Maintain analytic, neutral, non-normative tone
 * Preserve key details: names, figures, outcomes
+* ONLY use information from the provided event summaries
 
-### Structure guidance:
+### Structure rules:
 
-* Lead with the most significant developments (highest source counts)
-* If events form a single story arc, write unified paragraphs
-* If events are distinct topics, use separate paragraphs
+* When BOTH domestic and international events are provided:
+  - Start with "### Domestic" section header, then domestic narrative (1-2 paragraphs)
+  - Follow with "### International" section header, then international narrative (1-2 paragraphs)
+* When ONLY ONE category is provided:
+  - Write 2-3 paragraphs without any section headers
+* Within each section, lead with most significant developments (highest source counts)
 * Do NOT force unrelated events into false coherence
 
 ### Do NOT:
@@ -200,8 +205,6 @@ Higher source counts = more widely covered = more significant.
 {centroid_focus}"""
 
 CTM_SUMMARY_USER_PROMPT = """{context}
-
-Event Summaries:
 
 {events_text}
 

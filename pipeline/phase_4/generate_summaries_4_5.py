@@ -65,21 +65,40 @@ def get_events_for_ctm(conn, ctm_id: str) -> list:
 
 
 def format_events_for_digest(events: list) -> str:
-    """Format event summaries for CTM digest generation."""
-    lines = []
+    """Format event summaries into domestic/international blocks for CTM digest.
+
+    Splits non-catchall events by event_type and returns labeled blocks.
+    When only one category has content, returns it without section headers.
+    """
+    domestic = []
+    international = []
 
     for event in events:
-        # Skip catchall events in summary
         if event.get("is_catchall"):
             continue
 
         count = event.get("count", 0)
         summary = event.get("summary", "")
+        line = f"[{count} sources] {summary}"
 
-        # Format: [count] summary
-        lines.append(f"[{count} sources] {summary}")
+        if event.get("event_type") == "domestic":
+            domestic.append(line)
+        else:
+            international.append(line)
 
-    return "\n\n".join(lines)
+    # Single category: no headers needed
+    if domestic and not international:
+        return "\n\n".join(domestic)
+    if international and not domestic:
+        return "\n\n".join(international)
+
+    # Both categories: labeled blocks
+    parts = []
+    if domestic:
+        parts.append("=== DOMESTIC AFFAIRS ===\n" + "\n\n".join(domestic))
+    if international:
+        parts.append("=== INTERNATIONAL RELATIONS ===\n" + "\n\n".join(international))
+    return "\n\n".join(parts)
 
 
 async def generate_summary(
