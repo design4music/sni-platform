@@ -1,0 +1,9 @@
+psycopg2-binary
+pydantic
+pydantic-settings
+python-dotenv
+httpx
+feedparser
+loguru
+langdetect
+requests
