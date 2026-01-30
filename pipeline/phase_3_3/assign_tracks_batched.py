@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 project_root = Path(__file__).parent.parent.parent
 os.chdir(project_root)
 
-from core.config import config  # noqa: E402
+from core.config import GATE_WHITELIST, config  # noqa: E402
 from core.prompts import INTEL_GATING_PROMPT, TRACK_ASSIGNMENT_PROMPT  # noqa: E402
 
 
@@ -116,15 +116,15 @@ def group_titles_by_all_centroids(titles):
     Each title appears in multiple groups if it has multiple centroids.
 
     Args:
-        titles: List of (title_id, title_display, centroid_ids, pubdate)
+        titles: List of (title_id, title_display, centroid_ids, pubdate, action_class, domain)
 
     Returns:
-        dict: {centroid_id: [(title_id, title_display, centroid_ids, pubdate), ...]}
+        dict: {centroid_id: [title_data, ...]}
     """
     grouped = defaultdict(list)
 
     for title_data in titles:
-        title_id, title_display, centroid_ids, pubdate = title_data
+        centroid_ids = title_data[2]
 
         # Add title to ALL of its centroid groups
         for centroid_id in centroid_ids:
@@ -153,9 +153,8 @@ async def gate_centroid_batch(
     numbered_titles = []
     title_id_map = {}  # {1: title_id, 2: title_id, ...}
 
-    for idx, (title_id, title_display, centroid_ids, pubdate) in enumerate(
-        titles_batch, 1
-    ):
+    for idx, title_data in enumerate(titles_batch, 1):
+        title_id, title_display = title_data[0], title_data[1]
         numbered_titles.append(f"{idx}. {title_display}")
         title_id_map[idx] = title_id
 
@@ -259,9 +258,8 @@ async def assign_tracks_batch(
     numbered_titles = []
     title_id_map = {}
 
-    for idx, (title_id, title_display, centroid_ids, pubdate) in enumerate(
-        strategic_titles, 1
-    ):
+    for idx, title_data in enumerate(strategic_titles, 1):
+        title_id, title_display = title_data[0], title_data[1]
         numbered_titles.append(f"{idx}. {title_display}")
         title_id_map[idx] = title_id
 
@@ -395,7 +393,7 @@ async def process_centroid_group(
     Process all titles for one centroid in batches.
 
     Returns:
-        (strategic_count, rejected_count, error_count)
+        (pre_gated_count, strategic_count, rejected_count, error_count)
     """
     print(f"\nProcessing centroid: {centroid_id}")
     print(f"  Total titles: {len(titles)}")
@@ -412,17 +410,34 @@ async def process_centroid_group(
         # Get track config for this specific centroid
         track_config = get_track_config_for_centroids(conn, [centroid_id])
 
+        # Pre-gate: split titles into whitelisted (skip gating) vs need-gating
+        pre_gated = []
+        need_gating = []
+        for t in titles:
+            ac, dom = t[4], t[5]  # action_class, domain
+            if ac and dom and (ac, dom) in GATE_WHITELIST:
+                pre_gated.append(t)
+            else:
+                need_gating.append(t)
+
+        print(f"  Pre-gated (whitelist): {len(pre_gated)}")
+        print(f"  Need LLM gating: {len(need_gating)}")
+
         strategic_total = 0
         rejected_total = 0
+        pre_gated_total = len(pre_gated)
         error_total = 0
 
-        # Process in batches of batch_size
-        for batch_start in range(0, len(titles), batch_size):
-            batch_end = min(batch_start + batch_size, len(titles))
-            titles_batch = titles[batch_start:batch_end]
+        # All pre-gated titles are treated as strategic
+        all_strategic = list(pre_gated)
+
+        # Process need-gating titles in batches
+        for batch_start in range(0, len(need_gating), batch_size):
+            batch_end = min(batch_start + batch_size, len(need_gating))
+            titles_batch = need_gating[batch_start:batch_end]
 
             print(
-                f"  Batch {batch_start // batch_size + 1}: Processing {len(titles_batch)} titles..."
+                f"  Batch {batch_start // batch_size + 1}: Gating {len(titles_batch)} titles..."
             )
 
             try:
@@ -432,21 +447,19 @@ async def process_centroid_group(
                 )
 
                 # Separate strategic vs rejected
-                strategic_titles = []
                 rejected_title_ids = []
 
                 for title_data in titles_batch:
                     title_id = title_data[0]
                     if gating_results.get(title_id) == "strategic":
-                        strategic_titles.append(title_data)
+                        all_strategic.append(title_data)
+                        strategic_total += 1
                     else:
                         rejected_title_ids.append(title_id)
-
-                strategic_count = len(strategic_titles)
-                rejected_count = len(rejected_title_ids)
+                        rejected_total += 1
 
                 print(
-                    f"    Gating: {strategic_count} strategic, {rejected_count} rejected"
+                    f"    Gating: {len(titles_batch) - len(rejected_title_ids)} strategic, {len(rejected_title_ids)} rejected"
                 )
 
                 # Update rejected titles
@@ -463,27 +476,35 @@ async def process_centroid_group(
                         )
                     conn.commit()
 
-                # Stage 2: Track Assignment (only for strategic titles)
-                if strategic_titles:
-                    # Get month for prompt context
-                    first_pubdate = strategic_titles[0][3]
+            except Exception as e:
+                print(f"  ERROR in gating batch: {e}")
+                error_total += len(titles_batch)
+                conn.rollback()
+
+        # Stage 2: Track Assignment for ALL strategic titles (pre-gated + LLM-gated)
+        if all_strategic:
+            print(f"  Track assignment: {len(all_strategic)} strategic titles")
+
+            for batch_start in range(0, len(all_strategic), batch_size):
+                batch_end = min(batch_start + batch_size, len(all_strategic))
+                strategic_batch = all_strategic[batch_start:batch_end]
+
+                try:
+                    first_pubdate = strategic_batch[0][3]
                     month_str = first_pubdate.strftime("%Y-%m")
                     month_date = first_pubdate.replace(day=1).date()
 
                     track_assignments = await assign_tracks_batch(
-                        centroid_id, track_config, strategic_titles, month_str
+                        centroid_id, track_config, strategic_batch, month_str
                     )
 
                     print(f"    Assigned {len(track_assignments)} tracks")
 
                     # Update titles with tracks and create CTMs
                     title_errors = 0
-                    for (
-                        title_id,
-                        title_display,
-                        centroid_ids,
-                        pubdate,
-                    ) in strategic_titles:
+                    for title_data in strategic_batch:
+                        title_id = title_data[0]
+                        title_display = title_data[1]
                         if title_id not in track_assignments:
                             print(
                                 f"    WARNING: No track assigned for title {title_id}: {title_display[:60]}..."
@@ -494,12 +515,11 @@ async def process_centroid_group(
                         track = track_assignments[title_id]
 
                         try:
-                            # Create CTM for THIS centroid only
+                            month_date = title_data[3].replace(day=1).date()
                             ctm_id = get_or_create_ctm(
                                 conn, centroid_id, track, month_date
                             )
 
-                            # Increment title count
                             with conn.cursor() as cur:
                                 cur.execute(
                                     """
@@ -511,7 +531,6 @@ async def process_centroid_group(
                                     (ctm_id,),
                                 )
 
-                            # Insert into title_assignments (skip if already exists)
                             with conn.cursor() as cur:
                                 cur.execute(
                                     """
@@ -523,7 +542,6 @@ async def process_centroid_group(
                                     (title_id, centroid_id, track, ctm_id),
                                 )
 
-                            # Commit this title's updates
                             conn.commit()
 
                         except Exception as title_error:
@@ -535,15 +553,12 @@ async def process_centroid_group(
 
                     error_total += title_errors
 
-                strategic_total += strategic_count
-                rejected_total += rejected_count
+                except Exception as e:
+                    print(f"  ERROR in track assignment batch: {e}")
+                    error_total += len(strategic_batch)
+                    conn.rollback()
 
-            except Exception as e:
-                print(f"  ERROR in batch: {e}")
-                error_total += len(titles_batch)
-                conn.rollback()
-
-        return (strategic_total, rejected_total, error_total)
+        return (pre_gated_total, strategic_total, rejected_total, error_total)
 
     finally:
         conn.close()
@@ -568,8 +583,10 @@ async def process_batch(max_titles=None):
             limit_clause = f"LIMIT {max_titles}" if max_titles else ""
             cur.execute(
                 f"""
-                SELECT t.id, t.title_display, t.centroid_ids, t.pubdate_utc
+                SELECT t.id, t.title_display, t.centroid_ids, t.pubdate_utc,
+                       tl.action_class, tl.domain
                 FROM titles_v3 t
+                LEFT JOIN title_labels tl ON tl.title_id = t.id
                 WHERE t.processing_status = 'assigned'
                   AND t.centroid_ids IS NOT NULL
                   AND NOT EXISTS (
@@ -596,6 +613,7 @@ async def process_batch(max_titles=None):
         print()
 
         # Process each centroid group
+        total_pre_gated = 0
         total_strategic = 0
         total_rejected = 0
         total_errors = 0
@@ -603,10 +621,11 @@ async def process_batch(max_titles=None):
         batch_size = config.v3_p33_centroid_batch_size
 
         for centroid_id, centroid_titles in sorted(grouped.items()):
-            strategic, rejected, errors = await process_centroid_group(
+            pre_gated, strategic, rejected, errors = await process_centroid_group(
                 centroid_id, centroid_titles, batch_size
             )
 
+            total_pre_gated += pre_gated
             total_strategic += strategic
             total_rejected += rejected
             total_errors += errors
@@ -615,7 +634,8 @@ async def process_batch(max_titles=None):
         print("RESULTS")
         print(f"{'='*60}")
         print(f"Total titles processed:    {len(titles)}")
-        print(f"Strategic (assigned):      {total_strategic}")
+        print(f"Strategic (pre-gated):     {total_pre_gated}")
+        print(f"Strategic (LLM-gated):     {total_strategic}")
         print(f"Rejected (blocked_llm):    {total_rejected}")
         print(f"Errors:                    {total_errors}")
 
