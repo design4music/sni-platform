@@ -56,7 +56,7 @@ class SNIConfig(BaseSettings):
     # Phase 3.1: Event Label + Signal Extraction (ELO v2.0)
     v3_p31_temperature: float = Field(default=0.1, env="V3_P31_TEMPERATURE")
     v3_p31_max_tokens: int = Field(default=4000, env="V3_P31_MAX_TOKENS")
-    v3_p31_batch_size: int = Field(default=50, env="V3_P31_BATCH_SIZE")
+    v3_p31_batch_size: int = Field(default=25, env="V3_P31_BATCH_SIZE")
     v3_p31_concurrency: int = Field(default=5, env="V3_P31_CONCURRENCY")
     v3_p31_timeout_seconds: int = Field(default=180, env="V3_P31_TIMEOUT_SECONDS")
     v3_p31_max_titles: int = Field(default=500, env="V3_P31_MAX_TITLES")
