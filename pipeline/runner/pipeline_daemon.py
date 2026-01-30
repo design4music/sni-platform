@@ -6,7 +6,7 @@ Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 2: Centroid matching (12 hours)
 - Phase 3.1: Label + signal extraction (10 minutes)
 - Phase 3.2: Entity centroid backfill (after 3.1)
-- Phase 3.3: Intel gating + track assignment (10 minutes)
+- Phase 3.3: Intel gating + track assignment (5 minutes)
 - Phase 4: Event clustering (30 minutes)
 - Phase 4.1: Topic aggregation - LLM merge/cleanup (after 4)
 - Phase 4.5a: Event summaries - readable text per event (after 4.1)
@@ -64,7 +64,7 @@ class PipelineDaemon:
         self.phase1_interval = 43200  # 12 hours - RSS feeds
         self.phase2_interval = 43200  # 12 hours - Centroid matching (same as Phase 1)
         self.phase31_interval = 600  # 10 minutes - Label extraction
-        self.phase33_interval = 600  # 10 minutes - LLM gating + track assignment
+        self.phase33_interval = 300  # 5 minutes - LLM gating + track assignment
         self.phase4_interval = 1800  # 30 minutes - Event clustering
         self.phase45a_interval = (
             self.config.v3_p45a_interval
@@ -83,7 +83,7 @@ class PipelineDaemon:
         }
 
         # Batch sizes
-        self.phase33_batch_size = 100  # Titles per Phase 3.3 run
+        self.phase33_batch_size = 500  # Titles per Phase 3.3 run (match 3.1 throughput)
         self.phase4_batch_size = 50  # CTMs per Phase 4 run
 
         # Retry configuration
