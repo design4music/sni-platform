@@ -8,7 +8,7 @@ Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 3.2: Entity centroid backfill (after 3.1)
 - Phase 3.3: Intel gating + track assignment (5 minutes)
 - Phase 4: Event clustering (30 minutes)
-- Phase 4.1: Topic aggregation - LLM merge/cleanup (after 4)
+- Phase 4.1: Topic aggregation - LLM merge/cleanup (15 minutes)
 - Phase 4.5a: Event summaries - readable text per event (after 4.1)
 - Phase 4.5: CTM summary generation (1 hour)
 
@@ -66,6 +66,7 @@ class PipelineDaemon:
         self.phase31_interval = 600  # 10 minutes - Label extraction
         self.phase33_interval = 300  # 5 minutes - LLM gating + track assignment
         self.phase4_interval = 1800  # 30 minutes - Event clustering
+        self.phase41_interval = 900  # 15 minutes - Topic aggregation (LLM merge)
         self.phase45a_interval = (
             self.config.v3_p45a_interval
         )  # 15 min - Event summaries
@@ -78,6 +79,7 @@ class PipelineDaemon:
             "phase31": 0,
             "phase33": 0,
             "phase4": 0,
+            "phase41": 0,
             "phase45a": 0,
             "phase45": 0,
         }
@@ -726,19 +728,26 @@ class PipelineDaemon:
                 "Phase 4: Event Clustering",
                 self.run_event_clustering,
             )
-
-            # Phase 4.1: Topic Aggregation (LLM merge/cleanup)
-            self.run_phase_with_retry(
-                "Phase 4.1: Topic Aggregation",
-                self.run_topic_aggregation,
-            )
-
             self.last_run["phase4"] = time.time()
         else:
             next_run = int(
                 self.phase4_interval - (time.time() - self.last_run["phase4"])
             )
             print("\nPhase 4: Skipping (next run in {})".format(next_run))
+
+        # Phase 4.1: Topic Aggregation (own interval, decoupled from Phase 4)
+        if self.should_run_phase("phase41"):
+            self.run_phase_with_retry(
+                "Phase 4.1: Topic Aggregation",
+                self.run_topic_aggregation,
+                max_ctms=25,
+            )
+            self.last_run["phase41"] = time.time()
+        else:
+            next_run = int(
+                self.phase41_interval - (time.time() - self.last_run["phase41"])
+            )
+            print("\nPhase 4.1: Skipping (next run in {}s)".format(next_run))
 
         # Phase 4.5a: Event Summaries (decoupled, own interval)
         if self.should_run_phase("phase45a"):
@@ -803,6 +812,9 @@ class PipelineDaemon:
         )
         print(
             f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/60:.0f} minutes - event clustering)"
+        )
+        print(
+            f"  Phase 4.1 interval: {self.phase41_interval}s ({self.phase41_interval/60:.0f} minutes - topic aggregation)"
         )
         print(
             f"  Phase 4.5a interval: {self.phase45a_interval}s ({self.phase45a_interval/60:.0f} minutes - event summaries)"
