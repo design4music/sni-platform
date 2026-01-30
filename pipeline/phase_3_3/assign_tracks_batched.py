@@ -1,5 +1,5 @@
 """
-Phase 3: Intel Gating + Track Assignment with Centroid Batching
+Phase 3.3: Intel Gating + Track Assignment with Centroid Batching
 
 Two-stage processing with full centroid context:
 1. Intel Gating: LLM sees all titles for a centroid, rejects non-strategic content
@@ -177,10 +177,10 @@ async def gate_centroid_batch(
         "model": config.llm_model,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.2,  # Increased from 0.0 for more flexible strategic assessment
-        "max_tokens": config.v3_p3_max_tokens_gating,
+        "max_tokens": config.v3_p33_max_tokens_gating,
     }
 
-    async with httpx.AsyncClient(timeout=config.v3_p3_timeout_seconds) as client:
+    async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
         response = await client.post(
             f"{config.deepseek_api_url}/chat/completions",
             headers=headers,
@@ -286,11 +286,11 @@ async def assign_tracks_batch(
     payload = {
         "model": config.llm_model,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": config.v3_p3_temperature,
-        "max_tokens": config.v3_p3_max_tokens_tracks,
+        "temperature": config.v3_p33_temperature,
+        "max_tokens": config.v3_p33_max_tokens_tracks,
     }
 
-    async with httpx.AsyncClient(timeout=config.v3_p3_timeout_seconds) as client:
+    async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
         response = await client.post(
             f"{config.deepseek_api_url}/chat/completions",
             headers=headers,
@@ -600,7 +600,7 @@ async def process_batch(max_titles=None):
         total_rejected = 0
         total_errors = 0
 
-        batch_size = config.v3_p3_centroid_batch_size
+        batch_size = config.v3_p33_centroid_batch_size
 
         for centroid_id, centroid_titles in sorted(grouped.items()):
             strategic, rejected, errors = await process_centroid_group(

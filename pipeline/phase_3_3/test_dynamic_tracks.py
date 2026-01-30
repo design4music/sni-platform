@@ -8,7 +8,6 @@ Tests:
 4. Limited config (for quiet countries if linked)
 """
 
-import asyncio
 import sys
 from pathlib import Path
 
@@ -31,9 +30,9 @@ def test_track_config_loading():
     )
 
     try:
-        print("="*70)
+        print("=" * 70)
         print("Test: Track Config Loading")
-        print("="*70)
+        print("=" * 70)
 
         # Get some test centroids
         with conn.cursor() as cur:
@@ -78,9 +77,9 @@ async def test_llm_classification():
     )
 
     try:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Test: LLM Track Classification")
-        print("="*70)
+        print("=" * 70)
 
         test_cases = [
             (
@@ -145,9 +144,9 @@ def test_multi_centroid_priority():
     )
 
     try:
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("Test: Multi-Centroid Priority Resolution")
-        print("="*70)
+        print("=" * 70)
 
         # Get centroid IDs for testing
         with conn.cursor() as cur:
@@ -184,9 +183,9 @@ def test_multi_centroid_priority():
 
 def main():
     """Run all tests"""
-    print("\n" + "#"*70)
+    print("\n" + "#" * 70)
     print("# Dynamic Track Configuration System - Test Suite")
-    print("#"*70)
+    print("#" * 70)
 
     # Test 1: Config loading
     test_track_config_loading()
@@ -197,9 +196,9 @@ def main():
     # Test 3: Multi-centroid priority
     test_multi_centroid_priority()
 
-    print("\n" + "#"*70)
+    print("\n" + "#" * 70)
     print("# Tests Complete")
-    print("#"*70)
+    print("#" * 70)
 
 
 if __name__ == "__main__":

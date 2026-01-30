@@ -3,10 +3,10 @@ SNI v3 Pipeline Daemon
 
 Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 1: RSS ingestion (12 hours)
-- Phase 2: Centroid matching (5 minutes)
-- Phase 3: Track assignment & CTM creation (10 minutes)
-- Phase 3.5: Label extraction (10 minutes)
-- Phase 3.6: Entity centroid backfill (after 3.5)
+- Phase 2: Centroid matching (12 hours)
+- Phase 3.1: Label + signal extraction (10 minutes)
+- Phase 3.2: Entity centroid backfill (after 3.1)
+- Phase 3.3: Intel gating + track assignment (10 minutes)
 - Phase 4: Event clustering (30 minutes)
 - Phase 4.1: Topic aggregation - LLM merge/cleanup (after 4)
 - Phase 4.5a: Event summaries - readable text per event (after 4.1)
@@ -31,15 +31,15 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-from db.backfills.backfill_entity_centroids import (
-    backfill_entity_centroids as phase36_backfill,
-)
 
 # Import phase modules
 from pipeline.phase_1.ingest_feeds import run_ingestion
 from pipeline.phase_2.match_centroids import process_batch as phase2_process
-from pipeline.phase_3.assign_tracks_batched import process_batch as phase3_process
-from pipeline.phase_3_5.extract_labels import process_titles as phase35_extract
+from pipeline.phase_3_1.extract_labels import process_titles as phase31_extract
+from pipeline.phase_3_2.backfill_entity_centroids import (
+    backfill_entity_centroids as phase32_backfill,
+)
+from pipeline.phase_3_3.assign_tracks_batched import process_batch as phase33_process
 from pipeline.phase_4.aggregate_topics import process_ctm as phase41_aggregate
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_event_summaries,
@@ -62,9 +62,9 @@ class PipelineDaemon:
 
         # Intervals (in seconds)
         self.phase1_interval = 43200  # 12 hours - RSS feeds
-        self.phase2_interval = 900  # 15 minutes - Fast matching (low input rate)
-        self.phase3_interval = 600  # 10 minutes - LLM track assignment
-        self.phase35_interval = 600  # 10 minutes - Label extraction
+        self.phase2_interval = 43200  # 12 hours - Centroid matching (same as Phase 1)
+        self.phase31_interval = 600  # 10 minutes - Label extraction
+        self.phase33_interval = 600  # 10 minutes - LLM gating + track assignment
         self.phase4_interval = 1800  # 30 minutes - Event clustering
         self.phase45a_interval = (
             self.config.v3_p45a_interval
@@ -75,16 +75,15 @@ class PipelineDaemon:
         self.last_run = {
             "phase1": 0,
             "phase2": 0,
-            "phase3": 0,
-            "phase35": 0,
+            "phase31": 0,
+            "phase33": 0,
             "phase4": 0,
             "phase45a": 0,
             "phase45": 0,
         }
 
         # Batch sizes
-        self.phase2_batch_size = 500  # Titles per Phase 2 run
-        self.phase3_batch_size = 100  # CTMs per Phase 3 run
+        self.phase33_batch_size = 100  # Titles per Phase 3.3 run
         self.phase4_batch_size = 50  # CTMs per Phase 4 run
 
         # Retry configuration
@@ -126,7 +125,19 @@ class PipelineDaemon:
                 )
                 pending_titles = cur.fetchone()[0]
 
-                # Phase 3 queue (assigned titles without track assignment)
+                # Phase 3.1 queue (assigned titles without labels)
+                cur.execute(
+                    """
+                    SELECT COUNT(*)
+                    FROM titles_v3 t
+                    WHERE t.processing_status = 'assigned'
+                      AND t.centroid_ids IS NOT NULL
+                      AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
+                """
+                )
+                titles_need_labels = cur.fetchone()[0]
+
+                # Phase 3.3 queue (assigned titles without track assignment)
                 cur.execute(
                     """
                     SELECT COUNT(*)
@@ -137,17 +148,6 @@ class PipelineDaemon:
                 """
                 )
                 titles_need_track = cur.fetchone()[0]
-
-                # Phase 3.5 queue (titles with track but no labels)
-                cur.execute(
-                    """
-                    SELECT COUNT(*)
-                    FROM titles_v3 t
-                    WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE ta.title_id = t.id)
-                      AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
-                """
-                )
-                titles_need_labels = cur.fetchone()[0]
 
                 # Phase 4 cluster queue (CTMs that may need event regeneration)
                 cur.execute(
@@ -325,7 +325,7 @@ class PipelineDaemon:
                 )
                 active_ctms = cur.fetchone()[0]
 
-                print("\nPHASE 3 - TRACK ASSIGNMENT & CTM CREATION:")
+                print("\nPHASE 3.3 - TRACK ASSIGNMENT & CTM CREATION:")
                 print(f"  Titles with track assignments: {titles_with_tracks:,}")
                 print(
                     f"  Total title-centroid-track assignments: {total_assignments:,}"
@@ -639,11 +639,11 @@ class PipelineDaemon:
         # Get queue stats
         stats = self.get_queue_stats()
         print("\nQueue Status:")
-        print(f"  Pending titles (Phase 2):      {stats['pending_titles']}")
-        print(f"  Titles need track (Phase 3):   {stats['titles_need_track']}")
-        print(f"  Titles need extraction (Phase 3.5): {stats['titles_need_labels']}")
-        print(f"  CTMs for clustering (Phase 4):  {stats['ctms_for_clustering']}")
-        print(f"  CTMs need summary (Phase 4):    {stats['ctms_need_summary']}")
+        print(f"  Pending titles (Phase 2):        {stats['pending_titles']}")
+        print(f"  Titles need labels (Phase 3.1):  {stats['titles_need_labels']}")
+        print(f"  Titles need track (Phase 3.3):   {stats['titles_need_track']}")
+        print(f"  CTMs for clustering (Phase 4):   {stats['ctms_for_clustering']}")
+        print(f"  CTMs need summary (Phase 4):     {stats['ctms_need_summary']}")
 
         # Phase 1: RSS Ingestion (if interval elapsed)
         if self.should_run_phase("phase1"):
@@ -665,7 +665,7 @@ class PipelineDaemon:
                 "Phase 2: Centroid Matching",
                 phase2_process,
                 batch_size=100,
-                max_titles=self.phase2_batch_size,
+                max_titles=None,
             )
             self.last_run["phase2"] = time.time()
         else:
@@ -677,48 +677,48 @@ class PipelineDaemon:
                 )
                 print(f"\nPhase 2: Skipping (next run in {next_run}s)")
 
-        # Phase 3: Track Assignment (if interval elapsed and work available)
-        if self.should_run_phase("phase3") and stats["titles_need_track"] > 0:
-            await self.run_phase_with_retry(
-                "Phase 3: Track Assignment",
-                phase3_process,
-                max_titles=self.phase3_batch_size,
-            )
-            self.last_run["phase3"] = time.time()
-        else:
-            if stats["titles_need_track"] == 0:
-                print("\nPhase 3: Skipping (no titles need track)")
-            else:
-                next_run = int(
-                    self.phase3_interval - (time.time() - self.last_run["phase3"])
-                )
-                print(f"\nPhase 3: Skipping (next run in {next_run}s)")
-
-        # Phase 3.5: Label + Signal Extraction (if interval elapsed and work available)
-        if self.should_run_phase("phase35") and stats["titles_need_labels"] > 0:
+        # Phase 3.1: Label + Signal Extraction (if interval elapsed and work available)
+        if self.should_run_phase("phase31") and stats["titles_need_labels"] > 0:
             self.run_phase_with_retry(
-                "Phase 3.5: Label + Signal Extraction",
-                phase35_extract,
-                max_titles=self.config.v3_p35_max_titles,
-                batch_size=self.config.v3_p35_batch_size,
-                concurrency=self.config.v3_p35_concurrency,
+                "Phase 3.1: Label + Signal Extraction",
+                phase31_extract,
+                max_titles=self.config.v3_p31_max_titles,
+                batch_size=self.config.v3_p31_batch_size,
+                concurrency=self.config.v3_p31_concurrency,
             )
-            self.last_run["phase35"] = time.time()
+            self.last_run["phase31"] = time.time()
 
-            # Phase 3.6: Entity->Country->Centroid backfill (runs after label extraction)
+            # Phase 3.2: Entity->Country->Centroid backfill (runs after label extraction)
             self.run_phase_with_retry(
-                "Phase 3.6: Entity Centroid Backfill",
-                phase36_backfill,
+                "Phase 3.2: Entity Centroid Backfill",
+                phase32_backfill,
                 batch_size=500,
             )
         else:
             if stats["titles_need_labels"] == 0:
-                print("\nPhase 3.5: Skipping (no titles need labels)")
+                print("\nPhase 3.1: Skipping (no titles need labels)")
             else:
                 next_run = int(
-                    self.phase35_interval - (time.time() - self.last_run["phase35"])
+                    self.phase31_interval - (time.time() - self.last_run["phase31"])
                 )
-                print(f"\nPhase 3.5: Skipping (next run in {next_run}s)")
+                print(f"\nPhase 3.1: Skipping (next run in {next_run}s)")
+
+        # Phase 3.3: Intel Gating + Track Assignment (if interval elapsed and work available)
+        if self.should_run_phase("phase33") and stats["titles_need_track"] > 0:
+            await self.run_phase_with_retry(
+                "Phase 3.3: Intel Gating + Track Assignment",
+                phase33_process,
+                max_titles=self.phase33_batch_size,
+            )
+            self.last_run["phase33"] = time.time()
+        else:
+            if stats["titles_need_track"] == 0:
+                print("\nPhase 3.3: Skipping (no titles need track)")
+            else:
+                next_run = int(
+                    self.phase33_interval - (time.time() - self.last_run["phase33"])
+                )
+                print(f"\nPhase 3.3: Skipping (next run in {next_run}s)")
 
         # Phase 4: Event Clustering (if interval elapsed)
         if self.should_run_phase("phase4"):
@@ -793,13 +793,13 @@ class PipelineDaemon:
             f"  Phase 1 interval: {self.phase1_interval}s ({self.phase1_interval/3600:.1f} hours - RSS ingestion)"
         )
         print(
-            f"  Phase 2 interval: {self.phase2_interval}s ({self.phase2_interval/60:.0f} minutes - centroid matching)"
+            f"  Phase 2 interval: {self.phase2_interval}s ({self.phase2_interval/3600:.1f} hours - centroid matching)"
         )
         print(
-            f"  Phase 3 interval: {self.phase3_interval}s ({self.phase3_interval/60:.0f} minutes - track assignment)"
+            f"  Phase 3.1 interval: {self.phase31_interval}s ({self.phase31_interval/60:.0f} minutes - label + signal extraction)"
         )
         print(
-            f"  Phase 3.5 interval: {self.phase35_interval}s ({self.phase35_interval/60:.0f} minutes - label + signal extraction)"
+            f"  Phase 3.3 interval: {self.phase33_interval}s ({self.phase33_interval/60:.0f} minutes - gating + track assignment)"
         )
         print(
             f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/60:.0f} minutes - event clustering)"

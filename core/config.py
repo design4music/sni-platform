@@ -51,24 +51,26 @@ class SNIConfig(BaseSettings):
     # Phase 2: Centroid Matching (3-pass mechanical, no LLM)
     v3_p2_batch_size: int = Field(default=100, env="V3_P2_BATCH_SIZE")
     v3_p2_timeout_seconds: int = Field(default=180, env="V3_P2_TIMEOUT_SECONDS")
-    v3_p2_max_titles: Optional[int] = Field(default=1000, env="V3_P2_MAX_TITLES")
+    v3_p2_max_titles: Optional[int] = Field(default=None, env="V3_P2_MAX_TITLES")
 
-    # Phase 3: Intel Gating + Track Classification (LLM-based)
-    v3_p3_temperature: float = Field(default=0.0, env="V3_P3_TEMPERATURE")
-    v3_p3_max_tokens_gating: int = Field(default=500, env="V3_P3_MAX_TOKENS_GATING")
-    v3_p3_max_tokens_tracks: int = Field(default=500, env="V3_P3_MAX_TOKENS_TRACKS")
-    v3_p3_centroid_batch_size: int = Field(default=50, env="V3_P3_CENTROID_BATCH_SIZE")
-    v3_p3_concurrency: int = Field(default=8, env="V3_P3_CONCURRENCY")
-    v3_p3_timeout_seconds: int = Field(default=300, env="V3_P3_TIMEOUT_SECONDS")
-    v3_p3_max_titles: Optional[int] = Field(default=1000, env="V3_P3_MAX_TITLES")
+    # Phase 3.1: Event Label + Signal Extraction (ELO v2.0)
+    v3_p31_temperature: float = Field(default=0.1, env="V3_P31_TEMPERATURE")
+    v3_p31_max_tokens: int = Field(default=4000, env="V3_P31_MAX_TOKENS")
+    v3_p31_batch_size: int = Field(default=50, env="V3_P31_BATCH_SIZE")
+    v3_p31_concurrency: int = Field(default=5, env="V3_P31_CONCURRENCY")
+    v3_p31_timeout_seconds: int = Field(default=180, env="V3_P31_TIMEOUT_SECONDS")
+    v3_p31_max_titles: int = Field(default=500, env="V3_P31_MAX_TITLES")
 
-    # Phase 3.5: Event Label Extraction (ELO v2.0)
-    v3_p35_temperature: float = Field(default=0.1, env="V3_P35_TEMPERATURE")
-    v3_p35_max_tokens: int = Field(default=4000, env="V3_P35_MAX_TOKENS")
-    v3_p35_batch_size: int = Field(default=50, env="V3_P35_BATCH_SIZE")
-    v3_p35_concurrency: int = Field(default=5, env="V3_P35_CONCURRENCY")
-    v3_p35_timeout_seconds: int = Field(default=180, env="V3_P35_TIMEOUT_SECONDS")
-    v3_p35_max_titles: int = Field(default=500, env="V3_P35_MAX_TITLES")
+    # Phase 3.3: Intel Gating + Track Classification (LLM-based)
+    v3_p33_temperature: float = Field(default=0.0, env="V3_P33_TEMPERATURE")
+    v3_p33_max_tokens_gating: int = Field(default=500, env="V3_P33_MAX_TOKENS_GATING")
+    v3_p33_max_tokens_tracks: int = Field(default=500, env="V3_P33_MAX_TOKENS_TRACKS")
+    v3_p33_centroid_batch_size: int = Field(
+        default=50, env="V3_P33_CENTROID_BATCH_SIZE"
+    )
+    v3_p33_concurrency: int = Field(default=8, env="V3_P33_CONCURRENCY")
+    v3_p33_timeout_seconds: int = Field(default=300, env="V3_P33_TIMEOUT_SECONDS")
+    v3_p33_max_titles: Optional[int] = Field(default=1000, env="V3_P33_MAX_TITLES")
 
     # Phase 4: Events Digest and Summary Generation
     v3_p4_batch_size: int = Field(default=70, env="V3_P4_BATCH_SIZE")
@@ -139,7 +141,7 @@ def get_config() -> SNIConfig:
 # SIGNAL EXTRACTION & CLUSTERING CONSTANTS
 # =============================================================================
 
-# Signal types extracted by Phase 3.5 (ELO) - matches title_labels columns
+# Signal types extracted by Phase 3.1 (ELO) - matches title_labels columns
 SIGNAL_TYPES = [
     "persons",
     "orgs",

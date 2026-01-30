@@ -1,5 +1,5 @@
 """
-Phase 3.5: Combined Label + Signal Extraction (v2)
+Phase 3.1: Combined Label + Signal Extraction (v2)
 
 Extracts structured event labels AND typed signals in a single LLM call.
 Replaces separate extract_labels.py and extract_signals.py.
@@ -8,8 +8,8 @@ Labels: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
 Signals: persons, orgs, places, commodities, policies, systems, named_events
 
 Usage:
-    python pipeline/phase_3_5/extract_labels.py --max-titles 100
-    python pipeline/phase_3_5/extract_labels.py --centroid "AMERICAS-USA" --track "geo_economy"
+    python pipeline/phase_3_1/extract_labels.py --max-titles 100
+    python pipeline/phase_3_1/extract_labels.py --centroid "AMERICAS-USA" --track "geo_economy"
 """
 
 import argparse
@@ -86,13 +86,13 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        "temperature": config.v3_p35_temperature,
-        "max_tokens": config.v3_p35_max_tokens,
+        "temperature": config.v3_p31_temperature,
+        "max_tokens": config.v3_p31_max_tokens,
     }
 
     for attempt in range(config.llm_retry_attempts):
         try:
-            with httpx.Client(timeout=config.v3_p35_timeout_seconds) as client:
+            with httpx.Client(timeout=config.v3_p31_timeout_seconds) as client:
                 response = client.post(
                     "{}/chat/completions".format(config.deepseek_api_url),
                     headers=headers,
@@ -356,7 +356,11 @@ def load_titles_needing_extraction(
     backfill_entity_countries: bool = False,
     title_ids_filter: list = None,
 ) -> list[dict]:
-    """Load titles that need label+signal extraction."""
+    """Load titles that need label+signal extraction.
+
+    Phase 3.1 runs before gating (Phase 3.3), so we select titles based on
+    processing_status='assigned' and centroid_ids, NOT title_assignments.
+    """
     cur = conn.cursor()
 
     # If specific title_ids provided, just load those
@@ -379,30 +383,38 @@ def load_titles_needing_extraction(
         return [{"id": str(r[0]), "title_display": r[1]} for r in rows]
 
     # Build filter conditions
-    ta_conditions = ["ta.title_id = t.id"]
+    conditions = [
+        "t.processing_status = 'assigned'",
+        "t.centroid_ids IS NOT NULL",
+    ]
     params = []
 
     if centroid_filter:
-        ta_conditions.append("ta.ctm_id IN (SELECT id FROM ctm WHERE centroid_id = %s)")
+        conditions.append("%s = ANY(t.centroid_ids)")
         params.append(centroid_filter)
 
     if track_filter:
-        ta_conditions.append("ta.ctm_id IN (SELECT id FROM ctm WHERE track = %s)")
+        # track_filter only works after Phase 3.3 (for re-extraction)
+        conditions.append(
+            "EXISTS (SELECT 1 FROM title_assignments ta"
+            " WHERE ta.title_id = t.id"
+            " AND ta.ctm_id IN (SELECT id FROM ctm WHERE track = %s))"
+        )
         params.append(track_filter)
-
-    ta_where = " AND ".join(ta_conditions)
 
     limit_sql = ""
     if max_titles:
         limit_sql = "LIMIT %s"
         params.append(max_titles)
 
+    where_sql = " AND ".join(conditions)
+
     if backfill_entity_countries:
         # Select titles with labels but missing entity_countries
         query = """
             SELECT t.id, t.title_display
             FROM titles_v3 t
-            WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE {})
+            WHERE {}
               AND EXISTS (
                 SELECT 1 FROM title_labels tl
                 WHERE tl.title_id = t.id
@@ -411,14 +423,14 @@ def load_titles_needing_extraction(
             ORDER BY t.pubdate_utc DESC
             {}
         """.format(
-            ta_where, limit_sql
+            where_sql, limit_sql
         )
     else:
         # Select titles without labels OR without signals
         query = """
             SELECT t.id, t.title_display
             FROM titles_v3 t
-            WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE {})
+            WHERE {}
               AND (
                 NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id)
                 OR EXISTS (
@@ -430,7 +442,7 @@ def load_titles_needing_extraction(
             ORDER BY t.pubdate_utc DESC
             {}
         """.format(
-            ta_where, limit_sql
+            where_sql, limit_sql
         )
 
     cur.execute(query, params)

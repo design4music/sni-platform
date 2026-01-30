@@ -114,7 +114,7 @@ def main(max_titles: int = None, batch_size: int = 25, concurrency: int = 3):
     print("\nRunning LLM extraction for {} titles...".format(len(title_ids)))
 
     # Import here to avoid circular imports
-    from pipeline.phase_3_5.extract_labels import process_titles
+    from pipeline.phase_3_1.extract_labels import process_titles
 
     # Process in batches
     result = process_titles(
@@ -129,7 +129,7 @@ def main(max_titles: int = None, batch_size: int = 25, concurrency: int = 3):
 
     # Run centroid backfill
     print("\nRunning centroid mapping...")
-    from db.backfills.backfill_entity_centroids import backfill_entity_centroids
+    from pipeline.phase_3_2.backfill_entity_centroids import backfill_entity_centroids
 
     backfill_entity_centroids(batch_size=500)
 

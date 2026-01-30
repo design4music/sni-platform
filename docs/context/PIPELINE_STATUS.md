@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-01-29
+**Last Updated**: 2026-01-30
 **Status**: Production - Full pipeline operational
 **Branch**: `main`
 
@@ -19,11 +19,11 @@ RSS Feeds (Google News)
     |
 [Phase 2] Centroid Matching --> titles_v3 (centroid_ids assigned, status='assigned')
     |
-[Phase 3] Intel Gating + Track Assignment --> title_assignments + ctm
+[Phase 3.1] Label + Signal Extraction --> title_labels (combined LLM call)
     |
-[Phase 3.5] Label + Signal Extraction --> title_labels (combined LLM call)
+[Phase 3.2] Entity Centroid Backfill --> title_labels.entity_countries -> centroids
     |
-[Phase 3.6] Entity Centroid Backfill --> title_labels.entity_countries -> centroids
+[Phase 3.3] Intel Gating + Track Assignment --> title_assignments + ctm
     |
 [Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles
     |
@@ -45,10 +45,10 @@ Frontend (Next.js) <-- READ-ONLY
 | Phase | Interval | Batch Size | Description |
 |-------|----------|------------|-------------|
 | Phase 1 | 12 hours | all feeds | RSS ingestion |
-| Phase 2 | 15 minutes | 500 titles | Centroid matching (mechanical) |
-| Phase 3 | 10 minutes | 100 titles | Intel gating + track assignment |
-| Phase 3.5 | 10 minutes | 500 titles | Label + signal extraction (concurrency=5) |
-| Phase 3.6 | (after 3.5) | 500 titles | Entity centroid backfill |
+| Phase 2 | 12 hours | all titles | Centroid matching (mechanical) |
+| Phase 3.1 | 10 minutes | 500 titles | Label + signal extraction (concurrency=5) |
+| Phase 3.2 | (after 3.1) | 500 titles | Entity centroid backfill |
+| Phase 3.3 | 10 minutes | 100 titles | Intel gating + track assignment |
 | Phase 4 | 30 minutes | all CTMs | Incremental clustering |
 | Phase 4.1 | (after 4) | all CTMs | Topic aggregation (LLM merge) |
 | Phase 4.5a | 15 minutes | 500 events | Event summaries (decoupled) |
@@ -83,7 +83,7 @@ Frontend (Next.js) <-- READ-ONLY
 ## Phase 2: Centroid Matching
 
 **Script**: `pipeline/phase_2/match_centroids.py`
-**Interval**: 15 minutes
+**Interval**: 12 hours
 
 ### Algorithm
 
@@ -100,39 +100,14 @@ Frontend (Next.js) <-- READ-ONLY
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| Interval | 15 min | Reduced from 5min (low input rate) |
-| Batch size | 500 | Titles per run |
+| Interval | 12 hours | Same as Phase 1 |
+| Batch size | all | No limit (processes all pending) |
 
 ---
 
-## Phase 3: Intel Gating & Track Assignment
+## Phase 3.1: Label + Signal Extraction
 
-**Script**: `pipeline/phase_3/assign_tracks_batched.py`
-**Interval**: 10 minutes
-
-### Two-Stage Processing
-
-**Stage 1: Intel Gating**
-- LLM evaluates batch of titles for strategic relevance
-- Rejects: Sports, entertainment, human interest, local crime, weather
-- Accepts: Policy, international relations, economic, security, political
-- Rejected titles: `processing_status='blocked_llm'`
-
-**Stage 2: Track Assignment**
-- LLM assigns track using centroid-specific config
-- Creates `title_assignments` entries linking title-centroid-track-ctm
-
-### Multi-Centroid Logic
-
-A title with `centroid_ids = ['AMERICAS-USA', 'SYS-ENERGY']` is processed twice:
-- Once for AMERICAS-USA -> e.g., `geo_energy`
-- Once for SYS-ENERGY -> e.g., `energy_coercion`
-
----
-
-## Phase 3.5: Label + Signal Extraction
-
-**Script**: `pipeline/phase_3_5/extract_labels.py`
+**Script**: `pipeline/phase_3_1/extract_labels.py`
 **Interval**: 10 minutes
 
 ### Combined Extraction (Single LLM Call)
@@ -153,26 +128,56 @@ ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
 - `systems`: Systems/weapons (e.g., S-400, F-35)
 - `named_events`: Named events (e.g., G20 Summit)
 
+### Queue Query
+
+Selects titles with `processing_status='assigned'` and `centroid_ids IS NOT NULL`
+that do not yet have `title_labels`. No dependency on `title_assignments`.
+
 ### Configuration
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| `v3_p35_max_titles` | 500 | Titles per run |
-| `v3_p35_batch_size` | 50 | Titles per LLM call |
-| `v3_p35_concurrency` | 5 | Parallel workers |
-| `v3_p35_temperature` | 0.1 | LLM temperature |
+| `v3_p31_max_titles` | 500 | Titles per run |
+| `v3_p31_batch_size` | 50 | Titles per LLM call |
+| `v3_p31_concurrency` | 5 | Parallel workers |
+| `v3_p31_temperature` | 0.1 | LLM temperature |
 
 ---
 
-## Phase 3.6: Entity Centroid Backfill
+## Phase 3.2: Entity Centroid Backfill
 
-**Script**: `db/backfills/backfill_entity_centroids.py`
-**Runs**: After Phase 3.5
+**Script**: `pipeline/phase_3_2/backfill_entity_centroids.py`
+**Runs**: After Phase 3.1
 
-Uses `entity_countries` from Phase 3.5 to:
+Uses `entity_countries` from Phase 3.1 to:
 1. Map entities (persons, orgs) to country ISO codes
 2. Add corresponding geographic centroids to titles
 3. Enables bilateral relationship tracking (e.g., NVIDIA story -> adds USA centroid)
+
+---
+
+## Phase 3.3: Intel Gating & Track Assignment
+
+**Script**: `pipeline/phase_3_3/assign_tracks_batched.py`
+**Interval**: 10 minutes
+
+### Two-Stage Processing
+
+**Stage 1: Intel Gating**
+- LLM evaluates batch of titles for strategic relevance
+- Rejects: Sports, entertainment, human interest, local crime, weather
+- Accepts: Policy, international relations, economic, security, political
+- Rejected titles: `processing_status='blocked_llm'`
+
+**Stage 2: Track Assignment**
+- LLM assigns track using centroid-specific config
+- Creates `title_assignments` entries linking title-centroid-track-ctm
+
+### Multi-Centroid Logic
+
+A title with `centroid_ids = ['AMERICAS-USA', 'SYS-ENERGY']` is processed twice:
+- Once for AMERICAS-USA -> e.g., `geo_energy`
+- Once for SYS-ENERGY -> e.g., `energy_coercion`
 
 ---
 
@@ -278,7 +283,7 @@ processing_status: 'pending' | 'assigned' | 'out_of_scope' | 'blocked_stopword' 
 centroid_ids: TEXT[]  -- Assigned in Phase 2
 ```
 
-**title_labels**: Labels + signals from Phase 3.5
+**title_labels**: Labels + signals from Phase 3.1
 ```sql
 actor, action_class, domain, target  -- ELO labels
 persons, orgs, places, commodities, policies, systems, named_events  -- Signals
@@ -317,11 +322,14 @@ pipeline/
 |-- phase_2/
 |   |-- match_centroids.py           # Centroid matching
 |
-|-- phase_3/
-|   |-- assign_tracks_batched.py     # Intel gating + track assignment
-|
-|-- phase_3_5/
+|-- phase_3_1/
 |   |-- extract_labels.py            # Combined label + signal extraction
+|
+|-- phase_3_2/
+|   |-- backfill_entity_centroids.py # Entity->centroid mapping
+|
+|-- phase_3_3/
+|   |-- assign_tracks_batched.py     # Intel gating + track assignment
 |
 |-- phase_4/
 |   |-- incremental_clustering.py    # Topic clustering
@@ -339,7 +347,6 @@ core/
 
 db/
 |-- backfills/
-|   |-- backfill_entity_centroids.py # Entity->centroid mapping
 |   |-- backfill_unknown_entities.py # Unknown entity resolution
 |-- migrations/                      # SQL migrations
 ```
@@ -357,11 +364,11 @@ python pipeline/phase_1/ingest_feeds.py --max-feeds 10
 # Phase 2: Centroid Matching
 python pipeline/phase_2/match_centroids.py --max-titles 500
 
-# Phase 3: Track Assignment
-python pipeline/phase_3/assign_tracks_batched.py --max-titles 100
+# Phase 3.1: Label + Signal Extraction
+python pipeline/phase_3_1/extract_labels.py --max-titles 500 --concurrency 5
 
-# Phase 3.5: Label + Signal Extraction
-python pipeline/phase_3_5/extract_labels.py --max-titles 500 --concurrency 5
+# Phase 3.3: Intel Gating + Track Assignment
+python pipeline/phase_3_3/assign_tracks_batched.py --max-titles 100
 
 # Phase 4: Topic Clustering
 python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --write
@@ -379,15 +386,17 @@ python pipeline/phase_4/generate_summaries_4_5.py --max-ctms 50
 -- Phase 2 queue
 SELECT COUNT(*) FROM titles_v3 WHERE processing_status = 'pending';
 
--- Phase 3 queue
+-- Phase 3.1 queue (titles needing labels)
+SELECT COUNT(*) FROM titles_v3 t
+WHERE t.processing_status = 'assigned'
+  AND t.centroid_ids IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id);
+
+-- Phase 3.3 queue (titles needing track assignment)
 SELECT COUNT(*) FROM titles_v3
 WHERE processing_status = 'assigned'
+  AND centroid_ids IS NOT NULL
   AND id NOT IN (SELECT title_id FROM title_assignments);
-
--- Phase 3.5 queue
-SELECT COUNT(*) FROM titles_v3 t
-WHERE EXISTS (SELECT 1 FROM title_assignments ta WHERE ta.title_id = t.id)
-  AND NOT EXISTS (SELECT 1 FROM title_labels tl WHERE tl.title_id = t.id);
 
 -- Phase 4.5a queue (events needing summaries)
 SELECT COUNT(*) FROM events_v3 WHERE title IS NULL;
@@ -400,21 +409,22 @@ WHERE EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
 
 ---
 
-## Current Status (2026-01-29)
+## Current Status (2026-01-30)
 
 **Operational**: Full 7-phase pipeline running with daemon orchestration.
 
-### Recent Changes (last 10 commits)
+### Recent Changes
 
-1. **Scheduling optimization**: Phase 2 interval 5m->15m, Phase 4.5a decoupled with own 15m interval
-2. **Phase 3.5 concurrency**: Now uses 5 parallel workers, 500 titles/run
-3. **Entity-country extraction**: Maps entities to countries for centroid backfill
-4. **Conversational event summaries**: Phase 4.5a generates readable titles/summaries
-5. **Phase 4.1 topic aggregation**: LLM merge/cleanup of clustered topics
-6. **Consolidated LLM prompts**: All prompts moved to `core/prompts.py`
-7. **Combined label+signal extraction**: Single LLM call for both
-8. **All titles clustered**: No more ungrouped titles, "Other coverage" catchalls added
-9. **Backfill scripts**: Entity centroid backfill, unknown entity resolution
+1. **Phase restructuring**: Reordered phases so label extraction (3.1) and entity backfill (3.2) run before gating + track assignment (3.3)
+2. **Phase 2 limits removed**: Now processes all pending titles per run (12h interval)
+3. **Phase 3.1 queue**: No longer depends on title_assignments; uses processing_status + centroid_ids
+4. **Scheduling optimization**: Phase 4.5a decoupled with own 15m interval
+5. **Phase 3.1 concurrency**: Uses 5 parallel workers, 500 titles/run
+6. **Entity-country extraction**: Maps entities to countries for centroid backfill
+7. **Conversational event summaries**: Phase 4.5a generates readable titles/summaries
+8. **Phase 4.1 topic aggregation**: LLM merge/cleanup of clustered topics
+9. **Combined label+signal extraction**: Single LLM call for both
+10. **All titles clustered**: No more ungrouped titles, "Other coverage" catchalls added
 
 ### Pipeline Statistics (sample)
 
