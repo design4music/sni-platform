@@ -6,6 +6,7 @@ import Footer from './Footer';
 interface DashboardLayoutProps {
   children: ReactNode;
   title?: string;
+  breadcrumb?: ReactNode;
   sidebar?: ReactNode;
   fullWidthContent?: ReactNode;
   // For mobile navigation - pass track context
@@ -21,6 +22,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({
   children,
   title,
+  breadcrumb,
   sidebar,
   fullWidthContent,
   centroidLabel,
@@ -50,6 +52,9 @@ export default function DashboardLayout({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {breadcrumb && (
+          <div className="mb-4">{breadcrumb}</div>
+        )}
         {title && (
           <h1 className="text-4xl font-bold mb-8">{title}</h1>
         )}

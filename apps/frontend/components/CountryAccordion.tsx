@@ -5,6 +5,15 @@ import EventList from './EventList';
 import EventAccordion from './EventAccordion';
 import { Event, Title } from '@/lib/types';
 
+function getCountryFlag(iso2?: string): string {
+  if (!iso2 || iso2.length !== 2) return '';
+  const codePoints = iso2
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
+
 interface CountryAccordionProps {
   bucketKey: string;
   countryName: string;
@@ -36,7 +45,7 @@ export default function CountryAccordion({
 }: CountryAccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  const isSingle = isoCodes.length === 1 && isoCodes[0].length === 2;
+  const flag = isoCodes.length === 1 ? getCountryFlag(isoCodes[0]) : '';
 
   return (
     <div id={`section-intl-${bucketKey}`} className="mb-3">
@@ -47,16 +56,14 @@ export default function CountryAccordion({
       >
         <span className="text-left">
           <span className="text-lg font-semibold text-dashboard-text">
-            {isSingle && (
-              <span className="inline-block text-xs font-mono font-normal bg-blue-500/15 text-blue-400 border border-blue-500/30 rounded px-1.5 py-0.5 mr-2 align-middle">
-                {isoCodes[0]}
-              </span>
+            {flag && (
+              <span className="mr-2 text-xl align-middle">{flag}</span>
             )}
             {countryName}
           </span>
           {isoCodes.length > 1 && (
             <span className="block text-xs text-dashboard-text-muted mt-0.5">
-              {isoCodes.join(', ')}
+              {isoCodes.map(iso => getCountryFlag(iso) || iso).join(' ')}
             </span>
           )}
         </span>

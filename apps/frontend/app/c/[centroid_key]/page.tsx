@@ -10,8 +10,15 @@ import {
 } from '@/lib/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { REGIONS } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+function formatMonthLabel(monthStr: string): string {
+  const [year, month] = monthStr.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;
@@ -57,27 +64,6 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
 
   const sidebar = (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-3">About</h3>
-        <div className="space-y-2 text-sm">
-          <p>
-            <span className="text-dashboard-text-muted">Type:</span>{' '}
-            <span className="capitalize">{centroid.class}</span>
-          </p>
-          {centroid.primary_theater && (
-            <p>
-              <span className="text-dashboard-text-muted">Region:</span>{' '}
-              <Link
-                href={`/region/${centroid.primary_theater}`}
-                className="text-blue-400 hover:text-blue-300"
-              >
-                {centroid.primary_theater}
-              </Link>
-            </p>
-          )}
-        </div>
-      </div>
-
       {availableMonths.length > 0 && currentMonth && (
         <MonthPicker
           months={availableMonths}
@@ -88,25 +74,43 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     </div>
   );
 
+  const theaterLabel = centroid.primary_theater
+    ? (REGIONS as Record<string, string>)[centroid.primary_theater] || centroid.primary_theater
+    : null;
+
   return (
     <DashboardLayout
       title={centroid.label}
+      breadcrumb={theaterLabel ? (
+        <Link
+          href={`/region/${centroid.primary_theater}`}
+          className="text-blue-400 hover:text-blue-300 text-sm"
+        >
+          &larr; {theaterLabel}
+        </Link>
+      ) : undefined}
       sidebar={sidebar}
       fullWidthContent={
         centroid.profile_json ? (
           <GeoBriefSection
             profile={centroid.profile_json}
             updatedAt={centroid.updated_at}
+            centroidLabel={centroid.label}
           />
         ) : undefined
       }
     >
       <div className="space-y-8">
         <div>
-          <h2 className="text-2xl font-bold mb-4">Strategic Tracks</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            Strategic Tracks{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth)}`}
+          </h2>
           <p className="text-dashboard-text-muted mb-6">
-            Narratives organized by strategic domain
-            {currentMonth && <span className="ml-2">({currentMonth})</span>}
+            This is a monthly strategic snapshot of developments related to {centroid.label},
+            organized by domain. Each card represents a distinct analytical track, summarizing
+            how events and narratives evolved during the month within that sphere. Together,
+            they form a cross-sectional view of the country&apos;s strategic activity for the
+            selected period.
           </p>
         </div>
 

@@ -6,6 +6,7 @@ import { GeoBriefProfile } from '@/lib/types';
 interface GeoBriefSectionProps {
   profile: GeoBriefProfile;
   updatedAt?: Date;
+  centroidLabel?: string;
 }
 
 function getCountryFlag(iso2?: string): string {
@@ -77,7 +78,7 @@ function AccordionItem({
   );
 }
 
-export default function GeoBriefSection({ profile, updatedAt }: GeoBriefSectionProps) {
+export default function GeoBriefSection({ profile, updatedAt, centroidLabel }: GeoBriefSectionProps) {
   if (!profile || profile.schema_version !== 'geo_brief_v0') {
     return null;
   }
@@ -105,6 +106,12 @@ export default function GeoBriefSection({ profile, updatedAt }: GeoBriefSectionP
             </span>
           )}
         </div>
+        <p className="text-dashboard-text-muted text-sm mt-3 leading-relaxed">
+          This brief outlines the enduring context for {centroidLabel || 'this centroid'},
+          including structural constraints, strategic priorities, and persistent tensions.
+          Unlike the monthly track summaries above, it is not tied to a specific period and
+          changes only when underlying conditions evolve.
+        </p>
       </div>
 
       {hasSnapshot && profile.snapshot && (
