@@ -9,15 +9,18 @@ interface GeoBriefSectionProps {
   centroidLabel?: string;
 }
 
-function getCountryFlag(iso2?: string): string {
-  if (!iso2 || iso2.length !== 2) return '';
-
-  const codePoints = iso2
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-
-  return String.fromCodePoint(...codePoints);
+function FlagImg({ iso2, size = 24 }: { iso2: string; size?: number }) {
+  if (!iso2 || iso2.length !== 2) return null;
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
+      alt={iso2}
+      width={size}
+      height={Math.round(size * 0.75)}
+      className="inline-block align-middle"
+      style={{ objectFit: 'contain' }}
+    />
+  );
 }
 
 type Section = NonNullable<GeoBriefProfile['sections']>[number];
@@ -90,7 +93,7 @@ export default function GeoBriefSection({ profile, updatedAt, centroidLabel }: G
     return null;
   }
 
-  const flag = getCountryFlag(profile.visuals?.flag_iso2);
+  const flagIso2 = profile.visuals?.flag_iso2;
 
   return (
     <div className="border border-dashboard-border rounded-lg overflow-hidden">
@@ -98,7 +101,7 @@ export default function GeoBriefSection({ profile, updatedAt, centroidLabel }: G
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold">Background Brief</h2>
-            {flag && <span className="text-2xl">{flag}</span>}
+            {flagIso2 && <FlagImg iso2={flagIso2} size={28} />}
           </div>
           {updatedAt && (
             <span className="text-sm text-dashboard-text-muted" suppressHydrationWarning>

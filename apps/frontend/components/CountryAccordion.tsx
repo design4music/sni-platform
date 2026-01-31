@@ -5,13 +5,18 @@ import EventList from './EventList';
 import EventAccordion from './EventAccordion';
 import { Event, Title } from '@/lib/types';
 
-function getCountryFlag(iso2?: string): string {
-  if (!iso2 || iso2.length !== 2) return '';
-  const codePoints = iso2
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
+  if (!iso2 || iso2.length !== 2) return null;
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
+      alt={iso2}
+      width={size}
+      height={Math.round(size * 0.75)}
+      className="inline-block align-middle"
+      style={{ objectFit: 'contain' }}
+    />
+  );
 }
 
 interface CountryAccordionProps {
@@ -45,8 +50,6 @@ export default function CountryAccordion({
 }: CountryAccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  const flag = isoCodes.length === 1 ? getCountryFlag(isoCodes[0]) : '';
-
   return (
     <div id={`section-intl-${bucketKey}`} className="mb-3">
       <button
@@ -56,14 +59,16 @@ export default function CountryAccordion({
       >
         <span className="text-left">
           <span className="text-lg font-semibold text-dashboard-text">
-            {flag && (
-              <span className="mr-2 text-xl align-middle">{flag}</span>
+            {isoCodes.length === 1 && isoCodes[0].length === 2 && (
+              <span className="mr-2"><FlagImg iso2={isoCodes[0]} /></span>
             )}
             {countryName}
           </span>
           {isoCodes.length > 1 && (
-            <span className="block text-xs text-dashboard-text-muted mt-0.5">
-              {isoCodes.map(iso => getCountryFlag(iso) || iso).join(' ')}
+            <span className="flex items-center gap-1 mt-0.5">
+              {isoCodes.map(iso => (
+                <FlagImg key={iso} iso2={iso} size={16} />
+              ))}
             </span>
           )}
         </span>
