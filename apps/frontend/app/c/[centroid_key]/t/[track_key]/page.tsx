@@ -129,27 +129,15 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   }
 
   if (domesticEvents.length > 0) {
-    tocSections.push({
-      id: 'section-domestic',
-      label: 'Domestic',
-      count: domesticMainEvents.length
-    });
+    tocSections.push({ id: 'section-domestic', label: 'Domestic' });
   }
 
   if (internationalEvents.length > 0) {
-    tocSections.push({
-      id: 'section-international',
-      label: 'International',
-      count: internationalEvents.filter(e => !isOtherCoverage(e)).length,
-    });
+    tocSections.push({ id: 'section-international', label: 'International' });
   }
 
   if (unclusteredTitles.length > 0) {
-    tocSections.push({
-      id: 'section-other-sources',
-      label: 'Other Sources',
-      count: unclusteredTitles.length
-    });
+    tocSections.push({ id: 'section-other-sources', label: 'Other Sources' });
   }
 
   const sidebar = (
