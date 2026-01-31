@@ -12,14 +12,17 @@ interface GeoBriefSectionProps {
 function FlagImg({ iso2, size = 24 }: { iso2: string; size?: number }) {
   if (!iso2 || iso2.length !== 2) return null;
   return (
-    <img
-      src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
-      alt={iso2}
-      width={size}
-      height={Math.round(size * 0.75)}
-      className="inline-block align-middle"
-      style={{ objectFit: 'contain' }}
-    />
+    <span className="inline-flex items-center justify-center rounded border border-blue-500/30 bg-blue-500/10 overflow-hidden align-middle"
+      style={{ width: size + 6, height: Math.round(size * 0.75) + 4 }}>
+      <img
+        src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
+        alt={iso2}
+        width={size}
+        height={Math.round(size * 0.75)}
+        className="opacity-70"
+        style={{ objectFit: 'contain', filter: 'saturate(0.6) brightness(0.9)' }}
+      />
+    </span>
   );
 }
 
