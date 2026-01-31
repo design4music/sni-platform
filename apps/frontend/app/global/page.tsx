@@ -12,8 +12,16 @@ export default async function GlobalPage() {
   const nonStateActors = geoCentroids.filter(c => c.id.startsWith('NON-STATE-'));
 
   return (
-    <DashboardLayout title="Global Centroids">
+    <DashboardLayout title="Strategic Developments Worldwide">
       <div className="space-y-12">
+        <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-6">
+          <p className="text-yellow-200 font-medium">
+            This section is a conceptual illustration and a work in progress.
+            The mechanism for identifying and extracting major global developments
+            across thematic areas is still in an active research phase.
+            Content shown here may be incomplete, improperly grouped, or subject to change.
+          </p>
+        </div>
         <section>
           <h2 className="text-2xl font-bold mb-4">Systemic Lenses</h2>
           <p className="text-dashboard-text-muted mb-6">
