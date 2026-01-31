@@ -333,10 +333,12 @@ export async function getTrackSummaryByCentroidAndMonth(
   const results = await query<{ track: string; title_count: number }>(
     `SELECT
       c.track,
-      COALESCE(c.title_count, 0)::int as title_count
+      COUNT(DISTINCT ta.title_id)::int as title_count
     FROM ctm c
+    LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
     WHERE c.centroid_id = $1
       AND TO_CHAR(c.month, 'YYYY-MM') = $2
+    GROUP BY c.track
     ORDER BY c.track`,
     [centroidId, month]
   );
