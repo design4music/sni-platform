@@ -465,7 +465,7 @@ def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
         SELECT
             md5(url_gnews),
             LEFT(title_display, 500),
-            source_domain,
+            publisher_name,
             processing_status
         FROM titles_v3
         WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s

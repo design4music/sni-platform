@@ -1,16 +1,16 @@
-# SNI Project Contract (L3)
+# World Brief (SNI) Project Contract (L3)
 
 ## Project Identity
-Strategic Narrative Intelligence (SNI) is a **mechanical-first intelligence pipeline**
+World Brief is a **mechanical-first intelligence pipeline**
 for extracting, aggregating, and summarizing **strategic narratives** from global news.
 
-The system prioritizes:
+World Brief prioritizes:
 - Determinism over cleverness
 - Structural adequacy over semantic elegance
 - Coverage before purity
 - Auditability before abstraction
 
-SNI is **not** a semantic search engine, recommender system, or opinion generator.
+World Brief is **not** a semantic search engine, recommender system, or opinion generator.
 
 ---
 
@@ -33,7 +33,7 @@ SNI is **not** a semantic search engine, recommender system, or opinion generato
 
 ### 3. CTM as the Atomic Intelligence Unit
 - The Centroid–Track–Month (CTM) is the **core analytical object**.
-- All downstream intelligence (events, summaries, UI) is derived from CTMs.
+- All downstream intelligence (topics (previously "events"), summaries, UI) is derived from CTMs.
 - Titles are inputs; CTMs are products.
 
 ### 4. Many-to-Many Reality Preservation
@@ -42,7 +42,7 @@ SNI is **not** a semantic search engine, recommender system, or opinion generato
 - Forced single assignment is considered information loss.
 
 ### 5. Strategic Focus Constraint
-- SNI explicitly excludes:
+- World Brief explicitly excludes:
   - Culture
   - Sports
   - Entertainment

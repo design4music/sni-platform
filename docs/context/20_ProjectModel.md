@@ -1,4 +1,4 @@
-# SNI v3 Project Model (L2)
+# World Brief Project Model (L2)
 
 ## High-Level Flow
 

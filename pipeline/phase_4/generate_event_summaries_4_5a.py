@@ -293,9 +293,19 @@ def get_events_needing_summaries(
         params = []
 
         if not force_regenerate:
-            # Events without title OR with mechanical labels
+            # Events without title, with mechanical labels, or significantly grown
             conditions.append(
-                "(e.title IS NULL OR e.summary LIKE '%%->%%' OR e.summary LIKE '%%titles)%%' OR e.summary LIKE '%%SPIKE]%%')"
+                """(
+                    e.title IS NULL
+                    OR e.summary LIKE '%%->%%'
+                    OR e.summary LIKE '%%titles)%%'
+                    OR e.summary LIKE '%%SPIKE]%%'
+                    OR (
+                        e.summary_source_count IS NOT NULL
+                        AND e.source_batch_count > e.summary_source_count * 1.5
+                        AND e.source_batch_count - e.summary_source_count >= 5
+                    )
+                )"""
             )
 
         if ctm_id:
@@ -562,6 +572,7 @@ async def process_event(
                         tags = %s,
                         first_seen = %s,
                         date = %s,
+                        summary_source_count = source_batch_count,
                         updated_at = NOW()
                     WHERE id = %s
                     """,
