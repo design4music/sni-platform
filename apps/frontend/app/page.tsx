@@ -16,6 +16,15 @@ export default async function HomePage() {
     c => c.iso_codes && c.iso_codes.length > 0 && !c.id.startsWith('NON-STATE-')
   );
 
+  // Group centroids by region for region cards
+  const centroidsByRegion: Record<string, string[]> = {};
+  for (const c of geoCentroids) {
+    if (c.primary_theater && !c.id.startsWith('NON-STATE-')) {
+      if (!centroidsByRegion[c.primary_theater]) centroidsByRegion[c.primary_theater] = [];
+      centroidsByRegion[c.primary_theater].push(c.label);
+    }
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-12">
@@ -41,15 +50,21 @@ export default async function HomePage() {
         <section>
           <h2 className="text-3xl font-bold mb-6">World regions at a glance</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {Object.entries(REGIONS).map(([key, label]) => (
-              <Link
-                key={key}
-                href={`/region/${key.toLowerCase()}`}
-                className="p-8 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition text-center"
-              >
-                <h3 className="text-xl font-semibold">{label}</h3>
-              </Link>
-            ))}
+            {Object.entries(REGIONS).map(([key, label]) => {
+              const names = centroidsByRegion[key] || [];
+              return (
+                <Link
+                  key={key}
+                  href={`/region/${key.toLowerCase()}`}
+                  className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group"
+                >
+                  <h3 className="text-xl font-semibold mb-2">{label}</h3>
+                  <p className="text-sm text-dashboard-text-muted leading-relaxed">
+                    {names.join(', ')}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
           <p className="text-sm text-dashboard-text-muted mt-4">
             Coverage varies by country and region depending on available media sources.
