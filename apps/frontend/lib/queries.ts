@@ -350,6 +350,22 @@ export async function getTrackSummaryByCentroidAndMonth(
 }
 
 /**
+ * Get centroid-level cross-track summary for a given month
+ */
+export async function getCentroidMonthlySummary(
+  centroidId: string,
+  month: string
+): Promise<{ summary_text: string; track_count: number; total_events: number } | null> {
+  const results = await query<{ summary_text: string; track_count: number; total_events: number }>(
+    `SELECT summary_text, track_count, total_events
+     FROM centroid_monthly_summaries
+     WHERE centroid_id = $1 AND TO_CHAR(month, 'YYYY-MM') = $2`,
+    [centroidId, month]
+  );
+  return results[0] || null;
+}
+
+/**
  * Get all configured tracks for a centroid from track_configs
  */
 export async function getConfiguredTracksForCentroid(centroidId: string): Promise<string[]> {

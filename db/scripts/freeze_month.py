@@ -33,7 +33,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import config
-from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT
 
 # Threshold for "large" CTMs that get LLM summaries
 LARGE_CTM_THRESHOLD = 30
@@ -305,22 +304,48 @@ def get_centroid_track_summaries(conn, centroid_id: str, month: str) -> list:
     return cur.fetchall()
 
 
+CENTROID_SUMMARY_SYSTEM_PROMPT = """You are a strategic intelligence analyst writing monthly cross-track overviews.
+
+### Rules:
+* Use ONLY facts from the provided track summaries
+* NEVER add role descriptions (President, Chancellor, opposition leader, CEO, etc.)
+* Use bare names only -- your training data may be outdated
+* Maintain analytic, neutral tone
+* Do NOT speculate or editorialize
+* Do NOT list bullet points -- write short prose paragraphs"""
+
+
 async def generate_centroid_summary(
     centroid_id: str, centroid_label: str, month: str, track_summaries: list
 ) -> str:
     """Generate a cross-track summary for a centroid using LLM."""
+    # Build track labels for the structure instruction
+    track_labels = []
+    for track, summary, title_count, event_count in track_summaries:
+        label = track.replace("geo_", "").replace("_", " ").title()
+        track_labels.append(label)
+
     # Build input from track summaries
     lines = [
-        "Generate a concise overview summary (150-200 words) for {} in {}.".format(
+        "Generate a cross-track overview (200-300 words) for {} in {}.".format(
             centroid_label, month
         ),
         "",
-        "This summary should synthesize the key developments across all tracks below.",
-        "Focus on the most significant events and their interconnections.",
-        "",
-        "TRACK SUMMARIES:",
+        "STRUCTURE: Write one short paragraph (2-4 sentences) per track,",
+        "each under a ### heading. Use these headings in this order:",
         "",
     ]
+    for label in track_labels:
+        lines.append("  ### {}".format(label))
+    lines.append("")
+    lines.append(
+        "Each paragraph should highlight the 1-2 most significant"
+        " developments from that track. Mention cross-track connections"
+        " where they exist (e.g., energy crisis affecting security)."
+    )
+    lines.append("")
+    lines.append("TRACK SUMMARIES:")
+    lines.append("")
 
     for track, summary, title_count, event_count in track_summaries:
         track_label = track.replace("geo_", "").replace("_", " ").title()
@@ -329,7 +354,7 @@ async def generate_centroid_summary(
                 track_label, title_count, event_count
             )
         )
-        lines.append(summary[:500] if summary else "No summary available.")
+        lines.append(summary if summary else "No summary available.")
         lines.append("")
 
     prompt = "\n".join(lines)
@@ -342,11 +367,11 @@ async def generate_centroid_summary(
     payload = {
         "model": config.llm_model,
         "messages": [
-            {"role": "system", "content": CTM_SUMMARY_SYSTEM_PROMPT},
+            {"role": "system", "content": CENTROID_SUMMARY_SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
         ],
         "temperature": 0.3,
-        "max_tokens": 400,
+        "max_tokens": 600,
     }
 
     async with httpx.AsyncClient(timeout=60) as client:

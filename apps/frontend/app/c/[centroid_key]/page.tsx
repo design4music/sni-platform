@@ -1,5 +1,6 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import TrackCard from '@/components/TrackCard';
+import { getTrackIcon } from '@/components/TrackCard';
 import GeoBriefSection from '@/components/GeoBriefSection';
 import MonthPicker from '@/components/MonthPicker';
 import {
@@ -7,10 +8,11 @@ import {
   getAvailableMonthsForCentroid,
   getTrackSummaryByCentroidAndMonth,
   getConfiguredTracksForCentroid,
+  getCentroidMonthlySummary,
 } from '@/lib/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { REGIONS } from '@/lib/types';
+import { REGIONS, TRACK_LABELS, Track, getTrackLabel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +45,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     ? selectedMonth
     : availableMonths[0] || null;
 
-  // Fetch track data for the current month
-  const monthTrackData = currentMonth
-    ? await getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth)
-    : [];
+  // Fetch track data and centroid summary for the current month
+  const [monthTrackData, centroidSummary] = await Promise.all([
+    currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
+    currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
+  ]);
 
   // Build a map of track -> titleCount for the current month
   const trackDataMap = new Map(monthTrackData.map(t => [t.track, t.titleCount]));
@@ -62,14 +65,58 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
       : []
   );
 
+  const isFrozen = !!centroidSummary;
+
   const sidebar = (
-    <div className="space-y-6">
+    <div className={isFrozen ? "lg:sticky lg:top-24 space-y-6" : "space-y-6"}>
       {availableMonths.length > 0 && currentMonth && (
         <MonthPicker
           months={availableMonths}
           currentMonth={currentMonth}
           baseUrl={`/c/${centroid.id}`}
         />
+      )}
+      {isFrozen && configuredTracks.length > 0 && (
+        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
+          <h3 className="text-xl font-bold mb-1 text-dashboard-text">
+            {centroid.label}
+          </h3>
+          <p className="text-sm text-dashboard-text-muted mb-4">
+            Strategic Tracks
+          </p>
+          <nav className="space-y-1">
+            {configuredTracks.map(t => {
+              const titleCount = trackDataMap.get(t) || 0;
+              const hasData = titleCount > 0;
+              return hasData ? (
+                <Link
+                  key={t}
+                  href={`/c/${centroid.id}/t/${t}?month=${currentMonth}`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border
+                             border border-transparent hover:border-dashboard-border
+                             transition-all duration-150"
+                >
+                  <span className="text-dashboard-text-muted">{getTrackIcon(t)}</span>
+                  <span className="text-base font-medium text-dashboard-text hover:text-white transition flex-1">
+                    {getTrackLabel(t as Track)}
+                  </span>
+                  <span className="text-xs text-dashboard-text-muted tabular-nums">{titleCount}</span>
+                </Link>
+              ) : (
+                <div
+                  key={t}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg opacity-40"
+                >
+                  <span>{getTrackIcon(t)}</span>
+                  <span className="text-base font-medium flex-1">
+                    {getTrackLabel(t as Track)}
+                  </span>
+                  <span className="text-xs tabular-nums">0</span>
+                </div>
+              );
+            })}
+          </nav>
+        </div>
       )}
     </div>
   );
@@ -105,39 +152,73 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           <h2 className="text-2xl font-bold mb-4">
             Strategic Tracks{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth)}`}
           </h2>
-          <p className="text-dashboard-text-muted mb-6">
-            This is a monthly strategic snapshot of developments related to {centroid.label},
-            organized by domain. Each card represents a distinct analytical track, summarizing
-            how events and narratives evolved during the month within that sphere. Together,
-            they form a cross-sectional view of the country&apos;s strategic activity for the
-            selected period.
-          </p>
+          {!centroidSummary && (
+            <p className="text-dashboard-text-muted mb-6">
+              This is a monthly strategic snapshot of developments related to {centroid.label},
+              organized by domain. Each card represents a distinct analytical track, summarizing
+              how events and narratives evolved during the month within that sphere. Together,
+              they form a cross-sectional view of the country&apos;s strategic activity for the
+              selected period.
+            </p>
+          )}
         </div>
 
-        {configuredTracks.length === 0 ? (
-          <div className="text-center py-12 bg-dashboard-surface border border-dashboard-border rounded-lg">
-            <p className="text-dashboard-text-muted">No tracks configured for this centroid</p>
+        {centroidSummary && (
+          <div className="mb-8">
+            <h2 className="text-xl font-bold mb-3">Monthly Overview</h2>
+            <div className="text-lg leading-relaxed space-y-4">
+              {centroidSummary.summary_text.split('\n\n').flatMap((paragraph, idx) => {
+                const trimmed = paragraph.trim();
+                if (!trimmed) return [];
+                if (trimmed.startsWith('### ')) {
+                  const newlinePos = trimmed.indexOf('\n');
+                  const heading = newlinePos === -1 ? trimmed.slice(4) : trimmed.slice(4, newlinePos);
+                  const body = newlinePos === -1 ? null : trimmed.slice(newlinePos + 1).trim();
+                  const elements = [
+                    <h3 key={`h-${idx}`} className="text-base font-semibold uppercase tracking-wide text-dashboard-text-muted mt-6 first:mt-0">
+                      {heading}
+                    </h3>
+                  ];
+                  if (body) {
+                    elements.push(<p key={`p-${idx}`}>{body}</p>);
+                  }
+                  return elements;
+                }
+                return [<p key={idx}>{trimmed}</p>];
+              })}
+            </div>
+            <p className="text-sm text-dashboard-text-muted mt-3">
+              Based on {centroidSummary.total_events} topics across {centroidSummary.track_count} tracks
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {configuredTracks.map(track => {
-              const titleCount = trackDataMap.get(track) || 0;
-              const hasDataThisMonth = titleCount > 0;
-              const hasHistoricalData = tracksWithHistoricalData.has(track);
+        )}
 
-              return (
-                <TrackCard
-                  key={track}
-                  centroidId={centroid.id}
-                  track={track}
-                  latestMonth={currentMonth || undefined}
-                  titleCount={titleCount}
-                  disabled={!hasDataThisMonth}
-                  hasHistoricalData={hasHistoricalData}
-                />
-              );
-            })}
-          </div>
+        {!isFrozen && (
+          configuredTracks.length === 0 ? (
+            <div className="text-center py-12 bg-dashboard-surface border border-dashboard-border rounded-lg">
+              <p className="text-dashboard-text-muted">No tracks configured for this centroid</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {configuredTracks.map(track => {
+                const titleCount = trackDataMap.get(track) || 0;
+                const hasDataThisMonth = titleCount > 0;
+                const hasHistoricalData = tracksWithHistoricalData.has(track);
+
+                return (
+                  <TrackCard
+                    key={track}
+                    centroidId={centroid.id}
+                    track={track}
+                    latestMonth={currentMonth || undefined}
+                    titleCount={titleCount}
+                    disabled={!hasDataThisMonth}
+                    hasHistoricalData={hasHistoricalData}
+                  />
+                );
+              })}
+            </div>
+          )
         )}
       </div>
     </DashboardLayout>
