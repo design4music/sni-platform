@@ -63,21 +63,23 @@ export default function Navigation({
           onMouseEnter={() => setShowRegions(true)}
           onMouseLeave={() => setShowRegions(false)}
         >
-          <button className="text-dashboard-text-muted hover:text-dashboard-text transition">
+          <button className="text-dashboard-text-muted hover:text-dashboard-text transition py-2">
             Regional
           </button>
 
           {showRegions && (
-            <div className="absolute top-full right-0 mt-1 w-48 bg-dashboard-surface border border-dashboard-border rounded-lg shadow-lg py-2 z-50">
-              {REGIONS.map(region => (
-                <Link
-                  key={region.key}
-                  href={`/region/${region.key}`}
-                  className="block px-4 py-2 text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"
-                >
-                  {region.label}
-                </Link>
-              ))}
+            <div className="absolute top-full right-0 pt-1 z-50">
+              <div className="w-48 bg-dashboard-surface border border-dashboard-border rounded-lg shadow-lg py-2">
+                {REGIONS.map(region => (
+                  <Link
+                    key={region.key}
+                    href={`/region/${region.key}`}
+                    className="block px-4 py-2 text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"
+                  >
+                    {region.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </div>
