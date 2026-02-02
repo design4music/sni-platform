@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-01-30
+**Last Updated**: 2026-02-02
 **Status**: Production - Full pipeline operational
 **Branch**: `main`
 
@@ -310,6 +310,12 @@ centroid_id, track, month
 title_count, summary_text, is_frozen
 ```
 
+**centroid_monthly_summaries**: Cross-track summaries per centroid per month
+```sql
+centroid_id, month
+summary_text, track_count, total_events
+```
+
 ---
 
 ## File Map
@@ -346,9 +352,24 @@ core/
 |-- ontology.py                      # ELO v2.0 definitions
 
 db/
+|-- scripts/
+|   |-- freeze_month.py             # Monthly freeze + centroid summaries
 |-- backfills/
 |   |-- backfill_unknown_entities.py # Unknown entity resolution
 |-- migrations/                      # SQL migrations
+
+apps/frontend/
+|-- app/
+|   |-- c/[centroid_key]/page.tsx    # Centroid page (summary + tracks)
+|   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
+|-- lib/
+|   |-- queries.ts                   # All DB queries
+|   |-- types.ts                     # Shared types (Track, REGIONS, etc.)
+|-- components/
+|   |-- DashboardLayout.tsx          # Main layout (sidebar + content grid)
+|   |-- TrackCard.tsx                # Track card component
+|   |-- GeoBriefSection.tsx          # Centroid profile/brief display
+|   |-- MonthPicker.tsx              # Month navigation
 ```
 
 ---
@@ -409,33 +430,82 @@ WHERE EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
 
 ---
 
-## Current Status (2026-01-30)
+## Infrastructure & Deployment
 
-**Operational**: Full 7-phase pipeline running with daemon orchestration.
+### Architecture
 
-### Recent Changes
+| Component | Local (dev) | Remote (demo) |
+|-----------|-------------|---------------|
+| **Database** | Docker: `pgvector/pgvector:pg15` on port 5432 | Render managed PostgreSQL (Frankfurt) |
+| **Frontend** | `npm run dev` (localhost:3000) | Render web service (auto-deploy from `main`) |
+| **Pipeline** | `python pipeline/runner/pipeline_daemon.py` | Render worker (suspended) |
+| **Redis** | Docker: `redis:7-alpine` on port 6379 | Not used on remote |
 
-1. **Phase restructuring**: Reordered phases so label extraction (3.1) and entity backfill (3.2) run before gating + track assignment (3.3)
-2. **Phase 2 limits removed**: Now processes all pending titles per run (12h interval)
-3. **Phase 3.1 queue**: No longer depends on title_assignments; uses processing_status + centroid_ids
-4. **Scheduling optimization**: Phase 4.5a decoupled with own 15m interval
-5. **Phase 3.1 concurrency**: Uses 5 parallel workers, 500 titles/run
-6. **Entity-country extraction**: Maps entities to countries for centroid backfill
-7. **Conversational event summaries**: Phase 4.5a generates readable titles/summaries
-8. **Phase 4.1 topic aggregation**: LLM merge/cleanup of clustered topics
-9. **Combined label+signal extraction**: Single LLM call for both
-10. **All titles clustered**: No more ungrouped titles, "Other coverage" catchalls added
+### Source of Truth
 
-### Pipeline Statistics (sample)
+**Local is authoritative.** The pipeline runs only locally to avoid doubling LLM API
+costs. Remote is a read-only demo with a database snapshot.
 
+### Database Sync (local -> remote)
+
+```bash
+# 1. Dump from local Docker container
+docker exec etl_postgres bash -c \
+  "pg_dump -U postgres -d sni_v2 --no-owner --no-privileges --format=custom -f /tmp/sni_v2_live.dump"
+
+# 2. Copy dump to host
+docker cp etl_postgres:/tmp/sni_v2_live.dump ./sni_v2_live.dump
+
+# 3. Restore to Render (get connection string from Render dashboard)
+docker exec etl_postgres bash -c \
+  "pg_restore -d 'postgresql://USER:PASS@HOST/DBNAME' \
+   --no-owner --no-privileges --clean --if-exists /tmp/sni_v2_live.dump"
+```
+
+### Render Configuration
+
+- `render.yaml`: Worker service definition (pipeline daemon)
+- Frontend: Next.js web service, auto-deploys on push to `main`
+- Database: Managed PostgreSQL 15, connection via `DATABASE_URL` env var
+- Worker: Currently **suspended** (pipeline runs locally only)
+
+### Environment Variables
+
+Local: `.env` file (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DEEPSEEK_API_KEY, etc.)
+Remote: Render environment settings (`DATABASE_URL` connection string format)
+
+Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/frontend/lib/db.ts`).
+
+---
+
+## Current Status (2026-02-02)
+
+**Operational**: Full 7-phase pipeline running locally with daemon orchestration.
+January 2026 frozen with 85 centroid summaries. February 2026 pipeline active.
+
+### Recent Changes (since 2026-01-15)
+
+1. **Non-destructive incremental clustering** (Phase 4): No longer deletes events on re-run; loads only unlinked titles, matches against existing events, creates new events for unmatched clusters. LLM summaries preserved.
+2. **Events v3 normalized schema**: Migrated from JSONB `events_digest` to `events_v3` + `event_v3_titles` tables. Per-event lifecycle management.
+3. **Phase restructuring (3.1/3.2/3.3)**: Label+signal extraction now runs before intel gating. Enables mechanical pre-gating on safe labels (~30% fewer LLM calls).
+4. **Monthly freeze process**: `db/scripts/freeze_month.py` freezes CTMs, generates cross-track centroid summaries (per-track paragraphs via LLM), stores in `centroid_monthly_summaries`.
+5. **Centroid summaries on frontend**: Frozen months show monthly overview with per-track headings; track navigation moves to sticky sidebar.
+6. **Render deployment**: Frontend + DB snapshot on Render for demo. Pipeline worker suspended.
+7. **Staleness detection**: `events_v3.summary_source_count` tracks when summaries were generated; Phase 4.5a re-summarizes events that grew >50%.
+
+### Pipeline Statistics (2026-02-02)
+
+- Titles: ~46,000 total (Jan: ~42K, Feb: ~4K so far)
+- Active centroids: 85
+- CTMs: 667 (437 frozen Jan + 230 active Feb)
+- Events: ~5,100
+- Centroid monthly summaries: 85 (January)
 - Daily ingestion: ~3,000-6,000 titles
 - Assignment rate: ~43% assigned, ~40% out-of-scope, ~8% blocked
-- CTMs: 400+ active
-- Events: 4,000-5,000 per month
 
 ### Next Steps
 
-1. Monitor event summary quality and clustering coherence
-2. Tune clustering parameters (thresholds, weights) based on production data
+1. Monitor February pipeline quality and clustering coherence
+2. Tune clustering parameters based on multi-month data
 3. Cross-CTM event deduplication
-4. Frontend improvements for event display
+4. Evaluate label clustering for taxonomy refinement

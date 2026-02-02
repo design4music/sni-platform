@@ -254,4 +254,120 @@ decisions:
       simplicity, observability, and debuggability. Parallelization is deferred until
       empirically required.
 
+  - id: D-018
+    date: 2026-01-18
+    type: data_model
+    status: accepted
+    title: Normalize events into dedicated tables (events_v3)
+    rationale: >
+      Events were stored as JSONB arrays inside CTM rows (events_digest), making
+      per-event updates impossible without rewriting the entire payload. Migrated to
+      normalized events_v3 + event_v3_titles tables, enabling individual event summaries,
+      incremental clustering, and independent lifecycle management. Each event now has
+      its own row with title, summary, tags, source_batch_count, and bucket metadata.
+    consequences:
+      - Per-event LLM summary generation (Phase 4.5a) becomes possible
+      - Incremental clustering can append titles to existing events
+      - Frontend queries events directly instead of parsing JSONB
+    references:
+      - db/migrations/20260117_create_events_v3_tables.sql
+
+  - id: D-019
+    date: 2026-01-26
+    type: architectural
+    status: accepted
+    title: Signal-based mechanical topic clustering (Phase 4)
+    rationale: >
+      Replaced LLM-based event extraction with deterministic clustering using typed
+      signals (persons, orgs, places, commodities, policies, systems, named_events).
+      Early titles define anchor signals that lock after 5 titles, preventing topic
+      drift. Later titles match via weighted signal overlap. Geographic bucketing
+      (domestic, bilateral-XX, other_international) structures events spatially.
+      Sub-threshold titles route to catchall events per bucket.
+    consequences:
+      - Deterministic, reproducible clustering (no LLM variance)
+      - LLM restricted to summary generation only (Phase 4.5a/4.5b)
+      - Track-specific signal weights tune clustering per domain
+      - Catchall events ensure 100% title coverage
+    references:
+      - pipeline/phase_4/incremental_clustering.py
+      - core/config.py (TRACK_WEIGHTS, ANCHOR_LOCK_THRESHOLD, JOIN_THRESHOLD)
+
+  - id: D-020
+    date: 2026-01-30
+    type: architectural
+    status: accepted
+    title: Restructure phases -- label extraction before intel gating
+    rationale: >
+      Previously, intel gating and track assignment ran before label extraction,
+      meaning the LLM gating call had no entity/signal context. Reordering to
+      3.1 (labels + signals) -> 3.2 (entity backfill) -> 3.3 (gating + tracks)
+      gives Phase 3.3 richer context, enables mechanical pre-gating on safe label
+      patterns (skipping LLM for obvious accepts), and reduces unnecessary API calls
+      by ~30%.
+    consequences:
+      - Phase 3.3 can use label-based heuristics before calling LLM
+      - Entity backfill adds centroid assignments before track routing
+      - Pipeline phases renumbered from 3.5/3.6 to 3.1/3.2/3.3
+
+  - id: D-021
+    date: 2026-01-29
+    type: operational
+    status: accepted
+    title: Monthly freeze process with centroid-level cross-track summaries
+    rationale: >
+      End-of-month boundary needed to prevent unbounded CTM growth and to produce
+      archival-quality summaries. The freeze script marks all CTMs as frozen, generates
+      a cross-track centroid summary via LLM (one paragraph per strategic track,
+      200-300 words), and stores it in centroid_monthly_summaries. New titles after
+      freeze go into fresh CTMs for the next month. Frontend switches to a different
+      layout for frozen months (summary in main content, track nav in sticky sidebar).
+    consequences:
+      - Clean monthly boundaries for historical browsing
+      - Centroid summaries provide executive-level cross-domain overview
+      - Frozen CTMs and events are immutable (no re-clustering)
+    references:
+      - db/scripts/freeze_month.py
+      - db/migrations/20260129_add_centroid_summaries_and_purge.sql
+
+  - id: D-022
+    date: 2026-02-01
+    type: architectural
+    status: accepted
+    title: Non-destructive incremental clustering (Phase 4)
+    rationale: >
+      Phase 4 previously deleted all events for a CTM and rebuilt from scratch on
+      every run, destroying LLM-generated summaries and event identity. Replaced with
+      incremental approach: load only titles not yet linked to any event, match against
+      existing events by signal overlap, create new events only for unmatched clusters.
+      Existing event metadata (title, summary, tags) is never overwritten. Phase 4.5a
+      uses summary_source_count to detect events that grew significantly and need
+      re-summarization.
+    consequences:
+      - LLM summaries survive across pipeline runs
+      - Event IDs are stable (can be bookmarked/referenced)
+      - First run on empty CTM behaves identically to old cold path
+      - events_v3.summary column changed to nullable
+    references:
+      - pipeline/phase_4/incremental_clustering.py (process_ctm_for_daemon)
+      - db/migrations/20260201_add_summary_source_count.sql
+
+  - id: D-023
+    date: 2026-01-30
+    type: operational
+    status: accepted
+    title: Local-dev / remote-demo deployment split
+    rationale: >
+      Running the pipeline on both local and remote would double LLM API costs and
+      create data divergence. Local environment is the source of truth for development
+      and data. Render.com hosts a read-only demo: Next.js frontend + managed PostgreSQL
+      snapshot. Pipeline worker is suspended on Render. Database is synced via
+      pg_dump/pg_restore from the local Docker PostgreSQL container when needed.
+    consequences:
+      - No live pipeline on remote (demo is a point-in-time snapshot)
+      - Database updates require manual dump/restore cycle
+      - Frontend code auto-deploys via Render on git push to main
+    references:
+      - render.yaml
+      - pipeline/runner/sni-v3-pipeline.service (reference only, not active on Render)
 
