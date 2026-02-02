@@ -26,7 +26,7 @@ export default async function RegionPage({ params }: RegionPageProps) {
     <DashboardLayout title={regionLabel}>
       <div className="space-y-6">
         <p className="text-xl text-dashboard-text-muted">
-          Geographic centroids in {regionLabel}
+          Countries and sub-regions covered in this area
         </p>
 
         {centroids.length === 0 ? (
