@@ -58,7 +58,11 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-8 pt-8 border-t border-dashboard-border">
           <p className="text-sm text-dashboard-text-muted text-center">
-            &copy; {currentYear} WorldBrief & Maksim Micheliov. All rights reserved.
+            &copy; {currentYear} WorldBrief &{' '}
+            <a href="https://www.linkedin.com/in/mmdesign/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition">
+              Maksim Micheliov
+            </a>
+            . All rights reserved.
           </p>
         </div>
       </div>
