@@ -253,12 +253,22 @@ export async function getTrackSummaryByCentroid(
   }));
 }
 
-export async function getAllActiveFeeds(): Promise<Feed[]> {
-  return query<Feed>(
-    `SELECT id, name, url, language_code, country_code, source_domain, is_active
-     FROM feeds
-     WHERE is_active = true
-     ORDER BY country_code, name`
+export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: number; assigned_titles: number })[]> {
+  return query<Feed & { total_titles: number; assigned_titles: number }>(
+    `SELECT f.id, f.name, f.url, f.language_code, f.country_code, f.source_domain, f.is_active,
+       COALESCE(s.total, 0)::int as total_titles,
+       COALESCE(s.assigned, 0)::int as assigned_titles
+     FROM feeds f
+     LEFT JOIN (
+       SELECT publisher_name,
+         COUNT(*) as total,
+         COUNT(CASE WHEN processing_status = 'assigned' THEN 1 END) as assigned
+       FROM titles_v3
+       WHERE publisher_name IS NOT NULL
+       GROUP BY publisher_name
+     ) s ON s.publisher_name = f.name
+     WHERE f.is_active = true
+     ORDER BY f.country_code, f.name`
   );
 }
 
