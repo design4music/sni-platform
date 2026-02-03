@@ -255,18 +255,88 @@ export async function getTrackSummaryByCentroid(
 
 export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: number; assigned_titles: number })[]> {
   return query<Feed & { total_titles: number; assigned_titles: number }>(
-    `SELECT f.id, f.name, f.url, f.language_code, f.country_code, f.source_domain, f.is_active,
-       COALESCE(s.total, 0)::int as total_titles,
-       COALESCE(s.assigned, 0)::int as assigned_titles
+    `WITH publisher_map(feed_name, publisher_name) AS (VALUES
+       ('Al-Ahram', 'Ahram Online'), ('Al-Ahram', 'بوابة الأهرام'), ('Al-Ahram', 'الأهرام اوتو'),
+       ('Al Arabiya', 'العربية'), ('Al Arabiya', 'Al Arabiya English'),
+       ('Al Jazeera', 'الجزيرة نت'),
+       ('Anadolu Agency', 'Anadolu Ajansı'),
+       ('ABC News', 'Australian Broadcasting Corporation'), ('ABC News', 'ABC iview'),
+       ('Associated Press', 'AP News'), ('AFP', 'AFP Fact Check'),
+       ('Asahi Shimbun', '朝日新聞'),
+       ('BBC World', 'BBC'),
+       ('CGTN', 'news.cgtn.com'), ('CGTN', 'newsaf.cgtn.com'),
+       ('Channel NewsAsia', 'CNA'),
+       ('Clarín', 'Clarin.com'),
+       ('CTV News', 'CTV'),
+       ('Daily Mirror', 'Daily Mirror - Sri Lanka'),
+       ('Daily Star', 'The Daily Star'),
+       ('Deutsche Welle', 'dw.com'), ('Deutsche Welle', 'DW.com'), ('Deutsche Welle', 'DW'),
+       ('El País', 'EL PAÍS'), ('El País', 'EL PAÍS English'),
+       ('EurActiv', 'Euractiv'),
+       ('Euronews', 'Euronews.com'),
+       ('Express Tribune', 'The Express Tribune'),
+       ('Fars News', 'farsnews.ir'), ('Fars News', 'Fars News Agency'),
+       ('Frankfurter Allgemeine', 'FAZ'),
+       ('Globe and Mail', 'The Globe and Mail'),
+       ('Indian Express', 'The Indian Express'),
+       ('Jakarta Post', 'The Jakarta Post'),
+       ('Japan Times', 'The Japan Times'),
+       ('Jerusalem Post', 'The Jerusalem Post'), ('Jerusalem Post', 'jpost.com'),
+       ('KBS World', 'KBS WORLD Radio'),
+       ('Korea Herald', 'The Korea Herald'), ('Korea Herald', 'koreaherald.com'),
+       ('Kyodo News', 'Japan Wire by KYODO NEWS'),
+       ('La Repubblica', 'la Repubblica'), ('La Repubblica', 'Corriere Tv'), ('La Repubblica', 'Corriere Roma'),
+       ('Le Monde', 'Le Monde.fr'),
+       ('New Straits Times', 'NST Online'),
+       ('New York Times', 'The New York Times'), ('New York Times', 'nytimes.com'),
+       ('NHK World', 'nhk.or.jp'),
+       ('O Estado de S. Paulo', 'Estadão'), ('O Estado de S. Paulo', 'Estadão E-Investidor'),
+       ('People''s Daily', 'People''s Daily Online'),
+       ('Philippine Daily Inquirer', 'Inquirer.net'), ('Philippine Daily Inquirer', 'INQUIRER.net USA'), ('Philippine Daily Inquirer', 'Cebu Daily News'),
+       ('Punch', 'Punch Newspapers'),
+       ('Republic TV', 'republic.tv'),
+       ('Sputnik', 'sputniknews.com'),
+       ('Süddeutsche Zeitung', 'SZ.de'), ('Süddeutsche Zeitung', 'SZ Immobilienmarkt'),
+       ('Sydney Morning Herald', 'The Sydney Morning Herald'), ('Sydney Morning Herald', 'SMH.com.au'),
+       ('Tasnim News', 'tasnimnews.com'),
+       ('TASS', 'tass.com'),
+       ('The National', 'thenationalnews.com'),
+       ('The News', 'The News International'),
+       ('The Standard', 'standardmedia.co.ke'),
+       ('Times of Israel', 'The Times of Israel'), ('Times of Israel', 'timesofisrael.com'),
+       ('Ukraine World', 'UkraineWorld'),
+       ('Vanguard', 'Vanguard News'),
+       ('Vietnam News', 'vietnamnews.vn'),
+       ('VN Express', 'VnExpress International'),
+       ('Voice of America', 'VOA - Voice of America English News'),
+       ('Wall Street Journal', 'The Wall Street Journal'),
+       ('Washington Post', 'The Washington Post'),
+       ('Xinhua', 'Xinhuanet Deutsch'),
+       ('Yonhap', 'Yonhap News Agency')
+     ),
+     feed_publishers AS (
+       SELECT feed_name, publisher_name FROM publisher_map
+       UNION ALL
+       SELECT name, name FROM feeds WHERE is_active = true
+     ),
+     stats AS (
+       SELECT fp.feed_name,
+         SUM(s.total)::int as total,
+         SUM(s.assigned)::int as assigned
+       FROM feed_publishers fp
+       JOIN (
+         SELECT publisher_name, COUNT(*) as total,
+           COUNT(CASE WHEN processing_status = 'assigned' THEN 1 END) as assigned
+         FROM titles_v3 WHERE publisher_name IS NOT NULL
+         GROUP BY publisher_name
+       ) s ON s.publisher_name = fp.publisher_name
+       GROUP BY fp.feed_name
+     )
+     SELECT f.id, f.name, f.url, f.language_code, f.country_code, f.source_domain, f.is_active,
+       COALESCE(st.total, 0)::int as total_titles,
+       COALESCE(st.assigned, 0)::int as assigned_titles
      FROM feeds f
-     LEFT JOIN (
-       SELECT publisher_name,
-         COUNT(*) as total,
-         COUNT(CASE WHEN processing_status = 'assigned' THEN 1 END) as assigned
-       FROM titles_v3
-       WHERE publisher_name IS NOT NULL
-       GROUP BY publisher_name
-     ) s ON s.publisher_name = f.name
+     LEFT JOIN stats st ON st.feed_name = f.name
      WHERE f.is_active = true
      ORDER BY f.country_code, f.name`
   );
