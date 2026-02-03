@@ -448,19 +448,44 @@ costs. Remote is a read-only demo with a database snapshot.
 
 ### Database Sync (local -> remote)
 
+The remote DB is a **full snapshot** of local. There is no selective sync or
+migration -- dump the entire local DB and restore over the remote one.
+This is safe because the remote has no pipeline running (no data to lose).
+
+**When to sync**: After pipeline runs, after freeze, after any DB schema change,
+or whenever the live demo needs to show current data.
+
+**Step 1: Dump local DB** (runs inside the Docker container):
 ```bash
-# 1. Dump from local Docker container
 docker exec etl_postgres bash -c \
   "pg_dump -U postgres -d sni_v2 --no-owner --no-privileges --format=custom -f /tmp/sni_v2_live.dump"
+```
 
-# 2. Copy dump to host
-docker cp etl_postgres:/tmp/sni_v2_live.dump ./sni_v2_live.dump
-
-# 3. Restore to Render (get connection string from Render dashboard)
+**Step 2: Restore to Render** (also runs from the Docker container, which has `pg_restore`):
+```bash
 docker exec etl_postgres bash -c \
   "pg_restore -d 'postgresql://USER:PASS@HOST/DBNAME' \
    --no-owner --no-privileges --clean --if-exists /tmp/sni_v2_live.dump"
 ```
+
+The Render external connection string is in the Render dashboard under
+PostgreSQL > Info > External Database URL. Format:
+`postgresql://USER:PASS@dpg-XXXXX-a.frankfurt-postgres.render.com/sni_v2`
+
+**Step 3 (optional): Verify**:
+```bash
+docker exec etl_postgres bash -c \
+  "psql 'postgresql://USER:PASS@HOST/DBNAME' -c 'SELECT COUNT(*) FROM titles_v3;'"
+```
+
+Notes:
+- Step 2 uses `--clean --if-exists` which drops and recreates all objects. No
+  need to run migrations separately -- the dump includes the full schema.
+- `docker cp` to host is NOT required. The dump stays in `/tmp` inside the
+  container and `pg_restore` reads it from there directly.
+- The dump file is ~30 MB and restore takes ~1 minute to Frankfurt.
+- Local `pg_dump`/`pg_restore` binaries are NOT installed on Windows. Always
+  run these commands via `docker exec etl_postgres bash -c "..."`.
 
 ### Render Configuration
 
