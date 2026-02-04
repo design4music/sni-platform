@@ -547,23 +547,120 @@ ORDER BY e.date, c.centroid_id
 """
 
 
+# --- Wikipedia fact-check reference ---
+
+
+WIKI_HEADERS = {
+    "User-Agent": "WorldBriefBot/1.0 (https://worldbrief.io; contact@worldbrief.io)",
+}
+
+
+def fetch_wikipedia_context(title, anchor_tags, month_str=None):
+    """Search Wikipedia for the epic topic and return article content.
+
+    Fetches full article text (not just intros) for the most relevant
+    articles. Returns up to ~8000 chars of combined content.
+    """
+    from urllib.parse import quote
+
+    queries = []
+    # Tag + year first: most likely to find specific event articles
+    for tag in anchor_tags[:5]:
+        if ":" in tag:
+            val = tag.split(":", 1)[1]
+            if month_str:
+                queries.append("%s %s" % (val, month_str[:4]))
+    # Then title-based queries as fallback
+    if title:
+        if month_str:
+            queries.append("%s %s" % (title, month_str[:4]))
+        queries.append(title)
+
+    seen_pages = set()
+    all_extracts = []
+    total_chars = 0
+    max_chars = 8000
+
+    for query in queries:
+        if total_chars >= max_chars:
+            break
+        try:
+            search_url = (
+                "https://en.wikipedia.org/w/api.php"
+                "?action=query&list=search&srsearch=%s"
+                "&srlimit=3&format=json&utf8=1" % quote(query)
+            )
+            resp = httpx.get(search_url, headers=WIKI_HEADERS, timeout=10)
+            if resp.status_code != 200:
+                continue
+
+            results = resp.json().get("query", {}).get("search", [])
+            new_results = [r for r in results if r["pageid"] not in seen_pages]
+            if not new_results:
+                continue
+
+            # Fetch full article extracts (no exintro flag)
+            page_ids = "|".join(str(r["pageid"]) for r in new_results[:2])
+            extract_url = (
+                "https://en.wikipedia.org/w/api.php"
+                "?action=query&prop=extracts&explaintext=1"
+                "&pageids=%s&format=json&utf8=1" % page_ids
+            )
+            resp = httpx.get(extract_url, headers=WIKI_HEADERS, timeout=15)
+            if resp.status_code != 200:
+                continue
+
+            pages = resp.json().get("query", {}).get("pages", {})
+            for page in pages.values():
+                pid = page.get("pageid")
+                if pid in seen_pages:
+                    continue
+                seen_pages.add(pid)
+
+                extract = page.get("extract", "").strip()
+                if extract and len(extract) > 300:
+                    # Cap per article at 4000 chars
+                    if len(extract) > 4000:
+                        extract = extract[:4000] + "..."
+                    all_extracts.append("## %s\n%s" % (page.get("title", ""), extract))
+                    total_chars += len(extract)
+
+        except Exception:
+            continue
+
+    if all_extracts:
+        return "\n\n".join(all_extracts)
+    return None
+
+
 ENRICH_RULES = (
-    "STRICT RULES:\n"
-    "- Use ONLY facts from the event titles/summaries below. NEVER add facts, "
-    "dates, names, or details from your training data.\n"
-    "- NEVER assign office titles, political status, or roles (e.g. 'president', "
-    "'former president') unless explicitly stated in the event titles.\n"
-    "- Maintain 100%% neutral, balanced tone. No value judgments. No words like "
-    "'cynically', 'brazenly', 'aggressively', 'dangerously'. Describe actions "
-    "and stated positions without characterizing motives.\n"
+    "YOU HAVE TWO SOURCES:\n"
+    "1. REFERENCE MATERIAL (Wikipedia) - your primary source for facts, names, "
+    "dates, and sequence of events. Trust it for accuracy.\n"
+    "2. EVENT DATA (news titles from our platform) - shows what topics were "
+    "covered and from which countries. Use it to understand geographic spread, "
+    "which angles got attention, and cross-country dynamics.\n\n"
+    "Synthesize both sources into an accurate, well-informed narrative. "
+    "When the reference and event data conflict on facts (names, dates, "
+    "sequence), trust the reference. When the event data covers angles or "
+    "countries the reference does not, include those perspectives.\n\n"
+    "NEVER use facts from your training data. Only the two sources above.\n\n"
+    "DATES: Use specific dates only when stated in the reference material. "
+    "The dates in the event data are article PUBLISH dates (they lag actual "
+    "events by 1+ days) - do not treat them as event dates. When no exact "
+    "date is available, use approximate references: 'in early January', "
+    "'mid-month', 'by late January'.\n\n"
+    "TONE AND STYLE:\n"
+    "- 100%% neutral, balanced. No value judgments. No words like 'cynically', "
+    "'brazenly', 'aggressively'. Describe actions and stated positions.\n"
     "- Present all sides' stated positions with equal weight.\n"
-    "- Write in a clear, explanatory style. Imagine explaining this to a smart "
-    "reader who follows the news but might not know specialized terms. "
-    "Spell out acronyms on first use and explain context when helpful.\n"
+    "- Clear, explanatory style. Imagine explaining to a smart reader who "
+    "follows the news but might not know specialized terms. Spell out "
+    "acronyms on first use and explain context when helpful.\n"
 )
 
 
-def generate_timeline(title, events):
+def generate_timeline(title, events, wiki_ref=None):
     """Generate a chronological narrative of how the story unfolded."""
     lines = []
     for ev in events:
@@ -572,20 +669,29 @@ def generate_timeline(title, events):
 
     event_list = "\n".join(lines)
 
+    ref_block = "No reference material available.\n\n"
+    if wiki_ref:
+        ref_block = "REFERENCE MATERIAL:\n%s\n\n" % wiki_ref
+
     prompt = (
         "You are writing a chronological narrative of a major news story "
         "that unfolded across multiple countries.\n\n"
         "%s\n"
         "Story: %s\n\n"
-        "Below are all events sorted by date, with their country/region:\n"
+        "%s"
+        "EVENT DATA (news coverage from our platform, sorted by publish date "
+        "with country/region):\n"
         "%s\n\n"
         "Write a chronological narrative (3-5 paragraphs) describing how this "
-        "story unfolded during the month and across geography. Focus on:\n"
+        "story unfolded during the month and across geography. Use the "
+        "reference material for accurate facts, names, and dates. Use the "
+        "event data to understand which countries covered the story and "
+        "what angles received attention. Focus on:\n"
         "- Key developments and escalations\n"
         "- How different countries/regions reacted\n"
         "- Important turning points\n\n"
         "Write in past tense."
-    ) % (ENRICH_RULES, title, event_list)
+    ) % (ENRICH_RULES, title, ref_block, event_list)
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
@@ -595,7 +701,7 @@ def generate_timeline(title, events):
         "model": config.llm_model,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
-        "max_tokens": 1000,
+        "max_tokens": 1500,
     }
 
     resp = httpx.post(
@@ -612,7 +718,7 @@ def generate_timeline(title, events):
     return resp.json()["choices"][0]["message"]["content"].strip()
 
 
-def generate_narratives(title, events):
+def generate_narratives(title, events, wiki_ref=None):
     """Identify main narrative threads within the story."""
     lines = []
     for ev in events[:80]:
@@ -621,18 +727,25 @@ def generate_narratives(title, events):
 
     event_list = "\n".join(lines)
 
+    ref_block = "No reference material available.\n\n"
+    if wiki_ref:
+        ref_block = "REFERENCE MATERIAL:\n%s\n\n" % wiki_ref
+
     prompt = (
         "You are analyzing a major news story that spanned multiple countries.\n\n"
         "%s\n"
         "Story: %s\n\n"
-        "Events:\n%s\n\n"
+        "%s"
+        "EVENT DATA (news coverage by country):\n%s\n\n"
         "Identify 3-5 distinct narrative threads or angles within this story. "
         "These should be genuinely different dimensions (e.g. diplomatic, "
-        "economic, military, domestic politics, legal, humanitarian).\n\n"
+        "economic, military, domestic politics, legal, humanitarian). "
+        "Use the reference material for accurate details and the event data "
+        "to understand cross-country coverage.\n\n"
         "Respond with ONLY a JSON array:\n"
         '[{"title": "short title", "description": "2-3 sentence description"}, ...]\n\n'
         "Return ONLY the JSON array, no other text."
-    ) % (ENRICH_RULES, title, event_list)
+    ) % (ENRICH_RULES, title, ref_block, event_list)
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
@@ -669,7 +782,7 @@ def generate_narratives(title, events):
         return None
 
 
-def generate_centroid_summaries(title, events):
+def generate_centroid_summaries(title, events, wiki_ref=None):
     """Generate a short summary for each centroid's perspective."""
     by_centroid = defaultdict(list)
     for ev in events:
@@ -685,18 +798,24 @@ def generate_centroid_summaries(title, events):
 
     event_list = "\n".join(lines)
 
+    ref_block = "No reference material available.\n\n"
+    if wiki_ref:
+        ref_block = "REFERENCE MATERIAL:\n%s\n\n" % wiki_ref
+
     prompt = (
         "You are summarizing how a global news story manifested across "
         "different countries and regions.\n\n"
         "%s\n"
         "Story: %s\n\n"
-        "Events by country/region:\n%s\n\n"
+        "%s"
+        "EVENT DATA (news coverage by country):\n%s\n\n"
         "For each country/region, write a 1-2 sentence summary of the key "
-        "developments from that perspective.\n\n"
+        "developments from that perspective. Use the reference material for "
+        "accurate details and the event data for country-specific angles.\n\n"
         "Respond with ONLY a JSON object:\n"
         '{"CENTROID_ID": "summary text", ...}\n\n'
         "Use the exact centroid IDs as keys. Return ONLY the JSON, no other text."
-    ) % (ENRICH_RULES, title, event_list)
+    ) % (ENRICH_RULES, title, ref_block, event_list)
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
@@ -740,16 +859,32 @@ WHERE id = %s
 """
 
 
-def enrich_epic(conn, epic_id, title, events):
+def enrich_epic(conn, epic_id, title, events, anchor_tags=None, month_str=None):
     """Generate and store timeline, narratives, centroid summaries."""
+    # Fetch Wikipedia reference for fact-checking
+    wiki_ref = None
+    if anchor_tags:
+        print("  Fetching Wikipedia context...")
+        wiki_ref = fetch_wikipedia_context(title, anchor_tags, month_str)
+        if wiki_ref:
+            print("  Wikipedia context: %d chars" % len(wiki_ref))
+        else:
+            print("  No Wikipedia context found")
+
     print("  Enriching: timeline...")
-    timeline = generate_timeline(title, events)
+    timeline = generate_timeline(title, events, wiki_ref)
+
+    # If LLM rejected the prompt (content filter), retry without Wikipedia
+    if timeline is None and wiki_ref:
+        print("  Retrying enrichment without Wikipedia context...")
+        wiki_ref = None
+        timeline = generate_timeline(title, events, None)
 
     print("  Enriching: narratives...")
-    narratives = generate_narratives(title, events)
+    narratives = generate_narratives(title, events, wiki_ref)
 
     print("  Enriching: centroid summaries...")
-    centroid_sums = generate_centroid_summaries(title, events)
+    centroid_sums = generate_centroid_summaries(title, events, wiki_ref)
 
     cur = conn.cursor()
     cur.execute(
@@ -789,7 +924,7 @@ def enrich_all(month_str=None):
 
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, title, slug FROM epics WHERE month = %s "
+            "SELECT id, title, slug, anchor_tags FROM epics WHERE month = %s "
             "ORDER BY total_sources DESC",
             (month,),
         )
@@ -803,7 +938,7 @@ def enrich_all(month_str=None):
         print("ENRICH EPICS: %s (%d epics)" % (month_str, len(epics)))
         print("=" * 60)
 
-        for epic_id, title, slug in epics:
+        for epic_id, title, slug, anchor_tags in epics:
             print()
             print("-" * 50)
             print("Epic: %s" % (title or slug))
@@ -812,7 +947,7 @@ def enrich_all(month_str=None):
             events = cur.fetchall()
             print("  %d events" % len(events))
 
-            enrich_epic(conn, epic_id, title or slug, events)
+            enrich_epic(conn, epic_id, title or slug, events, anchor_tags, month_str)
 
         print()
         print("=" * 60)
