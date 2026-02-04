@@ -116,6 +116,46 @@ export const TRACK_LABELS = new Proxy({} as Record<string, string>, {
   }
 });
 
+export interface EpicNarrative {
+  title: string;
+  description: string;
+}
+
+export interface Epic {
+  id: string;
+  slug: string;
+  month: string;
+  title: string | null;
+  summary: string | null;
+  anchor_tags: string[];
+  centroid_count: number;
+  event_count: number;
+  total_sources: number;
+  timeline: string | null;
+  narratives: EpicNarrative[] | null;
+  centroid_summaries: Record<string, string> | null;
+}
+
+export interface EpicEvent {
+  event_id: string;
+  title: string | null;
+  summary: string;
+  tags: string[] | null;
+  source_batch_count: number;
+  date: string;
+  centroid_id: string;
+  track: string;
+  centroid_label: string;
+}
+
+export interface EpicCentroidStat {
+  centroid_id: string;
+  centroid_label: string;
+  event_count: number;
+  total_sources: number;
+  iso_codes: string[] | null;
+}
+
 export const REGIONS = {
   EUROPE: 'Europe',
   ASIA: 'Asia',

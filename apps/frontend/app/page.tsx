@@ -2,7 +2,8 @@ import DashboardLayout from '@/components/DashboardLayout';
 import MapSection from '@/components/MapSection';
 import SourceCarousel from '@/components/SourceCarousel';
 import AnimatedStats from '@/components/AnimatedStats';
-import { getCentroidsByClass, getAllActiveFeeds } from '@/lib/queries';
+import EpicCard from '@/components/EpicCard';
+import { getCentroidsByClass, getAllActiveFeeds, getLatestEpics } from '@/lib/queries';
 import { REGIONS } from '@/lib/types';
 import Link from 'next/link';
 
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const geoCentroids = await getCentroidsByClass('geo');
   const feeds = await getAllActiveFeeds();
+  const latestEpics = await getLatestEpics(3);
 
   const geoCentroidsWithMap = geoCentroids.filter(
     c => c.iso_codes && c.iso_codes.length > 0 && !c.id.startsWith('NON-STATE-')
@@ -70,6 +72,26 @@ export default async function HomePage() {
             Coverage varies by country and region depending on available media sources.
           </p>
         </section>
+
+        {/* Cross-Country Epics */}
+        {latestEpics.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold">Cross-Country Stories</h2>
+              <Link
+                href="/epics"
+                className="text-sm text-blue-400 hover:text-blue-300 transition"
+              >
+                View all
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {latestEpics.map(epic => (
+                <EpicCard key={epic.id} epic={epic} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Sources Carousel */}
         <SourceCarousel feedCount={feeds.length} />

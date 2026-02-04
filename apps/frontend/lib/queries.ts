@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -472,4 +472,83 @@ export async function getConfiguredTracksForCentroid(centroidId: string): Promis
   }
 
   return [];
+}
+
+// ========================================================================
+// Epic queries
+// ========================================================================
+
+export async function getEpicMonths(): Promise<string[]> {
+  const results = await query<{ month: string }>(
+    "SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month FROM epics ORDER BY month DESC"
+  );
+  return results.map(r => r.month);
+}
+
+export async function getEpicsByMonth(month: string): Promise<Epic[]> {
+  return query<Epic>(
+    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+            anchor_tags, centroid_count, event_count, total_sources
+     FROM epics
+     WHERE TO_CHAR(month, 'YYYY-MM') = $1
+     ORDER BY total_sources DESC`,
+    [month]
+  );
+}
+
+export async function getEpicBySlug(slug: string): Promise<Epic | null> {
+  const results = await query<Epic>(
+    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+            anchor_tags, centroid_count, event_count, total_sources,
+            timeline, narratives, centroid_summaries
+     FROM epics
+     WHERE slug = $1`,
+    [slug]
+  );
+  return results[0] || null;
+}
+
+export async function getEpicEvents(epicId: string): Promise<EpicEvent[]> {
+  return query<EpicEvent>(
+    `SELECT e.id as event_id, e.title, e.summary, e.tags,
+            e.source_batch_count, e.date::text as date,
+            c.centroid_id, c.track,
+            cv.label as centroid_label
+     FROM epic_events ee
+     JOIN events_v3 e ON ee.event_id = e.id
+     JOIN ctm c ON e.ctm_id = c.id
+     JOIN centroids_v3 cv ON c.centroid_id = cv.id
+     WHERE ee.epic_id = $1 AND ee.is_included = true
+     ORDER BY cv.label, e.source_batch_count DESC`,
+    [epicId]
+  );
+}
+
+export async function getEpicCentroidBreakdown(epicId: string): Promise<EpicCentroidStat[]> {
+  return query<EpicCentroidStat>(
+    `SELECT c.centroid_id, cv.label as centroid_label,
+            COUNT(*)::int as event_count,
+            SUM(e.source_batch_count)::int as total_sources,
+            cv.iso_codes
+     FROM epic_events ee
+     JOIN events_v3 e ON ee.event_id = e.id
+     JOIN ctm c ON e.ctm_id = c.id
+     JOIN centroids_v3 cv ON c.centroid_id = cv.id
+     WHERE ee.epic_id = $1 AND ee.is_included = true
+     GROUP BY c.centroid_id, cv.label, cv.iso_codes
+     ORDER BY total_sources DESC`,
+    [epicId]
+  );
+}
+
+export async function getLatestEpics(limit: number = 3): Promise<Epic[]> {
+  return query<Epic>(
+    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+            anchor_tags, centroid_count, event_count, total_sources
+     FROM epics
+     WHERE month = (SELECT MAX(month) FROM epics)
+     ORDER BY total_sources DESC
+     LIMIT $1`,
+    [limit]
+  );
 }
