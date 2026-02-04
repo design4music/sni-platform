@@ -92,6 +92,62 @@ def group_by_track(rows):
     return groups
 
 
+def print_signal_comparison(keyword, rows):
+    """Show top entity tags per centroid to reveal perspective differences."""
+    # Collect tags per centroid, weighted by source count
+    from collections import defaultdict
+
+    # The keyword itself as a place tag to exclude (e.g. place:greenland)
+    exclude_tag = "place:%s" % keyword.lower()
+
+    centroid_tags = defaultdict(lambda: defaultdict(lambda: [0, 0]))  # {weight, count}
+    for r in rows:
+        if not r.tags:
+            continue
+        for tag in r.tags:
+            if tag == exclude_tag:
+                continue
+            centroid_tags[r.centroid_id][tag][0] += r.source_batch_count
+            centroid_tags[r.centroid_id][tag][1] += 1
+
+    if not centroid_tags:
+        return
+
+    print("--- SIGNAL COMPARISON (top tags per centroid) ---")
+    print()
+
+    # Sort centroids by total weight
+    sorted_centroids = sorted(
+        centroid_tags.items(),
+        key=lambda x: sum(v[0] for v in x[1].values()),
+        reverse=True,
+    )
+
+    # Collect all tags across centroids to find distinctive ones
+    global_tag_count = defaultdict(int)
+    for cid, tags in sorted_centroids:
+        for tag in tags:
+            global_tag_count[tag] += 1
+
+    for centroid_id, tags in sorted_centroids:
+        # Sort tags by weight descending, take top 8
+        top = sorted(tags.items(), key=lambda x: x[1][0], reverse=True)[:8]
+        if not top:
+            continue
+
+        # Mark distinctive tags (appear in <=3 centroids)
+        parts = []
+        for tag, (weight, count) in top:
+            marker = "*" if global_tag_count[tag] <= 3 else ""
+            parts.append("%s%s(%d)" % (marker, tag, count))
+
+        print("  %-20s %s" % (centroid_id, "  ".join(parts)))
+
+    print()
+    print("  * = distinctive (appears in <=3 centroids)")
+    print()
+
+
 def print_report(keyword, rows):
     print("=" * 70)
     print("EPIC EXPLORER: %s" % keyword)
@@ -137,6 +193,9 @@ def print_report(keyword, rows):
         print("  %-30s %3d events, %5d sources" % (track, len(events), src))
 
     print()
+
+    # -- Signal comparison --
+    print_signal_comparison(keyword, rows)
 
     # -- Top 15 events --
     print("--- TOP 15 EVENTS (by source count) ---")
