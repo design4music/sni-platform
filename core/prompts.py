@@ -283,6 +283,13 @@ FORMATTING RULES:
 - Don't use phrases like "amid growing concerns" or "sparking debate"
 - No sensationalism or editorializing
 
+**CRITICAL - NO INVENTED CAUSALITY**:
+- NEVER connect events with causal language unless the headlines explicitly state causation
+- Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
+- Instead, simply LIST what happened: "X happened. Y also occurred."
+- Two events in the same time period does NOT mean one caused the other
+- When in doubt, use a period and start a new sentence instead of a causal bridge
+
 **CRITICAL - NO ROLE DESCRIPTIONS**:
 - NEVER write "President Trump", "Former President Trump", "CEO Dimon", etc.
 - Use ONLY the bare name: "Trump", "Dimon", "Powell", "Musk"

@@ -156,6 +156,25 @@ export interface EpicCentroidStat {
   iso_codes: string[] | null;
 }
 
+export type SignalType = 'persons' | 'orgs' | 'places' | 'commodities' | 'policies' | 'systems' | 'named_events';
+
+export interface TopSignal {
+  signal_type: SignalType;
+  value: string;
+  count: number;
+  context?: string;
+}
+
+export const SIGNAL_LABELS: Record<SignalType, string> = {
+  persons: 'Top Persons',
+  orgs: 'Top Organizations',
+  places: 'Top Places',
+  commodities: 'Top Commodities',
+  policies: 'Top Policies',
+  systems: 'Top Systems',
+  named_events: 'Top Events',
+};
+
 export const REGIONS = {
   EUROPE: 'Europe',
   ASIA: 'Asia',

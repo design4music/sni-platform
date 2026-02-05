@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -551,4 +551,49 @@ export async function getLatestEpics(limit: number = 3): Promise<Epic[]> {
      LIMIT $1`,
     [limit]
   );
+}
+
+// ========================================================================
+// Signal ranking queries
+// ========================================================================
+
+const SIGNAL_COLUMNS: SignalType[] = ['persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events'];
+
+export async function getTopSignalsByMonth(month: string, limit: number = 5): Promise<Record<SignalType, TopSignal[]>> {
+  // Try pre-computed rankings first (has LLM context)
+  const precomputed = await query<TopSignal>(
+    `SELECT signal_type, value, count, context
+     FROM monthly_signal_rankings
+     WHERE month = ($1 || '-01')::date
+     ORDER BY signal_type, rank`,
+    [month]
+  );
+
+  if (precomputed.length > 0) {
+    const result = {} as Record<SignalType, TopSignal[]>;
+    for (const col of SIGNAL_COLUMNS) {
+      result[col] = precomputed.filter(r => r.signal_type === col);
+    }
+    return result;
+  }
+
+  // Fallback: live query (no context)
+  const parts = SIGNAL_COLUMNS.map(col =>
+    `SELECT '${col}' as signal_type, val as value, COUNT(*)::int as count
+     FROM title_labels tl
+     JOIN titles_v3 t ON t.id = tl.title_id
+     CROSS JOIN LATERAL unnest(tl.${col}) AS val
+     WHERE t.pubdate_utc >= ($1 || '-01')::date
+       AND t.pubdate_utc < (($1 || '-01')::date + INTERVAL '1 month')
+     GROUP BY val ORDER BY count DESC LIMIT ${limit}`
+  );
+
+  const sql = parts.map(p => `(${p})`).join(' UNION ALL ');
+  const rows = await query<TopSignal>(sql, [month]);
+
+  const result = {} as Record<SignalType, TopSignal[]>;
+  for (const col of SIGNAL_COLUMNS) {
+    result[col] = rows.filter(r => r.signal_type === col);
+  }
+  return result;
 }
