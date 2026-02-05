@@ -312,7 +312,14 @@ CENTROID_SUMMARY_SYSTEM_PROMPT = """You are a strategic intelligence analyst wri
 * Use bare names only -- your training data may be outdated
 * Maintain analytic, neutral tone
 * Do NOT speculate or editorialize
-* Do NOT list bullet points -- write short prose paragraphs"""
+* Do NOT list bullet points -- write short prose paragraphs
+
+### CRITICAL - NO INVENTED CAUSALITY:
+* NEVER connect events with causal language unless the track summaries explicitly state causation
+* Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
+* Instead, simply describe what happened: "X happened. Y also occurred."
+* Two events in the same month does NOT mean one caused the other
+* When in doubt, use a period and start a new sentence instead of a causal bridge"""
 
 
 async def generate_centroid_summary(
@@ -340,8 +347,8 @@ async def generate_centroid_summary(
     lines.append("")
     lines.append(
         "Each paragraph should highlight the 1-2 most significant"
-        " developments from that track. Mention cross-track connections"
-        " where they exist (e.g., energy crisis affecting security)."
+        " developments from that track. If the same event appears in"
+        " multiple tracks, note it -- but do NOT invent causal links."
     )
     lines.append("")
     lines.append("TRACK SUMMARIES:")

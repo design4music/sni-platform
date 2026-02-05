@@ -197,6 +197,14 @@ If only one block is provided, all events belong to that category.
 * Infer political offices - they may be outdated
 * Use descriptive titles not in the source summaries
 
+### CRITICAL - NO INVENTED CAUSALITY:
+
+* NEVER connect events with causal language unless the source summaries explicitly state causation
+* Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
+* Instead, simply describe what happened: "X happened. Y also occurred."
+* Two events in the same month does NOT mean one caused the other
+* When in doubt, use a period and start a new sentence instead of a causal bridge
+
 ---
 
 ### DYNAMIC FOCUS
