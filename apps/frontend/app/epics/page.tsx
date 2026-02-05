@@ -1,5 +1,5 @@
 import DashboardLayout from '@/components/DashboardLayout';
-import MonthPicker from '@/components/MonthPicker';
+import MonthNav from '@/components/MonthNav';
 import EpicCard from '@/components/EpicCard';
 import { getEpicMonths, getEpicsByMonth } from '@/lib/queries';
 
@@ -18,7 +18,7 @@ export default async function EpicsPage({ searchParams }: Props) {
   const sidebar = months.length > 0 ? (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
       <div className="hidden lg:block">
-        <MonthPicker
+        <MonthNav
           months={months}
           currentMonth={currentMonth}
           baseUrl="/epics"
@@ -49,7 +49,7 @@ export default async function EpicsPage({ searchParams }: Props) {
       {/* Mobile month picker */}
       {months.length > 0 && (
         <div className="lg:hidden mb-6">
-          <MonthPicker
+          <MonthNav
             months={months}
             currentMonth={currentMonth}
             baseUrl="/epics"

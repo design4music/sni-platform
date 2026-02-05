@@ -4,6 +4,7 @@ import EventAccordion from '@/components/EventAccordion';
 import CountryAccordion from '@/components/CountryAccordion';
 import TableOfContents, { TocSection } from '@/components/TableOfContents';
 import MobileTocButton from '@/components/MobileTocButton';
+import MonthNav from '@/components/MonthNav';
 import {
   getCentroidById,
   getCentroidsByIds,
@@ -145,25 +146,11 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       {/* Month selector (desktop only - mobile uses hamburger menu) */}
       {months.length > 0 && (
         <div className="hidden lg:block">
-          <h3 className="text-lg font-semibold mb-3 text-dashboard-text">View by Month</h3>
-          <div className="space-y-1">
-            {months.map(m => {
-              const isCurrent = m === currentMonth;
-              return (
-                <Link
-                  key={m}
-                  href={`/c/${centroid.id}/t/${track}?month=${m}`}
-                  className={`block px-3 py-2 rounded ${
-                    isCurrent
-                      ? 'bg-blue-600 text-white'
-                      : 'text-dashboard-text-muted hover:bg-dashboard-border'
-                  }`}
-                >
-                  {m}
-                </Link>
-              );
-            })}
-          </div>
+          <MonthNav
+            months={months}
+            currentMonth={currentMonth}
+            baseUrl={`/c/${centroid.id}/t/${track}`}
+          />
         </div>
       )}
 

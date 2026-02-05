@@ -2,7 +2,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import TrackCard from '@/components/TrackCard';
 import { getTrackIcon } from '@/components/TrackCard';
 import GeoBriefSection from '@/components/GeoBriefSection';
-import MonthPicker from '@/components/MonthPicker';
+import MonthNav from '@/components/MonthNav';
 import {
   getCentroidById,
   getAvailableMonthsForCentroid,
@@ -70,7 +70,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const sidebar = (
     <div className={isFrozen ? "lg:sticky lg:top-24 space-y-6" : "space-y-6"}>
       {availableMonths.length > 0 && currentMonth && (
-        <MonthPicker
+        <MonthNav
           months={availableMonths}
           currentMonth={currentMonth}
           baseUrl={`/c/${centroid.id}`}

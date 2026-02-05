@@ -6,6 +6,12 @@ import { createPortal } from 'react-dom';
 import { getTrackLabel, Track } from '@/lib/types';
 import { getTrackIcon } from './TrackCard';
 
+function formatMonth(month: string): string {
+  const [year, m] = month.split('-');
+  const date = new Date(parseInt(year), parseInt(m, 10) - 1);
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
 const REGIONS = [
   { key: 'africa', label: 'Africa' },
   { key: 'americas', label: 'Americas' },
@@ -240,6 +246,49 @@ export default function Navigation({
               </div>
             )}
 
+            {/* View by Month (if on CTM page with months) */}
+            {centroidId && trackForMonths && availableMonths && availableMonths.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-dashboard-border">
+                <div className="rounded-lg bg-dashboard-surface border border-dashboard-border overflow-hidden">
+                  <button
+                    onClick={() => setMobileMonthsOpen(!mobileMonthsOpen)}
+                    className="w-full flex items-center justify-between px-4 py-4 text-lg font-medium text-dashboard-text hover:bg-dashboard-border transition"
+                  >
+                    <span>View by Month</span>
+                    <svg
+                      className={`w-5 h-5 transition-transform ${mobileMonthsOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {mobileMonthsOpen && (
+                    <div className="border-t border-dashboard-border">
+                      {availableMonths.map(m => {
+                        const isCurrent = m === currentMonth;
+                        return (
+                          <Link
+                            key={m}
+                            href={`/c/${centroidId}/t/${trackForMonths}?month=${m}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`block px-6 py-3 transition ${
+                              isCurrent
+                                ? 'bg-blue-600/20 text-blue-400 font-medium'
+                                : 'text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border'
+                            }`}
+                          >
+                            {formatMonth(m)}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Other Strategic Topics (if provided) */}
             {centroidLabel && otherTracks && otherTracks.length > 0 && (
               <div className="mt-6 pt-6 border-t border-dashboard-border">
@@ -277,49 +326,6 @@ export default function Navigation({
                       </Link>
                     );
                   })}
-                </div>
-              </div>
-            )}
-
-            {/* View by Month (if on CTM page with months) */}
-            {centroidId && trackForMonths && availableMonths && availableMonths.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-dashboard-border">
-                <div className="rounded-lg bg-dashboard-surface border border-dashboard-border overflow-hidden">
-                  <button
-                    onClick={() => setMobileMonthsOpen(!mobileMonthsOpen)}
-                    className="w-full flex items-center justify-between px-4 py-4 text-lg font-medium text-dashboard-text hover:bg-dashboard-border transition"
-                  >
-                    <span>View by Month</span>
-                    <svg
-                      className={`w-5 h-5 transition-transform ${mobileMonthsOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {mobileMonthsOpen && (
-                    <div className="border-t border-dashboard-border">
-                      {availableMonths.map(m => {
-                        const isCurrent = m === currentMonth;
-                        return (
-                          <Link
-                            key={m}
-                            href={`/c/${centroidId}/t/${trackForMonths}?month=${m}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={`block px-6 py-3 transition ${
-                              isCurrent
-                                ? 'bg-blue-600/20 text-blue-400 font-medium'
-                                : 'text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border'
-                            }`}
-                          >
-                            {m}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
