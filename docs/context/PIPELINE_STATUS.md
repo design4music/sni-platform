@@ -1,7 +1,8 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-02
+**Last Updated**: 2026-02-06
 **Status**: Production - Full pipeline operational
+**Live URL**: https://www.worldbrief.info
 **Branch**: `main`
 
 ---
@@ -32,6 +33,14 @@ RSS Feeds (Google News)
 [Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags
     |
 [Phase 4.5b] CTM Digest Generation --> ctm.summary_text
+    |
+[Phase 5] Epic Detection --> epics + epic_events (cross-country stories)
+    |
+[Phase 5.5] Epic Enrichment --> epics.timeline, narratives, centroid_summaries
+    |
+[Phase 5.5] Narrative Extraction --> epic_narratives (media framing analysis)
+    |
+[Phase 6] RAI Analysis --> epic_narratives.rai_* (adequacy, conflicts, blind spots)
     |
 Frontend (Next.js) <-- READ-ONLY
 ```
@@ -273,6 +282,87 @@ LLM generates conversational summaries for each event:
 
 ---
 
+## Phase 5: Epic Detection & Enrichment
+
+**Script**: `db/scripts/build_epics.py`
+**Runs**: Manual (after month freeze)
+
+### Epic Detection
+
+1. Query events with high source counts across multiple centroids
+2. Extract anchor tags (shared signals that link events)
+3. Group events into epics by anchor tag overlap
+4. Filter: minimum 3 centroids, 50+ total sources
+
+### Epic Enrichment (LLM)
+
+For each epic, generates:
+- **Title**: Descriptive headline (e.g., "Trump's Push for Greenland...")
+- **Summary**: 2-3 sentence overview
+- **Timeline**: Chronological narrative of how events unfolded
+- **Narratives**: Key storylines (title + description pairs)
+- **Centroid Summaries**: Per-country perspective on the epic
+
+### Output Tables
+
+- `epics`: Epic metadata (slug, month, title, summary, anchor_tags, stats)
+- `epic_events`: Links events to epics (event_id, epic_id, is_included)
+
+---
+
+## Phase 5.5: Narrative Extraction
+
+**Script**: `db/scripts/extract_epic_narratives.py`
+**Runs**: After epic enrichment
+
+### Two-Pass LLM Approach
+
+**Pass 1 - Frame Discovery** (temp 0.4):
+- Sample ~150 titles proportionally across centroids
+- LLM identifies 3-7 distinct narrative frames
+- Each frame: label, description, moral_frame
+
+**Pass 2 - Title Classification** (temp 0.1):
+- Classify ALL titles into discovered frames
+- Batch by publisher (~60/batch)
+- Track source attribution per frame
+
+### Output
+
+- `epic_narratives`: Frame label, moral_frame, title_count, top_sources, sample_titles
+- Over-indexed sources: TF-IDF style detection of outlets favoring specific frames
+
+---
+
+## Phase 6: RAI Analysis
+
+**Script**: `db/scripts/analyze_narratives_rai.py`
+**Runs**: After narrative extraction
+
+### RAI Integration
+
+Sends each narrative to RAI (Risk Assessment Intelligence) API:
+- **Input**: Narrative label, moral_frame, sample excerpts
+- **Output**: Adequacy score, bias/credibility/coherence scores, conflicts, blind spots, full HTML report
+
+### Configuration
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `rai_api_url` | Render service | RAI backend endpoint |
+| `rai_timeout_seconds` | 300 | Extended timeout for analysis |
+
+### Stored Fields
+
+- `rai_adequacy`: Overall score (0-1)
+- `rai_synthesis`: Summary of analysis
+- `rai_conflicts`: Detected tensions/contradictions
+- `rai_blind_spots`: Missing perspectives
+- `rai_shifts`: Detailed scores (bias, credibility, coherence, evidence, relevance)
+- `rai_full_analysis`: Complete HTML report
+
+---
+
 ## Database Schema
 
 ### Core Tables
@@ -316,6 +406,33 @@ centroid_id, month
 summary_text, track_count, total_events
 ```
 
+**epics**: Cross-country story aggregations
+```sql
+id, slug, month, title, summary
+anchor_tags TEXT[], centroid_count, event_count, total_sources
+timeline TEXT, narratives JSONB, centroid_summaries JSONB
+```
+
+**epic_events**: Events linked to epics
+```sql
+epic_id, event_id, is_included BOOLEAN
+```
+
+**epic_narratives**: Media framing analysis
+```sql
+epic_id, label, description, moral_frame
+title_count, top_sources TEXT[], proportional_sources TEXT[], top_countries TEXT[]
+sample_titles JSONB
+-- RAI Analysis fields:
+rai_adequacy FLOAT, rai_synthesis TEXT, rai_conflicts TEXT[], rai_blind_spots TEXT[]
+rai_shifts JSONB, rai_full_analysis TEXT, rai_analyzed_at TIMESTAMPTZ
+```
+
+**monthly_signal_rankings**: Pre-computed signal rankings with LLM context
+```sql
+month, signal_type, rank, value, count, context TEXT
+```
+
 ---
 
 ## File Map
@@ -353,7 +470,11 @@ core/
 
 db/
 |-- scripts/
-|   |-- freeze_month.py             # Monthly freeze + centroid summaries
+|   |-- freeze_month.py              # Monthly freeze + centroid summaries
+|   |-- build_epics.py               # Epic detection + enrichment (Phase 5)
+|   |-- extract_epic_narratives.py   # Narrative extraction (Phase 5.5)
+|   |-- analyze_narratives_rai.py    # RAI analysis (Phase 6)
+|   |-- generate_signal_rankings.py  # Monthly signal rankings
 |-- backfills/
 |   |-- backfill_unknown_entities.py # Unknown entity resolution
 |-- migrations/                      # SQL migrations
@@ -362,14 +483,18 @@ apps/frontend/
 |-- app/
 |   |-- c/[centroid_key]/page.tsx    # Centroid page (summary + tracks)
 |   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
+|   |-- epics/page.tsx               # Epic list page (month navigation)
+|   |-- epics/[slug]/page.tsx        # Epic detail page
 |-- lib/
 |   |-- queries.ts                   # All DB queries
-|   |-- types.ts                     # Shared types (Track, REGIONS, etc.)
+|   |-- types.ts                     # Shared types (Track, REGIONS, Epic, etc.)
 |-- components/
 |   |-- DashboardLayout.tsx          # Main layout (sidebar + content grid)
 |   |-- TrackCard.tsx                # Track card component
 |   |-- GeoBriefSection.tsx          # Centroid profile/brief display
 |   |-- MonthPicker.tsx              # Month navigation
+|   |-- EpicCountries.tsx            # Country accordion for epics
+|   |-- NarrativeOverlay.tsx         # Narrative cards + RAI analysis modal
 ```
 
 ---
@@ -493,22 +618,39 @@ Notes:
 - Frontend: Next.js web service, auto-deploys on push to `main`
 - Database: Managed PostgreSQL 15, connection via `DATABASE_URL` env var
 - Worker: Currently **suspended** (pipeline runs locally only)
+- **Custom Domain**: www.worldbrief.info (SSL auto-provisioned via Let's Encrypt)
+- **Analytics**: Google Analytics 4 (G-LF3GZ04SMF)
 
 ### Environment Variables
 
-Local: `.env` file (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DEEPSEEK_API_KEY, etc.)
+Local: `.env` file (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DEEPSEEK_API_KEY, RAI_API_KEY, etc.)
 Remote: Render environment settings (`DATABASE_URL` connection string format)
 
 Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/frontend/lib/db.ts`).
 
+### RAI Service
+
+- URL: `RAI_API_URL` (Render-hosted RAI backend)
+- Auth: `RAI_API_KEY` (Bearer token)
+- Timeout: 300s (Render free tier is slow)
+
 ---
 
-## Current Status (2026-02-02)
+## Current Status (2026-02-06)
 
-**Operational**: Full 7-phase pipeline running locally with daemon orchestration.
-January 2026 frozen with 85 centroid summaries. February 2026 pipeline active.
+**Operational**: Full pipeline (Phases 1-6) running locally. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. Production site live at https://www.worldbrief.info
 
-### Recent Changes (since 2026-01-15)
+### Recent Changes (since 2026-02-02)
+
+1. **Epics Feature (Phase 5)**: Cross-country story detection. Identifies events that span multiple centroids via shared anchor tags. Generates timeline, narratives, and per-centroid summaries.
+2. **Narrative Extraction (Phase 5.5)**: Two-pass LLM approach extracts media framing from epic titles. Identifies 3-7 contested narratives per epic with moral frames and source attribution.
+3. **RAI Analysis (Phase 6)**: Sends narratives to RAI (Risk Assessment Intelligence) service for adequacy scoring, conflict detection, and blind spot analysis. Full HTML reports stored.
+4. **Signal Rankings**: Pre-computed monthly signal rankings with LLM-generated context (persons, orgs, places, etc.) displayed on epics page.
+5. **Epic Frontend**: Epic list page with month navigation, detail pages with country accordion, narrative overlay with RAI scores and full analysis.
+6. **Custom Domain**: Live at https://www.worldbrief.info (SSL via Render)
+7. **Google Analytics**: GA4 tracking added (G-LF3GZ04SMF)
+
+### Previous Changes (2026-01-15 to 2026-02-02)
 
 1. **Non-destructive incremental clustering** (Phase 4): No longer deletes events on re-run; loads only unlinked titles, matches against existing events, creates new events for unmatched clusters. LLM summaries preserved.
 2. **Events v3 normalized schema**: Migrated from JSONB `events_digest` to `events_v3` + `event_v3_titles` tables. Per-event lifecycle management.
@@ -518,19 +660,21 @@ January 2026 frozen with 85 centroid summaries. February 2026 pipeline active.
 6. **Render deployment**: Frontend + DB snapshot on Render for demo. Pipeline worker suspended.
 7. **Staleness detection**: `events_v3.summary_source_count` tracks when summaries were generated; Phase 4.5a re-summarizes events that grew >50%.
 
-### Pipeline Statistics (2026-02-02)
+### Pipeline Statistics (2026-02-06)
 
-- Titles: ~46,000 total (Jan: ~42K, Feb: ~4K so far)
+- Titles: ~50,000+ total
 - Active centroids: 85
-- CTMs: 667 (437 frozen Jan + 230 active Feb)
-- Events: ~5,100
+- CTMs: 667+ (437 frozen Jan + active Feb)
+- Events: ~5,500+
+- Epics: 9 (January 2026)
+- Epic narratives: ~50 with RAI analysis
 - Centroid monthly summaries: 85 (January)
 - Daily ingestion: ~3,000-6,000 titles
-- Assignment rate: ~43% assigned, ~40% out-of-scope, ~8% blocked
 
 ### Next Steps
 
-1. Monitor February pipeline quality and clustering coherence
-2. Tune clustering parameters based on multi-month data
-3. Cross-CTM event deduplication
-4. Evaluate label clustering for taxonomy refinement
+1. **RAI Tuning**: Improve narrative extraction to select more clearly framed headlines; adjust RAI payloads for better bias detection
+2. **Phase 5 Refinement**: Better anchor tag selection, epic deduplication
+3. Monitor February pipeline quality and clustering coherence
+4. Cross-CTM event deduplication
+5. Evaluate label clustering for taxonomy refinement
