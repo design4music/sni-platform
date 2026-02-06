@@ -131,6 +131,22 @@ export interface FramedNarrative {
   proportional_sources: string[] | null;
   top_countries: string[] | null;
   sample_titles: Array<{ title: string; publisher: string; date: string | null }> | null;
+  // RAI Analysis fields
+  rai_adequacy: number | null;
+  rai_synthesis: string | null;
+  rai_conflicts: string[] | null;
+  rai_blind_spots: string[] | null;
+  rai_shifts: {
+    overall_score?: number;
+    bias_score?: number;
+    coherence_score?: number;
+    credibility_score?: number;
+    evidence_quality?: number;
+    relevance_score?: number;
+    safety_score?: number;
+  } | null;
+  rai_full_analysis: string | null;
+  rai_analyzed_at: string | null;
 }
 
 export interface Epic {

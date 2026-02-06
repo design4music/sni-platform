@@ -557,7 +557,9 @@ export async function getLatestEpics(limit: number = 3): Promise<Epic[]> {
 export async function getEpicFramedNarratives(epicId: string): Promise<FramedNarrative[]> {
   return query<FramedNarrative>(
     `SELECT id, label, description, moral_frame, title_count,
-            top_sources, proportional_sources, top_countries, sample_titles
+            top_sources, proportional_sources, top_countries, sample_titles,
+            rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
+            rai_shifts, rai_full_analysis, rai_analyzed_at::text
      FROM epic_narratives
      WHERE epic_id = $1
      ORDER BY title_count DESC`,

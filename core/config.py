@@ -84,6 +84,15 @@ class SNIConfig(BaseSettings):
     v3_p45a_max_events: int = Field(default=500, env="V3_P45A_MAX_EVENTS")
     v3_p45a_interval: int = Field(default=900, env="V3_P45A_INTERVAL")  # 15 min
 
+    # Phase 6: RAI (Risk Assessment Intelligence) Analysis
+    rai_api_url: str = Field(
+        default="https://rai-backend-ldy4.onrender.com/api/v1/analyze",
+        env="RAI_API_URL",
+    )
+    rai_api_key: Optional[str] = Field(default=None, env="RAI_API_KEY")
+    rai_timeout_seconds: int = Field(default=120, env="RAI_TIMEOUT_SECONDS")
+    rai_enabled: bool = Field(default=False, env="RAI_ENABLED")
+
     # Events Generation (bucket pass-through, no clustering yet)
     events_min_ctm_titles: int = Field(default=10, env="EVENTS_MIN_CTM_TITLES")
 

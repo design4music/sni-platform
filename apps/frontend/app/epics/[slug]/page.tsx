@@ -2,8 +2,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
+import NarrativeCards from '@/components/NarrativeOverlay';
 import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives } from '@/lib/queries';
-import { EpicEvent, EpicNarrative, FramedNarrative } from '@/lib/types';
+import { EpicEvent, EpicNarrative } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -166,67 +167,8 @@ export default async function EpicDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* How It Was Framed - moved to sidebar */}
-      {framedNarratives.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-2 text-dashboard-text">How It Was Framed</h3>
-          <p className="text-xs text-dashboard-text-muted mb-3">
-            Contested narratives from {framedNarratives.reduce((sum, n) => sum + n.title_count, 0)} headlines.
-          </p>
-          <div className="space-y-3">
-            {framedNarratives.map((n: FramedNarrative) => (
-              <div
-                key={n.id}
-                className="p-3 rounded-lg border border-dashboard-border bg-dashboard-surface"
-              >
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <h4 className="font-semibold text-sm">{n.label}</h4>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-dashboard-border text-dashboard-text-muted flex-shrink-0">
-                    {n.title_count}
-                  </span>
-                </div>
-                {n.moral_frame && (
-                  <p className="text-xs text-dashboard-text-muted leading-relaxed mb-2">
-                    {n.moral_frame}
-                  </p>
-                )}
-                {/* Over-indexed sources */}
-                {n.top_sources && n.top_sources.length > 0 && (
-                  <div className="mb-1">
-                    <span className="text-xs text-dashboard-text-muted mr-1">Favored by:</span>
-                    <div className="inline-flex flex-wrap gap-1">
-                      {n.top_sources.slice(0, 3).map((src, i) => (
-                        <span
-                          key={i}
-                          className="text-xs px-1 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                        >
-                          {src}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* Proportional sources */}
-                {n.proportional_sources && n.proportional_sources.length > 0 && (
-                  <div>
-                    <span className="text-xs text-dashboard-text-muted mr-1">Broad:</span>
-                    <div className="inline-flex flex-wrap gap-1">
-                      {n.proportional_sources.slice(0, 2).map((src, i) => (
-                        <span
-                          key={i}
-                          className="text-xs px-1 py-0.5 rounded bg-gray-500/10 text-gray-400 border border-gray-500/20"
-                        >
-                          {src}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* How It Was Framed - interactive cards with overlay */}
+      <NarrativeCards narratives={framedNarratives} />
     </div>
   );
 
