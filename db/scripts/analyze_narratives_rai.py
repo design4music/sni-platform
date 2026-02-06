@@ -74,17 +74,18 @@ def fetch_narratives_for_rai(conn, epic_slug=None, limit=50):
 
 def build_rai_payload(narrative):
     """Build RAI API request payload from narrative data."""
-    # Title combines epic context with narrative frame
-    title = f"{narrative['epic_title']} - {narrative['label']}"
+    # Title is just the narrative frame - don't dilute with factual epic title
+    title = narrative["label"]
 
-    # Summary provides context
+    # Summary provides the moral frame and context
     summary_parts = []
-    if narrative["epic_summary"]:
-        summary_parts.append(f"Epic Context: {narrative['epic_summary']}")
     if narrative["moral_frame"]:
-        summary_parts.append(f"Narrative Frame: {narrative['moral_frame']}")
+        summary_parts.append(narrative["moral_frame"])
     if narrative["description"]:
-        summary_parts.append(f"Description: {narrative['description']}")
+        summary_parts.append(narrative["description"])
+    # Epic context as background, not primary focus
+    if narrative["epic_summary"]:
+        summary_parts.append(f"Context: {narrative['epic_summary']}")
     if narrative["top_sources"]:
         summary_parts.append(f"Top Sources: {', '.join(narrative['top_sources'][:5])}")
 

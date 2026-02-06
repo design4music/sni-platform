@@ -197,10 +197,10 @@ function NarrativeOverlay({ narrative, onClose }: NarrativeOverlayProps) {
                   </summary>
                   <div
                     className="mt-3 text-sm text-dashboard-text-muted leading-relaxed
-                               [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:text-dashboard-text [&_h1]:mt-4 [&_h1]:mb-2
-                               [&_h2]:text-base [&_h2]:font-semibold [&_h2]:text-dashboard-text [&_h2]:mt-3 [&_h2]:mb-2
-                               [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-dashboard-text [&_h3]:mt-2 [&_h3]:mb-1
-                               [&_p]:my-2 [&_strong]:text-dashboard-text
+                               [&_h1]:text-base [&_h1]:font-medium [&_h1]:text-dashboard-text [&_h1]:mt-4 [&_h1]:mb-2
+                               [&_h2]:text-sm [&_h2]:font-medium [&_h2]:text-dashboard-text [&_h2]:mt-3 [&_h2]:mb-1
+                               [&_h3]:text-sm [&_h3]:font-normal [&_h3]:text-dashboard-text [&_h3]:mt-2 [&_h3]:mb-1
+                               [&_p]:my-2 [&_strong]:font-normal [&_strong]:text-dashboard-text
                                [&_ul]:my-2 [&_ul]:ml-4 [&_ul]:list-disc
                                [&_ol]:my-2 [&_ol]:ml-4 [&_ol]:list-decimal
                                [&_li]:my-1"
