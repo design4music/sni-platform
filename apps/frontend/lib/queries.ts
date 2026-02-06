@@ -513,7 +513,8 @@ export async function getEpicEvents(epicId: string): Promise<EpicEvent[]> {
     `SELECT e.id as event_id, e.title, e.summary, e.tags,
             e.source_batch_count, e.date::text as date,
             c.centroid_id, c.track,
-            cv.label as centroid_label
+            cv.label as centroid_label,
+            cv.iso_codes
      FROM epic_events ee
      JOIN events_v3 e ON ee.event_id = e.id
      JOIN ctm c ON e.ctm_id = c.id

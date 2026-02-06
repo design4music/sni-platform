@@ -158,6 +158,7 @@ export interface EpicEvent {
   centroid_id: string;
   track: string;
   centroid_label: string;
+  iso_codes: string[] | null;
 }
 
 export interface EpicCentroidStat {

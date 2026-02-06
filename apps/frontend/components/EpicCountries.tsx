@@ -165,6 +165,15 @@ function EpicCountryItem({ group, defaultOpen }: { group: CountryGroup; defaultO
               </div>
             ))}
           </div>
+          {/* Link to country centroid page */}
+          <div className="pt-3 pb-1">
+            <Link
+              href={`/c/${group.centroidId}`}
+              className="text-sm text-blue-400 hover:text-blue-300 transition"
+            >
+              View {group.displayLabel} page &rarr;
+            </Link>
+          </div>
         </div>
       )}
     </div>
