@@ -1,9 +1,9 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import MonthNav from '@/components/MonthNav';
 import EpicCard from '@/components/EpicCard';
-import SignalCard from '@/components/SignalCard';
+import SignalSlider from '@/components/SignalSlider';
 import { getEpicMonths, getEpicsByMonth, getTopSignalsByMonth } from '@/lib/queries';
-import { SignalType, SIGNAL_LABELS } from '@/lib/types';
+import { SignalType } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,10 +11,25 @@ interface Props {
   searchParams: Promise<{ month?: string }>;
 }
 
-const SIGNAL_ORDER: SignalType[] = [
-  'persons', 'orgs', 'places', 'commodities',
-  'policies', 'systems', 'named_events',
+// Signal grid layout: 2 rows x 3 columns, excluding named_events
+const SIGNAL_GRID: { type: SignalType; label: string }[][] = [
+  [
+    { type: 'persons', label: 'Persons' },
+    { type: 'orgs', label: 'Organizations' },
+    { type: 'places', label: 'Places' },
+  ],
+  [
+    { type: 'commodities', label: 'Commodities' },
+    { type: 'policies', label: 'Policies' },
+    { type: 'systems', label: 'Systems' },
+  ],
 ];
+
+function formatMonthName(monthStr: string): string {
+  const [year, month] = monthStr.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'long' });
+}
 
 export default async function EpicsPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -63,25 +78,28 @@ export default async function EpicsPage({ searchParams }: Props) {
         </section>
       )}
 
-      {/* Signal rankings */}
+      {/* Signal rankings - compact grid */}
       {topSignals && (
-        <section id="section-signals" className="space-y-10">
-          {SIGNAL_ORDER.map(signalType => {
-            const items = topSignals[signalType];
-            if (!items || items.length === 0) return null;
-            return (
-              <div key={signalType} id={`section-${signalType}`}>
-                <h2 className="text-xl font-bold mb-4">
-                  {SIGNAL_LABELS[signalType]}
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {items.map((item, i) => (
-                    <SignalCard key={item.value} signal={item} rank={i} />
-                  ))}
-                </div>
+        <section id="section-signals">
+          <h2 className="text-2xl font-bold mb-4">
+            {currentMonth ? `${formatMonthName(currentMonth)} Top 5` : 'Top Signals'}
+          </h2>
+          <p className="text-dashboard-text-muted text-sm mb-6">
+            Most mentioned entities across all headlines this month.
+          </p>
+          <div className="space-y-4">
+            {SIGNAL_GRID.map((row, rowIdx) => (
+              <div key={rowIdx} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {row.map(({ type, label }) => (
+                  <SignalSlider
+                    key={type}
+                    title={label}
+                    signals={topSignals[type] || []}
+                  />
+                ))}
               </div>
-            );
-          })}
+            ))}
+          </div>
         </section>
       )}
 
