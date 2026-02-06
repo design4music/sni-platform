@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
-import { getEpicBySlug, getEpicEvents, getEpicCentroidBreakdown, getEpicMonths } from '@/lib/queries';
-import { EpicEvent, EpicNarrative, EpicCentroidStat } from '@/lib/types';
+import { getEpicBySlug, getEpicEvents, getEpicCentroidBreakdown, getEpicMonths, getEpicFramedNarratives } from '@/lib/queries';
+import { EpicEvent, EpicNarrative, EpicCentroidStat, FramedNarrative } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -182,10 +182,11 @@ export default async function EpicDetailPage({ params }: Props) {
   const epic = await getEpicBySlug(slug);
   if (!epic) return notFound();
 
-  const [events, centroidBreakdown, epicMonths] = await Promise.all([
+  const [events, centroidBreakdown, epicMonths, framedNarratives] = await Promise.all([
     getEpicEvents(epic.id),
     getEpicCentroidBreakdown(epic.id),
     getEpicMonths(),
+    getEpicFramedNarratives(epic.id),
   ]);
 
   const { sorted: signalData, globalFreq } = computeSignalComparison(events, epic.anchor_tags);
@@ -316,10 +317,10 @@ export default async function EpicDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Narrative Threads */}
+      {/* What Happened */}
       {epic.narratives && epic.narratives.length > 0 && (
         <div className="mb-8 pb-8 border-b border-dashboard-border">
-          <h2 className="text-2xl font-bold mb-4">Key Narratives</h2>
+          <h2 className="text-2xl font-bold mb-4">What Happened</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {epic.narratives.map((n: EpicNarrative, i: number) => (
               <div
@@ -330,6 +331,69 @@ export default async function EpicDetailPage({ params }: Props) {
                 <p className="text-sm text-dashboard-text-muted leading-relaxed">
                   {n.description}
                 </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* How It Was Framed */}
+      {framedNarratives.length > 0 && (
+        <div className="mb-8 pb-8 border-b border-dashboard-border">
+          <h2 className="text-2xl font-bold mb-4">How It Was Framed</h2>
+          <p className="text-sm text-dashboard-text-muted mb-4">
+            Contested narratives extracted from {framedNarratives.reduce((sum, n) => sum + n.title_count, 0)} headlines.
+            Sources shown over-index on each frame compared to their baseline coverage.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {framedNarratives.map((n: FramedNarrative) => (
+              <div
+                key={n.id}
+                className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h3 className="font-semibold">{n.label}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded bg-dashboard-border text-dashboard-text-muted flex-shrink-0">
+                    {n.title_count} titles
+                  </span>
+                </div>
+                {n.moral_frame && (
+                  <p className="text-sm text-dashboard-text-muted leading-relaxed mb-3">
+                    {n.moral_frame}
+                  </p>
+                )}
+                {/* Over-indexed sources */}
+                {n.top_sources && n.top_sources.length > 0 && (
+                  <div className="mb-2">
+                    <span className="text-xs text-dashboard-text-muted mr-2">Favored by:</span>
+                    <div className="inline-flex flex-wrap gap-1">
+                      {n.top_sources.slice(0, 4).map((src, i) => (
+                        <span
+                          key={i}
+                          className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        >
+                          {src}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Proportional sources */}
+                {n.proportional_sources && n.proportional_sources.length > 0 && (
+                  <div>
+                    <span className="text-xs text-dashboard-text-muted mr-2">Broad coverage:</span>
+                    <div className="inline-flex flex-wrap gap-1">
+                      {n.proportional_sources.slice(0, 3).map((src, i) => (
+                        <span
+                          key={i}
+                          className="text-xs px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                        >
+                          {src}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -550,6 +550,17 @@ export async function getLatestEpics(limit: number = 3): Promise<Epic[]> {
      ORDER BY total_sources DESC
      LIMIT $1`,
     [limit]
+  );
+}
+
+export async function getEpicFramedNarratives(epicId: string): Promise<FramedNarrative[]> {
+  return query<FramedNarrative>(
+    `SELECT id, label, description, moral_frame, title_count,
+            top_sources, proportional_sources, top_countries, sample_titles
+     FROM epic_narratives
+     WHERE epic_id = $1
+     ORDER BY title_count DESC`,
+    [epicId]
   );
 }
 

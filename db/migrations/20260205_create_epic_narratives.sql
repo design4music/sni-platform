@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS epic_narratives (
     moral_frame TEXT,
     title_count INTEGER NOT NULL DEFAULT 0,
     top_sources TEXT[],
+    proportional_sources TEXT[],
     top_countries TEXT[],
     sample_titles JSONB,
     -- RAI Phase 6 fields (all nullable)

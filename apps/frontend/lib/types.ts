@@ -121,6 +121,18 @@ export interface EpicNarrative {
   description: string;
 }
 
+export interface FramedNarrative {
+  id: string;
+  label: string;
+  description: string | null;
+  moral_frame: string | null;
+  title_count: number;
+  top_sources: string[] | null;
+  proportional_sources: string[] | null;
+  top_countries: string[] | null;
+  sample_titles: Array<{ title: string; publisher: string; date: string | null }> | null;
+}
+
 export interface Epic {
   id: string;
   slug: string;

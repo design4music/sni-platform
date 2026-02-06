@@ -44,9 +44,9 @@ SAMPLE_SIZE = 150
 CLASSIFY_BATCH_SIZE = 60
 
 PASS1_SYSTEM = (
-    "You are a media-framing analyst. You identify ideological and moral lenses "
-    "used by news outlets -- not topics, but perspectives/frames through which "
-    "a story is told."
+    "You are a media-framing analyst. You identify CONTESTED ideological frames "
+    "where news outlets genuinely disagree about who is right, who is wrong, "
+    "who is victim, who is aggressor."
 )
 
 PASS1_USER = (
@@ -56,25 +56,24 @@ PASS1_USER = (
     "Below are %d sampled headlines from various publishers covering this epic. "
     "Each headline is prefixed with [publisher].\n\n"
     "%s\n\n"
-    "Identify 3-7 distinct narrative FRAMES used across these headlines.\n\n"
-    "A frame is a moral or ideological lens -- not a topic. Two types:\n\n"
-    "1. STRUCTURAL frames work for any epic: e.g. 'Humanitarian imperative', "
-    "'Economic opportunity', 'Democratic backsliding'. These describe a shared "
-    "analytical perspective that many outlets agree on.\n\n"
-    "2. CONTESTED frames apply when headlines reveal opposing moral claims about "
-    "who is victim, who is aggressor, who is right. When you detect this, split "
-    "into directional frames that name the moral stance, e.g.:\n"
-    "  - 'Russian self-defense against NATO encirclement' vs "
-    "'Russian imperial aggression'\n"
-    "  - 'Legitimate law enforcement' vs 'State overreach against vulnerable people'\n"
-    "Contested frames should cleanly separate outlets that disagree.\n\n"
-    "Use structural frames where the epic is not strongly confrontational. "
-    "Use contested frames where you see genuine moral disagreement between outlets. "
-    "Mix both types freely.\n\n"
-    "Return a JSON array of objects:\n"
+    "Identify 4-5 CONTESTED narrative frames used across these headlines.\n\n"
+    "RULES:\n"
+    "1. Each frame MUST assign moral roles (hero/villain, victim/aggressor, right/wrong)\n"
+    "2. Frames MUST be mutually exclusive -- a headline fitting Frame A should NOT fit Frame B\n"
+    "3. Frames should cleanly SEPARATE outlets that disagree\n"
+    "4. Prefer fewer, sharper frames over many overlapping ones\n\n"
+    "REJECT these frame types:\n"
+    "- Neutral/analytical frames everyone agrees on (e.g. 'Geopolitical developments')\n"
+    "- Topic descriptions (e.g. 'Diplomatic efforts', 'Energy crisis')\n"
+    "- Frames where both sides would say 'yes, that describes our view'\n\n"
+    "GOOD frame examples:\n"
+    "- 'Russian imperial aggression' (Russia=villain) vs 'NATO provocation' (West=villain)\n"
+    "- 'Trump's diplomatic triumph' (Trump=hero) vs 'Dangerous overreach' (Trump=reckless)\n"
+    "- 'Humanitarian liberation' (intervention=good) vs 'Colonial resource grab' (intervention=bad)\n\n"
+    "Return a JSON array of 4-5 objects:\n"
     "[\n"
     '  {"label": "short frame name", "description": "1-sentence explanation", '
-    '"moral_frame": "the underlying moral/value claim"}\n'
+    '"moral_frame": "who is hero/villain in this frame"}\n'
     "]\n\n"
     "Return ONLY the JSON array."
 )
@@ -331,7 +330,7 @@ def pass2_classify_titles(epic_title, frames, all_titles):
 
 
 def aggregate_results(frames, classifications, all_titles):
-    """Aggregate classifications into narrative records."""
+    """Aggregate classifications into narrative records with TF-IDF style source scoring."""
     frame_labels = {f["label"] for f in frames}
 
     # Group classifications by frame
@@ -341,6 +340,15 @@ def aggregate_results(frames, classifications, all_titles):
         if frame in frame_labels:
             by_frame[frame].append(c["title"])
 
+    # Compute global source distribution across ALL classified titles
+    global_source_counts = defaultdict(int)
+    total_classified = 0
+    for label in frame_labels:
+        for t in by_frame.get(label, []):
+            pub = t["publisher_name"] or "unknown"
+            global_source_counts[pub] += 1
+            total_classified += 1
+
     narratives = []
     for f in frames:
         label = f["label"]
@@ -348,7 +356,9 @@ def aggregate_results(frames, classifications, all_titles):
         if not matched:
             continue
 
-        # Count sources
+        frame_total = len(matched)
+
+        # Count sources in this frame
         source_counts = defaultdict(int)
         country_counts = defaultdict(int)
         for t in matched:
@@ -357,7 +367,40 @@ def aggregate_results(frames, classifications, all_titles):
             for code in t.get("iso_codes") or []:
                 country_counts[code] += 1
 
-        top_sources = sorted(source_counts, key=source_counts.get, reverse=True)[:10]
+        # Compute over-index score for each source
+        # over_index = (source_share_in_frame) / (source_share_in_epic)
+        # > 1.0 means source favors this frame more than average
+        source_scores = {}
+        proportional_sources_list = []
+        for pub, count in source_counts.items():
+            if count < 3:  # minimum threshold
+                continue
+            share_in_frame = count / frame_total
+            share_in_epic = global_source_counts[pub] / total_classified
+            if share_in_epic > 0:
+                over_index = share_in_frame / share_in_epic
+                source_scores[pub] = over_index
+                # Proportional sources: over-index between 0.85 and 1.15
+                # These sources cover this frame at roughly their baseline rate
+                if 0.85 <= over_index <= 1.15 and global_source_counts[pub] >= 20:
+                    proportional_sources_list.append((pub, global_source_counts[pub]))
+
+        # Sort by over-index score, take top 10 that over-index (>= 1.3)
+        over_indexed = [(p, s) for p, s in source_scores.items() if s >= 1.3]
+        top_sources = sorted(
+            [p for p, s in over_indexed], key=lambda x: source_scores[x], reverse=True
+        )[:10]
+
+        # Proportional sources: sorted by total volume (most prominent first)
+        proportional_sources = sorted(
+            proportional_sources_list, key=lambda x: x[1], reverse=True
+        )
+        proportional_sources = [p for p, _ in proportional_sources][:5]
+
+        # Fallback: if no sources over-index, use raw counts
+        if not top_sources:
+            top_sources = sorted(source_counts, key=source_counts.get, reverse=True)[:5]
+
         top_countries = sorted(country_counts, key=country_counts.get, reverse=True)[
             :10
         ]
@@ -398,6 +441,7 @@ def aggregate_results(frames, classifications, all_titles):
                 "moral_frame": f.get("moral_frame"),
                 "title_count": len(matched),
                 "top_sources": top_sources,
+                "proportional_sources": proportional_sources,
                 "top_countries": top_countries,
                 "sample_titles": sample[:15],
             }
@@ -415,8 +459,8 @@ def save_narratives(conn, epic_id, narratives):
         cur.execute(
             "INSERT INTO epic_narratives "
             "(epic_id, label, description, moral_frame, title_count, "
-            " top_sources, top_countries, sample_titles) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            " top_sources, proportional_sources, top_countries, sample_titles) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 str(epic_id),
                 n["label"],
@@ -424,6 +468,7 @@ def save_narratives(conn, epic_id, narratives):
                 n["moral_frame"],
                 n["title_count"],
                 n["top_sources"],
+                n["proportional_sources"],
                 n["top_countries"],
                 json.dumps(n["sample_titles"]),
             ),
