@@ -28,13 +28,13 @@ CRITICAL - NO INVENTED CAUSALITY:
 - When in doubt, use a period and start a new sentence instead of a causal bridge"""
 
 PROSE_RULES_NO_ROLES = """\
-CRITICAL - NO ROLE DESCRIPTIONS:
-- NEVER write "President Trump", "Former President Trump", "CEO Dimon", etc.
-- Use ONLY the bare name: "Trump", "Dimon", "Powell", "Musk", "Merz"
+CRITICAL - NO ROLE DESCRIPTIONS FROM TRAINING DATA:
 - Your training data is OUTDATED - political offices change frequently
-- NEVER write "former president Trump" - Trump is the current US President
-- NEVER write "opposition leader Merz" - Merz is now German Chancellor
-- When unsure about someone's current role, use just their name without title"""
+- ONLY use titles/roles that appear explicitly in the source headlines
+- If headlines say "President Trump" -> use "President Trump"
+- If headlines just say "Trump" -> use "Trump" (do NOT add a title)
+- NEVER infer or add roles from your training data
+- When in doubt, use just the name without any title"""
 
 PROSE_RULES_NEUTRAL_TONE = """\
 TONE AND STYLE:
@@ -42,7 +42,20 @@ TONE AND STYLE:
 - No words like "cynically", "brazenly", "aggressively"
 - Describe actions and stated positions without editorializing
 - Present all sides' stated positions with equal weight
-- No sensationalism or emotive language"""
+- No sensationalism or emotive language
+- Avoid "perceived" when facts are evident: do NOT write "perceived encirclement" when
+  encirclement is real, or "perceived threat" when hostilities are documented. This
+  framing dismisses legitimate concerns as paranoia."""
+
+PROSE_RULES_TROLLING = """\
+TROLLING AND PROVOCATIONS:
+- When officials comment on adversaries' internal disputes (e.g., Russia on Greenland,
+  China on US elections), treat as rhetorical exploitation, not genuine policy
+- Do NOT write "welcomed", "supported", "expressed concern" for such statements - use
+  "mocked", "seized on", "exploited rhetorically"
+- Deliberately absurd statements (e.g., proposing to kidnap foreign leaders) should be
+  omitted or flagged as provocative theater, not policy positions
+- If a statement has no plausible policy weight, do not treat it as diplomacy"""
 
 # Combined rules for prose-generating prompts
 PROSE_WRITING_RULES = f"""
@@ -50,7 +63,9 @@ PROSE_WRITING_RULES = f"""
 
 {PROSE_RULES_NO_ROLES}
 
-{PROSE_RULES_NEUTRAL_TONE}"""
+{PROSE_RULES_NEUTRAL_TONE}
+
+{PROSE_RULES_TROLLING}"""
 
 
 # =============================================================================
@@ -74,7 +89,11 @@ STRATEGIC CONTENT (ACCEPT):
 - Major industrial policy, manufacturing, labor disputes with economic impact
 
 NON-STRATEGIC CONTENT (REJECT):
-- Pure sports/entertainment (scores, celebrity gossip, award shows)
+- SPORTS: reject all athletic competitions, leagues, tournaments, player transfers,
+  match results, team standings, coaching changes. Sports often leaks through because
+  it involves international events (Olympics, World Cup) and uses conflict language
+  ("battle", "attack", "defense", "war room"). Still reject - it has no strategic value.
+- Entertainment/celebrity (gossip, award shows, movie releases, music charts)
 - Health/wellness tips, recipes, lifestyle advice
 - Local crime without systemic implications
 - Human interest stories, feel-good news
@@ -300,6 +319,8 @@ If only one block is provided, all events belong to that category.
 
 {PROSE_RULES_NO_ROLES}
 
+{PROSE_RULES_TROLLING}
+
 ---
 
 ### DYNAMIC FOCUS
@@ -420,7 +441,9 @@ DATES: Use specific dates only when stated in the reference material. The dates 
 
 {PROSE_RULES_NO_ROLES}
 
-{PROSE_RULES_NEUTRAL_TONE}"""
+{PROSE_RULES_NEUTRAL_TONE}
+
+{PROSE_RULES_TROLLING}"""
 
 
 # =============================================================================
@@ -601,7 +624,9 @@ CENTROID_SUMMARY_SYSTEM_PROMPT = f"""You are a strategic intelligence analyst wr
 
 {PROSE_RULES_NO_CAUSALITY}
 
-{PROSE_RULES_NO_ROLES}"""
+{PROSE_RULES_NO_ROLES}
+
+{PROSE_RULES_TROLLING}"""
 
 
 # =============================================================================
