@@ -11,8 +11,8 @@ For each signal value (e.g. "TRUMP" in persons):
 4. Ask LLM for 1-2 sentence strategic context
 
 Usage:
-    python db/scripts/generate_signal_rankings.py --month 2026-01 --dry-run
-    python db/scripts/generate_signal_rankings.py --month 2026-01 --apply
+    python -m pipeline.freeze.generate_signal_rankings --month 2026-01 --dry-run
+    python -m pipeline.freeze.generate_signal_rankings --month 2026-01 --apply
 """
 
 import argparse

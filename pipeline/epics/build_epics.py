@@ -6,10 +6,10 @@ Jaccard similarity on event sets, filters with LLM, generates
 titles/summaries, and stores in the database.
 
 Usage:
-    python -m pipeline.build_epics                    # latest month
-    python -m pipeline.build_epics --month 2025-01    # specific month
-    python -m pipeline.build_epics --dry-run           # preview only
-    python -m pipeline.build_epics --min-centroids 3   # tuning
+    python -m pipeline.epics.build_epics                    # latest month
+    python -m pipeline.epics.build_epics --month 2025-01    # specific month
+    python -m pipeline.epics.build_epics --dry-run           # preview only
+    python -m pipeline.epics.build_epics --min-centroids 3   # tuning
 """
 
 import argparse

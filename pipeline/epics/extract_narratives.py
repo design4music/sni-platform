@@ -6,8 +6,8 @@ Pass 1: Discover 3-7 narrative frames from sampled titles.
 Pass 2: Classify ALL titles into discovered frames.
 
 Usage:
-    python db/scripts/extract_epic_narratives.py --month 2026-01 --dry-run
-    python db/scripts/extract_epic_narratives.py --month 2026-01 --apply
+    python -m pipeline.epics.extract_narratives --month 2026-01 --dry-run
+    python -m pipeline.epics.extract_narratives --month 2026-01 --apply
 """
 
 import argparse

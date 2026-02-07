@@ -10,14 +10,14 @@ Freezes all CTMs for a given month:
 
 Usage:
     # Manual freeze for specific month
-    python db/scripts/freeze_month.py --month 2026-01 --dry-run
-    python db/scripts/freeze_month.py --month 2026-01 --apply
+    python -m pipeline.freeze.freeze_month --month 2026-01 --dry-run
+    python -m pipeline.freeze.freeze_month --month 2026-01 --apply
 
     # Automatic freeze for previous month (for cron)
-    python db/scripts/freeze_month.py --previous-month --apply
+    python -m pipeline.freeze.freeze_month --previous-month --apply
 
 Cron setup (runs 1st of each month at 00:05 UTC):
-    5 0 1 * * cd /path/to/SNI && python db/scripts/freeze_month.py --previous-month --apply >> /var/log/sni-freeze.log 2>&1
+    5 0 1 * * cd /path/to/SNI && python -m pipeline.freeze.freeze_month --previous-month --apply >> /var/log/sni-freeze.log 2>&1
 """
 
 import argparse
