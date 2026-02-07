@@ -16,8 +16,8 @@ from core.config import config
 from pipeline.phase_1.rss_fetcher import RSSFetcher
 
 
-def get_active_feeds():
-    """Get all active feeds for ingestion"""
+def get_active_feeds(country_code=None):
+    """Get all active feeds for ingestion, optionally filtered by country."""
     conn = psycopg2.connect(
         host=config.db_host,
         port=config.db_port,
@@ -28,14 +28,25 @@ def get_active_feeds():
 
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, url, name, source_domain, language_code
-                FROM feeds
-                WHERE is_active = true
-                ORDER BY priority DESC, name
-            """
-            )
+            if country_code:
+                cur.execute(
+                    """
+                    SELECT id, url, name, source_domain, language_code
+                    FROM feeds
+                    WHERE is_active = true AND country_code = %s
+                    ORDER BY priority DESC, name
+                    """,
+                    (country_code.upper(),),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT id, url, name, source_domain, language_code
+                    FROM feeds
+                    WHERE is_active = true
+                    ORDER BY priority DESC, name
+                    """
+                )
             feeds = cur.fetchall()
 
             return [
@@ -52,12 +63,13 @@ def get_active_feeds():
         conn.close()
 
 
-def run_ingestion(max_feeds=None):
+def run_ingestion(max_feeds=None, country_code=None):
     """
     Run RSS ingestion for all active feeds.
 
     Args:
         max_feeds: Maximum number of feeds to process (optional)
+        country_code: Filter feeds by country code (optional, e.g., 'RU', 'US')
     """
     start_time = datetime.now()
 
@@ -75,15 +87,20 @@ def run_ingestion(max_feeds=None):
     print("=" * 70)
     print("SNI v3 - Phase 1: RSS Feed Ingestion")
     print("=" * 70)
-    print(f"Start time: {start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+    print("Start time: {}".format(start_time.strftime("%Y-%m-%d %H:%M:%S")))
+    if country_code:
+        print("Country filter: {}".format(country_code.upper()))
+    print()
 
     # Get active feeds
-    feeds = get_active_feeds()
-    print(f"Found {len(feeds)} active feeds")
+    feeds = get_active_feeds(country_code=country_code)
+    print("Found {} active feeds".format(len(feeds)))
 
     if max_feeds:
         feeds = feeds[:max_feeds]
-        print(f"Processing first {len(feeds)} feeds (--max-feeds={max_feeds})\n")
+        print(
+            "Processing first {} feeds (--max-feeds={})\n".format(len(feeds), max_feeds)
+        )
 
     # Initialize fetcher
     fetcher = RSSFetcher()
@@ -143,7 +160,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max-feeds", type=int, help="Maximum number of feeds to process"
     )
+    parser.add_argument(
+        "--country", type=str, help="Filter feeds by country code (e.g., RU, US, CN)"
+    )
 
     args = parser.parse_args()
 
-    run_ingestion(max_feeds=args.max_feeds)
+    run_ingestion(max_feeds=args.max_feeds, country_code=args.country)

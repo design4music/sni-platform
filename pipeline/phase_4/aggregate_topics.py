@@ -803,18 +803,16 @@ def get_catchall_titles_with_signals(conn, catchall_id: str) -> list:
 def find_reassignment_candidates(
     catchall_titles: list,
     regular_events: dict,
-    similarity_threshold: float = 0.4,
+    similarity_threshold: float = 0.3,
 ) -> list:
     """
     Find catchall titles that could be reassigned to existing topics.
+    Uses both signal similarity AND title text similarity against event titles.
     Returns: [{title_id, target_event_id, similarity}]
     """
     candidates = []
 
     for title in catchall_titles:
-        if not title["signals"]:
-            continue
-
         best_match = None
         best_similarity = 0
 
@@ -822,13 +820,23 @@ def find_reassignment_candidates(
             if event["is_catchall"]:
                 continue
 
+            # Signal similarity
             event_signals = get_all_signals(event)
-            if not event_signals:
-                continue
+            sig_sim = 0
+            if title["signals"] and event_signals:
+                sig_sim = jaccard_similarity(title["signals"], event_signals)
 
-            similarity = jaccard_similarity(title["signals"], event_signals)
-            if similarity > best_similarity:
-                best_similarity = similarity
+            # Title text similarity: compare catchall headline vs event title
+            # This catches cases where signals differ but the story is the same
+            title_sim = title_similarity(
+                [title["title_display"]], [event.get("title", "")]
+            )
+
+            # Best of signal or title similarity
+            combined_sim = max(sig_sim, title_sim)
+
+            if combined_sim > best_similarity:
+                best_similarity = combined_sim
                 best_match = event_id
 
         if best_match and best_similarity >= similarity_threshold:
@@ -897,8 +905,8 @@ def process_catchall_reassignment(
     conn,
     ctm_id: str,
     events: dict,
-    similarity_threshold: float = 0.4,
-    max_reassignments: int = 50,
+    similarity_threshold: float = 0.25,
+    max_reassignments: int = 100,
     dry_run: bool = False,
 ) -> dict:
     """
@@ -1501,7 +1509,7 @@ def process_ctm(
     # Step D: Other Coverage reassignment
     print()
     print("-" * 70)
-    print("STEP D: OTHER COVERAGE REASSIGNMENT (similarity >= 40%)")
+    print("STEP D: OTHER COVERAGE REASSIGNMENT (similarity >= 25%)")
     print("-" * 70)
 
     # Reload events after cleanup
@@ -1512,8 +1520,8 @@ def process_ctm(
         conn,
         ctm["id"],
         events,
-        similarity_threshold=0.4,
-        max_reassignments=50,
+        similarity_threshold=0.25,
+        max_reassignments=100,
         dry_run=dry_run,
     )
 
