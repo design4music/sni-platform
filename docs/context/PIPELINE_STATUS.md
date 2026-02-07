@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-06
+**Last Updated**: 2026-02-07
 **Status**: Production - Full pipeline operational
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -284,7 +284,7 @@ LLM generates conversational summaries for each event:
 
 ## Phase 5: Epic Detection & Enrichment
 
-**Script**: `db/scripts/build_epics.py`
+**Script**: `pipeline/epics/build_epics.py`
 **Runs**: Manual (after month freeze)
 
 ### Epic Detection
@@ -312,7 +312,7 @@ For each epic, generates:
 
 ## Phase 5.5: Narrative Extraction
 
-**Script**: `db/scripts/extract_epic_narratives.py`
+**Script**: `pipeline/epics/extract_narratives.py`
 **Runs**: After epic enrichment
 
 ### Two-Pass LLM Approach
@@ -336,7 +336,7 @@ For each epic, generates:
 
 ## Phase 6: RAI Analysis
 
-**Script**: `db/scripts/analyze_narratives_rai.py`
+**Script**: `pipeline/epics/analyze_rai.py`
 **Runs**: After narrative extraction
 
 ### RAI Integration
@@ -460,6 +460,17 @@ pipeline/
 |   |-- generate_event_summaries_4_5a.py  # Event summaries
 |   |-- generate_summaries_4_5.py    # CTM digests
 |
+|-- epics/                           # Epic lifecycle (cron/manual)
+|   |-- build_epics.py               # Epic detection + enrichment
+|   |-- extract_narratives.py        # Narrative frame extraction
+|   |-- analyze_rai.py               # RAI analysis
+|   |-- detect_epics.py              # Epic detection logic
+|   |-- explore_epic.py              # Epic exploration tool
+|
+|-- freeze/                          # Monthly freeze (cron)
+|   |-- freeze_month.py              # CTM freeze + centroid summaries
+|   |-- generate_signal_rankings.py  # Monthly signal rankings
+|
 |-- runner/
 |   |-- pipeline_daemon.py           # Orchestration daemon
 
@@ -470,11 +481,7 @@ core/
 
 db/
 |-- scripts/
-|   |-- freeze_month.py              # Monthly freeze + centroid summaries
-|   |-- build_epics.py               # Epic detection + enrichment (Phase 5)
-|   |-- extract_epic_narratives.py   # Narrative extraction (Phase 5.5)
-|   |-- analyze_narratives_rai.py    # RAI analysis (Phase 6)
-|   |-- generate_signal_rankings.py  # Monthly signal rankings
+|   |-- fix_outdated_titles.py       # One-off data fix utilities
 |-- backfills/
 |   |-- backfill_unknown_entities.py # Unknown entity resolution
 |-- migrations/                      # SQL migrations
@@ -636,7 +643,7 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ---
 
-## Current Status (2026-02-06)
+## Current Status (2026-02-07)
 
 **Operational**: Full pipeline (Phases 1-6) running locally. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. Production site live at https://www.worldbrief.info
 
@@ -649,6 +656,8 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 5. **Epic Frontend**: Epic list page with month navigation, detail pages with country accordion, narrative overlay with RAI scores and full analysis.
 6. **Custom Domain**: Live at https://www.worldbrief.info (SSL via Render)
 7. **Google Analytics**: GA4 tracking added (G-LF3GZ04SMF)
+8. **Script Reorganization**: Epic scripts moved to `pipeline/epics/`, freeze scripts to `pipeline/freeze/`. Clear separation between worker phases and cron jobs.
+9. **Prompt Consolidation**: All LLM prompts consolidated into `core/prompts.py` with shared prose writing rules (no-causality, no-roles, neutral-tone).
 
 ### Previous Changes (2026-01-15 to 2026-02-02)
 
