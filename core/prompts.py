@@ -171,19 +171,26 @@ SIGNAL RULES:
 
 ## PART 3: ENTITY COUNTRIES
 
-For persons, orgs, places, AND systems, identify their PRIMARY country association using ISO 2-letter codes.
+Map entities to their PRIMARY country using ISO 2-letter codes.
 
 entity_countries: {{"ENTITY_NAME": "ISO_CODE", ...}}
 
-RULES:
-- Politicians/officials -> their country of office (JAISHANKAR->IN, RUBIO->US, MACRON->FR)
-- Companies -> headquarters country (TSMC->TW, SAMSUNG->KR, BOEING->US)
+COUNTRY ADJECTIVES (CRITICAL - catches bilateral references):
+- ANY country adjective -> that country's ISO code
+- English: French->FR, Ukrainian->UA, Brazilian->BR, Saudi->SA, German->DE, British->GB
+- Russian: Французский->FR, Украинский/Украине/Украины->UA, Бразильский/Бразилии->BR
+- Works for any context: "French president", "French economy", "Ukrainian talks"
+- Declined forms in any language -> normalize to ISO code
+
+OTHER ENTITY MAPPINGS:
+- Named politicians -> country of office (MACRON->FR, JAISHANKAR->IN, RUBIO->US)
+- Companies -> headquarters (TSMC->TW, SAMSUNG->KR, BOEING->US)
 - Sub-national places -> parent country (Crimea->UA, Bavaria->DE, Greenland->DK)
-- Systems/infrastructure -> owner country (Nord Stream->RU, SWIFT->BE, Starlink->US, BeiDou->CN)
-- IGOs -> use org code (NATO->NATO, EU->EU, UN->UN)
-- Armed groups -> use special codes (HAMAS->PS, HEZBOLLAH->LB, ISIS->ISIS)
-- Only include entities you're confident about (>80%)
-- Skip entities that are already country names (US, China, etc.)
+- Systems/infrastructure -> owner (Nord Stream->RU, Starlink->US, BeiDou->CN)
+- IGOs -> org code (NATO->NATO, EU->EU, UN->UN)
+- Armed groups -> special codes (HAMAS->PS, HEZBOLLAH->LB, ISIS->ISIS)
+
+SKIP: Country names themselves (US, China, France) - these go in places, not here.
 
 ## OUTPUT FORMAT
 
