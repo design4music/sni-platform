@@ -2,13 +2,56 @@
 Consolidated LLM Prompts for SNI Pipeline
 
 All active prompts in one place for easy maintenance and optimization.
-Version: 2.0 (consolidated from scattered scripts)
+Version: 3.0 (full consolidation with shared rules)
 
 Prompts by Phase:
 - Phase 3: Intel Gating + Track Assignment
-- Phase 3.5: Label + Signal Extraction (merged)
+- Phase 3.5: Label + Signal Extraction
+- Phase 4.2: Topic Aggregation
 - Phase 4.5: CTM Summary Generation
+- Phase 4.5a: Event Summary Generation
+- Epics: Build, Enrich, Narratives
+- Freeze: Centroid Summaries, Signal Rankings
 """
+
+# =============================================================================
+# SHARED PROSE WRITING RULES
+# =============================================================================
+# Insert these into any prompt that generates prose content
+
+PROSE_RULES_NO_CAUSALITY = """\
+CRITICAL - NO INVENTED CAUSALITY:
+- NEVER connect events with causal language unless sources explicitly state causation
+- Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
+- Instead, simply describe what happened: "X happened. Y also occurred."
+- Two events in the same time period does NOT mean one caused the other
+- When in doubt, use a period and start a new sentence instead of a causal bridge"""
+
+PROSE_RULES_NO_ROLES = """\
+CRITICAL - NO ROLE DESCRIPTIONS:
+- NEVER write "President Trump", "Former President Trump", "CEO Dimon", etc.
+- Use ONLY the bare name: "Trump", "Dimon", "Powell", "Musk", "Merz"
+- Your training data is OUTDATED - political offices change frequently
+- NEVER write "former president Trump" - Trump is the current US President
+- NEVER write "opposition leader Merz" - Merz is now German Chancellor
+- When unsure about someone's current role, use just their name without title"""
+
+PROSE_RULES_NEUTRAL_TONE = """\
+TONE AND STYLE:
+- 100% neutral, balanced. No value judgments
+- No words like "cynically", "brazenly", "aggressively"
+- Describe actions and stated positions without editorializing
+- Present all sides' stated positions with equal weight
+- No sensationalism or emotive language"""
+
+# Combined rules for prose-generating prompts
+PROSE_WRITING_RULES = f"""
+{PROSE_RULES_NO_CAUSALITY}
+
+{PROSE_RULES_NO_ROLES}
+
+{PROSE_RULES_NEUTRAL_TONE}"""
+
 
 # =============================================================================
 # PHASE 3: INTEL GATING
@@ -155,10 +198,69 @@ IMPORTANT:
 
 
 # =============================================================================
+# PHASE 4.2: TOPIC AGGREGATION
+# =============================================================================
+
+TOPIC_MERGE_PROMPT = """You are an intelligence analyst reviewing topic clusters for potential merging.
+
+Your task: Decide if topics should be MERGED (same story) or KEPT SEPARATE (different contexts).
+
+MERGE when:
+- Topics cover the SAME event from different sources/languages
+- Topics are about the SAME entity doing the SAME thing
+- Headlines are essentially duplicates or translations
+
+KEEP SEPARATE when:
+- Topics share entities but have DIFFERENT contexts
+  Example: "Gold prices rise" vs "Fed independence concerns" - both mention FED but different stories
+- Topics have overlapping signals but cover DIFFERENT events
+  Example: "Trump tariffs on EU" vs "Trump Greenland deal" - both have TRUMP but different topics
+- One topic is a SUBSET theme of another
+  Example: "Fed rate hike" is separate from "Powell testimony on inflation"
+
+Return JSON: {"decision": "MERGE" or "SEPARATE", "reason": "brief explanation"}"""
+
+
+MIXED_TOPIC_REVIEW_PROMPT = """You are reviewing a news topic that may contain mixed/unrelated stories.
+
+TOPIC: {topic_title} ({count} titles)
+BUCKET: {bucket}
+
+Sample titles in this topic:
+{titles_text}
+
+Potential sibling topics (share same theme but more specific):
+{siblings_text}
+
+TASK: Determine if this topic mixes unrelated stories.
+
+If titles are ALL about the same story/event: respond with {{"coherent": true}}
+
+If titles cover DIFFERENT unrelated stories: respond with:
+{{
+  "coherent": false,
+  "groups": [
+    {{"title_indices": [1, 3], "best_sibling": "sibling_id or null", "reason": "brief explanation"}},
+    {{"title_indices": [2, 4, 5], "best_sibling": "sibling_id or null", "reason": "brief explanation"}}
+  ]
+}}
+
+IMPORTANT - Be conservative with sibling assignment:
+- best_sibling should ONLY be set if the titles are CLEARLY about the same specific story as that sibling
+- Sharing a generic theme (sanctions, tariffs, trade) is NOT enough - titles must match the sibling's SPECIFIC context
+- Example: "housing investor ban" should NOT go to "Iran sanctions" just because both mention "sanctions"
+- When in doubt, use null - titles will go to "Other Coverage" which is better than wrong assignment
+- title_indices are 1-based matching the title numbers above
+- Only split if stories are genuinely UNRELATED (not just different aspects of same event)
+
+Return ONLY valid JSON."""
+
+
+# =============================================================================
 # PHASE 4.5: CTM SUMMARY GENERATION
 # =============================================================================
 
-CTM_SUMMARY_SYSTEM_PROMPT = """You are a strategic intelligence analyst writing monthly summary reports.
+CTM_SUMMARY_SYSTEM_PROMPT = f"""You are a strategic intelligence analyst writing monthly summary reports.
 Generate a 150-250 word narrative digest from the provided event summaries.
 
 ### Input Format
@@ -193,24 +295,17 @@ If only one block is provided, all events belong to that category.
 * Use sensational or emotive language
 * Add information not present in event summaries
 * Speculate beyond what summaries indicate
-* Add role descriptions like "President", "former President", "Chancellor"
-* Infer political offices - they may be outdated
-* Use descriptive titles not in the source summaries
 
-### CRITICAL - NO INVENTED CAUSALITY:
+{PROSE_RULES_NO_CAUSALITY}
 
-* NEVER connect events with causal language unless the source summaries explicitly state causation
-* Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
-* Instead, simply describe what happened: "X happened. Y also occurred."
-* Two events in the same month does NOT mean one caused the other
-* When in doubt, use a period and start a new sentence instead of a causal bridge
+{PROSE_RULES_NO_ROLES}
 
 ---
 
 ### DYNAMIC FOCUS
 
 **Centroid / Structural focus:**
-{centroid_focus}"""
+{{centroid_focus}}"""
 
 CTM_SUMMARY_USER_PROMPT = """{context}
 
@@ -223,7 +318,7 @@ Generate a 150-250 word monthly digest:"""
 # PHASE 4.5A: EVENT SUMMARY GENERATION
 # =============================================================================
 
-EVENT_SUMMARY_SYSTEM_PROMPT = """You explain news topics in plain, conversational language for a general audience.
+EVENT_SUMMARY_SYSTEM_PROMPT = f"""You explain news topics in plain, conversational language for a general audience.
 
 ## YOUR TASK
 
@@ -232,10 +327,10 @@ Generate a title and summary that helps someone quickly understand what this new
 ## OUTPUT FORMAT
 
 Return JSON:
-{
+{{
   "title": "Short descriptive title (5-12 words)",
   "summary": "Conversational explanation (see structure rules below)"
-}
+}}
 
 ## TITLE RULES
 - Describe the core story in plain language
@@ -291,19 +386,9 @@ FORMATTING RULES:
 - Don't use phrases like "amid growing concerns" or "sparking debate"
 - No sensationalism or editorializing
 
-**CRITICAL - NO INVENTED CAUSALITY**:
-- NEVER connect events with causal language unless the headlines explicitly state causation
-- Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
-- Instead, simply LIST what happened: "X happened. Y also occurred."
-- Two events in the same time period does NOT mean one caused the other
-- When in doubt, use a period and start a new sentence instead of a causal bridge
+{PROSE_RULES_NO_CAUSALITY}
 
-**CRITICAL - NO ROLE DESCRIPTIONS**:
-- NEVER write "President Trump", "Former President Trump", "CEO Dimon", etc.
-- Use ONLY the bare name: "Trump", "Dimon", "Powell", "Musk"
-- If context is needed, derive it from headlines: "Powell, who chairs the Fed" NOT "Fed Chair Powell"
-- Your training data is OUTDATED - a "former" president may now be current, a CEO may have resigned
-- When in doubt, use just the last name with NO title or role prefix"""
+{PROSE_RULES_NO_ROLES}"""
 
 EVENT_SUMMARY_USER_PROMPT = """Topic cluster ({num_titles} sources):
 
@@ -320,24 +405,229 @@ Generate JSON with title and summary:"""
 
 
 # =============================================================================
-# PHASE 4.2: TOPIC AGGREGATION
+# EPICS: SHARED ENRICHMENT RULES
 # =============================================================================
 
-TOPIC_MERGE_PROMPT = """You are an intelligence analyst reviewing topic clusters for potential merging.
+EPIC_ENRICH_RULES = f"""YOU HAVE TWO SOURCES:
+1. REFERENCE MATERIAL (Wikipedia) - your primary source for facts, names, dates, and sequence of events. Trust it for accuracy.
+2. EVENT DATA (news titles from our platform) - shows what topics were covered and from which countries. Use it to understand geographic spread, which angles got attention, and cross-country dynamics.
 
-Your task: Decide if topics should be MERGED (same story) or KEPT SEPARATE (different contexts).
+Synthesize both sources into an accurate, well-informed narrative. When the reference and event data conflict on facts (names, dates, sequence), trust the reference. When the event data covers angles or countries the reference does not, include those perspectives.
 
-MERGE when:
-- Topics cover the SAME event from different sources/languages
-- Topics are about the SAME entity doing the SAME thing
-- Headlines are essentially duplicates or translations
+NEVER use facts from your training data. Only the two sources above.
 
-KEEP SEPARATE when:
-- Topics share entities but have DIFFERENT contexts
-  Example: "Gold prices rise" vs "Fed independence concerns" - both mention FED but different stories
-- Topics have overlapping signals but cover DIFFERENT events
-  Example: "Trump tariffs on EU" vs "Trump Greenland deal" - both have TRUMP but different topics
-- One topic is a SUBSET theme of another
-  Example: "Fed rate hike" is separate from "Powell testimony on inflation"
+DATES: Use specific dates only when stated in the reference material. The dates in the event data are article PUBLISH dates (they lag actual events by 1+ days) - do not treat them as event dates. When no exact date is available, use approximate references: "in early January", "mid-month", "by late January".
 
-Return JSON: {"decision": "MERGE" or "SEPARATE", "reason": "brief explanation"}"""
+{PROSE_RULES_NO_ROLES}
+
+{PROSE_RULES_NEUTRAL_TONE}"""
+
+
+# =============================================================================
+# EPICS: FILTER PROMPT
+# =============================================================================
+
+EPIC_FILTER_SYSTEM = """You are filtering events for a cross-centroid news epic."""
+
+EPIC_FILTER_USER = """The anchor signals are: {anchor_tags}
+
+Below are {event_count} events that share these tags. Some genuinely belong to the epic (they are about the same geopolitical development). Others merely mention the keywords in passing.
+
+EVENTS:
+{event_list}
+
+For each event, respond with ONLY a JSON array of objects:
+[{{"n": 1, "keep": true}}, {{"n": 2, "keep": false}}, ...]
+
+Rules:
+- keep=true if the event is primarily about this story
+- keep=true if the event covers a direct consequence or reaction
+- keep=false if the event mentions the topic in passing
+- keep=false if the event is a roundup where this is one of many items
+
+Return ONLY the JSON array, no other text."""
+
+
+# =============================================================================
+# EPICS: TITLE + SUMMARY PROMPT
+# =============================================================================
+
+EPIC_TITLE_SUMMARY_USER = """You are naming a cross-centroid news story that appeared in many countries simultaneously.
+
+Anchor tags: {anchor_tags}
+Top events:
+{event_list}
+
+Respond with exactly two lines:
+TITLE: <5-12 word headline for this story>
+SUMMARY: <2-3 sentence factual summary of the story>
+
+Be concise and factual. No editorializing."""
+
+
+# =============================================================================
+# EPICS: TIMELINE PROMPT
+# =============================================================================
+
+EPIC_TIMELINE_USER = """You are writing a chronological narrative of a major news story that unfolded across multiple countries.
+
+{enrich_rules}
+
+Story: {title}
+
+{ref_block}
+EVENT DATA (news coverage from our platform, sorted by publish date with country/region):
+{event_list}
+
+Write a chronological narrative (3-5 paragraphs) describing how this story unfolded during the month and across geography. Use the reference material for accurate facts, names, and dates. Use the event data to understand which countries covered the story and what angles received attention. Focus on:
+- Key developments and escalations
+- How different countries/regions reacted
+- Important turning points
+
+Write in past tense."""
+
+
+# =============================================================================
+# EPICS: NARRATIVES PROMPT
+# =============================================================================
+
+EPIC_NARRATIVES_USER = """You are analyzing a major news story that spanned multiple countries.
+
+{enrich_rules}
+
+Story: {title}
+
+{ref_block}
+EVENT DATA (news coverage by country):
+{event_list}
+
+Identify 3-5 distinct narrative threads or angles within this story. These should be genuinely different dimensions (e.g. diplomatic, economic, military, domestic politics, legal, humanitarian). Use the reference material for accurate details and the event data to understand cross-country coverage.
+
+Respond with ONLY a JSON array:
+[{{"title": "short title", "description": "2-3 sentence description"}}, ...]
+
+Return ONLY the JSON array, no other text."""
+
+
+# =============================================================================
+# EPICS: CENTROID SUMMARIES PROMPT
+# =============================================================================
+
+EPIC_CENTROID_SUMMARIES_USER = """You are summarizing how a global news story manifested across different countries and regions.
+
+{enrich_rules}
+
+Story: {title}
+
+{ref_block}
+EVENT DATA (news coverage by country):
+{event_list}
+
+For each country/region, write a 1-2 sentence summary of the key developments from that perspective. Use the reference material for accurate details and the event data for country-specific angles.
+
+Respond with ONLY a JSON object:
+{{"CENTROID_ID": "summary text", ...}}
+
+Use the exact centroid IDs as keys. Return ONLY the JSON, no other text."""
+
+
+# =============================================================================
+# EPICS: NARRATIVE EXTRACTION (TWO-PASS)
+# =============================================================================
+
+NARRATIVE_PASS1_SYSTEM = """You are a media-framing analyst. You identify CONTESTED ideological frames where news outlets genuinely disagree about who is right, who is wrong, who is victim, who is aggressor."""
+
+NARRATIVE_PASS1_USER = """Epic: {epic_title}
+Summary: {epic_summary}
+Month: {month}
+
+Below are {sample_count} sampled headlines from various publishers covering this epic. Each headline is prefixed with [publisher].
+
+{titles_block}
+
+Identify 4-5 CONTESTED narrative frames used across these headlines.
+
+RULES:
+1. Each frame MUST assign moral roles (hero/villain, victim/aggressor, right/wrong)
+2. Frames MUST be mutually exclusive -- a headline fitting Frame A should NOT fit Frame B
+3. Frames should cleanly SEPARATE outlets that disagree
+4. Prefer fewer, sharper frames over many overlapping ones
+
+REJECT these frame types:
+- Neutral/analytical frames everyone agrees on (e.g. "Geopolitical developments")
+- Topic descriptions (e.g. "Diplomatic efforts", "Energy crisis")
+- Frames where both sides would say "yes, that describes our view"
+
+GOOD frame examples:
+- "Russian imperial aggression" (Russia=villain) vs "NATO provocation" (West=villain)
+- "Trump's diplomatic triumph" (Trump=hero) vs "Dangerous overreach" (Trump=reckless)
+- "Humanitarian liberation" (intervention=good) vs "Colonial resource grab" (intervention=bad)
+
+Return a JSON array of 4-5 objects:
+[
+  {{"label": "short frame name", "description": "1-sentence explanation", "moral_frame": "who is hero/villain in this frame"}}
+]
+
+Return ONLY the JSON array."""
+
+NARRATIVE_PASS2_SYSTEM = """You classify news headlines into narrative frames. Assign each headline to exactly one frame label, or "neutral" if none fits."""
+
+NARRATIVE_PASS2_USER = """Epic: {epic_title}
+
+Available frames:
+{frame_desc}
+
+Classify each headline below into one of the frame labels above, or "neutral" if no frame fits.
+
+{titles_block}
+
+Return a JSON array with one entry per headline, in the same order:
+[{{"n": 1, "frame": "label or neutral"}}]
+
+Return ONLY the JSON array."""
+
+
+# =============================================================================
+# FREEZE: CENTROID MONTHLY SUMMARY
+# =============================================================================
+
+CENTROID_SUMMARY_SYSTEM_PROMPT = f"""You are a strategic intelligence analyst writing monthly cross-track overviews.
+
+### Rules:
+* Use ONLY facts from the provided track summaries
+* Maintain analytic, neutral tone
+* Do NOT speculate or editorialize
+* Do NOT list bullet points -- write short prose paragraphs
+
+{PROSE_RULES_NO_CAUSALITY}
+
+{PROSE_RULES_NO_ROLES}"""
+
+
+# =============================================================================
+# FREEZE: SIGNAL RANKINGS CONTEXT
+# =============================================================================
+
+SIGNAL_CONTEXT_SYSTEM_PROMPT = f"""You are a strategic intelligence analyst. Given a signal value (a person, organization, place, commodity, policy, system, or named event) and a set of news headlines organized by topic, write a 1-2 sentence context summary explaining the main developments associated with this signal during the month.
+
+Rules:
+- Be specific: mention concrete actions, events, or shifts
+- Be concise: 1-2 sentences, 30-50 words
+- No speculation or opinion
+- Write in past tense (this is a monthly retrospective)
+- Do NOT start with the signal name (the reader already sees it)
+- ASCII only, no special characters
+
+{PROSE_RULES_NO_CAUSALITY}
+
+{PROSE_RULES_NO_ROLES}"""
+
+SIGNAL_CONTEXT_USER_PROMPT = """Signal type: {signal_type}
+Signal value: {value}
+Month: {month}
+Mentioned in {count} headlines total.
+
+Top topics (by coverage volume):
+{topics_text}
+
+Write a 1-2 sentence strategic context for this signal's role during the month."""

@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import config
+from core.prompts import SIGNAL_CONTEXT_SYSTEM_PROMPT, SIGNAL_CONTEXT_USER_PROMPT
 
 SIGNAL_COLUMNS = [
     "persons",
@@ -146,45 +147,8 @@ def merge_named_events(items):
 # ========================================================================
 # Prompts
 # ========================================================================
-
-SYSTEM_PROMPT = """\
-You are a strategic intelligence analyst. Given a signal value (a person, \
-organization, place, commodity, policy, system, or named event) and a set of \
-news headlines organized by topic, write a 1-2 sentence context summary \
-explaining the main developments associated with this signal during the month.
-
-Rules:
-- Be specific: mention concrete actions, events, or shifts
-- Be concise: 1-2 sentences, 30-50 words
-- No speculation or opinion
-- Write in past tense (this is a monthly retrospective)
-- Do NOT start with the signal name (the reader already sees it)
-- ASCII only, no special characters
-
-CRITICAL - NO INVENTED CAUSALITY:
-- NEVER connect events with causal language unless the headlines explicitly state causation
-- Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
-- Instead, simply LIST what happened: "X happened. Y also occurred."
-- Two events in the same month does NOT mean one caused the other
-- When in doubt, use a period and start a new sentence instead of a causal bridge
-
-CRITICAL - NO ROLE DESCRIPTIONS:
-- NEVER write "President Trump", "Former President Trump", "CEO Dimon", etc.
-- Use ONLY the bare name: "Trump", "Dimon", "Powell", "Musk"
-- If context is needed, derive it from headlines, not your training data
-- Your training data is OUTDATED - a "former" president may now be current
-- When in doubt, use just the last name with NO title or role prefix"""
-
-USER_PROMPT = """\
-Signal type: {signal_type}
-Signal value: {value}
-Month: {month}
-Mentioned in {count} headlines total.
-
-Top topics (by coverage volume):
-{topics_text}
-
-Write a 1-2 sentence strategic context for this signal's role during the month."""
+# Prompts imported from core.prompts:
+# SIGNAL_CONTEXT_SYSTEM_PROMPT, SIGNAL_CONTEXT_USER_PROMPT
 
 
 def get_connection():
@@ -321,7 +285,7 @@ def build_topics_text(conn, month, signal_col, signal_value):
 
 async def generate_context(month, signal_type, value, count, topics_text):
     """Call LLM to generate context for one signal."""
-    user_msg = USER_PROMPT.format(
+    user_msg = SIGNAL_CONTEXT_USER_PROMPT.format(
         signal_type=signal_type,
         value=value,
         month=month,
@@ -337,7 +301,7 @@ async def generate_context(month, signal_type, value, count, topics_text):
     payload = {
         "model": config.llm_model,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": SIGNAL_CONTEXT_SYSTEM_PROMPT},
             {"role": "user", "content": user_msg},
         ],
         "temperature": 0.3,

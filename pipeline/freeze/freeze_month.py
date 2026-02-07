@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import config
+from core.prompts import CENTROID_SUMMARY_SYSTEM_PROMPT
 
 # Threshold for "large" CTMs that get LLM summaries
 LARGE_CTM_THRESHOLD = 30
@@ -304,22 +305,7 @@ def get_centroid_track_summaries(conn, centroid_id: str, month: str) -> list:
     return cur.fetchall()
 
 
-CENTROID_SUMMARY_SYSTEM_PROMPT = """You are a strategic intelligence analyst writing monthly cross-track overviews.
-
-### Rules:
-* Use ONLY facts from the provided track summaries
-* NEVER add role descriptions (President, Chancellor, opposition leader, CEO, etc.)
-* Use bare names only -- your training data may be outdated
-* Maintain analytic, neutral tone
-* Do NOT speculate or editorialize
-* Do NOT list bullet points -- write short prose paragraphs
-
-### CRITICAL - NO INVENTED CAUSALITY:
-* NEVER connect events with causal language unless the track summaries explicitly state causation
-* Do NOT use: "triggered", "led to", "caused", "resulted in", "prompted", "sparked"
-* Instead, simply describe what happened: "X happened. Y also occurred."
-* Two events in the same month does NOT mean one caused the other
-* When in doubt, use a period and start a new sentence instead of a causal bridge"""
+# CENTROID_SUMMARY_SYSTEM_PROMPT imported from core.prompts
 
 
 async def generate_centroid_summary(

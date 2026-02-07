@@ -31,7 +31,7 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-from core.prompts import TOPIC_MERGE_PROMPT
+from core.prompts import MIXED_TOPIC_REVIEW_PROMPT, TOPIC_MERGE_PROMPT
 
 # =============================================================================
 # GENERIC SIGNAL DETECTION CONFIG
@@ -1080,39 +1080,7 @@ def find_sibling_topics(
     return siblings
 
 
-MIXED_TOPIC_REVIEW_PROMPT = """You are reviewing a news topic that may contain mixed/unrelated stories.
-
-TOPIC: {topic_title} ({count} titles)
-BUCKET: {bucket}
-
-Sample titles in this topic:
-{titles_text}
-
-Potential sibling topics (share same theme but more specific):
-{siblings_text}
-
-TASK: Determine if this topic mixes unrelated stories.
-
-If titles are ALL about the same story/event: respond with {{"coherent": true}}
-
-If titles cover DIFFERENT unrelated stories: respond with:
-{{
-  "coherent": false,
-  "groups": [
-    {{"title_indices": [1, 3], "best_sibling": "sibling_id or null", "reason": "brief explanation"}},
-    {{"title_indices": [2, 4, 5], "best_sibling": "sibling_id or null", "reason": "brief explanation"}}
-  ]
-}}
-
-IMPORTANT - Be conservative with sibling assignment:
-- best_sibling should ONLY be set if the titles are CLEARLY about the same specific story as that sibling
-- Sharing a generic theme (sanctions, tariffs, trade) is NOT enough - titles must match the sibling's SPECIFIC context
-- Example: "housing investor ban" should NOT go to "Iran sanctions" just because both mention "sanctions"
-- When in doubt, use null - titles will go to "Other Coverage" which is better than wrong assignment
-- title_indices are 1-based matching the title numbers above
-- Only split if stories are genuinely UNRELATED (not just different aspects of same event)
-
-Return ONLY valid JSON."""
+# MIXED_TOPIC_REVIEW_PROMPT imported from core.prompts
 
 
 def review_suspicious_topic_with_llm(

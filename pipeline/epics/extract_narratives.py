@@ -36,63 +36,18 @@ import psycopg2
 import psycopg2.extras
 
 from core.config import config
+from core.prompts import (
+    NARRATIVE_PASS1_SYSTEM,
+    NARRATIVE_PASS1_USER,
+    NARRATIVE_PASS2_SYSTEM,
+    NARRATIVE_PASS2_USER,
+)
 
 SKIP_SLUGS = {"xi-2026-01"}
 MAX_EPICS = 12
 MIN_TITLES = 20
 SAMPLE_SIZE = 150
 CLASSIFY_BATCH_SIZE = 60
-
-PASS1_SYSTEM = (
-    "You are a media-framing analyst. You identify CONTESTED ideological frames "
-    "where news outlets genuinely disagree about who is right, who is wrong, "
-    "who is victim, who is aggressor."
-)
-
-PASS1_USER = (
-    "Epic: %s\n"
-    "Summary: %s\n"
-    "Month: %s\n\n"
-    "Below are %d sampled headlines from various publishers covering this epic. "
-    "Each headline is prefixed with [publisher].\n\n"
-    "%s\n\n"
-    "Identify 4-5 CONTESTED narrative frames used across these headlines.\n\n"
-    "RULES:\n"
-    "1. Each frame MUST assign moral roles (hero/villain, victim/aggressor, right/wrong)\n"
-    "2. Frames MUST be mutually exclusive -- a headline fitting Frame A should NOT fit Frame B\n"
-    "3. Frames should cleanly SEPARATE outlets that disagree\n"
-    "4. Prefer fewer, sharper frames over many overlapping ones\n\n"
-    "REJECT these frame types:\n"
-    "- Neutral/analytical frames everyone agrees on (e.g. 'Geopolitical developments')\n"
-    "- Topic descriptions (e.g. 'Diplomatic efforts', 'Energy crisis')\n"
-    "- Frames where both sides would say 'yes, that describes our view'\n\n"
-    "GOOD frame examples:\n"
-    "- 'Russian imperial aggression' (Russia=villain) vs 'NATO provocation' (West=villain)\n"
-    "- 'Trump's diplomatic triumph' (Trump=hero) vs 'Dangerous overreach' (Trump=reckless)\n"
-    "- 'Humanitarian liberation' (intervention=good) vs 'Colonial resource grab' (intervention=bad)\n\n"
-    "Return a JSON array of 4-5 objects:\n"
-    "[\n"
-    '  {"label": "short frame name", "description": "1-sentence explanation", '
-    '"moral_frame": "who is hero/villain in this frame"}\n'
-    "]\n\n"
-    "Return ONLY the JSON array."
-)
-
-PASS2_SYSTEM = (
-    "You classify news headlines into narrative frames. "
-    "Assign each headline to exactly one frame label, or 'neutral' if none fits."
-)
-
-PASS2_USER = (
-    "Epic: %s\n\n"
-    "Available frames:\n%s\n\n"
-    "Classify each headline below into one of the frame labels above, "
-    "or 'neutral' if no frame fits.\n\n"
-    "%s\n\n"
-    "Return a JSON array with one entry per headline, in the same order:\n"
-    '[{"n": 1, "frame": "label or neutral"}]\n\n'
-    "Return ONLY the JSON array."
-)
 
 
 def get_connection():
@@ -227,22 +182,24 @@ def pass1_discover_frames(epic_title, epic_summary, month, sampled_titles):
         lines.append("[%s] %s" % (pub, t["title_display"]))
     titles_block = "\n".join(lines)
 
-    user_msg = PASS1_USER % (
-        epic_title,
-        epic_summary or "N/A",
-        month,
-        len(sampled_titles),
-        titles_block,
+    user_msg = NARRATIVE_PASS1_USER.format(
+        epic_title=epic_title,
+        epic_summary=epic_summary or "N/A",
+        month=month,
+        sample_count=len(sampled_titles),
+        titles_block=titles_block,
     )
 
-    content, tok_in, tok_out = call_llm(PASS1_SYSTEM, user_msg, 0.4, 1500)
+    content, tok_in, tok_out = call_llm(NARRATIVE_PASS1_SYSTEM, user_msg, 0.4, 1500)
     content = strip_json_fences(content)
 
     try:
         frames = json.loads(content)
     except json.JSONDecodeError:
         print("    WARN: Pass 1 JSON parse failed, retrying...")
-        content, tok_in2, tok_out2 = call_llm(PASS1_SYSTEM, user_msg, 0.3, 1500)
+        content, tok_in2, tok_out2 = call_llm(
+            NARRATIVE_PASS1_SYSTEM, user_msg, 0.3, 1500
+        )
         tok_in += tok_in2
         tok_out += tok_out2
         content = strip_json_fences(content)
@@ -281,9 +238,13 @@ def pass2_classify_titles(epic_title, frames, all_titles):
             lines.append("%d. [%s] %s" % (i, pub, t["title_display"]))
         titles_block = "\n".join(lines)
 
-        user_msg = PASS2_USER % (epic_title, frame_desc, titles_block)
+        user_msg = NARRATIVE_PASS2_USER.format(
+            epic_title=epic_title,
+            frame_desc=frame_desc,
+            titles_block=titles_block,
+        )
 
-        content, tok_in, tok_out = call_llm(PASS2_SYSTEM, user_msg, 0.1, 2000)
+        content, tok_in, tok_out = call_llm(NARRATIVE_PASS2_SYSTEM, user_msg, 0.1, 2000)
         total_tok_in += tok_in
         total_tok_out += tok_out
         content = strip_json_fences(content)
@@ -294,7 +255,9 @@ def pass2_classify_titles(epic_title, frames, all_titles):
             print(
                 "    WARN: Pass 2 batch parse failed at offset %d, retrying..." % offset
             )
-            content, tok_in2, tok_out2 = call_llm(PASS2_SYSTEM, user_msg, 0.1, 2000)
+            content, tok_in2, tok_out2 = call_llm(
+                NARRATIVE_PASS2_SYSTEM, user_msg, 0.1, 2000
+            )
             total_tok_in += tok_in2
             total_tok_out += tok_out2
             content = strip_json_fences(content)

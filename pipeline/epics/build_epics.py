@@ -21,6 +21,7 @@ import httpx
 import psycopg2
 
 from core.config import config
+from core.prompts import EPIC_ENRICH_RULES
 
 # First-class signal prefixes: specific entities that can anchor an epic.
 # topic: tags (talks, sanctions, trade) are too generic to define a story.
@@ -633,37 +634,7 @@ def fetch_wikipedia_context(title, anchor_tags, month_str=None):
     return None
 
 
-ENRICH_RULES = (
-    "YOU HAVE TWO SOURCES:\n"
-    "1. REFERENCE MATERIAL (Wikipedia) - your primary source for facts, names, "
-    "dates, and sequence of events. Trust it for accuracy.\n"
-    "2. EVENT DATA (news titles from our platform) - shows what topics were "
-    "covered and from which countries. Use it to understand geographic spread, "
-    "which angles got attention, and cross-country dynamics.\n\n"
-    "Synthesize both sources into an accurate, well-informed narrative. "
-    "When the reference and event data conflict on facts (names, dates, "
-    "sequence), trust the reference. When the event data covers angles or "
-    "countries the reference does not, include those perspectives.\n\n"
-    "NEVER use facts from your training data. Only the two sources above.\n\n"
-    "DATES: Use specific dates only when stated in the reference material. "
-    "The dates in the event data are article PUBLISH dates (they lag actual "
-    "events by 1+ days) - do not treat them as event dates. When no exact "
-    "date is available, use approximate references: 'in early January', "
-    "'mid-month', 'by late January'.\n\n"
-    "CRITICAL - TITLES AND ROLES:\n"
-    "- Your training data may be OUTDATED. Political offices change.\n"
-    "- NEVER write 'former president Trump' - Trump is the current US President.\n"
-    "- NEVER write 'opposition leader Merz' - Merz is now German Chancellor.\n"
-    "- When unsure about someone's current role, use just their name without title.\n"
-    "- Safe: 'Trump announced...', 'Merz stated...'\n\n"
-    "TONE AND STYLE:\n"
-    "- 100%% neutral, balanced. No value judgments. No words like 'cynically', "
-    "'brazenly', 'aggressively'. Describe actions and stated positions.\n"
-    "- Present all sides' stated positions with equal weight.\n"
-    "- Clear, explanatory style. Imagine explaining to a smart reader who "
-    "follows the news but might not know specialized terms. Spell out "
-    "acronyms on first use and explain context when helpful.\n"
-)
+# ENRICH_RULES imported from core.prompts as EPIC_ENRICH_RULES
 
 
 def generate_timeline(title, events, wiki_ref=None):
@@ -697,7 +668,7 @@ def generate_timeline(title, events, wiki_ref=None):
         "- How different countries/regions reacted\n"
         "- Important turning points\n\n"
         "Write in past tense."
-    ) % (ENRICH_RULES, title, ref_block, event_list)
+    ) % (EPIC_ENRICH_RULES, title, ref_block, event_list)
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
@@ -751,7 +722,7 @@ def generate_narratives(title, events, wiki_ref=None):
         "Respond with ONLY a JSON array:\n"
         '[{"title": "short title", "description": "2-3 sentence description"}, ...]\n\n'
         "Return ONLY the JSON array, no other text."
-    ) % (ENRICH_RULES, title, ref_block, event_list)
+    ) % (EPIC_ENRICH_RULES, title, ref_block, event_list)
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
@@ -821,7 +792,7 @@ def generate_centroid_summaries(title, events, wiki_ref=None):
         "Respond with ONLY a JSON object:\n"
         '{"CENTROID_ID": "summary text", ...}\n\n'
         "Use the exact centroid IDs as keys. Return ONLY the JSON, no other text."
-    ) % (ENRICH_RULES, title, ref_block, event_list)
+    ) % (EPIC_ENRICH_RULES, title, ref_block, event_list)
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
