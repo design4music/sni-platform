@@ -163,7 +163,12 @@ Extract these typed signals from each title:
 
 SIGNAL RULES:
 - ENGLISH ONLY - translate foreign terms (oro->gold, Pekin->Beijing)
-- Use canonical forms: tariff/trade war->tariffs, chip/semiconductor->semiconductors
+- Use canonical forms (CRITICAL for clustering):
+  - tariff/trade war/import duties -> tariffs
+  - chip/semiconductor/microchip -> semiconductors
+  - peace deal/peace process/negotiations/peace agreement -> peace talks
+  - truce/cessation of hostilities/armistice -> ceasefire
+  - economic sanctions/trade sanctions/restrictions -> sanctions
 - NO PUBLISHERS as orgs (WSJ, Reuters, BBC, CNN)
 - NO COUNTRIES as places (handled via ISO codes in target)
 - Companies go in orgs: NVIDIA, APPLE, OPENAI, META, TESLA, BOEING

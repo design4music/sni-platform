@@ -129,6 +129,8 @@ def get_topics_with_signals(conn, ctm_id: str) -> dict:
             "places": set(),
             "commodities": set(),
             "policies": set(),
+            "action_classes": set(),
+            "domains": set(),
             "sample_titles": [],
         }
 
@@ -139,7 +141,8 @@ def get_topics_with_signals(conn, ctm_id: str) -> dict:
     cur.execute(
         """
         SELECT evt.event_id,
-               tl.persons, tl.orgs, tl.places, tl.commodities, tl.policies
+               tl.persons, tl.orgs, tl.places, tl.commodities, tl.policies,
+               tl.action_class, tl.domain
         FROM event_v3_titles evt
         JOIN title_labels tl ON tl.title_id = evt.title_id
         WHERE evt.event_id = ANY(%s::uuid[])
@@ -148,7 +151,9 @@ def get_topics_with_signals(conn, ctm_id: str) -> dict:
     )
 
     for row in cur.fetchall():
-        event_id, persons, orgs, places, commodities, policies = row
+        event_id, persons, orgs, places, commodities, policies, action_class, domain = (
+            row
+        )
         if event_id in events:
             if persons:
                 events[event_id]["persons"].update(persons)
@@ -160,6 +165,10 @@ def get_topics_with_signals(conn, ctm_id: str) -> dict:
                 events[event_id]["commodities"].update(commodities)
             if policies:
                 events[event_id]["policies"].update(policies)
+            if action_class:
+                events[event_id]["action_classes"].add(action_class)
+            if domain:
+                events[event_id]["domains"].add(domain)
 
     # Get sample titles (top 5)
     cur.execute(
@@ -202,6 +211,8 @@ def get_all_signals(event: dict) -> set:
         | event["places"]
         | event["commodities"]
         | event["policies"]
+        | event.get("action_classes", set())
+        | event.get("domains", set())
     )
 
 
