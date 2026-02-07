@@ -275,9 +275,15 @@ def find_merge_candidates(events: dict, similarity_threshold: float = 0.25) -> l
                 sig2 = get_all_signals(e2)
                 sig_sim = jaccard_similarity(sig1, sig2)
 
-                # Title text similarity (catches obvious duplicates)
-                title_sim = title_similarity(
-                    e1.get("sample_titles", []), e2.get("sample_titles", [])
+                # Event title similarity (high signal - these are LLM-generated summaries)
+                event_title_sim = title_similarity(
+                    [e1.get("title", "")], [e2.get("title", "")]
+                )
+
+                # Sample headline similarity (lower signal - varied source wording)
+                headline_sim = title_similarity(
+                    e1.get("sample_titles", [])[:3],
+                    e2.get("sample_titles", [])[:3],
                 )
 
                 # Key entity boost: if topics share 2+ persons or orgs, add boost
@@ -286,8 +292,10 @@ def find_merge_candidates(events: dict, similarity_threshold: float = 0.25) -> l
                 key_entity_count = len(shared_persons) + len(shared_orgs)
                 entity_boost = 0.15 if key_entity_count >= 2 else 0
 
-                # Combined similarity: max of signal/title + entity boost
-                combined_sim = max(sig_sim, title_sim) + entity_boost
+                # Combined similarity: best of signal, event title, or headlines + boost
+                combined_sim = (
+                    max(sig_sim, event_title_sim, headline_sim) + entity_boost
+                )
 
                 if combined_sim >= similarity_threshold:
                     pairs.append((eid1, eid2, combined_sim, sig1 & sig2))
