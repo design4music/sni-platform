@@ -125,10 +125,12 @@ def backfill_entity_centroids(batch_size=500, limit=None, dry_run=False):
 
             # Extract unique codes from entity_countries values
             # Handle both 2-letter ISO codes AND special codes (NATO, ISIS, EU, etc.)
+            CODE_ALIASES = {"UK": "GB"}
             codes = set()
             for entity, code in entity_countries.items():
                 if code and isinstance(code, str):
                     code = code.upper().strip()
+                    code = CODE_ALIASES.get(code, code)
                     # Accept any valid code (2-letter ISO or special codes in our mapping)
                     if len(code) >= 2 and code.isalpha():
                         codes.add(code)
