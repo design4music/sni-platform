@@ -21,6 +21,11 @@ from pathlib import Path
 import httpx
 import psycopg2
 
+# Fix Windows console encoding (prevents charmap errors on non-ASCII data)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(errors="replace")
+    sys.stderr.reconfigure(errors="replace")
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 from core.prompts import EVENT_SUMMARY_SYSTEM_PROMPT, EVENT_SUMMARY_USER_PROMPT

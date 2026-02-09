@@ -23,6 +23,11 @@ from pathlib import Path
 import httpx
 import psycopg2
 
+# Fix Windows console encoding (prevents charmap errors on non-ASCII data)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(errors="replace")
+    sys.stderr.reconfigure(errors="replace")
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT, CTM_SUMMARY_USER_PROMPT
@@ -110,6 +115,7 @@ async def generate_summary(
     events: list,
     centroid_focus: str,
     track_focus: str = None,
+    has_domestic: bool = False,
 ) -> str:
     """
     Generate 150-250 word narrative summary from event summaries.
@@ -152,8 +158,18 @@ async def generate_summary(
     if track_focus:
         system_prompt += "\n\n**Domain / Track focus:**\n" + track_focus
 
-    user_prompt = CTM_SUMMARY_USER_PROMPT.format(
-        context=context, events_text=events_text
+    # Add domestic perspective note when applicable
+    perspective_note = ""
+    if has_domestic:
+        perspective_note = (
+            "\n\nPERSPECTIVE: Domestic event summaries are written from the local "
+            "perspective of %s. Preserve this voice -- do NOT reframe domestic "
+            "events through an external lens." % centroid_label
+        )
+
+    user_prompt = (
+        CTM_SUMMARY_USER_PROMPT.format(context=context, events_text=events_text)
+        + perspective_note
     )
 
     headers = {
@@ -172,19 +188,35 @@ async def generate_summary(
     }
 
     async with httpx.AsyncClient(timeout=config.v3_p4_timeout_seconds) as client:
-        response = await client.post(
-            f"{config.deepseek_api_url}/chat/completions",
-            headers=headers,
-            json=payload,
-        )
+        last_error = None
+        for attempt in range(config.llm_retry_attempts):
+            try:
+                response = await client.post(
+                    "%s/chat/completions" % config.deepseek_api_url,
+                    headers=headers,
+                    json=payload,
+                )
 
-        if response.status_code != 200:
-            raise Exception(f"LLM API error: {response.status_code} - {response.text}")
+                if response.status_code != 200:
+                    raise Exception(
+                        "LLM API error: %d - %s" % (response.status_code, response.text)
+                    )
 
-        data = response.json()
-        summary = data["choices"][0]["message"]["content"].strip()
+                data = response.json()
+                summary = data["choices"][0]["message"]["content"].strip()
+                return summary
 
-        return summary
+            except Exception as e:
+                last_error = e
+                if attempt < config.llm_retry_attempts - 1:
+                    delay = config.llm_retry_backoff**attempt
+                    print(
+                        "  Retry %d/%d in %.1fs: %s"
+                        % (attempt + 1, config.llm_retry_attempts, delay, e)
+                    )
+                    await asyncio.sleep(delay)
+
+        raise last_error
 
 
 async def process_single_ctm(
@@ -235,6 +267,8 @@ async def process_single_ctm(
                 )
                 return False
 
+            has_domestic = any(e.get("event_type") == "domestic" for e in events)
+
             print(
                 f"Processing: {centroid_label} / {track} / {month.strftime('%Y-%m')} "
                 f"({len(real_events)} events, {total_sources} sources)"
@@ -250,6 +284,7 @@ async def process_single_ctm(
                 events,
                 centroid_focus,
                 track_focus,
+                has_domestic=has_domestic,
             )
 
             word_count = len(summary.split())
@@ -326,7 +361,7 @@ async def process_ctm_batch(max_ctms=None):
                           (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id)
                               > COALESCE(c.event_count_at_summary, 0)
                           AND (c.last_summary_at IS NULL
-                               OR c.last_summary_at < NOW() - INTERVAL '24 hours')
+                               OR c.last_summary_at < NOW() - make_interval(hours => %s))
                       )
                   )
                 ORDER BY
@@ -335,7 +370,7 @@ async def process_ctm_batch(max_ctms=None):
                   c.month DESC
                 {limit_clause}
             """,
-                (config.v3_p4_min_titles,),
+                (config.v3_p4_min_titles, config.v3_p45_cooldown_hours),
             )
             ctms = cur.fetchall()
 

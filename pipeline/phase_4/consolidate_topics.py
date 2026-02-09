@@ -74,14 +74,17 @@ def get_ctm_info(conn, ctm_id=None, centroid=None, track=None):
 
 def load_bucket_data(conn, ctm_id):
     """
-    Load all events grouped by bucket_key with sample headlines.
+    Load all events grouped by bucket with sample headlines.
+    Uses (event_type, bucket_key) as grouping key to prevent domestic
+    and other_international events (both bucket_key=NULL) from mixing.
     Returns: {bucket_key: {"events": [...], "catchall": {"id":..., "titles":[...]}}}
     """
     cur = conn.cursor()
 
-    # Get all events
+    # Get all events (include event_type for proper grouping)
     cur.execute(
-        """SELECT e.id, e.bucket_key, e.source_batch_count, e.is_catchall, e.topic_core
+        """SELECT e.id, e.bucket_key, e.source_batch_count, e.is_catchall,
+                  e.topic_core, e.event_type
            FROM events_v3 e
            WHERE e.ctm_id = %s
            ORDER BY e.source_batch_count DESC NULLS LAST""",
@@ -107,10 +110,16 @@ def load_bucket_data(conn, ctm_id):
     for event_id, title_display in cur.fetchall():
         headlines_by_event[event_id].append(title_display)
 
-    # Group by bucket
+    # Group by bucket -- use event_type to distinguish domestic from other_international
     buckets = defaultdict(lambda: {"events": [], "catchall": None})
-    for event_id, bucket_key, count, is_catchall, topic_core in events_raw:
-        bk = bucket_key or "__domestic__"
+    for event_id, bucket_key, count, is_catchall, topic_core, event_type in events_raw:
+        if bucket_key:
+            bk = bucket_key  # bilateral: use the foreign centroid
+        elif event_type == "other_international":
+            bk = "__other_international__"
+        else:
+            bk = "__domestic__"
+
         headlines = headlines_by_event.get(event_id, [])
 
         if is_catchall:
@@ -398,8 +407,17 @@ def apply_consolidation(
 
         elif catchall_ids and catchall_event_id:
             # No existing events -- create a new event from catchall titles
-            db_bucket = None if bucket_key == "__domestic__" else bucket_key
-            db_event_type = "domestic" if bucket_key == "__domestic__" else "bilateral"
+            db_bucket = (
+                None
+                if bucket_key in ("__domestic__", "__other_international__")
+                else bucket_key
+            )
+            if bucket_key == "__domestic__":
+                db_event_type = "domestic"
+            elif bucket_key == "__other_international__":
+                db_event_type = "other_international"
+            else:
+                db_event_type = "bilateral"
             cur.execute(
                 """INSERT INTO events_v3
                    (ctm_id, date, summary, event_type, bucket_key,
@@ -488,7 +506,12 @@ def process_bucket(conn, ctm_info, bucket_key, bucket_data, dry_run=False):
     if all(ev.get("topic_core") for ev in events):
         return {"skipped": True, "reason": "already consolidated"}
 
-    bucket_label = "Domestic" if bucket_key == "__domestic__" else bucket_key
+    if bucket_key == "__domestic__":
+        bucket_label = "Domestic"
+    elif bucket_key == "__other_international__":
+        bucket_label = "Other International"
+    else:
+        bucket_label = bucket_key
     catchall_titles = catchall["titles"] if catchall else []
 
     # Build and send prompt
@@ -663,19 +686,30 @@ def cross_bucket_dedup(conn, ctm_id, home_centroid_id, dry_run=False):
             merged += 1
             continue
 
+        # Only move titles that actually have the target centroid
+        cur.execute(
+            """SELECT evt.title_id
+               FROM event_v3_titles evt
+               JOIN titles_v3 t ON t.id = evt.title_id
+               WHERE evt.event_id = %s
+                 AND %s = ANY(t.centroid_ids)""",
+            (orphan_id, target_bucket),
+        )
+        matching_title_ids = [r[0] for r in cur.fetchall()]
+        if not matching_title_ids:
+            continue
+
         # Find best bilateral event to merge into (largest in that bucket)
         candidates = bilateral_by_bucket.get(target_bucket, [])
         if candidates:
-            # Pick largest event in the target bucket
             best = max(candidates, key=lambda e: e["count"])
-            # Merge: move titles from orphan to target
-            cur.execute(
-                """UPDATE event_v3_titles SET event_id = %s
-                   WHERE event_id = %s""",
-                (best["id"], orphan_id),
-            )
-            # Delete orphan
-            cur.execute("DELETE FROM events_v3 WHERE id = %s", (orphan_id,))
+            # Move ONLY matching titles from orphan to target
+            for tid in matching_title_ids:
+                cur.execute(
+                    """UPDATE event_v3_titles SET event_id = %s
+                       WHERE title_id = %s AND event_id = %s""",
+                    (best["id"], tid, orphan_id),
+                )
             # Update target count
             cur.execute(
                 """UPDATE events_v3 SET source_batch_count = (
@@ -683,29 +717,64 @@ def cross_bucket_dedup(conn, ctm_id, home_centroid_id, dry_run=False):
                    ), updated_at = NOW() WHERE id = %s""",
                 (best["id"], best["id"]),
             )
-            best["count"] += orphan_count
+            best["count"] += len(matching_title_ids)
             print(
-                "  Cross-bucket merge: '{}' ({}) -> '{}' in {}".format(
-                    (orphan_core or "?")[:40],
+                "  Cross-bucket merge: %d/%d titles -> '%s' in %s"
+                % (
+                    len(matching_title_ids),
                     orphan_count,
                     (best["topic_core"] or "?")[:40],
                     target_bucket,
                 )
             )
         else:
-            # No bilateral event exists -- reassign this event to the bucket
+            # No bilateral event exists -- move matching titles to a new event
+            import uuid
+
+            new_event_id = str(uuid.uuid4())
             cur.execute(
-                """UPDATE events_v3
-                   SET bucket_key = %s, event_type = 'bilateral'
-                   WHERE id = %s""",
-                (target_bucket, orphan_id),
+                """INSERT INTO events_v3 (id, ctm_id, date, event_type, bucket_key,
+                       source_batch_count, is_catchall, topic_core)
+                   VALUES (%s, %s, CURRENT_DATE, 'bilateral', %s, %s, false, %s)""",
+                (
+                    new_event_id,
+                    ctm_id,
+                    target_bucket,
+                    len(matching_title_ids),
+                    orphan_core,
+                ),
+            )
+            for tid in matching_title_ids:
+                cur.execute(
+                    """UPDATE event_v3_titles SET event_id = %s
+                       WHERE title_id = %s AND event_id = %s""",
+                    (new_event_id, tid, orphan_id),
+                )
+            bilateral_by_bucket[target_bucket].append(
+                {
+                    "id": new_event_id,
+                    "topic_core": orphan_core,
+                    "count": len(matching_title_ids),
+                }
             )
             print(
-                "  Cross-bucket reassign: '{}' ({}) -> new in {}".format(
-                    (orphan_core or "?")[:40],
-                    orphan_count,
-                    target_bucket,
-                )
+                "  Cross-bucket new: %d/%d titles -> new event in %s"
+                % (len(matching_title_ids), orphan_count, target_bucket)
+            )
+
+        # Update orphan count (titles remaining) or delete if empty
+        cur.execute(
+            "SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s",
+            (orphan_id,),
+        )
+        remaining = cur.fetchone()[0]
+        if remaining == 0:
+            cur.execute("DELETE FROM events_v3 WHERE id = %s", (orphan_id,))
+        else:
+            cur.execute(
+                """UPDATE events_v3 SET source_batch_count = %s, updated_at = NOW()
+                   WHERE id = %s""",
+                (remaining, orphan_id),
             )
 
         merged += 1

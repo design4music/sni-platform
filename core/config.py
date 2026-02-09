@@ -80,6 +80,9 @@ class SNIConfig(BaseSettings):
     v3_p4_max_tokens: int = Field(default=500, env="V3_P4_MAX_TOKENS")
     v3_p4_timeout_seconds: int = Field(default=180, env="V3_P4_TIMEOUT_SECONDS")
 
+    # Phase 4.5: CTM Summaries
+    v3_p45_cooldown_hours: int = Field(default=24, env="V3_P45_COOLDOWN_HOURS")
+
     # Phase 4.5a: Event Summaries
     v3_p45a_max_events: int = Field(default=500, env="V3_P45A_MAX_EVENTS")
     v3_p45a_interval: int = Field(default=900, env="V3_P45A_INTERVAL")  # 15 min
