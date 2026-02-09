@@ -366,7 +366,14 @@ def apply_consolidation(
     Returns stats dict.
     """
     cur = conn.cursor()
-    stats = {"merged": 0, "rescued": 0, "deleted": 0, "created": 0}
+    stats = {"merged": 0, "rescued": 0, "rescue_skipped": 0, "deleted": 0, "created": 0}
+
+    # For bilateral buckets, derive the DB bucket_key for centroid validation
+    db_bucket = (
+        None
+        if bucket_key in ("__domestic__", "__other_international__")
+        else bucket_key
+    )
 
     for story in stories:
         event_ids = story.get("event_ids", [])
@@ -458,6 +465,16 @@ def apply_consolidation(
                     title_text = catchall_titles[ci]
                     title_id = catchall_title_to_id.get(title_text)
                     if title_id:
+                        # For bilateral events, verify title has the bucket centroid
+                        if db_bucket:
+                            cur.execute(
+                                "SELECT %s = ANY(centroid_ids) FROM titles_v3 WHERE id = %s",
+                                (db_bucket, title_id),
+                            )
+                            row = cur.fetchone()
+                            if not row or not row[0]:
+                                stats["rescue_skipped"] += 1
+                                continue
                         cur.execute(
                             """UPDATE event_v3_titles
                                SET event_id = %s
