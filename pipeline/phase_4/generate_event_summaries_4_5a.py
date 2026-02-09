@@ -353,12 +353,14 @@ def get_events_needing_summaries(
         for row in cur.fetchall():
             event_id, ctm_id_val, label, bucket_key, count, date, first_seen = row
 
-            # Fetch ALL titles for this event with dates
+            # Fetch ALL titles for this event with dates and feed country
             cur.execute(
                 """
-                SELECT t.title_display, DATE(t.pubdate_utc)
+                SELECT t.title_display, DATE(t.pubdate_utc),
+                       UPPER(f.country_code)
                 FROM event_v3_titles evt
                 JOIN titles_v3 t ON evt.title_id = t.id
+                LEFT JOIN feeds f ON t.feed_id = f.id
                 WHERE evt.event_id = %s
                 ORDER BY t.pubdate_utc DESC
                 """,
@@ -367,6 +369,7 @@ def get_events_needing_summaries(
             rows = cur.fetchall()
             titles = [r[0] for r in rows]
             dates = [r[1] for r in rows if r[1]]
+            title_countries = [r[2] for r in rows]
 
             # Get backbone signals
             backbone = get_backbone_signals(conn, event_id)
@@ -382,6 +385,7 @@ def get_events_needing_summaries(
                     "bucket_key": bucket_key,
                     "count": count or len(titles),
                     "titles": titles,
+                    "title_countries": title_countries,
                     "date": date,
                     "first_seen": first_seen,
                     "title_dates": dates,
@@ -389,6 +393,27 @@ def get_events_needing_summaries(
                     "title_signals": title_signals,
                 }
             )
+
+        # Look up centroid iso_codes for domestic perspective detection
+        ctm_iso_codes = {}
+        ctm_ids_seen = set(e["ctm_id"] for e in events)
+        for cid in ctm_ids_seen:
+            cur.execute(
+                """SELECT cv.iso_codes FROM ctm c
+                   JOIN centroids_v3 cv ON cv.id = c.centroid_id
+                   WHERE c.id = %s""",
+                (cid,),
+            )
+            row = cur.fetchone()
+            if row and row[0]:
+                ctm_iso_codes[cid] = set(row[0])
+
+        for event in events:
+            is_domestic = event["bucket_key"] is None
+            if is_domestic:
+                event["centroid_countries"] = ctm_iso_codes.get(event["ctm_id"], set())
+            else:
+                event["centroid_countries"] = set()
 
         return events
 
@@ -432,6 +457,8 @@ async def generate_event_data(
     title_signals: dict,
     num_titles: int,
     max_titles: int = 200,
+    centroid_countries: set = None,
+    title_countries: list = None,
 ) -> dict:
     """Generate title and summary for an event cluster.
 
@@ -441,6 +468,8 @@ async def generate_event_data(
         title_signals: Dict mapping title_id to signals for outlier detection
         num_titles: Total number of titles (for context)
         max_titles: Maximum titles to send to LLM (default 200)
+        centroid_countries: Set of ISO codes for this centroid (e.g. {"RU"})
+        title_countries: List of feed country_code per title (parallel to titles)
     """
     # Filter out outlier titles that don't share core signals
     core_titles, outlier_titles = filter_outlier_titles(
@@ -450,18 +479,43 @@ async def generate_event_data(
     # Use core titles for summary, but note if outliers exist
     titles_to_use = core_titles if core_titles else titles
     titles_sample = titles_to_use[:max_titles]
-    titles_text = "\n".join("- %s" % t for t in titles_sample)
+
+    # Domestic perspective: label headlines [D] domestic / [F] foreign
+    perspective_note = ""
+    if centroid_countries and title_countries:
+        # Build country lookup for titles_to_use
+        title_to_country = {}
+        for t, cc in zip(titles, title_countries or []):
+            title_to_country[t] = cc
+
+        domestic_lines = []
+        foreign_lines = []
+        for t in titles_sample:
+            cc = title_to_country.get(t)
+            if cc and cc in centroid_countries:
+                domestic_lines.append("- [D] %s" % t)
+            else:
+                foreign_lines.append("- [F] %s" % t)
+
+        # Domestic first, then foreign
+        titles_text = "\n".join(domestic_lines + foreign_lines)
+
+        if domestic_lines:
+            perspective_note = (
+                "\n\nPERSPECTIVE: This is a DOMESTIC topic. "
+                "Headlines marked [D] are from domestic media and set the tone. "
+                "Headlines marked [F] are from foreign media -- use for facts only, "
+                "do NOT adopt their framing or editorial stance."
+            )
+    else:
+        titles_text = "\n".join("- %s" % t for t in titles_sample)
 
     if len(titles_to_use) > max_titles:
         titles_text += "\n... and %d more headlines" % (len(titles_to_use) - max_titles)
 
     # Note outliers filtered
     outlier_note = ""
-    if outlier_titles and len(outlier_titles) <= 5:
-        outlier_note = "\n\n(Note: %d off-topic headlines were filtered out)" % len(
-            outlier_titles
-        )
-    elif outlier_titles:
+    if outlier_titles:
         outlier_note = "\n\n(Note: %d off-topic headlines were filtered out)" % len(
             outlier_titles
         )
@@ -471,7 +525,7 @@ async def generate_event_data(
 
     user_prompt = EVENT_SUMMARY_USER_PROMPT.format(
         num_titles=len(titles_to_use),  # Use filtered count
-        titles_text=titles_text + outlier_note,
+        titles_text=titles_text + outlier_note + perspective_note,
         backbone_signals=backbone_text,
     )
 
@@ -545,6 +599,8 @@ async def process_event(
                 backbone,
                 title_signals,
                 event["count"],
+                centroid_countries=event.get("centroid_countries", set()),
+                title_countries=event.get("title_countries", []),
             )
 
             title = result["title"]

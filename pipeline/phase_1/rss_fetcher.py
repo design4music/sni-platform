@@ -311,6 +311,7 @@ class RSSFetcher:
                         "pubdate_utc": pubdate_utc,
                         "detected_language": detected_language,
                         "content_hash": content_hash,
+                        "feed_id": feed_id,
                     }
 
                     articles.append(article)
@@ -375,9 +376,10 @@ class RSSFetcher:
                         """
                         INSERT INTO titles_v3 (
                             title_display, url_gnews, publisher_name, pubdate_utc,
-                            detected_language, processing_status, created_at, updated_at
+                            detected_language, feed_id, processing_status,
+                            created_at, updated_at
                         )
-                        SELECT %s, %s, %s, %s, %s, 'pending', NOW(), NOW()
+                        SELECT %s, %s, %s, %s, %s, %s, 'pending', NOW(), NOW()
                         WHERE NOT EXISTS (
                             SELECT 1 FROM titles_v3
                             WHERE title_display = %s
@@ -394,6 +396,7 @@ class RSSFetcher:
                             article["publisher_name"],
                             article["pubdate_utc"],
                             article["detected_language"],
+                            article.get("feed_id"),
                             # Strict deduplication: same title = duplicate
                             article["title_display"],
                             # Tombstone check
