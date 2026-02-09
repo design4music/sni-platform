@@ -399,14 +399,21 @@ def apply_consolidation(
         elif catchall_ids and catchall_event_id:
             # No existing events -- create a new event from catchall titles
             db_bucket = None if bucket_key == "__domestic__" else bucket_key
+            db_event_type = "domestic" if bucket_key == "__domestic__" else "bilateral"
             cur.execute(
                 """INSERT INTO events_v3
                    (ctm_id, date, summary, event_type, bucket_key,
                     is_catchall, topic_core, source_batch_count)
-                   VALUES (%s, CURRENT_DATE, %s, 'bilateral', %s,
+                   VALUES (%s, CURRENT_DATE, %s, %s, %s,
                            false, %s, 0)
                    RETURNING id""",
-                (ctm_id, topic_core or "New topic", db_bucket, topic_core),
+                (
+                    ctm_id,
+                    topic_core or "New topic",
+                    db_event_type,
+                    db_bucket,
+                    topic_core,
+                ),
             )
             target_id = cur.fetchone()[0]
             stats["created"] += 1
