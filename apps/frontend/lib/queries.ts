@@ -120,7 +120,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
       e.id,
       e.date::text as date,
       e.last_active::text as last_active,
-      e.title,
+      COALESCE(e.title, e.topic_core) as title,
       e.summary,
       e.tags,
       e.event_type,
@@ -131,7 +131,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
     WHERE e.ctm_id = $1
-    GROUP BY e.id, e.date, e.last_active, e.title, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
+    GROUP BY e.id, e.date, e.last_active, e.title, e.topic_core, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
     ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
   );
@@ -140,7 +140,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     date: r.date,
     last_active: r.last_active || undefined,
     title: r.title || undefined,
-    summary: r.summary,
+    summary: r.summary || '',
     tags: r.tags || undefined,
     event_id: r.id,
     source_title_ids: r.source_title_ids.filter(id => id !== null),

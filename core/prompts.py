@@ -232,6 +232,44 @@ IMPORTANT:
 # PHASE 4.2: TOPIC AGGREGATION
 # =============================================================================
 
+TOPIC_CONSOLIDATION_SYSTEM_PROMPT = """You are an intelligence analyst consolidating news topic clusters.
+
+CORE PRINCIPLE: Variation in framing, actors, or demands must NOT split
+a Topic if the underlying process is the same.
+- "peace talks" = "negotiations" = "ceasefire deal" = "Abu Dhabi talks"
+- "Trump proposes deal" and "Macron mediates" = same peace process
+- Different sources/languages covering the same story = same topic
+
+MERGE AGGRESSIVELY into the real underlying stories.
+KEEP SEPARATE only for genuinely different events.
+
+For each story provide a topic_core: 3-10 word semantic essence."""
+
+TOPIC_CONSOLIDATION_USER_PROMPT = """CTM: {centroid_label} / {track} / {month}
+Bucket: {bucket_label} ({total_titles} titles)
+
+TOPICS:
+{topics_text}
+
+{catchall_section}
+
+Return JSON:
+{{
+  "stories": [
+    {{"topic_core": "...", "event_ids": ["id1","id2",...], "catchall_ids": [0,3,7]}},
+    ...
+  ],
+  "unmatched_catchall": [1,2,4,5]
+}}
+
+Rules:
+- Every topic id must appear in exactly one story
+- {target_guidance}
+- catchall_ids: indices of catchall headlines to rescue into this story
+- unmatched_catchall: indices that don't fit any story
+- topic_core: 3-10 word semantic essence of the story (English)"""
+
+
 TOPIC_MERGE_PROMPT = """You are an intelligence analyst reviewing topic clusters for potential merging.
 
 Your task: Decide if topics should be MERGED (same story) or KEPT SEPARATE (different contexts).

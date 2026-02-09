@@ -40,7 +40,7 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
     backfill_entity_centroids as phase32_backfill,
 )
 from pipeline.phase_3_3.assign_tracks_batched import process_batch as phase33_process
-from pipeline.phase_4.aggregate_topics import process_ctm as phase41_aggregate
+from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_event_summaries,
 )
