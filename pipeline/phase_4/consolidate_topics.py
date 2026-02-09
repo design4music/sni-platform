@@ -577,6 +577,145 @@ def process_bucket(conn, ctm_info, bucket_key, bucket_data, dry_run=False):
     }
 
 
+def cross_bucket_dedup(conn, ctm_id, home_centroid_id, dry_run=False):
+    """
+    Post-consolidation pass: merge orphaned other_international events
+    into bilateral buckets when their titles have clear geo signals.
+
+    For each non-catchall event with event_type='other_international',
+    look at its titles' centroid_ids to find the dominant foreign GEO centroid.
+    If a bilateral event exists for that centroid with a similar topic, merge.
+    Otherwise reassign the event to that bilateral bucket.
+    """
+    cur = conn.cursor()
+
+    # Find other_international non-catchall events
+    cur.execute(
+        """SELECT e.id, e.topic_core, e.source_batch_count
+           FROM events_v3 e
+           WHERE e.ctm_id = %s AND e.event_type = 'other_international'
+             AND e.is_catchall = false
+           ORDER BY e.source_batch_count DESC""",
+        (ctm_id,),
+    )
+    orphans = cur.fetchall()
+    if not orphans:
+        return 0
+
+    # Load bilateral events for matching
+    cur.execute(
+        """SELECT e.id, e.bucket_key, e.topic_core, e.source_batch_count
+           FROM events_v3 e
+           WHERE e.ctm_id = %s AND e.event_type = 'bilateral'
+             AND e.bucket_key IS NOT NULL AND e.is_catchall = false""",
+        (ctm_id,),
+    )
+    bilateral_events = cur.fetchall()
+    bilateral_by_bucket = defaultdict(list)
+    for eid, bk, tc, cnt in bilateral_events:
+        bilateral_by_bucket[bk].append({"id": eid, "topic_core": tc, "count": cnt})
+
+    merged = 0
+    for orphan_id, orphan_core, orphan_count in orphans:
+        # Get centroid_ids from this event's titles
+        cur.execute(
+            """SELECT DISTINCT UNNEST(t.centroid_ids)
+               FROM event_v3_titles evt
+               JOIN titles_v3 t ON t.id = evt.title_id
+               WHERE evt.event_id = %s""",
+            (orphan_id,),
+        )
+        centroids = [r[0] for r in cur.fetchall()]
+        # Find foreign GEO centroids (not home, not SYS-)
+        foreign_geo = [
+            c
+            for c in centroids
+            if c != home_centroid_id
+            and not c.startswith("SYS-")
+            and not c.startswith("NON-STATE-")
+        ]
+        if not foreign_geo:
+            continue
+
+        # Pick the most common foreign centroid among titles
+        cur.execute(
+            """SELECT cid, COUNT(*) AS cnt FROM (
+                 SELECT UNNEST(t.centroid_ids) AS cid
+                 FROM event_v3_titles evt
+                 JOIN titles_v3 t ON t.id = evt.title_id
+                 WHERE evt.event_id = %s
+               ) sub
+               WHERE cid = ANY(%s::text[])
+               GROUP BY cid ORDER BY cnt DESC LIMIT 1""",
+            (orphan_id, foreign_geo),
+        )
+        row = cur.fetchone()
+        if not row:
+            continue
+        target_bucket = row[0]
+
+        if dry_run:
+            print(
+                "  Cross-bucket: '{}' -> bucket {}".format(
+                    (orphan_core or "?")[:50], target_bucket
+                )
+            )
+            merged += 1
+            continue
+
+        # Find best bilateral event to merge into (largest in that bucket)
+        candidates = bilateral_by_bucket.get(target_bucket, [])
+        if candidates:
+            # Pick largest event in the target bucket
+            best = max(candidates, key=lambda e: e["count"])
+            # Merge: move titles from orphan to target
+            cur.execute(
+                """UPDATE event_v3_titles SET event_id = %s
+                   WHERE event_id = %s""",
+                (best["id"], orphan_id),
+            )
+            # Delete orphan
+            cur.execute("DELETE FROM events_v3 WHERE id = %s", (orphan_id,))
+            # Update target count
+            cur.execute(
+                """UPDATE events_v3 SET source_batch_count = (
+                     SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
+                   ), updated_at = NOW() WHERE id = %s""",
+                (best["id"], best["id"]),
+            )
+            best["count"] += orphan_count
+            print(
+                "  Cross-bucket merge: '{}' ({}) -> '{}' in {}".format(
+                    (orphan_core or "?")[:40],
+                    orphan_count,
+                    (best["topic_core"] or "?")[:40],
+                    target_bucket,
+                )
+            )
+        else:
+            # No bilateral event exists -- reassign this event to the bucket
+            cur.execute(
+                """UPDATE events_v3
+                   SET bucket_key = %s, event_type = 'bilateral'
+                   WHERE id = %s""",
+                (target_bucket, orphan_id),
+            )
+            print(
+                "  Cross-bucket reassign: '{}' ({}) -> new in {}".format(
+                    (orphan_core or "?")[:40],
+                    orphan_count,
+                    target_bucket,
+                )
+            )
+
+        merged += 1
+
+    if merged > 0 and not dry_run:
+        conn.commit()
+
+    return merged
+
+
 def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     """
     Run topic consolidation on a CTM.
@@ -625,6 +764,9 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
             total_rescued += result.get("rescued", 0)
             total_deleted += result.get("deleted", 0)
 
+    # Cross-bucket dedup: merge orphaned other_international into bilateral
+    cross_merged = cross_bucket_dedup(conn, ctm["id"], ctm["centroid_id"], dry_run)
+
     print()
     print("=" * 70)
     print("SUMMARY")
@@ -634,6 +776,8 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     print("Events merged: {}".format(total_merged))
     print("Catchall titles rescued: {}".format(total_rescued))
     print("Events deleted: {}".format(total_deleted))
+    if cross_merged:
+        print("Cross-bucket dedup: {}".format(cross_merged))
 
     conn.close()
 
