@@ -802,6 +802,129 @@ def cross_bucket_dedup(conn, ctm_id, home_centroid_id, dry_run=False):
     return merged
 
 
+def redistribute_oi_catchall(conn, ctm_id, home_centroid_id, dry_run=False):
+    """Move other_international catchall titles to bilateral catchalls by centroid_ids.
+
+    For each title in an OI catchall, check its foreign GEO centroids.
+    If it has exactly one, move it to that bilateral catchall.
+    If multiple, move to the biggest bilateral bucket's catchall.
+    """
+    import uuid
+
+    cur = conn.cursor()
+
+    # Find OI catchall events
+    cur.execute(
+        """SELECT e.id FROM events_v3 e
+           WHERE e.ctm_id = %s AND e.event_type = 'other_international'
+             AND e.is_catchall = true""",
+        (ctm_id,),
+    )
+    oi_catchalls = [r[0] for r in cur.fetchall()]
+    if not oi_catchalls:
+        return 0
+
+    # Load bilateral catchalls (find or create later)
+    cur.execute(
+        """SELECT e.bucket_key, e.id
+           FROM events_v3 e
+           WHERE e.ctm_id = %s AND e.event_type = 'bilateral' AND e.is_catchall = true""",
+        (ctm_id,),
+    )
+    bilateral_catchalls = dict(cur.fetchall())
+
+    # Load bilateral event counts for picking biggest bucket
+    cur.execute(
+        """SELECT e.bucket_key, SUM(e.source_batch_count) as total
+           FROM events_v3 e
+           WHERE e.ctm_id = %s AND e.event_type = 'bilateral'
+           GROUP BY e.bucket_key""",
+        (ctm_id,),
+    )
+    bilateral_sizes = dict(cur.fetchall())
+
+    moved = 0
+
+    for oi_id in oi_catchalls:
+        # Get all titles with their centroid_ids
+        cur.execute(
+            """SELECT evt.title_id, t.centroid_ids
+               FROM event_v3_titles evt
+               JOIN titles_v3 t ON t.id = evt.title_id
+               WHERE evt.event_id = %s""",
+            (oi_id,),
+        )
+        titles = cur.fetchall()
+
+        for title_id, centroid_ids in titles:
+            foreign_geo = [
+                c
+                for c in (centroid_ids or [])
+                if c != home_centroid_id
+                and not c.startswith("SYS-")
+                and not c.startswith("NON-STATE-")
+            ]
+            if not foreign_geo:
+                continue  # no foreign GEO, stays in OI catchall
+
+            # Pick target bucket
+            if len(foreign_geo) == 1:
+                target = foreign_geo[0]
+            else:
+                # Multiple foreign GEOs: pick biggest bilateral bucket
+                target = max(foreign_geo, key=lambda c: bilateral_sizes.get(c, 0))
+
+            if dry_run:
+                moved += 1
+                continue
+
+            # Find or create bilateral catchall for target
+            if target not in bilateral_catchalls:
+                ca_id = str(uuid.uuid4())
+                cur.execute(
+                    """INSERT INTO events_v3 (id, ctm_id, date, summary,
+                           event_type, bucket_key, source_batch_count, is_catchall)
+                       VALUES (%s, %s, CURRENT_DATE, 'Other coverage',
+                           'bilateral', %s, 0, true)""",
+                    (ca_id, ctm_id, target),
+                )
+                bilateral_catchalls[target] = ca_id
+
+            # Move title
+            cur.execute(
+                """UPDATE event_v3_titles SET event_id = %s
+                   WHERE title_id = %s AND event_id = %s""",
+                (bilateral_catchalls[target], title_id, oi_id),
+            )
+            moved += 1
+
+    if not dry_run and moved > 0:
+        # Update all affected catchall counts
+        for ca_id in list(bilateral_catchalls.values()) + oi_catchalls:
+            cur.execute(
+                """UPDATE events_v3 SET source_batch_count = (
+                       SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
+                   ), updated_at = NOW() WHERE id = %s""",
+                (ca_id, ca_id),
+            )
+        # Delete empty OI catchalls
+        for oi_id in oi_catchalls:
+            cur.execute(
+                "SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s",
+                (oi_id,),
+            )
+            if cur.fetchone()[0] == 0:
+                cur.execute("DELETE FROM events_v3 WHERE id = %s", (oi_id,))
+        conn.commit()
+
+    if moved > 0:
+        print(
+            "  OI catchall redistribution: %d titles moved to bilateral catchalls"
+            % moved
+        )
+    return moved
+
+
 def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     """
     Run topic consolidation on a CTM.
@@ -853,6 +976,11 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     # Cross-bucket dedup: merge orphaned other_international into bilateral
     cross_merged = cross_bucket_dedup(conn, ctm["id"], ctm["centroid_id"], dry_run)
 
+    # Redistribute OI catchall titles to bilateral catchalls
+    oi_redistributed = redistribute_oi_catchall(
+        conn, ctm["id"], ctm["centroid_id"], dry_run
+    )
+
     print()
     print("=" * 70)
     print("SUMMARY")
@@ -864,6 +992,8 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     print("Events deleted: {}".format(total_deleted))
     if cross_merged:
         print("Cross-bucket dedup: {}".format(cross_merged))
+    if oi_redistributed:
+        print("OI catchall redistributed: {}".format(oi_redistributed))
 
     conn.close()
 

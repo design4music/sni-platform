@@ -41,6 +41,50 @@ function sortBySourceCount(events: Event[]) {
   return [...events].sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
 }
 
+function CatchallTitleList({ events, allTitles }: { events: Event[]; allTitles: Title[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const titleIds = events.flatMap(e => e.source_title_ids || []);
+  const titles = allTitles.filter(t => titleIds.includes(t.id));
+  const displayed = showAll ? titles : titles.slice(0, 20);
+  const remaining = titles.length - 20;
+
+  return (
+    <div className="space-y-1">
+      {displayed.map(title => (
+        <div key={title.id} className="py-1 text-sm">
+          {title.url_gnews ? (
+            <a
+              href={title.url_gnews}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-dashboard-text-muted hover:text-blue-400 transition"
+            >
+              {title.title_display}
+            </a>
+          ) : (
+            <span className="text-dashboard-text-muted">{title.title_display}</span>
+          )}
+          {title.publisher_name && (
+            <span className="text-dashboard-text-muted/60 text-xs ml-2">
+              - {title.publisher_name}
+            </span>
+          )}
+        </div>
+      ))}
+      {remaining > 0 && !showAll && (
+        <button
+          onClick={() => setShowAll(true)}
+          className="mt-2 px-3 py-1.5 text-xs font-medium text-blue-400 hover:text-blue-300
+                     bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30
+                     rounded-lg transition-all duration-200"
+        >
+          Show {remaining} more
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function CountryAccordion({
   bucketKey,
   countryName,
@@ -89,28 +133,37 @@ export default function CountryAccordion({
 
       {isOpen && (
         <div className="mt-2 pl-4 border-l-2 border-dashboard-border">
-          <EventList
-            events={sortBySourceCount(mainEvents)}
-            allTitles={allTitles}
-            initialLimit={10}
-            compact
-            keyPrefix={`bilateral-${bucketKey}`}
-          />
-          {otherEvents.length > 0 && (
-            <div className="mt-2">
-              <EventAccordion
-                key={`bilateral-${bucketKey}-other`}
-                event={{
-                  date: otherEvents[0]?.date || '',
-                  summary: `Other ${countryName} Coverage (${countTitles(otherEvents)} sources)`,
-                  source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
-                }}
+          {mainEvents.length > 0 ? (
+            <>
+              <EventList
+                events={sortBySourceCount(mainEvents)}
                 allTitles={allTitles}
-                index={998}
+                initialLimit={10}
                 compact
+                keyPrefix={`bilateral-${bucketKey}`}
               />
-            </div>
-          )}
+              {otherEvents.length > 0 && (
+                <div className="mt-2">
+                  <EventAccordion
+                    key={`bilateral-${bucketKey}-other`}
+                    event={{
+                      date: otherEvents[0]?.date || '',
+                      summary: `Other ${countryName} Coverage (${countTitles(otherEvents)} sources)`,
+                      source_title_ids: otherEvents.flatMap(e => e.source_title_ids || [])
+                    }}
+                    allTitles={allTitles}
+                    index={998}
+                    compact
+                  />
+                </div>
+              )}
+            </>
+          ) : otherEvents.length > 0 ? (
+            <CatchallTitleList
+              events={otherEvents}
+              allTitles={allTitles}
+            />
+          ) : null}
         </div>
       )}
     </div>
