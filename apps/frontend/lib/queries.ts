@@ -130,7 +130,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
       array_agg(evt.title_id ORDER BY evt.title_id) as source_title_ids
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
-    WHERE e.ctm_id = $1
+    WHERE e.ctm_id = $1 AND e.source_batch_count > 0
     GROUP BY e.id, e.date, e.last_active, e.title, e.topic_core, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
     ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
