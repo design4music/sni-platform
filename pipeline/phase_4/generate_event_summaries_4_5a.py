@@ -12,8 +12,6 @@ Output: {title, summary, tags} stored in events_v3
 
 import argparse
 import asyncio
-import json
-import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -28,6 +26,7 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from core.llm_utils import extract_json
 from core.prompts import EVENT_SUMMARY_SYSTEM_PROMPT, EVENT_SUMMARY_USER_PROMPT
 
 
@@ -423,39 +422,6 @@ def get_events_needing_summaries(
         return events
 
 
-def extract_json_from_response(text: str) -> dict:
-    """Extract JSON object from LLM response."""
-    # Try direct parse
-    try:
-        return json.loads(text.strip())
-    except json.JSONDecodeError:
-        pass
-
-    # Try markdown code block
-    patterns = [
-        r"```json\s*(.*?)\s*```",
-        r"```\s*(.*?)\s*```",
-    ]
-
-    for pattern in patterns:
-        match = re.search(pattern, text, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group(1).strip())
-            except json.JSONDecodeError:
-                continue
-
-    # Try to find JSON object
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
-
-    raise ValueError("No valid JSON found in response")
-
-
 async def generate_event_data(
     titles: list,
     backbone_signals: dict,
@@ -572,7 +538,7 @@ async def generate_event_data(
         data = response.json()
         content = data["choices"][0]["message"]["content"].strip()
 
-        result = extract_json_from_response(content)
+        result = extract_json(content)
 
         # Validate
         title = result.get("title", "").strip()

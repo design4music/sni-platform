@@ -13,17 +13,23 @@ Usage:
 """
 
 import argparse
-import json
-import re
 import sys
+import time
+import uuid
 from collections import defaultdict
 from pathlib import Path
 
 import httpx
 import psycopg2
 
+# Fix Windows console encoding (prevents charmap errors on non-ASCII data)
+if sys.platform == "win32":
+    sys.stdout.reconfigure(errors="replace")
+    sys.stderr.reconfigure(errors="replace")
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from core.llm_utils import extract_json
 from core.prompts import (
     TOPIC_CONSOLIDATION_SYSTEM_PROMPT,
     TOPIC_CONSOLIDATION_USER_PROMPT,
@@ -100,15 +106,17 @@ def load_bucket_data(conn, ctm_id):
 
     # Get sample headlines per event (up to 5 for regular, up to 50 for catchall)
     cur.execute(
-        """SELECT evt.event_id, t.title_display
+        """SELECT evt.event_id, t.title_display, evt.title_id
            FROM event_v3_titles evt
            JOIN titles_v3 t ON t.id = evt.title_id
            WHERE evt.event_id = ANY(%s::uuid[])""",
         (event_ids,),
     )
     headlines_by_event = defaultdict(list)
-    for event_id, title_display in cur.fetchall():
+    title_ids_by_event = defaultdict(list)
+    for event_id, title_display, title_id in cur.fetchall():
         headlines_by_event[event_id].append(title_display)
+        title_ids_by_event[event_id].append(title_id)
 
     # Group by bucket -- use event_type to distinguish domestic from other_international
     buckets = defaultdict(lambda: {"events": [], "catchall": None})
@@ -123,9 +131,11 @@ def load_bucket_data(conn, ctm_id):
         headlines = headlines_by_event.get(event_id, [])
 
         if is_catchall:
+            tids = title_ids_by_event.get(event_id, [])
             buckets[bk]["catchall"] = {
                 "id": event_id,
                 "titles": headlines[:50],
+                "title_ids": tids[:50],
             }
         else:
             buckets[bk]["events"].append(
@@ -214,7 +224,7 @@ def build_prompt(bucket_label, events, catchall_titles, ctm_info):
 
 
 def call_llm(system_prompt, user_prompt):
-    """Call DeepSeek LLM and return parsed JSON response."""
+    """Call DeepSeek LLM with retry and return parsed JSON response."""
     headers = {
         "Authorization": "Bearer {}".format(config.deepseek_api_key),
         "Content-Type": "application/json",
@@ -225,52 +235,40 @@ def call_llm(system_prompt, user_prompt):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        "temperature": 0.2,
+        "temperature": config.llm_temperature,
         "max_tokens": 1000,
     }
 
-    with httpx.Client(timeout=60) as client:
-        response = client.post(
-            "{}/chat/completions".format(config.deepseek_api_url),
-            headers=headers,
-            json=payload,
-        )
-        if response.status_code != 200:
-            raise RuntimeError(
-                "LLM API error: {} {}".format(response.status_code, response.text[:200])
-            )
-
-        data = response.json()
-        content = data["choices"][0]["message"]["content"].strip()
-
-    return extract_json(content)
-
-
-def extract_json(text):
-    """Extract JSON from LLM response."""
-    # Try direct parse
-    try:
-        return json.loads(text.strip())
-    except json.JSONDecodeError:
-        pass
-
-    # Try markdown code block
-    match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
-    if match:
+    last_error = None
+    for attempt in range(config.llm_retry_attempts):
         try:
-            return json.loads(match.group(1).strip())
-        except json.JSONDecodeError:
-            pass
+            with httpx.Client(timeout=config.llm_timeout_seconds) as client:
+                response = client.post(
+                    "{}/chat/completions".format(config.deepseek_api_url),
+                    headers=headers,
+                    json=payload,
+                )
+                if response.status_code != 200:
+                    raise RuntimeError(
+                        "LLM API error: {} {}".format(
+                            response.status_code, response.text[:200]
+                        )
+                    )
 
-    # Try to find JSON object
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
+                data = response.json()
+                content = data["choices"][0]["message"]["content"].strip()
 
-    raise ValueError("Failed to parse LLM response as JSON")
+            return extract_json(content)
+        except Exception as e:
+            last_error = e
+            if attempt < config.llm_retry_attempts - 1:
+                wait = config.llm_retry_backoff**attempt
+                print(
+                    "  LLM retry %d/%d after %.1fs: %s"
+                    % (attempt + 1, config.llm_retry_attempts, wait, e)
+                )
+                time.sleep(wait)
+    raise last_error
 
 
 def repair_event_ids(response, valid_ids):
@@ -298,11 +296,13 @@ def repair_event_ids(response, valid_ids):
                 for vid in valid_ids:
                     if vid in already_used:
                         continue
-                    if len(vid) == len(eid):
-                        diffs = sum(1 for a, b in zip(vid, eid) if a != b)
-                        if diffs < best_diffs:
-                            best = vid
-                            best_diffs = diffs
+                    len_diff = abs(len(vid) - len(eid))
+                    if len_diff > 2:
+                        continue
+                    diffs = sum(1 for a, b in zip(vid, eid) if a != b) + len_diff
+                    if diffs < best_diffs:
+                        best = vid
+                        best_diffs = diffs
                 if best:
                     repaired.append(best)
                     already_used.add(best)
@@ -359,10 +359,17 @@ def validate_response(response, event_ids, catchall_count):
 
 
 def apply_consolidation(
-    conn, stories, catchall_event_id, catchall_titles, ctm_id, bucket_key
+    conn,
+    stories,
+    catchall_event_id,
+    catchall_titles,
+    catchall_title_ids,
+    ctm_id,
+    bucket_key,
 ):
     """
     Execute merges and set topic_core for one bucket.
+    catchall_title_ids: list of title UUIDs parallel to catchall_titles (positional match).
     Returns stats dict.
     """
     cur = conn.cursor()
@@ -384,6 +391,7 @@ def apply_consolidation(
             continue
 
         target_id = None
+        created_new = False
 
         if event_ids:
             # Find the largest event as merge target
@@ -414,11 +422,6 @@ def apply_consolidation(
 
         elif catchall_ids and catchall_event_id:
             # No existing events -- create a new event from catchall titles
-            db_bucket = (
-                None
-                if bucket_key in ("__domestic__", "__other_international__")
-                else bucket_key
-            )
             if bucket_key == "__domestic__":
                 db_event_type = "domestic"
             elif bucket_key == "__other_international__":
@@ -442,58 +445,56 @@ def apply_consolidation(
             )
             target_id = cur.fetchone()[0]
             stats["created"] += 1
+            created_new = True
 
-        # Rescue catchall titles into target
-        if catchall_ids and catchall_event_id and catchall_titles and target_id:
-            # Get actual title_ids from catchall event
-            cur.execute(
-                """SELECT evt.title_id, t.title_display
-                   FROM event_v3_titles evt
-                   JOIN titles_v3 t ON t.id = evt.title_id
-                   WHERE evt.event_id = %s""",
-                (catchall_event_id,),
-            )
-            catchall_rows = cur.fetchall()
-            # Build index -> title_id mapping by matching title text
-            # (catchall_titles list order = prompt order)
-            catchall_title_to_id = {}
-            for tid, tdisplay in catchall_rows:
-                catchall_title_to_id[tdisplay] = tid
-
+        # Rescue catchall titles into target (using positional title_id mapping)
+        if catchall_ids and catchall_event_id and catchall_title_ids and target_id:
             for ci in catchall_ids:
-                if 0 <= ci < len(catchall_titles):
-                    title_text = catchall_titles[ci]
-                    title_id = catchall_title_to_id.get(title_text)
-                    if title_id:
-                        # For bilateral events, verify title has the bucket centroid
-                        if db_bucket:
-                            cur.execute(
-                                "SELECT %s = ANY(centroid_ids) FROM titles_v3 WHERE id = %s",
-                                (db_bucket, title_id),
-                            )
-                            row = cur.fetchone()
-                            if not row or not row[0]:
-                                stats["rescue_skipped"] += 1
-                                continue
+                if 0 <= ci < len(catchall_title_ids):
+                    title_id = catchall_title_ids[ci]
+                    if not title_id:
+                        continue
+                    # For bilateral events, verify title has the bucket centroid
+                    if db_bucket:
                         cur.execute(
-                            """UPDATE event_v3_titles
-                               SET event_id = %s
-                               WHERE title_id = %s AND event_id = %s""",
-                            (target_id, title_id, catchall_event_id),
+                            "SELECT %s = ANY(centroid_ids) FROM titles_v3 WHERE id = %s",
+                            (db_bucket, title_id),
                         )
-                        stats["rescued"] += 1
+                        row = cur.fetchone()
+                        if not row or not row[0]:
+                            stats["rescue_skipped"] += 1
+                            continue
+                    cur.execute(
+                        """UPDATE event_v3_titles
+                           SET event_id = %s
+                           WHERE title_id = %s AND event_id = %s""",
+                        (target_id, title_id, catchall_event_id),
+                    )
+                    stats["rescued"] += 1
+
+        # Clean up zombie event: created new but no titles were rescued
+        if created_new and target_id:
+            cur.execute(
+                "SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s",
+                (target_id,),
+            )
+            if cur.fetchone()[0] == 0:
+                cur.execute("DELETE FROM events_v3 WHERE id = %s", (target_id,))
+                stats["created"] -= 1
+                continue
 
         # Update target count and set topic_core
-        cur.execute(
-            """UPDATE events_v3
-               SET source_batch_count = (
-                   SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
-               ),
-               topic_core = %s,
-               updated_at = NOW()
-               WHERE id = %s""",
-            (target_id, topic_core, target_id),
-        )
+        if target_id:
+            cur.execute(
+                """UPDATE events_v3
+                   SET source_batch_count = (
+                       SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
+                   ),
+                   topic_core = %s,
+                   updated_at = NOW()
+                   WHERE id = %s""",
+                (target_id, topic_core, target_id),
+            )
 
     # Update catchall count if any rescues happened
     if stats["rescued"] > 0 and catchall_event_id:
@@ -519,9 +520,11 @@ def process_bucket(conn, ctm_info, bucket_key, bucket_data, dry_run=False):
     if len(events) <= 1 and (not catchall or len(catchall.get("titles", [])) < 5):
         return {"skipped": True, "reason": "too few events"}
 
-    # Skip if all events already have topic_core
+    # Skip if all events already have topic_core and catchall is small
     if all(ev.get("topic_core") for ev in events):
-        return {"skipped": True, "reason": "already consolidated"}
+        catchall_size = len(catchall.get("titles", [])) if catchall else 0
+        if catchall_size < 10:
+            return {"skipped": True, "reason": "already consolidated"}
 
     if bucket_key == "__domestic__":
         bucket_label = "Domestic"
@@ -586,15 +589,22 @@ def process_bucket(conn, ctm_info, bucket_key, bucket_data, dry_run=False):
 
     # Apply in transaction
     catchall_id = catchall["id"] if catchall else None
-    stats = apply_consolidation(
-        conn,
-        stories,
-        catchall_id,
-        catchall_titles,
-        ctm_id=ctm_info["id"],
-        bucket_key=bucket_key,
-    )
-    conn.commit()
+    catchall_tids = catchall.get("title_ids", []) if catchall else []
+    try:
+        stats = apply_consolidation(
+            conn,
+            stories,
+            catchall_id,
+            catchall_titles,
+            catchall_tids,
+            ctm_id=ctm_info["id"],
+            bucket_key=bucket_key,
+        )
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print("  DB error for bucket '{}': {}".format(bucket_label, e))
+        return {"skipped": True, "reason": "db_error"}
 
     print(
         "  Bucket '{}': {} stories, merged {}, rescued {}, deleted {}, created {}".format(
@@ -746,8 +756,6 @@ def cross_bucket_dedup(conn, ctm_id, home_centroid_id, dry_run=False):
             )
         else:
             # No bilateral event exists -- move matching titles to a new event
-            import uuid
-
             new_event_id = str(uuid.uuid4())
             cur.execute(
                 """INSERT INTO events_v3 (id, ctm_id, date, event_type, bucket_key,
@@ -809,8 +817,6 @@ def redistribute_oi_catchall(conn, ctm_id, home_centroid_id, dry_run=False):
     If it has exactly one, move it to that bilateral catchall.
     If multiple, move to the biggest bilateral bucket's catchall.
     """
-    import uuid
-
     cur = conn.cursor()
 
     # Find OI catchall events
@@ -931,71 +937,71 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     Same signature as aggregate_topics.process_ctm for daemon compatibility.
     """
     conn = get_connection()
+    try:
+        ctm = get_ctm_info(conn, ctm_id, centroid, track)
+        if not ctm:
+            print("CTM not found")
+            return
 
-    ctm = get_ctm_info(conn, ctm_id, centroid, track)
-    if not ctm:
-        print("CTM not found")
+        print("=" * 70)
+        print("TOPIC CONSOLIDATION {}".format("(DRY RUN)" if dry_run else ""))
+        print("=" * 70)
+        print("{} / {} / {}".format(ctm["centroid_id"], ctm["track"], ctm["month"]))
+        print("Titles: {}".format(ctm["title_count"]))
+        print()
+
+        # Load all bucket data
+        buckets = load_bucket_data(conn, ctm["id"])
+        if not buckets:
+            print("No events found")
+            return
+
+        total_events = sum(len(b["events"]) for b in buckets.values())
+        print(
+            "Loaded {} buckets, {} non-catchall events".format(
+                len(buckets), total_events
+            )
+        )
+        print()
+
+        total_stories = 0
+        total_merged = 0
+        total_rescued = 0
+        total_deleted = 0
+        buckets_processed = 0
+
+        for bucket_key, bucket_data in buckets.items():
+            result = process_bucket(conn, ctm, bucket_key, bucket_data, dry_run)
+            if not result.get("skipped"):
+                buckets_processed += 1
+                total_stories += result.get("stories", 0)
+                total_merged += result.get("merged", 0)
+                total_rescued += result.get("rescued", 0)
+                total_deleted += result.get("deleted", 0)
+
+        # Cross-bucket dedup: merge orphaned other_international into bilateral
+        cross_merged = cross_bucket_dedup(conn, ctm["id"], ctm["centroid_id"], dry_run)
+
+        # Redistribute OI catchall titles to bilateral catchalls
+        oi_redistributed = redistribute_oi_catchall(
+            conn, ctm["id"], ctm["centroid_id"], dry_run
+        )
+
+        print()
+        print("=" * 70)
+        print("SUMMARY")
+        print("=" * 70)
+        print("Buckets processed: {}".format(buckets_processed))
+        print("Stories created: {}".format(total_stories))
+        print("Events merged: {}".format(total_merged))
+        print("Catchall titles rescued: {}".format(total_rescued))
+        print("Events deleted: {}".format(total_deleted))
+        if cross_merged:
+            print("Cross-bucket dedup: {}".format(cross_merged))
+        if oi_redistributed:
+            print("OI catchall redistributed: {}".format(oi_redistributed))
+    finally:
         conn.close()
-        return
-
-    print("=" * 70)
-    print("TOPIC CONSOLIDATION {}".format("(DRY RUN)" if dry_run else ""))
-    print("=" * 70)
-    print("{} / {} / {}".format(ctm["centroid_id"], ctm["track"], ctm["month"]))
-    print("Titles: {}".format(ctm["title_count"]))
-    print()
-
-    # Load all bucket data
-    buckets = load_bucket_data(conn, ctm["id"])
-    if not buckets:
-        print("No events found")
-        conn.close()
-        return
-
-    total_events = sum(len(b["events"]) for b in buckets.values())
-    print(
-        "Loaded {} buckets, {} non-catchall events".format(len(buckets), total_events)
-    )
-    print()
-
-    total_stories = 0
-    total_merged = 0
-    total_rescued = 0
-    total_deleted = 0
-    buckets_processed = 0
-
-    for bucket_key, bucket_data in buckets.items():
-        result = process_bucket(conn, ctm, bucket_key, bucket_data, dry_run)
-        if not result.get("skipped"):
-            buckets_processed += 1
-            total_stories += result.get("stories", 0)
-            total_merged += result.get("merged", 0)
-            total_rescued += result.get("rescued", 0)
-            total_deleted += result.get("deleted", 0)
-
-    # Cross-bucket dedup: merge orphaned other_international into bilateral
-    cross_merged = cross_bucket_dedup(conn, ctm["id"], ctm["centroid_id"], dry_run)
-
-    # Redistribute OI catchall titles to bilateral catchalls
-    oi_redistributed = redistribute_oi_catchall(
-        conn, ctm["id"], ctm["centroid_id"], dry_run
-    )
-
-    print()
-    print("=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
-    print("Buckets processed: {}".format(buckets_processed))
-    print("Stories created: {}".format(total_stories))
-    print("Events merged: {}".format(total_merged))
-    print("Catchall titles rescued: {}".format(total_rescued))
-    print("Events deleted: {}".format(total_deleted))
-    if cross_merged:
-        print("Cross-bucket dedup: {}".format(cross_merged))
-    if oi_redistributed:
-        print("OI catchall redistributed: {}".format(oi_redistributed))
-
-    conn.close()
 
 
 if __name__ == "__main__":

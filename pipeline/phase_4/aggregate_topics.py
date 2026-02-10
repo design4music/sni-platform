@@ -31,6 +31,7 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from core.llm_utils import extract_json
 from core.prompts import MIXED_TOPIC_REVIEW_PROMPT, TOPIC_MERGE_PROMPT
 
 # =============================================================================
@@ -499,35 +500,6 @@ def review_merge_with_llm(events: dict, candidate: dict) -> dict:
 
     except Exception as e:
         return {"decision": "SEPARATE", "reason": str(e), "error": True}
-
-
-def extract_json(text: str) -> dict:
-    """Extract JSON from LLM response."""
-    import re
-
-    # Try direct parse
-    try:
-        return json.loads(text.strip())
-    except json.JSONDecodeError:
-        pass
-
-    # Try markdown code block
-    match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group(1).strip())
-        except json.JSONDecodeError:
-            pass
-
-    # Try to find JSON object
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
-
-    return {"decision": "SEPARATE", "reason": "Failed to parse LLM response"}
 
 
 # =============================================================================
