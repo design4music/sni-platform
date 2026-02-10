@@ -92,6 +92,10 @@ class SNIConfig(BaseSettings):
         default="https://rai-backend-ldy4.onrender.com/api/v1/analyze",
         env="RAI_API_URL",
     )
+    rai_worldbrief_url: str = Field(
+        default="https://rai-backend-ldy4.onrender.com/api/v1/worldbrief/analyze",
+        env="RAI_WORLDBRIEF_URL",
+    )
     rai_api_key: Optional[str] = Field(default=None, env="RAI_API_KEY")
     rai_timeout_seconds: int = Field(default=120, env="RAI_TIMEOUT_SECONDS")
     rai_enabled: bool = Field(default=False, env="RAI_ENABLED")

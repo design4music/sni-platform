@@ -664,6 +664,34 @@ Return ONLY the JSON array."""
 
 
 # =============================================================================
+# EVENT NARRATIVE EXTRACTION (single-pass for high-source events)
+# =============================================================================
+
+EVENT_NARRATIVE_SYSTEM = """You are a media-framing analyst. You identify distinct narrative frames used by different news sources to cover the same event."""
+
+EVENT_NARRATIVE_USER = """Event: {event_title}
+Summary: {event_summary}
+
+Below are {title_count} headlines covering this event. Each is prefixed with [publisher].
+
+{titles_block}
+
+Identify 2-5 distinct NARRATIVE FRAMES used by different media sources to cover this story.
+
+RULES:
+1. Each frame MUST assign moral roles (hero/villain, victim/aggressor, right/wrong)
+2. Frames should capture genuinely different editorial stances, not topic variations
+3. Include the headline indices that support each frame
+
+Return a JSON array:
+[
+  {{"label": "short frame name", "description": "1-sentence explanation", "moral_frame": "who is hero/villain", "title_indices": [1, 4, 7]}}
+]
+
+Return ONLY the JSON array."""
+
+
+# =============================================================================
 # FREEZE: CENTROID MONTHLY SUMMARY
 # =============================================================================
 

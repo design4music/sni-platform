@@ -417,13 +417,16 @@ def aggregate_results(frames, classifications, all_titles):
 def save_narratives(conn, epic_id, narratives):
     """DELETE existing + INSERT (idempotent re-run)."""
     cur = conn.cursor()
-    cur.execute("DELETE FROM epic_narratives WHERE epic_id = %s", (str(epic_id),))
+    cur.execute(
+        "DELETE FROM narratives WHERE entity_type = 'epic' AND entity_id = %s",
+        (str(epic_id),),
+    )
     for n in narratives:
         cur.execute(
-            "INSERT INTO epic_narratives "
-            "(epic_id, label, description, moral_frame, title_count, "
+            "INSERT INTO narratives "
+            "(entity_type, entity_id, label, description, moral_frame, title_count, "
             " top_sources, proportional_sources, top_countries, sample_titles) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "VALUES ('epic', %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 str(epic_id),
                 n["label"],

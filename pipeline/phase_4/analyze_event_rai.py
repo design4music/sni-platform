@@ -1,7 +1,9 @@
 """
-RAI Analysis for Epic Narratives (Phase 6)
-Sends narrative frames to WorldBrief RAI endpoint for adequacy, conflicts,
-and blind spot analysis. Uses structured JSON scores (no HTML regex parsing).
+RAI Analysis for Event Narratives
+
+Sends event narrative frames to the WorldBrief RAI endpoint for philosophical
+analysis of adequacy, conflicts, blind spots, and synthesis.
+Uses structured JSON scores (no HTML regex parsing).
 """
 
 import argparse
@@ -13,10 +15,8 @@ import httpx
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# Windows console encoding fix
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# Load config
 sys.path.insert(0, str(__file__).replace("\\", "/").rsplit("/", 3)[0])
 from core.config import get_config  # noqa: E402
 
@@ -37,63 +37,58 @@ def get_db_connection():
     )
 
 
-def fetch_narratives_for_rai(conn, epic_slug=None, limit=50):
-    """Fetch narratives that need RAI analysis."""
+def fetch_narratives_for_rai(conn, limit=50, event_id=None):
+    """Fetch event narratives that need RAI analysis."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        if epic_slug:
-            cur.execute(
-                """
-                SELECT n.id, n.entity_id, n.label, n.description, n.moral_frame,
-                       n.title_count, n.top_sources, n.sample_titles,
-                       e.title as epic_title, e.summary as epic_summary,
-                       e.total_sources
-                FROM narratives n
-                JOIN epics e ON n.entity_id = e.id
-                WHERE n.entity_type = 'epic'
-                  AND e.slug = %s
-                  AND n.rai_analyzed_at IS NULL
-                ORDER BY n.title_count DESC
-                LIMIT %s
-            """,
-                (epic_slug, limit),
-            )
-        else:
-            cur.execute(
-                """
-                SELECT n.id, n.entity_id, n.label, n.description, n.moral_frame,
-                       n.title_count, n.top_sources, n.sample_titles,
-                       e.title as epic_title, e.summary as epic_summary,
-                       e.total_sources
-                FROM narratives n
-                JOIN epics e ON n.entity_id = e.id
-                WHERE n.entity_type = 'epic'
-                  AND n.rai_analyzed_at IS NULL
-                ORDER BY n.title_count DESC
-                LIMIT %s
-            """,
-                (limit,),
-            )
+        where = "en.entity_type = 'event' AND en.rai_analyzed_at IS NULL"
+        params = []
+
+        if event_id:
+            where += " AND en.entity_id = %s"
+            params.append(event_id)
+
+        params.append(limit)
+        cur.execute(
+            """
+            SELECT en.id, en.entity_id as event_id, en.label, en.description, en.moral_frame,
+                   en.title_count, en.top_sources, en.sample_titles,
+                   e.title as event_title, e.summary as event_summary,
+                   e.source_batch_count,
+                   c.centroid_id, c.track
+            FROM narratives en
+            JOIN events_v3 e ON en.entity_id = e.id
+            JOIN ctm c ON c.id = e.ctm_id
+            WHERE """
+            + where
+            + """
+            ORDER BY en.title_count DESC
+            LIMIT %s
+        """,
+            params,
+        )
         return cur.fetchall()
 
 
 def build_rai_payload(narrative):
-    """Build WorldBrief RAI API request payload from narrative data."""
+    """Build WorldBrief RAI API request payload."""
     sample_titles = narrative["sample_titles"]
     if isinstance(sample_titles, str):
         sample_titles = json.loads(sample_titles)
 
     return {
-        "content_type": "epic_narrative",
+        "content_type": "event_narrative",
         "narrative": {
             "label": narrative["label"],
             "moral_frame": narrative.get("moral_frame"),
             "description": narrative.get("description"),
             "sample_titles": sample_titles or [],
-            "source_count": narrative.get("total_sources", 0),
+            "source_count": narrative.get("source_batch_count", 0),
             "top_sources": narrative.get("top_sources") or [],
         },
         "context": {
-            "event_title": narrative.get("epic_title", ""),
+            "centroid_id": narrative.get("centroid_id", ""),
+            "track": narrative.get("track", ""),
+            "event_title": narrative.get("event_title", ""),
         },
     }
 
@@ -151,7 +146,7 @@ def process_rai_response(rai_result):
 
 
 def save_rai_analysis(conn, narrative_id, rai_data):
-    """Save RAI analysis to database."""
+    """Save RAI analysis to narratives table."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -179,8 +174,8 @@ def save_rai_analysis(conn, narrative_id, rai_data):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="RAI analysis for epic narratives")
-    parser.add_argument("--epic", type=str, help="Process specific epic by slug")
+    parser = argparse.ArgumentParser(description="RAI analysis for event narratives")
+    parser.add_argument("--event", type=str, help="Process specific event by ID")
     parser.add_argument(
         "--limit", type=int, default=10, help="Max narratives to process"
     )
@@ -192,40 +187,38 @@ def main():
     )
     args = parser.parse_args()
 
-    print("RAI Narrative Analysis (Phase 6)")
+    print("RAI Event Narrative Analysis")
     print("=" * 50)
 
     conn = get_db_connection()
 
-    # Fetch narratives
-    narratives = fetch_narratives_for_rai(conn, args.epic, args.limit)
-    print("Found %d narratives pending RAI analysis" % len(narratives))
+    narratives = fetch_narratives_for_rai(conn, args.limit, args.event)
+    print("Found %d event narratives pending RAI analysis" % len(narratives))
 
     if not narratives:
         print("Nothing to process")
+        conn.close()
         return
 
     if args.dry_run:
         print("\nDry run - would process:")
         for n in narratives:
             print(
-                "  - %s (%d titles) from %s"
-                % (n["label"], n["title_count"], n["epic_title"])
+                "  - %s (%d titles) from event: %s"
+                % (n["label"], n["title_count"], n["event_title"])
             )
+        conn.close()
         return
 
-    # Process each narrative
     stats = {"success": 0, "failed": 0}
 
     for i, narrative in enumerate(narratives, 1):
         print("\n[%d/%d] %s" % (i, len(narratives), narrative["label"]))
-        print("  Epic: %s" % narrative["epic_title"])
+        print("  Event: %s" % narrative["event_title"])
         print("  Titles: %d" % narrative["title_count"])
 
-        # Build payload
         payload = build_rai_payload(narrative)
 
-        # Call RAI API
         print("  Calling RAI API...")
         rai_result = call_rai_api(payload)
 
@@ -233,14 +226,12 @@ def main():
             stats["failed"] += 1
             continue
 
-        # Process response
         rai_data = process_rai_response(rai_result)
 
         if not rai_data:
             stats["failed"] += 1
             continue
 
-        # Save to database
         save_rai_analysis(conn, narrative["id"], rai_data)
 
         print("  Adequacy: %s" % rai_data["adequacy"])
@@ -251,7 +242,6 @@ def main():
 
         stats["success"] += 1
 
-        # Delay between calls
         if i < len(narratives):
             time.sleep(args.delay)
 
