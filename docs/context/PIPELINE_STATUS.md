@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-07
+**Last Updated**: 2026-02-10
 **Status**: Production - Full pipeline operational
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -28,7 +28,7 @@ RSS Feeds (Google News)
     |
 [Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles
     |
-[Phase 4.1] Topic Aggregation (LLM merge/cleanup) --> events_v3 (merged)
+[Phase 4.1] Topic Consolidation (LLM merge/rescue/dedup) --> events_v3 (consolidated)
     |
 [Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags
     |
@@ -59,7 +59,7 @@ Frontend (Next.js) <-- READ-ONLY
 | Phase 3.2 | (after 3.1) | 500 titles | Entity centroid backfill |
 | Phase 3.3 | 10 minutes | 100 titles | Intel gating + track assignment |
 | Phase 4 | 30 minutes | all CTMs | Incremental clustering |
-| Phase 4.1 | (after 4) | all CTMs | Topic aggregation (LLM merge) |
+| Phase 4.1 | (after 4) | all CTMs | Topic consolidation (LLM merge/rescue/dedup) |
 | Phase 4.5a | 15 minutes | 500 events | Event summaries (decoupled) |
 | Phase 4.5b | 1 hour | 50 CTMs | CTM digest generation |
 
@@ -229,17 +229,32 @@ TRACK_WEIGHTS = {
 
 ---
 
-## Phase 4.1: Topic Aggregation
+## Phase 4.1: Topic Consolidation
 
-**Script**: `pipeline/phase_4/aggregate_topics.py`
+**Script**: `pipeline/phase_4/consolidate_topics.py`
 **Runs**: After Phase 4
 
 ### Purpose
 
-LLM-based cleanup and merging of mechanically clustered topics:
-- Merge similar topics that should be combined
-- Split topics that are too broad
-- Improve topic coherence
+Single-pass LLM consolidation of mechanically clustered topics. One LLM call per bucket:
+- Merge similar events that should be combined
+- Rescue titles from "Other Coverage" catchalls into real topic events
+- Redistribute Other International catchall titles to bilateral buckets
+- Cross-bucket deduplication of duplicate events
+
+### Key Features
+
+**Catchall Rescue**: When catchall has >= 10 titles, LLM sees catchall items with indices and can assign them to existing events via `rescue_catchall_ids`. Positional index mapping (not text matching) ensures accuracy.
+
+**Centroid Validation Gate**: For bilateral buckets, catchall rescue validates that each title's `centroid_ids` contains the bucket centroid before moving it. Prevents contamination from previous bugs.
+
+**Cross-Bucket Deduplication** (`cross_bucket_dedup()`): Scans `other_international` events for duplicates already present in bilateral buckets. Merges titles into the bilateral event and deletes the OI duplicate.
+
+**OI Redistribution** (`redistribute_oi_catchall()`): Moves Other International catchall titles to bilateral catchalls based on each title's foreign geo centroids. Single-centroid titles go to that country's bucket; multi-centroid to the largest.
+
+**LLM Retry**: Exponential backoff (configurable via `config.llm_retry_attempts` and `config.llm_retry_backoff`). Falls back gracefully on persistent failure.
+
+**Zombie Event Cleanup**: After consolidation, deletes any events that ended up with 0 titles (e.g., from failed catchall rescues).
 
 ---
 
@@ -392,12 +407,15 @@ ctm_id, date, first_seen
 title, summary, tags  -- From Phase 4.5a
 event_type: 'bilateral' | 'domestic' | 'other_international'
 bucket_key, source_batch_count, is_catchall
+topic_core JSONB  -- Anchor signals for consolidation context
 ```
 
 **ctm**: Centroid-Track-Month aggregations
 ```sql
 centroid_id, track, month
 title_count, summary_text, is_frozen
+events_digest JSONB  -- Denormalized event list for frontend
+last_aggregated_at, title_count_at_aggregation  -- Staleness tracking
 ```
 
 **centroid_monthly_summaries**: Cross-track summaries per centroid per month
@@ -455,8 +473,8 @@ pipeline/
 |   |-- assign_tracks_batched.py     # Intel gating + track assignment
 |
 |-- phase_4/
-|   |-- incremental_clustering.py    # Topic clustering
-|   |-- aggregate_topics.py          # LLM topic merge/cleanup
+|   |-- incremental_clustering.py    # Topic clustering (anchor signals + buckets)
+|   |-- consolidate_topics.py        # LLM consolidation (merge, rescue, dedup)
 |   |-- generate_event_summaries_4_5a.py  # Event summaries
 |   |-- generate_summaries_4_5.py    # CTM digests
 |
@@ -470,14 +488,16 @@ pipeline/
 |-- freeze/                          # Monthly freeze (cron)
 |   |-- freeze_month.py              # CTM freeze + centroid summaries
 |   |-- generate_signal_rankings.py  # Monthly signal rankings
-|
+
 |-- runner/
 |   |-- pipeline_daemon.py           # Orchestration daemon
+|   |-- backfill_pipeline.py         # One-time catch-up (4.5a + 4.1)
 
 core/
 |-- config.py                        # Configuration + clustering constants
 |-- prompts.py                       # All LLM prompts (consolidated)
 |-- ontology.py                      # ELO v2.0 definitions
+|-- llm_utils.py                     # Shared LLM utilities (extract_json)
 
 db/
 |-- scripts/
@@ -498,10 +518,21 @@ apps/frontend/
 |-- components/
 |   |-- DashboardLayout.tsx          # Main layout (sidebar + content grid)
 |   |-- TrackCard.tsx                # Track card component
+|   |-- EventList.tsx                # Event list with expand/collapse
+|   |-- EventAccordion.tsx           # Single event accordion item
+|   |-- CountryAccordion.tsx         # Country section with events
 |   |-- GeoBriefSection.tsx          # Centroid profile/brief display
-|   |-- MonthPicker.tsx              # Month navigation
+|   |-- MonthNav.tsx                 # Month navigation sidebar
+|   |-- TableOfContents.tsx          # Sticky TOC for track page
 |   |-- EpicCountries.tsx            # Country accordion for epics
 |   |-- NarrativeOverlay.tsx         # Narrative cards + RAI analysis modal
+
+archive/phase_4_old/                 # Deprecated Phase 4 scripts
+|-- aggregate_topics.py              # Replaced by consolidate_topics.py
+|-- bucketed_clustering.py           # Replaced by incremental_clustering.py
+|-- cluster_topics.py                # Old clustering approach
+|-- cluster_events_mechanical.py     # Old mechanical clustering
+|-- test_incremental_nondestructive.py  # Old test harness
 ```
 
 ---
@@ -525,6 +556,9 @@ python pipeline/phase_3_3/assign_tracks_batched.py --max-titles 100
 
 # Phase 4: Topic Clustering
 python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --write
+
+# Phase 4.1: Topic Consolidation (LLM merge + rescue)
+python pipeline/phase_4/consolidate_topics.py --ctm-id <ctm_id>
 
 # Phase 4.5a: Event Summaries
 python pipeline/phase_4/generate_event_summaries_4_5a.py --max-events 500
@@ -643,11 +677,27 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ---
 
-## Current Status (2026-02-07)
+## Current Status (2026-02-10)
 
-**Operational**: Full pipeline (Phases 1-6) running locally. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. Production site live at https://www.worldbrief.info
+**Operational**: Full pipeline (Phases 1-6) running locally. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active with improved Phase 4 consolidation. Production site live at https://www.worldbrief.info
 
-### Recent Changes (since 2026-02-02)
+### Recent Changes (2026-02-08 to 2026-02-10)
+
+1. **Phase 4.1 Rewrite** (`consolidate_topics.py`): Replaced `aggregate_topics.py` with single-pass LLM consolidation. One call per bucket handles merge, rescue, and cleanup simultaneously. Old multi-step approach archived.
+2. **Catchall Rescue**: Titles stuck in "Other Coverage" catchalls are now rescued into real topic events. LLM sees catchall items with positional indices; code uses parallel `title_ids` array (not fragile text matching) for DB updates.
+3. **Centroid Validation Gate**: Bilateral catchall rescue validates each title's `centroid_ids` contains the bucket centroid before moving. Prevents cross-bucket contamination from propagating.
+4. **Cross-Bucket Deduplication**: `cross_bucket_dedup()` finds and merges duplicate events across OI and bilateral buckets.
+5. **OI Redistribution**: `redistribute_oi_catchall()` moves Other International catchall titles to bilateral catchalls based on foreign geo centroids.
+6. **LLM Retry with Backoff**: All Phase 4 LLM calls use exponential backoff (configurable via `config.llm_retry_attempts`, `config.llm_retry_backoff`).
+7. **Shared `extract_json`**: Deduplicated JSON extraction from 3 modules into `core/llm_utils.py`.
+8. **Zombie Event Cleanup**: Events with 0 titles (from failed rescues or stale data) are automatically deleted during consolidation.
+9. **Orphaned Title Routing**: `fix_orphaned_titles.py` routes titles present in `title_assignments` but missing from `event_v3_titles` into appropriate catchall events.
+10. **Frontend Cleanup**: Removed standalone "Other Sources" section from track page. Hidden zero-source events via `source_batch_count > 0` filter in query.
+11. **Entity Countries Backfill**: Extracted entity_countries from 12,859 Feb titles via LLM. Maps entity mentions to ISO codes for bilateral relationship tracking.
+12. **Prompt Rule - No "Former"**: LLM explicitly forbidden from adding "Former" to politician roles unless headline contains it.
+13. **Script Archive**: 5 obsolete Phase 4 scripts moved to `archive/phase_4_old/`.
+
+### Previous Changes (2026-02-02 to 2026-02-07)
 
 1. **Epics Feature (Phase 5)**: Cross-country story detection. Identifies events that span multiple centroids via shared anchor tags. Generates timeline, narratives, and per-centroid summaries.
 2. **Narrative Extraction (Phase 5.5)**: Two-pass LLM approach extracts media framing from epic titles. Identifies 3-7 contested narratives per epic with moral frames and source attribution.
@@ -669,21 +719,26 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 6. **Render deployment**: Frontend + DB snapshot on Render for demo. Pipeline worker suspended.
 7. **Staleness detection**: `events_v3.summary_source_count` tracks when summaries were generated; Phase 4.5a re-summarizes events that grew >50%.
 
-### Pipeline Statistics (2026-02-06)
+### Pipeline Statistics (2026-02-10)
 
-- Titles: ~50,000+ total
+- Titles: ~87,000+ total (~50k Jan frozen + ~37k Feb active)
 - Active centroids: 85
-- CTMs: 667+ (437 frozen Jan + active Feb)
-- Events: ~5,500+
+- CTMs: ~870+ (437 frozen Jan + ~430 active Feb)
+- Events: ~7,000+
 - Epics: 9 (January 2026)
 - Epic narratives: ~50 with RAI analysis
 - Centroid monthly summaries: 85 (January)
 - Daily ingestion: ~3,000-6,000 titles
 
+### Known Issues
+
+1. **Phase 2 centroid gap**: Some topics appear under "Domestic" when they should be bilateral (e.g., Lebanon/UNIFIL under MIDEAST-ISRAEL domestic). Titles only have the home centroid, missing the foreign centroid (e.g., MIDEAST-LEVANT). Phase 2 mechanical matching doesn't catch all geographic references.
+2. **Node memory leak**: Frontend dev server leaks to 2GB+ after ~3 days. Requires restart.
+
 ### Next Steps
 
-1. **RAI Tuning**: Improve narrative extraction to select more clearly framed headlines; adjust RAI payloads for better bias detection
+1. **RAI Tuning**: Improve narrative extraction; adjust RAI payloads for better bias detection
 2. **Phase 5 Refinement**: Better anchor tag selection, epic deduplication
-3. Monitor February pipeline quality and clustering coherence
-4. Cross-CTM event deduplication
-5. Evaluate label clustering for taxonomy refinement
+3. **Phase 2 Improvement**: Better centroid matching for bilateral relationships (e.g., Lebanon -> MIDEAST-LEVANT)
+4. **February Freeze**: End-of-month freeze + centroid summaries + epic detection
+5. Monitor consolidation quality across all CTMs
