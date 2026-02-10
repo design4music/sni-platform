@@ -33,7 +33,8 @@ CRITICAL - NO ROLE DESCRIPTIONS FROM TRAINING DATA:
 - ONLY use titles/roles that appear explicitly in the source headlines
 - If headlines say "President Trump" -> use "President Trump"
 - If headlines just say "Trump" -> use "Trump" (do NOT add a title)
-- NEVER write "Former President", "President-elect", or any title not in the headlines
+- NEVER add "Former" to any role (Former President, Former Minister, etc.) unless the headline text itself contains the word "Former"
+- NEVER write "President-elect" or any title not in the headlines
 - NEVER infer or add roles from your training data
 - This applies to ALL people: no "CEO Musk", "Chancellor Scholz" unless the headline says so
 - When in doubt, use just the name without any title"""
