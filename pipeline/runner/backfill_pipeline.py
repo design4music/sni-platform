@@ -23,7 +23,7 @@ import psycopg2
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-from pipeline.phase_4.aggregate_topics import process_ctm as phase41_aggregate
+from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_process,
 )
