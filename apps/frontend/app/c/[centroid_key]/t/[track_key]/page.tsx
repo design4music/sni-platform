@@ -1,6 +1,6 @@
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
-import EventAccordion from '@/components/EventAccordion';
+import OtherCoverage from '@/components/OtherCoverage';
 import CountryAccordion from '@/components/CountryAccordion';
 import TableOfContents, { TocSection } from '@/components/TableOfContents';
 import MobileTocButton from '@/components/MobileTocButton';
@@ -21,6 +21,11 @@ import { getTrackIcon } from '@/components/TrackCard';
 
 export const dynamic = 'force-dynamic';
 
+// Display limits: top N topics shown, rest collapse into "Other Coverage"
+const DOMESTIC_TOP_N = 20;
+const INTL_TOP_N = 5;
+const INITIAL_DISPLAY = 5;  // Show first 5, then "load more"
+
 interface TrackPageProps {
   params: Promise<{ centroid_key: string; track_key: string }>;
   searchParams: Promise<{ month?: string }>;
@@ -37,13 +42,16 @@ function countTitles(events: Event[]) {
   return events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 }
 
-function sortBySourceCount(events: Event[]) {
-  return [...events].sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-}
 
-function isOtherCoverage(e: Event) {
-  const s = e.summary || '';
-  return s.startsWith('[Storyline]') || s.startsWith('Other ') || e.is_catchall === true;
+/** Split events into top-N topics and "other" (small topics + catchalls). */
+function splitTopN(events: Event[], topN: number) {
+  const sorted = [...events]
+    .filter(e => !e.is_catchall)
+    .sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+  const catchalls = events.filter(e => e.is_catchall);
+  const top = sorted.slice(0, topN);
+  const rest = [...sorted.slice(topN), ...catchalls];
+  return { top, rest };
 }
 
 export default async function TrackPage({ params, searchParams }: TrackPageProps) {
@@ -81,8 +89,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const domesticEvents = allEvents.filter(
     e => !e.event_type || e.event_type === 'domestic' || isBilateralToSelf(e)
   );
-  const domesticMainEvents = domesticEvents.filter(e => !isOtherCoverage(e));
-  const domesticOther = domesticEvents.filter(e => isOtherCoverage(e));
+  const { top: domesticMainEvents, rest: domesticOther } = splitTopN(domesticEvents, DOMESTIC_TOP_N);
 
   const internationalEvents = allEvents.filter(
     e => (e.event_type === 'bilateral' && !isBilateralToSelf(e)) || e.event_type === 'other_international'
@@ -335,25 +342,18 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               </p>
 
               <EventList
-                events={sortBySourceCount(domesticMainEvents)}
+                events={domesticMainEvents}
                 allTitles={titles}
-                initialLimit={10}
+                initialLimit={INITIAL_DISPLAY}
                 keyPrefix="domestic"
               />
 
               {domesticOther.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-dashboard-border">
-                  <EventAccordion
-                    key="domestic-other"
-                    event={{
-                      date: domesticOther[0]?.date || '',
-                      summary: `Other Domestic Coverage (${countTitles(domesticOther)} sources)`,
-                      source_title_ids: domesticOther.flatMap(e => e.source_title_ids || [])
-                    }}
-                    allTitles={titles}
-                    index={999}
-                  />
-                </div>
+                <OtherCoverage
+                  label="Other Domestic Coverage"
+                  events={domesticOther}
+                  allTitles={titles}
+                />
               )}
             </div>
           )}
@@ -363,13 +363,12 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             <div id="section-international" className="mb-10">
               <h2 className="text-2xl font-bold mb-2">International</h2>
               <p className="text-sm text-dashboard-text-muted mb-6">
-                {internationalEvents.filter(e => !isOtherCoverage(e)).length} topics | {countTitles(internationalEvents)} sources
+                {internationalEvents.filter(e => !e.is_catchall).length} topics | {countTitles(internationalEvents)} sources
               </p>
 
               {/* Bilateral groups by country */}
               {sortedBilateralEntries.map(([bucketKey, events], index) => {
-                const mainEvents = events.filter(e => !isOtherCoverage(e));
-                const otherEvents = events.filter(e => isOtherCoverage(e));
+                const { top: mainEvents, rest: otherEvents } = splitTopN(events, INTL_TOP_N);
                 const bucketCentroid = bucketCentroidMap.get(bucketKey);
                 const countryLabel = bucketCentroid?.label || getCountryName(bucketKey);
                 const isoCodes = bucketCentroid?.iso_codes || [getIsoFromBucketKey(bucketKey)];
@@ -391,8 +390,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
               {/* Other International */}
               {otherInternational.length > 0 && (() => {
-                const mainEvents = otherInternational.filter(e => !isOtherCoverage(e));
-                const otherEvents = otherInternational.filter(e => isOtherCoverage(e));
+                const { top: mainEvents, rest: otherEvents } = splitTopN(otherInternational, INTL_TOP_N);
 
                 return (
                   <CountryAccordion

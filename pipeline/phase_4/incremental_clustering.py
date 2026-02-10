@@ -449,7 +449,7 @@ def load_centroid_iso_codes(conn, centroid_id: str) -> set:
 # GEOGRAPHIC BUCKETING (using centroid_ids)
 # =============================================================================
 
-MIN_BILATERAL_TITLES = 5
+MIN_BILATERAL_TITLES = 1  # Every foreign GEO centroid gets its own bilateral bucket
 
 
 def is_geo_centroid(centroid_id: str) -> bool:
