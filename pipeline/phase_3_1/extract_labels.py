@@ -25,7 +25,7 @@ import httpx
 import psycopg2
 from loguru import logger
 
-from core.config import config
+from core.config import MAX_API_ERRORS, config
 from core.ontology import (
     ONTOLOGY_VERSION,
     PRIORITY_RULES,
@@ -386,8 +386,9 @@ def load_titles_needing_extraction(
     conditions = [
         "t.processing_status = 'assigned'",
         "t.centroid_ids IS NOT NULL",
+        "(t.api_error_count IS NULL OR t.api_error_count < %s)",
     ]
-    params = []
+    params = [MAX_API_ERRORS]
 
     if centroid_filter:
         conditions.append("%s = ANY(t.centroid_ids)")
@@ -527,15 +528,49 @@ def write_to_db(conn, results: list[dict]) -> int:
 # =============================================================================
 
 
+def increment_api_error_count(conn, title_ids: list):
+    """Increment api_error_count for titles in a failed batch."""
+    if not title_ids:
+        return
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            UPDATE titles_v3
+            SET api_error_count = COALESCE(api_error_count, 0) + 1
+            WHERE id = ANY(%s::uuid[])
+            """,
+            (title_ids,),
+        )
+        conn.commit()
+        logger.warning(
+            "Incremented api_error_count for {} titles".format(len(title_ids))
+        )
+    except Exception as e:
+        logger.error("Failed to increment api_error_count: {}".format(e))
+        conn.rollback()
+
+
 def process_batch_worker(batch_info: tuple) -> dict:
     """Worker function for concurrent batch processing."""
     batch, batch_num, total_batches = batch_info
+    title_ids = [t["id"] for t in batch]
     try:
         results = extract_batch(batch)
-        return {"batch_num": batch_num, "results": results, "error": None}
+        return {
+            "batch_num": batch_num,
+            "results": results,
+            "error": None,
+            "title_ids": title_ids,
+        }
     except Exception as e:
         logger.error("Batch {} failed: {}".format(batch_num, e))
-        return {"batch_num": batch_num, "results": [], "error": str(e)}
+        return {
+            "batch_num": batch_num,
+            "results": [],
+            "error": str(e),
+            "title_ids": title_ids,
+        }
 
 
 def process_titles(
@@ -593,6 +628,7 @@ def process_titles(
                 logger.info("  Wrote {} labels+signals".format(written))
             if result["error"]:
                 failed_batches += 1
+                increment_api_error_count(conn, result["title_ids"])
     else:
         # Concurrent processing
         with ThreadPoolExecutor(max_workers=concurrency) as executor:
@@ -614,6 +650,7 @@ def process_titles(
                     )
                 if result["error"]:
                     failed_batches += 1
+                    increment_api_error_count(conn, result["title_ids"])
 
     conn.close()
 

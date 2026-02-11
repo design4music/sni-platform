@@ -1,0 +1,1 @@
+ALTER TABLE titles_v3 ADD COLUMN api_error_count INTEGER DEFAULT 0;

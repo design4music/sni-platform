@@ -223,6 +223,9 @@ TRACK_DISCRIMINATORS = {
 }
 
 
+# Circuit breaker: max API errors before excluding a title from queue
+MAX_API_ERRORS = 3
+
 # (action_class, domain) combos with <2% block rate (n>=10)
 # Titles matching these skip LLM gating and go straight to track assignment
 GATE_WHITELIST = frozenset(

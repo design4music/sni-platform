@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 project_root = Path(__file__).parent.parent.parent
 os.chdir(project_root)
 
-from core.config import GATE_WHITELIST, config  # noqa: E402
+from core.config import GATE_WHITELIST, MAX_API_ERRORS, config  # noqa: E402
 from core.prompts import INTEL_GATING_PROMPT, TRACK_ASSIGNMENT_PROMPT  # noqa: E402
 
 
@@ -480,6 +480,20 @@ async def process_centroid_group(
                 print(f"  ERROR in gating batch: {e}")
                 error_total += len(titles_batch)
                 conn.rollback()
+                # Circuit breaker: increment api_error_count for failed batch
+                try:
+                    with conn.cursor() as err_cur:
+                        err_cur.execute(
+                            """
+                            UPDATE titles_v3
+                            SET api_error_count = COALESCE(api_error_count, 0) + 1
+                            WHERE id = ANY(%s::uuid[])
+                            """,
+                            ([t[0] for t in titles_batch],),
+                        )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
 
         # Stage 2: Track Assignment for ALL strategic titles (pre-gated + LLM-gated)
         if all_strategic:
@@ -557,6 +571,20 @@ async def process_centroid_group(
                     print(f"  ERROR in track assignment batch: {e}")
                     error_total += len(strategic_batch)
                     conn.rollback()
+                    # Circuit breaker: increment api_error_count for failed batch
+                    try:
+                        with conn.cursor() as err_cur:
+                            err_cur.execute(
+                                """
+                                UPDATE titles_v3
+                                SET api_error_count = COALESCE(api_error_count, 0) + 1
+                                WHERE id = ANY(%s::uuid[])
+                                """,
+                                ([t[0] for t in strategic_batch],),
+                            )
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
 
         return (pre_gated_total, strategic_total, rejected_total, error_total)
 
@@ -589,6 +617,7 @@ async def process_batch(max_titles=None):
                 LEFT JOIN title_labels tl ON tl.title_id = t.id
                 WHERE t.processing_status = 'assigned'
                   AND t.centroid_ids IS NOT NULL
+                  AND (t.api_error_count IS NULL OR t.api_error_count < {MAX_API_ERRORS})
                   AND NOT EXISTS (
                     SELECT 1 FROM title_assignments ta
                     WHERE ta.title_id = t.id
