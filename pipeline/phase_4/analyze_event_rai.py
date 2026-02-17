@@ -1,9 +1,12 @@
 """
 RAI Analysis for Event Narratives
 
-Sends event narrative frames to the WorldBrief RAI endpoint for philosophical
-analysis of adequacy, conflicts, blind spots, and synthesis.
-Uses structured JSON scores (no HTML regex parsing).
+Two modes:
+  - Signals (default): compact, data-driven signals via /worldbrief/signals
+  - Full (--full):      full HTML analysis via /worldbrief/analyze (legacy)
+
+Signals mode computes Tier 1 stats locally, sends them to RAI for Tier 2
+interpretation, and stores both in narratives.signal_stats / rai_signals.
 """
 
 import argparse
@@ -19,10 +22,12 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, str(__file__).replace("\\", "/").rsplit("/", 3)[0])
 from core.config import get_config  # noqa: E402
+from core.signal_stats import compute_event_stats  # noqa: E402
 
 config = get_config()
 
-RAI_URL = config.rai_worldbrief_url
+RAI_FULL_URL = config.rai_worldbrief_url
+RAI_SIGNALS_URL = config.rai_signals_url
 RAI_API_KEY = config.rai_api_key
 RAI_TIMEOUT = getattr(config, "rai_timeout_seconds", 300)
 
@@ -37,10 +42,13 @@ def get_db_connection():
     )
 
 
-def fetch_narratives_for_rai(conn, limit=50, event_id=None):
+def fetch_narratives(conn, limit=50, event_id=None, mode="signals"):
     """Fetch event narratives that need RAI analysis."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        where = "en.entity_type = 'event' AND en.rai_analyzed_at IS NULL"
+        if mode == "signals":
+            where = "en.entity_type = 'event' AND en.rai_signals_at IS NULL"
+        else:
+            where = "en.entity_type = 'event' AND en.rai_analyzed_at IS NULL"
         params = []
 
         if event_id:
@@ -69,8 +77,145 @@ def fetch_narratives_for_rai(conn, limit=50, event_id=None):
         return cur.fetchall()
 
 
-def build_rai_payload(narrative):
-    """Build WorldBrief RAI API request payload."""
+# =========================================================================
+# Signals path (default)
+# =========================================================================
+
+
+def build_signals_payload(narrative, stats):
+    """Build payload for /worldbrief/signals endpoint."""
+    sample_titles = narrative["sample_titles"]
+    if isinstance(sample_titles, str):
+        sample_titles = json.loads(sample_titles)
+
+    return {
+        "content_type": "event_narrative",
+        "narrative": {
+            "label": narrative["label"],
+            "moral_frame": narrative.get("moral_frame"),
+            "description": narrative.get("description"),
+            "sample_titles": sample_titles or [],
+        },
+        "context": {
+            "centroid_id": narrative.get("centroid_id", ""),
+            "track": narrative.get("track", ""),
+            "event_title": narrative.get("event_title", ""),
+        },
+        "stats": stats,
+    }
+
+
+def call_signals_api(payload):
+    """Call /worldbrief/signals and return response."""
+    try:
+        with httpx.Client(timeout=RAI_TIMEOUT) as client:
+            response = client.post(
+                RAI_SIGNALS_URL,
+                json=payload,
+                headers={
+                    "Authorization": "Bearer %s" % RAI_API_KEY,
+                    "Content-Type": "application/json",
+                },
+            )
+            if response.status_code != 200:
+                print(
+                    "  Signals API error: %d - %s"
+                    % (response.status_code, response.text[:200])
+                )
+                return None
+            return response.json()
+    except httpx.TimeoutException:
+        print("  Signals API timeout (>%ds)" % RAI_TIMEOUT)
+        return None
+    except Exception as e:
+        print("  Signals API error: %s" % e)
+        return None
+
+
+def save_signals(conn, narrative_id, stats, signals_result):
+    """Save Tier 1 stats and Tier 2 signals to narratives."""
+    signals = signals_result.get("signals", {})
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE narratives
+            SET signal_stats = %s,
+                rai_signals = %s,
+                rai_signals_at = NOW()
+            WHERE id = %s
+            """,
+            (json.dumps(stats), json.dumps(signals), narrative_id),
+        )
+    conn.commit()
+
+
+def run_signals(conn, narratives, delay):
+    """Process narratives through the signals path."""
+    counts = {"success": 0, "failed": 0}
+
+    for i, narrative in enumerate(narratives, 1):
+        print("\n[%d/%d] %s" % (i, len(narratives), narrative["label"]))
+        print("  Event: %s" % narrative["event_title"])
+        print("  Titles: %d" % narrative["title_count"])
+
+        # Tier 1: compute stats locally
+        print("  Computing stats...")
+        stats = compute_event_stats(conn, narrative["event_id"])
+        if not stats:
+            print("  No titles found for event, skipping")
+            counts["failed"] += 1
+            continue
+        print(
+            "  Stats: %d titles, %d publishers (HHI %.3f), %d languages"
+            % (
+                stats["title_count"],
+                stats["publisher_count"],
+                stats["publisher_hhi"],
+                stats["language_count"],
+            )
+        )
+
+        # Save Tier 1 stats immediately
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE narratives SET signal_stats = %s WHERE id = %s",
+                (json.dumps(stats), narrative["id"]),
+            )
+        conn.commit()
+
+        # Tier 2: call RAI signals endpoint
+        payload = build_signals_payload(narrative, stats)
+        print("  Calling RAI signals API...")
+        result = call_signals_api(payload)
+
+        if not result:
+            counts["failed"] += 1
+            continue
+
+        save_signals(conn, narrative["id"], stats, result)
+
+        signals = result.get("signals", {})
+        print("  Adequacy: %s" % signals.get("adequacy", "N/A"))
+        print("  Source concentration: %s" % signals.get("source_concentration", "N/A"))
+        findings = signals.get("findings", [])
+        if findings:
+            print("  Findings: %s" % findings[0][:80])
+
+        counts["success"] += 1
+
+        if i < len(narratives):
+            time.sleep(delay)
+
+    return counts
+
+
+# =========================================================================
+# Full analysis path (--full, legacy)
+# =========================================================================
+
+
+def build_full_payload(narrative):
+    """Build WorldBrief RAI API request payload (legacy full analysis)."""
     sample_titles = narrative["sample_titles"]
     if isinstance(sample_titles, str):
         sample_titles = json.loads(sample_titles)
@@ -93,28 +238,25 @@ def build_rai_payload(narrative):
     }
 
 
-def call_rai_api(payload):
-    """Call WorldBrief RAI API and return response."""
+def call_full_api(payload):
+    """Call /worldbrief/analyze and return response."""
     try:
         with httpx.Client(timeout=RAI_TIMEOUT) as client:
             response = client.post(
-                RAI_URL,
+                RAI_FULL_URL,
                 json=payload,
                 headers={
                     "Authorization": "Bearer %s" % RAI_API_KEY,
                     "Content-Type": "application/json",
                 },
             )
-
             if response.status_code != 200:
                 print(
                     "  RAI API error: %d - %s"
                     % (response.status_code, response.text[:200])
                 )
                 return None
-
             return response.json()
-
     except httpx.TimeoutException:
         print("  RAI API timeout (>%ds)" % RAI_TIMEOUT)
         return None
@@ -123,14 +265,10 @@ def call_rai_api(payload):
         return None
 
 
-def process_rai_response(rai_result):
-    """Process structured RAI response into database fields."""
-    if not rai_result:
-        return None
-
+def save_full_analysis(conn, narrative_id, rai_result):
+    """Save full RAI analysis to narratives table."""
     scores = rai_result.get("scores", {})
-
-    return {
+    rai_data = {
         "adequacy": scores.get("adequacy"),
         "synthesis": scores.get("synthesis"),
         "conflicts": scores.get("conflicts") or [],
@@ -143,10 +281,6 @@ def process_rai_response(rai_result):
         },
         "full_analysis": rai_result.get("full_analysis", ""),
     }
-
-
-def save_rai_analysis(conn, narrative_id, rai_data):
-    """Save RAI analysis to narratives table."""
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -159,7 +293,7 @@ def save_rai_analysis(conn, narrative_id, rai_data):
                 rai_full_analysis = %s,
                 rai_analyzed_at = NOW()
             WHERE id = %s
-        """,
+            """,
             (
                 rai_data["adequacy"],
                 rai_data["synthesis"],
@@ -171,6 +305,44 @@ def save_rai_analysis(conn, narrative_id, rai_data):
             ),
         )
     conn.commit()
+    return rai_data
+
+
+def run_full(conn, narratives, delay):
+    """Process narratives through the full analysis path."""
+    counts = {"success": 0, "failed": 0}
+
+    for i, narrative in enumerate(narratives, 1):
+        print("\n[%d/%d] %s" % (i, len(narratives), narrative["label"]))
+        print("  Event: %s" % narrative["event_title"])
+        print("  Titles: %d" % narrative["title_count"])
+
+        payload = build_full_payload(narrative)
+        print("  Calling RAI full analysis API...")
+        rai_result = call_full_api(payload)
+
+        if not rai_result:
+            counts["failed"] += 1
+            continue
+
+        rai_data = save_full_analysis(conn, narrative["id"], rai_result)
+
+        print("  Adequacy: %s" % rai_data["adequacy"])
+        print("  Blind spots: %d" % len(rai_data["blind_spots"]))
+        if rai_data["synthesis"]:
+            print("  Synthesis: %s..." % rai_data["synthesis"][:100])
+
+        counts["success"] += 1
+
+        if i < len(narratives):
+            time.sleep(delay)
+
+    return counts
+
+
+# =========================================================================
+# Main
+# =========================================================================
 
 
 def main():
@@ -183,16 +355,22 @@ def main():
         "--dry-run", action="store_true", help="Show what would be processed"
     )
     parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Use full analysis (legacy) instead of signals",
+    )
+    parser.add_argument(
         "--delay", type=float, default=2.0, help="Delay between API calls (seconds)"
     )
     args = parser.parse_args()
 
-    print("RAI Event Narrative Analysis")
+    mode = "full" if args.full else "signals"
+    print("RAI Event Narrative Analysis [%s mode]" % mode)
     print("=" * 50)
 
     conn = get_db_connection()
 
-    narratives = fetch_narratives_for_rai(conn, args.limit, args.event)
+    narratives = fetch_narratives(conn, args.limit, args.event, mode)
     print("Found %d event narratives pending RAI analysis" % len(narratives))
 
     if not narratives:
@@ -210,43 +388,13 @@ def main():
         conn.close()
         return
 
-    stats = {"success": 0, "failed": 0}
-
-    for i, narrative in enumerate(narratives, 1):
-        print("\n[%d/%d] %s" % (i, len(narratives), narrative["label"]))
-        print("  Event: %s" % narrative["event_title"])
-        print("  Titles: %d" % narrative["title_count"])
-
-        payload = build_rai_payload(narrative)
-
-        print("  Calling RAI API...")
-        rai_result = call_rai_api(payload)
-
-        if not rai_result:
-            stats["failed"] += 1
-            continue
-
-        rai_data = process_rai_response(rai_result)
-
-        if not rai_data:
-            stats["failed"] += 1
-            continue
-
-        save_rai_analysis(conn, narrative["id"], rai_data)
-
-        print("  Adequacy: %s" % rai_data["adequacy"])
-        print("  Blind spots: %d" % len(rai_data["blind_spots"]))
-        print("  Conflicts: %d" % len(rai_data["conflicts"]))
-        if rai_data["synthesis"]:
-            print("  Synthesis: %s..." % rai_data["synthesis"][:100])
-
-        stats["success"] += 1
-
-        if i < len(narratives):
-            time.sleep(args.delay)
+    if mode == "signals":
+        counts = run_signals(conn, narratives, args.delay)
+    else:
+        counts = run_full(conn, narratives, args.delay)
 
     print("\n" + "=" * 50)
-    print("Complete: %d success, %d failed" % (stats["success"], stats["failed"]))
+    print("Complete: %d success, %d failed" % (counts["success"], counts["failed"]))
 
     conn.close()
 
