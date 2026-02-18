@@ -68,6 +68,7 @@ Frontend (Next.js) <-- READ-ONLY
 | Phase 4.5b | 1 hour | 50 CTMs | CTM digest generation |
 | Phase 5a | 24 hours | 20 CTMs | CTM narrative extraction (new + refresh) |
 | Phase 5b | 24 hours | 50 events | Event narrative extraction (new + refresh) |
+| Phase 6 | 24 hours | 20 narratives | RAI signal analysis (event + CTM) |
 
 ---
 
@@ -346,24 +347,40 @@ Both scripts export daemon entry points:
 ## Phase 6: RAI Signal Analysis
 
 **Script**: `pipeline/phase_4/analyze_event_rai.py`
-**Runs**: Manual or after narrative extraction
+**Interval**: 24 hours (daemon Phase 6)
+
+### Complete Cycle
+
+Phase 5 extracts narrative frames -> Phase 6 computes stats + sends to RAI -> RAI returns compact analytical signals. This produces the final intelligence product per narrative: scores, blind spots, framing analysis.
 
 ### Two-Tier Architecture
 
 **Tier 1 -- Local Stats** (`core/signal_stats.py`):
 - Pure SQL + Python aggregation, no LLM calls
-- Publisher HHI (concentration index), language distribution, entity countries, domain/action_class distribution, top actors/persons/orgs, narrative frame count, date range, label coverage
+- `compute_event_stats(conn, event_id)` and `compute_ctm_stats(conn, ctm_id)` share `_aggregate_rows()` helper
+- CTM stats use `DISTINCT ON (t.id)` to avoid double-counting titles across events
+- Stats: publisher HHI, language distribution, entity countries, domain/action_class distribution, top actors/persons/orgs, narrative frame count, date range, label coverage
 - Stored in `narratives.signal_stats` JSONB
 
 **Tier 2 -- RAI Interpretation** (`POST /api/v1/worldbrief/signals`):
-- RAI LLM interprets hard stats (does NOT guess)
-- Returns compact JSON: adequacy score, framing_bias, source_concentration, geographic_blind_spots, findings, follow_the_gain, missing_perspectives
+- RAI LLM interprets hard stats using 5 RAI modules (CL-0, NL-3, FL-2, FL-3, SL-8)
+- Returns compact JSON: adequacy (0-1), adequacy_reason, framing_bias, source_concentration, geographic_blind_spots, findings, follow_the_gain, missing_perspectives
 - Stored in `narratives.rai_signals` JSONB + `rai_signals_at` timestamp
+
+### Entity Types
+
+Both event and CTM narratives are processed. Different JOIN paths:
+- Events: `narratives -> events_v3 -> ctm` (context = event title/summary)
+- CTMs: `narratives -> ctm` (context = CTM summary_text, truncated to 200 chars)
 
 ### Modes
 
 - **Signals (default)**: Compact signals via `/worldbrief/signals` (~10-15s)
-- **Full (`--full`)**: Legacy full HTML analysis via `/worldbrief/analyze` (~50-60s)
+- **Full (`--full`)**: Legacy full HTML analysis via `/worldbrief/analyze` (~50-60s, events only)
+
+### Daemon Callable
+
+`process_rai_signals(limit=20, delay=2.0)` -- iterates over ("event", "ctm") entity types, processes narratives where `rai_signals_at IS NULL`.
 
 ### Configuration
 
@@ -539,7 +556,7 @@ core/
 |-- config.py                        # Configuration + clustering constants
 |-- prompts.py                       # All LLM prompts (consolidated)
 |-- ontology.py                      # ELO v2.0 definitions
-|-- llm_utils.py                     # Shared LLM utilities (extract_json)
+|-- llm_utils.py                     # Shared LLM utilities (extract_json, fix_role_hallucinations)
 |-- signal_stats.py                  # Tier 1 coverage stats (HHI, language dist, etc.)
 
 db/
@@ -619,6 +636,7 @@ python pipeline/phase_4/extract_event_narratives.py --refresh --limit 20
 
 # Phase 6: RAI Signal Analysis
 python pipeline/phase_4/analyze_event_rai.py --limit 10
+python pipeline/phase_4/analyze_event_rai.py --entity-type ctm --limit 5
 python pipeline/phase_4/analyze_event_rai.py --full --event <UUID>
 ```
 
@@ -734,7 +752,7 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ## Current Status (2026-02-17)
 
-**Operational**: Full pipeline (Phases 1-6) running locally. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. Phase 5 (narrative extraction) and Phase 6 (RAI signals) integrated into daemon on 24h cycle. Production site live at https://www.worldbrief.info
+**Operational**: Full pipeline (Phases 1-6) running locally with complete RAI cycle. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. All phases including narrative extraction (Phase 5) and RAI signal analysis (Phase 6) integrated into daemon on 24h cycle. Production site live at https://www.worldbrief.info
 
 ### Recent Changes (2026-02-17)
 
@@ -743,8 +761,10 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 3. **Event Narrative Extraction (Phase 5b)**: Full rewrite of `extract_event_narratives.py`. Fixed column name bugs, added language-stratified sampling, frozen CTM filter, sync LLM, daemon integration (24h, limit 50). Threshold: 30+ sources.
 4. **Refresh Mode**: Both narrative scripts support `--refresh` to re-extract when entities grow significantly. CTM refresh: title_count grew by 100+. Event refresh: source_batch_count grew by 50+ (tracked via `signal_stats.source_count_at_extraction`).
 5. **Unified Narratives Table**: All entity types (epic, event, ctm) in one `narratives` table with `entity_type` + `entity_id`. Signal columns: `signal_stats` JSONB, `rai_signals` JSONB, `rai_signals_at` TIMESTAMPTZ.
-6. **Phase 5 Config Variables**: `v3_p5_min_titles`, `v3_p5_refresh_growth`, `v3_p5_interval`, `v3_p5e_min_sources`, `v3_p5e_refresh_growth`.
-7. **RAI Standalone Cleanup**: Deleted archive files, rotated API keys, env-var config, premise ID instructions.
+6. **Phase 6 Daemon Integration**: `analyze_event_rai.py` generalized for both event + CTM narratives. `compute_ctm_stats` added with shared `_aggregate_rows` helper (DISTINCT ON to avoid double-counting). `process_rai_signals()` daemon callable runs both entity types. 24h interval, limit 20.
+7. **Role Hallucination Fixes**: `core/llm_utils.py` adds `fix_role_hallucinations()` to post-process LLM prose. Fixes Trump ("Former President" -> "President") and Merz ("opposition leader" -> "Chancellor") due to DeepSeek training cutoff. Applied in Phase 4.5a and 4.5b.
+8. **Title-Only Mode for Small Events**: Events with <5 sources get title only (no summary) in Phase 4.5a, reducing unnecessary LLM output.
+9. **RAI Standalone Cleanup**: Deleted archive files, rotated API keys, env-var config, premise ID instructions.
 
 ### Previous Changes (2026-02-08 to 2026-02-10)
 
