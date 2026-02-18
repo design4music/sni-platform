@@ -371,3 +371,49 @@ decisions:
       - render.yaml
       - pipeline/runner/sni-v3-pipeline.service (reference only, not active on Render)
 
+  - id: D-024
+    date: 2026-02-17
+    type: architectural
+    status: accepted
+    title: Two-tier RAI signal architecture (local stats + remote interpretation)
+    rationale: >
+      RAI previously received thin payloads (narrative label, moral frame, 15 headlines)
+      and had to guess about source diversity and geographic bias. WB's DB already has
+      rich structured data (title_labels with actors, domains, entity_countries, languages).
+      Tier 1 computes hard stats locally (publisher HHI, language distribution, entity
+      countries, domain balance, actor concentration) with no LLM calls. Tier 2 sends
+      stats to RAI for compact JSON interpretation via a new /worldbrief/signals endpoint.
+      This makes RAI data-driven instead of speculative.
+    consequences:
+      - signal_stats JSONB stores Tier 1 stats per narrative
+      - rai_signals JSONB stores Tier 2 compact signals (no HTML)
+      - Full HTML analysis preserved via --full flag for on-demand use
+      - ~10-15s per signal call vs ~50-60s for full analysis
+    references:
+      - core/signal_stats.py
+      - pipeline/phase_4/analyze_event_rai.py
+      - RAI app.py (/api/v1/worldbrief/signals)
+
+  - id: D-025
+    date: 2026-02-17
+    type: operational
+    status: accepted
+    title: Automated narrative extraction with refresh mode (Phase 5)
+    rationale: >
+      Narrative extraction was previously manual. CTMs and events grow continuously as
+      new titles arrive. Phase 5 runs daily (24h interval) in the daemon, processing
+      both new entities and refreshing existing ones whose source count grew significantly.
+      CTM refresh triggers at +100 titles, event refresh at +50 sources. Frozen CTMs
+      are skipped. Language-stratified sampling ensures editorial diversity in frame
+      discovery. Scripts kept separate (CTM, event, epic) because fetch logic, sampling
+      strategy, and prompts differ meaningfully per entity type.
+    consequences:
+      - Narratives stay current as coverage builds during the month
+      - Refresh deletes old frames and re-extracts fresh ones
+      - Event script tracks source_count_at_extraction in signal_stats JSONB
+      - Epic narratives remain manual (post-freeze only)
+    references:
+      - pipeline/phase_4/extract_ctm_narratives.py
+      - pipeline/phase_4/extract_event_narratives.py
+      - pipeline/runner/pipeline_daemon.py (Phase 5a + 5b)
+
