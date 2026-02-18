@@ -87,6 +87,15 @@ class SNIConfig(BaseSettings):
     v3_p45a_max_events: int = Field(default=500, env="V3_P45A_MAX_EVENTS")
     v3_p45a_interval: int = Field(default=900, env="V3_P45A_INTERVAL")  # 15 min
 
+    # Phase 5: CTM Narrative Extraction
+    v3_p5_min_titles: int = Field(default=100, env="V3_P5_MIN_TITLES")
+    v3_p5_refresh_growth: int = Field(default=100, env="V3_P5_REFRESH_GROWTH")
+    v3_p5_interval: int = Field(default=86400, env="V3_P5_INTERVAL")  # 24h
+
+    # Phase 5: Event Narrative Extraction
+    v3_p5e_min_sources: int = Field(default=30, env="V3_P5E_MIN_SOURCES")
+    v3_p5e_refresh_growth: int = Field(default=50, env="V3_P5E_REFRESH_GROWTH")
+
     # Phase 6: RAI (Risk Assessment Intelligence) Analysis
     rai_api_url: str = Field(
         default="https://rai-backend-ldy4.onrender.com/api/v1/analyze",

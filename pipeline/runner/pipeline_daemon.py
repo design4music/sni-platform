@@ -11,6 +11,7 @@ Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 4.1: Topic aggregation - LLM merge/cleanup (15 minutes)
 - Phase 4.5a: Event summaries - readable text per event (after 4.1)
 - Phase 4.5: CTM summary generation (1 hour)
+- Phase 5: CTM + event narrative extraction (24 hours)
 
 Features:
 - Sequential execution with configurable intervals
@@ -41,6 +42,12 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
 )
 from pipeline.phase_3_3.assign_tracks_batched import process_batch as phase33_process
 from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
+from pipeline.phase_4.extract_ctm_narratives import (
+    process_ctm_narratives as phase5_ctm_narratives,
+)
+from pipeline.phase_4.extract_event_narratives import (
+    process_event_narratives as phase5_event_narratives,
+)
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_event_summaries,
 )
@@ -71,6 +78,7 @@ class PipelineDaemon:
             self.config.v3_p45a_interval
         )  # 15 min - Event summaries
         self.phase45_interval = 3600  # 1 hour - CTM summary generation
+        self.phase5_interval = self.config.v3_p5_interval  # 24h - CTM narratives
 
         # Last run timestamps
         self.last_run = {
@@ -82,6 +90,7 @@ class PipelineDaemon:
             "phase41": 0,
             "phase45a": 0,
             "phase45": 0,
+            "phase5": 0,
         }
 
         # Batch sizes
@@ -783,6 +792,25 @@ class PipelineDaemon:
                 )
                 print(f"\nPhase 4.5: Skipping (next run in {next_run}s)")
 
+        # Phase 5: Narrative Extraction (24h interval)
+        if self.should_run_phase("phase5"):
+            self.run_phase_with_retry(
+                "Phase 5a: CTM Narrative Extraction",
+                phase5_ctm_narratives,
+                limit=20,
+            )
+            self.run_phase_with_retry(
+                "Phase 5b: Event Narrative Extraction",
+                phase5_event_narratives,
+                limit=50,
+            )
+            self.last_run["phase5"] = time.time()
+        else:
+            next_run = int(
+                self.phase5_interval - (time.time() - self.last_run["phase5"])
+            )
+            print("\nPhase 5: Skipping (next run in %ds)" % next_run)
+
         cycle_duration = time.time() - cycle_start
         print(f"\n{'='*70}")
         print(f"Cycle {self.cycle_count} completed in {cycle_duration:.1f}s")
@@ -821,6 +849,9 @@ class PipelineDaemon:
         )
         print(
             f"  Phase 4.5b interval: {self.phase45_interval}s ({self.phase45_interval/3600:.0f} hour - CTM summaries)"
+        )
+        print(
+            f"  Phase 5 interval: {self.phase5_interval}s ({self.phase5_interval/3600:.0f} hours - CTM + event narratives)"
         )
         print("\nPress Ctrl+C to shutdown gracefully\n")
 
