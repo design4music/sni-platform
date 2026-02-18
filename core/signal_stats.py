@@ -1,5 +1,5 @@
 """
-Tier 1 Signal Stats: compute hard coverage statistics for an event.
+Tier 1 Signal Stats: compute hard coverage statistics for events and CTMs.
 
 No LLM calls -- pure SQL + Python aggregation.
 """
@@ -29,33 +29,8 @@ def _top_n(counter, n=5):
     ]
 
 
-def compute_event_stats(conn, event_id):
-    """Compute coverage statistics for a single event.
-
-    Returns a dict ready to store as narratives.signal_stats JSONB.
-    """
-    with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute(
-            """
-            SELECT t.publisher_name,
-                   t.detected_language,
-                   t.pubdate_utc,
-                   tl.actor,
-                   tl.action_class,
-                   tl.domain,
-                   tl.target,
-                   tl.persons,
-                   tl.orgs,
-                   tl.entity_countries
-            FROM event_v3_titles et
-            JOIN titles_v3 t ON t.id = et.title_id
-            LEFT JOIN title_labels tl ON tl.title_id = et.title_id
-            WHERE et.event_id = %s
-            """,
-            (str(event_id),),
-        )
-        rows = cur.fetchall()
-
+def _aggregate_rows(rows, entity_type, entity_id, conn):
+    """Shared aggregation logic for title rows. Returns stats dict."""
     if not rows:
         return {}
 
@@ -102,11 +77,11 @@ def compute_event_stats(conn, event_id):
     else:
         date_range_days = 0
 
-    # Narrative frame count (how many narratives exist for this event)
+    # Narrative frame count
     with conn.cursor() as cur2:
         cur2.execute(
-            "SELECT COUNT(*) FROM narratives WHERE entity_type = 'event' AND entity_id = %s",
-            (str(event_id),),
+            "SELECT COUNT(*) FROM narratives WHERE entity_type = %s AND entity_id = %s",
+            (entity_type, str(entity_id)),
         )
         narrative_frame_count = cur2.fetchone()[0]
 
@@ -131,6 +106,46 @@ def compute_event_stats(conn, event_id):
     }
 
 
+def compute_event_stats(conn, event_id):
+    """Compute coverage statistics for a single event."""
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT t.publisher_name, t.detected_language, t.pubdate_utc,
+                   tl.actor, tl.action_class, tl.domain, tl.target,
+                   tl.persons, tl.orgs, tl.entity_countries
+            FROM event_v3_titles et
+            JOIN titles_v3 t ON t.id = et.title_id
+            LEFT JOIN title_labels tl ON tl.title_id = et.title_id
+            WHERE et.event_id = %s
+            """,
+            (str(event_id),),
+        )
+        rows = cur.fetchall()
+    return _aggregate_rows(rows, "event", event_id, conn)
+
+
+def compute_ctm_stats(conn, ctm_id):
+    """Compute coverage statistics for an entire CTM bucket."""
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT DISTINCT ON (t.id)
+                   t.publisher_name, t.detected_language, t.pubdate_utc,
+                   tl.actor, tl.action_class, tl.domain, tl.target,
+                   tl.persons, tl.orgs, tl.entity_countries
+            FROM events_v3 e
+            JOIN event_v3_titles et ON et.event_id = e.id
+            JOIN titles_v3 t ON t.id = et.title_id
+            LEFT JOIN title_labels tl ON tl.title_id = t.id
+            WHERE e.ctm_id = %s
+            """,
+            (str(ctm_id),),
+        )
+        rows = cur.fetchall()
+    return _aggregate_rows(rows, "ctm", ctm_id, conn)
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -138,9 +153,13 @@ if __name__ == "__main__":
 
     from core.config import get_config
 
-    parser = argparse.ArgumentParser(description="Print signal stats for an event")
-    parser.add_argument("--event-id", required=True, help="Event UUID")
+    parser = argparse.ArgumentParser(description="Print signal stats")
+    parser.add_argument("--event-id", help="Event UUID")
+    parser.add_argument("--ctm-id", help="CTM UUID")
     args = parser.parse_args()
+
+    if not args.event_id and not args.ctm_id:
+        parser.error("specify --event-id or --ctm-id")
 
     cfg = get_config()
     conn = psycopg2.connect(
@@ -150,7 +169,10 @@ if __name__ == "__main__":
         user=cfg.db_user,
         password=cfg.db_password,
     )
-    stats = compute_event_stats(conn, args.event_id)
+    if args.event_id:
+        stats = compute_event_stats(conn, args.event_id)
+    else:
+        stats = compute_ctm_stats(conn, args.ctm_id)
     conn.close()
 
     print(json.dumps(stats, indent=2, default=str))

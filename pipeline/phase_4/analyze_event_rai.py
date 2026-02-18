@@ -1,12 +1,19 @@
 """
-RAI Analysis for Event Narratives
+RAI Signal Analysis for Narratives
 
-Two modes:
+Processes both event and CTM narratives through the two-tier signal architecture:
+  - Tier 1: compute hard stats locally (no LLM)
+  - Tier 2: send stats to RAI for compact JSON interpretation
+
+Modes:
   - Signals (default): compact, data-driven signals via /worldbrief/signals
-  - Full (--full):      full HTML analysis via /worldbrief/analyze (legacy)
+  - Full (--full):      full HTML analysis via /worldbrief/analyze (legacy, events only)
 
-Signals mode computes Tier 1 stats locally, sends them to RAI for Tier 2
-interpretation, and stores both in narratives.signal_stats / rai_signals.
+Usage:
+    python pipeline/phase_4/analyze_event_rai.py --limit 10
+    python pipeline/phase_4/analyze_event_rai.py --entity-type ctm --limit 5
+    python pipeline/phase_4/analyze_event_rai.py --event <UUID>
+    python pipeline/phase_4/analyze_event_rai.py --full --limit 5
 """
 
 import argparse
@@ -22,7 +29,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, str(__file__).replace("\\", "/").rsplit("/", 3)[0])
 from core.config import get_config  # noqa: E402
-from core.signal_stats import compute_event_stats  # noqa: E402
+from core.signal_stats import compute_ctm_stats, compute_event_stats  # noqa: E402
 
 config = get_config()
 
@@ -42,38 +49,60 @@ def get_db_connection():
     )
 
 
-def fetch_narratives(conn, limit=50, event_id=None, mode="signals"):
-    """Fetch event narratives that need RAI analysis."""
+def fetch_narratives(conn, entity_type, limit=50, entity_id=None, mode="signals"):
+    """Fetch narratives that need RAI analysis."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         if mode == "signals":
-            where = "en.entity_type = 'event' AND en.rai_signals_at IS NULL"
+            where = "n.entity_type = %s AND n.rai_signals_at IS NULL"
         else:
-            where = "en.entity_type = 'event' AND en.rai_analyzed_at IS NULL"
-        params = []
+            where = "n.entity_type = %s AND n.rai_analyzed_at IS NULL"
+        params = [entity_type]
 
-        if event_id:
-            where += " AND en.entity_id = %s"
-            params.append(event_id)
+        if entity_id:
+            where += " AND n.entity_id = %s"
+            params.append(entity_id)
 
         params.append(limit)
-        cur.execute(
-            """
-            SELECT en.id, en.entity_id as event_id, en.label, en.description, en.moral_frame,
-                   en.title_count, en.top_sources, en.sample_titles,
-                   e.title as event_title, e.summary as event_summary,
-                   e.source_batch_count,
-                   c.centroid_id, c.track
-            FROM narratives en
-            JOIN events_v3 e ON en.entity_id = e.id
-            JOIN ctm c ON c.id = e.ctm_id
-            WHERE """
-            + where
-            + """
-            ORDER BY en.title_count DESC
-            LIMIT %s
-        """,
-            params,
-        )
+
+        if entity_type == "event":
+            cur.execute(
+                """
+                SELECT n.id, n.entity_type, n.entity_id, n.label, n.description,
+                       n.moral_frame, n.title_count, n.top_sources, n.sample_titles,
+                       e.title as context_title, e.summary as context_summary,
+                       e.source_batch_count,
+                       c.centroid_id, c.track
+                FROM narratives n
+                JOIN events_v3 e ON n.entity_id = e.id
+                JOIN ctm c ON c.id = e.ctm_id
+                WHERE """
+                + where
+                + """
+                ORDER BY n.title_count DESC
+                LIMIT %s
+                """,
+                params,
+            )
+        else:
+            # CTM narratives
+            cur.execute(
+                """
+                SELECT n.id, n.entity_type, n.entity_id, n.label, n.description,
+                       n.moral_frame, n.title_count, n.top_sources, n.sample_titles,
+                       c.summary_text as context_title,
+                       c.summary_text as context_summary,
+                       c.title_count as source_batch_count,
+                       c.centroid_id, c.track
+                FROM narratives n
+                JOIN ctm c ON n.entity_id = c.id
+                WHERE """
+                + where
+                + """
+                ORDER BY n.title_count DESC
+                LIMIT %s
+                """,
+                params,
+            )
         return cur.fetchall()
 
 
@@ -88,8 +117,12 @@ def build_signals_payload(narrative, stats):
     if isinstance(sample_titles, str):
         sample_titles = json.loads(sample_titles)
 
+    context_title = narrative.get("context_title") or ""
+    if len(context_title) > 200:
+        context_title = context_title[:200] + "..."
+
     return {
-        "content_type": "event_narrative",
+        "content_type": "%s_narrative" % narrative["entity_type"],
         "narrative": {
             "label": narrative["label"],
             "moral_frame": narrative.get("moral_frame"),
@@ -99,7 +132,7 @@ def build_signals_payload(narrative, stats):
         "context": {
             "centroid_id": narrative.get("centroid_id", ""),
             "track": narrative.get("track", ""),
-            "event_title": narrative.get("event_title", ""),
+            "event_title": context_title,
         },
         "stats": stats,
     }
@@ -114,7 +147,7 @@ def call_signals_api(payload):
                 json=payload,
                 headers={
                     "Authorization": "Bearer %s" % RAI_API_KEY,
-                    "Content-Type": "application/json",
+                    "Content_Type": "application/json",
                 },
             )
             if response.status_code != 200:
@@ -154,15 +187,22 @@ def run_signals(conn, narratives, delay):
     counts = {"success": 0, "failed": 0}
 
     for i, narrative in enumerate(narratives, 1):
-        print("\n[%d/%d] %s" % (i, len(narratives), narrative["label"]))
-        print("  Event: %s" % narrative["event_title"])
+        etype = narrative["entity_type"]
+        print("\n[%d/%d] [%s] %s" % (i, len(narratives), etype, narrative["label"]))
+        ctx = narrative.get("context_title") or ""
+        if ctx:
+            print("  Context: %s" % ctx[:80])
         print("  Titles: %d" % narrative["title_count"])
 
         # Tier 1: compute stats locally
         print("  Computing stats...")
-        stats = compute_event_stats(conn, narrative["event_id"])
+        if etype == "event":
+            stats = compute_event_stats(conn, narrative["entity_id"])
+        else:
+            stats = compute_ctm_stats(conn, narrative["entity_id"])
+
         if not stats:
-            print("  No titles found for event, skipping")
+            print("  No titles found, skipping")
             counts["failed"] += 1
             continue
         print(
@@ -233,7 +273,7 @@ def build_full_payload(narrative):
         "context": {
             "centroid_id": narrative.get("centroid_id", ""),
             "track": narrative.get("track", ""),
-            "event_title": narrative.get("event_title", ""),
+            "event_title": narrative.get("context_title", ""),
         },
     }
 
@@ -314,7 +354,7 @@ def run_full(conn, narratives, delay):
 
     for i, narrative in enumerate(narratives, 1):
         print("\n[%d/%d] %s" % (i, len(narratives), narrative["label"]))
-        print("  Event: %s" % narrative["event_title"])
+        print("  Event: %s" % narrative.get("context_title", ""))
         print("  Titles: %d" % narrative["title_count"])
 
         payload = build_full_payload(narrative)
@@ -341,13 +381,45 @@ def run_full(conn, narratives, delay):
 
 
 # =========================================================================
+# Daemon callable
+# =========================================================================
+
+
+def process_rai_signals(limit=20, delay=2.0):
+    """Daemon-callable entry point. Runs signals for both event + CTM narratives."""
+    conn = get_db_connection()
+    total = {"success": 0, "failed": 0}
+
+    for etype in ("event", "ctm"):
+        narratives = fetch_narratives(conn, etype, limit=limit)
+        if narratives:
+            print("%s narratives: %d pending RAI signals" % (etype, len(narratives)))
+            r = run_signals(conn, narratives, delay)
+            total["success"] += r["success"]
+            total["failed"] += r["failed"]
+
+    if total["success"] == 0 and total["failed"] == 0:
+        print("No narratives need RAI signal analysis")
+
+    conn.close()
+    return total
+
+
+# =========================================================================
 # Main
 # =========================================================================
 
 
 def main():
-    parser = argparse.ArgumentParser(description="RAI analysis for event narratives")
+    parser = argparse.ArgumentParser(description="RAI analysis for narratives")
     parser.add_argument("--event", type=str, help="Process specific event by ID")
+    parser.add_argument(
+        "--entity-type",
+        type=str,
+        default="event",
+        choices=["event", "ctm"],
+        help="Entity type to process",
+    )
     parser.add_argument(
         "--limit", type=int, default=10, help="Max narratives to process"
     )
@@ -365,13 +437,14 @@ def main():
     args = parser.parse_args()
 
     mode = "full" if args.full else "signals"
-    print("RAI Event Narrative Analysis [%s mode]" % mode)
+    etype = args.entity_type
+    print("RAI Narrative Analysis [%s mode, %s]" % (mode, etype))
     print("=" * 50)
 
     conn = get_db_connection()
 
-    narratives = fetch_narratives(conn, args.limit, args.event, mode)
-    print("Found %d event narratives pending RAI analysis" % len(narratives))
+    narratives = fetch_narratives(conn, etype, args.limit, args.event, mode)
+    print("Found %d %s narratives pending RAI analysis" % (len(narratives), etype))
 
     if not narratives:
         print("Nothing to process")
@@ -381,10 +454,8 @@ def main():
     if args.dry_run:
         print("\nDry run - would process:")
         for n in narratives:
-            print(
-                "  - %s (%d titles) from event: %s"
-                % (n["label"], n["title_count"], n["event_title"])
-            )
+            ctx = n.get("context_title") or ""
+            print("  - %s (%d titles) %s" % (n["label"], n["title_count"], ctx[:60]))
         conn.close()
         return
 

@@ -30,6 +30,7 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
+from core.llm_utils import fix_role_hallucinations
 from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT, CTM_SUMMARY_USER_PROMPT
 
 
@@ -204,7 +205,7 @@ async def generate_summary(
 
                 data = response.json()
                 summary = data["choices"][0]["message"]["content"].strip()
-                return summary
+                return fix_role_hallucinations(summary)
 
             except Exception as e:
                 last_error = e

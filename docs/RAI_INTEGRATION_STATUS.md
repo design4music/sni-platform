@@ -1,6 +1,6 @@
 # RAI x WorldBrief Integration - Status & Pickup Guide
 
-**Last updated:** 2026-02-10
+**Last updated:** 2026-02-17
 **Status:** Phases 1-6 code complete, SNI changes uncommitted, pipeline not yet run
 
 ---
@@ -253,7 +253,7 @@ narratives (
 
 2. **SCORES: parsing**: The LLM sometimes puts the SCORES block inside the analysis text rather than at the end. The parser handles this (regex searches the full response). But if the LLM omits it entirely, all score fields will be NULL. Check for this after runs.
 
-3. **Config.json in RAI repo contains API keys**: These are committed to GitHub. Consider rotating them or using environment variables on Render instead.
+3. **API keys rotated (2026-02-17)**: Old keys revoked. `config.json` now has placeholders and is gitignored. Real keys are set as Render env vars (`DEEPSEEK_API_KEY`, `RAI_API_KEY`). Unused providers (OpenAI, Anthropic, Gemini) deleted entirely.
 
 4. **`rai_enabled` is False in SNI config**: The scripts don't check this flag -- they call the RAI endpoint directly. This flag was only for future automated pipeline gating.
 

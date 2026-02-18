@@ -26,8 +26,10 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-from core.llm_utils import extract_json
+from core.llm_utils import extract_json, fix_role_hallucinations
 from core.prompts import EVENT_SUMMARY_SYSTEM_PROMPT, EVENT_SUMMARY_USER_PROMPT
+
+MIN_SUMMARY_SOURCES = 5  # Below this: title only, no summary
 
 
 def get_backbone_signals(conn, event_id: str) -> dict:
@@ -430,6 +432,7 @@ async def generate_event_data(
     max_titles: int = 200,
     centroid_countries: set = None,
     title_countries: list = None,
+    title_only: bool = False,
 ) -> dict:
     """Generate title and summary for an event cluster.
 
@@ -500,13 +503,18 @@ async def generate_event_data(
         backbone_signals=backbone_text,
     )
 
+    if title_only:
+        user_prompt += '\nThis is a small topic. Return "" (empty string) for summary.'
+
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
         "Content-Type": "application/json",
     }
 
     # Scale max_tokens based on topic size
-    if num_titles < 20:
+    if title_only:
+        max_tokens = 150
+    elif num_titles < 20:
         max_tokens = 300
     elif num_titles < 100:
         max_tokens = 500
@@ -540,9 +548,9 @@ async def generate_event_data(
 
         result = extract_json(content)
 
-        # Validate
-        title = result.get("title", "").strip()
-        summary = result.get("summary", "").strip()
+        # Fix LLM training-data hallucinations (e.g. "Former President Trump")
+        title = fix_role_hallucinations(result.get("title", "")).strip()
+        summary = fix_role_hallucinations(result.get("summary", "")).strip()
 
         return {
             "title": title,
@@ -564,6 +572,7 @@ async def process_event(
 
             backbone = event.get("backbone_signals", {})
             title_signals = event.get("title_signals", {})
+            title_only = event["count"] < MIN_SUMMARY_SOURCES
 
             result = await generate_event_data(
                 event["titles"],
@@ -572,10 +581,11 @@ async def process_event(
                 event["count"],
                 centroid_countries=event.get("centroid_countries", set()),
                 title_countries=event.get("title_countries", []),
+                title_only=title_only,
             )
 
             title = result["title"]
-            summary = result["summary"]
+            summary = result["summary"] if not title_only else None
 
             # Derive tags from backbone signals (the actual clustering anchors)
             tags = signals_to_tags(backbone, min_freq=2)
@@ -607,10 +617,13 @@ async def process_event(
                 )
             conn.commit()
 
-            # Print summary preview (first 100 chars)
-            summary_preview = summary.replace("\n", " ")[:100]
+            # Print progress
             print("  [%3d] %s" % (event["count"], title[:60]))
-            print("        %s..." % summary_preview)
+            if summary:
+                summary_preview = summary.replace("\n", " ")[:100]
+                print("        %s..." % summary_preview)
+            else:
+                print("        (title only)")
             print("        tags: %s" % tags[:5])
 
             return True
