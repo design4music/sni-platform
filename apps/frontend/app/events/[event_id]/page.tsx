@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -10,6 +11,18 @@ import { getEventById, getEventTitles, getFramedNarratives, getRelatedEvents } f
 import { getTrackLabel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { event_id } = await params;
+  const event = await getEventById(event_id);
+  if (!event) return { title: 'Event Not Found' };
+  const title = event.title || 'Event Detail';
+  return {
+    title,
+    description: event.summary ? `${event.summary.slice(0, 155)}...` : `News analysis: ${title}. Narrative frames, source coverage, and media signals.`,
+    alternates: { canonical: `/events/${event_id}` },
+  };
+}
 
 interface Props {
   params: Promise<{ event_id: string }>;

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import MonthNav from '@/components/MonthNav';
 import EpicCard from '@/components/EpicCard';
@@ -6,6 +7,12 @@ import { getEpicMonths, getEpicsByMonth, getTopSignalsByMonth } from '@/lib/quer
 import { SignalType } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Monthly Intelligence',
+  description: 'Cross-country stories and signal rankings: top persons, organizations, places, commodities, policies, and systems shaping global news each month.',
+  alternates: { canonical: '/epics' },
+};
 
 interface Props {
   searchParams: Promise<{ month?: string }>;

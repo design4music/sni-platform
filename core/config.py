@@ -93,7 +93,7 @@ class SNIConfig(BaseSettings):
     v3_p5_interval: int = Field(default=86400, env="V3_P5_INTERVAL")  # 24h
 
     # Phase 5: Event Narrative Extraction
-    v3_p5e_min_sources: int = Field(default=30, env="V3_P5E_MIN_SOURCES")
+    v3_p5e_min_sources: int = Field(default=100, env="V3_P5E_MIN_SOURCES")
     v3_p5e_refresh_growth: int = Field(default=50, env="V3_P5E_REFRESH_GROWTH")
 
     # Phase 6: RAI (Risk Assessment Intelligence) Analysis

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import OtherCoverage from '@/components/OtherCoverage';
@@ -22,6 +23,18 @@ import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event } from
 import { getTrackIcon } from '@/components/TrackCard';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: TrackPageProps): Promise<Metadata> {
+  const { centroid_key, track_key } = await params;
+  const centroid = await getCentroidById(centroid_key);
+  if (!centroid) return { title: 'Not Found' };
+  const trackLabel = getTrackLabel(track_key as Track);
+  return {
+    title: `${centroid.label}: ${trackLabel}`,
+    description: `${trackLabel} developments in ${centroid.label}. Topic summaries, narrative frames, and source analysis from multilingual media coverage.`,
+    alternates: { canonical: `/c/${centroid_key}/t/${track_key}` },
+  };
+}
 
 // Display limits: top N topics shown, rest collapse into "Other Coverage"
 const DOMESTIC_TOP_N = 20;

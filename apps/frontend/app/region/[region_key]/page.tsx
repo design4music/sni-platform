@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import CentroidCard from '@/components/CentroidCard';
 import { getCentroidsByTheater } from '@/lib/queries';
@@ -8,6 +9,18 @@ export const dynamic = 'force-dynamic';
 
 interface RegionPageProps {
   params: Promise<{ region_key: string }>;
+}
+
+export async function generateMetadata({ params }: RegionPageProps): Promise<Metadata> {
+  const { region_key } = await params;
+  const regionKey = region_key.toUpperCase() as RegionKey;
+  const label = REGIONS[regionKey];
+  if (!label) return { title: 'Region Not Found' };
+  return {
+    title: label,
+    description: `${label} news intelligence: countries and sub-regions covered by WorldBrief with multilingual source analysis and narrative tracking.`,
+    alternates: { canonical: `/region/${region_key.toLowerCase()}` },
+  };
 }
 
 export default async function RegionPage({ params }: RegionPageProps) {

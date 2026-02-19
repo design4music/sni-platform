@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import MapSection from '@/components/MapSection';
 import SourceCarousel from '@/components/SourceCarousel';
@@ -8,6 +9,12 @@ import { REGIONS } from '@/lib/types';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'WorldBrief - Understand the world. Briefly.',
+  description: 'AI-powered global news intelligence. Multilingual coverage from 180+ sources, organized by country, theme, and narrative frame. Updated daily.',
+  alternates: { canonical: '/' },
+};
 
 export default async function HomePage() {
   const geoCentroids = await getCentroidsByClass('geo');

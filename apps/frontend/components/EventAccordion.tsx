@@ -109,8 +109,8 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
           )}
         </div>
         {isOpen && hasRelatedTitles && (
-          <div className="mt-2 pl-4 space-y-1 max-h-96 overflow-y-auto">
-            {relatedTitles.map(title => (
+          <div className="mt-2 pl-4 space-y-1">
+            {relatedTitles.slice(0, 10).map(title => (
               <div key={title.id} className="text-xs text-dashboard-text-muted">
                 {title.url_gnews ? (
                   <a
@@ -126,6 +126,14 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
                 )}
               </div>
             ))}
+            {relatedTitles.length > 10 && event.event_id && (
+              <Link
+                href={`/events/${event.event_id}`}
+                className="inline-block mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                View all {sourceCount} sources &rarr;
+              </Link>
+            )}
           </div>
         )}
       </div>
@@ -181,7 +189,7 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
 
       {isOpen && hasRelatedTitles && (
         <div className="mt-3 pl-4 border-l border-dashboard-border space-y-2">
-          {relatedTitles.map(title => (
+          {relatedTitles.slice(0, 10).map(title => (
             <div key={title.id} className="text-sm">
               {title.url_gnews ? (
                 <a
@@ -205,6 +213,14 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
               </div>
             </div>
           ))}
+          {relatedTitles.length > 10 && event.event_id && (
+            <Link
+              href={`/events/${event.event_id}`}
+              className="inline-block text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              View all {sourceCount} sources &rarr;
+            </Link>
+          )}
         </div>
       )}
     </div>

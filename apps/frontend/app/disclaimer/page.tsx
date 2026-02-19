@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Method & Disclaimer',
+  description: 'How WorldBrief works: automated ingestion, multilingual processing, and structured synthesis of global news. Limitations and editorial policy.',
+  alternates: { canonical: '/disclaimer' },
+};
 
 export default function DisclaimerPage() {
   return (

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -7,6 +8,18 @@ import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives } 
 import { EpicEvent, EpicNarrative } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const epic = await getEpicBySlug(slug);
+  if (!epic) return { title: 'Story Not Found' };
+  const title = epic.title || epic.anchor_tags?.join(', ') || 'Cross-Country Story';
+  return {
+    title,
+    description: `Cross-country analysis: ${title}. Narrative frames, country perspectives, and source coverage from international media.`,
+    alternates: { canonical: `/epics/${slug}` },
+  };
+}
 
 interface Props {
   params: Promise<{ slug: string }>;

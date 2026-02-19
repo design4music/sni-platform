@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import TrackCard from '@/components/TrackCard';
 import { getTrackIcon } from '@/components/TrackCard';
@@ -16,15 +17,26 @@ import { REGIONS, TRACK_LABELS, Track, getTrackLabel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
+interface CentroidPageProps {
+  params: Promise<{ centroid_key: string }>;
+  searchParams: Promise<{ month?: string }>;
+}
+
+export async function generateMetadata({ params }: CentroidPageProps): Promise<Metadata> {
+  const { centroid_key } = await params;
+  const centroid = await getCentroidById(centroid_key);
+  if (!centroid) return { title: 'Country Not Found' };
+  return {
+    title: centroid.label,
+    description: `${centroid.label} news briefing: strategic tracks, topic summaries, and multilingual source analysis from international media.`,
+    alternates: { canonical: `/c/${centroid_key}` },
+  };
+}
+
 function formatMonthLabel(monthStr: string): string {
   const [year, month] = monthStr.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1, 1);
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-}
-
-interface CentroidPageProps {
-  params: Promise<{ centroid_key: string }>;
-  searchParams: Promise<{ month?: string }>;
 }
 
 export default async function CentroidPage({ params, searchParams }: CentroidPageProps) {

@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import CentroidCard from '@/components/CentroidCard';
 import { getCentroidsByClass } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Global & Systemic',
+  description: 'Systemic lenses and non-state actors: cross-border themes like trade, energy, climate, and technology tracked across global news coverage.',
+  alternates: { canonical: '/global' },
+};
 
 export default async function GlobalPage() {
   const systemicCentroids = await getCentroidsByClass('systemic');

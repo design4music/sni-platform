@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getAllActiveFeeds } from '@/lib/queries';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Feed } from '@/lib/types';
@@ -6,6 +7,12 @@ import { getOutletLogoUrl } from '@/lib/logos';
 import SourceSuggestionForm from '@/components/SourceSuggestionForm';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Media Sources',
+  description: 'Curated list of 180+ international media sources powering WorldBrief, spanning 6 continents and dozens of languages.',
+  alternates: { canonical: '/sources' },
+};
 
 function groupFeedsByRegionAndCountry(feeds: (Feed & { total_titles: number; assigned_titles: number })[]) {
   const grouped: Record<string, Record<string, typeof feeds>> = {};
