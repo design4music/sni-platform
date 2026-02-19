@@ -13,6 +13,7 @@ Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 4.5: CTM summary generation (1 hour)
 - Phase 5: CTM + event narrative extraction (24 hours)
 - Phase 6: RAI signal analysis for narratives (24 hours)
+- Daily purge: Remove rejected titles (out_of_scope, blocked_stopword, blocked_llm)
 
 Features:
 - Sequential execution with configurable intervals
@@ -84,6 +85,7 @@ class PipelineDaemon:
         self.phase6_interval = (
             self.config.v3_p5_interval
         )  # 24h - RAI signals (same as Phase 5)
+        self.purge_interval = 86400  # 24h - Daily rejected title cleanup
 
         # Last run timestamps
         self.last_run = {
@@ -97,6 +99,7 @@ class PipelineDaemon:
             "phase45": 0,
             "phase5": 0,
             "phase6": 0,
+            "purge": 0,
         }
 
         # Batch sizes
@@ -608,6 +611,66 @@ class PipelineDaemon:
         finally:
             conn.close()
 
+    def run_daily_purge(self):
+        """Purge rejected titles older than 24h to tombstone table."""
+        conn = self.get_connection()
+        try:
+            cur = conn.cursor()
+            rejected = ("out_of_scope", "blocked_stopword", "blocked_llm")
+
+            # Count
+            cur.execute(
+                """
+                SELECT processing_status, COUNT(*)
+                FROM titles_v3
+                WHERE processing_status = ANY(%s)
+                  AND updated_at < NOW() - INTERVAL '24 hours'
+                GROUP BY processing_status
+                """,
+                (list(rejected),),
+            )
+            status_counts = dict(cur.fetchall())
+            total = sum(status_counts.values())
+
+            if total == 0:
+                print("  No rejected titles to purge")
+                return {"purged": 0}
+
+            for status, count in status_counts.items():
+                print("  %s: %d" % (status, count))
+
+            # Tombstone
+            cur.execute(
+                """
+                INSERT INTO titles_purged (url_hash, original_title, source_domain, reason)
+                SELECT md5(url_gnews), LEFT(title_display, 500), publisher_name, processing_status
+                FROM titles_v3
+                WHERE processing_status = ANY(%s)
+                  AND updated_at < NOW() - INTERVAL '24 hours'
+                ON CONFLICT (url_hash) DO NOTHING
+                """,
+                (list(rejected),),
+            )
+            tombstoned = cur.rowcount
+
+            # Delete
+            cur.execute(
+                """
+                DELETE FROM titles_v3
+                WHERE processing_status = ANY(%s)
+                  AND updated_at < NOW() - INTERVAL '24 hours'
+                """,
+                (list(rejected),),
+            )
+            deleted = cur.rowcount
+            conn.commit()
+
+            print("  Purged %d titles (%d tombstoned)" % (deleted, tombstoned))
+            return {"purged": deleted}
+
+        finally:
+            conn.close()
+
     def run_phase_with_retry(self, phase_name: str, phase_func, *args, **kwargs):
         """
         Run a phase with retry logic.
@@ -832,6 +895,17 @@ class PipelineDaemon:
             )
             print("\nPhase 6: Skipping (next run in %ds)" % next_run)
 
+        # Daily Purge: Remove rejected titles (24h interval)
+        if self.should_run_phase("purge"):
+            self.run_phase_with_retry(
+                "Daily Purge: Rejected Titles",
+                self.run_daily_purge,
+            )
+            self.last_run["purge"] = time.time()
+        else:
+            next_run = int(self.purge_interval - (time.time() - self.last_run["purge"]))
+            print("\nDaily Purge: Skipping (next run in %ds)" % next_run)
+
         cycle_duration = time.time() - cycle_start
         print(f"\n{'='*70}")
         print(f"Cycle {self.cycle_count} completed in {cycle_duration:.1f}s")
@@ -876,6 +950,9 @@ class PipelineDaemon:
         )
         print(
             f"  Phase 6 interval: {self.phase6_interval}s ({self.phase6_interval/3600:.0f} hours - RAI signal analysis)"
+        )
+        print(
+            f"  Purge interval: {self.purge_interval}s ({self.purge_interval/3600:.0f} hours - rejected title cleanup)"
         )
         print("\nPress Ctrl+C to shutdown gracefully\n")
 

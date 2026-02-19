@@ -446,8 +446,13 @@ async def generate_centroid_summaries(conn, month: str, dry_run: bool) -> int:
 
 
 def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
-    """Move rejected titles to tombstone table and delete from titles_v3."""
+    """Move rejected titles to tombstone table and delete from titles_v3.
+
+    Note: The daily purge in pipeline_daemon handles most cleanup.
+    This catches any stragglers remaining at month-end freeze.
+    """
     cur = conn.cursor()
+    rejected = ("out_of_scope", "blocked_stopword", "blocked_llm")
 
     # Count rejected titles for this month
     cur.execute(
@@ -455,10 +460,10 @@ def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
         SELECT processing_status, COUNT(*)
         FROM titles_v3
         WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s
-          AND processing_status IN ('out_of_scope', 'blocked_llm')
+          AND processing_status = ANY(%s)
         GROUP BY processing_status
         """,
-        (month,),
+        (month, list(rejected)),
     )
     status_counts = dict(cur.fetchall())
 
@@ -487,10 +492,10 @@ def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
             processing_status
         FROM titles_v3
         WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s
-          AND processing_status IN ('out_of_scope', 'blocked_llm')
+          AND processing_status = ANY(%s)
         ON CONFLICT (url_hash) DO NOTHING
         """,
-        (month,),
+        (month, list(rejected)),
     )
     tombstoned = cur.rowcount
 
@@ -499,9 +504,9 @@ def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
         """
         DELETE FROM titles_v3
         WHERE TO_CHAR(pubdate_utc, 'YYYY-MM') = %s
-          AND processing_status IN ('out_of_scope', 'blocked_llm')
+          AND processing_status = ANY(%s)
         """,
-        (month,),
+        (month, list(rejected)),
     )
     deleted = cur.rowcount
 
