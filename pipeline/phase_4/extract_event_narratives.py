@@ -216,10 +216,50 @@ def delete_event_narratives(conn, event_id):
     return deleted
 
 
+def compute_frame_stats(titles, indices, total_sampled):
+    """Compute per-frame statistics from title indices."""
+    frame_titles = []
+    for idx in indices:
+        if 0 < idx <= len(titles):
+            frame_titles.append(titles[idx - 1])
+
+    if not frame_titles:
+        return {"source_count_at_extraction": 0}
+
+    # Language distribution
+    lang_counts = Counter(t.get("detected_language") or "unknown" for t in frame_titles)
+
+    # Publisher distribution (top 10)
+    pub_counts = Counter(t.get("publisher_name") or "unknown" for t in frame_titles)
+    top_pubs = [
+        {"name": name, "count": count} for name, count in pub_counts.most_common(10)
+    ]
+
+    # Date range
+    dates = []
+    for t in frame_titles:
+        dt = t.get("pubdate_utc")
+        if dt:
+            dates.append(str(dt)[:10])
+    dates.sort()
+
+    return {
+        "source_count_at_extraction": total_sampled,
+        "frame_title_count": len(frame_titles),
+        "frame_pct": (
+            round(len(frame_titles) / total_sampled * 100, 1) if total_sampled else 0
+        ),
+        "frame_languages": dict(lang_counts.most_common()),
+        "frame_publishers": top_pubs,
+        "frame_date_first": dates[0] if dates else None,
+        "frame_date_last": dates[-1] if dates else None,
+    }
+
+
 def save_narratives(conn, event_id, frames, titles, source_batch_count):
     """Save extracted frames to narratives table."""
     saved = 0
-    stats_json = json.dumps({"source_count_at_extraction": source_batch_count})
+    total_sampled = len(titles)
 
     with conn.cursor() as cur:
         for frame in frames:
@@ -230,6 +270,9 @@ def save_narratives(conn, event_id, frames, titles, source_batch_count):
             indices = frame.get("title_indices", [])
             title_count = len(indices)
             top_sources = compute_top_sources(titles, indices)
+
+            frame_stats = compute_frame_stats(titles, indices, total_sampled)
+            frame_stats["source_count_at_extraction"] = source_batch_count
 
             sample_titles = []
             for idx in indices[:15]:
@@ -264,7 +307,7 @@ def save_narratives(conn, event_id, frames, titles, source_batch_count):
                     title_count,
                     top_sources,
                     json.dumps(sample_titles),
-                    stats_json,
+                    json.dumps(frame_stats),
                 ),
             )
             saved += 1

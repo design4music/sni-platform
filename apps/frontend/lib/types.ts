@@ -182,6 +182,16 @@ export interface FramedNarrative {
   rai_signals_at: string | null;
 }
 
+// Per-frame stats computed at extraction time (stored in signal_stats JSONB)
+export interface FrameStats {
+  frame_title_count: number;
+  frame_pct: number;
+  frame_languages: Record<string, number>;
+  frame_publishers: Array<{ name: string; count: number }>;
+  frame_date_first: string | null;
+  frame_date_last: string | null;
+}
+
 export interface SignalStatsEntry {
   name: string;
   count: number;

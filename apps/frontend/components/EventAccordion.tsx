@@ -71,9 +71,15 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
             {/* Title if available, otherwise summary */}
             {event.title ? (
               <>
-                <p className="text-sm font-medium text-dashboard-text mb-1">
-                  {event.title}
-                </p>
+                {event.event_id ? (
+                  <Link href={`/events/${event.event_id}`} className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition-colors mb-1 block">
+                    {event.title}
+                  </Link>
+                ) : (
+                  <p className="text-sm font-medium text-dashboard-text mb-1">
+                    {event.title}
+                  </p>
+                )}
                 <p className="text-sm text-dashboard-text-muted">
                   {event.summary}
                 </p>
@@ -137,9 +143,15 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
           {/* Title if available */}
           {event.title ? (
             <>
-              <p className="text-lg font-semibold text-dashboard-text mb-1">
-                {event.title}
-              </p>
+              {event.event_id ? (
+                <Link href={`/events/${event.event_id}`} className="text-lg font-semibold text-dashboard-text hover:text-blue-400 transition-colors mb-1 block">
+                  {event.title}
+                </Link>
+              ) : (
+                <p className="text-lg font-semibold text-dashboard-text mb-1">
+                  {event.title}
+                </p>
+              )}
               <p className="text-dashboard-text">{event.summary}</p>
             </>
           ) : (
@@ -155,14 +167,6 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {event.has_narratives && event.event_id && (
-            <Link
-              href={`/events/${event.event_id}`}
-              className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded border border-blue-500/20"
-            >
-              View analysis
-            </Link>
-          )}
           {sourceCount > 0 && (
             <button
               onClick={() => setIsOpen(!isOpen)}
