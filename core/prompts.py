@@ -667,25 +667,30 @@ Return ONLY the JSON array."""
 # EVENT NARRATIVE EXTRACTION (single-pass for high-source events)
 # =============================================================================
 
-EVENT_NARRATIVE_SYSTEM = """You are a media-framing analyst. You identify distinct narrative frames used by different news sources to cover the same event."""
+EVENT_NARRATIVE_SYSTEM = """You are a media-framing analyst. You identify the sharpest opposing narrative frames in news coverage. Focus on who is cast as right vs wrong, aggressor vs victim."""
 
 EVENT_NARRATIVE_USER = """Event: {event_title}
 Summary: {event_summary}
-
-Below are {title_count} headlines covering this event. Each is prefixed with [publisher].
+{wiki_block}
+Below are {title_count} headlines covering this event, spanning the full timeline. Each is prefixed with [date][publisher].
 
 {titles_block}
 
-Identify 2-5 distinct NARRATIVE FRAMES used by different media sources to cover this story.
+Identify exactly 3 OPPOSING NARRATIVE FRAMES. Think "whose side is this headline on?"
+
+Frame 1: The most PRO-Side-A framing (e.g. "X is the aggressor / threat / villain")
+Frame 2: The most PRO-Side-B framing (the opposing view - "X is defending itself / justified")
+Frame 3: A NEUTRAL or THIRD-PARTY framing (geopolitical chess, mediation, process-focused)
 
 RULES:
-1. Each frame MUST assign moral roles (hero/villain, victim/aggressor, right/wrong)
-2. Frames should capture genuinely different editorial stances, not topic variations
-3. Include the headline indices that support each frame
+1. Each frame MUST clearly state who is hero and who is villain (or "neutral" for frame 3)
+2. Frames must represent genuinely opposing editorial stances, not topic variations
+3. Assign EVERY headline index to exactly one frame - even if the fit is imperfect
+4. Include the headline indices that support each frame
 
 Return a JSON array:
 [
-  {{"label": "short frame name", "description": "1-sentence explanation", "moral_frame": "who is hero/villain", "title_indices": [1, 4, 7]}}
+  {{"label": "short frame name (max 5 words)", "description": "1-sentence explanation of the editorial stance", "moral_frame": "Hero: X, Villain: Y", "title_indices": [1, 4, 7]}}
 ]
 
 Return ONLY the JSON array."""

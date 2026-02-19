@@ -162,25 +162,35 @@ def fetch_ctm_titles(conn, ctm_id):
         return cur.fetchall()
 
 
-def sample_titles(titles, n=SAMPLE_SIZE):
+def sample_titles(titles, n=SAMPLE_SIZE, time_stratify=False):
     """Language-stratified sampling for narrative diversity.
 
     Each language with >= 3 titles gets a guaranteed floor (MIN_LANG_SHARE
     of the sample), so minority-language ecosystems are properly represented.
     Within each language stratum, titles are round-robin'd across publishers.
+
+    When time_stratify=True, titles are first divided into date buckets
+    (calendar days) with guaranteed minimum per day, then language-stratified
+    within each bucket. This ensures the sample covers the full timeline.
     """
     if len(titles) <= n:
         return titles
 
-    MIN_LANG_FLOOR = 5  # each qualifying language gets at least 5 titles
-    MIN_LANG_TITLES = 3  # need >= 3 titles to qualify
+    if time_stratify:
+        return _sample_time_and_language(titles, n)
 
-    # Group by language
+    return _sample_language_only(titles, n)
+
+
+def _sample_language_only(titles, n):
+    """Original language-stratified sampling."""
+    MIN_LANG_FLOOR = 5
+    MIN_LANG_TITLES = 3
+
     by_lang = defaultdict(list)
     for t in titles:
         by_lang[t.get("detected_language") or "unknown"].append(t)
 
-    # Compute allocation: proportional with a floor for minority languages
     total = len(titles)
     lang_allocs = {}
     for lang, ltitles in by_lang.items():
@@ -188,14 +198,12 @@ def sample_titles(titles, n=SAMPLE_SIZE):
             continue
         proportional_slots = round(n * len(ltitles) / total)
         slots = max(MIN_LANG_FLOOR, proportional_slots)
-        # Don't allocate more than available
         slots = min(slots, len(ltitles))
         lang_allocs[lang] = {
             "slots": slots,
             "titles": ltitles,
         }
 
-    # If total slots exceed n, scale down proportionally but keep floors
     total_slots = sum(a["slots"] for a in lang_allocs.values())
     if total_slots > n:
         scale = n / total_slots
@@ -205,7 +213,6 @@ def sample_titles(titles, n=SAMPLE_SIZE):
                 round(lang_allocs[lang]["slots"] * scale),
             )
 
-    # Round-robin by publisher within each language stratum
     sampled = []
     for lang, alloc in lang_allocs.items():
         slots = alloc["slots"]
@@ -227,7 +234,73 @@ def sample_titles(titles, n=SAMPLE_SIZE):
             if idx > slots + len(pubs):
                 break
 
-    # Trim to n if over-allocated due to rounding
+    return sampled[:n]
+
+
+def _sample_time_and_language(titles, n):
+    """Time + language stratified sampling.
+
+    1. Divide titles into calendar-day buckets
+    2. Allocate slots per day: proportional with floor of 3
+    3. Within each day, round-robin across publishers (language-diverse)
+    """
+    MIN_DAY_FLOOR = 3
+
+    # Group by calendar date
+    by_day = defaultdict(list)
+    for t in titles:
+        dt = t.get("pubdate_utc")
+        if dt:
+            day_key = str(dt)[:10]  # "2026-02-15"
+        else:
+            day_key = "unknown"
+        by_day[day_key].append(t)
+
+    # Sort days chronologically
+    sorted_days = sorted(by_day.keys())
+
+    # Allocate slots per day
+    total = len(titles)
+    day_allocs = {}
+    for day in sorted_days:
+        day_titles = by_day[day]
+        proportional = round(n * len(day_titles) / total)
+        slots = max(MIN_DAY_FLOOR, proportional)
+        slots = min(slots, len(day_titles))
+        day_allocs[day] = slots
+
+    # Scale down if over budget
+    total_slots = sum(day_allocs.values())
+    if total_slots > n:
+        scale = n / total_slots
+        for day in day_allocs:
+            day_allocs[day] = max(
+                min(MIN_DAY_FLOOR, len(by_day[day])),
+                round(day_allocs[day] * scale),
+            )
+
+    # Within each day: round-robin across publishers (naturally language-diverse)
+    sampled = []
+    for day in sorted_days:
+        slots = day_allocs[day]
+        day_titles = by_day[day]
+
+        by_pub = defaultdict(list)
+        for t in day_titles:
+            by_pub[t.get("publisher_name") or "unknown"].append(t)
+
+        pubs = list(by_pub.values())
+        picked = 0
+        idx = 0
+        while picked < slots and picked < len(day_titles):
+            bucket = pubs[idx % len(pubs)]
+            if bucket:
+                sampled.append(bucket.pop(0))
+                picked += 1
+            idx += 1
+            if idx > slots + len(pubs):
+                break
+
     return sampled[:n]
 
 

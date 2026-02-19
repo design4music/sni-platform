@@ -94,14 +94,14 @@ export default async function EventDetailPage({ params }: Props) {
 
   const sidebar = (narratives.length > 0 || raiSignals) ? (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {/* RAI Analysis */}
-      {raiSignals && (
-        <RaiSidebar signals={raiSignals} stats={signalStats} />
-      )}
-
       {/* Narrative Frames */}
       {narratives.length > 0 && (
         <NarrativeCards narratives={narratives} />
+      )}
+
+      {/* Coverage Assessment */}
+      {raiSignals && (
+        <RaiSidebar signals={raiSignals} stats={signalStats} />
       )}
     </div>
   ) : undefined;

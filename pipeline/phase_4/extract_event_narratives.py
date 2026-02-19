@@ -33,6 +33,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config  # noqa: E402
 from core.llm_utils import extract_json  # noqa: E402
 from core.prompts import EVENT_NARRATIVE_SYSTEM, EVENT_NARRATIVE_USER  # noqa: E402
+from pipeline.epics.build_epics import fetch_wikipedia_context  # noqa: E402
 from pipeline.phase_4.extract_ctm_narratives import sample_titles  # noqa: E402
 
 MIN_SOURCES = config.v3_p5e_min_sources
@@ -61,9 +62,12 @@ def fetch_events(conn, limit=50, ctm_id=None, refresh=False):
             e.source_batch_count >= %s
             AND e.is_catchall = false
             AND e.title IS NOT NULL
-            AND c.is_frozen = false
         """
         params = [MIN_SOURCES]
+
+        # Skip frozen CTMs in daemon mode, but allow when targeting a specific CTM
+        if not ctm_id:
+            base_where += " AND c.is_frozen = false"
 
         if refresh:
             base_where += """
@@ -129,23 +133,30 @@ def fetch_event_titles(conn, event_id):
 
 
 def build_titles_block(titles):
-    """Format titles for LLM prompt."""
+    """Format titles for LLM prompt, including date prefix."""
     lines = []
     for i, t in enumerate(titles, 1):
         pub = t.get("publisher_name") or "unknown"
-        lines.append("%d. [%s] %s" % (i, pub, t["title_display"]))
+        dt = t.get("pubdate_utc")
+        day = str(dt)[:10] if dt else ""
+        lines.append("%d. [%s][%s] %s" % (i, day, pub, t["title_display"]))
     return "\n".join(lines)
 
 
-def extract_narratives_llm(event, sampled):
+def extract_narratives_llm(event, sampled, wiki_context=None):
     """Call LLM to extract narrative frames."""
     titles_block = build_titles_block(sampled)
+
+    wiki_block = ""
+    if wiki_context:
+        wiki_block = "\nBackground context (from Wikipedia):\n%s\n" % wiki_context
 
     user_prompt = EVENT_NARRATIVE_USER.format(
         event_title=event["title"] or "",
         event_summary=event["summary"] or "",
         title_count=len(sampled),
         titles_block=titles_block,
+        wiki_block=wiki_block,
     )
 
     headers = {
@@ -283,13 +294,35 @@ def process_event_list(conn, events, refresh=False):
             results["failed"] += 1
             continue
 
-        sampled = sample_titles(titles)
+        sampled = sample_titles(titles, time_stratify=True)
         lang_counts = Counter(t.get("detected_language") or "?" for t in sampled)
         top_langs = ", ".join("%s:%d" % (lg, c) for lg, c in lang_counts.most_common(5))
-        print("  %d titles, sampled %d (%s)" % (len(titles), len(sampled), top_langs))
+        # Count date coverage
+        day_set = set()
+        for t in sampled:
+            dt = t.get("pubdate_utc")
+            if dt:
+                day_set.add(str(dt)[:10])
+        print(
+            "  %d titles, sampled %d (%s) spanning %d days"
+            % (len(titles), len(sampled), top_langs, len(day_set))
+        )
+
+        # Fetch Wikipedia context for richer framing analysis
+        wiki_context = None
+        try:
+            wiki_context = fetch_wikipedia_context(event["title"], [], month_str=None)
+            if wiki_context:
+                print("  Wikipedia context: %d chars" % len(wiki_context))
+            else:
+                print("  No Wikipedia context found")
+        except Exception as e:
+            print("  Wikipedia fetch failed: %s" % e)
 
         try:
-            frames, tok_in, tok_out = extract_narratives_llm(event, sampled)
+            frames, tok_in, tok_out = extract_narratives_llm(
+                event, sampled, wiki_context
+            )
             total_tok_in += tok_in
             total_tok_out += tok_out
         except Exception as e:
