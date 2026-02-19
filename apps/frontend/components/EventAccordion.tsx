@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Title } from '@/lib/types';
 
 interface EventAccordionProps {
@@ -12,6 +13,8 @@ interface EventAccordionProps {
     tags?: string[];
     source_title_ids?: string[];
     source_count?: number;
+    event_id?: string;
+    has_narratives?: boolean;
   };
   allTitles: Title[];
   index: number;
@@ -151,15 +154,25 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
             </div>
           )}
         </div>
-        {sourceCount > 0 && (
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex-shrink-0 text-sm text-blue-400 hover:text-blue-300 transition"
-            aria-expanded={isOpen}
-          >
-            {isOpen ? '−' : '+'} {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {event.has_narratives && event.event_id && (
+            <Link
+              href={`/events/${event.event_id}`}
+              className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded border border-blue-500/20"
+            >
+              View analysis
+            </Link>
+          )}
+          {sourceCount > 0 && (
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-sm text-blue-400 hover:text-blue-300 transition"
+              aria-expanded={isOpen}
+            >
+              {isOpen ? '−' : '+'} {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
+            </button>
+          )}
+        </div>
       </div>
 
       {isOpen && hasRelatedTitles && (

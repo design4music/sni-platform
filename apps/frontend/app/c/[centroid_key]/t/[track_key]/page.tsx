@@ -13,7 +13,9 @@ import {
   getTitlesByCTM,
   getTracksByCentroid,
   getOverlappingCentroidsForTrack,
+  getFramedNarratives,
 } from '@/lib/queries';
+import NarrativeCards from '@/components/NarrativeOverlay';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event } from '@/lib/types';
@@ -70,10 +72,13 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     notFound();
   }
 
-  const titles = await getTitlesByCTM(ctm.id);
-  const months = await getCTMMonths(centroid.id, track);
-  const otherTracks = await getTracksByCentroid(centroid.id);
-  const overlappingCentroids = await getOverlappingCentroidsForTrack(centroid.id, track);
+  const [titles, months, otherTracks, overlappingCentroids, narratives] = await Promise.all([
+    getTitlesByCTM(ctm.id),
+    getCTMMonths(centroid.id, track),
+    getTracksByCentroid(centroid.id),
+    getOverlappingCentroidsForTrack(centroid.id, track),
+    getFramedNarratives('ctm', ctm.id),
+  ]);
 
   const currentMonth = month || months[0];
   const eventCount = ctm.events_digest?.length || 0;
@@ -131,6 +136,10 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
   if (ctm.summary_text) {
     tocSections.push({ id: 'section-summary', label: 'Summary' });
+  }
+
+  if (narratives.length > 0) {
+    tocSections.push({ id: 'section-narratives', label: 'Narrative Frames' });
   }
 
   if (domesticEvents.length > 0) {
@@ -280,6 +289,14 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               return [<p key={idx}>{trimmed}</p>];
             })}
           </div>
+        </div>
+      )}
+
+      {/* Narrative Frames */}
+      {narratives.length > 0 && (
+        <div id="section-narratives" className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Narrative Frames</h2>
+          <NarrativeCards narratives={narratives} layout="grid" />
         </div>
       )}
 

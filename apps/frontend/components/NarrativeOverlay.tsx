@@ -38,9 +38,48 @@ interface NarrativeOverlayProps {
   onClose: () => void;
 }
 
+function AdequacyBadge({ value, reason }: { value: number; reason: string }) {
+  const color = value >= 0.7 ? 'green' : value >= 0.4 ? 'yellow' : 'red';
+  const colorClasses = {
+    green: 'bg-green-500/20 text-green-400 border-green-500/30',
+    yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    red: 'bg-red-500/20 text-red-400 border-red-500/30',
+  };
+  return (
+    <div className="flex items-start gap-3">
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${colorClasses[color]}`}>
+        {Math.round(value * 100)}% adequate
+      </span>
+      <p className="text-sm text-dashboard-text-muted flex-1">{reason}</p>
+    </div>
+  );
+}
+
+function ConcentrationBadge({ value, stats }: { value: string; stats: { publisher_count: number; language_count: number } | null }) {
+  const colorClasses: Record<string, string> = {
+    ok: 'bg-green-500/20 text-green-400 border-green-500/30',
+    warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    critical: 'bg-red-500/20 text-red-400 border-red-500/30',
+  };
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${colorClasses[value] || colorClasses.ok}`}>
+        {value}
+      </span>
+      {stats && (
+        <span className="text-xs text-dashboard-text-muted">
+          {stats.publisher_count} publishers, {stats.language_count} languages
+        </span>
+      )}
+    </div>
+  );
+}
+
 function NarrativeOverlay({ narrative, onClose }: NarrativeOverlayProps) {
   const shifts = narrative.rai_shifts;
-  const hasRai = narrative.rai_analyzed_at !== null;
+  const hasOldRai = narrative.rai_analyzed_at !== null;
+  const hasNewRai = narrative.rai_signals_at !== null && narrative.rai_signals !== null;
+  const hasRai = hasOldRai || hasNewRai;
 
   return (
     <div
@@ -124,7 +163,111 @@ function NarrativeOverlay({ narrative, onClose }: NarrativeOverlayProps) {
           )}
 
           {/* RAI Analysis Section */}
-          {hasRai ? (
+          {hasNewRai ? (
+            <>
+              <div className="border-t border-dashboard-border pt-4">
+                <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wide mb-3">
+                  RAI Signals
+                </h3>
+
+                {/* Adequacy */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                      Adequacy
+                    </h4>
+                    <AdequacyBadge value={narrative.rai_signals!.adequacy} reason={narrative.rai_signals!.adequacy_reason} />
+                  </div>
+
+                  {/* Source Concentration */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                      Source Concentration
+                    </h4>
+                    <ConcentrationBadge
+                      value={narrative.rai_signals!.source_concentration}
+                      stats={narrative.signal_stats ? { publisher_count: narrative.signal_stats.publisher_count, language_count: narrative.signal_stats.language_count } : null}
+                    />
+                  </div>
+
+                  {/* Framing Bias */}
+                  {narrative.rai_signals!.framing_bias && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                        Framing Bias
+                      </h4>
+                      <p className="text-sm text-dashboard-text leading-relaxed">
+                        {narrative.rai_signals!.framing_bias}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Findings */}
+                  {narrative.rai_signals!.findings && narrative.rai_signals!.findings.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                        Findings
+                      </h4>
+                      <ul className="space-y-1">
+                        {narrative.rai_signals!.findings.map((finding, i) => (
+                          <li key={i} className="text-sm text-dashboard-text-muted flex items-start gap-2">
+                            <span className="text-blue-400 mt-0.5">-</span>
+                            <span>{finding}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Geographic Blind Spots */}
+                  {narrative.rai_signals!.geographic_blind_spots && narrative.rai_signals!.geographic_blind_spots.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                        Geographic Blind Spots
+                      </h4>
+                      <ul className="space-y-1">
+                        {narrative.rai_signals!.geographic_blind_spots.map((spot, i) => (
+                          <li key={i} className="text-sm text-dashboard-text-muted flex items-start gap-2">
+                            <span className="text-orange-500 mt-0.5">?</span>
+                            <span>{spot}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Follow the Gain */}
+                  {narrative.rai_signals!.follow_the_gain && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                        Follow the Gain
+                      </h4>
+                      <p className="text-sm text-dashboard-text leading-relaxed">
+                        {narrative.rai_signals!.follow_the_gain}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Missing Perspectives */}
+                  {narrative.rai_signals!.missing_perspectives && narrative.rai_signals!.missing_perspectives.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-2">
+                        Missing Perspectives
+                      </h4>
+                      <ul className="space-y-1">
+                        {narrative.rai_signals!.missing_perspectives.map((perspective, i) => (
+                          <li key={i} className="text-sm text-dashboard-text-muted flex items-start gap-2">
+                            <span className="text-orange-500 mt-0.5">?</span>
+                            <span>{perspective}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : hasOldRai ? (
             <>
               <div className="border-t border-dashboard-border pt-4">
                 <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wide mb-3">
@@ -241,9 +384,10 @@ function NarrativeOverlay({ narrative, onClose }: NarrativeOverlayProps) {
 
 interface NarrativeCardsProps {
   narratives: FramedNarrative[];
+  layout?: 'sidebar' | 'grid';
 }
 
-export default function NarrativeCards({ narratives }: NarrativeCardsProps) {
+export default function NarrativeCards({ narratives, layout = 'sidebar' }: NarrativeCardsProps) {
   const [selectedNarrative, setSelectedNarrative] = useState<FramedNarrative | null>(null);
 
   if (narratives.length === 0) return null;
@@ -256,7 +400,10 @@ export default function NarrativeCards({ narratives }: NarrativeCardsProps) {
           Contested narratives from {narratives.reduce((sum, n) => sum + n.title_count, 0)} headlines.
           Click for analysis.
         </p>
-        <div className="space-y-3">
+        <div className={layout === 'grid'
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+          : "space-y-3"
+        }>
           {narratives.map((n) => (
             <button
               key={n.id}
@@ -266,7 +413,7 @@ export default function NarrativeCards({ narratives }: NarrativeCardsProps) {
               <div className="flex items-start justify-between gap-2 mb-1">
                 <h4 className="font-semibold text-sm">{n.label}</h4>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {n.rai_analyzed_at && (
+                  {(n.rai_analyzed_at || n.rai_signals_at) && (
                     <span
                       className="w-2 h-2 rounded-full bg-green-500"
                       title="RAI analyzed"

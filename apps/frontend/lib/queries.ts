@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -115,6 +115,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     bucket_key: string | null;
     source_batch_count: number;
     is_catchall: boolean;
+    has_narratives: boolean;
   }>(
     `SELECT
       e.id,
@@ -127,6 +128,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
       e.bucket_key,
       e.source_batch_count,
       e.is_catchall,
+      EXISTS (SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
       array_agg(evt.title_id ORDER BY evt.title_id) as source_title_ids
     FROM events_v3 e
     LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
@@ -148,6 +150,7 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
     bucket_key: r.bucket_key,
     source_count: r.source_batch_count,
     is_catchall: r.is_catchall,
+    has_narratives: r.has_narratives,
   }));
 }
 
@@ -559,11 +562,97 @@ export async function getEpicFramedNarratives(epicId: string): Promise<FramedNar
     `SELECT id, label, description, moral_frame, title_count,
             top_sources, proportional_sources, top_countries, sample_titles,
             rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
-            rai_shifts, rai_full_analysis, rai_analyzed_at::text
+            rai_shifts, rai_full_analysis, rai_analyzed_at::text,
+            signal_stats, rai_signals, rai_signals_at::text
      FROM narratives
      WHERE entity_type = 'epic' AND entity_id = $1
      ORDER BY title_count DESC`,
     [epicId]
+  );
+}
+
+// ========================================================================
+// Generic narrative + event detail queries
+// ========================================================================
+
+export async function getFramedNarratives(
+  entityType: string, entityId: string
+): Promise<FramedNarrative[]> {
+  return query<FramedNarrative>(
+    `SELECT id, label, description, moral_frame, title_count,
+            top_sources, proportional_sources, top_countries, sample_titles,
+            rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
+            rai_shifts, rai_full_analysis, rai_analyzed_at::text,
+            signal_stats, rai_signals, rai_signals_at::text
+     FROM narratives
+     WHERE entity_type = $1 AND entity_id = $2
+     ORDER BY title_count DESC`,
+    [entityType, entityId]
+  );
+}
+
+export async function getEventById(eventId: string): Promise<EventDetail | null> {
+  const results = await query<EventDetail>(
+    `SELECT
+      e.id,
+      e.date::text as date,
+      e.last_active::text as last_active,
+      COALESCE(e.title, e.topic_core) as title,
+      e.summary,
+      e.tags,
+      e.source_batch_count,
+      e.event_type,
+      e.bucket_key,
+      c.id as ctm_id,
+      c.centroid_id,
+      cv.label as centroid_label,
+      c.track,
+      TO_CHAR(c.month, 'YYYY-MM') as month
+    FROM events_v3 e
+    JOIN ctm c ON e.ctm_id = c.id
+    JOIN centroids_v3 cv ON c.centroid_id = cv.id
+    WHERE e.id = $1`,
+    [eventId]
+  );
+  return results[0] || null;
+}
+
+export async function getEventTitles(eventId: string): Promise<Title[]> {
+  return query<Title>(
+    `SELECT t.id, t.title_display, t.url_gnews, t.publisher_name,
+            t.pubdate_utc, t.detected_language, t.processing_status
+     FROM event_v3_titles et
+     JOIN titles_v3 t ON et.title_id = t.id
+     WHERE et.event_id = $1
+     ORDER BY t.pubdate_utc DESC`,
+    [eventId]
+  );
+}
+
+export async function getRelatedEvents(
+  eventId: string, centroidId: string, minShared: number = 5
+): Promise<RelatedEvent[]> {
+  return query<RelatedEvent>(
+    `WITH this_titles AS (
+       SELECT title_id FROM event_v3_titles WHERE event_id = $1
+     )
+     SELECT e2.id, e2.title, e2.source_batch_count,
+            c2.centroid_id, cv.label as centroid_label, cv.iso_codes,
+            c2.track,
+            COUNT(DISTINCT et2.title_id)::int as shared_titles
+     FROM this_titles tt
+     JOIN event_v3_titles et2 ON tt.title_id = et2.title_id
+     JOIN events_v3 e2 ON et2.event_id = e2.id
+     JOIN ctm c2 ON e2.ctm_id = c2.id
+     JOIN centroids_v3 cv ON c2.centroid_id = cv.id
+     WHERE c2.centroid_id <> $2
+       AND e2.is_catchall = false
+     GROUP BY e2.id, e2.title, e2.source_batch_count,
+              c2.centroid_id, cv.label, cv.iso_codes, c2.track
+     HAVING COUNT(DISTINCT et2.title_id) >= $3
+     ORDER BY shared_titles DESC
+     LIMIT 10`,
+    [eventId, centroidId, minShared]
   );
 }
 

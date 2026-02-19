@@ -64,6 +64,7 @@ export interface Event {
   alias?: string | null;
   source_count?: number;
   is_catchall?: boolean;
+  has_narratives?: boolean;
 }
 
 export interface Title {
@@ -116,6 +117,34 @@ export const TRACK_LABELS = new Proxy({} as Record<string, string>, {
   }
 });
 
+export interface EventDetail {
+  id: string;
+  date: string;
+  last_active: string | null;
+  title: string | null;
+  summary: string | null;
+  tags: string[] | null;
+  source_batch_count: number;
+  event_type: string | null;
+  bucket_key: string | null;
+  ctm_id: string;
+  centroid_id: string;
+  centroid_label: string;
+  track: string;
+  month: string;
+}
+
+export interface RelatedEvent {
+  id: string;
+  title: string | null;
+  source_batch_count: number;
+  centroid_id: string;
+  centroid_label: string;
+  iso_codes: string[] | null;
+  track: string;
+  shared_titles: number;
+}
+
 export interface EpicNarrative {
   title: string;
   description: string;
@@ -147,6 +176,47 @@ export interface FramedNarrative {
   } | null;
   rai_full_analysis: string | null;
   rai_analyzed_at: string | null;
+  // New signal fields (for event/CTM narratives)
+  signal_stats: SignalStats | null;
+  rai_signals: RaiSignals | null;
+  rai_signals_at: string | null;
+}
+
+export interface SignalStatsEntry {
+  name: string;
+  count: number;
+  share: number;
+}
+
+export interface SignalStats {
+  title_count: number;
+  publisher_count: number;
+  publisher_hhi: number;
+  language_count: number;
+  language_distribution: Record<string, number>;
+  domain_distribution: Record<string, number>;
+  date_range_days: number;
+  top_publishers: SignalStatsEntry[];
+  top_persons: SignalStatsEntry[];
+  top_orgs: SignalStatsEntry[];
+  top_actors: SignalStatsEntry[];
+  entity_country_distribution: Record<string, number>;
+  person_count: number;
+  actor_count: number;
+  narrative_frame_count: number;
+  label_coverage: number;
+  action_class_distribution?: Record<string, number>;
+}
+
+export interface RaiSignals {
+  adequacy: number;
+  adequacy_reason: string;
+  framing_bias: string;
+  source_concentration: string;
+  geographic_blind_spots: string[];
+  findings: string[];
+  follow_the_gain: string;
+  missing_perspectives: string[];
 }
 
 export interface Epic {
