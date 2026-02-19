@@ -4,9 +4,9 @@ interface SignalDashboardProps {
   stats: SignalStats;
 }
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+function StatCard({ label, value, sub, tooltip }: { label: string; value: string | number; sub?: string; tooltip?: string }) {
   return (
-    <div className="bg-dashboard-border/30 rounded-lg p-3 text-center">
+    <div className="bg-dashboard-border/30 rounded-lg p-3 text-center" title={tooltip}>
       <div className="text-2xl font-bold text-dashboard-text">{value}</div>
       <div className="text-xs text-dashboard-text-muted mt-0.5">{label}</div>
       {sub && <div className="text-[10px] text-dashboard-text-muted mt-0.5">{sub}</div>}
@@ -30,10 +30,13 @@ function MiniBar({ label, count, maxCount }: { label: string; count: number; max
 function LanguagePills({ distribution }: { distribution: Record<string, number> }) {
   const sorted = Object.entries(distribution).sort((a, b) => b[1] - a[1]);
   const total = sorted.reduce((s, [, v]) => s + v, 0);
+  // Only show languages with at least 1% share
+  const visible = sorted.filter(([, count]) => (count / total) >= 0.01);
+  const hiddenCount = sorted.length - visible.length;
 
   return (
     <div className="flex flex-wrap gap-1">
-      {sorted.map(([lang, count]) => {
+      {visible.map(([lang, count]) => {
         const pct = Math.round((count / total) * 100);
         return (
           <span
@@ -45,6 +48,12 @@ function LanguagePills({ distribution }: { distribution: Record<string, number> 
           </span>
         );
       })}
+      {hiddenCount > 0 && (
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-dashboard-border text-dashboard-text-muted"
+          title={`${hiddenCount} more languages with less than 1% each`}>
+          +{hiddenCount} more
+        </span>
+      )}
     </div>
   );
 }
@@ -59,14 +68,15 @@ export default function SignalDashboard({ stats }: SignalDashboardProps) {
 
       {/* Top row: key stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Headlines" value={stats.title_count} />
+        <StatCard label="Headlines" value={stats.title_count} tooltip="Total number of news headlines collected for this topic" />
         <StatCard
           label="Publishers"
           value={stats.publisher_count}
           sub={`HHI ${(stats.publisher_hhi * 100).toFixed(1)}%`}
+          tooltip={`Herfindahl-Hirschman Index measures source concentration. Below 5% = highly diverse, 5-15% = moderate, above 15% = concentrated. Current: ${(stats.publisher_hhi * 100).toFixed(1)}%`}
         />
-        <StatCard label="Languages" value={stats.language_count} />
-        <StatCard label="Date Span" value={`${stats.date_range_days}d`} />
+        <StatCard label="Languages" value={stats.language_count} tooltip="Number of distinct languages detected across all headlines" />
+        <StatCard label="Date Span" value={`${stats.date_range_days}d`} tooltip={`Coverage spans ${stats.date_range_days} days from first to last headline`} />
       </div>
 
       {/* Top publishers + top persons side by side */}

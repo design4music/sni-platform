@@ -166,7 +166,7 @@ export default async function EventDetailPage({ params }: Props) {
       )}
 
       {/* Related Coverage */}
-      <RelatedStories events={relatedEvents} thisSourceCount={event.source_batch_count} />
+      <RelatedStories events={relatedEvents} />
 
       {/* Source Headlines */}
       {titles.length > 0 && (
