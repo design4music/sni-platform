@@ -1,18 +1,23 @@
 import { query } from './db';
+import { cached } from './cache';
 import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
-  return query<Centroid>(
-    'SELECT * FROM centroids_v3 WHERE is_active = true ORDER BY class, label'
+  return cached('centroids:all', 300, () =>
+    query<Centroid>(
+      'SELECT * FROM centroids_v3 WHERE is_active = true ORDER BY class, label'
+    )
   );
 }
 
 export async function getCentroidById(id: string): Promise<Centroid | null> {
-  const results = await query<Centroid>(
-    'SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id, description, profile_json, updated_at FROM centroids_v3 WHERE id = $1 AND is_active = true',
-    [id]
-  );
-  return results[0] || null;
+  return cached(`centroid:${id}`, 300, async () => {
+    const results = await query<Centroid>(
+      'SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id, description, profile_json, updated_at FROM centroids_v3 WHERE id = $1 AND is_active = true',
+      [id]
+    );
+    return results[0] || null;
+  });
 }
 
 export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
@@ -24,68 +29,60 @@ export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
 }
 
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Promise<Centroid[]> {
-  return query<Centroid>(
-    `SELECT
-      c.*,
-      COALESCE((SELECT SUM(title_count) FROM ctm WHERE ctm.centroid_id = c.id), 0)::int as article_count,
-      (
-        SELECT COUNT(DISTINCT t.publisher_name)
+  return cached(`centroids:class:${centroidClass}`, 300, () =>
+    query<Centroid>(
+      `WITH centroid_stats AS (
+        SELECT
+          ctm.centroid_id,
+          SUM(ctm.title_count)::int AS article_count,
+          COUNT(DISTINCT t.publisher_name) FILTER (WHERE t.publisher_name IS NOT NULL)::int AS source_count,
+          COUNT(DISTINCT t.detected_language) FILTER (WHERE t.detected_language IS NOT NULL)::int AS language_count,
+          MAX(t.pubdate_utc) AS last_article_date
         FROM ctm
         JOIN title_assignments ta ON ctm.id = ta.ctm_id
         JOIN titles_v3 t ON ta.title_id = t.id
-        WHERE ctm.centroid_id = c.id AND t.publisher_name IS NOT NULL
-      )::int as source_count,
-      (
-        SELECT COUNT(DISTINCT t.detected_language)
-        FROM ctm
-        JOIN title_assignments ta ON ctm.id = ta.ctm_id
-        JOIN titles_v3 t ON ta.title_id = t.id
-        WHERE ctm.centroid_id = c.id AND t.detected_language IS NOT NULL
-      )::int as language_count,
-      (
-        SELECT MAX(t.pubdate_utc)
-        FROM ctm
-        JOIN title_assignments ta ON ctm.id = ta.ctm_id
-        JOIN titles_v3 t ON ta.title_id = t.id
-        WHERE ctm.centroid_id = c.id
-      ) as last_article_date
-     FROM centroids_v3 c
-     WHERE c.class = $1 AND c.is_active = true
-     ORDER BY c.label`,
-    [centroidClass]
+        GROUP BY ctm.centroid_id
+      )
+      SELECT c.*,
+        COALESCE(cs.article_count, 0) AS article_count,
+        COALESCE(cs.source_count, 0) AS source_count,
+        COALESCE(cs.language_count, 0) AS language_count,
+        cs.last_article_date
+      FROM centroids_v3 c
+      LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
+      WHERE c.class = $1 AND c.is_active = true
+      ORDER BY c.label`,
+      [centroidClass]
+    )
   );
 }
 
 export async function getCentroidsByTheater(theater: string): Promise<Centroid[]> {
-  return query<Centroid>(
-    `SELECT
-      c.*,
-      COALESCE((SELECT SUM(title_count) FROM ctm WHERE ctm.centroid_id = c.id), 0)::int as article_count,
-      (
-        SELECT COUNT(DISTINCT t.publisher_name)
+  return cached(`centroids:theater:${theater}`, 300, () =>
+    query<Centroid>(
+      `WITH centroid_stats AS (
+        SELECT
+          ctm.centroid_id,
+          SUM(ctm.title_count)::int AS article_count,
+          COUNT(DISTINCT t.publisher_name) FILTER (WHERE t.publisher_name IS NOT NULL)::int AS source_count,
+          COUNT(DISTINCT t.detected_language) FILTER (WHERE t.detected_language IS NOT NULL)::int AS language_count,
+          MAX(t.pubdate_utc) AS last_article_date
         FROM ctm
         JOIN title_assignments ta ON ctm.id = ta.ctm_id
         JOIN titles_v3 t ON ta.title_id = t.id
-        WHERE ctm.centroid_id = c.id AND t.publisher_name IS NOT NULL
-      )::int as source_count,
-      (
-        SELECT COUNT(DISTINCT t.detected_language)
-        FROM ctm
-        JOIN title_assignments ta ON ctm.id = ta.ctm_id
-        JOIN titles_v3 t ON ta.title_id = t.id
-        WHERE ctm.centroid_id = c.id AND t.detected_language IS NOT NULL
-      )::int as language_count,
-      (
-        SELECT MAX(t.pubdate_utc)
-        FROM ctm
-        JOIN title_assignments ta ON ctm.id = ta.ctm_id
-        JOIN titles_v3 t ON ta.title_id = t.id
-        WHERE ctm.centroid_id = c.id
-      ) as last_article_date
-     FROM centroids_v3 c
-     WHERE c.primary_theater = $1 AND c.is_active = true
-     ORDER BY c.label`,
-    [theater]
+        GROUP BY ctm.centroid_id
+      )
+      SELECT c.*,
+        COALESCE(cs.article_count, 0) AS article_count,
+        COALESCE(cs.source_count, 0) AS source_count,
+        COALESCE(cs.language_count, 0) AS language_count,
+        cs.last_article_date
+      FROM centroids_v3 c
+      LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
+      WHERE c.primary_theater = $1 AND c.is_active = true
+      ORDER BY c.label`,
+      [theater]
+    )
   );
 }
 
@@ -329,7 +326,7 @@ const PUBLISHER_MAP_VALUES = `
   ('Yonhap', 'Yonhap News Agency')`;
 
 export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: number; assigned_titles: number })[]> {
-  return query<Feed & { total_titles: number; assigned_titles: number }>(
+  return cached('feeds:active', 600, () => query<Feed & { total_titles: number; assigned_titles: number }>(
     `WITH publisher_map(feed_name, publisher_name) AS (VALUES
   ${PUBLISHER_MAP_VALUES}
      ),
@@ -358,7 +355,7 @@ export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: numbe
      LEFT JOIN stats st ON st.feed_name = f.name
      WHERE f.is_active = true
      ORDER BY f.country_code, f.name`
-  );
+  ));
 }
 
 export async function getOverlappingCentroids(centroidId: string): Promise<Array<Centroid & { overlap_count: number }>> {
@@ -501,20 +498,24 @@ export async function getConfiguredTracksForCentroid(centroidId: string): Promis
 // ========================================================================
 
 export async function getEpicMonths(): Promise<string[]> {
-  const results = await query<{ month: string }>(
-    "SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month FROM epics ORDER BY month DESC"
-  );
-  return results.map(r => r.month);
+  return cached('epic:months', 600, async () => {
+    const results = await query<{ month: string }>(
+      "SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month FROM epics ORDER BY month DESC"
+    );
+    return results.map(r => r.month);
+  });
 }
 
 export async function getEpicsByMonth(month: string): Promise<Epic[]> {
-  return query<Epic>(
-    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
-            anchor_tags, centroid_count, event_count, total_sources
-     FROM epics
-     WHERE TO_CHAR(month, 'YYYY-MM') = $1
-     ORDER BY total_sources DESC`,
-    [month]
+  return cached(`epics:month:${month}`, 300, () =>
+    query<Epic>(
+      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+              anchor_tags, centroid_count, event_count, total_sources
+       FROM epics
+       WHERE TO_CHAR(month, 'YYYY-MM') = $1
+       ORDER BY total_sources DESC`,
+      [month]
+    )
   );
 }
 
@@ -528,6 +529,11 @@ export async function getEpicBySlug(slug: string): Promise<Epic | null> {
     [slug]
   );
   return results[0] || null;
+}
+
+export async function getAllEpicSlugs(): Promise<string[]> {
+  const results = await query<{ slug: string }>('SELECT slug FROM epics');
+  return results.map(r => r.slug);
 }
 
 export async function getEpicEvents(epicId: string): Promise<EpicEvent[]> {
@@ -565,14 +571,16 @@ export async function getEpicCentroidBreakdown(epicId: string): Promise<EpicCent
 }
 
 export async function getLatestEpics(limit: number = 3): Promise<Epic[]> {
-  return query<Epic>(
-    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
-            anchor_tags, centroid_count, event_count, total_sources
-     FROM epics
-     WHERE month = (SELECT MAX(month) FROM epics)
-     ORDER BY total_sources DESC
-     LIMIT $1`,
-    [limit]
+  return cached(`epics:latest:${limit}`, 300, () =>
+    query<Epic>(
+      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+              anchor_tags, centroid_count, event_count, total_sources
+       FROM epics
+       WHERE month = (SELECT MAX(month) FROM epics)
+       ORDER BY total_sources DESC
+       LIMIT $1`,
+      [limit]
+    )
   );
 }
 
@@ -697,6 +705,7 @@ export async function getRelatedEvents(
 const SIGNAL_COLUMNS: SignalType[] = ['persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events'];
 
 export async function getTopSignalsByMonth(month: string, limit: number = 5): Promise<Record<SignalType, TopSignal[]>> {
+  return cached(`signals:${month}`, 600, async () => {
   // Try pre-computed rankings first (has LLM context)
   const precomputed = await query<TopSignal>(
     `SELECT signal_type, value, count, context
@@ -733,6 +742,7 @@ export async function getTopSignalsByMonth(month: string, limit: number = 5): Pr
     result[col] = rows.filter(r => r.signal_type === col);
   }
   return result;
+  });
 }
 
 // ========================================================================

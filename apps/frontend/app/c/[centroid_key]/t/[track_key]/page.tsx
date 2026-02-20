@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event } from '@/lib/types';
 import { getTrackIcon } from '@/components/TrackCard';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: TrackPageProps): Promise<Metadata> {
   const { centroid_key, track_key } = await params;

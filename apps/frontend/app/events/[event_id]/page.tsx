@@ -10,7 +10,7 @@ import RelatedStories from '@/components/RelatedStories';
 import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { event_id } = await params;

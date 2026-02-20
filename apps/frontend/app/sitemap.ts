@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next';
-import { getAllCentroids, getTracksByCentroid } from '@/lib/queries';
-import { REGIONS, RegionKey } from '@/lib/types';
+import { query } from '@/lib/db';
+import { REGIONS } from '@/lib/types';
 
 const SITE_URL = 'https://worldbrief.info';
 
@@ -26,19 +26,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Centroid (country) pages + their track pages
-  const centroids = await getAllCentroids();
-  for (const c of centroids) {
+  // Centroid pages + track pages in a single query
+  const rows = await query<{ centroid_id: string; track: string | null }>(
+    `SELECT c.id as centroid_id, ctm.track
+     FROM centroids_v3 c
+     LEFT JOIN (SELECT DISTINCT centroid_id, track FROM ctm) ctm ON ctm.centroid_id = c.id
+     WHERE c.is_active = true
+     ORDER BY c.id, ctm.track`
+  );
+
+  const centroidTracks = new Map<string, string[]>();
+  for (const row of rows) {
+    if (!centroidTracks.has(row.centroid_id)) {
+      centroidTracks.set(row.centroid_id, []);
+    }
+    if (row.track) {
+      centroidTracks.get(row.centroid_id)!.push(row.track);
+    }
+  }
+
+  for (const [centroidId, tracks] of centroidTracks) {
     entries.push({
-      url: `${SITE_URL}/c/${c.id}`,
+      url: `${SITE_URL}/c/${centroidId}`,
       changeFrequency: 'daily',
       priority: 0.8,
     });
-
-    const tracks = await getTracksByCentroid(c.id);
     for (const track of tracks) {
       entries.push({
-        url: `${SITE_URL}/c/${c.id}/t/${track}`,
+        url: `${SITE_URL}/c/${centroidId}/t/${track}`,
         changeFrequency: 'daily',
         priority: 0.7,
       });

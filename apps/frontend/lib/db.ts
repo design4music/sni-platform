@@ -4,10 +4,16 @@ let pool: Pool | null = null;
 
 export function getPool(): Pool {
   if (!pool) {
+    const poolOpts = {
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    };
     if (process.env.DATABASE_URL) {
       pool = new Pool({
         connectionString: process.env.DATABASE_URL,
         ssl: { rejectUnauthorized: false },
+        ...poolOpts,
       });
     } else {
       pool = new Pool({
@@ -16,6 +22,7 @@ export function getPool(): Pool {
         database: process.env.DB_NAME,
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
+        ...poolOpts,
       });
     }
   }

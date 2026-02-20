@@ -6,6 +6,7 @@ import GeoBriefSection from '@/components/GeoBriefSection';
 import MonthNav from '@/components/MonthNav';
 import CentroidMiniMapWrapper from '@/components/CentroidMiniMapWrapper';
 import {
+  getAllCentroids,
   getCentroidById,
   getAvailableMonthsForCentroid,
   getTrackSummaryByCentroidAndMonth,
@@ -16,7 +17,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const centroids = await getAllCentroids();
+  return centroids.map(c => ({ centroid_key: c.id }));
+}
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;

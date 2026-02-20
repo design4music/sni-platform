@@ -7,7 +7,7 @@ import { getTrackLabel, Track } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 600;
 
 interface OutletPageProps {
   params: Promise<{ feed_name: string }>;

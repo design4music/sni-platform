@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'Method & Disclaimer',
   description: 'How WorldBrief works: automated ingestion, multilingual processing, and structured synthesis of global news. Limitations and editorial policy.',
@@ -99,7 +97,7 @@ export default function DisclaimerPage() {
 
           <div className="mt-12 pt-8 border-t border-dashboard-border">
             <p className="text-sm text-dashboard-text-muted italic">
-              Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              Last updated: February 2026
             </p>
           </div>
         </div>

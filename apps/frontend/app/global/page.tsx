@@ -3,7 +3,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import CentroidCard from '@/components/CentroidCard';
 import { getCentroidsByClass } from '@/lib/queries';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Global & Systemic',

@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 
-export const dynamic = 'force-dynamic';
-
 export const metadata: Metadata = {
   title: 'About',
   description: 'WorldBrief organizes global reporting into structured briefings by geography and theme. Built by an independent researcher focused on analytical adequacy.',

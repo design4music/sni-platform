@@ -6,7 +6,7 @@ import SignalSlider from '@/components/SignalSlider';
 import { getEpicMonths, getEpicsByMonth, getTopSignalsByMonth } from '@/lib/queries';
 import { SignalType } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Monthly Intelligence',
