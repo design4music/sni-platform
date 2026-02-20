@@ -460,6 +460,7 @@ title, summary, tags  -- From Phase 4.5a
 event_type: 'bilateral' | 'domestic' | 'other_international'
 bucket_key, source_batch_count, is_catchall
 topic_core JSONB  -- Anchor signals for consolidation context
+saga TEXT  -- UUID linking same story across months (from chain_event_sagas)
 ```
 
 **ctm**: Centroid-Track-Month aggregations
@@ -536,6 +537,7 @@ pipeline/
 |   |-- extract_ctm_narratives.py    # CTM narrative extraction (Phase 5a)
 |   |-- extract_event_narratives.py  # Event narrative extraction (Phase 5b)
 |   |-- analyze_event_rai.py         # RAI signal analysis (Phase 6)
+|   |-- chain_event_sagas.py         # Cross-month event saga linking
 |
 |-- epics/                           # Epic lifecycle (cron/manual)
 |   |-- build_epics.py               # Epic detection + enrichment
@@ -570,8 +572,11 @@ apps/frontend/
 |-- app/
 |   |-- c/[centroid_key]/page.tsx    # Centroid page (summary + tracks)
 |   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
+|   |-- events/[event_id]/page.tsx   # Event detail page (saga timeline)
 |   |-- epics/page.tsx               # Epic list page (month navigation)
 |   |-- epics/[slug]/page.tsx        # Epic detail page
+|   |-- sources/page.tsx             # Media outlet list
+|   |-- sources/[feed_name]/page.tsx # Outlet profile page
 |-- lib/
 |   |-- queries.ts                   # All DB queries
 |   |-- types.ts                     # Shared types (Track, REGIONS, Epic, etc.)
@@ -638,6 +643,11 @@ python pipeline/phase_4/extract_event_narratives.py --refresh --limit 20
 python pipeline/phase_4/analyze_event_rai.py --limit 10
 python pipeline/phase_4/analyze_event_rai.py --entity-type ctm --limit 5
 python pipeline/phase_4/analyze_event_rai.py --full --event <UUID>
+
+# Event Saga Chaining (cross-month story linking)
+python -m pipeline.phase_4.chain_event_sagas --dry-run
+python -m pipeline.phase_4.chain_event_sagas --centroid-id MIDEAST-IRAN --track geo_domestic
+python -m pipeline.phase_4.chain_event_sagas --threshold 0.35
 ```
 
 ### Queue Monitoring
@@ -750,11 +760,17 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ---
 
-## Current Status (2026-02-17)
+## Current Status (2026-02-20)
 
 **Operational**: Full pipeline (Phases 1-6) running locally with complete RAI cycle. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. All phases including narrative extraction (Phase 5) and RAI signal analysis (Phase 6) integrated into daemon on 24h cycle. Production site live at https://www.worldbrief.info
 
-### Recent Changes (2026-02-17)
+### Recent Changes (2026-02-20)
+
+1. **Event Saga Chaining**: `chain_event_sagas.py` links events across months using tag+title Dice similarity (no LLM). 432 story chains created across Jan-Feb, 757 events linked via `events_v3.saga` UUID. Event detail pages show Story Timeline with clickable siblings.
+2. **Media Outlet Profile Pages**: New `/sources/{feed_name}` route showing per-outlet geographic coverage, top CTMs, and narrative frame participation. Publisher name normalization via shared CTE mapping.
+3. **Inline Month Switch Removed**: CTM track page no longer has inline month pills in main content; month switching is sidebar-only (MonthNav component).
+
+### Previous Changes (2026-02-17)
 
 1. **Signals-First RAI Integration**: Two-tier architecture. Tier 1 = local stats computation (`core/signal_stats.py`), Tier 2 = RAI LLM interpretation via `/api/v1/worldbrief/signals`. Compact JSON signals stored in `narratives.rai_signals` JSONB. Full HTML analysis kept via `--full` flag.
 2. **CTM Narrative Extraction (Phase 5a)**: `extract_ctm_narratives.py` with language-stratified sampling (200 titles, language floor of 5, publisher round-robin). Threshold: 100+ titles. Integrated into daemon (24h interval, limit 20 CTMs).
@@ -804,16 +820,17 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 6. **Render deployment**: Frontend + DB snapshot on Render for demo. Pipeline worker suspended.
 7. **Staleness detection**: `events_v3.summary_source_count` tracks when summaries were generated; Phase 4.5a re-summarizes events that grew >50%.
 
-### Pipeline Statistics (2026-02-10)
+### Pipeline Statistics (2026-02-20)
 
-- Titles: ~87,000+ total (~50k Jan frozen + ~37k Feb active)
+- Titles: ~100,000+ total (~50k Jan frozen + ~50k Feb active)
 - Active centroids: 85
 - CTMs: ~870+ (437 frozen Jan + ~430 active Feb)
-- Events: ~7,000+
+- Events: ~7,000+ (757 linked via saga chains)
 - Epics: 9 (January 2026)
 - Epic narratives: ~50 with RAI analysis
 - Centroid monthly summaries: 85 (January)
 - Daily ingestion: ~3,000-6,000 titles
+- Saga chains: 432 cross-month story links
 
 ### Known Issues
 

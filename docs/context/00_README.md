@@ -18,8 +18,8 @@ This repository contains the World Brief strategic intelligence system.
 
 ## Quick Orientation
 
-- Pipeline: mechanical ingestion → CTM generation
-- Frontend: read-only CTM navigation
+- Pipeline: ingestion -> matching -> classification -> clustering -> narratives -> RAI signals
+- Frontend: read-only navigation (centroids, CTMs, events, epics, outlets)
 - Database: single source of truth
 
 No component should be modified without understanding the above.

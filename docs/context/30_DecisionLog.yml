@@ -417,3 +417,46 @@ decisions:
       - pipeline/phase_4/extract_event_narratives.py
       - pipeline/runner/pipeline_daemon.py (Phase 5a + 5b)
 
+  - id: D-026
+    date: 2026-02-20
+    type: data_model
+    status: accepted
+    title: Event saga chaining across months via tag+title Dice similarity
+    rationale: >
+      Individual events within CTMs had no connection to their continuations in
+      adjacent months. The saga column on events_v3 (TEXT, previously NULL) was
+      designed for this. Algorithm uses tag overlap (exact match on type:value
+      strings) plus title word Dice similarity, with thresholds of tag_overlap>=2
+      and combined score>=0.3. Dice chosen over Jaccard because it is less punitive
+      when tag set sizes differ (3-tag event vs 8-tag event). Each later-month event
+      matches its single best earlier-month candidate; saga UUIDs chain forward as
+      new months are processed. No LLM involved -- purely mechanical.
+    consequences:
+      - 432 story chains linked across Jan-Feb (757 events updated)
+      - Event detail page shows Story Timeline with linked siblings
+      - Chains grow automatically as future months are processed
+      - Same saga may appear across multiple centroids (same story, different perspectives)
+    references:
+      - pipeline/phase_4/chain_event_sagas.py
+      - apps/frontend/app/events/[event_id]/page.tsx
+
+  - id: D-027
+    date: 2026-02-20
+    type: frontend
+    status: accepted
+    title: Media outlet profile pages
+    rationale: >
+      The sources list page showed feeds but provided no analytical depth. Outlet
+      profile pages at /sources/{feed_name} show each outlet's geographic coverage
+      distribution, top CTMs by article volume, and narrative frames where the outlet
+      appears as a top source. Publisher name normalization (variant names -> canonical
+      feed name) handled via a shared CTE mapping. This enables users to assess
+      individual outlet coverage patterns and potential editorial focus areas.
+    consequences:
+      - New route /sources/[feed_name] with server-side rendering
+      - Queries use publisher_map CTE for multi-name outlets (e.g., BBC World = BBC)
+      - Narrative participation shows frames where outlet is a top_source
+    references:
+      - apps/frontend/app/sources/[feed_name]/page.tsx
+      - apps/frontend/lib/queries.ts (getOutletProfile, getOutletNarrativeFrames)
+
