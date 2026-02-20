@@ -4,15 +4,10 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
 import NarrativeCards from '@/components/NarrativeOverlay';
-import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives, getAllEpicSlugs } from '@/lib/queries';
+import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives } from '@/lib/queries';
 import { EpicEvent, EpicNarrative } from '@/lib/types';
 
 export const revalidate = 600;
-
-export async function generateStaticParams() {
-  const slugs = await getAllEpicSlugs();
-  return slugs.map(slug => ({ slug }));
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
