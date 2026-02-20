@@ -127,6 +127,7 @@ export interface EventDetail {
   source_batch_count: number;
   event_type: string | null;
   bucket_key: string | null;
+  saga: string | null;
   ctm_id: string;
   centroid_id: string;
   centroid_label: string;
@@ -272,6 +273,25 @@ export interface TopSignal {
   value: string;
   count: number;
   context?: string;
+}
+
+export interface OutletProfile {
+  feed_name: string;
+  source_domain: string | null;
+  country_code: string | null;
+  language_code: string | null;
+  article_count: number;
+  centroid_coverage: { centroid_id: string; label: string; count: number }[];
+  top_ctms: { ctm_id: string; centroid_id: string; track: string; month: string; label: string; count: number }[];
+}
+
+export interface OutletNarrativeFrame {
+  entity_type: string;
+  entity_id: string;
+  label: string;
+  description: string | null;
+  title_count: number;
+  entity_label: string;
 }
 
 export const SIGNAL_LABELS: Record<SignalType, string> = {

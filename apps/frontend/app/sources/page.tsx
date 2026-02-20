@@ -5,6 +5,7 @@ import { Feed } from '@/lib/types';
 import { COUNTRY_TO_REGION, getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
 import SourceSuggestionForm from '@/components/SourceSuggestionForm';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,11 +73,8 @@ export default async function SourcesPage() {
                     const logoUrl = getOutletLogoUrl(domain, 32);
 
                     return (
-                      <a
+                      <div
                         key={feed.id}
-                        href={`https://${domain}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="flex items-center gap-4 py-3 px-2 -mx-2 rounded hover:bg-dashboard-surface transition-colors group"
                       >
                         <img
@@ -84,9 +82,12 @@ export default async function SourcesPage() {
                           alt=""
                           className="w-5 h-5 flex-shrink-0 object-contain"
                         />
-                        <span className="font-medium text-dashboard-text group-hover:text-white transition-colors flex-1 min-w-0 truncate">
+                        <Link
+                          href={`/sources/${encodeURIComponent(feed.name)}`}
+                          className="font-medium text-dashboard-text group-hover:text-blue-400 transition-colors flex-1 min-w-0 truncate"
+                        >
                           {feed.name}
-                        </span>
+                        </Link>
                         <span className="text-xs text-dashboard-text-muted flex-shrink-0 uppercase">
                           {feed.language_code}
                         </span>
@@ -95,15 +96,22 @@ export default async function SourcesPage() {
                             {feed.assigned_titles.toLocaleString()} / {feed.total_titles.toLocaleString()}
                           </span>
                         )}
-                        <svg
-                          className="w-3.5 h-3.5 text-dashboard-text-muted/50 group-hover:text-white transition-colors flex-shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                        <a
+                          href={`https://${domain}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0"
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
+                          <svg
+                            className="w-3.5 h-3.5 text-dashboard-text-muted/50 hover:text-white transition-colors"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
                     );
                   })}
                 </div>

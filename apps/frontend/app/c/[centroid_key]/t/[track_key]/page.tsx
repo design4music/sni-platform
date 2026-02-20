@@ -10,7 +10,7 @@ import {
   getCentroidById,
   getCentroidsByIds,
   getCTM,
-  getCTMMonths,
+  getMonthTimeline,
   getTitlesByCTM,
   getTracksByCentroid,
   getOverlappingCentroidsForTrack,
@@ -85,14 +85,15 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     notFound();
   }
 
-  const [titles, months, otherTracks, overlappingCentroids, narratives] = await Promise.all([
+  const [titles, timeline, otherTracks, overlappingCentroids, narratives] = await Promise.all([
     getTitlesByCTM(ctm.id),
-    getCTMMonths(centroid.id, track),
+    getMonthTimeline(centroid.id, track),
     getTracksByCentroid(centroid.id),
     getOverlappingCentroidsForTrack(centroid.id, track),
     getFramedNarratives('ctm', ctm.id),
   ]);
 
+  const months = timeline.map(t => t.month);
   const currentMonth = month || months[0];
   const eventCount = ctm.events_digest?.length || 0;
   const actualSourceCount = titles.length;

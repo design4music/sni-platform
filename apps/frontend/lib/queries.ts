@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -191,6 +191,18 @@ export async function getCTMMonths(centroidId: string, track: string): Promise<s
     [centroidId, track]
   );
   return results.map(r => r.month);
+}
+
+export async function getMonthTimeline(
+  centroidId: string, track: string
+): Promise<{ month: string; title_count: number; is_frozen: boolean }[]> {
+  return query<{ month: string; title_count: number; is_frozen: boolean }>(
+    `SELECT TO_CHAR(month, 'YYYY-MM') as month, title_count, is_frozen
+     FROM ctm
+     WHERE centroid_id = $1 AND track = $2
+     ORDER BY month DESC`,
+    [centroidId, track]
+  );
 }
 
 export async function getTitlesByCTM(ctmId: string): Promise<Title[]> {
@@ -603,6 +615,7 @@ export async function getEventById(eventId: string): Promise<EventDetail | null>
       e.source_batch_count,
       e.event_type,
       e.bucket_key,
+      e.saga,
       c.id as ctm_id,
       c.centroid_id,
       cv.label as centroid_label,
@@ -615,6 +628,20 @@ export async function getEventById(eventId: string): Promise<EventDetail | null>
     [eventId]
   );
   return results[0] || null;
+}
+
+export async function getEventSagaSiblings(
+  saga: string, currentEventId: string
+): Promise<Array<{ id: string; title: string; date: string; source_batch_count: number; month: string }>> {
+  return query<{ id: string; title: string; date: string; source_batch_count: number; month: string }>(
+    `SELECT e.id, COALESCE(e.title, e.topic_core) as title, e.date::text,
+            e.source_batch_count, TO_CHAR(c.month, 'YYYY-MM') as month
+     FROM events_v3 e
+     JOIN ctm c ON e.ctm_id = c.id
+     WHERE e.saga = $1 AND e.id != $2
+     ORDER BY e.date ASC`,
+    [saga, currentEventId]
+  );
 }
 
 export async function getEventTitles(eventId: string): Promise<Title[]> {
@@ -699,4 +726,151 @@ export async function getTopSignalsByMonth(month: string, limit: number = 5): Pr
     result[col] = rows.filter(r => r.signal_type === col);
   }
   return result;
+}
+
+// ========================================================================
+// Outlet profile queries
+// ========================================================================
+
+/** Publisher name -> feed name normalization. Maps variant publisher_names to canonical feed names. */
+const PUBLISHER_MAP_VALUES = `
+  ('Al-Ahram', 'Ahram Online'), ('Al-Ahram', 'بوابة الأهرام'), ('Al-Ahram', 'الأهرام اوتو'),
+  ('Al Arabiya', 'العربية'), ('Al Arabiya', 'Al Arabiya English'),
+  ('Al Jazeera', 'الجزيرة نت'),
+  ('Anadolu Agency', 'Anadolu Ajansı'),
+  ('ABC News', 'Australian Broadcasting Corporation'), ('ABC News', 'ABC iview'),
+  ('Associated Press', 'AP News'), ('AFP', 'AFP Fact Check'),
+  ('Asahi Shimbun', '朝日新聞'),
+  ('BBC World', 'BBC'),
+  ('CGTN', 'news.cgtn.com'), ('CGTN', 'newsaf.cgtn.com'),
+  ('Channel NewsAsia', 'CNA'),
+  ('Clarín', 'Clarin.com'),
+  ('CTV News', 'CTV'),
+  ('Daily Mirror', 'Daily Mirror - Sri Lanka'),
+  ('Daily Star', 'The Daily Star'),
+  ('Deutsche Welle', 'dw.com'), ('Deutsche Welle', 'DW.com'), ('Deutsche Welle', 'DW'),
+  ('El País', 'EL PAÍS'), ('El País', 'EL PAÍS English'),
+  ('EurActiv', 'Euractiv'),
+  ('Euronews', 'Euronews.com'),
+  ('Express Tribune', 'The Express Tribune'),
+  ('Fars News', 'farsnews.ir'), ('Fars News', 'Fars News Agency'),
+  ('Frankfurter Allgemeine', 'FAZ'),
+  ('Globe and Mail', 'The Globe and Mail'),
+  ('Indian Express', 'The Indian Express'),
+  ('Jakarta Post', 'The Jakarta Post'),
+  ('Japan Times', 'The Japan Times'),
+  ('Jerusalem Post', 'The Jerusalem Post'), ('Jerusalem Post', 'jpost.com'),
+  ('KBS World', 'KBS WORLD Radio'),
+  ('Korea Herald', 'The Korea Herald'), ('Korea Herald', 'koreaherald.com'),
+  ('Kyodo News', 'Japan Wire by KYODO NEWS'),
+  ('La Repubblica', 'la Repubblica'), ('La Repubblica', 'Corriere Tv'), ('La Repubblica', 'Corriere Roma'),
+  ('Le Monde', 'Le Monde.fr'),
+  ('New Straits Times', 'NST Online'),
+  ('New York Times', 'The New York Times'), ('New York Times', 'nytimes.com'),
+  ('NHK World', 'nhk.or.jp'),
+  ('O Estado de S. Paulo', 'Estadão'), ('O Estado de S. Paulo', 'Estadão E-Investidor'),
+  ('People''s Daily', 'People''s Daily Online'),
+  ('Philippine Daily Inquirer', 'Inquirer.net'), ('Philippine Daily Inquirer', 'INQUIRER.net USA'), ('Philippine Daily Inquirer', 'Cebu Daily News'),
+  ('Punch', 'Punch Newspapers'),
+  ('Republic TV', 'republic.tv'),
+  ('Sputnik', 'sputniknews.com'),
+  ('Süddeutsche Zeitung', 'SZ.de'), ('Süddeutsche Zeitung', 'SZ Immobilienmarkt'),
+  ('Sydney Morning Herald', 'The Sydney Morning Herald'), ('Sydney Morning Herald', 'SMH.com.au'),
+  ('Tasnim News', 'tasnimnews.com'),
+  ('TASS', 'tass.com'),
+  ('The National', 'thenationalnews.com'),
+  ('The News', 'The News International'),
+  ('The Standard', 'standardmedia.co.ke'),
+  ('Times of Israel', 'The Times of Israel'), ('Times of Israel', 'timesofisrael.com'),
+  ('Ukraine World', 'UkraineWorld'),
+  ('Vanguard', 'Vanguard News'),
+  ('Vietnam News', 'vietnamnews.vn'),
+  ('VN Express', 'VnExpress International'),
+  ('Voice of America', 'VOA - Voice of America English News'),
+  ('Wall Street Journal', 'The Wall Street Journal'),
+  ('Washington Post', 'The Washington Post'),
+  ('Xinhua', 'Xinhuanet Deutsch'),
+  ('Yonhap', 'Yonhap News Agency')`;
+
+function feedPubsCTE(): string {
+  return `WITH publisher_map(feed_name, publisher_name) AS (VALUES
+  ${PUBLISHER_MAP_VALUES}
+  ),
+  feed_pubs AS (
+    SELECT publisher_name FROM publisher_map WHERE feed_name = $1
+    UNION ALL SELECT $1
+  )`;
+}
+
+export async function getOutletProfile(feedName: string): Promise<OutletProfile | null> {
+  const feedResults = await query<Feed>(
+    'SELECT id, name, url, language_code, country_code, source_domain, is_active FROM feeds WHERE name = $1 LIMIT 1',
+    [feedName]
+  );
+  if (feedResults.length === 0) return null;
+  const feed = feedResults[0];
+
+  const cte = feedPubsCTE();
+
+  const [coverageRes, ctmsRes, countRes] = await Promise.all([
+    query<{ centroid_id: string; label: string; count: number }>(
+      `${cte}
+       SELECT ta.centroid_id, cv.label, COUNT(*)::int as count
+       FROM titles_v3 t
+       JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name
+       JOIN title_assignments ta ON ta.title_id = t.id
+       JOIN centroids_v3 cv ON cv.id = ta.centroid_id
+       GROUP BY ta.centroid_id, cv.label
+       ORDER BY count DESC`,
+      [feedName]
+    ),
+    query<{ ctm_id: string; centroid_id: string; track: string; month: string; label: string; count: number }>(
+      `${cte}
+       SELECT ta.ctm_id, c.centroid_id, c.track, TO_CHAR(c.month, 'YYYY-MM') as month,
+              cv.label, COUNT(*)::int as count
+       FROM titles_v3 t
+       JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name
+       JOIN title_assignments ta ON ta.title_id = t.id
+       JOIN ctm c ON c.id = ta.ctm_id
+       JOIN centroids_v3 cv ON cv.id = c.centroid_id
+       GROUP BY ta.ctm_id, c.centroid_id, c.track, c.month, cv.label
+       ORDER BY count DESC
+       LIMIT 20`,
+      [feedName]
+    ),
+    query<{ count: number }>(
+      `${cte}
+       SELECT COUNT(*)::int as count FROM titles_v3 t
+       JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name`,
+      [feedName]
+    ),
+  ]);
+
+  return {
+    feed_name: feed.name,
+    source_domain: feed.source_domain || null,
+    country_code: feed.country_code || null,
+    language_code: feed.language_code || null,
+    article_count: countRes[0]?.count || 0,
+    centroid_coverage: coverageRes,
+    top_ctms: ctmsRes,
+  };
+}
+
+export async function getOutletNarrativeFrames(feedName: string): Promise<OutletNarrativeFrame[]> {
+  return query<OutletNarrativeFrame>(
+    `${feedPubsCTE()}
+     SELECT n.entity_type, n.entity_id, n.label, n.description, n.title_count,
+            COALESCE(e.title, cv.label || ' / ' || c.track) as entity_label
+     FROM narratives n
+     LEFT JOIN events_v3 e ON n.entity_type = 'event' AND n.entity_id = e.id
+     LEFT JOIN ctm c ON n.entity_type = 'ctm' AND n.entity_id = c.id
+     LEFT JOIN centroids_v3 cv ON cv.id = c.centroid_id
+     WHERE EXISTS (
+       SELECT 1 FROM feed_pubs fp WHERE fp.publisher_name = ANY(n.top_sources)
+     )
+     ORDER BY n.title_count DESC
+     LIMIT 30`,
+    [feedName]
+  );
 }

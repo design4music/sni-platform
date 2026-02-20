@@ -7,7 +7,7 @@ import RaiSidebar from '@/components/RaiSidebar';
 import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
-import { getEventById, getEventTitles, getFramedNarratives, getRelatedEvents } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -74,10 +74,11 @@ export default async function EventDetailPage({ params }: Props) {
   const event = await getEventById(event_id);
   if (!event) return notFound();
 
-  const [titles, narratives, relatedEvents] = await Promise.all([
+  const [titles, narratives, relatedEvents, sagaSiblings] = await Promise.all([
     getEventTitles(event_id),
     getFramedNarratives('event', event_id),
     getRelatedEvents(event_id, event.centroid_id),
+    event.saga ? getEventSagaSiblings(event.saga, event_id) : Promise.resolve([]),
   ]);
 
   const trackLabel = getTrackLabel(event.track);
@@ -158,6 +159,38 @@ export default async function EventDetailPage({ params }: Props) {
           </div>
         )}
       </div>
+
+      {/* Story Timeline */}
+      {sagaSiblings.length > 0 && (
+        <div className="mb-8 pb-8 border-b border-dashboard-border">
+          <h2 className="text-lg font-semibold mb-3 text-dashboard-text-muted">Story Timeline</h2>
+          <div className="border-l-2 border-blue-500/30 pl-4 space-y-3">
+            {[...sagaSiblings, { id: event_id, title: event.title || 'Current event', date: event.date, source_batch_count: event.source_batch_count, month: event.month }]
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map((sib) => {
+                const isCurrent = sib.id === event_id;
+                return (
+                  <div key={sib.id} className={`relative ${isCurrent ? 'text-dashboard-text' : 'text-dashboard-text-muted'}`}>
+                    <div className="absolute -left-[1.3rem] top-1.5 w-2 h-2 rounded-full bg-blue-500" />
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <span className="text-xs font-mono shrink-0">{formatDate(sib.date)}</span>
+                      {isCurrent ? (
+                        <span className="font-semibold">{sib.title}</span>
+                      ) : (
+                        <Link href={`/events/${sib.id}`} className="hover:text-blue-400 transition-colors">
+                          {sib.title}
+                        </Link>
+                      )}
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-dashboard-border shrink-0">
+                        {sib.source_batch_count} sources
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      )}
 
       {/* Summary */}
       {event.summary && (
