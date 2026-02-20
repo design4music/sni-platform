@@ -12,7 +12,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https://flagcdn.com",
+              "img-src 'self' data:",
               "font-src 'self'",
               "connect-src 'self' https://raw.githubusercontent.com https://www.google-analytics.com https://www.googletagmanager.com",
               "frame-src 'none'",

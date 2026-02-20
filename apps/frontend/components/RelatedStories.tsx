@@ -9,7 +9,7 @@ function FlagImg({ iso2 }: { iso2: string }) {
   if (!iso2 || iso2.length !== 2) return null;
   return (
     <img
-      src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
+      src={`/flags/${iso2.toLowerCase()}.png`}
       alt={iso2}
       width={20}
       height={15}

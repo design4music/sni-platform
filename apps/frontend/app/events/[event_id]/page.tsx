@@ -54,7 +54,7 @@ function PerspectiveBadge({ centroidId, label, track, month }: {
     >
       {iso2 && (
         <img
-          src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
+          src={`/flags/${iso2.toLowerCase()}.png`}
           alt={iso2}
           width={20}
           height={15}

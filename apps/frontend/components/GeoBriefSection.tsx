@@ -15,7 +15,7 @@ function FlagImg({ iso2, size = 24 }: { iso2: string; size?: number }) {
     <span className="inline-flex items-center justify-center rounded border border-blue-500/30 bg-blue-500/10 overflow-hidden align-middle"
       style={{ width: size + 6, height: Math.round(size * 0.75) + 4 }}>
       <img
-        src={`https://flagcdn.com/w40/${iso2.toLowerCase()}.png`}
+        src={`/flags/${iso2.toLowerCase()}.png`}
         alt={iso2}
         width={size}
         height={Math.round(size * 0.75)}

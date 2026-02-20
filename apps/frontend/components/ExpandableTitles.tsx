@@ -45,7 +45,7 @@ function PublisherFavicon({ publisher }: { publisher: string }) {
 
   return (
     <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+      src={`/logos/${domain}.png`}
       alt=""
       width={20}
       height={20}
