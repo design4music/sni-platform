@@ -206,6 +206,13 @@ It introduces no intelligence, inference, or interpretation.
 - No aggregation or transformation beyond what exists in DB
 - No write paths, no user state, no sessions
 
+### Caching Strategy
+- **ISR revalidation**: Pages cached as static HTML (5 min for hot pages, 10 min for cold)
+- **In-memory query cache**: Map-based TTL cache for 9 frequent DB queries (lib/cache.ts)
+- **Optimized SQL**: Expensive correlated subqueries replaced with CTEs
+- **No Redis**: Single instance, in-memory cache sufficient
+- Search page remains force-dynamic (user-specific query)
+
 ### Content Types
 
 | Type | URL Pattern | Source |

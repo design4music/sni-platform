@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-17
+**Last Updated**: 2026-02-21
 **Status**: Production - Full pipeline operational
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -578,7 +578,9 @@ apps/frontend/
 |   |-- sources/page.tsx             # Media outlet list
 |   |-- sources/[feed_name]/page.tsx # Outlet profile page
 |-- lib/
-|   |-- queries.ts                   # All DB queries
+|   |-- cache.ts                     # In-memory TTL cache (Map-based, lazy cleanup)
+|   |-- db.ts                        # PostgreSQL pool (max 10, idle 30s, conn 5s)
+|   |-- queries.ts                   # All DB queries (9 cached with 5-10 min TTL)
 |   |-- types.ts                     # Shared types (Track, REGIONS, Epic, etc.)
 |-- components/
 |   |-- DashboardLayout.tsx          # Main layout (sidebar + content grid)
@@ -764,7 +766,11 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 **Operational**: Full pipeline (Phases 1-6) running locally with complete RAI cycle. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. All phases including narrative extraction (Phase 5) and RAI signal analysis (Phase 6) integrated into daemon on 24h cycle. Production site live at https://www.worldbrief.info
 
-### Recent Changes (2026-02-20)
+### Recent Changes (2026-02-21)
+
+1. **Frontend Performance Optimization**: Replaced `force-dynamic` on all 13 pages with ISR revalidation (5 min for frequently viewed pages, 10 min for slower-changing pages). Added in-memory Map-based TTL cache (`lib/cache.ts`) for 9 frequently-called queries. Rewrote `getCentroidsByClass` and `getCentroidsByTheater` from O(N*4) correlated subqueries to single CTE aggregation. Fixed sitemap N+1 query (101 sequential queries replaced with 1 JOIN). Added `generateStaticParams` for region pages (6 static paths from REGIONS constant). Connection pool tuned (max 10, idle timeout 30s, connection timeout 5s). About/disclaimer pages fully static. Search page remains `force-dynamic`.
+
+### Previous Changes (2026-02-20)
 
 1. **Event Saga Chaining**: `chain_event_sagas.py` links events across months using tag+title Dice similarity (no LLM). 432 story chains created across Jan-Feb, 757 events linked via `events_v3.saga` UUID. Event detail pages show Story Timeline with clickable siblings.
 2. **Media Outlet Profile Pages**: New `/sources/{feed_name}` route showing per-outlet geographic coverage, top CTMs, and narrative frame participation. Publisher name normalization via shared CTE mapping.

@@ -460,3 +460,33 @@ decisions:
       - apps/frontend/app/sources/[feed_name]/page.tsx
       - apps/frontend/lib/queries.ts (getOutletProfile, getOutletNarrativeFrames)
 
+  - id: D-028
+    date: 2026-02-21
+    type: frontend
+    status: accepted
+    title: ISR revalidation + in-memory cache + SQL optimization
+    rationale: >
+      All 13 pages used force-dynamic, hitting PostgreSQL on every request with
+      zero caching. Heaviest queries used correlated subqueries scanning titles_v3
+      (~100k rows) per centroid. Sitemap ran ~100 sequential queries. On Render
+      starter tier with remote Postgres, this caused 2-6 second page loads.
+      Data changes daily (pipeline runs), not in real-time, so caching is safe.
+    implementation:
+      - ISR revalidation replaces force-dynamic (300s for hot pages, 600s for cold)
+      - In-memory Map-based TTL cache wraps 9 frequent queries (lib/cache.ts)
+      - getCentroidsByClass/Theater rewritten from 4 correlated subqueries to single CTE
+      - Sitemap N+1 eliminated (101 queries -> 1 JOIN)
+      - generateStaticParams for region pages (6 paths from REGIONS constant)
+      - Connection pool tuned (max 10, idle 30s, connection timeout 5s)
+      - About/disclaimer fully static; search keeps force-dynamic
+    consequences:
+      - Pages served as cached HTML for 5-10 min after first request
+      - Cold requests still hit DB but benefit from query cache + optimized SQL
+      - No Redis needed (single Render instance, in-memory sufficient)
+      - generateStaticParams removed from centroid/epic pages (overwhelmed remote DB at build)
+      - Cache TTLs hardcoded next to usage (no config file -- simple, rarely changed)
+    references:
+      - apps/frontend/lib/cache.ts
+      - apps/frontend/lib/db.ts
+      - apps/frontend/lib/queries.ts
+
