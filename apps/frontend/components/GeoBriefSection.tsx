@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { GeoBriefProfile } from '@/lib/types';
 
 interface GeoBriefSectionProps {
   profile: GeoBriefProfile;
   updatedAt?: Date;
   centroidLabel?: string;
+  miniMap?: ReactNode;
 }
 
 function FlagImg({ iso2, size = 24 }: { iso2: string; size?: number }) {
@@ -84,7 +85,7 @@ function AccordionItem({
   );
 }
 
-export default function GeoBriefSection({ profile, updatedAt, centroidLabel }: GeoBriefSectionProps) {
+export default function GeoBriefSection({ profile, updatedAt, centroidLabel, miniMap }: GeoBriefSectionProps) {
   if (!profile || profile.schema_version !== 'geo_brief_v0') {
     return null;
   }
@@ -119,6 +120,12 @@ export default function GeoBriefSection({ profile, updatedAt, centroidLabel }: G
           changes only when underlying conditions evolve.
         </p>
       </div>
+
+      {miniMap && (
+        <div className="px-6 py-4 border-b border-dashboard-border">
+          {miniMap}
+        </div>
+      )}
 
       {hasSnapshot && profile.snapshot && (
         <div className="px-6 py-6 border-b border-dashboard-border">

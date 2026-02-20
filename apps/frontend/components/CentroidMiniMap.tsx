@@ -19,6 +19,19 @@ function normalizeIso(feature: any): string | null {
   return iso || null;
 }
 
+// Extend bounds by ~500km in each direction.
+// 1 degree latitude ~ 111km, so 500km ~ 4.5 degrees.
+// Longitude degrees shrink with cos(lat), so we adjust.
+function extendBounds(bounds: L.LatLngBounds, km: number): L.LatLngBounds {
+  const degLat = km / 111;
+  const centerLat = bounds.getCenter().lat;
+  const degLng = km / (111 * Math.cos((centerLat * Math.PI) / 180));
+  return L.latLngBounds(
+    [bounds.getSouth() - degLat, bounds.getWest() - degLng],
+    [bounds.getNorth() + degLat, bounds.getEast() + degLng]
+  );
+}
+
 function FitBounds({ isoCodes, geoData }: { isoCodes: string[]; geoData: any }) {
   const map = useMap();
   useEffect(() => {
@@ -29,7 +42,8 @@ function FitBounds({ isoCodes, geoData }: { isoCodes: string[]; geoData: any }) 
     });
     if (matching.length > 0) {
       const group = L.geoJSON({ type: 'FeatureCollection', features: matching } as any);
-      map.fitBounds(group.getBounds().pad(0.5), { animate: false });
+      const extended = extendBounds(group.getBounds(), 500);
+      map.fitBounds(extended, { animate: false });
     }
   }, [map, isoCodes, geoData]);
   return null;
@@ -46,7 +60,7 @@ export default function CentroidMiniMap({ isoCodes }: Props) {
 
   if (!geoData) {
     return (
-      <div className="w-full h-[180px] bg-dashboard-surface rounded-lg animate-pulse" />
+      <div className="w-full h-[200px] bg-dashboard-surface rounded-lg animate-pulse" />
     );
   }
 
@@ -56,19 +70,19 @@ export default function CentroidMiniMap({ isoCodes }: Props) {
     const iso = normalizeIso(feature);
     const isTarget = iso && isoSet.has(iso);
     return {
-      fillColor: isTarget ? '#3b82f6' : '#374151',
-      fillOpacity: isTarget ? 0.7 : 0.15,
-      color: '#1f2937',
-      weight: 0.5,
+      fillColor: isTarget ? '#3b82f6' : '#475569',
+      fillOpacity: isTarget ? 0.65 : 0.35,
+      color: isTarget ? '#60a5fa' : '#334155',
+      weight: isTarget ? 1.5 : 0.5,
     };
   };
 
   return (
-    <div className="w-full h-[180px] rounded-lg overflow-hidden">
+    <div className="w-full h-[200px] rounded-lg overflow-hidden border border-dashboard-border">
       <MapContainer
         center={[20, 0]}
         zoom={2}
-        style={{ height: '100%', width: '100%', background: '#0a0e1a' }}
+        style={{ height: '100%', width: '100%', background: '#0f172a' }}
         zoomControl={false}
         attributionControl={false}
         dragging={false}

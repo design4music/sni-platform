@@ -157,12 +157,16 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             profile={centroid.profile_json}
             updatedAt={centroid.updated_at}
             centroidLabel={centroid.label}
+            miniMap={centroid.iso_codes && centroid.iso_codes.length > 0
+              ? <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
+              : undefined}
           />
         ) : undefined
       }
     >
       <div className="space-y-8">
-        {centroid.iso_codes && centroid.iso_codes.length > 0 && (
+        {/* Show mini-map standalone if no Background Brief exists */}
+        {!centroid.profile_json && centroid.iso_codes && centroid.iso_codes.length > 0 && (
           <div className="mb-2">
             <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
           </div>
