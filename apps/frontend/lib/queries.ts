@@ -34,7 +34,7 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Pr
       `WITH centroid_stats AS (
         SELECT
           ctm.centroid_id,
-          SUM(ctm.title_count)::int AS article_count,
+          COUNT(DISTINCT t.id)::int AS article_count,
           COUNT(DISTINCT t.publisher_name) FILTER (WHERE t.publisher_name IS NOT NULL)::int AS source_count,
           COUNT(DISTINCT t.detected_language) FILTER (WHERE t.detected_language IS NOT NULL)::int AS language_count,
           MAX(t.pubdate_utc) AS last_article_date
@@ -63,7 +63,7 @@ export async function getCentroidsByTheater(theater: string): Promise<Centroid[]
       `WITH centroid_stats AS (
         SELECT
           ctm.centroid_id,
-          SUM(ctm.title_count)::int AS article_count,
+          COUNT(DISTINCT t.id)::int AS article_count,
           COUNT(DISTINCT t.publisher_name) FILTER (WHERE t.publisher_name IS NOT NULL)::int AS source_count,
           COUNT(DISTINCT t.detected_language) FILTER (WHERE t.detected_language IS NOT NULL)::int AS language_count,
           MAX(t.pubdate_utc) AS last_article_date
