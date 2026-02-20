@@ -1,5 +1,5 @@
 import { query } from './db';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return query<Centroid>(
@@ -428,13 +428,15 @@ export async function getAvailableMonthsForCentroid(centroidId: string): Promise
 export async function getTrackSummaryByCentroidAndMonth(
   centroidId: string,
   month: string
-): Promise<Array<{ track: string; titleCount: number }>> {
-  const results = await query<{ track: string; title_count: number }>(
+): Promise<Array<{ track: string; titleCount: number; lastActive: string | null }>> {
+  const results = await query<{ track: string; title_count: number; last_active: string | null }>(
     `SELECT
       c.track,
-      COUNT(DISTINCT ta.title_id)::int as title_count
+      COUNT(DISTINCT ta.title_id)::int as title_count,
+      MAX(e.last_active)::text as last_active
     FROM ctm c
     LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
+    LEFT JOIN events_v3 e ON e.ctm_id = c.id
     WHERE c.centroid_id = $1
       AND TO_CHAR(c.month, 'YYYY-MM') = $2
     GROUP BY c.track
@@ -445,6 +447,7 @@ export async function getTrackSummaryByCentroidAndMonth(
   return results.map(r => ({
     track: r.track,
     titleCount: r.title_count,
+    lastActive: r.last_active,
   }));
 }
 
@@ -816,5 +819,48 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
      ORDER BY n.title_count DESC
      LIMIT 30`,
     [feedName]
+  );
+}
+
+// ========================================================================
+// Search
+// ========================================================================
+
+export async function searchAll(q: string): Promise<SearchResult[]> {
+  if (!q || q.trim().length === 0) return [];
+
+  return query<SearchResult>(
+    `WITH q AS (SELECT websearch_to_tsquery('english', $1) AS tsq)
+     SELECT * FROM (
+       (SELECT 'event' as type, e.id::text, COALESCE(e.title, e.topic_core) as title,
+               LEFT(e.summary, 200) as snippet, e.source_batch_count as sources,
+               e.date::text as date, cv.label as centroid_label, NULL as slug,
+               ts_rank(to_tsvector('english', COALESCE(e.title,'') || ' ' || COALESCE(e.summary,'')), q.tsq) as rank
+        FROM events_v3 e
+        JOIN ctm c ON e.ctm_id = c.id
+        JOIN centroids_v3 cv ON c.centroid_id = cv.id
+        CROSS JOIN q
+        WHERE to_tsvector('english', COALESCE(e.title,'') || ' ' || COALESCE(e.summary,'')) @@ q.tsq
+        ORDER BY rank DESC LIMIT 15)
+       UNION ALL
+       (SELECT 'centroid' as type, cv.id, cv.label as title,
+               COALESCE(cv.description,'') as snippet, NULL::int as sources,
+               NULL as date, NULL as centroid_label, NULL as slug,
+               ts_rank(to_tsvector('english', cv.label || ' ' || COALESCE(cv.description,'')), q.tsq) as rank
+        FROM centroids_v3 cv CROSS JOIN q
+        WHERE to_tsvector('english', cv.label || ' ' || COALESCE(cv.description,'')) @@ q.tsq AND cv.is_active
+        ORDER BY rank DESC LIMIT 10)
+       UNION ALL
+       (SELECT 'epic' as type, ep.id::text, COALESCE(ep.title,'') as title,
+               LEFT(COALESCE(ep.summary,''),200) as snippet, ep.total_sources as sources,
+               NULL as date, NULL as centroid_label, ep.slug,
+               ts_rank(to_tsvector('english', COALESCE(ep.title,'') || ' ' || COALESCE(ep.summary,'')), q.tsq) as rank
+        FROM epics ep CROSS JOIN q
+        WHERE to_tsvector('english', COALESCE(ep.title,'') || ' ' || COALESCE(ep.summary,'')) @@ q.tsq
+        ORDER BY rank DESC LIMIT 10)
+     ) sub
+     ORDER BY rank DESC
+     LIMIT 30`,
+    [q.trim()]
   );
 }

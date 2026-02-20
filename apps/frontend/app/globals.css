@@ -99,6 +99,24 @@
   display: none !important;
 }
 
+.leaflet-interactive {
+  transition: fill-opacity 0.2s ease;
+}
+
+.map-tooltip {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+.map-tooltip::before {
+  border-top-color: rgba(59, 130, 246, 0.3) !important;
+}
+
 /* Reading mode typography */
 .prose {
   @apply text-reading-text;

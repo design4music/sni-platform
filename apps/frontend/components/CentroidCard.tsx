@@ -11,7 +11,9 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
   const hasArticles = articleCount > 0;
   const sourceCount = centroid.source_count || 0;
   const languageCount = centroid.language_count || 0;
-  const lastUpdated = formatTimeAgo(centroid.last_article_date);
+  const isFresh = !!(centroid.last_article_date &&
+    (Date.now() - new Date(centroid.last_article_date).getTime()) < 172800000);
+  const lastUpdated = isFresh ? '' : formatTimeAgo(centroid.last_article_date);
 
   return (
     <Link
@@ -21,7 +23,7 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-lg font-semibold">{centroid.label}</h3>
+            <h3 className="text-lg font-semibold flex-1">{centroid.label}</h3>
             {centroid.article_count !== undefined && (
               <span
                 className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium ${
@@ -41,6 +43,9 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
                   </svg>
                 )}
                 <span className="tabular-nums">{articleCount.toLocaleString()}</span>
+                {isFresh && (
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Active in last 48h" />
+                )}
               </span>
             )}
           </div>

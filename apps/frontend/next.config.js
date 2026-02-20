@@ -14,7 +14,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data:",
               "font-src 'self'",
-              "connect-src 'self' https://raw.githubusercontent.com https://www.google-analytics.com https://www.googletagmanager.com",
+              "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",

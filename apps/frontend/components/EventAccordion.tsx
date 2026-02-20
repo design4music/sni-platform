@@ -65,8 +65,11 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             {/* Date range */}
-            <p className="text-xs mb-1">
+            <p className="text-xs mb-1 flex items-center">
               <DateRange date={event.date} last_active={event.last_active} />
+              {event.last_active && (Date.now() - new Date(event.last_active + 'T00:00:00').getTime()) < 172800000 && (
+                <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title="Active in last 48h" />
+              )}
             </p>
             {/* Title if available, otherwise summary */}
             {event.title ? (
@@ -145,8 +148,11 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           {/* Date range */}
-          <p className="text-sm mb-1">
+          <p className="text-sm mb-1 flex items-center">
             <DateRange date={event.date} last_active={event.last_active} />
+            {event.last_active && (Date.now() - new Date(event.last_active + 'T00:00:00').getTime()) < 172800000 && (
+              <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title="Active in last 48h" />
+            )}
           </p>
           {/* Title if available */}
           {event.title ? (

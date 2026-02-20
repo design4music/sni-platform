@@ -61,7 +61,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
 
   useEffect(() => {
     if (!mapInitialized.current) {
-      fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+      fetch('/geo/countries.geojson')
         .then(res => res.json())
         .then(data => setGeoData(data));
       mapInitialized.current = true;
@@ -111,11 +111,10 @@ export default function WorldMap({ centroids }: WorldMapProps) {
     const centroid = isoToCentroid.get(iso2);
 
     if (centroid) {
-      layer.bindTooltip(centroid.label, {
-        permanent: false,
-        direction: 'center',
-        className: 'custom-tooltip',
-      });
+      layer.bindTooltip(
+        `<strong>${centroid.label}</strong><br/><span style="opacity:0.7">${centroid.articleCount.toLocaleString()} articles</span>`,
+        { permanent: false, direction: 'top', className: 'map-tooltip' }
+      );
 
       layer.on({
         mouseover: (e: any) => {

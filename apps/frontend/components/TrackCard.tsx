@@ -8,6 +8,7 @@ interface TrackCardProps {
   titleCount?: number;
   disabled?: boolean;
   hasHistoricalData?: boolean;
+  lastActive?: string;
 }
 
 export function getTrackIcon(track: string) {
@@ -99,7 +100,8 @@ export default function TrackCard({
   latestMonth,
   titleCount,
   disabled,
-  hasHistoricalData
+  hasHistoricalData,
+  lastActive
 }: TrackCardProps) {
   const href = latestMonth
     ? `/c/${centroidId}/t/${track}?month=${latestMonth}`
@@ -168,6 +170,9 @@ export default function TrackCard({
             </svg>
           )}
           <span className="tabular-nums">{articleCount.toLocaleString()}</span>
+          {lastActive && (Date.now() - new Date(lastActive + 'T00:00:00').getTime()) < 172800000 && (
+            <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Active in last 48h" />
+          )}
         </span>
       </div>
       <div className="text-sm text-dashboard-text-muted">

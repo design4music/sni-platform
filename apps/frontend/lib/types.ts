@@ -294,6 +294,18 @@ export interface OutletNarrativeFrame {
   entity_label: string;
 }
 
+export interface SearchResult {
+  type: 'event' | 'centroid' | 'epic';
+  id: string;
+  title: string;
+  snippet: string;
+  sources: number | null;
+  date: string | null;
+  centroid_label: string | null;
+  slug: string | null;
+  rank: number;
+}
+
 export const SIGNAL_LABELS: Record<SignalType, string> = {
   persons: 'Top Persons',
   orgs: 'Top Organizations',

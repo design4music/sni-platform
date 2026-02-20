@@ -4,6 +4,7 @@ import TrackCard from '@/components/TrackCard';
 import { getTrackIcon } from '@/components/TrackCard';
 import GeoBriefSection from '@/components/GeoBriefSection';
 import MonthNav from '@/components/MonthNav';
+import CentroidMiniMapWrapper from '@/components/CentroidMiniMapWrapper';
 import {
   getCentroidById,
   getAvailableMonthsForCentroid,
@@ -63,8 +64,9 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
   ]);
 
-  // Build a map of track -> titleCount for the current month
+  // Build maps of track -> titleCount and track -> lastActive for the current month
   const trackDataMap = new Map(monthTrackData.map(t => [t.track, t.titleCount]));
+  const trackLastActiveMap = new Map(monthTrackData.map(t => [t.track, t.lastActive]));
 
   // For each configured track, check if it has any historical data
   const tracksWithHistoricalData = new Set(
@@ -160,6 +162,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
       }
     >
       <div className="space-y-8">
+        {centroid.iso_codes && centroid.iso_codes.length > 0 && (
+          <div className="mb-2">
+            <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
+          </div>
+        )}
         <div>
           <h2 className="text-2xl font-bold mb-4">
             Strategic Tracks{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth)}`}
@@ -226,6 +233,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                     titleCount={titleCount}
                     disabled={!hasDataThisMonth}
                     hasHistoricalData={hasHistoricalData}
+                    lastActive={trackLastActiveMap.get(track) || undefined}
                   />
                 );
               })}

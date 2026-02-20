@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { getTrackLabel, Track } from '@/lib/types';
 import { getTrackIcon } from './TrackCard';
@@ -48,6 +49,10 @@ export default function Navigation({
   const [mobileRegionsOpen, setMobileRegionsOpen] = useState(false);
   const [mobileMonthsOpen, setMobileMonthsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const router = useRouter();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -57,13 +62,6 @@ export default function Navigation({
     <>
       {/* Desktop Navigation */}
       <nav className="hidden md:flex items-center gap-6">
-        <Link
-          href="/global"
-          className="text-dashboard-text-muted hover:text-dashboard-text transition"
-        >
-          Global
-        </Link>
-
         <div
           className="relative"
           onMouseEnter={() => setShowRegions(true)}
@@ -104,6 +102,34 @@ export default function Navigation({
           Epics
         </Link>
 
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (searchQuery.trim()) {
+              router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+              setSearchQuery('');
+              searchRef.current?.blur();
+            }
+          }}
+          className="relative"
+        >
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-dashboard-text-muted pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            ref={searchRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            placeholder="Search..."
+            className={`pl-8 pr-3 py-1.5 bg-dashboard-surface border border-dashboard-border rounded-lg text-sm text-dashboard-text placeholder-dashboard-text-muted focus:outline-none focus:border-blue-500 transition-all ${
+              searchFocused ? 'w-64' : 'w-48'
+            }`}
+          />
+        </form>
+
         <div
           className="relative"
           onMouseEnter={() => setShowComingSoon(true)}
@@ -135,6 +161,15 @@ export default function Navigation({
 
       {/* Mobile Navigation Buttons */}
       <div className="flex md:hidden items-center gap-2">
+        <Link
+          href="/search"
+          className="p-2 rounded-lg bg-dashboard-border/50 hover:bg-dashboard-border transition"
+          aria-label="Search"
+        >
+          <svg className="w-6 h-6 text-dashboard-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </Link>
         <button
           onClick={() => setMobileMenuOpen(true)}
           className="p-2 rounded-lg bg-dashboard-border/50 hover:bg-dashboard-border transition"
@@ -182,18 +217,7 @@ export default function Navigation({
           {/* Menu Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Main Navigation - Compact icon buttons */}
-            <div className="grid grid-cols-4 gap-3">
-              <Link
-                href="/global"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex flex-col items-center justify-center p-4 rounded-lg bg-dashboard-surface border border-dashboard-border hover:bg-dashboard-border transition"
-              >
-                <svg className="w-6 h-6 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs text-dashboard-text-muted">Global</span>
-              </Link>
-
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setMobileRegionsOpen(!mobileRegionsOpen)}
                 className={`flex flex-col items-center justify-center p-4 rounded-lg bg-dashboard-surface border transition ${
