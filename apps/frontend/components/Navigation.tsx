@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
+import { useSession, signOut } from 'next-auth/react';
 import { getTrackLabel, Track } from '@/lib/types';
 import { getTrackIcon } from './TrackCard';
 
@@ -43,8 +44,9 @@ export default function Navigation({
   availableMonths,
   trackForMonths
 }: NavigationProps) {
+  const { data: session } = useSession();
   const [showRegions, setShowRegions] = useState(false);
-  const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileRegionsOpen, setMobileRegionsOpen] = useState(false);
   const [mobileMonthsOpen, setMobileMonthsOpen] = useState(false);
@@ -130,33 +132,43 @@ export default function Navigation({
           />
         </form>
 
-        <div
-          className="relative"
-          onMouseEnter={() => setShowComingSoon(true)}
-          onMouseLeave={() => setShowComingSoon(false)}
-        >
-          <div className="w-8 h-8 rounded-full bg-dashboard-border flex items-center justify-center cursor-not-allowed">
-            <svg
-              className="w-5 h-5 text-dashboard-text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
+        {session?.user ? (
+          <div
+            className="relative"
+            onMouseEnter={() => setShowUserMenu(true)}
+            onMouseLeave={() => setShowUserMenu(false)}
+          >
+            <button className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+              {(session.user.name || session.user.email || '?')[0].toUpperCase()}
+            </button>
 
-          {showComingSoon && (
-            <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-dashboard-surface border border-dashboard-border rounded shadow-lg whitespace-nowrap text-sm text-dashboard-text-muted z-50">
-              Coming soon
-            </div>
-          )}
-        </div>
+            {showUserMenu && (
+              <div className="absolute top-full right-0 pt-1 z-50">
+                <div className="w-56 bg-dashboard-surface border border-dashboard-border rounded-lg shadow-lg py-2">
+                  <div className="px-4 py-2 border-b border-dashboard-border">
+                    {session.user.name && (
+                      <p className="text-sm font-medium text-dashboard-text">{session.user.name}</p>
+                    )}
+                    <p className="text-xs text-dashboard-text-muted truncate">{session.user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full text-left px-4 py-2 text-sm text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            href="/auth/signin"
+            className="text-sm px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+          >
+            Sign In
+          </Link>
+        )}
       </nav>
 
       {/* Mobile Navigation Buttons */}
@@ -180,21 +192,25 @@ export default function Navigation({
           </svg>
         </button>
 
-        <div className="w-8 h-8 rounded-full bg-dashboard-border flex items-center justify-center cursor-not-allowed">
-          <svg
-            className="w-5 h-5 text-dashboard-text-muted"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {session?.user ? (
+          <button
+            onClick={() => signOut()}
+            className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium"
+            aria-label="Sign out"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-        </div>
+            {(session.user.name || session.user.email || '?')[0].toUpperCase()}
+          </button>
+        ) : (
+          <Link
+            href="/auth/signin"
+            className="p-2 rounded-lg bg-dashboard-border/50 hover:bg-dashboard-border transition"
+            aria-label="Sign in"
+          >
+            <svg className="w-6 h-6 text-dashboard-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </Link>
+        )}
       </div>
 
       {/* Mobile Full-Screen Menu - Portal to escape header stacking context */}
@@ -312,6 +328,34 @@ export default function Navigation({
                 </div>
               </div>
             )}
+
+            {/* Account */}
+            <div className="rounded-lg bg-dashboard-surface border border-dashboard-border overflow-hidden">
+              {session?.user ? (
+                <>
+                  <div className="px-4 py-3 border-b border-dashboard-border/50">
+                    {session.user.name && (
+                      <p className="text-sm font-medium text-dashboard-text">{session.user.name}</p>
+                    )}
+                    <p className="text-xs text-dashboard-text-muted truncate">{session.user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                    className="w-full text-left px-4 py-3 text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth/signin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-blue-400 hover:text-blue-300 hover:bg-dashboard-border transition"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
 
             {/* Other Strategic Topics (if provided) */}
             {centroidLabel && otherTracks && otherTracks.length > 0 && (
