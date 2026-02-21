@@ -55,6 +55,16 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await resp.json();
+
+    // Coherence check: LLM detected unrelated topics
+    if (data.coherent === false) {
+      return NextResponse.json({
+        coherent: false,
+        reason: data.reason || 'Headlines cover unrelated topics',
+        topics: data.topics || [],
+      });
+    }
+
     const narratives = data.narratives || [];
 
     return NextResponse.json({

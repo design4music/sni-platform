@@ -159,10 +159,13 @@ def build_titles_block(titles):
     return "\n".join(lines)
 
 
-def extract_narratives_llm(event, sampled, wiki_context=None, frame_hint=None):
+def extract_narratives_llm(
+    event, sampled, wiki_context=None, frame_hint=None, pre_instructions=None
+):
     """Call LLM to extract narrative frames.
 
     frame_hint: optional string to replace the default frame count instruction.
+    pre_instructions: optional text prepended to prompt (e.g. coherence check).
     """
     titles_block = build_titles_block(sampled)
 
@@ -183,6 +186,9 @@ def extract_narratives_llm(event, sampled, wiki_context=None, frame_hint=None):
             "Identify exactly 3 OPPOSING NARRATIVE FRAMES",
             frame_hint,
         )
+
+    if pre_instructions:
+        user_prompt = pre_instructions + "\n\n" + user_prompt
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,

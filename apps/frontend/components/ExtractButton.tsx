@@ -14,6 +14,10 @@ export default function ExtractButton({ entityType, entityId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coherenceWarning, setCoherenceWarning] = useState<{
+    reason: string;
+    topics: string[];
+  } | null>(null);
 
   if (!session?.user) {
     return (
@@ -29,6 +33,7 @@ export default function ExtractButton({ entityType, entityId }: Props) {
   async function handleClick() {
     setLoading(true);
     setError(null);
+    setCoherenceWarning(null);
 
     try {
       const resp = await fetch('/api/extract-narratives', {
@@ -43,6 +48,17 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       }
 
       const data = await resp.json();
+
+      // Coherence check failed
+      if (data.coherent === false) {
+        setCoherenceWarning({
+          reason: data.reason,
+          topics: data.topics || [],
+        });
+        setLoading(false);
+        return;
+      }
+
       if (data.first_narrative_id) {
         router.push(`/analysis/${data.first_narrative_id}`);
       } else {
@@ -53,6 +69,24 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setLoading(false);
     }
+  }
+
+  if (coherenceWarning) {
+    return (
+      <div className="space-y-2">
+        <div className="text-xs text-amber-300 bg-amber-900/20 border border-amber-700/50 rounded-lg p-3 leading-relaxed">
+          <p className="font-medium mb-1">Mixed topic cluster detected</p>
+          <p>{coherenceWarning.reason}</p>
+          {coherenceWarning.topics.length > 0 && (
+            <ul className="mt-1.5 space-y-0.5 list-disc list-inside text-amber-200/80">
+              {coherenceWarning.topics.map((t, i) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -107,11 +107,23 @@ export default async function EventDetailPage({ params }: Props) {
     </div>
   );
 
-  const sidebar = (narratives.length > 0 || raiSignals) ? (
+  const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {/* Narrative Frames */}
-      {narratives.length > 0 && (
+      {narratives.length > 0 ? (
         <NarrativeCards narratives={narratives} />
+      ) : (
+        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-dashboard-text">Narrative Analysis</h3>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            Extract opposing narrative frames from this event&apos;s coverage.
+            The analysis identifies how different sources frame the same story.
+          </p>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            Extraction and analysis takes 1-2 minutes. Once generated, results
+            are available instantly on future visits.
+          </p>
+          <ExtractButton entityType="event" entityId={event_id} />
+        </div>
       )}
 
       {/* Coverage Assessment */}
@@ -119,7 +131,7 @@ export default async function EventDetailPage({ params }: Props) {
         <RaiSidebar signals={raiSignals} stats={signalStats} />
       )}
     </div>
-  ) : undefined;
+  );
 
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
@@ -202,16 +214,6 @@ export default async function EventDetailPage({ params }: Props) {
               <p key={i}>{para.trim()}</p>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Extract & Analyse CTA */}
-      {narratives.length === 0 && (
-        <div className="mb-8 p-6 rounded-lg border border-dashboard-border bg-dashboard-surface text-center">
-          <p className="text-sm text-dashboard-text-muted mb-3">
-            No narrative frames extracted yet for this event.
-          </p>
-          <ExtractButton entityType="event" entityId={event_id} />
         </div>
       )}
 

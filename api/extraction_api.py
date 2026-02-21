@@ -48,6 +48,17 @@ from pipeline.phase_4.extract_event_narratives import (
 
 EXTRACTION_API_KEY = os.environ.get("EXTRACTION_API_KEY", "")
 
+COHERENCE_CHECK = """IMPORTANT: Before extracting frames, assess whether these headlines \
+cover a SINGLE coherent story or MULTIPLE UNRELATED topics.
+
+If the headlines are about different, unrelated subjects (not just different angles on \
+the same story), respond ONLY with this JSON object:
+{"coherent": false, "reason": "one sentence explaining the topic mix", \
+"topics": ["Topic A", "Topic B"]}
+
+Only proceed with frame extraction if the headlines genuinely cover the same overarching \
+event or story from different editorial stances."""
+
 app = FastAPI(title="SNI Extraction API")
 
 
@@ -71,7 +82,18 @@ def _frame_hint(title_count: int) -> str | None:
     return None  # use default prompt (3-5 for CTM, exactly 3 for event)
 
 
-def _extract_event(conn, entity_id: str) -> list[dict]:
+def _is_incoherent(result) -> dict | None:
+    """Check if LLM returned a coherence warning instead of frames."""
+    if isinstance(result, dict) and result.get("coherent") is False:
+        return {
+            "coherent": False,
+            "reason": result.get("reason", "Headlines cover unrelated topics"),
+            "topics": result.get("topics", []),
+        }
+    return None
+
+
+def _extract_event(conn, entity_id: str) -> dict:
     """Extract narratives for an event."""
     event = fetch_event_by_id(conn, entity_id)
     if not event:
@@ -94,7 +116,19 @@ def _extract_event(conn, entity_id: str) -> list[dict]:
     except Exception:
         pass
 
-    frames, _, _ = event_extract_llm(event, sampled, wiki_context, frame_hint=hint)
+    frames, _, _ = event_extract_llm(
+        event,
+        sampled,
+        wiki_context,
+        frame_hint=hint,
+        pre_instructions=COHERENCE_CHECK,
+    )
+
+    # Check coherence
+    incoherent = _is_incoherent(frames)
+    if incoherent:
+        return incoherent
+
     if not frames or not isinstance(frames, list):
         raise HTTPException(status_code=500, detail="LLM returned no frames")
 
@@ -113,10 +147,10 @@ def _extract_event(conn, entity_id: str) -> list[dict]:
             )
         conn.commit()
 
-    return _fetch_saved_narratives(conn, "event", entity_id)
+    return {"narratives": _fetch_saved_narratives(conn, "event", entity_id)}
 
 
-def _extract_ctm(conn, entity_id: str) -> list[dict]:
+def _extract_ctm(conn, entity_id: str) -> dict:
     """Extract narratives for a CTM."""
     ctm = fetch_ctm_by_id(conn, entity_id)
     if not ctm:
@@ -132,7 +166,18 @@ def _extract_ctm(conn, entity_id: str) -> list[dict]:
     sampled = sample_titles(titles)
     hint = _frame_hint(len(sampled))
 
-    frames, _, _ = ctm_extract_llm(ctm, sampled, frame_hint=hint)
+    frames, _, _ = ctm_extract_llm(
+        ctm,
+        sampled,
+        frame_hint=hint,
+        pre_instructions=COHERENCE_CHECK,
+    )
+
+    # Check coherence
+    incoherent = _is_incoherent(frames)
+    if incoherent:
+        return incoherent
+
     if not frames or not isinstance(frames, list):
         raise HTTPException(status_code=500, detail="LLM returned no frames")
 
@@ -149,7 +194,7 @@ def _extract_ctm(conn, entity_id: str) -> list[dict]:
             )
         conn.commit()
 
-    return _fetch_saved_narratives(conn, "ctm", entity_id)
+    return {"narratives": _fetch_saved_narratives(conn, "ctm", entity_id)}
 
 
 def _fetch_saved_narratives(conn, entity_type: str, entity_id: str) -> list[dict]:
@@ -181,11 +226,11 @@ async def extract(body: ExtractRequest, request: Request):
     conn = get_db_connection()
     try:
         if body.entity_type == "event":
-            narratives = _extract_event(conn, body.entity_id)
+            result = _extract_event(conn, body.entity_id)
         else:
-            narratives = _extract_ctm(conn, body.entity_id)
+            result = _extract_ctm(conn, body.entity_id)
 
-        return JSONResponse(content={"narratives": narratives})
+        return JSONResponse(content=result)
     except HTTPException:
         raise
     except Exception as e:
