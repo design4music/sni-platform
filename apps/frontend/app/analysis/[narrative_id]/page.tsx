@@ -4,6 +4,7 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import AnalysisContent from '@/components/AnalysisContent';
 import NarrativeNav from '@/components/NarrativeNav';
+import AssessmentScores from '@/components/AssessmentScores';
 import { getNarrativeById } from '@/lib/queries';
 import { getTrackLabel, getCountryName } from '@/lib/types';
 import type { SignalStats } from '@/lib/types';
@@ -107,55 +108,14 @@ export default async function AnalysisPage({ params }: Props) {
     ? (typeof n.sample_titles === 'string' ? JSON.parse(n.sample_titles as unknown as string) : n.sample_titles)
     : [];
 
-  // Scores for sidebar (from cached analysis)
-  const shifts = n.rai_shifts;
-
   // Sidebar
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-4">
-      {/* Assessment Scores */}
-      {(n.rai_adequacy != null || shifts) && (
-        <div className="bg-dashboard-border/30 rounded-lg p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-dashboard-text">Assessment Scores</h3>
-
-          {n.rai_adequacy != null && (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-dashboard-text-muted">Adequacy</span>
-                <span className="text-xs font-medium">{Math.round(n.rai_adequacy * 100)}%</span>
-              </div>
-              <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${
-                    n.rai_adequacy >= 0.7 ? 'bg-green-500' : n.rai_adequacy >= 0.4 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${Math.round(n.rai_adequacy * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {shifts && Object.entries(shifts)
-            .filter(([k]) => !['overall_score', 'adequacy'].includes(k))
-            .map(([key, val]) => {
-              if (typeof val !== 'number') return null;
-              const label = key.replace(/_score$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-              // Scores are 0-1 scale
-              const pct = Math.round(val * 100);
-              return (
-                <div key={key}>
-                  <div className="flex justify-between text-xs mb-0.5">
-                    <span className="text-dashboard-text-muted">{label}</span>
-                    <span>{pct}%</span>
-                  </div>
-                  <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500/60 rounded-full" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      )}
+      {/* Assessment Scores (client component: updates live when analysis completes) */}
+      <AssessmentScores
+        initialAdequacy={n.rai_adequacy}
+        initialShifts={n.rai_shifts}
+      />
 
       {/* Narrative meta */}
       {stats && stats.title_count > 0 && (

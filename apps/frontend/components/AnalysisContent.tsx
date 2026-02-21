@@ -130,6 +130,10 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
             if (data.scores.synthesis) setSynthesis(data.scores.synthesis);
             if (data.scores.conflicts) setConflicts(data.scores.conflicts);
             if (data.scores.blind_spots) setBlindSpots(data.scores.blind_spots);
+            // Broadcast to sidebar AssessmentScores component
+            window.dispatchEvent(new CustomEvent('rai-scores-updated', {
+              detail: { adequacy: data.scores.adequacy, shifts: data.scores.shifts },
+            }));
           }
         } else {
           setError('No analysis returned');
