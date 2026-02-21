@@ -5,9 +5,13 @@ import {
   buildAnalysisPrompt,
   callDeepSeek,
   parseAnalysisResponse,
+  selectModules,
+  resolveModules,
+  CORE_MODULE_IDS,
   NarrativeInput,
   AnalysisContext,
 } from '@/lib/rai-engine';
+import type { SignalStats } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,13 +72,14 @@ export async function POST(req: NextRequest) {
       top_sources: string[] | null;
       title_count: number;
       entity_type: string;
+      signal_stats: SignalStats | null;
       centroid_id: string | null;
       centroid_name: string | null;
       track: string | null;
       event_title: string | null;
     }>(
       `SELECT n.label, n.moral_frame, n.description, n.sample_titles,
-              n.top_sources, n.title_count, n.entity_type,
+              n.top_sources, n.title_count, n.entity_type, n.signal_stats,
               COALESCE(ct.centroid_id, c.centroid_id) as centroid_id,
               c2.label as centroid_name,
               COALESCE(ct.track, c.track) as track,
@@ -113,10 +118,23 @@ export async function POST(req: NextRequest) {
       centroid_name: row.centroid_name || '',
       track: row.track || '',
       event_title: row.event_title || '',
+      entity_type: row.entity_type,
     };
 
+    // Parse signal_stats (JSONB comes as object or string)
+    let stats: SignalStats | null = null;
+    if (row.signal_stats) {
+      stats = typeof row.signal_stats === 'string'
+        ? JSON.parse(row.signal_stats)
+        : row.signal_stats;
+    }
+
+    // Select modules: 3 core + 3 LLM-selected
+    const selectedIds = await selectModules(narrative, context, stats);
+    const modules = resolveModules([...CORE_MODULE_IDS, ...selectedIds]);
+
     // Build prompt, call DeepSeek, parse response
-    const prompt = buildAnalysisPrompt(narrative, context);
+    const prompt = buildAnalysisPrompt(narrative, context, modules, stats);
     const raw = await callDeepSeek(prompt);
     const { sections, scores } = parseAnalysisResponse(raw);
 
