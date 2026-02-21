@@ -173,8 +173,8 @@ export async function POST(req: NextRequest) {
         JSON.stringify(sections),
         scores.adequacy ?? null,
         scores.synthesis ?? null,
-        scores.conflicts ? JSON.stringify(scores.conflicts) : null,
-        scores.blind_spots ? JSON.stringify(scores.blind_spots) : null,
+        scores.conflicts?.length ? scores.conflicts : null,
+        scores.blind_spots?.length ? scores.blind_spots : null,
         scores.bias_detected != null || scores.coherence != null
           ? JSON.stringify(scores)
           : null,
