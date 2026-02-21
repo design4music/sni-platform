@@ -144,16 +144,18 @@ export async function POST(req: NextRequest) {
 
     const raiData = await raiRes.json();
 
-    if (raiData.status !== 'success') {
-      console.error('RAI non-success:', JSON.stringify(raiData).slice(0, 500));
-      return NextResponse.json(
-        { error: raiData.error || 'RAI returned non-success' },
-        { status: 502 },
-      );
+    if (raiData.error) {
+      console.error('RAI error:', raiData.error);
+      return NextResponse.json({ error: raiData.error }, { status: 502 });
     }
 
     const sections = raiData.full_analysis;
     const scores = raiData.scores || {};
+
+    if (!sections) {
+      console.error('RAI response missing full_analysis:', JSON.stringify(raiData).slice(0, 500));
+      return NextResponse.json({ error: 'RAI returned no analysis' }, { status: 502 });
+    }
 
     // Save to DB
     await query(
