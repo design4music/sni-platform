@@ -136,10 +136,7 @@ export async function POST(req: NextRequest) {
     if (!raiRes.ok) {
       const text = await raiRes.text();
       console.error(`RAI error ${raiRes.status}: ${text.slice(0, 500)}`);
-      return NextResponse.json(
-        { error: `RAI ${raiRes.status}: ${text.slice(0, 200)}` },
-        { status: 502 },
-      );
+      return NextResponse.json({ error: 'RAI analysis failed' }, { status: 502 });
     }
 
     const raiData = await raiRes.json();
