@@ -670,7 +670,8 @@ export async function getEventById(eventId: string): Promise<EventDetail | null>
       c.centroid_id,
       cv.label as centroid_label,
       c.track,
-      TO_CHAR(c.month, 'YYYY-MM') as month
+      TO_CHAR(c.month, 'YYYY-MM') as month,
+      e.coherence_check
     FROM events_v3 e
     JOIN ctm c ON e.ctm_id = c.id
     JOIN centroids_v3 cv ON c.centroid_id = cv.id
