@@ -12,8 +12,8 @@ RSS Headlines
 -> Phase 4.1: Topic Consolidation (LLM merge/rescue/dedup)
 -> Phase 4.5a: Event Summaries (LLM)
 -> Phase 4.5b: CTM Digest Summaries (LLM)
--> Phase 5: Narrative Frame Extraction (LLM)
--> Phase 6: RAI Signal Analysis (local stats + remote LLM)
+-> [On-demand] Narrative Frame Extraction (LLM, user-triggered)
+-> [On-demand] RAI Analysis (local stats + local LLM, user-triggered)
 -> Monthly Freeze (archival boundary)
 -> Epic Detection & Enrichment (cross-country stories)
 -> Frontend Consumption
@@ -115,31 +115,38 @@ Journalistic, strategic tone. No opinion, no speculation.
 
 ---
 
-## Phase 5 -- Narrative Frame Extraction (LLM)
+## On-Demand Extraction & Analysis (formerly Phases 5 & 6)
+
+Narrative extraction and RAI analysis are **on-demand, user-triggered**
+operations, not automated daemon phases. Users click "Extract & Analyse" on
+a CTM or event page; the frontend calls a FastAPI extraction service which
+runs the same scripts that the daemon previously ran.
+
+### Narrative Frame Extraction
 
 Identifies 2-5 contested narrative frames per entity. Language-stratified
 sampling ensures editorial diversity. Separate scripts for CTM, event, and
 epic narratives (different fetch logic, sampling, and prompts per type).
 
-Runs daily in daemon. Supports refresh mode: re-extracts when an entity's
-source count grows significantly since last extraction.
+**Trigger**: User clicks ExtractButton on CTM track page or event detail page.
+**Auth**: Requires sign-in (extraction is gated behind authentication).
 
-**Output**: `narratives` table (entity_type + entity_id, label, description,
-moral_frame, title_count, top_sources, sample_titles)
-
----
-
-## Phase 6 -- RAI Signal Analysis
+### RAI Analysis
 
 Two-tier architecture:
-- **Tier 1 (local)**: Computes hard coverage stats from DB -- publisher HHI,
-  language distribution, entity countries, domain balance, actor concentration.
-  No LLM calls.
-- **Tier 2 (remote)**: Sends stats to RAI service for compact JSON
-  interpretation -- adequacy score, framing bias, geographic blind spots,
-  missing perspectives.
+- **Tier 1 (local stats)**: Computes hard coverage stats from DB -- publisher
+  HHI, language distribution, entity countries, domain balance, actor
+  concentration. No LLM calls. (`core/signal_stats.py`)
+- **Tier 2 (local LLM)**: RAI engine in frontend (`lib/rai-engine.ts`) builds
+  a targeted prompt using signal stats + narrative context. LLM pre-pass selects
+  3 of 33 analytical modules. DeepSeek generates prose analysis + assessment
+  scores. Results cached in DB.
 
-**Output**: `narratives.signal_stats` (JSONB), `narratives.rai_signals` (JSONB)
+**Trigger**: Automatic after extraction completes, or user clicks "Analyse" on
+existing narratives.
+
+**Output**: `narratives` table (frames), `narratives.signal_stats` (JSONB),
+`narratives.rai_signals` (JSONB), dedicated `/analysis/[narrative_id]` page
 
 ---
 
@@ -177,9 +184,10 @@ Chains grow across months via reused saga UUIDs stored in `events_v3.saga`.
 
 ## Orchestration Model
 
-- Single daemon with adaptive scheduling
+- Single daemon with adaptive scheduling (Phases 1 through 4.5b + daily purge)
 - Sequential phases, phase-specific intervals
 - Queue-aware execution (skip when empty)
+- On-demand extraction and analysis (user-triggered, outside daemon)
 - Designed for observability and recovery
 
 ---
@@ -195,16 +203,20 @@ SNI is a **strategic aggregation engine**, not a discovery toy.
 
 ---
 
-## Frontend Consumption Layer (Non-Intelligent)
+## Frontend Layer
 
-The frontend is a **read-only presentation layer** over the database.
-It introduces no intelligence, inference, or interpretation.
+The frontend is primarily a **read-only presentation layer** over the database.
+It introduces no intelligence, inference, or interpretation of pipeline data.
+
+Two exceptions have controlled write paths:
+- **Authentication**: User registration and sign-in (NextAuth v5, credentials)
+- **On-demand extraction/analysis**: Triggers extraction + RAI analysis, caches results in DB
 
 ### Principles
 - Centroid-first navigation
 - CTM is the atomic unit of displayed intelligence
 - No aggregation or transformation beyond what exists in DB
-- No write paths, no user state, no sessions
+- Write paths limited to auth and extraction triggers
 
 ### Caching Strategy
 - **ISR revalidation**: Pages cached as static HTML (5 min for hot pages, 10 min for cold)
@@ -224,14 +236,19 @@ It introduces no intelligence, inference, or interpretation.
 | Epic detail | `/epics/{slug}` | epics + epic_events + narratives |
 | Sources list | `/sources` | feeds (active outlets) |
 | Outlet profile | `/sources/{feed_name}` | feeds + titles_v3 + narratives |
+| Analysis | `/analysis/{narrative_id}` | narratives + signal_stats + rai_signals |
+| Search | `/search` | Full-text search across centroids, events, CTMs |
 
 ### Navigation Model
 
 Home
 -> Region/System -> Centroid -> Track -> CTM (summary + events + sources)
+                                     -> Extract & Analyse -> Analysis page (scores + prose)
                                      -> Event detail (summary + saga timeline + narratives + sources)
+                                         -> Extract & Analyse -> Analysis page
 -> Epics -> Epic detail (timeline + centroid perspectives + narratives)
 -> Sources -> Outlet profile (coverage map + narrative participation)
+-> Search -> Full-text results
 
 ### Architectural Constraint
 

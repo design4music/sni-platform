@@ -1,0 +1,41 @@
+questions:
+
+  - id: Q-001
+    date: 2026-02-21
+    status: open
+    title: Stale narratives after removing daemon auto-refresh
+    context: >
+      The daemon previously re-extracted narratives when entities grew significantly
+      (CTMs +100 titles, events +50 sources). With Phase 5 removed from the daemon
+      (D-030), narratives extracted early in a month will become stale as coverage
+      accumulates. A CTM extracted at 120 titles may have 400 by month-end.
+    possible_directions:
+      - Refresh button on the analysis page (user-triggered re-extraction)
+      - Staleness indicator showing growth since extraction (e.g., "Coverage grew 3x since analysis")
+      - Automatic staleness badge based on source_count_at_extraction vs current count
+    not_urgent_because: >
+      Most narratives are extracted mid-to-late month when coverage is substantial.
+      February is the first month with on-demand extraction. Monitor before solving.
+    related_decisions:
+      - D-025 (original refresh mode design)
+      - D-030 (on-demand extraction replacing daemon)
+
+  - id: Q-002
+    date: 2026-02-21
+    status: open
+    title: No re-extraction path for existing narratives
+    context: >
+      The extract-narratives API route returns existing narratives if any exist
+      (line 32-37 of extraction_api.py). Users cannot trigger re-extraction for
+      entities that already have narratives. This means early extractions persist
+      even if coverage changed dramatically or extraction quality was poor.
+    possible_directions:
+      - Add a "Re-extract" button (separate from initial "Extract & Analyse")
+      - Allow re-extraction when source count grew by a configurable threshold
+      - Version narratives (keep old extraction, create new one alongside)
+    not_urgent_because: >
+      On-demand extraction is new. Most entities don't have narratives yet.
+      The problem will become visible as the month progresses and users revisit
+      previously-extracted entities. Monitor usage patterns first.
+    related_decisions:
+      - D-030 (on-demand extraction)

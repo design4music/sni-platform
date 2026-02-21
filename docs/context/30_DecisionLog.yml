@@ -490,3 +490,86 @@ decisions:
       - apps/frontend/lib/db.ts
       - apps/frontend/lib/queries.ts
 
+  - id: D-029
+    date: 2026-02-21
+    type: architectural
+    status: accepted
+    title: Add email/password authentication with NextAuth v5
+    rationale: >
+      The frontend was fully public with no user state. Adding authentication
+      enables gating high-value features (narrative extraction, RAI analysis)
+      behind sign-in, creating value differentiation for registered users and
+      a future paywall path. NextAuth v5 chosen for native Next.js App Router
+      integration, credential-based auth (email + bcrypt-hashed password),
+      and session management via JWT.
+    consequences:
+      - Sign-in/sign-up pages at /sign-in, /sign-up
+      - SessionWrapper provides client-side session context
+      - Navigation shows user menu with sign-out for authenticated users
+      - Extraction and analysis API routes check session before proceeding
+      - Frontend is no longer stateless -- has user sessions
+    references:
+      - apps/frontend/auth.ts
+      - apps/frontend/app/sign-in/page.tsx
+      - apps/frontend/app/sign-up/page.tsx
+      - apps/frontend/app/api/auth/signup/route.ts
+
+  - id: D-030
+    date: 2026-02-21
+    type: architectural
+    status: accepted
+    title: Move narrative extraction and RAI analysis to on-demand (remove daemon Phases 5 & 6)
+    rationale: >
+      Phases 5 (narrative extraction) and 6 (RAI analysis) ran automatically in the
+      daemon on a 24h cycle, consuming LLM API credits for all qualifying entities
+      regardless of whether anyone viewed them. Moving to on-demand extraction
+      (triggered by user clicking "Extract & Analyse") achieves three goals:
+      (1) simplifies the pipeline (fewer daemon phases = less fragility),
+      (2) creates value behind sign-in (extraction requires authentication),
+      (3) eliminates background LLM spend (API calls only when users request them).
+      A FastAPI extraction service (api/extraction_api.py) handles extraction requests,
+      calling the same underlying scripts. The frontend routes (extract-narratives,
+      rai-analyse) proxy to this service and cache results in the DB. Existing
+      narratives already in the DB remain untouched.
+    consequences:
+      - Daemon reduced to Phases 1-4.5b + daily purge
+      - First-time visitors see "Extract & Analyse" CTA instead of pre-computed narratives
+      - Extraction scripts unchanged (extraction API imports from them)
+      - Config variables (v3_p5_min_titles etc.) retained for script thresholds
+      - No auto-refresh of stale narratives (see OpenQuestions Q-001)
+      - No re-extraction path for existing narratives (see OpenQuestions Q-002)
+    references:
+      - api/extraction_api.py
+      - apps/frontend/app/api/extract-narratives/route.ts
+      - apps/frontend/app/api/rai-analyse/route.ts
+      - apps/frontend/components/ExtractButton.tsx
+      - pipeline/runner/pipeline_daemon.py (Phase 5/6 removed)
+
+  - id: D-031
+    date: 2026-02-21
+    type: architectural
+    status: accepted
+    title: Port RAI analysis engine locally (eliminate remote RAI intermediary)
+    rationale: >
+      RAI analysis previously required a round-trip to a separate Render-hosted
+      RAI service, which called DeepSeek and returned results. This added latency,
+      an extra deployment to maintain, and an opaque intermediary. The analysis
+      engine was ported directly into the frontend as lib/rai-engine.ts: prompt
+      builder, DeepSeek API caller, response parser, 33 analytical modules with
+      46 premises. An LLM pre-pass selects 3 context-appropriate modules per
+      entity, making analysis targeted rather than generic. Signal stats from
+      Tier 1 (core/signal_stats.py) are injected into the prompt for data-driven
+      analysis. The remote RAI service is retained for the /worldbrief/signals
+      endpoint but is no longer in the critical path.
+    consequences:
+      - Analysis runs directly from frontend API route (no intermediary hop)
+      - 33 modules with 46 premises (up from 6 modules / 14 premises)
+      - LLM selects 3 modules per analysis (context-appropriate, not fixed)
+      - Dedicated /analysis/[narrative_id] page with sidebar scores + prose
+      - DeepSeek API key required in frontend env vars
+    references:
+      - apps/frontend/lib/rai-engine.ts
+      - apps/frontend/app/analysis/[narrative_id]/page.tsx
+      - apps/frontend/components/AnalysisContent.tsx
+      - apps/frontend/components/AssessmentScores.tsx
+

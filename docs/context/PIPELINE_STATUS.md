@@ -9,44 +9,44 @@
 
 ## Executive Summary
 
-The v3 pipeline processes news headlines through 8 phases to produce intelligence CTMs (Centroid-Track-Month units) with structured events, narrative summaries, and RAI risk signals. The system uses a PostgreSQL-native architecture with LLM-based classification and entity extraction.
+The v3 pipeline processes news headlines through automated daemon phases (1 through 4.5b) to produce intelligence CTMs (Centroid-Track-Month units) with structured events and narrative summaries. Narrative extraction and RAI analysis are on-demand (user-triggered via frontend). The system uses a PostgreSQL-native architecture with LLM-based classification and entity extraction.
 
 ### Pipeline Flow
 
 ```
 RSS Feeds (Google News)
     |
-[Phase 1] Ingestion --> titles_v3 (processing_status='pending')
+[Phase 1] Ingestion --> titles_v3 (processing_status='pending')              \
+    |                                                                          \
+[Phase 2] Centroid Matching --> titles_v3 (centroid_ids, status='assigned')    |
+    |                                                                          |
+[Phase 3.1] Label + Signal Extraction --> title_labels (combined LLM call)    | DAEMON
+    |                                                                          | (automated)
+[Phase 3.2] Entity Centroid Backfill --> entity_countries -> centroids        |
+    |                                                                          |
+[Phase 3.3] Intel Gating + Track Assignment --> title_assignments + ctm       |
+    |                                                                          |
+[Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles        |
+    |                                                                          |
+[Phase 4.1] Topic Consolidation (LLM merge/rescue/dedup) --> consolidated     |
+    |                                                                          |
+[Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags      |
+    |                                                                         /
+[Phase 4.5b] CTM Digest Generation --> ctm.summary_text                     /
     |
-[Phase 2] Centroid Matching --> titles_v3 (centroid_ids assigned, status='assigned')
+    |--- [On-demand] User clicks "Extract & Analyse" ------\
+    |                                                       | ON-DEMAND
+    |    Narrative Extraction --> narratives                 | (user-triggered,
+    |    |                                                  |  auth-gated)
+    |    RAI Analysis --> signal_stats + rai_signals         |
+    |    |                                                  |
+    |    Analysis Page (/analysis/[id])  ------------------/
     |
-[Phase 3.1] Label + Signal Extraction --> title_labels (combined LLM call)
-    |
-[Phase 3.2] Entity Centroid Backfill --> title_labels.entity_countries -> centroids
-    |
-[Phase 3.3] Intel Gating + Track Assignment --> title_assignments + ctm
-    |
-[Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles
-    |
-[Phase 4.1] Topic Consolidation (LLM merge/rescue/dedup) --> events_v3 (consolidated)
-    |
-[Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags
-    |
-[Phase 4.5b] CTM Digest Generation --> ctm.summary_text
-    |
-[Phase 5a] CTM Narrative Extraction --> narratives (entity_type='ctm')
-    |
-[Phase 5b] Event Narrative Extraction --> narratives (entity_type='event')
-    |
-[Phase 6] RAI Signal Analysis --> narratives.signal_stats + rai_signals
-    |
-[Epic Detection] --> epics + epic_events (cross-country stories, manual/freeze)
+[Epic Detection] --> epics + epic_events (post-freeze, manual)
     |
 [Epic Enrichment] --> epics.timeline, narratives, centroid_summaries
     |
-[Epic Narrative Extraction] --> narratives (entity_type='epic')
-    |
-Frontend (Next.js) <-- READ-ONLY
+Frontend (Next.js, auth via NextAuth v5)
 ```
 
 ---
@@ -66,9 +66,10 @@ Frontend (Next.js) <-- READ-ONLY
 | Phase 4.1 | (after 4) | all CTMs | Topic consolidation (LLM merge/rescue/dedup) |
 | Phase 4.5a | 15 minutes | 500 events | Event summaries (decoupled) |
 | Phase 4.5b | 1 hour | 50 CTMs | CTM digest generation |
-| Phase 5a | 24 hours | 20 CTMs | CTM narrative extraction (new + refresh) |
-| Phase 5b | 24 hours | 50 events | Event narrative extraction (new + refresh) |
-| Phase 6 | 24 hours | 20 narratives | RAI signal analysis (event + CTM) |
+| Daily purge | 24 hours | all | Remove rejected titles to tombstone table |
+
+Phases 5 (narrative extraction) and 6 (RAI analysis) were removed from the daemon
+in D-030. They now run on-demand via the frontend extraction API.
 
 ---
 
@@ -304,91 +305,62 @@ LLM generates conversational summaries for each event:
 
 ---
 
-## Phase 5: Narrative Extraction
+## On-Demand Narrative Extraction & RAI Analysis
 
-**Scripts**: `pipeline/phase_4/extract_ctm_narratives.py`, `pipeline/phase_4/extract_event_narratives.py`
-**Interval**: 24 hours (daemon Phase 5a + 5b)
+**Extraction service**: `api/extraction_api.py` (FastAPI)
+**Frontend routes**: `app/api/extract-narratives/route.ts`, `app/api/rai-analyse/route.ts`
+**Trigger**: User clicks "Extract & Analyse" (requires authentication)
 
-### Overview
+Previously daemon Phases 5 & 6, now on-demand (D-030). Scripts and stats modules unchanged.
+
+### Narrative Extraction
 
 Single-pass LLM analysis identifies 2-5 contested narrative frames per entity. Stores results in the unified `narratives` table with `entity_type` = 'ctm' or 'event'.
 
-### CTM Narratives (Phase 5a)
+**CTM Narratives**:
+- Selection: CTMs with `title_count >= 100` (config: `v3_p5_min_titles`), not frozen
+- Sampling: Language-stratified (200 titles max), publisher round-robin within strata
 
-- **Selection**: CTMs with `title_count >= 100` (config: `v3_p5_min_titles`), not frozen
-- **Refresh**: Re-extract when `title_count` grew by >= 100 since last extraction (config: `v3_p5_refresh_growth`)
-- **Sampling**: Language-stratified (200 titles max). Each language with >= 3 titles gets a floor of 5 slots. Publisher round-robin within each language stratum.
-- **Prompt**: Asks for 3-5 frames with moral roles (hero/villain), rejects neutral/topic-description frames
+**Event Narratives**:
+- Selection: Events with `source_batch_count >= 30` (config: `v3_p5e_min_sources`)
+- Sampling: Same language-stratified sampling
 
-### Event Narratives (Phase 5b)
+**Coherence Check**: Before extraction, LLM checks whether the topic cluster is coherent enough for meaningful narrative extraction. Result stored in `events_v3.coherence_check` JSONB.
 
-- **Selection**: Events with `source_batch_count >= 30` (config: `v3_p5e_min_sources`), not on frozen CTMs
-- **Refresh**: Re-extract when `source_batch_count` grew by >= 50 since extraction (config: `v3_p5e_refresh_growth`). Tracks `source_count_at_extraction` in `signal_stats` JSONB.
-- **Sampling**: Same language-stratified sampling (imported from CTM script)
+### RAI Analysis
 
-### Daemon Callable
+**Tier 1 -- Local Stats** (`core/signal_stats.py`):
+- Pure SQL + Python aggregation, no LLM calls
+- `compute_event_stats()`, `compute_ctm_stats()`, `compute_epic_stats()` share `_aggregate_rows()` helper
+- Stats: publisher HHI, language distribution, entity countries, domain/action_class distribution, top actors/persons/orgs, narrative frame count, date range, label coverage
+- Stored in `narratives.signal_stats` JSONB
 
-Both scripts export daemon entry points:
-- `process_ctm_narratives(month, limit)` -- runs new + refresh passes
-- `process_event_narratives(limit)` -- runs new + refresh passes
+**Tier 2 -- Local RAI Engine** (`apps/frontend/lib/rai-engine.ts`):
+- 33 analytical modules with 46 premises (covering coverage adequacy, framing, source diversity, geographic bias, narrative shifts, etc.)
+- LLM pre-pass selects 3 context-appropriate modules per entity
+- Signal stats from Tier 1 injected into analysis prompt
+- DeepSeek generates prose analysis + assessment scores (0-1 scale)
+- Results cached in `narratives.rai_signals` JSONB + `rai_signals_at` timestamp
+
+### Analysis Page
+
+Dedicated `/analysis/[narrative_id]` page with:
+- Sidebar: assessment scores (displayed as %), coverage stats (sources, languages, publishers)
+- Main: analysis prose, synthesis, shift indicators
+- Appendix: sample headlines used in analysis
 
 ### Configuration
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `v3_p5_min_titles` | 100 | CTM min titles for extraction |
-| `v3_p5_refresh_growth` | 100 | CTM title growth to trigger refresh |
-| `v3_p5_interval` | 86400 | Daemon interval (24h) |
 | `v3_p5e_min_sources` | 30 | Event min sources for extraction |
-| `v3_p5e_refresh_growth` | 50 | Event source growth to trigger refresh |
+| `DEEPSEEK_API_KEY` | env var | Required for RAI analysis LLM calls |
 
----
+### Known Limitations
 
-## Phase 6: RAI Signal Analysis
-
-**Script**: `pipeline/phase_4/analyze_event_rai.py`
-**Interval**: 24 hours (daemon Phase 6)
-
-### Complete Cycle
-
-Phase 5 extracts narrative frames -> Phase 6 computes stats + sends to RAI -> RAI returns compact analytical signals. This produces the final intelligence product per narrative: scores, blind spots, framing analysis.
-
-### Two-Tier Architecture
-
-**Tier 1 -- Local Stats** (`core/signal_stats.py`):
-- Pure SQL + Python aggregation, no LLM calls
-- `compute_event_stats(conn, event_id)` and `compute_ctm_stats(conn, ctm_id)` share `_aggregate_rows()` helper
-- CTM stats use `DISTINCT ON (t.id)` to avoid double-counting titles across events
-- Stats: publisher HHI, language distribution, entity countries, domain/action_class distribution, top actors/persons/orgs, narrative frame count, date range, label coverage
-- Stored in `narratives.signal_stats` JSONB
-
-**Tier 2 -- RAI Interpretation** (`POST /api/v1/worldbrief/signals`):
-- RAI LLM interprets hard stats using 5 RAI modules (CL-0, NL-3, FL-2, FL-3, SL-8)
-- Returns compact JSON: adequacy (0-1), adequacy_reason, framing_bias, source_concentration, geographic_blind_spots, findings, follow_the_gain, missing_perspectives
-- Stored in `narratives.rai_signals` JSONB + `rai_signals_at` timestamp
-
-### Entity Types
-
-Both event and CTM narratives are processed. Different JOIN paths:
-- Events: `narratives -> events_v3 -> ctm` (context = event title/summary)
-- CTMs: `narratives -> ctm` (context = CTM summary_text, truncated to 200 chars)
-
-### Modes
-
-- **Signals (default)**: Compact signals via `/worldbrief/signals` (~10-15s)
-- **Full (`--full`)**: Legacy full HTML analysis via `/worldbrief/analyze` (~50-60s, events only)
-
-### Daemon Callable
-
-`process_rai_signals(limit=20, delay=2.0)` -- iterates over ("event", "ctm") entity types, processes narratives where `rai_signals_at IS NULL`.
-
-### Configuration
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| `rai_signals_url` | Render service | Signals endpoint |
-| `rai_worldbrief_url` | Render service | Full analysis endpoint |
-| `rai_timeout_seconds` | 120 | API timeout |
+- **No auto-refresh**: Narratives are not re-extracted when coverage grows (see Q-001)
+- **No re-extraction**: Existing narratives cannot be overwritten by user (see Q-002)
 
 ---
 
@@ -461,6 +433,7 @@ event_type: 'bilateral' | 'domestic' | 'other_international'
 bucket_key, source_batch_count, is_catchall
 topic_core JSONB  -- Anchor signals for consolidation context
 saga TEXT  -- UUID linking same story across months (from chain_event_sagas)
+coherence_check JSONB  -- LLM coherence assessment before narrative extraction
 ```
 
 **ctm**: Centroid-Track-Month aggregations
@@ -536,7 +509,7 @@ pipeline/
 |   |-- generate_summaries_4_5.py    # CTM digests
 |   |-- extract_ctm_narratives.py    # CTM narrative extraction (Phase 5a)
 |   |-- extract_event_narratives.py  # Event narrative extraction (Phase 5b)
-|   |-- analyze_event_rai.py         # RAI signal analysis (Phase 6)
+|   |-- analyze_event_rai.py         # RAI signal analysis (legacy batch, now on-demand)
 |   |-- chain_event_sagas.py         # Cross-month event saga linking
 |
 |-- epics/                           # Epic lifecycle (cron/manual)
@@ -554,6 +527,9 @@ pipeline/
 |   |-- pipeline_daemon.py           # Orchestration daemon
 |   |-- backfill_pipeline.py         # One-time catch-up (4.5a + 4.1)
 
+api/
+|-- extraction_api.py                # FastAPI service for on-demand narrative extraction
+
 core/
 |-- config.py                        # Configuration + clustering constants
 |-- prompts.py                       # All LLM prompts (consolidated)
@@ -569,30 +545,45 @@ db/
 |-- migrations/                      # SQL migrations
 
 apps/frontend/
+|-- auth.ts                          # NextAuth v5 config (credentials provider, JWT)
 |-- app/
 |   |-- c/[centroid_key]/page.tsx    # Centroid page (summary + tracks)
 |   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
 |   |-- events/[event_id]/page.tsx   # Event detail page (saga timeline)
+|   |-- analysis/[narrative_id]/page.tsx  # Dedicated RAI analysis page
 |   |-- epics/page.tsx               # Epic list page (month navigation)
 |   |-- epics/[slug]/page.tsx        # Epic detail page
 |   |-- sources/page.tsx             # Media outlet list
 |   |-- sources/[feed_name]/page.tsx # Outlet profile page
+|   |-- search/page.tsx              # Full-text search
+|   |-- sign-in/page.tsx             # Authentication sign-in
+|   |-- sign-up/page.tsx             # Authentication sign-up
+|   |-- api/extract-narratives/route.ts  # Proxy to extraction API
+|   |-- api/rai-analyse/route.ts     # On-demand RAI analysis (auth-gated)
+|   |-- api/auth/signup/route.ts     # User registration endpoint
 |-- lib/
 |   |-- cache.ts                     # In-memory TTL cache (Map-based, lazy cleanup)
 |   |-- db.ts                        # PostgreSQL pool (max 10, idle 30s, conn 5s)
 |   |-- queries.ts                   # All DB queries (9 cached with 5-10 min TTL)
 |   |-- types.ts                     # Shared types (Track, REGIONS, Epic, etc.)
+|   |-- rai-engine.ts               # Local RAI analysis engine (33 modules, DeepSeek)
+|   |-- logos.ts                     # Self-hosted outlet favicon paths
 |-- components/
 |   |-- DashboardLayout.tsx          # Main layout (sidebar + content grid)
 |   |-- TrackCard.tsx                # Track card component
 |   |-- EventList.tsx                # Event list with expand/collapse
-|   |-- EventAccordion.tsx           # Single event accordion item
+|   |-- EventAccordion.tsx           # Single event accordion item (freshness dot)
 |   |-- CountryAccordion.tsx         # Country section with events
-|   |-- GeoBriefSection.tsx          # Centroid profile/brief display
+|   |-- GeoBriefSection.tsx          # Centroid profile/brief display + mini-map
+|   |-- CentroidMiniMap.tsx          # Geographic mini-map for centroid cards
 |   |-- MonthNav.tsx                 # Month navigation sidebar
 |   |-- TableOfContents.tsx          # Sticky TOC for track page
 |   |-- EpicCountries.tsx            # Country accordion for epics
-|   |-- NarrativeOverlay.tsx         # Narrative cards + RAI analysis modal
+|   |-- NarrativeOverlay.tsx         # Narrative cards (links to analysis page)
+|   |-- ExtractButton.tsx            # "Extract & Analyse" CTA (auth-gated)
+|   |-- NarrativeNav.tsx             # Prev/next dots + arrows for sibling narratives
+|   |-- AnalysisContent.tsx          # Client-side analysis prose + score broadcast
+|   |-- AssessmentScores.tsx         # Client component for live score rendering
 
 archive/phase_4_old/                 # Deprecated Phase 4 scripts
 |-- aggregate_topics.py              # Replaced by consolidate_topics.py
@@ -633,18 +624,13 @@ python pipeline/phase_4/generate_event_summaries_4_5a.py --max-events 500
 # Phase 4.5b: CTM Summaries
 python pipeline/phase_4/generate_summaries_4_5.py --max-ctms 50
 
-# Phase 5a: CTM Narrative Extraction
+# Narrative Extraction (on-demand, or manual CLI)
 python pipeline/phase_4/extract_ctm_narratives.py --month 2026-02 --dry-run
-python pipeline/phase_4/extract_ctm_narratives.py --month 2026-02 --refresh --limit 10
-
-# Phase 5b: Event Narrative Extraction
 python pipeline/phase_4/extract_event_narratives.py --dry-run --limit 20
-python pipeline/phase_4/extract_event_narratives.py --refresh --limit 20
 
-# Phase 6: RAI Signal Analysis
+# RAI Signal Analysis (on-demand via frontend, or manual CLI)
 python pipeline/phase_4/analyze_event_rai.py --limit 10
 python pipeline/phase_4/analyze_event_rai.py --entity-type ctm --limit 5
-python pipeline/phase_4/analyze_event_rai.py --full --event <UUID>
 
 # Event Saga Chaining (cross-month story linking)
 python -m pipeline.phase_4.chain_event_sagas --dry-run
@@ -754,21 +740,33 @@ Remote: Render environment settings (`DATABASE_URL` connection string format)
 
 Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/frontend/lib/db.ts`).
 
-### RAI Service
+### RAI Analysis
 
-- URL: `RAI_API_URL` (Render-hosted RAI backend)
-- Auth: `RAI_API_KEY` (Bearer token)
-- Timeout: 300s (Render free tier is slow)
+- **Primary path**: Local RAI engine in `lib/rai-engine.ts` (calls DeepSeek directly)
+- **Legacy path**: Remote RAI service at `RAI_API_URL` (retained for `/worldbrief/signals` endpoint)
+- Required env vars: `DEEPSEEK_API_KEY` (frontend), `AUTH_SECRET` (NextAuth JWT signing)
 
 ---
 
-## Current Status (2026-02-20)
+## Current Status (2026-02-21)
 
-**Operational**: Full pipeline (Phases 1-6) running locally with complete RAI cycle. January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. All phases including narrative extraction (Phase 5) and RAI signal analysis (Phase 6) integrated into daemon on 24h cycle. Production site live at https://www.worldbrief.info
+**Operational**: Daemon runs Phases 1 through 4.5b + daily purge locally. Narrative extraction and RAI analysis are on-demand (user-triggered, auth-gated). January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. User authentication live. Production site at https://www.worldbrief.info
 
 ### Recent Changes (2026-02-21)
 
-1. **Frontend Performance Optimization**: Replaced `force-dynamic` on all 13 pages with ISR revalidation (5 min for frequently viewed pages, 10 min for slower-changing pages). Added in-memory Map-based TTL cache (`lib/cache.ts`) for 9 frequently-called queries. Rewrote `getCentroidsByClass` and `getCentroidsByTheater` from O(N*4) correlated subqueries to single CTE aggregation. Fixed sitemap N+1 query (101 sequential queries replaced with 1 JOIN). Added `generateStaticParams` for region pages (6 static paths from REGIONS constant). Connection pool tuned (max 10, idle timeout 30s, connection timeout 5s). About/disclaimer pages fully static. Search page remains `force-dynamic`.
+1. **User Authentication**: Email/password auth via NextAuth v5 (D-029). Sign-in/sign-up pages, JWT sessions, user menu in navigation. Extraction and analysis API routes require authentication.
+2. **On-Demand Extraction & Analysis**: Narrative extraction and RAI analysis moved from daemon (Phases 5 & 6) to user-triggered on-demand flow (D-030). FastAPI extraction service (`api/extraction_api.py`), frontend proxy routes, ExtractButton component. Users see "Extract & Analyse" CTA on entities without narratives.
+3. **Local RAI Engine**: Analysis ported from remote RAI service to frontend-local engine (D-031). `lib/rai-engine.ts` with 33 modules / 46 premises, LLM-driven module selection, signal stats injection. Dedicated `/analysis/[narrative_id]` page with sidebar scores + prose.
+4. **Daemon Simplified**: Phases 5 & 6 removed from `pipeline_daemon.py`. Daemon now runs Phases 1-4.5b + daily purge only.
+5. **Coherence Check**: LLM evaluates topic cluster coherence before extraction. Result stored in `events_v3.coherence_check` JSONB, shown as amber warning in event sidebar.
+6. **Self-Hosted Assets**: 152 flag PNGs + 176 outlet favicon PNGs self-hosted under `public/flags/` and `public/logos/`. CSP `img-src` tightened to `'self'`.
+7. **Search**: Full-text search page (`/search`) across centroids, events, CTMs.
+8. **Freshness Badges**: Green pulsing dot on events with recent coverage. Geographic mini-maps on centroid cards.
+9. **Security Headers**: CSP, X-Frame-Options, Referrer-Policy added to Next.js config.
+
+### Previous Changes (2026-02-21 early)
+
+1. **Frontend Performance Optimization**: ISR revalidation replacing `force-dynamic` on all 13 pages (D-028). In-memory TTL cache for 9 queries. CTE query rewrites. Sitemap N+1 fix. Connection pool tuning.
 
 ### Previous Changes (2026-02-20)
 
@@ -842,11 +840,12 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 1. **Phase 2 centroid gap**: Some topics appear under "Domestic" when they should be bilateral (e.g., Lebanon/UNIFIL under MIDEAST-ISRAEL domestic). Titles only have the home centroid, missing the foreign centroid (e.g., MIDEAST-LEVANT). Phase 2 mechanical matching doesn't catch all geographic references.
 2. **Node memory leak**: Frontend dev server leaks to 2GB+ after ~3 days. Requires restart.
+3. **Stale narratives**: No auto-refresh after removing daemon Phase 5. See OpenQuestions Q-001.
+4. **No re-extraction path**: Users cannot re-extract narratives for entities that already have them. See OpenQuestions Q-002.
 
 ### Next Steps
 
-1. **RAI Tuning**: Improve narrative extraction; adjust RAI payloads for better bias detection
-2. **Phase 5 Refinement**: Better anchor tag selection, epic deduplication
-3. **Phase 2 Improvement**: Better centroid matching for bilateral relationships (e.g., Lebanon -> MIDEAST-LEVANT)
-4. **February Freeze**: End-of-month freeze + centroid summaries + epic detection
-5. Monitor consolidation quality across all CTMs
+1. **February Freeze**: End-of-month freeze + centroid summaries + epic detection
+2. **Phase 2 Improvement**: Better centroid matching for bilateral relationships
+3. **Staleness indicators**: Show users when narratives are outdated relative to current coverage
+4. Monitor on-demand extraction usage patterns and quality
