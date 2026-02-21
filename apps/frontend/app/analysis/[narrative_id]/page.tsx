@@ -112,19 +112,8 @@ export default async function AnalysisPage({ params }: Props) {
   // Sidebar
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-4">
-      {/* Yellow LLM disclaimer */}
-      <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
-        <p className="text-xs text-yellow-200 leading-relaxed">
-          This analysis is produced by an AI language model (DeepSeek) operating under
-          the RAI analytical framework. It is based on the coverage data shown on this
-          page. The analysis reflects the available data and may contain omissions or
-          misinterpretations. It should be treated as a structured starting point for
-          critical thinking, not as a definitive assessment.
-        </p>
-      </div>
-
       {/* Assessment Scores */}
-      {(n.rai_adequacy != null || n.rai_synthesis || shifts) && (
+      {(n.rai_adequacy != null || shifts) && (
         <div className="bg-dashboard-border/30 rounded-lg p-4 space-y-3">
           <h3 className="text-sm font-semibold text-dashboard-text">Assessment Scores</h3>
 
@@ -162,41 +151,6 @@ export default async function AnalysisPage({ params }: Props) {
                 </div>
               );
             })}
-
-          {n.rai_synthesis && (
-            <div>
-              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-1">Synthesis</h4>
-              <p className="text-xs text-dashboard-text-muted leading-relaxed">{n.rai_synthesis}</p>
-            </div>
-          )}
-
-          {n.rai_conflicts && n.rai_conflicts.length > 0 && (
-            <div>
-              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-1">Conflicts</h4>
-              <ul className="space-y-1">
-                {n.rai_conflicts.map((c, i) => (
-                  <li key={i} className="text-xs text-dashboard-text-muted flex items-start gap-1.5">
-                    <span className="text-orange-400 mt-0.5 flex-shrink-0">-</span>
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {n.rai_blind_spots && n.rai_blind_spots.length > 0 && (
-            <div>
-              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-1">Blind Spots</h4>
-              <ul className="space-y-1">
-                {n.rai_blind_spots.map((b, i) => (
-                  <li key={i} className="text-xs text-dashboard-text-muted flex items-start gap-1.5">
-                    <span className="text-orange-400 mt-0.5 flex-shrink-0">?</span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
 
@@ -298,6 +252,17 @@ export default async function AnalysisPage({ params }: Props) {
 
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
+      {/* LLM disclaimer */}
+      <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4 mb-6">
+        <p className="text-xs text-yellow-200 leading-relaxed">
+          This analysis is produced by an AI language model (DeepSeek) operating under
+          the RAI analytical framework. It is based on the coverage data shown on this
+          page. The analysis reflects the available data and may contain omissions or
+          misinterpretations. It should be treated as a structured starting point for
+          critical thinking, not as a definitive assessment.
+        </p>
+      </div>
+
       {/* Title */}
       <h1 className="text-3xl md:text-4xl font-bold mb-4">{n.label}</h1>
 

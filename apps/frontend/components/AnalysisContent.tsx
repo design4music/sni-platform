@@ -87,6 +87,9 @@ interface AnalysisContentProps {
 export default function AnalysisContent({ narrative, sampleTitles }: AnalysisContentProps) {
   const { data: session } = useSession();
   const [sections, setSections] = useState<RaiSection[] | null>(null);
+  const [synthesis, setSynthesis] = useState<string | null>(narrative.rai_synthesis || null);
+  const [conflicts, setConflicts] = useState<string[] | null>(narrative.rai_conflicts || null);
+  const [blindSpots, setBlindSpots] = useState<string[] | null>(narrative.rai_blind_spots || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -122,6 +125,12 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
       .then((data) => {
         if (data.sections && Array.isArray(data.sections)) {
           setSections(data.sections);
+          // Update scores from fresh API response
+          if (data.scores) {
+            if (data.scores.synthesis) setSynthesis(data.scores.synthesis);
+            if (data.scores.conflicts) setConflicts(data.scores.conflicts);
+            if (data.scores.blind_spots) setBlindSpots(data.scores.blind_spots);
+          }
         } else {
           setError('No analysis returned');
         }
@@ -142,6 +151,8 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
       </div>
     );
   }
+
+  const hasSynthesisSection = synthesis || (conflicts && conflicts.length > 0) || (blindSpots && blindSpots.length > 0);
 
   return (
     <div>
@@ -172,6 +183,46 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
           ))}
         </div>
       ))}
+
+      {/* Synthesis, Conflicts, Blind Spots */}
+      {hasSynthesisSection && (
+        <div className="mt-10 pt-8 border-t border-dashboard-border space-y-6">
+          {synthesis && (
+            <div>
+              <h2 className="text-xl font-semibold text-dashboard-text mb-2">Synthesis</h2>
+              <p className="text-base text-dashboard-text-muted leading-relaxed">{synthesis}</p>
+            </div>
+          )}
+
+          {conflicts && conflicts.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold text-dashboard-text mb-2">Conflicts</h2>
+              <ul className="space-y-1.5">
+                {conflicts.map((c, i) => (
+                  <li key={i} className="text-base text-dashboard-text-muted leading-relaxed flex items-start gap-2">
+                    <span className="text-orange-400 mt-1 flex-shrink-0">-</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {blindSpots && blindSpots.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold text-dashboard-text mb-2">Blind Spots</h2>
+              <ul className="space-y-1.5">
+                {blindSpots.map((b, i) => (
+                  <li key={i} className="text-base text-dashboard-text-muted leading-relaxed flex items-start gap-2">
+                    <span className="text-orange-400 mt-1 flex-shrink-0">?</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Sample Headlines appendix */}
       {sampleTitles.length > 0 && (
