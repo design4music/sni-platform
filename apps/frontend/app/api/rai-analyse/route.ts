@@ -122,11 +122,15 @@ export async function POST(req: NextRequest) {
     };
 
     // Parse signal_stats (JSONB comes as object or string)
+    // Only use stats if they have full Tier 1 data (title_count), not just frame-level extraction markers
     let stats: SignalStats | null = null;
     if (row.signal_stats) {
-      stats = typeof row.signal_stats === 'string'
+      const raw = typeof row.signal_stats === 'string'
         ? JSON.parse(row.signal_stats)
         : row.signal_stats;
+      if (raw.title_count) {
+        stats = raw;
+      }
     }
 
     // Select modules: 3 core + 3 LLM-selected
