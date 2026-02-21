@@ -135,18 +135,20 @@ export default async function AnalysisPage({ params }: Props) {
           )}
 
           {shifts && Object.entries(shifts)
-            .filter(([k]) => k !== 'overall_score')
+            .filter(([k]) => !['overall_score', 'adequacy'].includes(k))
             .map(([key, val]) => {
               if (typeof val !== 'number') return null;
-              const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              const label = key.replace(/_score$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              // Scores are 0-1 scale
+              const pct = Math.round(val * 100);
               return (
                 <div key={key}>
                   <div className="flex justify-between text-xs mb-0.5">
                     <span className="text-dashboard-text-muted">{label}</span>
-                    <span>{val}/10</span>
+                    <span>{pct}%</span>
                   </div>
                   <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500/60 rounded-full" style={{ width: `${val * 10}%` }} />
+                    <div className="h-full bg-blue-500/60 rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
