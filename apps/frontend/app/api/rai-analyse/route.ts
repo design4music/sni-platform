@@ -135,14 +135,21 @@ export async function POST(req: NextRequest) {
 
     if (!raiRes.ok) {
       const text = await raiRes.text();
-      console.error(`RAI error ${raiRes.status}: ${text.slice(0, 200)}`);
-      return NextResponse.json({ error: 'RAI analysis failed' }, { status: 502 });
+      console.error(`RAI error ${raiRes.status}: ${text.slice(0, 500)}`);
+      return NextResponse.json(
+        { error: `RAI ${raiRes.status}: ${text.slice(0, 200)}` },
+        { status: 502 },
+      );
     }
 
     const raiData = await raiRes.json();
 
     if (raiData.status !== 'success') {
-      return NextResponse.json({ error: raiData.error || 'RAI error' }, { status: 502 });
+      console.error('RAI non-success:', JSON.stringify(raiData).slice(0, 500));
+      return NextResponse.json(
+        { error: raiData.error || 'RAI returned non-success' },
+        { status: 502 },
+      );
     }
 
     const sections = raiData.full_analysis;
