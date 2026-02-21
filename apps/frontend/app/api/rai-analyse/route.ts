@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     }>(
       `SELECT n.label, n.moral_frame, n.description, n.sample_titles,
               n.top_sources, n.title_count, n.entity_type,
-              COALESCE(e.centroid_id, c.centroid_id) as centroid_id,
+              COALESCE(ct.centroid_id, c.centroid_id) as centroid_id,
               c2.label as centroid_name,
               COALESCE(ct.track, c.track) as track,
               COALESCE(e.title, e.topic_core) as event_title
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
        LEFT JOIN events_v3 e ON n.entity_type = 'event' AND n.entity_id = e.id
        LEFT JOIN ctm ct ON n.entity_type = 'event' AND e.ctm_id = ct.id
        LEFT JOIN ctm c ON n.entity_type = 'ctm' AND n.entity_id = c.id
-       LEFT JOIN centroids_v3 c2 ON c2.id = COALESCE(e.centroid_id, c.centroid_id)
+       LEFT JOIN centroids_v3 c2 ON c2.id = COALESCE(ct.centroid_id, c.centroid_id)
        WHERE n.id = $1`,
       [narrative_id]
     );
