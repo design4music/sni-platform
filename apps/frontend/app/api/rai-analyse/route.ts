@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { query } from '@/lib/db';
-
-const RAI_WORLDBRIEF_URL = process.env.RAI_WORLDBRIEF_URL;
-const RAI_API_KEY = process.env.RAI_API_KEY;
-const RAI_TIMEOUT_MS = 120_000; // 2 minutes
+import {
+  buildAnalysisPrompt,
+  callDeepSeek,
+  parseAnalysisResponse,
+  NarrativeInput,
+  AnalysisContext,
+} from '@/lib/rai-engine';
 
 export async function POST(req: NextRequest) {
   try {
@@ -91,67 +94,35 @@ export async function POST(req: NextRequest) {
 
     const row = rows[0];
 
-    // Build RAI payload
+    // Build narrative + context for prompt
     const sampleTitles = typeof row.sample_titles === 'string'
       ? JSON.parse(row.sample_titles)
       : row.sample_titles || [];
 
-    const payload = {
-      content_type: `${row.entity_type}_narrative`,
-      format: 'json',
-      narrative: {
-        label: row.label,
-        moral_frame: row.moral_frame,
-        description: row.description,
-        sample_titles: sampleTitles,
-        source_count: row.title_count,
-        top_sources: row.top_sources || [],
-      },
-      context: {
-        centroid_id: row.centroid_id || '',
-        track: row.track || '',
-        event_title: row.event_title || '',
-      },
+    const narrative: NarrativeInput = {
+      label: row.label,
+      moral_frame: row.moral_frame,
+      description: row.description,
+      sample_titles: sampleTitles,
+      source_count: row.title_count,
+      top_sources: row.top_sources || [],
     };
 
-    // Call RAI
-    if (!RAI_WORLDBRIEF_URL || !RAI_API_KEY) {
-      return NextResponse.json({ error: 'RAI not configured' }, { status: 503 });
-    }
+    const context: AnalysisContext = {
+      centroid_id: row.centroid_id || '',
+      centroid_name: row.centroid_name || '',
+      track: row.track || '',
+      event_title: row.event_title || '',
+    };
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), RAI_TIMEOUT_MS);
+    // Build prompt, call DeepSeek, parse response
+    const prompt = buildAnalysisPrompt(narrative, context);
+    const raw = await callDeepSeek(prompt);
+    const { sections, scores } = parseAnalysisResponse(raw);
 
-    const raiRes = await fetch(RAI_WORLDBRIEF_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RAI_API_KEY}`,
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!raiRes.ok) {
-      const text = await raiRes.text();
-      console.error(`RAI error ${raiRes.status}: ${text.slice(0, 500)}`);
-      return NextResponse.json({ error: 'RAI analysis failed' }, { status: 502 });
-    }
-
-    const raiData = await raiRes.json();
-
-    if (raiData.error) {
-      console.error('RAI error:', raiData.error);
-      return NextResponse.json({ error: raiData.error }, { status: 502 });
-    }
-
-    const sections = raiData.full_analysis;
-    const scores = raiData.scores || {};
-
-    if (!sections) {
-      console.error('RAI response missing full_analysis:', JSON.stringify(raiData).slice(0, 500));
-      return NextResponse.json({ error: 'RAI returned no analysis' }, { status: 502 });
+    if (sections.length === 0) {
+      console.error('DeepSeek returned no parseable sections');
+      return NextResponse.json({ error: 'Analysis returned no content' }, { status: 502 });
     }
 
     // Save to DB
@@ -181,7 +152,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sections, scores });
   } catch (err: unknown) {
     if (err instanceof Error && err.name === 'AbortError') {
-      return NextResponse.json({ error: 'RAI analysis timed out' }, { status: 504 });
+      return NextResponse.json({ error: 'Analysis timed out' }, { status: 504 });
     }
     console.error('RAI analyse error:', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

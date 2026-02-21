@@ -4,6 +4,85 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { FramedNarrative, FrameStats, RaiSection } from '@/lib/types';
 
+/** Render a paragraph-level markdown block as React elements. */
+function renderMarkdown(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let listItems: string[] = [];
+  let listKey = 0;
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    elements.push(
+      <ul key={`ul-${listKey++}`} className="list-disc pl-5 mb-2 space-y-0.5 text-sm text-dashboard-text-muted leading-relaxed">
+        {listItems.map((item, i) => (
+          <li key={i} dangerouslySetInnerHTML={{ __html: inlineFormat(item) }} />
+        ))}
+      </ul>
+    );
+    listItems = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Sub-heading (### within a section)
+    const subHeading = line.match(/^###\s+(.+)$/);
+    if (subHeading) {
+      flushList();
+      elements.push(
+        <h5 key={`h-${i}`} className="text-xs font-semibold text-dashboard-text mt-3 mb-1">
+          {subHeading[1]}
+        </h5>
+      );
+      continue;
+    }
+
+    // Blockquote
+    if (line.startsWith('> ')) {
+      flushList();
+      elements.push(
+        <blockquote
+          key={`bq-${i}`}
+          className="border-l-2 border-emerald-500/40 pl-3 my-2 text-sm italic text-dashboard-text-muted/80 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: inlineFormat(line.slice(2)) }}
+        />
+      );
+      continue;
+    }
+
+    // Bullet list item
+    const bullet = line.match(/^[\-\*]\s+(.+)$/);
+    if (bullet) {
+      listItems.push(bullet[1]);
+      continue;
+    }
+
+    // Regular line
+    flushList();
+    const trimmed = line.trim();
+    if (trimmed) {
+      elements.push(
+        <span
+          key={`l-${i}`}
+          className="block text-sm text-dashboard-text-muted leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: inlineFormat(trimmed) }}
+        />
+      );
+    }
+  }
+  flushList();
+
+  return <>{elements}</>;
+}
+
+/** Apply inline markdown formatting (bold, italic). */
+function inlineFormat(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+
 interface NarrativeOverlayProps {
   narrative: FramedNarrative;
   onClose: () => void;
@@ -119,9 +198,9 @@ function NarrativeOverlay({ narrative, onClose }: NarrativeOverlayProps) {
               <div key={s.heading} className="mb-4">
                 <h4 className="text-sm font-semibold text-dashboard-text mb-1.5">{s.heading}</h4>
                 {s.paragraphs.map((p, i) => (
-                  <p key={i} className="text-sm text-dashboard-text-muted leading-relaxed mb-2 whitespace-pre-line">
-                    {p}
-                  </p>
+                  <div key={i} className="mb-2">
+                    {renderMarkdown(p)}
+                  </div>
                 ))}
               </div>
             ))}
