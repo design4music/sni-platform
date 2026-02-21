@@ -131,8 +131,10 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
             if (data.scores.conflicts) setConflicts(data.scores.conflicts);
             if (data.scores.blind_spots) setBlindSpots(data.scores.blind_spots);
             // Broadcast to sidebar AssessmentScores component
+            // On fresh analysis, shift scores are flat on data.scores (bias_detected, coherence, etc.)
+            // On cached reads, they're nested under data.scores.shifts
             window.dispatchEvent(new CustomEvent('rai-scores-updated', {
-              detail: { adequacy: data.scores.adequacy, shifts: data.scores.shifts },
+              detail: { adequacy: data.scores.adequacy, shifts: data.scores.shifts || data.scores },
             }));
           }
         } else {
