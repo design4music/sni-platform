@@ -299,6 +299,16 @@ export interface OutletNarrativeFrame {
   entity_label: string;
 }
 
+export interface NarrativeDetail extends FramedNarrative {
+  entity_type: string;
+  entity_id: string;
+  centroid_id: string | null;
+  centroid_name: string | null;
+  track: string | null;
+  event_title: string | null;
+  event_id: string | null;
+}
+
 export interface SearchResult {
   type: 'event' | 'centroid' | 'epic';
   id: string;

@@ -1,6 +1,6 @@
 import { query } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return cached('centroids:all', 300, () =>
@@ -601,6 +601,30 @@ export async function getEpicFramedNarratives(epicId: string): Promise<FramedNar
 // ========================================================================
 // Generic narrative + event detail queries
 // ========================================================================
+
+export async function getNarrativeById(id: string): Promise<NarrativeDetail | null> {
+  const results = await query<NarrativeDetail>(
+    `SELECT n.id, n.label, n.moral_frame, n.description, n.title_count,
+            n.sample_titles, n.top_sources, n.proportional_sources, n.top_countries,
+            n.entity_type, n.entity_id,
+            n.signal_stats, n.rai_signals, n.rai_signals_at::text,
+            n.rai_full_analysis, n.rai_adequacy, n.rai_synthesis,
+            n.rai_conflicts, n.rai_blind_spots, n.rai_shifts, n.rai_analyzed_at::text,
+            COALESCE(ct.centroid_id, c.centroid_id) as centroid_id,
+            c2.label as centroid_name,
+            COALESCE(ct.track, c.track) as track,
+            COALESCE(e.title, e.topic_core) as event_title,
+            e.id as event_id
+     FROM narratives n
+     LEFT JOIN events_v3 e ON n.entity_type = 'event' AND n.entity_id = e.id
+     LEFT JOIN ctm ct ON n.entity_type = 'event' AND e.ctm_id = ct.id
+     LEFT JOIN ctm c ON n.entity_type = 'ctm' AND n.entity_id = c.id
+     LEFT JOIN centroids_v3 c2 ON c2.id = COALESCE(ct.centroid_id, c.centroid_id)
+     WHERE n.id = $1`,
+    [id]
+  );
+  return results[0] || null;
+}
 
 export async function getFramedNarratives(
   entityType: string, entityId: string
