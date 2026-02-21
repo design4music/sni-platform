@@ -146,6 +146,11 @@ export interface RelatedEvent {
   shared_titles: number;
 }
 
+export interface RaiSection {
+  heading: string;
+  paragraphs: string[];
+}
+
 export interface EpicNarrative {
   title: string;
   description: string;
@@ -175,7 +180,7 @@ export interface FramedNarrative {
     relevance_score?: number;
     safety_score?: number;
   } | null;
-  rai_full_analysis: string | null;
+  rai_full_analysis: RaiSection[] | string | null;
   rai_analyzed_at: string | null;
   // New signal fields (for event/CTM narratives)
   signal_stats: SignalStats | null;

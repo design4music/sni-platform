@@ -12,7 +12,7 @@ Orchestrates the complete v3 pipeline with configurable intervals:
 - Phase 4.5a: Event summaries - readable text per event (after 4.1)
 - Phase 4.5: CTM summary generation (1 hour)
 - Phase 5: CTM + event narrative extraction (24 hours)
-- Phase 6: RAI signal analysis for narratives (24 hours)
+- (Phase 6 disabled: RAI analysis is now on-demand via frontend)
 - Daily purge: Remove rejected titles (out_of_scope, blocked_stopword, blocked_llm)
 
 Features:
@@ -43,7 +43,9 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
     backfill_entity_centroids as phase32_backfill,
 )
 from pipeline.phase_3_3.assign_tracks_batched import process_batch as phase33_process
-from pipeline.phase_4.analyze_event_rai import process_rai_signals as phase6_rai_signals
+
+# Phase 6 disabled: RAI analysis is now on-demand via frontend
+# from pipeline.phase_4.analyze_event_rai import process_rai_signals as phase6_rai_signals
 from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
 from pipeline.phase_4.extract_ctm_narratives import (
     process_ctm_narratives as phase5_ctm_narratives,
@@ -82,9 +84,8 @@ class PipelineDaemon:
         )  # 15 min - Event summaries
         self.phase45_interval = 3600  # 1 hour - CTM summary generation
         self.phase5_interval = self.config.v3_p5_interval  # 24h - CTM narratives
-        self.phase6_interval = (
-            self.config.v3_p5_interval
-        )  # 24h - RAI signals (same as Phase 5)
+        # Phase 6 disabled: RAI analysis is now on-demand via frontend
+        # self.phase6_interval = self.config.v3_p5_interval
         self.purge_interval = 86400  # 24h - Daily rejected title cleanup
 
         # Last run timestamps
@@ -98,7 +99,7 @@ class PipelineDaemon:
             "phase45a": 0,
             "phase45": 0,
             "phase5": 0,
-            "phase6": 0,
+            # "phase6": 0,  # Phase 6 disabled
             "purge": 0,
         }
 
@@ -880,20 +881,15 @@ class PipelineDaemon:
             )
             print("\nPhase 5: Skipping (next run in %ds)" % next_run)
 
-        # Phase 6: RAI Signal Analysis (24h interval)
-        if self.should_run_phase("phase6"):
-            self.run_phase_with_retry(
-                "Phase 6: RAI Signal Analysis",
-                phase6_rai_signals,
-                limit=20,
-                delay=2.0,
-            )
-            self.last_run["phase6"] = time.time()
-        else:
-            next_run = int(
-                self.phase6_interval - (time.time() - self.last_run["phase6"])
-            )
-            print("\nPhase 6: Skipping (next run in %ds)" % next_run)
+        # Phase 6 disabled: RAI analysis is now on-demand via frontend
+        # if self.should_run_phase("phase6"):
+        #     self.run_phase_with_retry(
+        #         "Phase 6: RAI Signal Analysis",
+        #         phase6_rai_signals,
+        #         limit=20,
+        #         delay=2.0,
+        #     )
+        #     self.last_run["phase6"] = time.time()
 
         # Daily Purge: Remove rejected titles (24h interval)
         if self.should_run_phase("purge"):
@@ -948,9 +944,7 @@ class PipelineDaemon:
         print(
             f"  Phase 5 interval: {self.phase5_interval}s ({self.phase5_interval/3600:.0f} hours - CTM + event narratives)"
         )
-        print(
-            f"  Phase 6 interval: {self.phase6_interval}s ({self.phase6_interval/3600:.0f} hours - RAI signal analysis)"
-        )
+        # Phase 6 disabled: RAI analysis is now on-demand via frontend
         print(
             f"  Purge interval: {self.purge_interval}s ({self.purge_interval/3600:.0f} hours - rejected title cleanup)"
         )
