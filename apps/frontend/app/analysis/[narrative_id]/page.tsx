@@ -106,6 +106,9 @@ export default async function AnalysisPage({ params }: Props) {
     ? (typeof n.sample_titles === 'string' ? JSON.parse(n.sample_titles as unknown as string) : n.sample_titles)
     : [];
 
+  // Scores for sidebar (from cached analysis)
+  const shifts = n.rai_shifts;
+
   // Sidebar
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-4">
@@ -119,6 +122,83 @@ export default async function AnalysisPage({ params }: Props) {
           critical thinking, not as a definitive assessment.
         </p>
       </div>
+
+      {/* Assessment Scores */}
+      {(n.rai_adequacy != null || n.rai_synthesis || shifts) && (
+        <div className="bg-dashboard-border/30 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-dashboard-text">Assessment Scores</h3>
+
+          {n.rai_adequacy != null && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-dashboard-text-muted">Adequacy</span>
+                <span className="text-xs font-medium">{Math.round(n.rai_adequacy * 100)}%</span>
+              </div>
+              <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${
+                    n.rai_adequacy >= 0.7 ? 'bg-green-500' : n.rai_adequacy >= 0.4 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.round(n.rai_adequacy * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {shifts && Object.entries(shifts)
+            .filter(([k]) => k !== 'overall_score')
+            .map(([key, val]) => {
+              if (typeof val !== 'number') return null;
+              const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              return (
+                <div key={key}>
+                  <div className="flex justify-between text-xs mb-0.5">
+                    <span className="text-dashboard-text-muted">{label}</span>
+                    <span>{val}/10</span>
+                  </div>
+                  <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500/60 rounded-full" style={{ width: `${val * 10}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+
+          {n.rai_synthesis && (
+            <div>
+              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-1">Synthesis</h4>
+              <p className="text-xs text-dashboard-text-muted leading-relaxed">{n.rai_synthesis}</p>
+            </div>
+          )}
+
+          {n.rai_conflicts && n.rai_conflicts.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-1">Conflicts</h4>
+              <ul className="space-y-1">
+                {n.rai_conflicts.map((c, i) => (
+                  <li key={i} className="text-xs text-dashboard-text-muted flex items-start gap-1.5">
+                    <span className="text-orange-400 mt-0.5 flex-shrink-0">-</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {n.rai_blind_spots && n.rai_blind_spots.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wide mb-1">Blind Spots</h4>
+              <ul className="space-y-1">
+                {n.rai_blind_spots.map((b, i) => (
+                  <li key={i} className="text-xs text-dashboard-text-muted flex items-start gap-1.5">
+                    <span className="text-orange-400 mt-0.5 flex-shrink-0">?</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Narrative meta */}
       {stats && stats.title_count > 0 && (
@@ -213,23 +293,6 @@ export default async function AnalysisPage({ params }: Props) {
         </div>
       )}
 
-      {/* Sample Headlines */}
-      {sampleTitles.length > 0 && (
-        <div className="bg-dashboard-border/30 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-dashboard-text mb-2">Sample Headlines</h3>
-          <ul className="space-y-2">
-            {sampleTitles.slice(0, 10).map((sample: { title: string; publisher: string }, i: number) => (
-              <li key={i} className="text-xs flex items-start gap-1.5">
-                <span className="text-blue-400 mt-0.5 flex-shrink-0">-</span>
-                <div>
-                  <span className="text-dashboard-text">{sample.title}</span>
-                  <span className="text-dashboard-text-muted ml-1">- {sample.publisher}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 
@@ -255,7 +318,7 @@ export default async function AnalysisPage({ params }: Props) {
       )}
 
       {/* Analysis content (client component) */}
-      <AnalysisContent narrative={n} />
+      <AnalysisContent narrative={n} sampleTitles={sampleTitles} />
     </DashboardLayout>
   );
 }

@@ -49,7 +49,7 @@ function renderMarkdown(text: string): React.ReactNode {
       elements.push(
         <blockquote
           key={`bq-${i}`}
-          className="border-l-2 border-emerald-500/40 pl-4 my-3 text-base italic text-dashboard-text-muted/80 leading-relaxed"
+          className="border-l-4 border-blue-500 pl-4 my-3 text-base italic text-dashboard-text-muted/80 leading-relaxed"
           dangerouslySetInnerHTML={{ __html: inlineFormat(line.slice(2)) }}
         />
       );
@@ -81,18 +81,12 @@ function renderMarkdown(text: string): React.ReactNode {
 
 interface AnalysisContentProps {
   narrative: NarrativeDetail;
+  sampleTitles: Array<{ title: string; publisher: string }>;
 }
 
-export default function AnalysisContent({ narrative }: AnalysisContentProps) {
+export default function AnalysisContent({ narrative, sampleTitles }: AnalysisContentProps) {
   const { data: session } = useSession();
   const [sections, setSections] = useState<RaiSection[] | null>(null);
-  const [scores, setScores] = useState<{
-    adequacy?: number | null;
-    synthesis?: string | null;
-    conflicts?: string[] | null;
-    blind_spots?: string[] | null;
-    shifts?: Record<string, number> | null;
-  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,13 +98,6 @@ export default function AnalysisContent({ narrative }: AnalysisContentProps) {
         : narrative.rai_full_analysis;
       if (Array.isArray(existing)) {
         setSections(existing);
-        setScores({
-          adequacy: narrative.rai_adequacy,
-          synthesis: narrative.rai_synthesis,
-          conflicts: narrative.rai_conflicts,
-          blind_spots: narrative.rai_blind_spots,
-          shifts: narrative.rai_shifts,
-        });
         return;
       }
     }
@@ -135,7 +122,6 @@ export default function AnalysisContent({ narrative }: AnalysisContentProps) {
       .then((data) => {
         if (data.sections && Array.isArray(data.sections)) {
           setSections(data.sections);
-          setScores(data.scores || null);
         } else {
           setError('No analysis returned');
         }
@@ -187,89 +173,21 @@ export default function AnalysisContent({ narrative }: AnalysisContentProps) {
         </div>
       ))}
 
-      {/* Scores card */}
-      {scores && (scores.adequacy != null || scores.synthesis) && (
-        <div className="mt-10 bg-dashboard-border/30 rounded-lg p-5 space-y-4">
-          <h3 className="text-lg font-semibold text-dashboard-text">Assessment Scores</h3>
-
-          {/* Adequacy bar */}
-          {scores.adequacy != null && (
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-dashboard-text-muted">Adequacy</span>
-                <span className="text-sm font-medium">{Math.round(scores.adequacy * 100)}%</span>
-              </div>
-              <div className="h-2 bg-dashboard-border rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${
-                    scores.adequacy >= 0.7 ? 'bg-green-500' : scores.adequacy >= 0.4 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${Math.round(scores.adequacy * 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Shift scores */}
-          {scores.shifts && (
-            <div className="grid grid-cols-2 gap-3">
-              {Object.entries(scores.shifts)
-                .filter(([k]) => !['overall_score'].includes(k))
-                .map(([key, val]) => {
-                  if (typeof val !== 'number') return null;
-                  const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                  return (
-                    <div key={key}>
-                      <div className="flex justify-between text-sm mb-0.5">
-                        <span className="text-dashboard-text-muted">{label}</span>
-                        <span>{val}/10</span>
-                      </div>
-                      <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500/60 rounded-full" style={{ width: `${val * 10}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-
-          {/* Synthesis */}
-          {scores.synthesis && (
-            <div>
-              <h4 className="text-sm font-semibold text-dashboard-text mb-1">Synthesis</h4>
-              <p className="text-sm text-dashboard-text-muted leading-relaxed">{scores.synthesis}</p>
-            </div>
-          )}
-
-          {/* Conflicts */}
-          {scores.conflicts && scores.conflicts.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-dashboard-text mb-1">Conflicts</h4>
-              <ul className="space-y-1">
-                {scores.conflicts.map((c, i) => (
-                  <li key={i} className="text-sm text-dashboard-text-muted flex items-start gap-1.5">
-                    <span className="text-orange-400 mt-0.5 flex-shrink-0">-</span>
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Blind spots */}
-          {scores.blind_spots && scores.blind_spots.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold text-dashboard-text mb-1">Blind Spots</h4>
-              <ul className="space-y-1">
-                {scores.blind_spots.map((b, i) => (
-                  <li key={i} className="text-sm text-dashboard-text-muted flex items-start gap-1.5">
-                    <span className="text-orange-400 mt-0.5 flex-shrink-0">?</span>
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {/* Sample Headlines appendix */}
+      {sampleTitles.length > 0 && (
+        <div className="mt-10 pt-8 border-t border-dashboard-border">
+          <h2 className="text-xl font-semibold text-dashboard-text mb-4">Sample Headlines</h2>
+          <ul className="space-y-2">
+            {sampleTitles.slice(0, 15).map((sample, i) => (
+              <li key={i} className="text-sm flex items-start gap-2">
+                <span className="text-blue-400 mt-0.5 flex-shrink-0">-</span>
+                <div>
+                  <span className="text-dashboard-text">{sample.title}</span>
+                  <span className="text-dashboard-text-muted ml-2 text-xs">- {sample.publisher}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
