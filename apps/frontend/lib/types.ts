@@ -133,6 +133,7 @@ export interface EventDetail {
   centroid_label: string;
   track: string;
   month: string;
+  coherence_check: { coherent: false; reason: string; topics: string[] } | null;
 }
 
 export interface RelatedEvent {

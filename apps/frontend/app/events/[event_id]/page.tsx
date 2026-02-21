@@ -111,6 +111,20 @@ export default async function EventDetailPage({ params }: Props) {
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
       {narratives.length > 0 ? (
         <NarrativeCards narratives={narratives} />
+      ) : event.coherence_check ? (
+        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
+          <h3 className="text-sm font-semibold text-amber-300">Mixed Topic Cluster</h3>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            {event.coherence_check.reason}
+          </p>
+          {event.coherence_check.topics?.length > 0 && (
+            <ul className="text-xs text-dashboard-text-muted space-y-0.5 list-disc list-inside">
+              {event.coherence_check.topics.map((t: string, i: number) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       ) : (
         <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
           <h3 className="text-sm font-semibold text-dashboard-text">Narrative Analysis</h3>

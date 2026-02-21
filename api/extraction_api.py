@@ -127,6 +127,12 @@ def _extract_event(conn, entity_id: str) -> dict:
     # Check coherence
     incoherent = _is_incoherent(frames)
     if incoherent:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE events_v3 SET coherence_check = %s WHERE id = %s",
+                (json.dumps(incoherent), str(event["id"])),
+            )
+        conn.commit()
         return incoherent
 
     if not frames or not isinstance(frames, list):
