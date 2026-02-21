@@ -146,6 +146,27 @@ def compute_ctm_stats(conn, ctm_id):
     return _aggregate_rows(rows, "ctm", ctm_id, conn)
 
 
+def compute_epic_stats(conn, epic_id):
+    """Compute coverage statistics for an epic (across all its events)."""
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT DISTINCT ON (t.id)
+                   t.publisher_name, t.detected_language, t.pubdate_utc,
+                   tl.actor, tl.action_class, tl.domain, tl.target,
+                   tl.persons, tl.orgs, tl.entity_countries
+            FROM epic_events ee
+            JOIN event_v3_titles et ON et.event_id = ee.event_id
+            JOIN titles_v3 t ON t.id = et.title_id
+            LEFT JOIN title_labels tl ON tl.title_id = t.id
+            WHERE ee.epic_id = %s AND ee.is_included = true
+            """,
+            (str(epic_id),),
+        )
+        rows = cur.fetchall()
+    return _aggregate_rows(rows, "epic", epic_id, conn)
+
+
 if __name__ == "__main__":
     import argparse
 
