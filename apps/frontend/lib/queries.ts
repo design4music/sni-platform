@@ -642,6 +642,17 @@ export async function getFramedNarratives(
   );
 }
 
+export async function getSiblingNarratives(
+  entityType: string, entityId: string
+): Promise<Array<{ id: string; label: string }>> {
+  return query<{ id: string; label: string }>(
+    `SELECT id, label FROM narratives
+     WHERE entity_type = $1 AND entity_id = $2
+     ORDER BY title_count DESC`,
+    [entityType, entityId]
+  );
+}
+
 export async function getEventById(eventId: string): Promise<EventDetail | null> {
   const results = await query<EventDetail>(
     `SELECT

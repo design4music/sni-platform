@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import AnalysisContent from '@/components/AnalysisContent';
+import NarrativeNav from '@/components/NarrativeNav';
 import { getNarrativeById } from '@/lib/queries';
 import { getTrackLabel, getCountryName } from '@/lib/types';
 import type { SignalStats } from '@/lib/types';
@@ -264,6 +265,13 @@ export default async function AnalysisPage({ params }: Props) {
           critical thinking, not as a definitive assessment.
         </p>
       </div>
+
+      {/* Sibling navigation */}
+      <NarrativeNav
+        currentNarrativeId={narrative_id}
+        entityType={n.entity_type}
+        entityId={n.entity_id}
+      />
 
       {/* Title */}
       <h1 className="text-3xl md:text-4xl font-bold mb-4">{n.label}</h1>

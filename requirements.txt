@@ -7,3 +7,5 @@ feedparser
 loguru
 langdetect
 requests
+fastapi
+uvicorn

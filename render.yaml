@@ -5,3 +5,10 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python pipeline/runner/pipeline_daemon.py"
     autoDeploy: true
+
+  - type: web
+    name: sni-extraction-api
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn api.extraction_api:app --host 0.0.0.0 --port $PORT"
+    autoDeploy: true

@@ -17,6 +17,7 @@ import {
   getFramedNarratives,
 } from '@/lib/queries';
 import NarrativeCards from '@/components/NarrativeOverlay';
+import ExtractButton from '@/components/ExtractButton';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event } from '@/lib/types';
@@ -307,10 +308,17 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       )}
 
       {/* Narrative Frames */}
-      {narratives.length > 0 && (
+      {narratives.length > 0 ? (
         <div id="section-narratives" className="mb-8">
           <h2 className="text-2xl font-bold mb-4">Narrative Frames</h2>
           <NarrativeCards narratives={narratives} layout="grid" />
+        </div>
+      ) : (
+        <div id="section-narratives" className="mb-8 p-6 rounded-lg border border-dashboard-border bg-dashboard-surface text-center">
+          <p className="text-sm text-dashboard-text-muted mb-3">
+            No narrative frames extracted yet for this topic.
+          </p>
+          <ExtractButton entityType="ctm" entityId={ctm.id} />
         </div>
       )}
 

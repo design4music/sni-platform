@@ -82,6 +82,21 @@ def get_db_connection():
     )
 
 
+def fetch_ctm_by_id(conn, ctm_id):
+    """Fetch a single CTM regardless of thresholds."""
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT c.id, c.centroid_id, c.track, c.month, c.title_count,
+                   c.summary_text
+            FROM ctm c
+            WHERE c.id = %s
+            """,
+            (str(ctm_id),),
+        )
+        return cur.fetchone()
+
+
 def fetch_ctms(conn, month, limit=50, ctm_id=None, refresh=False):
     """Fetch CTMs eligible for narrative extraction.
 
@@ -313,8 +328,11 @@ def build_titles_block(titles):
     return "\n".join(lines)
 
 
-def extract_narratives_llm(ctm, sampled):
-    """Call LLM to extract narrative frames."""
+def extract_narratives_llm(ctm, sampled, frame_hint=None):
+    """Call LLM to extract narrative frames.
+
+    frame_hint: optional string to replace the default frame count instruction.
+    """
     titles_block = build_titles_block(sampled)
 
     user_prompt = CTM_NARRATIVE_USER.format(
@@ -325,6 +343,12 @@ def extract_narratives_llm(ctm, sampled):
         sample_count=len(sampled),
         titles_block=titles_block,
     )
+
+    if frame_hint:
+        user_prompt = user_prompt.replace(
+            "Identify 3-5 distinct NARRATIVE FRAMES",
+            frame_hint,
+        )
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,

@@ -7,6 +7,7 @@ import RaiSidebar from '@/components/RaiSidebar';
 import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
+import ExtractButton from '@/components/ExtractButton';
 import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel } from '@/lib/types';
 
@@ -201,6 +202,16 @@ export default async function EventDetailPage({ params }: Props) {
               <p key={i}>{para.trim()}</p>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Extract & Analyse CTA */}
+      {narratives.length === 0 && (
+        <div className="mb-8 p-6 rounded-lg border border-dashboard-border bg-dashboard-surface text-center">
+          <p className="text-sm text-dashboard-text-muted mb-3">
+            No narrative frames extracted yet for this event.
+          </p>
+          <ExtractButton entityType="event" entityId={event_id} />
         </div>
       )}
 

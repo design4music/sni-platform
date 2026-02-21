@@ -50,6 +50,22 @@ def get_db_connection():
     )
 
 
+def fetch_event_by_id(conn, event_id):
+    """Fetch a single event regardless of thresholds."""
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT e.id, e.title, e.summary, e.source_batch_count,
+                   e.ctm_id, c.centroid_id, c.track
+            FROM events_v3 e
+            JOIN ctm c ON c.id = e.ctm_id
+            WHERE e.id = %s
+            """,
+            (str(event_id),),
+        )
+        return cur.fetchone()
+
+
 def fetch_events(conn, limit=50, ctm_id=None, refresh=False):
     """Fetch events eligible for narrative extraction.
 
@@ -143,8 +159,11 @@ def build_titles_block(titles):
     return "\n".join(lines)
 
 
-def extract_narratives_llm(event, sampled, wiki_context=None):
-    """Call LLM to extract narrative frames."""
+def extract_narratives_llm(event, sampled, wiki_context=None, frame_hint=None):
+    """Call LLM to extract narrative frames.
+
+    frame_hint: optional string to replace the default frame count instruction.
+    """
     titles_block = build_titles_block(sampled)
 
     wiki_block = ""
@@ -158,6 +177,12 @@ def extract_narratives_llm(event, sampled, wiki_context=None):
         titles_block=titles_block,
         wiki_block=wiki_block,
     )
+
+    if frame_hint:
+        user_prompt = user_prompt.replace(
+            "Identify exactly 3 OPPOSING NARRATIVE FRAMES",
+            frame_hint,
+        )
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
