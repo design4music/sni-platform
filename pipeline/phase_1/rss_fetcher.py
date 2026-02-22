@@ -356,22 +356,43 @@ class RSSFetcher:
 
     def insert_articles(self, articles: List[Dict]) -> Dict[str, int]:
         """
-        Insert articles into titles_v3 with idempotent UPSERT.
+        Insert articles into titles_v3 with deduplication.
 
-        Uses content_hash for deduplication across the entire database.
+        Three layers of dedup:
+        1. In-memory: skip duplicate title_display within this batch
+        2. Tombstone: skip URLs previously purged (titles_purged table)
+        3. DB UNIQUE constraint: ON CONFLICT DO NOTHING on title_display
         """
         if not articles:
             return {"inserted": 0, "skipped": 0}
 
         stats = {"inserted": 0, "skipped": 0}
 
+        # In-memory dedup: same title can appear multiple times in one RSS feed
+        seen = set()
+        unique_articles = []
+        for article in articles:
+            key = article["title_display"]
+            if key in seen:
+                stats["skipped"] += 1
+                continue
+            seen.add(key)
+            unique_articles.append(article)
+
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
-                for article in articles:
-                    # UPSERT: Insert only if exact title doesn't exist
-                    # Strict dedup: same title_display = duplicate (regardless of publisher)
-                    # Also check tombstone table to prevent re-ingesting purged titles
+                for article in unique_articles:
+                    # Skip if URL was previously purged
+                    cur.execute(
+                        "SELECT 1 FROM titles_purged WHERE url_hash = md5(%s)",
+                        (article["url_gnews"],),
+                    )
+                    if cur.fetchone():
+                        stats["skipped"] += 1
+                        continue
+
+                    # Insert with UNIQUE constraint protection
                     cur.execute(
                         """
                         INSERT INTO titles_v3 (
@@ -379,15 +400,8 @@ class RSSFetcher:
                             detected_language, feed_id, processing_status,
                             created_at, updated_at
                         )
-                        SELECT %s, %s, %s, %s, %s, %s, 'pending', NOW(), NOW()
-                        WHERE NOT EXISTS (
-                            SELECT 1 FROM titles_v3
-                            WHERE title_display = %s
-                        )
-                        AND NOT EXISTS (
-                            SELECT 1 FROM titles_purged
-                            WHERE url_hash = md5(%s)
-                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, 'pending', NOW(), NOW())
+                        ON CONFLICT (title_display) DO NOTHING
                         RETURNING id
                     """,
                         (
@@ -397,10 +411,6 @@ class RSSFetcher:
                             article["pubdate_utc"],
                             article["detected_language"],
                             article.get("feed_id"),
-                            # Strict deduplication: same title = duplicate
-                            article["title_display"],
-                            # Tombstone check
-                            article["url_gnews"],
                         ),
                     )
 
