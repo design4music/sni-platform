@@ -182,14 +182,14 @@ async def gate_centroid_batch(
     from core.llm_utils import async_check_rate_limit
 
     async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
-        for _attempt in range(2):
+        for _attempt in range(3):
             response = await client.post(
                 f"{config.deepseek_api_url}/chat/completions",
                 headers=headers,
                 json=payload,
             )
 
-            if await async_check_rate_limit(response):
+            if await async_check_rate_limit(response, _attempt):
                 continue
 
             if response.status_code != 200:
@@ -301,14 +301,14 @@ async def assign_tracks_batch(
     from core.llm_utils import async_check_rate_limit
 
     async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
-        for _attempt in range(2):
+        for _attempt in range(3):
             response = await client.post(
                 f"{config.deepseek_api_url}/chat/completions",
                 headers=headers,
                 json=payload,
             )
 
-            if await async_check_rate_limit(response):
+            if await async_check_rate_limit(response, _attempt):
                 continue
 
             if response.status_code != 200:

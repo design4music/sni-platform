@@ -200,7 +200,7 @@ async def generate_summary(
 
                 from core.llm_utils import async_check_rate_limit
 
-                if await async_check_rate_limit(response):
+                if await async_check_rate_limit(response, attempt):
                     continue
 
                 if response.status_code != 200:

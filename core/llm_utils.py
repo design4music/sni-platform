@@ -8,22 +8,46 @@ import time
 # --- Rate limit handling ---
 
 
-def check_rate_limit(response):
-    """Sleep and return True if response is a 429 rate limit. Sync version."""
-    if response.status_code == 429:
-        retry_after = int(response.headers.get("Retry-After", 60))
-        print("Rate limited (429), waiting %ds..." % retry_after)
-        time.sleep(retry_after)
+def check_rate_limit(response, attempt=0):
+    """Sleep and return True if response is a 429 rate limit. Sync version.
+
+    Uses Retry-After header if present, otherwise exponential backoff
+    starting at 5s (5, 15, 45s for attempts 0, 1, 2).
+    Also backs off on 502/503/504 (transient server errors).
+    """
+    if response.status_code == 429 or response.status_code in (502, 503, 504):
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            wait = int(retry_after)
+        else:
+            wait = 5 * (3**attempt)  # 5, 15, 45
+        print(
+            "HTTP %d, backing off %ds (attempt %d)..."
+            % (response.status_code, wait, attempt + 1)
+        )
+        time.sleep(wait)
         return True
     return False
 
 
-async def async_check_rate_limit(response):
-    """Sleep and return True if response is a 429 rate limit. Async version."""
-    if response.status_code == 429:
-        retry_after = int(response.headers.get("Retry-After", 60))
-        print("Rate limited (429), waiting %ds..." % retry_after)
-        await asyncio.sleep(retry_after)
+async def async_check_rate_limit(response, attempt=0):
+    """Sleep and return True if response is a 429 rate limit. Async version.
+
+    Uses Retry-After header if present, otherwise exponential backoff
+    starting at 5s (5, 15, 45s for attempts 0, 1, 2).
+    Also backs off on 502/503/504 (transient server errors).
+    """
+    if response.status_code == 429 or response.status_code in (502, 503, 504):
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            wait = int(retry_after)
+        else:
+            wait = 5 * (3**attempt)  # 5, 15, 45
+        print(
+            "HTTP %d, backing off %ds (attempt %d)..."
+            % (response.status_code, wait, attempt + 1)
+        )
+        await asyncio.sleep(wait)
         return True
     return False
 

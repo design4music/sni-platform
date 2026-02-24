@@ -1,24 +1,18 @@
 """
-SNI v3 Pipeline Daemon
+SNI v3 Pipeline Daemon -- 4-Slot Architecture
 
-Orchestrates the complete v3 pipeline with configurable intervals:
-- Phase 1: RSS ingestion (12 hours)
-- Phase 2: Centroid matching (12 hours)
-- Phase 3.1: Label + signal extraction (10 minutes)
-- Phase 3.2: Entity centroid backfill (after 3.1)
-- Phase 3.3: Intel gating + track assignment (5 minutes)
-- Phase 4: Event clustering (30 minutes)
-- Phase 4.1: Topic aggregation - LLM merge/cleanup (15 minutes)
-- Phase 4.5a: Event summaries - readable text per event (after 4.1)
-- Phase 4.5: CTM summary generation (1 hour)
-- Daily purge: Remove rejected titles (out_of_scope, blocked_stopword, blocked_llm)
+Scheduling slots (phases run sequentially within each slot):
+- Slot 1 INGESTION   (12h):  Phase 1 (RSS) + Phase 2 (centroid matching)
+- Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
+- Slot 3 CLUSTERING  (30m):  Phase 4 (event clustering) + 4.1 (topic aggregation)
+- Slot 4 ENRICHMENT  (6h):   Phase 4.5a (event summaries) + 4.5b (CTM summaries)
+- Daily purge: Remove rejected titles + reset api_error_count
 
 Features:
 - Sequential execution with configurable intervals
 - Graceful shutdown on SIGTERM/SIGINT
-- Basic retry logic with exponential backoff
-- Log-based monitoring
-- Adaptive batch sizing based on queue depth
+- Retry logic with exponential backoff
+- Phase-level timeouts to prevent hangs
 """
 
 import asyncio
@@ -61,46 +55,37 @@ class PipelineDaemon:
         self.running = True
         self.cycle_count = 0
 
-        # Intervals (in seconds)
-        self.phase1_interval = 43200  # 12 hours - RSS feeds
-        self.phase2_interval = 43200  # 12 hours - Centroid matching (same as Phase 1)
-        self.phase31_interval = 600  # 10 minutes - Label extraction
-        self.phase33_interval = 300  # 5 minutes - LLM gating + track assignment
-        self.phase4_interval = 1800  # 30 minutes - Event clustering
-        self.phase41_interval = 900  # 15 minutes - Topic aggregation (LLM merge)
-        self.phase45a_interval = (
-            self.config.v3_p45a_interval
-        )  # 15 min - Event summaries
-        self.phase45_interval = 3600  # 1 hour - CTM summary generation
-        self.purge_interval = 86400  # 24h - Daily rejected title cleanup
+        # 4-slot intervals (seconds)
+        self.ingestion_interval = 43200  # 12 hours - Phase 1 + 2
+        self.classification_interval = 900  # 15 minutes - Phase 3.1 + 3.2 + 3.3
+        self.clustering_interval = 1800  # 30 minutes - Phase 4 + 4.1
+        self.enrichment_interval = 21600  # 6 hours - Phase 4.5a + 4.5b
+        self.purge_interval = 86400  # 24 hours - daily cleanup
 
         # Last run timestamps
         self.last_run = {
-            "phase1": 0,
-            "phase2": 0,
-            "phase31": 0,
-            "phase33": 0,
-            "phase4": 0,
-            "phase41": 0,
-            "phase45a": 0,
-            "phase45": 0,
+            "ingestion": 0,
+            "classification": 0,
+            "clustering": 0,
+            "enrichment": 0,
             "purge": 0,
         }
 
         # Batch sizes
-        self.phase33_batch_size = 500  # Titles per Phase 3.3 run (match 3.1 throughput)
-        self.phase4_batch_size = 50  # CTMs per Phase 4 run
+        self.classification_batch_size = 500  # Titles per 3.1 and 3.3 run
+        self.aggregation_max_ctms = 25  # CTMs per 4.1 run
+        self.enrichment_max_events = 2000  # Events per 4.5a run
+        self.enrichment_max_ctms = 200  # CTMs per 4.5b run
 
         # Retry configuration
         self.max_retries = 3
         self.retry_backoff = 2.0  # Exponential backoff multiplier
 
-        # Phase-level timeouts (seconds) -- prevents daemon from hanging
+        # Slot-level timeouts (seconds) -- prevents daemon from hanging
         self.timeout_ingestion = 1200  # 20 min for RSS + centroid matching
-        self.timeout_classification = 600  # 10 min for 3.1 + 3.2 + 3.3
-        self.timeout_enrichment = (
-            1800  # 30 min for clustering + aggregation + summaries
-        )
+        self.timeout_classification = 1200  # 20 min for 3.1 + 3.2 + 3.3
+        self.timeout_clustering = 900  # 15 min for Phase 4 + 4.1
+        self.timeout_enrichment = 7200  # 120 min for 4.5a + 4.5b
         self.timeout_purge = 300  # 5 min for daily cleanup
 
         # Connection pool (minconn=2, maxconn=10)
@@ -219,12 +204,11 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
-    def should_run_phase(self, phase_name: str) -> bool:
-        """Check if enough time has passed since last run"""
+    def should_run_slot(self, slot_name: str) -> bool:
+        """Check if enough time has passed since last run of this slot"""
         now = time.time()
-        last = self.last_run[phase_name]
-        interval = getattr(self, f"{phase_name}_interval")
-
+        last = self.last_run[slot_name]
+        interval = getattr(self, "%s_interval" % slot_name)
         return (now - last) >= interval
 
     def monitor_summary_word_counts(self):
@@ -728,26 +712,26 @@ class PipelineDaemon:
             return None
 
     async def run_cycle(self):
-        """Run one complete pipeline cycle"""
+        """Run one complete pipeline cycle (4 slots + daily purge)"""
         self.cycle_count += 1
         cycle_start = time.time()
 
-        print(f"\n{'#'*70}")
-        print(f"# PIPELINE CYCLE {self.cycle_count}")
-        print(f"# {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"{'#'*70}")
+        print("\n" + "#" * 70)
+        print("# PIPELINE CYCLE %d" % self.cycle_count)
+        print("# %s" % datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print("#" * 70)
 
         # Get queue stats
         stats = self.get_queue_stats()
         print("\nQueue Status:")
-        print(f"  Pending titles (Phase 2):        {stats['pending_titles']}")
-        print(f"  Titles need labels (Phase 3.1):  {stats['titles_need_labels']}")
-        print(f"  Titles need track (Phase 3.3):   {stats['titles_need_track']}")
-        print(f"  CTMs for clustering (Phase 4):   {stats['ctms_for_clustering']}")
-        print(f"  CTMs need summary (Phase 4):     {stats['ctms_need_summary']}")
+        print("  Pending titles (Phase 2):        %d" % stats["pending_titles"])
+        print("  Titles need labels (Phase 3.1):  %d" % stats["titles_need_labels"])
+        print("  Titles need track (Phase 3.3):   %d" % stats["titles_need_track"])
+        print("  CTMs for clustering (Phase 4):   %d" % stats["ctms_for_clustering"])
+        print("  CTMs need summary (Phase 4.5b):  %d" % stats["ctms_need_summary"])
 
-        # Phase 1: RSS Ingestion (if interval elapsed)
-        if self.should_run_phase("phase1"):
+        # --- SLOT 1: INGESTION (Phase 1 + Phase 2) ---
+        if self.should_run_slot("ingestion"):
             await self.run_with_timeout(
                 "Phase 1: RSS Ingestion",
                 asyncio.to_thread(
@@ -758,15 +742,6 @@ class PipelineDaemon:
                 ),
                 self.timeout_ingestion,
             )
-            self.last_run["phase1"] = time.time()
-        else:
-            next_run = int(
-                self.phase1_interval - (time.time() - self.last_run["phase1"])
-            )
-            print(f"\nPhase 1: Skipping (next run in {next_run}s)")
-
-        # Phase 2: Centroid Matching (if interval elapsed and work available)
-        if self.should_run_phase("phase2") and stats["pending_titles"] > 0:
             await self.run_with_timeout(
                 "Phase 2: Centroid Matching",
                 asyncio.to_thread(
@@ -778,75 +753,67 @@ class PipelineDaemon:
                 ),
                 self.timeout_ingestion,
             )
-            self.last_run["phase2"] = time.time()
+            self.last_run["ingestion"] = time.time()
         else:
-            if stats["pending_titles"] == 0:
-                print("\nPhase 2: Skipping (no pending titles)")
+            remaining = int(
+                self.ingestion_interval - (time.time() - self.last_run["ingestion"])
+            )
+            print("\nSlot 1 INGESTION: next in %ds" % remaining)
+
+        # --- SLOT 2: CLASSIFICATION (Phase 3.1 + 3.2 + 3.3) ---
+        if self.should_run_slot("classification"):
+            has_work = stats["titles_need_labels"] > 0 or stats["titles_need_track"] > 0
+            if has_work:
+                # Phase 3.1: Label + Signal Extraction
+                if stats["titles_need_labels"] > 0:
+                    await self.run_with_timeout(
+                        "Phase 3.1: Label + Signal Extraction",
+                        asyncio.to_thread(
+                            self.run_phase_with_retry,
+                            "Phase 3.1: Label + Signal Extraction",
+                            phase31_extract,
+                            max_titles=self.config.v3_p31_max_titles,
+                            batch_size=self.config.v3_p31_batch_size,
+                            concurrency=self.config.v3_p31_concurrency,
+                        ),
+                        self.timeout_classification,
+                    )
+                    # Phase 3.2: Entity Centroid Backfill (always after 3.1)
+                    await self.run_with_timeout(
+                        "Phase 3.2: Entity Centroid Backfill",
+                        asyncio.to_thread(
+                            self.run_phase_with_retry,
+                            "Phase 3.2: Entity Centroid Backfill",
+                            phase32_backfill,
+                            batch_size=500,
+                        ),
+                        self.timeout_classification,
+                    )
+
+                # Phase 3.3: Intel Gating + Track Assignment
+                if stats["titles_need_track"] > 0:
+                    await self.run_with_timeout(
+                        "Phase 3.3: Intel Gating + Track Assignment",
+                        self.run_phase_with_retry(
+                            "Phase 3.3: Intel Gating + Track Assignment",
+                            phase33_process,
+                            max_titles=self.classification_batch_size,
+                        ),
+                        self.timeout_classification,
+                    )
             else:
-                next_run = int(
-                    self.phase2_interval - (time.time() - self.last_run["phase2"])
-                )
-                print(f"\nPhase 2: Skipping (next run in {next_run}s)")
-
-        # Phase 3.1: Label + Signal Extraction (if interval elapsed and work available)
-        if self.should_run_phase("phase31") and stats["titles_need_labels"] > 0:
-            await self.run_with_timeout(
-                "Phase 3.1: Label + Signal Extraction",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 3.1: Label + Signal Extraction",
-                    phase31_extract,
-                    max_titles=self.config.v3_p31_max_titles,
-                    batch_size=self.config.v3_p31_batch_size,
-                    concurrency=self.config.v3_p31_concurrency,
-                ),
-                self.timeout_classification,
-            )
-            self.last_run["phase31"] = time.time()
-
-            # Phase 3.2: Entity->Country->Centroid backfill (runs after label extraction)
-            await self.run_with_timeout(
-                "Phase 3.2: Entity Centroid Backfill",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 3.2: Entity Centroid Backfill",
-                    phase32_backfill,
-                    batch_size=500,
-                ),
-                self.timeout_classification,
-            )
+                print("\nSlot 2 CLASSIFICATION: no work")
+            self.last_run["classification"] = time.time()
         else:
-            if stats["titles_need_labels"] == 0:
-                print("\nPhase 3.1: Skipping (no titles need labels)")
-            else:
-                next_run = int(
-                    self.phase31_interval - (time.time() - self.last_run["phase31"])
-                )
-                print(f"\nPhase 3.1: Skipping (next run in {next_run}s)")
-
-        # Phase 3.3: Intel Gating + Track Assignment (if interval elapsed and work available)
-        if self.should_run_phase("phase33") and stats["titles_need_track"] > 0:
-            await self.run_with_timeout(
-                "Phase 3.3: Intel Gating + Track Assignment",
-                self.run_phase_with_retry(
-                    "Phase 3.3: Intel Gating + Track Assignment",
-                    phase33_process,
-                    max_titles=self.phase33_batch_size,
-                ),
-                self.timeout_classification,
+            remaining = int(
+                self.classification_interval
+                - (time.time() - self.last_run["classification"])
             )
-            self.last_run["phase33"] = time.time()
-        else:
-            if stats["titles_need_track"] == 0:
-                print("\nPhase 3.3: Skipping (no titles need track)")
-            else:
-                next_run = int(
-                    self.phase33_interval - (time.time() - self.last_run["phase33"])
-                )
-                print(f"\nPhase 3.3: Skipping (next run in {next_run}s)")
+            print("\nSlot 2 CLASSIFICATION: next in %ds" % remaining)
 
-        # Phase 4: Event Clustering (if interval elapsed)
-        if self.should_run_phase("phase4"):
+        # --- SLOT 3: CLUSTERING (Phase 4 + Phase 4.1) ---
+        if self.should_run_slot("clustering"):
+            # Phase 4: Event Clustering
             await self.run_with_timeout(
                 "Phase 4: Event Clustering",
                 asyncio.to_thread(
@@ -854,134 +821,112 @@ class PipelineDaemon:
                     "Phase 4: Event Clustering",
                     self.run_event_clustering,
                 ),
-                self.timeout_enrichment,
+                self.timeout_clustering,
             )
-            self.last_run["phase4"] = time.time()
-        else:
-            next_run = int(
-                self.phase4_interval - (time.time() - self.last_run["phase4"])
-            )
-            print("\nPhase 4: Skipping (next run in {})".format(next_run))
-
-        # Phase 4.1: Topic Aggregation (own interval, decoupled from Phase 4)
-        if self.should_run_phase("phase41"):
+            # Phase 4.1: Topic Aggregation
             await self.run_with_timeout(
                 "Phase 4.1: Topic Aggregation",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
                     "Phase 4.1: Topic Aggregation",
                     self.run_topic_aggregation,
-                    max_ctms=25,
+                    max_ctms=self.aggregation_max_ctms,
                 ),
-                self.timeout_enrichment,
+                self.timeout_clustering,
             )
-            self.last_run["phase41"] = time.time()
+            self.last_run["clustering"] = time.time()
         else:
-            next_run = int(
-                self.phase41_interval - (time.time() - self.last_run["phase41"])
+            remaining = int(
+                self.clustering_interval - (time.time() - self.last_run["clustering"])
             )
-            print("\nPhase 4.1: Skipping (next run in {}s)".format(next_run))
+            print("\nSlot 3 CLUSTERING: next in %ds" % remaining)
 
-        # Phase 4.5a: Event Summaries (decoupled, own interval)
-        if self.should_run_phase("phase45a"):
+        # --- SLOT 4: ENRICHMENT (Phase 4.5a + Phase 4.5b) ---
+        if self.should_run_slot("enrichment"):
+            # Phase 4.5a: Event Summaries
             await self.run_with_timeout(
                 "Phase 4.5a: Event Summaries",
                 self.run_phase_with_retry(
                     "Phase 4.5a: Event Summaries",
                     self.run_event_summaries,
-                    max_events=self.config.v3_p45a_max_events,
+                    max_events=self.enrichment_max_events,
                 ),
                 self.timeout_enrichment,
             )
-            self.last_run["phase45a"] = time.time()
-        else:
-            next_run = int(
-                self.phase45a_interval - (time.time() - self.last_run["phase45a"])
-            )
-            print("\nPhase 4.5a: Skipping (next run in {}s)".format(next_run))
-
-        # Phase 4.5b: CTM Summary Generation (if interval elapsed and work available)
-        if self.should_run_phase("phase45") and stats["ctms_need_summary"] > 0:
-            await self.run_with_timeout(
-                "Phase 4.5b: CTM Summary Generation",
-                self.run_phase_with_retry(
+            # Phase 4.5b: CTM Summary Generation
+            if stats["ctms_need_summary"] > 0:
+                await self.run_with_timeout(
                     "Phase 4.5b: CTM Summary Generation",
-                    phase45_summaries,
-                    max_ctms=self.phase4_batch_size,
-                ),
-                self.timeout_enrichment,
-            )
-            self.last_run["phase45"] = time.time()
-
-            # Monitor summary word counts after generation
-            self.monitor_summary_word_counts()
-        else:
-            if stats["ctms_need_summary"] == 0:
-                print("\nPhase 4.5: Skipping (no CTMs need summary)")
-            else:
-                next_run = int(
-                    self.phase45_interval - (time.time() - self.last_run["phase45"])
+                    self.run_phase_with_retry(
+                        "Phase 4.5b: CTM Summary Generation",
+                        phase45_summaries,
+                        max_ctms=self.enrichment_max_ctms,
+                    ),
+                    self.timeout_enrichment,
                 )
-                print(f"\nPhase 4.5: Skipping (next run in {next_run}s)")
+                self.monitor_summary_word_counts()
+            self.last_run["enrichment"] = time.time()
+        else:
+            remaining = int(
+                self.enrichment_interval - (time.time() - self.last_run["enrichment"])
+            )
+            print("\nSlot 4 ENRICHMENT: next in %ds" % remaining)
 
-        # Daily Purge: Remove rejected titles (24h interval)
-        if self.should_run_phase("purge"):
+        # --- DAILY PURGE ---
+        if self.should_run_slot("purge"):
             await self.run_with_timeout(
-                "Daily Purge: Rejected Titles",
+                "Daily Purge",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
-                    "Daily Purge: Rejected Titles",
+                    "Daily Purge",
                     self.run_daily_purge,
                 ),
                 self.timeout_purge,
             )
             self.last_run["purge"] = time.time()
         else:
-            next_run = int(self.purge_interval - (time.time() - self.last_run["purge"]))
-            print("\nDaily Purge: Skipping (next run in %ds)" % next_run)
+            remaining = int(
+                self.purge_interval - (time.time() - self.last_run["purge"])
+            )
+            print("\nDaily Purge: next in %ds" % remaining)
 
         cycle_duration = time.time() - cycle_start
-        print(f"\n{'='*70}")
-        print(f"Cycle {self.cycle_count} completed in {cycle_duration:.1f}s")
-        print(f"{'='*70}")
+        print("\n" + "=" * 70)
+        print("Cycle %d completed in %.1fs" % (self.cycle_count, cycle_duration))
+        print("=" * 70)
 
         # Print full statistics after cycle completion
         self.print_full_statistics()
 
     async def run(self):
         """Main daemon loop"""
-        print(f"{'#'*70}")
-        print("# SNI v3 Pipeline Daemon Starting")
-        print(f"# {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"{'#'*70}")
-        print("\nConfiguration:")
+        print("#" * 70)
+        print("# SNI v3 Pipeline Daemon Starting (4-Slot Architecture)")
+        print("# %s" % datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print("#" * 70)
+        print("\nScheduling Slots:")
         print(
-            f"  Phase 1 interval: {self.phase1_interval}s ({self.phase1_interval/3600:.1f} hours - RSS ingestion)"
+            "  Slot 1 INGESTION:      %dh  (Phase 1 + 2)"
+            % (self.ingestion_interval // 3600)
         )
         print(
-            f"  Phase 2 interval: {self.phase2_interval}s ({self.phase2_interval/3600:.1f} hours - centroid matching)"
+            "  Slot 2 CLASSIFICATION: %dm  (Phase 3.1 + 3.2 + 3.3)"
+            % (self.classification_interval // 60)
         )
         print(
-            f"  Phase 3.1 interval: {self.phase31_interval}s ({self.phase31_interval/60:.0f} minutes - label + signal extraction)"
+            "  Slot 3 CLUSTERING:     %dm  (Phase 4 + 4.1)"
+            % (self.clustering_interval // 60)
         )
         print(
-            f"  Phase 3.3 interval: {self.phase33_interval}s ({self.phase33_interval/60:.0f} minutes - gating + track assignment)"
+            "  Slot 4 ENRICHMENT:     %dh  (Phase 4.5a + 4.5b)"
+            % (self.enrichment_interval // 3600)
         )
-        print(
-            f"  Phase 4 interval: {self.phase4_interval}s ({self.phase4_interval/60:.0f} minutes - event clustering)"
-        )
-        print(
-            f"  Phase 4.1 interval: {self.phase41_interval}s ({self.phase41_interval/60:.0f} minutes - topic aggregation)"
-        )
-        print(
-            f"  Phase 4.5a interval: {self.phase45a_interval}s ({self.phase45a_interval/60:.0f} minutes - event summaries)"
-        )
-        print(
-            f"  Phase 4.5b interval: {self.phase45_interval}s ({self.phase45_interval/3600:.0f} hour - CTM summaries)"
-        )
-        print(
-            f"  Purge interval: {self.purge_interval}s ({self.purge_interval/3600:.0f} hours - rejected title cleanup)"
-        )
+        print("  Daily Purge:           %dh" % (self.purge_interval // 3600))
+        print("\nBatch Sizes:")
+        print("  Classification: %d titles/run" % self.classification_batch_size)
+        print("  Aggregation:    %d CTMs/run" % self.aggregation_max_ctms)
+        print("  Event summaries: %d events/run" % self.enrichment_max_events)
+        print("  CTM summaries:   %d CTMs/run" % self.enrichment_max_ctms)
         print("\nPress Ctrl+C to shutdown gracefully\n")
 
         while self.running:

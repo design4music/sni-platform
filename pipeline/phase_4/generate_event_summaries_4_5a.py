@@ -534,14 +534,14 @@ async def generate_event_data(
     from core.llm_utils import async_check_rate_limit
 
     async with httpx.AsyncClient(timeout=90) as client:
-        for _attempt in range(2):
+        for _attempt in range(3):
             response = await client.post(
                 "%s/chat/completions" % config.deepseek_api_url,
                 headers=headers,
                 json=payload,
             )
 
-            if await async_check_rate_limit(response):
+            if await async_check_rate_limit(response, _attempt):
                 continue
 
             if response.status_code != 200:

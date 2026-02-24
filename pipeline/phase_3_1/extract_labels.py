@@ -101,7 +101,7 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
 
                 from core.llm_utils import check_rate_limit
 
-                if check_rate_limit(response):
+                if check_rate_limit(response, attempt):
                     continue
 
                 if response.status_code != 200:
