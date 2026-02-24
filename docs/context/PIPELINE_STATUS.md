@@ -1,7 +1,7 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-21
-**Status**: Production - Full pipeline operational
+**Last Updated**: 2026-02-24
+**Status**: Production - Full pipeline operational (4-slot architecture)
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
 
@@ -51,22 +51,25 @@ Frontend (Next.js, auth via NextAuth v5)
 
 ---
 
-## Daemon Schedule
+## Daemon Schedule (4-Slot Architecture)
 
 **Script**: `pipeline/runner/pipeline_daemon.py`
+**Design doc**: `docs/context/DAEMON_4SLOT_PLAN.md`
 
-| Phase | Interval | Batch Size | Description |
-|-------|----------|------------|-------------|
-| Phase 1 | 12 hours | all feeds | RSS ingestion |
-| Phase 2 | 12 hours | all titles | Centroid matching (mechanical) |
-| Phase 3.1 | 10 minutes | 500 titles | Label + signal extraction (concurrency=5) |
-| Phase 3.2 | (after 3.1) | 500 titles | Entity centroid backfill |
-| Phase 3.3 | 10 minutes | 100 titles | Intel gating + track assignment |
-| Phase 4 | 30 minutes | all CTMs | Incremental clustering |
-| Phase 4.1 | (after 4) | all CTMs | Topic consolidation (LLM merge/rescue/dedup) |
-| Phase 4.5a | 15 minutes | 500 events | Event summaries (decoupled) |
-| Phase 4.5b | 1 hour | 50 CTMs | CTM digest generation |
-| Daily purge | 24 hours | all | Remove rejected titles to tombstone table |
+Phases are grouped into 4 scheduling slots. Within each slot, phases run sequentially.
+
+| Slot | Interval | Phases | Batch Sizes |
+|------|----------|--------|-------------|
+| **INGESTION** | 12 hours | Phase 1 (RSS) + Phase 2 (centroid matching) | all feeds, all titles |
+| **CLASSIFICATION** | 15 minutes | Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks) | 500 titles/run (concurrency=5) |
+| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (topic aggregation) | all CTMs, 25 CTMs for aggregation |
+| **ENRICHMENT** | 6 hours | Phase 4.5a (event summaries) + 4.5b (CTM digests) | 2000 events, 200 CTMs |
+| **Daily purge** | 24 hours | Remove rejected titles + reset api_error_count | all |
+
+**Key design decisions:**
+- Enrichment (Phase 4.5a+b) is the biggest LLM cost (~63% of tokens). Running every 6h instead of 15min cuts enrichment costs ~90%. Events get prose summaries up to 6h after clustering; titles/source counts appear immediately.
+- Daily purge resets `api_error_count` for titles blocked by transient API failures, preventing permanent title loss from temporary outages.
+- All LLM calls retry 3x with exponential backoff on HTTP 429/502/503/504 (5s, 15s, 45s).
 
 Phases 5 (narrative extraction) and 6 (RAI analysis) were removed from the daemon
 in D-030. They now run on-demand via the frontend extraction API.
@@ -269,7 +272,7 @@ Single-pass LLM consolidation of mechanically clustered topics. One LLM call per
 ## Phase 4.5a: Event Summary Generation
 
 **Script**: `pipeline/phase_4/generate_event_summaries_4_5a.py`
-**Interval**: 15 minutes (decoupled from Phase 4)
+**Slot**: ENRICHMENT (every 6 hours)
 
 ### Output Structure
 
@@ -286,15 +289,15 @@ LLM generates conversational summaries for each event:
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| `v3_p45a_max_events` | 500 | Events per run |
-| `v3_p45a_interval` | 900 | 15 minutes |
+| `enrichment_max_events` | 2000 | Events per run (daemon) |
+| Enrichment interval | 6 hours | Shared with 4.5b |
 
 ---
 
 ## Phase 4.5b: CTM Digest Generation
 
 **Script**: `pipeline/phase_4/generate_summaries_4_5.py`
-**Interval**: 1 hour
+**Slot**: ENRICHMENT (every 6 hours)
 
 ### Process
 
@@ -534,7 +537,7 @@ core/
 |-- config.py                        # Configuration + clustering constants
 |-- prompts.py                       # All LLM prompts (consolidated)
 |-- ontology.py                      # ELO v2.0 definitions
-|-- llm_utils.py                     # Shared LLM utilities (extract_json, fix_role_hallucinations)
+|-- llm_utils.py                     # Shared LLM utilities (rate limit backoff, extract_json, fix_role_hallucinations)
 |-- signal_stats.py                  # Tier 1 coverage stats (HHI, language dist, etc.)
 
 db/
@@ -748,11 +751,21 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ---
 
-## Current Status (2026-02-21)
+## Current Status (2026-02-24)
 
-**Operational**: Daemon runs Phases 1 through 4.5b + daily purge locally. Narrative extraction and RAI analysis are on-demand (user-triggered, auth-gated). January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. User authentication live. Production site at https://www.worldbrief.info
+**Operational**: Daemon runs 4-slot architecture (ingestion/classification/clustering/enrichment) + daily purge locally. Narrative extraction and RAI analysis are on-demand (user-triggered, auth-gated). January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. User authentication live. Production site at https://www.worldbrief.info
 
-### Recent Changes (2026-02-21)
+### Recent Changes (2026-02-24)
+
+1. **4-Slot Daemon Architecture**: Consolidated 8 scheduling intervals into 4 slots (ingestion 12h, classification 15m, clustering 30m, enrichment 6h). Enrichment batch sizes raised to 2000 events + 200 CTMs per run. Estimated ~80% reduction in enrichment API costs (~$0.30-0.40/day vs ~$1.10/day).
+2. **LLM Retry Backoff**: All DeepSeek API calls now retry 3x with exponential backoff (5s, 15s, 45s) on HTTP 429/502/503/504 transient errors. Previously some phases only retried 2x with no backoff scaling.
+3. **Self-Healing Error Recovery**: Daily purge resets `api_error_count` for titles blocked by transient API failures. Previously, titles hitting 3 API errors during an outage were permanently stuck and required manual intervention.
+4. **Feed Data Quality**: Expanded PUBLISHER_MAP with ~65 missing aliases (German, Russian, and other outlets). Fixed URL typos for Telegraph and Straits Times. Updated Google News URLs for 7 feeds.
+5. **Sources Page Redesign**: Converted `/sources` from flat country headers to collapsible accordion components with flags. Added 10 missing European countries. Renamed "Global" to "International Organizations".
+6. **Frontend Performance**: Suspense streaming boundaries, route-specific loading skeletons, reduced client-serialized data on track pages.
+7. **Backlog Processing**: Cleared 5,863 titles stuck at api_error_count >= 3, processed through all phases. Generated ~1,500 event summaries and 50 CTM digests.
+
+### Previous Changes (2026-02-21)
 
 1. **User Authentication**: Email/password auth via NextAuth v5 (D-029). Sign-in/sign-up pages, JWT sessions, user menu in navigation. Extraction and analysis API routes require authentication.
 2. **On-Demand Extraction & Analysis**: Narrative extraction and RAI analysis moved from daemon (Phases 5 & 6) to user-triggered on-demand flow (D-030). FastAPI extraction service (`api/extraction_api.py`), frontend proxy routes, ExtractButton component. Users see "Extract & Analyse" CTA on entities without narratives.
@@ -824,15 +837,16 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 6. **Render deployment**: Frontend + DB snapshot on Render for demo. Pipeline worker suspended.
 7. **Staleness detection**: `events_v3.summary_source_count` tracks when summaries were generated; Phase 4.5a re-summarizes events that grew >50%.
 
-### Pipeline Statistics (2026-02-20)
+### Pipeline Statistics (2026-02-24)
 
-- Titles: ~100,000+ total (~50k Jan frozen + ~50k Feb active)
+- Titles: ~91,000 total (~50k Jan frozen + ~41k Feb active)
 - Active centroids: 85
-- CTMs: ~870+ (437 frozen Jan + ~430 active Feb)
-- Events: ~7,000+ (757 linked via saga chains)
+- CTMs: ~2,000 (437 frozen Jan + ~1,500+ active Feb)
+- Events: ~14,900
 - Epics: 9 (January 2026)
 - Epic narratives: ~50 with RAI analysis
 - Centroid monthly summaries: 85 (January)
+- Active feeds: 210
 - Daily ingestion: ~3,000-6,000 titles
 - Saga chains: 432 cross-month story links
 
