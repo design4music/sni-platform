@@ -6,6 +6,7 @@ import { Event, Title } from '@/lib/types';
 interface OtherCoverageProps {
   label: string;
   events: Event[];       // Mix of small topics + catchall events
+  flat?: boolean;        // If true, render without accordion wrapper (no main topics exist)
 }
 
 function formatDate(dateStr: string): string {
@@ -74,7 +75,7 @@ function countTitles(events: Event[]) {
   return events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 }
 
-export default function OtherCoverage({ label, events }: OtherCoverageProps) {
+export default function OtherCoverage({ label, events, flat = false }: OtherCoverageProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const totalSources = countTitles(events);
@@ -91,6 +92,45 @@ export default function OtherCoverage({ label, events }: OtherCoverageProps) {
   );
   const singletonTitles = singletonEvents.flatMap(e => e.resolvedTitles || []);
 
+  const content = (
+    <div className={flat ? '' : 'mt-3 pl-2'}>
+      {/* Small topics with grouped titles */}
+      {smallTopics.length > 0 && (
+        <div className="mb-4">
+          {smallTopics.map((event, i) => (
+            <SmallTopic key={event.event_id || i} event={event} />
+          ))}
+        </div>
+      )}
+
+      {/* Singletons */}
+      {singletonTitles.length > 0 && (
+        <div>
+          {smallTopics.length > 0 && (
+            <p className="text-xs text-dashboard-text-muted/60 uppercase tracking-wide mb-2">
+              Unclustered ({singletonTitles.length})
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {singletonTitles.slice(0, 30).map(t => (
+              <TitleLink key={t.id} title={t} />
+            ))}
+            {singletonTitles.length > 30 && (
+              <p className="text-xs text-dashboard-text-muted pt-1">
+                ... and {singletonTitles.length - 30} more
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Flat mode: no accordion, render content directly
+  if (flat) {
+    return content;
+  }
+
   return (
     <div className="mt-4 pt-3 border-t border-dashboard-border/50">
       <button
@@ -104,39 +144,7 @@ export default function OtherCoverage({ label, events }: OtherCoverageProps) {
         {label} ({totalSources} sources)
       </button>
 
-      {isOpen && (
-        <div className="mt-3 pl-2">
-          {/* Small topics with grouped titles */}
-          {smallTopics.length > 0 && (
-            <div className="mb-4">
-              {smallTopics.map((event, i) => (
-                <SmallTopic key={event.event_id || i} event={event} />
-              ))}
-            </div>
-          )}
-
-          {/* Singletons */}
-          {singletonTitles.length > 0 && (
-            <div>
-              {smallTopics.length > 0 && (
-                <p className="text-xs text-dashboard-text-muted/60 uppercase tracking-wide mb-2">
-                  Unclustered ({singletonTitles.length})
-                </p>
-              )}
-              <div className="space-y-0.5">
-                {singletonTitles.slice(0, 30).map(t => (
-                  <TitleLink key={t.id} title={t} />
-                ))}
-                {singletonTitles.length > 30 && (
-                  <p className="text-xs text-dashboard-text-muted pt-1">
-                    ... and {singletonTitles.length - 30} more
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {isOpen && content}
     </div>
   );
 }

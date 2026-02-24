@@ -103,6 +103,7 @@ export default function CountryAccordion({
             <OtherCoverage
               label={`Other ${countryName} Coverage`}
               events={otherEvents}
+              flat
             />
           ) : null}
         </div>

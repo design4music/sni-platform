@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Centroid, formatTimeAgo } from '@/lib/types';
+import { Centroid } from '@/lib/types';
 
 interface CentroidCardProps {
   centroid: Centroid;
@@ -13,7 +13,6 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
   const languageCount = centroid.language_count || 0;
   const isFresh = !!(centroid.last_article_date &&
     (Date.now() - new Date(centroid.last_article_date).getTime()) < 172800000);
-  const lastUpdated = isFresh ? '' : formatTimeAgo(centroid.last_article_date);
 
   return (
     <Link
@@ -52,7 +51,7 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
           {centroid.description && (
             <p className="text-sm text-dashboard-text-muted mb-2">{centroid.description}</p>
           )}
-          {hasArticles && (sourceCount > 0 || languageCount > 0 || lastUpdated) && (
+          {hasArticles && (sourceCount > 0 || languageCount > 0) && (
             <div className="flex flex-wrap gap-3 text-xs text-dashboard-text-muted mt-2">
               {sourceCount > 0 && (
                 <span title={`${sourceCount} distinct news sources`}>
@@ -62,11 +61,6 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
               {languageCount > 0 && (
                 <span title={`Coverage in ${languageCount} languages`}>
                   {languageCount} {languageCount === 1 ? 'language' : 'languages'}
-                </span>
-              )}
-              {lastUpdated && (
-                <span className="text-green-400" title="Latest article">
-                  {lastUpdated}
                 </span>
               )}
             </div>

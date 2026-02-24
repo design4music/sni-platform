@@ -227,7 +227,9 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     tocSections.push({ id: 'section-summary', label: 'Summary' });
   }
 
-  tocSections.push({ id: 'section-narratives', label: 'Narrative Frames' });
+  if (ctm.summary_text) {
+    tocSections.push({ id: 'section-narratives', label: 'Narrative Frames' });
+  }
 
   if (domesticEvents.length > 0) {
     tocSections.push({ id: 'section-domestic', label: 'Domestic' });
@@ -367,18 +369,20 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         </div>
       )}
 
-      {/* Narrative Frames (deferred via Suspense) */}
-      <Suspense fallback={
-        <div id="section-narratives" className="mb-8 animate-pulse">
-          <div className="h-7 w-48 bg-dashboard-border rounded mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
-            <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
+      {/* Narrative Frames (deferred via Suspense, only if CTM has a summary) */}
+      {ctm.summary_text && (
+        <Suspense fallback={
+          <div id="section-narratives" className="mb-8 animate-pulse">
+            <div className="h-7 w-48 bg-dashboard-border rounded mb-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
+              <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
+            </div>
           </div>
-        </div>
-      }>
-        <NarrativeSection entityType="ctm" entityId={ctm.id} />
-      </Suspense>
+        }>
+          <NarrativeSection entityType="ctm" entityId={ctm.id} />
+        </Suspense>
+      )}
 
       {/* Events content */}
       {allEvents.length === 0 ? (
@@ -438,18 +442,27 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 {domesticMainEvents.length} topics | {countTitles(domesticEvents)} sources
               </p>
 
-              <EventList
-                events={domesticMainEvents}
-                initialLimit={INITIAL_DISPLAY}
-                keyPrefix="domestic"
-              />
-
-              {domesticOther.length > 0 && (
+              {domesticMainEvents.length > 0 ? (
+                <>
+                  <EventList
+                    events={domesticMainEvents}
+                    initialLimit={INITIAL_DISPLAY}
+                    keyPrefix="domestic"
+                  />
+                  {domesticOther.length > 0 && (
+                    <OtherCoverage
+                      label="Other Domestic Coverage"
+                      events={domesticOther}
+                    />
+                  )}
+                </>
+              ) : domesticOther.length > 0 ? (
                 <OtherCoverage
                   label="Other Domestic Coverage"
                   events={domesticOther}
+                  flat
                 />
-              )}
+              ) : null}
             </div>
           )}
 
