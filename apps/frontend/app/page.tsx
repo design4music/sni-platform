@@ -91,10 +91,18 @@ export default async function HomePage() {
                 <Link
                   key={key}
                   href={`/region/${key.toLowerCase()}`}
-                  className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group"
+                  className="relative overflow-hidden p-6 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group"
                 >
-                  <h3 className="text-xl font-semibold mb-2">{label}</h3>
-                  <p className="text-sm text-dashboard-text-muted leading-relaxed">
+                  <div
+                    className="absolute inset-0 opacity-40 pointer-events-none"
+                    style={{
+                      backgroundImage: `url(/geo/regions/${key.toLowerCase()}.png)`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                  <h3 className="relative text-xl font-semibold mb-2">{label}</h3>
+                  <p className="relative text-sm text-dashboard-text-muted leading-relaxed">
                     {names.join(', ')}
                   </p>
                 </Link>
