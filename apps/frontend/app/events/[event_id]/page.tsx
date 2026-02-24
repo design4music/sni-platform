@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -69,26 +70,108 @@ function PerspectiveBadge({ centroidId, label, track, month }: {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Deferred async server components                                   */
+/* ------------------------------------------------------------------ */
+
+async function EventSidebar({ eventId, coherenceCheck }: {
+  eventId: string;
+  coherenceCheck?: { reason: string; topics?: string[] } | null;
+}) {
+  const narratives = await getFramedNarratives('event', eventId);
+
+  const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
+  const signalStats = rawStats?.title_count ? rawStats : null;
+  const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
+
+  return (
+    <div className="lg:sticky lg:top-24 space-y-6 text-sm">
+      {narratives.length > 0 ? (
+        <NarrativeCards narratives={narratives} />
+      ) : coherenceCheck ? (
+        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
+          <h3 className="text-sm font-semibold text-amber-300">Mixed Topic Cluster</h3>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            {coherenceCheck.reason}
+          </p>
+          {coherenceCheck.topics?.length && coherenceCheck.topics.length > 0 && (
+            <ul className="text-xs text-dashboard-text-muted space-y-0.5 list-disc list-inside">
+              {coherenceCheck.topics.map((t: string, i: number) => (
+                <li key={i}>{t}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
+        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-dashboard-text">Narrative Analysis</h3>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            Extract opposing narrative frames from this event&apos;s coverage.
+            The analysis identifies how different sources frame the same story.
+          </p>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            Extraction and analysis takes 1-2 minutes. Once generated, results
+            are available instantly on future visits.
+          </p>
+          <ExtractButton entityType="event" entityId={eventId} />
+        </div>
+      )}
+
+      {/* Coverage Assessment */}
+      {raiSignals && (
+        <RaiSidebar signals={raiSignals} stats={signalStats} />
+      )}
+    </div>
+  );
+}
+
+async function EventSignalSection({ eventId }: { eventId: string }) {
+  const narratives = await getFramedNarratives('event', eventId);
+  const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
+  const signalStats = rawStats?.title_count ? rawStats : null;
+
+  if (!signalStats) return null;
+  return (
+    <div className="mb-8">
+      <SignalDashboard stats={signalStats} />
+    </div>
+  );
+}
+
+async function SourceHeadlinesSection({ eventId }: { eventId: string }) {
+  const titles = await getEventTitles(eventId);
+  if (titles.length === 0) return null;
+  return (
+    <div className="mb-8">
+      <h2 className="text-2xl font-bold mb-4">Source Headlines</h2>
+      <ExpandableTitles titles={titles} />
+    </div>
+  );
+}
+
+async function RelatedStoriesSection({ eventId, centroidId }: {
+  eventId: string; centroidId: string;
+}) {
+  const relatedEvents = await getRelatedEvents(eventId, centroidId);
+  return <RelatedStories events={relatedEvents} />;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main page component                                                */
+/* ------------------------------------------------------------------ */
+
 export default async function EventDetailPage({ params }: Props) {
   const { event_id } = await params;
 
   const event = await getEventById(event_id);
   if (!event) return notFound();
 
-  const [titles, narratives, relatedEvents, sagaSiblings] = await Promise.all([
-    getEventTitles(event_id),
-    getFramedNarratives('event', event_id),
-    getRelatedEvents(event_id, event.centroid_id),
-    event.saga ? getEventSagaSiblings(event.saga, event_id) : Promise.resolve([]),
-  ]);
+  // Only fetch saga siblings immediately (fast, needed for story timeline)
+  const sagaSiblings = event.saga
+    ? await getEventSagaSiblings(event.saga, event_id)
+    : [];
 
   const trackLabel = getTrackLabel(event.track);
-
-  // Signal stats are the same across all narratives for an event
-  // Only use stats if they have full Tier 1 data (title_count), not just extraction markers
-  const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
-  const signalStats = rawStats?.title_count ? rawStats : null;
-  const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
 
   const breadcrumb = (
     <div className="text-sm text-dashboard-text-muted">
@@ -107,44 +190,20 @@ export default async function EventDetailPage({ params }: Props) {
     </div>
   );
 
-  const sidebar = (
-    <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {narratives.length > 0 ? (
-        <NarrativeCards narratives={narratives} />
-      ) : event.coherence_check ? (
-        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
-          <h3 className="text-sm font-semibold text-amber-300">Mixed Topic Cluster</h3>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            {event.coherence_check.reason}
-          </p>
-          {event.coherence_check.topics?.length > 0 && (
-            <ul className="text-xs text-dashboard-text-muted space-y-0.5 list-disc list-inside">
-              {event.coherence_check.topics.map((t: string, i: number) => (
-                <li key={i}>{t}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ) : (
-        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-dashboard-text">Narrative Analysis</h3>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            Extract opposing narrative frames from this event&apos;s coverage.
-            The analysis identifies how different sources frame the same story.
-          </p>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            Extraction and analysis takes 1-2 minutes. Once generated, results
-            are available instantly on future visits.
-          </p>
-          <ExtractButton entityType="event" entityId={event_id} />
-        </div>
-      )}
-
-      {/* Coverage Assessment */}
-      {raiSignals && (
-        <RaiSidebar signals={raiSignals} stats={signalStats} />
-      )}
+  const sidebarFallback = (
+    <div className="lg:sticky lg:top-24 space-y-6 text-sm animate-pulse">
+      <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
+        <div className="h-4 w-32 bg-dashboard-border rounded" />
+        <div className="h-3 w-full bg-dashboard-border/50 rounded" />
+        <div className="h-3 w-4/5 bg-dashboard-border/50 rounded" />
+      </div>
     </div>
+  );
+
+  const sidebar = (
+    <Suspense fallback={sidebarFallback}>
+      <EventSidebar eventId={event_id} coherenceCheck={event.coherence_check} />
+    </Suspense>
   );
 
   return (
@@ -231,23 +290,29 @@ export default async function EventDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Topic Stats */}
-      {signalStats && (
-        <div className="mb-8">
-          <SignalDashboard stats={signalStats} />
-        </div>
-      )}
+      {/* Topic Stats (deferred - depends on narratives) */}
+      <Suspense fallback={null}>
+        <EventSignalSection eventId={event_id} />
+      </Suspense>
 
-      {/* Related Coverage */}
-      <RelatedStories events={relatedEvents} />
+      {/* Related Coverage (deferred) */}
+      <Suspense fallback={null}>
+        <RelatedStoriesSection eventId={event_id} centroidId={event.centroid_id} />
+      </Suspense>
 
-      {/* Source Headlines */}
-      {titles.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Source Headlines</h2>
-          <ExpandableTitles titles={titles} />
+      {/* Source Headlines (deferred) */}
+      <Suspense fallback={
+        <div className="mb-8 animate-pulse">
+          <div className="h-7 w-48 bg-dashboard-border rounded mb-4" />
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-dashboard-border/50 rounded" />
+            <div className="h-4 w-5/6 bg-dashboard-border/50 rounded" />
+            <div className="h-4 w-4/6 bg-dashboard-border/50 rounded" />
+          </div>
         </div>
-      )}
+      }>
+        <SourceHeadlinesSection eventId={event_id} />
+      </Suspense>
     </DashboardLayout>
   );
 }

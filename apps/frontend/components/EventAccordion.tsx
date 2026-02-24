@@ -15,8 +15,8 @@ interface EventAccordionProps {
     source_count?: number;
     event_id?: string;
     has_narratives?: boolean;
+    resolvedTitles?: Title[];
   };
-  allTitles: Title[];
   index: number;
   compact?: boolean;
 }
@@ -48,14 +48,10 @@ function DateRange({ date, last_active }: { date: string; last_active?: string }
   return <span className="text-dashboard-text-muted">{formattedFirst}</span>;
 }
 
-export default function EventAccordion({ event, allTitles, index, compact = false }: EventAccordionProps) {
+export default function EventAccordion({ event, index, compact = false }: EventAccordionProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Get related titles for this event
-  const relatedTitles = event.source_title_ids
-    ? allTitles.filter(t => event.source_title_ids!.includes(t.id))
-    : [];
-
+  const relatedTitles = event.resolvedTitles || [];
   const hasRelatedTitles = relatedTitles.length > 0;
   const sourceCount = event.source_count || relatedTitles.length;
 
@@ -107,7 +103,7 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
               className="flex-shrink-0 text-xs text-dashboard-text-muted hover:text-dashboard-text transition"
               aria-expanded={isOpen}
             >
-              {isOpen ? '−' : '+'} {sourceCount}
+              {isOpen ? '\u2212' : '+'} {sourceCount}
             </button>
           )}
         </div>
@@ -187,7 +183,7 @@ export default function EventAccordion({ event, allTitles, index, compact = fals
               className="text-sm text-blue-400 hover:text-blue-300 transition"
               aria-expanded={isOpen}
             >
-              {isOpen ? '−' : '+'} {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
+              {isOpen ? '\u2212' : '+'} {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
             </button>
           )}
         </div>

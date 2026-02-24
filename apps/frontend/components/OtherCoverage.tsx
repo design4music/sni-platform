@@ -6,7 +6,6 @@ import { Event, Title } from '@/lib/types';
 interface OtherCoverageProps {
   label: string;
   events: Event[];       // Mix of small topics + catchall events
-  allTitles: Title[];
 }
 
 function formatDate(dateStr: string): string {
@@ -47,8 +46,8 @@ function TitleLink({ title }: { title: Title }) {
 }
 
 /** A small topic: date + title + indented linked titles. */
-function SmallTopic({ event, allTitles }: { event: Event; allTitles: Title[] }) {
-  const titles = allTitles.filter(t => (event.source_title_ids || []).includes(t.id));
+function SmallTopic({ event }: { event: Event }) {
+  const titles = event.resolvedTitles || [];
   const topicTitle = event.title || event.summary || 'Untitled topic';
 
   return (
@@ -75,7 +74,7 @@ function countTitles(events: Event[]) {
   return events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 }
 
-export default function OtherCoverage({ label, events, allTitles }: OtherCoverageProps) {
+export default function OtherCoverage({ label, events }: OtherCoverageProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const totalSources = countTitles(events);
@@ -90,8 +89,7 @@ export default function OtherCoverage({ label, events, allTitles }: OtherCoverag
   const singletonEvents = events.filter(
     e => e.is_catchall || (e.source_title_ids?.length || 0) < 2
   );
-  const singletonIds = singletonEvents.flatMap(e => e.source_title_ids || []);
-  const singletonTitles = allTitles.filter(t => singletonIds.includes(t.id));
+  const singletonTitles = singletonEvents.flatMap(e => e.resolvedTitles || []);
 
   return (
     <div className="mt-4 pt-3 border-t border-dashboard-border/50">
@@ -112,7 +110,7 @@ export default function OtherCoverage({ label, events, allTitles }: OtherCoverag
           {smallTopics.length > 0 && (
             <div className="mb-4">
               {smallTopics.map((event, i) => (
-                <SmallTopic key={event.event_id || i} event={event} allTitles={allTitles} />
+                <SmallTopic key={event.event_id || i} event={event} />
               ))}
             </div>
           )}

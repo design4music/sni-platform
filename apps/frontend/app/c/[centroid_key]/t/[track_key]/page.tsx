@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
@@ -20,7 +21,7 @@ import NarrativeCards from '@/components/NarrativeOverlay';
 import ExtractButton from '@/components/ExtractButton';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event } from '@/lib/types';
+import { getTrackLabel, getCountryName, getIsoFromBucketKey, Track, Event, Title } from '@/lib/types';
 import { getTrackIcon } from '@/components/TrackCard';
 
 export const revalidate = 300;
@@ -70,6 +71,75 @@ function splitTopN(events: Event[], topN: number) {
   return { top, rest };
 }
 
+/** Resolve titles per event using a pre-built lookup map */
+function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
+  for (const event of events) {
+    event.resolvedTitles = (event.source_title_ids || [])
+      .map(id => titleMap.get(id))
+      .filter((t): t is Title => t !== undefined);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Deferred async server components (wrapped in Suspense)             */
+/* ------------------------------------------------------------------ */
+
+async function OverlappingCentroidsSection({
+  centroidId, track, currentMonth,
+}: {
+  centroidId: string; track: string; currentMonth: string;
+}) {
+  const overlappingCentroids = await getOverlappingCentroidsForTrack(centroidId, track);
+  if (overlappingCentroids.length === 0) return null;
+  return (
+    <div className="hidden lg:block bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
+      <h3 className="text-base font-semibold mb-3 text-dashboard-text">
+        &ldquo;{getTrackLabel(track as Track)}&rdquo; Elsewhere
+      </h3>
+      <div className="space-y-1">
+        {overlappingCentroids.slice(0, 5).map(c => (
+          <Link
+            key={c.id}
+            href={`/c/${c.id}/t/${track}?month=${currentMonth}`}
+            className="block px-3 py-2 rounded text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border/50 transition"
+          >
+            {c.label}
+            <span className="text-xs ml-2 opacity-60">({c.overlap_count})</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function NarrativeSection({
+  entityType, entityId,
+}: {
+  entityType: 'event' | 'ctm'; entityId: string;
+}) {
+  const narratives = await getFramedNarratives(entityType, entityId);
+  if (narratives.length > 0) {
+    return (
+      <div id="section-narratives" className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Narrative Frames</h2>
+        <NarrativeCards narratives={narratives} layout="grid" />
+      </div>
+    );
+  }
+  return (
+    <div id="section-narratives" className="mb-8 p-6 rounded-lg border border-dashboard-border bg-dashboard-surface text-center">
+      <p className="text-sm text-dashboard-text-muted mb-3">
+        No narrative frames extracted yet for this topic.
+      </p>
+      <ExtractButton entityType={entityType} entityId={entityId} />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Main page component                                                */
+/* ------------------------------------------------------------------ */
+
 export default async function TrackPage({ params, searchParams }: TrackPageProps) {
   const { centroid_key, track_key } = await params;
   const { month } = await searchParams;
@@ -86,12 +156,11 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     notFound();
   }
 
-  const [titles, timeline, otherTracks, overlappingCentroids, narratives] = await Promise.all([
+  // Fetch immediate data in parallel (defer overlapping centroids + narratives via Suspense)
+  const [titles, timeline, otherTracks] = await Promise.all([
     getTitlesByCTM(ctm.id),
     getMonthTimeline(centroid.id, track),
     getTracksByCentroid(centroid.id),
-    getOverlappingCentroidsForTrack(centroid.id, track),
-    getFramedNarratives('ctm', ctm.id),
   ]);
 
   const months = timeline.map(t => t.month);
@@ -99,8 +168,13 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const eventCount = ctm.events_digest?.length || 0;
   const actualSourceCount = titles.length;
 
+  // Build title lookup map and resolve per-event titles
+  const titleMap = new Map(titles.map(t => [t.id, t]));
+
   // Process events for both content and TOC
   const allEvents = ctm.events_digest || [];
+  resolveEventTitles(allEvents, titleMap);
+
   const homeIsoCodes = new Set(centroid.iso_codes || []);
 
   const isBilateralToSelf = (e: Event) =>
@@ -146,16 +220,14 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const bucketCentroids = await getCentroidsByIds(bucketKeys);
   const bucketCentroidMap = new Map(bucketCentroids.map(c => [c.id, c]));
 
-  // Build TOC sections
+  // Build TOC sections (always include narratives since section always renders)
   const tocSections: TocSection[] = [];
 
   if (ctm.summary_text) {
     tocSections.push({ id: 'section-summary', label: 'Summary' });
   }
 
-  if (narratives.length > 0) {
-    tocSections.push({ id: 'section-narratives', label: 'Narrative Frames' });
-  }
+  tocSections.push({ id: 'section-narratives', label: 'Narrative Frames' });
 
   if (domesticEvents.length > 0) {
     tocSections.push({ id: 'section-domestic', label: 'Domestic' });
@@ -229,26 +301,14 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         </div>
       )}
 
-      {/* Same track, other centroids */}
-      {overlappingCentroids.length > 0 && (
-        <div className="hidden lg:block bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-          <h3 className="text-base font-semibold mb-3 text-dashboard-text">
-            &ldquo;{getTrackLabel(track)}&rdquo; Elsewhere
-          </h3>
-          <div className="space-y-1">
-            {overlappingCentroids.slice(0, 5).map(c => (
-              <Link
-                key={c.id}
-                href={`/c/${c.id}/t/${track}?month=${currentMonth}`}
-                className="block px-3 py-2 rounded text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border/50 transition"
-              >
-                {c.label}
-                <span className="text-xs ml-2 opacity-60">({c.overlap_count})</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Same track, other centroids (deferred - slow query) */}
+      <Suspense fallback={null}>
+        <OverlappingCentroidsSection
+          centroidId={centroid.id}
+          track={track}
+          currentMonth={currentMonth}
+        />
+      </Suspense>
     </div>
   );
 
@@ -307,20 +367,18 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         </div>
       )}
 
-      {/* Narrative Frames */}
-      {narratives.length > 0 ? (
-        <div id="section-narratives" className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Narrative Frames</h2>
-          <NarrativeCards narratives={narratives} layout="grid" />
+      {/* Narrative Frames (deferred via Suspense) */}
+      <Suspense fallback={
+        <div id="section-narratives" className="mb-8 animate-pulse">
+          <div className="h-7 w-48 bg-dashboard-border rounded mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
+            <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
+          </div>
         </div>
-      ) : (
-        <div id="section-narratives" className="mb-8 p-6 rounded-lg border border-dashboard-border bg-dashboard-surface text-center">
-          <p className="text-sm text-dashboard-text-muted mb-3">
-            No narrative frames extracted yet for this topic.
-          </p>
-          <ExtractButton entityType="ctm" entityId={ctm.id} />
-        </div>
-      )}
+      }>
+        <NarrativeSection entityType="ctm" entityId={ctm.id} />
+      </Suspense>
 
       {/* Events content */}
       {allEvents.length === 0 ? (
@@ -382,7 +440,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
               <EventList
                 events={domesticMainEvents}
-                allTitles={titles}
                 initialLimit={INITIAL_DISPLAY}
                 keyPrefix="domestic"
               />
@@ -391,7 +448,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 <OtherCoverage
                   label="Other Domestic Coverage"
                   events={domesticOther}
-                  allTitles={titles}
                 />
               )}
             </div>
@@ -420,7 +476,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                     isoCodes={isoCodes}
                     mainEvents={mainEvents}
                     otherEvents={otherEvents}
-                    allTitles={titles}
                     totalSourceCount={countTitles(events)}
                     defaultOpen={index === 0}
                   />
@@ -438,7 +493,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                     isoCodes={[]}
                     mainEvents={mainEvents}
                     otherEvents={otherEvents}
-                    allTitles={titles}
                     totalSourceCount={countTitles(otherInternational)}
                     defaultOpen={sortedBilateralEntries.length === 0}
                   />

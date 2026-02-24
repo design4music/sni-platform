@@ -384,24 +384,26 @@ export async function getOverlappingCentroidsForTrack(
   centroidId: string,
   track: string
 ): Promise<Array<Centroid & { overlap_count: number }>> {
-  return query<Centroid & { overlap_count: number }>(
-    `SELECT
-      c.id, c.label, c.class, c.primary_theater,
-      COUNT(DISTINCT t.id) as overlap_count
-     FROM centroids_v3 c
-     JOIN title_assignments ta1 ON c.id = ta1.centroid_id AND ta1.track = $2
-     JOIN titles_v3 t ON ta1.title_id = t.id
-     WHERE t.id IN (
-       SELECT title_id
-       FROM title_assignments
-       WHERE centroid_id = $1 AND track = $2
-     )
-     AND c.id != $1
-     AND c.is_active = true
-     GROUP BY c.id, c.label, c.class, c.primary_theater
-     ORDER BY overlap_count DESC
-     LIMIT 10`,
-    [centroidId, track]
+  return cached(`overlap:${centroidId}:${track}`, 600, () =>
+    query<Centroid & { overlap_count: number }>(
+      `SELECT
+        c.id, c.label, c.class, c.primary_theater,
+        COUNT(DISTINCT t.id) as overlap_count
+       FROM centroids_v3 c
+       JOIN title_assignments ta1 ON c.id = ta1.centroid_id AND ta1.track = $2
+       JOIN titles_v3 t ON ta1.title_id = t.id
+       WHERE t.id IN (
+         SELECT title_id
+         FROM title_assignments
+         WHERE centroid_id = $1 AND track = $2
+       )
+       AND c.id != $1
+       AND c.is_active = true
+       GROUP BY c.id, c.label, c.class, c.primary_theater
+       ORDER BY overlap_count DESC
+       LIMIT 10`,
+      [centroidId, track]
+    )
   );
 }
 

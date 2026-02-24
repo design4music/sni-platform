@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import MapSection from '@/components/MapSection';
@@ -16,10 +17,35 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
 };
 
-export default async function HomePage() {
-  const geoCentroids = await getCentroidsByClass('geo');
-  const feeds = await getAllActiveFeeds();
+/* Deferred async server component for cross-country epics */
+async function CrossCountryEpics() {
   const latestEpics = await getLatestEpics(3);
+  if (latestEpics.length === 0) return null;
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold">Cross-Country Stories</h2>
+        <Link
+          href="/epics"
+          className="text-sm text-blue-400 hover:text-blue-300 transition"
+        >
+          View all
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {latestEpics.map(epic => (
+          <EpicCard key={epic.id} epic={epic} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default async function HomePage() {
+  const [geoCentroids, feeds] = await Promise.all([
+    getCentroidsByClass('geo'),
+    getAllActiveFeeds(),
+  ]);
 
   const geoCentroidsWithMap = geoCentroids.filter(
     c => c.iso_codes && c.iso_codes.length > 0 && !c.id.startsWith('NON-STATE-')
@@ -80,25 +106,19 @@ export default async function HomePage() {
           </p>
         </section>
 
-        {/* Cross-Country Epics */}
-        {latestEpics.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold">Cross-Country Stories</h2>
-              <Link
-                href="/epics"
-                className="text-sm text-blue-400 hover:text-blue-300 transition"
-              >
-                View all
-              </Link>
-            </div>
+        {/* Cross-Country Epics (deferred via Suspense) */}
+        <Suspense fallback={
+          <div className="animate-pulse">
+            <div className="h-8 w-64 bg-dashboard-border rounded mb-6" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {latestEpics.map(epic => (
-                <EpicCard key={epic.id} epic={epic} />
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-48 bg-dashboard-surface border border-dashboard-border rounded-lg" />
               ))}
             </div>
-          </section>
-        )}
+          </div>
+        }>
+          <CrossCountryEpics />
+        </Suspense>
 
         {/* Sources Carousel */}
         <SourceCarousel feedCount={feeds.length} />

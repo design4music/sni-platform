@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import EventAccordion from './EventAccordion';
-import { Title, Event } from '@/lib/types';
+import { Event } from '@/lib/types';
 
 interface EventListProps {
   events: Event[];
-  allTitles: Title[];
   initialLimit?: number;
   compact?: boolean;
   keyPrefix: string;
@@ -14,7 +13,6 @@ interface EventListProps {
 
 export default function EventList({
   events,
-  allTitles,
   initialLimit = 10,
   compact = false,
   keyPrefix,
@@ -31,7 +29,6 @@ export default function EventList({
         <EventAccordion
           key={`${keyPrefix}-${idx}`}
           event={event}
-          allTitles={allTitles}
           index={idx}
           compact={compact}
         />

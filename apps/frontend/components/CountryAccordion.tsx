@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import EventList from './EventList';
 import OtherCoverage from './OtherCoverage';
-import { Event, Title } from '@/lib/types';
+import { Event } from '@/lib/types';
 
 function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
   if (!iso2 || iso2.length !== 2) return null;
@@ -28,13 +28,8 @@ interface CountryAccordionProps {
   isoCodes: string[];
   mainEvents: Event[];
   otherEvents: Event[];
-  allTitles: Title[];
   totalSourceCount: number;
   defaultOpen?: boolean;
-}
-
-function countTitles(events: Event[]) {
-  return events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 }
 
 function sortBySourceCount(events: Event[]) {
@@ -48,7 +43,6 @@ export default function CountryAccordion({
   isoCodes,
   mainEvents,
   otherEvents,
-  allTitles,
   totalSourceCount,
   defaultOpen = false,
 }: CountryAccordionProps) {
@@ -94,7 +88,6 @@ export default function CountryAccordion({
             <>
               <EventList
                 events={sortBySourceCount(mainEvents)}
-                allTitles={allTitles}
                 initialLimit={10}
                 compact
                 keyPrefix={`bilateral-${bucketKey}`}
@@ -103,7 +96,6 @@ export default function CountryAccordion({
                 <OtherCoverage
                   label={`Other ${countryName} Coverage`}
                   events={otherEvents}
-                  allTitles={allTitles}
                 />
               )}
             </>
@@ -111,7 +103,6 @@ export default function CountryAccordion({
             <OtherCoverage
               label={`Other ${countryName} Coverage`}
               events={otherEvents}
-              allTitles={allTitles}
             />
           ) : null}
         </div>

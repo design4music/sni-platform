@@ -65,6 +65,7 @@ export interface Event {
   source_count?: number;
   is_catchall?: boolean;
   has_narratives?: boolean;
+  resolvedTitles?: Title[];
 }
 
 export interface Title {
