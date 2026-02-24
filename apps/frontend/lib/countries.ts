@@ -51,6 +51,16 @@ export const COUNTRY_NAMES: Record<string, string> = {
   LV: 'Latvia',
   LT: 'Lithuania',
   IE: 'Ireland',
+  AL: 'Albania',
+  BA: 'Bosnia and Herzegovina',
+  BY: 'Belarus',
+  CY: 'Cyprus',
+  IS: 'Iceland',
+  MD: 'Moldova',
+  ME: 'Montenegro',
+  MK: 'North Macedonia',
+  MT: 'Malta',
+  XK: 'Kosovo',
 
   // Asia
   CN: 'China',
@@ -132,7 +142,8 @@ export const COUNTRY_NAMES: Record<string, string> = {
 // Country code to region mapping
 export const COUNTRY_TO_REGION: Record<string, string> = {
   // International Organizations
-  EU: 'Global', UN: 'Global', WOR: 'Global', BRI: 'Global',
+  EU: 'International Organizations', UN: 'International Organizations',
+  WOR: 'International Organizations', BRI: 'International Organizations',
 
   // Americas
   US: 'Americas', CA: 'Americas', BR: 'Americas', AR: 'Americas', MX: 'Americas',
@@ -146,6 +157,8 @@ export const COUNTRY_TO_REGION: Record<string, string> = {
   CH: 'Europe', GR: 'Europe', PT: 'Europe', CZ: 'Europe', RO: 'Europe',
   HU: 'Europe', BG: 'Europe', RS: 'Europe', HR: 'Europe', SK: 'Europe',
   SI: 'Europe', EE: 'Europe', LV: 'Europe', LT: 'Europe', IE: 'Europe',
+  AL: 'Europe', BA: 'Europe', BY: 'Europe', CY: 'Europe', IS: 'Europe',
+  MD: 'Europe', ME: 'Europe', MK: 'Europe', MT: 'Europe', XK: 'Europe',
 
   // Asia
   CN: 'Asia', JP: 'Asia', KR: 'Asia', KP: 'Asia', IN: 'Asia', ID: 'Asia',
