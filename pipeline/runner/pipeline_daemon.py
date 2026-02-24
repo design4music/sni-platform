@@ -31,7 +31,7 @@ from pathlib import Path
 from psycopg2.pool import ThreadedConnectionPool
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from core.config import config
+from core.config import MAX_API_ERRORS, config
 
 # Import phase modules
 from pipeline.phase_1.ingest_feeds import run_ingestion
@@ -669,6 +669,16 @@ class PipelineDaemon:
             conn.commit()
 
             print("  Purged %d titles (%d tombstoned)" % (deleted, tombstoned))
+
+            # Reset API error circuit breakers so transient failures don't block titles permanently
+            cur.execute(
+                "UPDATE titles_v3 SET api_error_count = 0 WHERE api_error_count >= %s",
+                (MAX_API_ERRORS,),
+            )
+            if cur.rowcount:
+                print("  Reset api_error_count for %d titles" % cur.rowcount)
+                conn.commit()
+
             return {"purged": deleted}
 
         finally:
