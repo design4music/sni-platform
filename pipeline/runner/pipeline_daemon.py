@@ -28,7 +28,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import psycopg2
+from psycopg2.pool import ThreadedConnectionPool
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
@@ -95,6 +95,25 @@ class PipelineDaemon:
         self.max_retries = 3
         self.retry_backoff = 2.0  # Exponential backoff multiplier
 
+        # Phase-level timeouts (seconds) -- prevents daemon from hanging
+        self.timeout_ingestion = 1200  # 20 min for RSS + centroid matching
+        self.timeout_classification = 600  # 10 min for 3.1 + 3.2 + 3.3
+        self.timeout_enrichment = (
+            1800  # 30 min for clustering + aggregation + summaries
+        )
+        self.timeout_purge = 300  # 5 min for daily cleanup
+
+        # Connection pool (minconn=2, maxconn=10)
+        self.pool = ThreadedConnectionPool(
+            minconn=2,
+            maxconn=10,
+            host=self.config.db_host,
+            port=self.config.db_port,
+            database=self.config.db_name,
+            user=self.config.db_user,
+            password=self.config.db_password,
+        )
+
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
@@ -106,14 +125,13 @@ class PipelineDaemon:
         self.running = False
 
     def get_connection(self):
-        """Get database connection"""
-        return psycopg2.connect(
-            host=self.config.db_host,
-            port=self.config.db_port,
-            database=self.config.db_name,
-            user=self.config.db_user,
-            password=self.config.db_password,
-        )
+        """Get database connection from pool"""
+        return self.pool.getconn()
+
+    def return_connection(self, conn):
+        """Return connection to pool"""
+        if conn:
+            self.pool.putconn(conn)
 
     def get_queue_stats(self):
         """Get current queue depths for adaptive scheduling"""
@@ -199,7 +217,7 @@ class PipelineDaemon:
                     "ctms_need_summary": ctms_need_summary,
                 }
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     def should_run_phase(self, phase_name: str) -> bool:
         """Check if enough time has passed since last run"""
@@ -240,7 +258,7 @@ class PipelineDaemon:
                     )
 
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     def print_full_statistics(self):
         """Print comprehensive pipeline statistics"""
@@ -422,7 +440,7 @@ class PipelineDaemon:
                 print("=" * 70)
 
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     def run_event_clustering(self):
         """Run event clustering only for CTMs with NEW titles since last clustering.
@@ -491,7 +509,7 @@ class PipelineDaemon:
             print("Clustered {} topics across {} CTMs".format(total_topics, processed))
 
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     def run_topic_aggregation(self, max_ctms: int = 10):
         """
@@ -561,7 +579,7 @@ class PipelineDaemon:
                     print("  Aggregation failed for {}: {}".format(ctm_id[:8], e))
 
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     async def run_event_summaries(self, max_events: int = 100):
         """Generate summaries for events that need them"""
@@ -594,7 +612,7 @@ class PipelineDaemon:
             )
 
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     def run_daily_purge(self):
         """Purge rejected titles older than 24h to tombstone table."""
@@ -654,7 +672,7 @@ class PipelineDaemon:
             return {"purged": deleted}
 
         finally:
-            conn.close()
+            self.return_connection(conn)
 
     def run_phase_with_retry(self, phase_name: str, phase_func, *args, **kwargs):
         """
@@ -691,6 +709,14 @@ class PipelineDaemon:
                     print(f"{phase_name} failed after {self.max_retries} attempts")
                     raise
 
+    async def run_with_timeout(self, phase_name, coro, timeout_seconds):
+        """Run an async coroutine with a timeout. Returns None on timeout."""
+        try:
+            return await asyncio.wait_for(coro, timeout=timeout_seconds)
+        except asyncio.TimeoutError:
+            print(f"{phase_name} timed out after {timeout_seconds}s, moving on")
+            return None
+
     async def run_cycle(self):
         """Run one complete pipeline cycle"""
         self.cycle_count += 1
@@ -712,10 +738,15 @@ class PipelineDaemon:
 
         # Phase 1: RSS Ingestion (if interval elapsed)
         if self.should_run_phase("phase1"):
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 1: RSS Ingestion",
-                run_ingestion,
-                max_feeds=None,  # Process all feeds
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 1: RSS Ingestion",
+                    run_ingestion,
+                    max_feeds=None,
+                ),
+                self.timeout_ingestion,
             )
             self.last_run["phase1"] = time.time()
         else:
@@ -726,11 +757,16 @@ class PipelineDaemon:
 
         # Phase 2: Centroid Matching (if interval elapsed and work available)
         if self.should_run_phase("phase2") and stats["pending_titles"] > 0:
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 2: Centroid Matching",
-                phase2_process,
-                batch_size=100,
-                max_titles=None,
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 2: Centroid Matching",
+                    phase2_process,
+                    batch_size=100,
+                    max_titles=None,
+                ),
+                self.timeout_ingestion,
             )
             self.last_run["phase2"] = time.time()
         else:
@@ -744,20 +780,30 @@ class PipelineDaemon:
 
         # Phase 3.1: Label + Signal Extraction (if interval elapsed and work available)
         if self.should_run_phase("phase31") and stats["titles_need_labels"] > 0:
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 3.1: Label + Signal Extraction",
-                phase31_extract,
-                max_titles=self.config.v3_p31_max_titles,
-                batch_size=self.config.v3_p31_batch_size,
-                concurrency=self.config.v3_p31_concurrency,
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 3.1: Label + Signal Extraction",
+                    phase31_extract,
+                    max_titles=self.config.v3_p31_max_titles,
+                    batch_size=self.config.v3_p31_batch_size,
+                    concurrency=self.config.v3_p31_concurrency,
+                ),
+                self.timeout_classification,
             )
             self.last_run["phase31"] = time.time()
 
             # Phase 3.2: Entity->Country->Centroid backfill (runs after label extraction)
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 3.2: Entity Centroid Backfill",
-                phase32_backfill,
-                batch_size=500,
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 3.2: Entity Centroid Backfill",
+                    phase32_backfill,
+                    batch_size=500,
+                ),
+                self.timeout_classification,
             )
         else:
             if stats["titles_need_labels"] == 0:
@@ -770,10 +816,14 @@ class PipelineDaemon:
 
         # Phase 3.3: Intel Gating + Track Assignment (if interval elapsed and work available)
         if self.should_run_phase("phase33") and stats["titles_need_track"] > 0:
-            await self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 3.3: Intel Gating + Track Assignment",
-                phase33_process,
-                max_titles=self.phase33_batch_size,
+                self.run_phase_with_retry(
+                    "Phase 3.3: Intel Gating + Track Assignment",
+                    phase33_process,
+                    max_titles=self.phase33_batch_size,
+                ),
+                self.timeout_classification,
             )
             self.last_run["phase33"] = time.time()
         else:
@@ -787,9 +837,14 @@ class PipelineDaemon:
 
         # Phase 4: Event Clustering (if interval elapsed)
         if self.should_run_phase("phase4"):
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 4: Event Clustering",
-                self.run_event_clustering,
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4: Event Clustering",
+                    self.run_event_clustering,
+                ),
+                self.timeout_enrichment,
             )
             self.last_run["phase4"] = time.time()
         else:
@@ -800,10 +855,15 @@ class PipelineDaemon:
 
         # Phase 4.1: Topic Aggregation (own interval, decoupled from Phase 4)
         if self.should_run_phase("phase41"):
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 4.1: Topic Aggregation",
-                self.run_topic_aggregation,
-                max_ctms=25,
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.1: Topic Aggregation",
+                    self.run_topic_aggregation,
+                    max_ctms=25,
+                ),
+                self.timeout_enrichment,
             )
             self.last_run["phase41"] = time.time()
         else:
@@ -814,10 +874,14 @@ class PipelineDaemon:
 
         # Phase 4.5a: Event Summaries (decoupled, own interval)
         if self.should_run_phase("phase45a"):
-            await self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 4.5a: Event Summaries",
-                self.run_event_summaries,
-                max_events=self.config.v3_p45a_max_events,
+                self.run_phase_with_retry(
+                    "Phase 4.5a: Event Summaries",
+                    self.run_event_summaries,
+                    max_events=self.config.v3_p45a_max_events,
+                ),
+                self.timeout_enrichment,
             )
             self.last_run["phase45a"] = time.time()
         else:
@@ -828,10 +892,14 @@ class PipelineDaemon:
 
         # Phase 4.5b: CTM Summary Generation (if interval elapsed and work available)
         if self.should_run_phase("phase45") and stats["ctms_need_summary"] > 0:
-            await self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Phase 4.5b: CTM Summary Generation",
-                phase45_summaries,
-                max_ctms=self.phase4_batch_size,
+                self.run_phase_with_retry(
+                    "Phase 4.5b: CTM Summary Generation",
+                    phase45_summaries,
+                    max_ctms=self.phase4_batch_size,
+                ),
+                self.timeout_enrichment,
             )
             self.last_run["phase45"] = time.time()
 
@@ -848,9 +916,14 @@ class PipelineDaemon:
 
         # Daily Purge: Remove rejected titles (24h interval)
         if self.should_run_phase("purge"):
-            self.run_phase_with_retry(
+            await self.run_with_timeout(
                 "Daily Purge: Rejected Titles",
-                self.run_daily_purge,
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Daily Purge: Rejected Titles",
+                    self.run_daily_purge,
+                ),
+                self.timeout_purge,
             )
             self.last_run["purge"] = time.time()
         else:
@@ -921,6 +994,10 @@ class PipelineDaemon:
                 print("Waiting 60s before retry...")
                 await asyncio.sleep(60)
 
+        # Close connection pool
+        if hasattr(self, "pool") and self.pool:
+            self.pool.closeall()
+            print("Connection pool closed")
         print("\nPipeline daemon stopped")
 
 

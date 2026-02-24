@@ -179,15 +179,25 @@ async def gate_centroid_batch(
         "max_tokens": config.v3_p33_max_tokens_gating,
     }
 
-    async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
-        response = await client.post(
-            f"{config.deepseek_api_url}/chat/completions",
-            headers=headers,
-            json=payload,
-        )
+    from core.llm_utils import async_check_rate_limit
 
-        if response.status_code != 200:
-            raise Exception(f"LLM API error: {response.status_code} - {response.text}")
+    async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
+        for _attempt in range(2):
+            response = await client.post(
+                f"{config.deepseek_api_url}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+
+            if await async_check_rate_limit(response):
+                continue
+
+            if response.status_code != 200:
+                raise Exception(
+                    f"LLM API error: {response.status_code} - {response.text}"
+                )
+
+            break
 
         data = response.json()
         llm_response = data["choices"][0]["message"]["content"].strip()
@@ -288,15 +298,25 @@ async def assign_tracks_batch(
         "max_tokens": config.v3_p33_max_tokens_tracks,
     }
 
-    async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
-        response = await client.post(
-            f"{config.deepseek_api_url}/chat/completions",
-            headers=headers,
-            json=payload,
-        )
+    from core.llm_utils import async_check_rate_limit
 
-        if response.status_code != 200:
-            raise Exception(f"LLM API error: {response.status_code} - {response.text}")
+    async with httpx.AsyncClient(timeout=config.v3_p33_timeout_seconds) as client:
+        for _attempt in range(2):
+            response = await client.post(
+                f"{config.deepseek_api_url}/chat/completions",
+                headers=headers,
+                json=payload,
+            )
+
+            if await async_check_rate_limit(response):
+                continue
+
+            if response.status_code != 200:
+                raise Exception(
+                    f"LLM API error: {response.status_code} - {response.text}"
+                )
+
+            break
 
         data = response.json()
         llm_response = data["choices"][0]["message"]["content"].strip()

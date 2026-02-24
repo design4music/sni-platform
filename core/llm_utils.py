@@ -1,7 +1,31 @@
 """Shared LLM utilities for pipeline modules."""
 
+import asyncio
 import json
 import re
+import time
+
+# --- Rate limit handling ---
+
+
+def check_rate_limit(response):
+    """Sleep and return True if response is a 429 rate limit. Sync version."""
+    if response.status_code == 429:
+        retry_after = int(response.headers.get("Retry-After", 60))
+        print("Rate limited (429), waiting %ds..." % retry_after)
+        time.sleep(retry_after)
+        return True
+    return False
+
+
+async def async_check_rate_limit(response):
+    """Sleep and return True if response is a 429 rate limit. Async version."""
+    if response.status_code == 429:
+        retry_after = int(response.headers.get("Retry-After", 60))
+        print("Rate limited (429), waiting %ds..." % retry_after)
+        await asyncio.sleep(retry_after)
+        return True
+    return False
 
 
 def extract_json(text):

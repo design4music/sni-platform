@@ -198,6 +198,11 @@ async def generate_summary(
                     json=payload,
                 )
 
+                from core.llm_utils import async_check_rate_limit
+
+                if await async_check_rate_limit(response):
+                    continue
+
                 if response.status_code != 200:
                     raise Exception(
                         "LLM API error: %d - %s" % (response.status_code, response.text)

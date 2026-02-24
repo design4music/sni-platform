@@ -99,6 +99,11 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
                     json=payload,
                 )
 
+                from core.llm_utils import check_rate_limit
+
+                if check_rate_limit(response):
+                    continue
+
                 if response.status_code != 200:
                     raise Exception(
                         "API error: {} - {}".format(

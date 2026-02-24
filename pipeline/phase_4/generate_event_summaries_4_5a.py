@@ -531,17 +531,25 @@ async def generate_event_data(
         "max_tokens": max_tokens,
     }
 
-    async with httpx.AsyncClient(timeout=90) as client:
-        response = await client.post(
-            "%s/chat/completions" % config.deepseek_api_url,
-            headers=headers,
-            json=payload,
-        )
+    from core.llm_utils import async_check_rate_limit
 
-        if response.status_code != 200:
-            raise Exception(
-                "LLM API error: %d - %s" % (response.status_code, response.text)
+    async with httpx.AsyncClient(timeout=90) as client:
+        for _attempt in range(2):
+            response = await client.post(
+                "%s/chat/completions" % config.deepseek_api_url,
+                headers=headers,
+                json=payload,
             )
+
+            if await async_check_rate_limit(response):
+                continue
+
+            if response.status_code != 200:
+                raise Exception(
+                    "LLM API error: %d - %s" % (response.status_code, response.text)
+                )
+
+            break
 
         data = response.json()
         content = data["choices"][0]["message"]["content"].strip()

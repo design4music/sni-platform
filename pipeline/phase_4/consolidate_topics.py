@@ -248,6 +248,12 @@ def call_llm(system_prompt, user_prompt):
                     headers=headers,
                     json=payload,
                 )
+
+                from core.llm_utils import check_rate_limit
+
+                if check_rate_limit(response):
+                    continue
+
                 if response.status_code != 200:
                     raise RuntimeError(
                         "LLM API error: {} {}".format(
