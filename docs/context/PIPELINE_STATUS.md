@@ -28,7 +28,7 @@ RSS Feeds (Google News)
     |                                                                          |
 [Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles        |
     |                                                                          |
-[Phase 4.1] Topic Consolidation (LLM merge/rescue/dedup) --> consolidated     |
+[Phase 4.1] Topic Consolidation (anchor-candidate dedup + rescue) --> merged   |
     |                                                                          |
 [Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags      |
     |                                                                         /
@@ -62,7 +62,7 @@ Phases are grouped into 4 scheduling slots. Within each slot, phases run sequent
 |------|----------|--------|-------------|
 | **INGESTION** | 12 hours | Phase 1 (RSS) + Phase 2 (centroid matching) | all feeds, all titles |
 | **CLASSIFICATION** | 15 minutes | Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks) | 500 titles/run (concurrency=5) |
-| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (topic aggregation) | all CTMs, 25 CTMs for aggregation |
+| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (anchor-candidate dedup) | all CTMs, 25 CTMs for consolidation |
 | **ENRICHMENT** | 6 hours | Phase 4.5a (event summaries) + 4.5b (CTM digests) | 2000 events, 200 CTMs |
 | **Daily purge** | 24 hours | Remove rejected titles + reset api_error_count | all |
 
@@ -240,32 +240,68 @@ TRACK_WEIGHTS = {
 
 ---
 
-## Phase 4.1: Topic Consolidation
+## Phase 4.1: Topic Consolidation (Anchor-Candidate Dedup)
 
 **Script**: `pipeline/phase_4/consolidate_topics.py`
 **Runs**: After Phase 4
 
 ### Purpose
 
-Single-pass LLM consolidation of mechanically clustered topics. One LLM call per bucket:
-- Merge similar events that should be combined
-- Rescue titles from "Other Coverage" catchalls into real topic events
+Conservative deduplication of mechanically clustered topics using an asymmetric anchor-candidate model. Per bucket:
+- **Phase A -- Dedup**: Merge confirmed duplicate events (anchor keeps its identity)
+- **Phase B -- Catchall rescue**: Assign recent unclustered titles to matching events
 - Redistribute Other International catchall titles to bilateral buckets
-- Cross-bucket deduplication of duplicate events
+- Cross-bucket deduplication of orphaned events
+
+### Design: Anchor-Candidate Model
+
+**Problem solved**: The previous design sent all events to an LLM with "MERGE AGGRESSIVELY into the real underlying stories." The LLM freely grouped events into broad themes, causing unrelated events to be merged (e.g., Google/Alphabet bond absorbing 186 unrelated AI/tech titles under an invented "AI market competition" theme).
+
+**New model**: Existing events are **anchors** with fixed identity (title, topic_core, summary never change). Smaller similar-looking events are **candidates**. The LLM only confirms whether each candidate is a true duplicate of a specific anchor -- it never groups events or invents themes.
+
+### Flow
+
+1. Filter to titled events only (need Phase 4.5a titles)
+2. Skip if < 2 titled events AND < 5 catchall titles
+3. **Phase A -- Dedup**:
+   - `_find_merge_candidates()`: Pre-filter by title word Dice > 0.35. Larger event = anchor, smaller = candidate. Events with no similar partner are excluded entirely (no LLM call).
+   - If pairs found: build prompt (`DEDUP_CONFIRM_SYSTEM/USER_PROMPT`), call LLM, validate, `apply_merges()` (confidence >= 0.7)
+   - Typical: 50-event bucket -> 3-5 candidates, most events untouched
+4. **Phase B -- Catchall rescue**:
+   - `_find_catchall_matches()`: Pre-filter catchall titles by word overlap >= 2 with any event
+   - If matches found: build prompt (`CATCHALL_RESCUE_SYSTEM/USER_PROMPT`), call LLM, validate, `apply_rescues()`
+5. Cross-bucket passes (unchanged): `cross_bucket_dedup()` + `redistribute_oi_catchall()`
 
 ### Key Features
 
-**Catchall Rescue**: When catchall has >= 10 titles, LLM sees catchall items with indices and can assign them to existing events via `rescue_catchall_ids`. Positional index mapping (not text matching) ensures accuracy.
+**Pre-LLM Filtering**: Dice coefficient and word overlap pre-filters mean most buckets skip the LLM call entirely. Only buckets with similar-looking event pairs or catchall word matches trigger API calls.
 
-**Centroid Validation Gate**: For bilateral buckets, catchall rescue validates that each title's `centroid_ids` contains the bucket centroid before moving it. Prevents contamination from previous bugs.
+**Conservative Merges**: LLM prompt instructs "when in doubt, keep SEPARATE." Same-actor-different-action = separate. Same-theme-different-event = separate. A missed merge is harmless; a wrong merge destroys data.
 
-**Cross-Bucket Deduplication** (`cross_bucket_dedup()`): Scans `other_international` events for duplicates already present in bilateral buckets. Merges titles into the bilateral event and deletes the OI duplicate.
+**Anchor Identity Preserved**: `apply_merges()` moves titles from candidate to anchor and deletes the candidate. Anchor's title/topic_core/summary are never touched -- only `source_batch_count` updates.
 
-**OI Redistribution** (`redistribute_oi_catchall()`): Moves Other International catchall titles to bilateral catchalls based on each title's foreign geo centroids. Single-centroid titles go to that country's bucket; multi-centroid to the largest.
+**Catchall Freshness**: Only catchall titles published within `CATCHALL_MAX_AGE_DAYS` (default 3) are sent for rescue.
 
-**LLM Retry**: Exponential backoff (configurable via `config.llm_retry_attempts` and `config.llm_retry_backoff`). Falls back gracefully on persistent failure.
+**Centroid Validation Gate**: For bilateral buckets, catchall rescue validates that each title's `centroid_ids` contains the bucket centroid before moving it.
 
-**Zombie Event Cleanup**: After consolidation, deletes any events that ended up with 0 titles (e.g., from failed catchall rescues).
+**Cross-Bucket Deduplication** (`cross_bucket_dedup()`): Scans `other_international` events for duplicates already present in bilateral buckets.
+
+**OI Redistribution** (`redistribute_oi_catchall()`): Moves Other International catchall titles to bilateral catchalls based on each title's foreign geo centroids.
+
+**LLM Retry**: Exponential backoff (configurable via `config.llm_retry_attempts` and `config.llm_retry_backoff`).
+
+### Prompts
+
+| Prompt | Role |
+|--------|------|
+| `DEDUP_CONFIRM_SYSTEM_PROMPT` | Conservative duplicate detector -- confirms yes/no per candidate |
+| `DEDUP_CONFIRM_USER_PROMPT` | Lists anchors + candidates, returns `{matches: [{candidate_id, anchor_id, confidence}]}` |
+| `CATCHALL_RESCUE_SYSTEM_PROMPT` | Assigns unclustered headlines to existing events |
+| `CATCHALL_RESCUE_USER_PROMPT` | Lists events + headlines, returns `{assignments: [{index, anchor_id}]}` |
+
+### Validation
+
+Tested on all 460 Feb 2026 CTMs (69,576 titles): 41 genuine merges, 67 catchall rescues, 0 false merges. Previous system would have produced hundreds of merges, many incorrect.
 
 ---
 
@@ -507,7 +543,7 @@ pipeline/
 |
 |-- phase_4/
 |   |-- incremental_clustering.py    # Topic clustering (anchor signals + buckets)
-|   |-- consolidate_topics.py        # LLM consolidation (merge, rescue, dedup)
+|   |-- consolidate_topics.py        # Anchor-candidate dedup + catchall rescue
 |   |-- generate_event_summaries_4_5a.py  # Event summaries
 |   |-- generate_summaries_4_5.py    # CTM digests
 |   |-- extract_ctm_narratives.py    # CTM narrative extraction (Phase 5a)
@@ -623,7 +659,7 @@ python pipeline/phase_3_3/assign_tracks_batched.py --max-titles 100
 # Phase 4: Topic Clustering
 python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id> --write
 
-# Phase 4.1: Topic Consolidation (LLM merge + rescue)
+# Phase 4.1: Topic Consolidation (anchor-candidate dedup + rescue)
 python pipeline/phase_4/consolidate_topics.py --ctm-id <ctm_id>
 
 # Phase 4.5a: Event Summaries
@@ -762,6 +798,12 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ### Recent Changes (2026-02-25)
 
+1. **Saga Chaining: IDF-Weighted Tags**: `chain_event_sagas.py` now computes per-tag IDF weights within each centroid+track bucket. Ubiquitous tags like `person:trump` (IDF 0.28) contribute ~3.5x less than rare tags like `place:el salvador` (IDF 1.0). Threshold raised from 0.3 to 0.35. Eliminates false saga chains between unrelated stories that merely share common topic tags (e.g., different deportation stories all matching on `person:trump` + `topic:deportation`). Re-chained 487 events (down from 746).
+2. **Phase 4.1 Redesign: Anchor-Candidate Dedup**: Complete rewrite of `consolidate_topics.py`. Replaced free-form LLM grouping ("MERGE AGGRESSIVELY") with asymmetric anchor-candidate model where LLM confirms yes/no per candidate pair. Pre-LLM Dice filter (> 0.35) means most buckets skip LLM entirely. Prevents over-merge (e.g., Google bond absorbing 186 unrelated AI/tech titles). Tested on 460 CTMs: 41 genuine merges, 67 catchall rescues, 0 false merges. New prompts: `DEDUP_CONFIRM_*` + `CATCHALL_RESCUE_*`. Removed: `TOPIC_CONSOLIDATION_*`, `TOPIC_MERGE_PROMPT`, `MIXED_TOPIC_REVIEW_PROMPT`.
+3. **Trending Carousel Fade Transition**: `TrendingCarouselClient.tsx` now uses a 300ms CSS opacity transition between frames instead of instant swap.
+
+### Previous Changes (2026-02-25 early)
+
 1. **Trending Page Redesign**: Full rewrite of `/trending` with track SVG icons (from TrackCard), blue-tinted flags (matching CountryAccordion pattern), freshness dots (48h pulse), and signal pills (top persons/orgs per event). Two-part layout: full-width hero cards at top, then two-column grid with compact event list + "Trending Signals" sidebar aggregating top persons/orgs/places/commodities/policies across all trending events.
 2. **Trending Signals Query**: New `getTrendingSignals()` function aggregates signals from `title_labels` across all trending events (5 types, top 8 per type, COUNT DISTINCT event_id). `getTrendingEvents()` enriched with LATERAL subquery for top 3 persons/orgs per event (`top_signals` field).
 3. **Home Page Trending Carousel**: Dot carousel on home page showing 4 frames of 3 hero cards (12 events total). Auto-advances every 8s, pauses on hover. Server component fetches data, client component handles frame state. Placed above "Explore the world by country" map section with Suspense fallback.
@@ -813,7 +855,7 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ### Previous Changes (2026-02-08 to 2026-02-10)
 
-1. **Phase 4.1 Rewrite** (`consolidate_topics.py`): Replaced `aggregate_topics.py` with single-pass LLM consolidation. One call per bucket handles merge, rescue, and cleanup simultaneously. Old multi-step approach archived.
+1. **Phase 4.1 Rewrite** (`consolidate_topics.py`): Replaced `aggregate_topics.py` with single-pass LLM consolidation. Later redesigned again (2026-02-25) as anchor-candidate dedup model to prevent over-merging.
 2. **Catchall Rescue**: Titles stuck in "Other Coverage" catchalls are now rescued into real topic events. LLM sees catchall items with positional indices; code uses parallel `title_ids` array (not fragile text matching) for DB updates.
 3. **Centroid Validation Gate**: Bilateral catchall rescue validates each title's `centroid_ids` contains the bucket centroid before moving. Prevents cross-bucket contamination from propagating.
 4. **Cross-Bucket Deduplication**: `cross_bucket_dedup()` finds and merges duplicate events across OI and bilateral buckets.
