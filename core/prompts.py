@@ -7,7 +7,7 @@ Version: 3.0 (full consolidation with shared rules)
 Prompts by Phase:
 - Phase 3: Intel Gating + Track Assignment
 - Phase 3.5: Label + Signal Extraction
-- Phase 4.2: Topic Aggregation
+- Phase 4.1: Topic Consolidation (Anchor-Candidate Dedup)
 - Phase 4.5: CTM Summary Generation
 - Phase 4.5a: Event Summary Generation
 - Epics: Build, Enrich, Narratives
@@ -232,100 +232,82 @@ IMPORTANT:
 
 
 # =============================================================================
-# PHASE 4.2: TOPIC AGGREGATION
+# PHASE 4.1: ANCHOR-CANDIDATE TOPIC CONSOLIDATION
 # =============================================================================
 
-TOPIC_CONSOLIDATION_SYSTEM_PROMPT = """You are an intelligence analyst consolidating news topic clusters.
+DEDUP_CONFIRM_SYSTEM_PROMPT = """You are a conservative duplicate detector for news event clusters.
 
-CORE PRINCIPLE: Variation in framing, actors, or demands must NOT split
-a Topic if the underlying process is the same.
-- "peace talks" = "negotiations" = "ceasefire deal" = "Abu Dhabi talks"
-- "Trump proposes deal" and "Macron mediates" = same peace process
-- Different sources/languages covering the same story = same topic
+Your ONLY job: for each CANDIDATE event, decide if it is a true duplicate of one specific ANCHOR event.
 
-MERGE AGGRESSIVELY into the real underlying stories.
-KEEP SEPARATE only for genuinely different events.
+TRUE DUPLICATE means: both events cover the EXACT SAME specific real-world story. Not "same theme" or "same sector" -- the SAME event.
 
-For each story provide a topic_core: 3-10 word semantic essence."""
+KEEP SEPARATE (return "none") when:
+- Same actor but different actions (e.g., "Trump tariffs" vs "Trump Greenland" = SEPARATE)
+- Same theme but different events (e.g., "EU trade deal" vs "EU climate policy" = SEPARATE)
+- Same company but different news (e.g., "Google bond" vs "Google AI launch" = SEPARATE)
+- One is a specific aspect of a broader topic (e.g., "Fed rate hike" vs "Fed testimony" = SEPARATE)
+- Different time periods of an ongoing process (unless headlines clearly overlap)
 
-TOPIC_CONSOLIDATION_USER_PROMPT = """CTM: {centroid_label} / {track} / {month}
-Bucket: {bucket_label} ({total_titles} titles)
+MERGE (return the anchor_id) only when:
+- Headlines describe the EXACT same development from different sources/angles
+- Different languages covering the same specific event
+- Minor wording variations of the same news
 
-TOPICS:
-{topics_text}
+When in doubt, keep SEPARATE. A missed merge is harmless. A wrong merge destroys data."""
 
-{catchall_section}
+DEDUP_CONFIRM_USER_PROMPT = """CTM: {centroid_label} / {track} / {month}
+
+ANCHORS (existing events -- identity is fixed, will NOT change):
+{anchors_text}
+
+CANDIDATES (smaller events -- check if each duplicates an anchor):
+{candidates_text}
+
+For each candidate, decide: is it a TRUE DUPLICATE of exactly one anchor?
 
 Return JSON:
 {{
-  "stories": [
-    {{"topic_core": "...", "event_ids": ["id1","id2",...], "catchall_ids": [0,3,7]}},
-    ...
-  ],
-  "unmatched_catchall": [1,2,4,5]
-}}
-
-Rules:
-- Every topic id must appear in exactly one story
-- {target_guidance}
-- catchall_ids: indices of catchall headlines to rescue into this story
-- unmatched_catchall: indices that don't fit any story
-- topic_core: 3-10 word semantic essence of the story (English)"""
-
-
-TOPIC_MERGE_PROMPT = """You are an intelligence analyst reviewing topic clusters for potential merging.
-
-Your task: Decide if topics should be MERGED (same story) or KEPT SEPARATE (different contexts).
-
-MERGE when:
-- Topics cover the SAME event from different sources/languages
-- Topics are about the SAME entity doing the SAME thing
-- Headlines are essentially duplicates or translations
-
-KEEP SEPARATE when:
-- Topics share entities but have DIFFERENT contexts
-  Example: "Gold prices rise" vs "Fed independence concerns" - both mention FED but different stories
-- Topics have overlapping signals but cover DIFFERENT events
-  Example: "Trump tariffs on EU" vs "Trump Greenland deal" - both have TRUMP but different topics
-- One topic is a SUBSET theme of another
-  Example: "Fed rate hike" is separate from "Powell testimony on inflation"
-
-Return JSON: {"decision": "MERGE" or "SEPARATE", "reason": "brief explanation"}"""
-
-
-MIXED_TOPIC_REVIEW_PROMPT = """You are reviewing a news topic that may contain mixed/unrelated stories.
-
-TOPIC: {topic_title} ({count} titles)
-BUCKET: {bucket}
-
-Sample titles in this topic:
-{titles_text}
-
-Potential sibling topics (share same theme but more specific):
-{siblings_text}
-
-TASK: Determine if this topic mixes unrelated stories.
-
-If titles are ALL about the same story/event: respond with {{"coherent": true}}
-
-If titles cover DIFFERENT unrelated stories: respond with:
-{{
-  "coherent": false,
-  "groups": [
-    {{"title_indices": [1, 3], "best_sibling": "sibling_id or null", "reason": "brief explanation"}},
-    {{"title_indices": [2, 4, 5], "best_sibling": "sibling_id or null", "reason": "brief explanation"}}
+  "matches": [
+    {{"candidate_id": "...", "anchor_id": "..." or "none", "confidence": 0.0-1.0}}
   ]
 }}
 
-IMPORTANT - Be conservative with sibling assignment:
-- best_sibling should ONLY be set if the titles are CLEARLY about the same specific story as that sibling
-- Sharing a generic theme (sanctions, tariffs, trade) is NOT enough - titles must match the sibling's SPECIFIC context
-- Example: "housing investor ban" should NOT go to "Iran sanctions" just because both mention "sanctions"
-- When in doubt, use null - titles will go to "Other Coverage" which is better than wrong assignment
-- title_indices are 1-based matching the title numbers above
-- Only split if stories are genuinely UNRELATED (not just different aspects of same event)
+Rules:
+- Every candidate_id must appear exactly once
+- anchor_id must be a valid anchor ID or "none"
+- confidence 0.7+ means merge, below 0.7 means skip
+- When in doubt, "none" is always the safe answer"""
 
-Return ONLY valid JSON."""
+
+CATCHALL_RESCUE_SYSTEM_PROMPT = """You assign unclustered news headlines to existing event clusters.
+
+Rules:
+- Assign a headline to an event ONLY if it clearly covers the SAME specific story
+- Sharing a general theme or sector is NOT enough -- the headline must be about that exact event
+- If no event is a clear match, assign "none" -- the headline stays unclustered
+- When in doubt, "none" is always the safe answer"""
+
+CATCHALL_RESCUE_USER_PROMPT = """CTM: {centroid_label} / {track} / {month}
+
+EVENTS (existing clusters):
+{events_text}
+
+UNCLUSTERED HEADLINES:
+{headlines_text}
+
+For each headline, assign to the event covering the SAME specific story, or "none".
+
+Return JSON:
+{{
+  "assignments": [
+    {{"index": 0, "anchor_id": "..." or "none"}}
+  ]
+}}
+
+Rules:
+- Every headline index must appear exactly once
+- anchor_id must be a valid event ID or "none"
+- Only assign if the headline clearly belongs to that specific event"""
 
 
 # =============================================================================

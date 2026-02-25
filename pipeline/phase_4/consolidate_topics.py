@@ -1,10 +1,10 @@
 """
-Phase 4.1: LLM-Driven Topic Consolidation
+Phase 4.1: Anchor-Candidate Topic Consolidation
 
-Replaces the old multi-step aggregate_topics with ONE intelligent LLM call
-per bucket that sees all topics + catchall and groups them into real stories.
-
-Each story gets a topic_core -- a semantic essence that captures the story.
+Asymmetric dedup model: existing events are ANCHORS with fixed identity.
+Smaller similar-looking events are CANDIDATES. The LLM confirms whether
+each candidate is a true duplicate of an anchor (yes/no), never groups
+events into invented themes.
 
 Usage:
     python pipeline/phase_4/consolidate_topics.py --ctm-id <uuid>
@@ -31,8 +31,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 from core.llm_utils import extract_json
 from core.prompts import (
-    TOPIC_CONSOLIDATION_SYSTEM_PROMPT,
-    TOPIC_CONSOLIDATION_USER_PROMPT,
+    CATCHALL_RESCUE_SYSTEM_PROMPT,
+    CATCHALL_RESCUE_USER_PROMPT,
+    DEDUP_CONFIRM_SYSTEM_PROMPT,
+    DEDUP_CONFIRM_USER_PROMPT,
 )
 
 
@@ -78,19 +80,22 @@ def get_ctm_info(conn, ctm_id=None, centroid=None, track=None):
     }
 
 
+CATCHALL_MAX_AGE_DAYS = 3
+
+
 def load_bucket_data(conn, ctm_id):
     """
-    Load all events grouped by bucket with sample headlines.
-    Uses (event_type, bucket_key) as grouping key to prevent domestic
-    and other_international events (both bucket_key=NULL) from mixing.
+    Load all events grouped by bucket.
+    Non-catchall events carry their LLM-generated title (compact).
+    Catchall titles are filtered to recent only (< CATCHALL_MAX_AGE_DAYS).
     Returns: {bucket_key: {"events": [...], "catchall": {"id":..., "titles":[...]}}}
     """
     cur = conn.cursor()
 
-    # Get all events (include event_type for proper grouping)
+    # Get all events (include title for compact prompt representation)
     cur.execute(
         """SELECT e.id, e.bucket_key, e.source_batch_count, e.is_catchall,
-                  e.topic_core, e.event_type
+                  e.topic_core, e.event_type, e.title
            FROM events_v3 e
            WHERE e.ctm_id = %s
            ORDER BY e.source_batch_count DESC NULLS LAST""",
@@ -101,126 +106,61 @@ def load_bucket_data(conn, ctm_id):
     if not events_raw:
         return {}
 
-    # Collect event IDs for headline lookup
-    event_ids = [r[0] for r in events_raw]
-
-    # Get sample headlines per event (up to 5 for regular, up to 50 for catchall)
-    cur.execute(
-        """SELECT evt.event_id, t.title_display, evt.title_id
-           FROM event_v3_titles evt
-           JOIN titles_v3 t ON t.id = evt.title_id
-           WHERE evt.event_id = ANY(%s::uuid[])""",
-        (event_ids,),
-    )
+    # Load recent catchall titles only (older orphans are permanently unclustered)
+    catchall_ids = [r[0] for r in events_raw if r[3]]  # is_catchall=True
     headlines_by_event = defaultdict(list)
     title_ids_by_event = defaultdict(list)
-    for event_id, title_display, title_id in cur.fetchall():
-        headlines_by_event[event_id].append(title_display)
-        title_ids_by_event[event_id].append(title_id)
+
+    if catchall_ids:
+        cur.execute(
+            """SELECT evt.event_id, t.title_display, evt.title_id
+               FROM event_v3_titles evt
+               JOIN titles_v3 t ON t.id = evt.title_id
+               WHERE evt.event_id = ANY(%s::uuid[])
+                 AND t.pubdate_utc >= NOW() - %s * INTERVAL '1 day'""",
+            (catchall_ids, CATCHALL_MAX_AGE_DAYS),
+        )
+        for event_id, title_display, title_id in cur.fetchall():
+            headlines_by_event[event_id].append(title_display)
+            title_ids_by_event[event_id].append(title_id)
 
     # Group by bucket -- use event_type to distinguish domestic from other_international
     buckets = defaultdict(lambda: {"events": [], "catchall": None})
-    for event_id, bucket_key, count, is_catchall, topic_core, event_type in events_raw:
+    for (
+        eid,
+        bucket_key,
+        count,
+        is_catchall,
+        topic_core,
+        event_type,
+        title,
+    ) in events_raw:
         if bucket_key:
-            bk = bucket_key  # bilateral: use the foreign centroid
+            bk = bucket_key
         elif event_type == "other_international":
             bk = "__other_international__"
         else:
             bk = "__domestic__"
 
-        headlines = headlines_by_event.get(event_id, [])
-
         if is_catchall:
-            tids = title_ids_by_event.get(event_id, [])
+            tids = title_ids_by_event.get(eid, [])
+            headlines = headlines_by_event.get(eid, [])
             buckets[bk]["catchall"] = {
-                "id": event_id,
-                "titles": headlines[:50],
-                "title_ids": tids[:50],
+                "id": eid,
+                "titles": headlines,
+                "title_ids": tids,
             }
         else:
             buckets[bk]["events"].append(
                 {
-                    "id": str(event_id),
+                    "id": str(eid),
                     "count": count or 0,
-                    "headlines": headlines[:5],
+                    "title": title,
                     "topic_core": topic_core,
                 }
             )
 
     return dict(buckets)
-
-
-def compute_target_guidance(is_domestic, total_titles):
-    """
-    Compute dynamic topic target range based on bucket type and size.
-    Monthly maximums: domestic up to 10-15, bilateral up to 6-7.
-    Early in month (fewer titles), targets scale down proportionally.
-    """
-    if is_domestic:
-        # Domestic: scale from 2-4 (small) to 10-15 (large/end of month)
-        if total_titles < 30:
-            return "Target 2-4 stories"
-        elif total_titles < 80:
-            return "Target 4-7 stories"
-        elif total_titles < 200:
-            return "Target 6-10 stories"
-        else:
-            return "Target 8-15 stories"
-    else:
-        # Bilateral: scale from 2-3 (small) to 5-7 (large/end of month)
-        if total_titles < 20:
-            return "Target 2-3 stories"
-        elif total_titles < 60:
-            return "Target 3-5 stories"
-        elif total_titles < 150:
-            return "Target 4-6 stories"
-        else:
-            return "Target 5-7 stories"
-
-
-def build_prompt(bucket_label, events, catchall_titles, ctm_info):
-    """Build the user prompt for one bucket."""
-    # Build topics text
-    topics_lines = []
-    total_titles = 0
-    for i, ev in enumerate(events, 1):
-        total_titles += ev["count"]
-        topics_lines.append("T{} [{} titles] id={}".format(i, ev["count"], ev["id"]))
-        max_headlines = 3 if len(events) > 20 else 5
-        for h in ev["headlines"][:max_headlines]:
-            safe_h = h[:100] if h else "[no title]"
-            topics_lines.append("  - {}".format(safe_h))
-        topics_lines.append("")
-
-    topics_text = "\n".join(topics_lines)
-
-    # Build catchall section
-    if catchall_titles:
-        total_titles += len(catchall_titles)
-        catchall_lines = [
-            "CATCHALL ({} unclustered titles):".format(len(catchall_titles))
-        ]
-        for i, t in enumerate(catchall_titles):
-            safe_t = t[:100] if t else "[no title]"
-            catchall_lines.append("C{}: {}".format(i, safe_t))
-        catchall_section = "\n".join(catchall_lines)
-    else:
-        catchall_section = "CATCHALL: (none)"
-
-    month_str = str(ctm_info["month"])[:7] if ctm_info["month"] else "unknown"
-    is_domestic = bucket_label == "Domestic"
-    guidance = compute_target_guidance(is_domestic, total_titles)
-
-    return TOPIC_CONSOLIDATION_USER_PROMPT.format(
-        centroid_label=ctm_info["centroid_label"],
-        track=ctm_info["track"],
-        month=month_str,
-        bucket_label=bucket_label,
-        total_titles=total_titles,
-        topics_text=topics_text,
-        catchall_section=catchall_section,
-        target_guidance=guidance,
-    )
 
 
 def call_llm(system_prompt, user_prompt):
@@ -236,7 +176,7 @@ def call_llm(system_prompt, user_prompt):
             {"role": "user", "content": user_prompt},
         ],
         "temperature": config.llm_temperature,
-        "max_tokens": 1000,
+        "max_tokens": 4000,
     }
 
     last_error = None
@@ -317,199 +257,379 @@ def repair_event_ids(response, valid_ids):
         story["event_ids"] = repaired
 
 
-def validate_response(response, event_ids, catchall_count):
+def _title_words(text):
+    """Extract lowercase content words from a headline."""
+    if not text:
+        return set()
+    stop = {
+        "the",
+        "a",
+        "an",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "of",
+        "and",
+        "or",
+        "with",
+        "as",
+        "by",
+        "is",
+        "are",
+        "its",
+        "after",
+        "from",
+        "new",
+        "says",
+        "has",
+        "have",
+        "will",
+        "been",
+        "over",
+        "amid",
+        "not",
+        "but",
+    }
+    words = set()
+    for w in text.lower().split():
+        w = w.strip(".,;:!?\"'()[]")
+        if w and w not in stop and len(w) > 2:
+            words.add(w)
+    return words
+
+
+# ---------------------------------------------------------------------------
+# New: Anchor-Candidate helpers
+# ---------------------------------------------------------------------------
+
+
+def _repair_single_id(broken_id, valid_ids):
+    """Find the closest valid ID to a potentially corrupted UUID."""
+    best = None
+    best_diffs = 5
+    for vid in valid_ids:
+        len_diff = abs(len(vid) - len(broken_id))
+        if len_diff > 2:
+            continue
+        diffs = sum(1 for a, b in zip(vid, broken_id) if a != b) + len_diff
+        if diffs < best_diffs:
+            best = vid
+            best_diffs = diffs
+    return best
+
+
+def _find_merge_candidates(events, dice_threshold=0.35):
+    """Pre-LLM filter: find anchor-candidate pairs by title word Dice.
+
+    For each pair above threshold, the larger event is the anchor and the
+    smaller is the candidate.  Returns (anchors, candidates) as flat lists.
+    Events with no similar partner are excluded entirely.
     """
-    Validate LLM response: every event_id must appear exactly once.
+    n = len(events)
+    if n < 2:
+        return [], []
+
+    word_sets = []
+    for ev in events:
+        text = ev.get("title") or ev.get("topic_core") or ""
+        word_sets.append(_title_words(text))
+
+    is_candidate = set()
+    is_anchor = set()
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = word_sets[i], word_sets[j]
+            if not a or not b:
+                continue
+            dice = 2 * len(a & b) / (len(a) + len(b))
+            if dice >= dice_threshold:
+                ci = events[i]["count"] or 0
+                cj = events[j]["count"] or 0
+                if ci >= cj:
+                    is_anchor.add(i)
+                    is_candidate.add(j)
+                else:
+                    is_anchor.add(j)
+                    is_candidate.add(i)
+
+    # An event that is similar to something larger is always a candidate,
+    # even if it was also an anchor for something smaller.
+    is_anchor -= is_candidate
+
+    if not is_candidate:
+        return [], []
+
+    anchors = [events[i] for i in sorted(is_anchor)]
+    candidates = [events[i] for i in sorted(is_candidate)]
+    return anchors, candidates
+
+
+def _find_catchall_matches(events, catchall_titles, min_overlap=2):
+    """Pre-filter catchall titles to those with word overlap to any event.
+
+    Returns list of catchall indices with >= min_overlap shared content words
+    with at least one existing event.
+    """
+    if not events or not catchall_titles:
+        return []
+
+    event_words = []
+    for ev in events:
+        text = ev.get("title") or ev.get("topic_core") or ""
+        event_words.append(_title_words(text))
+
+    matched_indices = []
+    for ci, title in enumerate(catchall_titles):
+        tw = _title_words(title)
+        if not tw:
+            continue
+        for ew in event_words:
+            if len(tw & ew) >= min_overlap:
+                matched_indices.append(ci)
+                break
+
+    return matched_indices
+
+
+def build_dedup_prompt(anchors, candidates, ctm_info, bucket_label):
+    """Format the dedup confirmation prompt for one bucket."""
+    month_str = str(ctm_info["month"])[:7] if ctm_info["month"] else "unknown"
+
+    anchors_lines = []
+    for i, ev in enumerate(anchors, 1):
+        title = ev.get("title") or ev.get("topic_core") or "(untitled)"
+        anchors_lines.append(
+            "A{} [{} sources] id={} -- {}".format(i, ev["count"], ev["id"], title)
+        )
+
+    candidates_lines = []
+    for i, ev in enumerate(candidates, 1):
+        title = ev.get("title") or ev.get("topic_core") or "(untitled)"
+        candidates_lines.append(
+            "C{} [{} sources] id={} -- {}".format(i, ev["count"], ev["id"], title)
+        )
+
+    return DEDUP_CONFIRM_USER_PROMPT.format(
+        centroid_label=ctm_info["centroid_label"],
+        track=ctm_info["track"],
+        month=month_str,
+        anchors_text="\n".join(anchors_lines),
+        candidates_text="\n".join(candidates_lines),
+    )
+
+
+def build_rescue_prompt(
+    events, catchall_titles, catchall_indices, ctm_info, bucket_label
+):
+    """Format the catchall rescue prompt for one bucket."""
+    month_str = str(ctm_info["month"])[:7] if ctm_info["month"] else "unknown"
+
+    events_lines = []
+    for i, ev in enumerate(events, 1):
+        title = ev.get("title") or ev.get("topic_core") or "(untitled)"
+        events_lines.append(
+            "E{} [{} sources] id={} -- {}".format(i, ev["count"], ev["id"], title)
+        )
+
+    headlines_lines = []
+    for seq, ci in enumerate(catchall_indices):
+        safe_t = catchall_titles[ci][:100] if catchall_titles[ci] else "[no title]"
+        headlines_lines.append("H{}: {}".format(seq, safe_t))
+
+    return CATCHALL_RESCUE_USER_PROMPT.format(
+        centroid_label=ctm_info["centroid_label"],
+        track=ctm_info["track"],
+        month=month_str,
+        events_text="\n".join(events_lines),
+        headlines_text="\n".join(headlines_lines),
+    )
+
+
+def validate_dedup_response(response, candidate_ids, anchor_ids):
+    """Validate LLM dedup response structure.
+
     Returns (is_valid, error_message).
     """
-    stories = response.get("stories", [])
-    if not stories:
-        return False, "No stories in response"
+    matches = response.get("matches", [])
+    if not matches:
+        return False, "No matches in response"
 
-    seen_ids = set()
-    for story in stories:
-        for eid in story.get("event_ids", []):
-            if eid in seen_ids:
-                return False, "Duplicate event_id: {}".format(eid)
-            seen_ids.add(eid)
+    valid_anchors = set(anchor_ids) | {"none"}
+    seen = set()
 
-        # Validate catchall indices
-        for ci in story.get("catchall_ids", []):
-            if not isinstance(ci, int) or ci < 0 or ci >= catchall_count:
-                return False, "Invalid catchall index: {}".format(ci)
+    for m in matches:
+        cid = m.get("candidate_id")
+        aid = m.get("anchor_id")
+        conf = m.get("confidence", 0)
 
-    # Validate unmatched_catchall indices
-    for ci in response.get("unmatched_catchall", []):
-        if not isinstance(ci, int) or ci < 0 or ci >= catchall_count:
-            return False, "Invalid unmatched_catchall index: {}".format(ci)
+        if cid not in set(candidate_ids):
+            return False, "Unknown candidate_id: {}".format(cid)
+        if aid not in valid_anchors:
+            return False, "Invalid anchor_id: {}".format(aid)
+        if not isinstance(conf, (int, float)) or conf < 0 or conf > 1:
+            return False, "Confidence out of range: {}".format(conf)
+        if cid in seen:
+            return False, "Duplicate candidate_id: {}".format(cid)
+        seen.add(cid)
 
-    expected = set(event_ids)
-    if seen_ids != expected:
-        missing = expected - seen_ids
-        extra = seen_ids - expected
-        if extra:
-            return False, "Extra event IDs: {}".format(extra)
-        if missing:
-            # Auto-fix: put each missing ID into its own singleton story
-            for mid in missing:
-                response["stories"].append(
-                    {
-                        "topic_core": "",
-                        "event_ids": [mid],
-                        "catchall_ids": [],
-                    }
-                )
-            return True, ""  # fixed
+    # Auto-fix: add missing candidates as "none"
+    missing = set(candidate_ids) - seen
+    if missing:
+        for cid in missing:
+            response["matches"].append(
+                {"candidate_id": cid, "anchor_id": "none", "confidence": 0}
+            )
 
     return True, ""
 
 
-def apply_consolidation(
-    conn,
-    stories,
-    catchall_event_id,
-    catchall_titles,
-    catchall_title_ids,
-    ctm_id,
-    bucket_key,
-):
+def validate_rescue_response(response, catchall_indices, anchor_ids):
+    """Validate LLM rescue response structure.
+
+    Returns (is_valid, error_message).
     """
-    Execute merges and set topic_core for one bucket.
-    catchall_title_ids: list of title UUIDs parallel to catchall_titles (positional match).
+    assignments = response.get("assignments", [])
+    if not assignments:
+        return False, "No assignments in response"
+
+    valid_anchors = set(anchor_ids) | {"none"}
+    valid_indices = set(catchall_indices)
+    seen = set()
+
+    for a in assignments:
+        idx = a.get("index")
+        aid = a.get("anchor_id")
+
+        if idx not in valid_indices:
+            return False, "Unknown index: {}".format(idx)
+        if aid not in valid_anchors:
+            return False, "Invalid anchor_id: {}".format(aid)
+        if idx in seen:
+            return False, "Duplicate index: {}".format(idx)
+        seen.add(idx)
+
+    # Auto-fix: add missing indices as "none"
+    missing = valid_indices - seen
+    if missing:
+        for idx in missing:
+            response["assignments"].append({"index": idx, "anchor_id": "none"})
+
+    return True, ""
+
+
+def apply_merges(conn, matches, min_confidence=0.7):
+    """Apply confirmed dedup merges.
+
+    Moves titles from candidate to anchor. Never touches anchor's
+    title/topic_core/summary -- only source_batch_count updates.
     Returns stats dict.
     """
     cur = conn.cursor()
-    stats = {"merged": 0, "rescued": 0, "rescue_skipped": 0, "deleted": 0, "created": 0}
+    stats = {"merged": 0, "deleted": 0}
 
-    # For bilateral buckets, derive the DB bucket_key for centroid validation
+    for m in matches:
+        if m.get("anchor_id") == "none":
+            continue
+        if m.get("confidence", 0) < min_confidence:
+            continue
+
+        candidate_id = m["candidate_id"]
+        anchor_id = m["anchor_id"]
+
+        # Move all titles from candidate to anchor
+        cur.execute(
+            "UPDATE event_v3_titles SET event_id = %s WHERE event_id = %s",
+            (anchor_id, candidate_id),
+        )
+        # Delete the candidate event
+        cur.execute("DELETE FROM events_v3 WHERE id = %s", (candidate_id,))
+        # Update anchor's source_batch_count
+        cur.execute(
+            """UPDATE events_v3
+               SET source_batch_count = (
+                   SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
+               ), updated_at = NOW()
+               WHERE id = %s""",
+            (anchor_id, anchor_id),
+        )
+        stats["merged"] += 1
+        stats["deleted"] += 1
+
+    return stats
+
+
+def apply_rescues(conn, assignments, catchall_event_id, catchall_title_ids, bucket_key):
+    """Move assigned catchall titles from catchall to anchor events.
+
+    Includes bilateral centroid validation (same as original).
+    Returns stats dict.
+    """
+    cur = conn.cursor()
+    stats = {"rescued": 0, "rescue_skipped": 0}
+
     db_bucket = (
         None
         if bucket_key in ("__domestic__", "__other_international__")
         else bucket_key
     )
 
-    for story in stories:
-        event_ids = story.get("event_ids", [])
-        topic_core = story.get("topic_core", "")
-        catchall_ids = story.get("catchall_ids", [])
+    updated_anchors = set()
 
-        if not event_ids and not catchall_ids:
+    for a in assignments:
+        if a.get("anchor_id") == "none":
             continue
 
-        target_id = None
-        created_new = False
+        idx = a["index"]
+        anchor_id = a["anchor_id"]
 
-        if event_ids:
-            # Find the largest event as merge target
-            counts = []
-            for eid in event_ids:
-                cur.execute(
-                    "SELECT source_batch_count FROM events_v3 WHERE id = %s",
-                    (eid,),
-                )
-                row = cur.fetchone()
-                counts.append((eid, row[0] if row else 0))
-            counts.sort(key=lambda x: x[1], reverse=True)
-            target_id = counts[0][0]
-            source_ids = [c[0] for c in counts[1:]]
+        if idx < 0 or idx >= len(catchall_title_ids):
+            continue
 
-            # Merge sources into target
-            for source_id in source_ids:
-                cur.execute(
-                    "UPDATE event_v3_titles SET event_id = %s WHERE event_id = %s",
-                    (target_id, source_id),
-                )
-                cur.execute(
-                    "DELETE FROM events_v3 WHERE id = %s",
-                    (source_id,),
-                )
-                stats["merged"] += 1
-                stats["deleted"] += 1
+        title_id = catchall_title_ids[idx]
+        if not title_id:
+            continue
 
-        elif catchall_ids and catchall_event_id:
-            # No existing events -- create a new event from catchall titles
-            if bucket_key == "__domestic__":
-                db_event_type = "domestic"
-            elif bucket_key == "__other_international__":
-                db_event_type = "other_international"
-            else:
-                db_event_type = "bilateral"
+        # Bilateral centroid validation
+        if db_bucket:
             cur.execute(
-                """INSERT INTO events_v3
-                   (ctm_id, date, summary, event_type, bucket_key,
-                    is_catchall, topic_core, source_batch_count)
-                   VALUES (%s, CURRENT_DATE, %s, %s, %s,
-                           false, %s, 0)
-                   RETURNING id""",
-                (
-                    ctm_id,
-                    topic_core or "New topic",
-                    db_event_type,
-                    db_bucket,
-                    topic_core,
-                ),
+                "SELECT %s = ANY(centroid_ids) FROM titles_v3 WHERE id = %s",
+                (db_bucket, title_id),
             )
-            target_id = cur.fetchone()[0]
-            stats["created"] += 1
-            created_new = True
-
-        # Rescue catchall titles into target (using positional title_id mapping)
-        if catchall_ids and catchall_event_id and catchall_title_ids and target_id:
-            for ci in catchall_ids:
-                if 0 <= ci < len(catchall_title_ids):
-                    title_id = catchall_title_ids[ci]
-                    if not title_id:
-                        continue
-                    # For bilateral events, verify title has the bucket centroid
-                    if db_bucket:
-                        cur.execute(
-                            "SELECT %s = ANY(centroid_ids) FROM titles_v3 WHERE id = %s",
-                            (db_bucket, title_id),
-                        )
-                        row = cur.fetchone()
-                        if not row or not row[0]:
-                            stats["rescue_skipped"] += 1
-                            continue
-                    cur.execute(
-                        """UPDATE event_v3_titles
-                           SET event_id = %s
-                           WHERE title_id = %s AND event_id = %s""",
-                        (target_id, title_id, catchall_event_id),
-                    )
-                    stats["rescued"] += 1
-
-        # Clean up zombie event: created new but no titles were rescued
-        if created_new and target_id:
-            cur.execute(
-                "SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s",
-                (target_id,),
-            )
-            if cur.fetchone()[0] == 0:
-                cur.execute("DELETE FROM events_v3 WHERE id = %s", (target_id,))
-                stats["created"] -= 1
+            row = cur.fetchone()
+            if not row or not row[0]:
+                stats["rescue_skipped"] += 1
                 continue
 
-        # Update target count and set topic_core
-        if target_id:
-            cur.execute(
-                """UPDATE events_v3
-                   SET source_batch_count = (
-                       SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
-                   ),
-                   topic_core = %s,
-                   updated_at = NOW()
-                   WHERE id = %s""",
-                (target_id, topic_core, target_id),
-            )
+        cur.execute(
+            """UPDATE event_v3_titles
+               SET event_id = %s
+               WHERE title_id = %s AND event_id = %s""",
+            (anchor_id, title_id, catchall_event_id),
+        )
+        stats["rescued"] += 1
+        updated_anchors.add(anchor_id)
 
-    # Update catchall count if any rescues happened
+    # Update source_batch_count for all affected anchors
+    for aid in updated_anchors:
+        cur.execute(
+            """UPDATE events_v3
+               SET source_batch_count = (
+                   SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
+               ), updated_at = NOW()
+               WHERE id = %s""",
+            (aid, aid),
+        )
+
+    # Update catchall count
     if stats["rescued"] > 0 and catchall_event_id:
         cur.execute(
             """UPDATE events_v3
                SET source_batch_count = (
                    SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
-               ),
-               updated_at = NOW()
+               ), updated_at = NOW()
                WHERE id = %s""",
             (catchall_event_id, catchall_event_id),
         )
@@ -517,20 +637,24 @@ def apply_consolidation(
     return stats
 
 
+# ---------------------------------------------------------------------------
+# Main bucket processor (rewritten for anchor-candidate model)
+# ---------------------------------------------------------------------------
+
+
 def process_bucket(conn, ctm_info, bucket_key, bucket_data, dry_run=False):
-    """Process one bucket: call LLM, validate, apply."""
-    events = bucket_data["events"]
+    """Process one bucket: anchor-candidate dedup + catchall rescue."""
+    all_events = bucket_data["events"]
     catchall = bucket_data.get("catchall")
 
-    # Skip conditions
-    if len(events) <= 1 and (not catchall or len(catchall.get("titles", [])) < 5):
-        return {"skipped": True, "reason": "too few events"}
+    # Only titled events participate
+    events = [ev for ev in all_events if ev.get("title")]
+    catchall_titles = catchall["titles"] if catchall else []
+    catchall_tids = catchall.get("title_ids", []) if catchall else []
 
-    # Skip if all events already have topic_core and catchall is small
-    if all(ev.get("topic_core") for ev in events):
-        catchall_size = len(catchall.get("titles", [])) if catchall else 0
-        if catchall_size < 10:
-            return {"skipped": True, "reason": "already consolidated"}
+    # Skip if too little data
+    if len(events) < 2 and len(catchall_titles) < 5:
+        return {"skipped": True, "reason": "too few titled events"}
 
     if bucket_key == "__domestic__":
         bucket_label = "Domestic"
@@ -538,99 +662,173 @@ def process_bucket(conn, ctm_info, bucket_key, bucket_data, dry_run=False):
         bucket_label = "Other International"
     else:
         bucket_label = bucket_key
-    catchall_titles = catchall["titles"] if catchall else []
 
-    # Build and send prompt
-    user_prompt = build_prompt(bucket_label, events, catchall_titles, ctm_info)
-    event_ids = [ev["id"] for ev in events]
+    stats = {"merged": 0, "rescued": 0, "rescue_skipped": 0, "deleted": 0}
 
-    if dry_run:
-        print(
-            "  Bucket '{}': {} events, {} catchall titles".format(
-                bucket_label, len(events), len(catchall_titles)
+    # --- Phase A: Anchor-candidate dedup ---
+    merged_candidate_ids = set()
+    if len(events) >= 2:
+        anchors, candidates = _find_merge_candidates(events)
+        if anchors and candidates:
+            user_prompt = build_dedup_prompt(
+                anchors, candidates, ctm_info, bucket_label
             )
-        )
-        print("  Prompt length: {} chars".format(len(user_prompt)))
+            anchor_ids = [a["id"] for a in anchors]
+            candidate_ids = [c["id"] for c in candidates]
 
-    try:
-        response = call_llm(TOPIC_CONSOLIDATION_SYSTEM_PROMPT, user_prompt)
-    except Exception as e:
-        print("  LLM error for bucket '{}': {}".format(bucket_label, e))
-        return {"skipped": True, "reason": "llm_error"}
-
-    # Repair any corrupted UUIDs before validation
-    repair_event_ids(response, event_ids)
-
-    # Validate
-    is_valid, error = validate_response(response, event_ids, len(catchall_titles))
-    if not is_valid:
-        print("  Validation error for bucket '{}': {}".format(bucket_label, error))
-        return {"skipped": True, "reason": "validation_error: {}".format(error)}
-
-    stories = response.get("stories", [])
-
-    # Over-merge guard: if LLM returns 1 group for 10+ input topics, skip
-    if len(stories) == 1 and len(events) >= 10:
-        print("  Over-merge guard: 1 story for {} topics, skipping".format(len(events)))
-        return {"skipped": True, "reason": "over_merge_guard"}
-
-    if dry_run:
-        print("  LLM returned {} stories:".format(len(stories)))
-        for s in stories:
-            print(
-                "    [{}] {} (events: {}, catchall: {})".format(
-                    s.get("topic_core", "?"),
-                    len(s.get("event_ids", [])),
-                    ", ".join(s.get("event_ids", [])[:3]),
-                    len(s.get("catchall_ids", [])),
+            if dry_run:
+                print(
+                    "  [%s] Dedup: %d anchors, %d candidates, prompt %d chars"
+                    % (bucket_label, len(anchors), len(candidates), len(user_prompt))
                 )
+
+            try:
+                response = call_llm(DEDUP_CONFIRM_SYSTEM_PROMPT, user_prompt)
+            except Exception as e:
+                print("  [%s] Dedup LLM error: %s" % (bucket_label, e))
+                response = None
+
+            if response:
+                # Repair corrupted UUIDs
+                for m in response.get("matches", []):
+                    if m.get("candidate_id") not in set(candidate_ids):
+                        fixed = _repair_single_id(m["candidate_id"], candidate_ids)
+                        if fixed:
+                            m["candidate_id"] = fixed
+                    aid = m.get("anchor_id")
+                    if aid and aid != "none" and aid not in set(anchor_ids):
+                        fixed = _repair_single_id(aid, anchor_ids)
+                        if fixed:
+                            m["anchor_id"] = fixed
+
+                ok, err = validate_dedup_response(response, candidate_ids, anchor_ids)
+                if ok:
+                    if dry_run:
+                        confirmed = [
+                            m
+                            for m in response["matches"]
+                            if m.get("anchor_id") != "none"
+                            and m.get("confidence", 0) >= 0.7
+                        ]
+                        print("    -> %d confirmed merges" % len(confirmed))
+                        for m in confirmed:
+                            print(
+                                "      %s -> %s (conf=%.2f)"
+                                % (
+                                    m["candidate_id"][:12],
+                                    m["anchor_id"][:12],
+                                    m["confidence"],
+                                )
+                            )
+                    else:
+                        merge_stats = apply_merges(conn, response["matches"])
+                        stats["merged"] += merge_stats["merged"]
+                        stats["deleted"] += merge_stats["deleted"]
+                        conn.commit()
+                        # Track which candidates were merged for Phase B
+                        for m in response["matches"]:
+                            if (
+                                m.get("anchor_id") != "none"
+                                and m.get("confidence", 0) >= 0.7
+                            ):
+                                merged_candidate_ids.add(m["candidate_id"])
+                else:
+                    print("  [%s] Dedup validation error: %s" % (bucket_label, err))
+        elif dry_run:
+            print(
+                "  [%s] No similar pairs (Dice < 0.35), skipping dedup" % bucket_label
             )
-        unmatched = response.get("unmatched_catchall", [])
-        print("  Unmatched catchall: {}".format(len(unmatched)))
-        return {
-            "skipped": False,
-            "stories": len(stories),
-            "input_events": len(events),
-        }
 
-    # Apply in transaction
-    catchall_id = catchall["id"] if catchall else None
-    catchall_tids = catchall.get("title_ids", []) if catchall else []
-    try:
-        stats = apply_consolidation(
-            conn,
-            stories,
-            catchall_id,
-            catchall_titles,
-            catchall_tids,
-            ctm_id=ctm_info["id"],
-            bucket_key=bucket_key,
+    # Remove merged candidates from event list before rescue phase
+    if merged_candidate_ids:
+        events = [ev for ev in events if ev["id"] not in merged_candidate_ids]
+
+    # --- Phase B: Catchall rescue ---
+    if catchall_titles and events:
+        matched_indices = _find_catchall_matches(events, catchall_titles)
+        if matched_indices:
+            user_prompt = build_rescue_prompt(
+                events, catchall_titles, matched_indices, ctm_info, bucket_label
+            )
+            event_ids = [ev["id"] for ev in events]
+
+            if dry_run:
+                print(
+                    "  [%s] Rescue: %d catchall -> %d pre-filtered, prompt %d chars"
+                    % (
+                        bucket_label,
+                        len(catchall_titles),
+                        len(matched_indices),
+                        len(user_prompt),
+                    )
+                )
+
+            try:
+                response = call_llm(CATCHALL_RESCUE_SYSTEM_PROMPT, user_prompt)
+            except Exception as e:
+                print("  [%s] Rescue LLM error: %s" % (bucket_label, e))
+                response = None
+
+            if response:
+                # Repair corrupted anchor IDs
+                for a in response.get("assignments", []):
+                    aid = a.get("anchor_id")
+                    if aid and aid != "none" and aid not in set(event_ids):
+                        fixed = _repair_single_id(aid, event_ids)
+                        if fixed:
+                            a["anchor_id"] = fixed
+
+                # Validate against sequential indices (prompt uses H0, H1, ...)
+                seq_indices = list(range(len(matched_indices)))
+                ok, err = validate_rescue_response(response, seq_indices, event_ids)
+                # Remap sequential -> original catchall indices
+                if ok:
+                    for a in response.get("assignments", []):
+                        seq = a.get("index", -1)
+                        if 0 <= seq < len(matched_indices):
+                            a["index"] = matched_indices[seq]
+                if ok:
+                    if dry_run:
+                        assigned = [
+                            a
+                            for a in response["assignments"]
+                            if a.get("anchor_id") != "none"
+                        ]
+                        print("    -> %d titles assigned to events" % len(assigned))
+                    else:
+                        rescue_stats = apply_rescues(
+                            conn,
+                            response["assignments"],
+                            catchall["id"],
+                            catchall_tids,
+                            bucket_key,
+                        )
+                        stats["rescued"] += rescue_stats["rescued"]
+                        stats["rescue_skipped"] += rescue_stats["rescue_skipped"]
+                        conn.commit()
+                else:
+                    print("  [%s] Rescue validation error: %s" % (bucket_label, err))
+        elif dry_run:
+            print("  [%s] No catchall word-overlap matches" % bucket_label)
+
+    if not dry_run and (stats["merged"] or stats["rescued"]):
+        print(
+            "  Bucket '%s': merged %d, rescued %d (skipped %d), deleted %d"
+            % (
+                bucket_label,
+                stats["merged"],
+                stats["rescued"],
+                stats["rescue_skipped"],
+                stats["deleted"],
+            )
         )
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        print("  DB error for bucket '{}': {}".format(bucket_label, e))
-        return {"skipped": True, "reason": "db_error"}
 
-    print(
-        "  Bucket '{}': {} stories, merged {}, rescued {}, deleted {}, created {}".format(
-            bucket_label,
-            len(stories),
-            stats["merged"],
-            stats["rescued"],
-            stats["deleted"],
-            stats["created"],
-        )
-    )
+    return {"skipped": False, **stats}
 
-    return {
-        "skipped": False,
-        "stories": len(stories),
-        "merged": stats["merged"],
-        "rescued": stats["rescued"],
-        "deleted": stats["deleted"],
-        "created": stats["created"],
-    }
+
+# ---------------------------------------------------------------------------
+# Cross-bucket passes (unchanged)
+# ---------------------------------------------------------------------------
 
 
 def cross_bucket_dedup(conn, ctm_id, home_centroid_id, dry_run=False):
@@ -937,6 +1135,11 @@ def redistribute_oi_catchall(conn, ctm_id, home_centroid_id, dry_run=False):
     return moved
 
 
+# ---------------------------------------------------------------------------
+# Entry points
+# ---------------------------------------------------------------------------
+
+
 def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
     """
     Run topic consolidation on a CTM.
@@ -970,7 +1173,6 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
         )
         print()
 
-        total_stories = 0
         total_merged = 0
         total_rescued = 0
         total_deleted = 0
@@ -980,7 +1182,6 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
             result = process_bucket(conn, ctm, bucket_key, bucket_data, dry_run)
             if not result.get("skipped"):
                 buckets_processed += 1
-                total_stories += result.get("stories", 0)
                 total_merged += result.get("merged", 0)
                 total_rescued += result.get("rescued", 0)
                 total_deleted += result.get("deleted", 0)
@@ -998,8 +1199,7 @@ def process_ctm(ctm_id=None, centroid=None, track=None, dry_run=False):
         print("SUMMARY")
         print("=" * 70)
         print("Buckets processed: {}".format(buckets_processed))
-        print("Stories created: {}".format(total_stories))
-        print("Events merged: {}".format(total_merged))
+        print("Events merged (dedup): {}".format(total_merged))
         print("Catchall titles rescued: {}".format(total_rescued))
         print("Events deleted: {}".format(total_deleted))
         if cross_merged:
