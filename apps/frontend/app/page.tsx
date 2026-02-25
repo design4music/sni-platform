@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
+import TrendingCarousel from '@/components/TrendingCarousel';
 import MapSection from '@/components/MapSection';
 import SourceCarousel from '@/components/SourceCarousel';
 import AnimatedStats from '@/components/AnimatedStats';
@@ -77,6 +78,20 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
+
+        {/* Trending Now (deferred via Suspense) */}
+        <Suspense fallback={
+          <div className="animate-pulse">
+            <div className="h-8 w-48 bg-dashboard-border rounded mb-6" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-56 bg-dashboard-surface border border-dashboard-border rounded-lg" />
+              ))}
+            </div>
+          </div>
+        }>
+          <TrendingCarousel />
+        </Suspense>
 
         {/* Map */}
         <MapSection centroids={geoCentroidsWithMap} />

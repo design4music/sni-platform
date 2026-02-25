@@ -311,6 +311,28 @@ export interface NarrativeDetail extends FramedNarrative {
   event_id: string | null;
 }
 
+export interface TrendingEvent {
+  id: string;
+  title: string;
+  date: string;
+  last_active: string;
+  source_batch_count: number;
+  tags: string[];
+  summary: string | null;
+  centroid_id: string;
+  centroid_label: string;
+  iso_codes: string[];
+  track: string;
+  trending_score: number;
+  top_signals?: string[];
+}
+
+export interface TrendingSignal {
+  signal_type: string;
+  value: string;
+  event_count: number;
+}
+
 export interface SearchResult {
   type: 'event' | 'centroid' | 'epic';
   id: string;

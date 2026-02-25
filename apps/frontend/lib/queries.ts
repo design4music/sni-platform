@@ -1,6 +1,6 @@
 import { query } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return cached('centroids:all', 300, () =>
@@ -934,6 +934,78 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
      LIMIT 30`,
     [feedName]
   );
+}
+
+// ========================================================================
+// Trending events (time-decayed source count)
+// ========================================================================
+
+export async function getTrendingEvents(limit: number = 20): Promise<TrendingEvent[]> {
+  return cached(`trending:${limit}`, 300, () =>
+    query<TrendingEvent>(
+      `SELECT e.id, COALESCE(e.title, e.topic_core) as title,
+              e.date::text as date, COALESCE(e.last_active, e.date)::text as last_active,
+              e.source_batch_count, COALESCE(e.tags, '{}') as tags,
+              LEFT(e.summary, 200) as summary,
+              c.centroid_id, cv.label as centroid_label, cv.iso_codes,
+              c.track,
+              (e.source_batch_count * pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400)))::numeric(10,2) as trending_score,
+              sig.top_signals
+       FROM events_v3 e
+       JOIN ctm c ON e.ctm_id = c.id
+       JOIN centroids_v3 cv ON c.centroid_id = cv.id
+       LEFT JOIN LATERAL (
+         SELECT array_agg(val ORDER BY cnt DESC) as top_signals
+         FROM (
+           SELECT val, COUNT(*) as cnt
+           FROM event_v3_titles evt
+           JOIN title_labels tl ON tl.title_id = evt.title_id
+           CROSS JOIN LATERAL unnest(
+             COALESCE(tl.persons, '{}') || COALESCE(tl.orgs, '{}')
+           ) AS val
+           WHERE evt.event_id = e.id
+           GROUP BY val
+           ORDER BY cnt DESC
+           LIMIT 3
+         ) sub
+       ) sig ON true
+       WHERE e.source_batch_count >= 5
+         AND e.is_catchall = false
+         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '14 days'
+         AND c.is_frozen = false
+       ORDER BY trending_score DESC
+       LIMIT $1`,
+      [limit]
+    )
+  );
+}
+
+export async function getTrendingSignals(): Promise<Record<string, TrendingSignal[]>> {
+  return cached('trending:signals', 300, async () => {
+    const types = ['persons', 'orgs', 'places', 'commodities', 'policies'] as const;
+    const parts = types.map(col =>
+      `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+       FROM events_v3 e
+       JOIN ctm c ON e.ctm_id = c.id
+       JOIN event_v3_titles evt ON evt.event_id = e.id
+       JOIN title_labels tl ON tl.title_id = evt.title_id
+       CROSS JOIN LATERAL unnest(tl.${col}) AS val
+       WHERE e.source_batch_count >= 5
+         AND e.is_catchall = false
+         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '14 days'
+         AND c.is_frozen = false
+       GROUP BY val ORDER BY event_count DESC LIMIT 8`
+    );
+
+    const sql = parts.map(p => `(${p})`).join(' UNION ALL ');
+    const rows = await query<TrendingSignal>(sql);
+
+    const result: Record<string, TrendingSignal[]> = {};
+    for (const col of types) {
+      result[col] = rows.filter(r => r.signal_type === col);
+    }
+    return result;
+  });
 }
 
 // ========================================================================
