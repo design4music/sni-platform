@@ -26,7 +26,7 @@ WorldBrief aggregates reporting from international media across 6 continents and
 - Monthly Intelligence: https://worldbrief.info/epics
 - Media Sources: https://worldbrief.info/sources
 - About: https://worldbrief.info/about
-- Method & Disclaimer: https://worldbrief.info/disclaimer
+- Methodology: https://worldbrief.info/methodology
 `;
 
   return new Response(content, {

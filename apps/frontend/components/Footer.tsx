@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-dashboard-border bg-dashboard-surface mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About Section */}
           <div>
             <h3 className="text-lg font-semibold mb-4">WorldBrief</h3>
@@ -47,8 +47,30 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/disclaimer" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Disclaimer
+                <Link href="/methodology" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Methodology
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Pricing
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Legal</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/terms" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Privacy Policy
                 </Link>
               </li>
             </ul>

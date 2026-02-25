@@ -143,7 +143,7 @@ export default function AnimatedStats({
 
       <p className="text-center text-sm text-dashboard-text-muted/70">
         All summaries are AI-generated.{' '}
-        <a href="/disclaimer" className="text-blue-400/70 hover:text-blue-300 underline">
+        <a href="/methodology" className="text-blue-400/70 hover:text-blue-300 underline">
           Learn more about our method
         </a>
       </p>

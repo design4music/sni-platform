@@ -73,7 +73,7 @@ export default async function HomePage() {
             world — clearly, quickly, and with sources.
           </p>
           <div className="flex gap-4">
-            <Link href="/disclaimer" className="text-blue-400 hover:text-blue-300 underline">
+            <Link href="/methodology" className="text-blue-400 hover:text-blue-300 underline">
               How it works
             </Link>
           </div>

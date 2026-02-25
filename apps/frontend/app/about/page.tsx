@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'WorldBrief organizes global reporting into structured briefings by geography and theme. Built by an independent researcher focused on analytical adequacy.',
+  description: 'WorldBrief organizes global reporting into structured briefings by geography and theme. Built by Maksim Micheliov.',
   alternates: { canonical: '/about' },
 };
 
@@ -12,30 +13,27 @@ export default function AboutPage() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">About WorldBrief</h1>
-        <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">Why WorldBrief Exists</h2>
         <div className="prose prose-invert prose-lg max-w-none space-y-6">
           <p className="text-lg text-dashboard-text-muted leading-relaxed">
-            The volume of global reporting has never been higher, yet understanding has not kept pace. News is fragmented across regions, languages, and platforms, while attention is pulled toward speed, novelty, and outrage.
+            WorldBrief is a global news intelligence platform. It continuously aggregates reporting from over 210 international sources, processes it through a multi-stage AI pipeline, and organizes it into structured briefings by country, region, and theme.
           </p>
-          <p className="text-dashboard-text-muted leading-relaxed">As a result, it has become increasingly difficult to answer basic questions:</p>
-          <ul className="text-dashboard-text-muted leading-relaxed">
-            <li>What is actually happening?</li>
-            <li>Where is it happening?</li>
-            <li>How do different issues connect across regions and topics?</li>
-          </ul>
-
-          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">What WorldBrief does</h2>
           <p className="text-dashboard-text-muted leading-relaxed">
-            WorldBrief organizes global reporting into continuously updated briefings structured by geography and theme.
+            The goal is to solve a specific problem: the volume of global reporting has never been higher, but it is fragmented across regions, languages, and platforms. It has become difficult to answer basic questions -- what is happening, where, and how different issues connect. WorldBrief provides that orientation.
           </p>
-          <p className="text-dashboard-text-muted leading-relaxed">Instead of presenting isolated articles or endless feeds, the system:</p>
-          <ul className="text-dashboard-text-muted leading-relaxed">
-            <li>aggregates reporting from diverse international sources,</li>
-            <li>compresses coverage into coherent summaries,</li>
-            <li>and allows exploration by map, topic, and time.</li>
-          </ul>
-          <p className="text-dashboard-text-muted leading-relaxed">The goal is not to replace reading, but to provide orientation: a clear starting point for understanding what matters and where to look deeper.</p>
-          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">What WorldBrief is not</h2>
+
+          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">How It Works</h2>
+          <p className="text-dashboard-text-muted leading-relaxed">
+            The system ingests reporting from 210+ sources across 60+ countries. Incoming material passes through automated classification, geographic mapping, and AI-driven clustering that groups related coverage into coherent events.
+          </p>
+          <p className="text-dashboard-text-muted leading-relaxed">
+            Events are organized across five thematic tracks -- Geopolitics, Security, Economy, Society, and Environment -- and surfaced through country pages, region pages, and a global trending view.
+          </p>
+          <p className="text-dashboard-text-muted leading-relaxed">
+            For a detailed look at the pipeline, methodology, and design decisions, see{' '}
+            <Link href="/methodology" className="text-blue-400 hover:underline">Methodology</Link>.
+          </p>
+
+          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">What WorldBrief Is Not</h2>
           <p className="text-dashboard-text-muted leading-relaxed">
             WorldBrief is intentionally limited in scope. It is:
           </p>
@@ -48,18 +46,25 @@ export default function AboutPage() {
             All summaries are derived from existing reporting, and source links are provided to enable independent verification and further reading.
           </p>
 
-          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">About the author</h2>
+          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">From the Founder</h2>
           <p className="text-dashboard-text-muted leading-relaxed">
-            WorldBrief is developed by an independent researcher and product builder with a long-standing interest in global affairs, information systems, and analytical adequacy.
-          </p>
-          <p className="text-dashboard-text-muted leading-relaxed">The project is driven less by commentary than by method: how information is structured, contextualized, and presented in order to support better judgment in complex environments.</p>
-          <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">Support</h2>
-          <p className="text-dashboard-text-muted leading-relaxed">
-            WorldBrief is an independent project, developed and maintained outside of large institutions.
+            My name is Maksim Micheliov. I built WorldBrief because I wanted a tool that did not exist -- something that could take the full breadth of global reporting and compress it into a structured, navigable picture of what is happening in the world.
           </p>
           <p className="text-dashboard-text-muted leading-relaxed">
-            If you find it useful and would like to support its continued development, you can do so here. Support is entirely optional and helps cover infrastructure, data access, and ongoing refinement.
+            The project started as a personal research tool and evolved over nearly a year of iterative development into a full pipeline: ingestion, classification, clustering, summarization, and analysis. Every design decision -- from source selection to how events are grouped -- reflects a deliberate choice about how to organize information for clarity rather than engagement.
           </p>
+          <p className="text-dashboard-text-muted leading-relaxed">
+            WorldBrief is driven by method, not commentary. The machine I have built is the product. My interest is in analytical adequacy: structuring information so that it supports better judgment in complex environments. If you find that useful, I am glad to have you here.
+          </p>
+
+          <div className="mt-12 pt-8 border-t border-dashboard-border">
+            <p className="text-sm text-dashboard-text-muted">
+              Questions or feedback?{' '}
+              <a href="mailto:contact@worldbrief.org" className="text-blue-400 hover:underline">
+                contact@worldbrief.org
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </DashboardLayout>

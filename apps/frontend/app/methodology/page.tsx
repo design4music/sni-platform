@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 
 export const metadata: Metadata = {
-  title: 'Method & Disclaimer',
+  title: 'Methodology',
   description: 'How WorldBrief works: automated ingestion, multilingual processing, and structured synthesis of global news. Limitations and editorial policy.',
-  alternates: { canonical: '/disclaimer' },
+  alternates: { canonical: '/methodology' },
 };
 
-export default function DisclaimerPage() {
+export default function MethodologyPage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Method & Disclaimer</h1>
+        <h1 className="text-4xl font-bold mb-8">Methodology</h1>
         <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">How WorldBrief works</h2>
         <div className="prose prose-invert prose-lg max-w-none space-y-6">
           <p className="text-dashboard-text-muted leading-relaxed">
