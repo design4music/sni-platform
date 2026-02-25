@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-24
+**Last Updated**: 2026-02-25
 **Status**: Production - Full pipeline operational (4-slot architecture)
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -559,6 +559,8 @@ apps/frontend/
 |   |-- sources/page.tsx             # Media outlet list
 |   |-- sources/[feed_name]/page.tsx # Outlet profile page
 |   |-- search/page.tsx              # Full-text search
+|   |-- trending/page.tsx            # Trending stories (hero cards + compact list + signals sidebar)
+|   |-- trending/loading.tsx         # Trending page skeleton
 |   |-- sign-in/page.tsx             # Authentication sign-in
 |   |-- sign-up/page.tsx             # Authentication sign-up
 |   |-- api/extract-narratives/route.ts  # Proxy to extraction API
@@ -567,7 +569,7 @@ apps/frontend/
 |-- lib/
 |   |-- cache.ts                     # In-memory TTL cache (Map-based, lazy cleanup)
 |   |-- db.ts                        # PostgreSQL pool (max 10, idle 30s, conn 5s)
-|   |-- queries.ts                   # All DB queries (9 cached with 5-10 min TTL)
+|   |-- queries.ts                   # All DB queries (11 cached with 5-10 min TTL)
 |   |-- types.ts                     # Shared types (Track, REGIONS, Epic, etc.)
 |   |-- rai-engine.ts               # Local RAI analysis engine (33 modules, DeepSeek)
 |   |-- logos.ts                     # Self-hosted outlet favicon paths
@@ -587,6 +589,9 @@ apps/frontend/
 |   |-- NarrativeNav.tsx             # Prev/next dots + arrows for sibling narratives
 |   |-- AnalysisContent.tsx          # Client-side analysis prose + score broadcast
 |   |-- AssessmentScores.tsx         # Client component for live score rendering
+|   |-- TrendingCard.tsx             # Trending event card (hero + compact modes, track icons, flags, signals)
+|   |-- TrendingCarousel.tsx         # Trending carousel server wrapper (fetches 12 events)
+|   |-- TrendingCarouselClient.tsx   # Dot carousel client component (4 frames, auto-advance 8s)
 
 archive/phase_4_old/                 # Deprecated Phase 4 scripts
 |-- aggregate_topics.py              # Replaced by consolidate_topics.py
@@ -751,11 +756,18 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 ---
 
-## Current Status (2026-02-24)
+## Current Status (2026-02-25)
 
 **Operational**: Daemon runs 4-slot architecture (ingestion/classification/clustering/enrichment) + daily purge locally. Narrative extraction and RAI analysis are on-demand (user-triggered, auth-gated). January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. User authentication live. Production site at https://www.worldbrief.info
 
-### Recent Changes (2026-02-24)
+### Recent Changes (2026-02-25)
+
+1. **Trending Page Redesign**: Full rewrite of `/trending` with track SVG icons (from TrackCard), blue-tinted flags (matching CountryAccordion pattern), freshness dots (48h pulse), and signal pills (top persons/orgs per event). Two-part layout: full-width hero cards at top, then two-column grid with compact event list + "Trending Signals" sidebar aggregating top persons/orgs/places/commodities/policies across all trending events.
+2. **Trending Signals Query**: New `getTrendingSignals()` function aggregates signals from `title_labels` across all trending events (5 types, top 8 per type, COUNT DISTINCT event_id). `getTrendingEvents()` enriched with LATERAL subquery for top 3 persons/orgs per event (`top_signals` field).
+3. **Home Page Trending Carousel**: Dot carousel on home page showing 4 frames of 3 hero cards (12 events total). Auto-advances every 8s, pauses on hover. Server component fetches data, client component handles frame state. Placed above "Explore the world by country" map section with Suspense fallback.
+4. **TrendingCard Component**: Rewritten with hero (default) and compact modes. Hero cards show full titles and longer summaries. Compact cards use stacked vertical layout with wrapping metadata for mobile readability.
+
+### Previous Changes (2026-02-24)
 
 1. **4-Slot Daemon Architecture**: Consolidated 8 scheduling intervals into 4 slots (ingestion 12h, classification 15m, clustering 30m, enrichment 6h). Enrichment batch sizes raised to 2000 events + 200 CTMs per run. Estimated ~80% reduction in enrichment API costs (~$0.30-0.40/day vs ~$1.10/day).
 2. **LLM Retry Backoff**: All DeepSeek API calls now retry 3x with exponential backoff (5s, 15s, 45s) on HTTP 429/502/503/504 transient errors. Previously some phases only retried 2x with no backoff scaling.
