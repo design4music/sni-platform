@@ -70,11 +70,17 @@ def get_events_for_ctm(conn, ctm_id: str) -> list:
         return events
 
 
+MAX_DOMESTIC_EVENTS = 8  # Cap domestic events in CTM digest
+MAX_INTERNATIONAL_EVENTS = 12  # Cap international events in CTM digest
+
+
 def format_events_for_digest(events: list) -> str:
     """Format event summaries into domestic/international blocks for CTM digest.
 
     Splits non-catchall events by event_type and returns labeled blocks.
     When only one category has content, returns it without section headers.
+    Events are pre-sorted by source_batch_count DESC, so capping per category
+    keeps the most significant events while ensuring both perspectives are represented.
     """
     domestic = []
     international = []
@@ -85,12 +91,14 @@ def format_events_for_digest(events: list) -> str:
 
         count = event.get("count", 0)
         summary = event.get("summary", "")
-        line = f"[{count} sources] {summary}"
+        line = "[%d sources] %s" % (count, summary)
 
         if event.get("event_type") == "domestic":
-            domestic.append(line)
+            if len(domestic) < MAX_DOMESTIC_EVENTS:
+                domestic.append(line)
         else:
-            international.append(line)
+            if len(international) < MAX_INTERNATIONAL_EVENTS:
+                international.append(line)
 
     # Single category: no headers needed
     if domestic and not international:
