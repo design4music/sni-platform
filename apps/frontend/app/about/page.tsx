@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 
@@ -47,6 +48,23 @@ export default function AboutPage() {
           </p>
 
           <h2 className="text-2xl font-bold text-dashboard-text mt-8 mb-4">From the Founder</h2>
+          <div className="float-left mr-6 mb-4 w-[120px] sm:w-[200px]">
+            <Image
+              src="/maksim.webp"
+              alt="Maksim Micheliov"
+              width={200}
+              height={200}
+              className="rounded-full border-2 border-dashboard-border w-full h-auto"
+            />
+            <a
+              href="https://www.linkedin.com/in/mmdesign/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-xs text-blue-400 hover:underline mt-2"
+            >
+              LinkedIn
+            </a>
+          </div>
           <p className="text-dashboard-text-muted leading-relaxed">
             My name is Maksim Micheliov. I built WorldBrief because I wanted a tool that did not exist -- something that could take the full breadth of global reporting and compress it into a structured, navigable picture of what is happening in the world.
           </p>
