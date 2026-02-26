@@ -27,7 +27,14 @@ if sys.platform == "win32":
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 from core.llm_utils import extract_json, fix_role_hallucinations
-from core.prompts import EVENT_SUMMARY_SYSTEM_PROMPT, EVENT_SUMMARY_USER_PROMPT
+from core.prompts import (
+    EVENT_SUMMARY_PROMPT_MAXI,
+    EVENT_SUMMARY_PROMPT_MEDIUM,
+    EVENT_SUMMARY_PROMPT_MINI,
+    EVENT_SUMMARY_PROMPT_TITLE_ONLY,
+    EVENT_SUMMARY_USER_PROMPT,
+    EVENT_SUMMARY_USER_PROMPT_TITLE,
+)
 
 MIN_SUMMARY_SOURCES = 5  # Below this: title only, no summary
 
@@ -72,11 +79,11 @@ def get_backbone_signals(conn, event_id: str) -> dict:
                     places[p] += 1
 
         return {
-            "persons": persons.most_common(5),
-            "orgs": orgs.most_common(5),
-            "commodities": commodities.most_common(3),
-            "policies": policies.most_common(3),
-            "places": places.most_common(3),
+            "persons": persons.most_common(3),
+            "orgs": orgs.most_common(3),
+            "commodities": commodities.most_common(2),
+            "policies": policies.most_common(2),
+            "places": places.most_common(2),
         }
 
 
@@ -429,7 +436,7 @@ async def generate_event_data(
     backbone_signals: dict,
     title_signals: dict,
     num_titles: int,
-    max_titles: int = 200,
+    max_titles: int = 100,
     centroid_countries: set = None,
     title_countries: list = None,
     title_only: bool = False,
@@ -494,37 +501,40 @@ async def generate_event_data(
             outlier_titles
         )
 
-    # Format backbone signals for prompt
-    backbone_text = format_backbone_signals(backbone_signals)
-
-    user_prompt = EVENT_SUMMARY_USER_PROMPT.format(
-        num_titles=len(titles_to_use),  # Use filtered count
-        titles_text=titles_text + outlier_note + perspective_note,
-        backbone_signals=backbone_text,
-    )
-
+    # Select prompt tier + max_tokens based on event size
     if title_only:
-        user_prompt += '\nThis is a small topic. Return "" (empty string) for summary.'
+        system_prompt = EVENT_SUMMARY_PROMPT_TITLE_ONLY
+        user_prompt = EVENT_SUMMARY_USER_PROMPT_TITLE.format(
+            num_titles=len(titles_to_use),
+            titles_text=titles_text + outlier_note + perspective_note,
+        )
+        max_tokens = 80
+    else:
+        backbone_text = format_backbone_signals(backbone_signals)
+        user_prompt = EVENT_SUMMARY_USER_PROMPT.format(
+            num_titles=len(titles_to_use),
+            titles_text=titles_text + outlier_note + perspective_note,
+            backbone_signals=backbone_text,
+        )
+        if num_titles <= 10:
+            system_prompt = EVENT_SUMMARY_PROMPT_MINI
+            max_tokens = 300
+        elif num_titles <= 50:
+            system_prompt = EVENT_SUMMARY_PROMPT_MEDIUM
+            max_tokens = 500
+        else:
+            system_prompt = EVENT_SUMMARY_PROMPT_MAXI
+            max_tokens = 800
 
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
         "Content-Type": "application/json",
     }
 
-    # Scale max_tokens based on topic size
-    if title_only:
-        max_tokens = 150
-    elif num_titles < 20:
-        max_tokens = 300
-    elif num_titles < 100:
-        max_tokens = 500
-    else:
-        max_tokens = 800
-
     payload = {
         "model": config.llm_model,
         "messages": [
-            {"role": "system", "content": EVENT_SUMMARY_SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.4,

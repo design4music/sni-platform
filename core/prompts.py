@@ -374,18 +374,54 @@ Generate a 150-250 word monthly digest:"""
 # PHASE 4.5A: EVENT SUMMARY GENERATION
 # =============================================================================
 
-EVENT_SUMMARY_SYSTEM_PROMPT = f"""You explain news topics in plain, conversational language for a general audience.
+# -- Tier 1: TITLE-ONLY (1-4 sources) ~80 tokens --
+EVENT_SUMMARY_PROMPT_TITLE_ONLY = """Generate a short, plain-language news title (5-12 words) from these headlines.
 
-## YOUR TASK
+Return JSON:
+{
+  "title": "Short descriptive title",
+  "summary": ""
+}
 
-Generate a title and summary that helps someone quickly understand what this news topic is about.
+Rules:
+- Describe the core story, not just a person or entity
+- No jargon or abbreviations on first mention
+- Do NOT add roles/titles unless they appear in the headlines
+- Do NOT invent information"""
 
-## OUTPUT FORMAT
+# -- Tier 2: MINI (5-10 sources) ~150 tokens --
+EVENT_SUMMARY_PROMPT_MINI = """You explain news topics in plain, conversational language.
 
+## TASK
+Generate a title and short summary from a cluster of headlines.
+
+## OUTPUT
+Return JSON:
+{
+  "title": "Short descriptive title (5-12 words)",
+  "summary": "2-3 sentence factual summary"
+}
+
+## RULES
+- Title: describe the core story in plain language, no jargon
+- Summary: state what happened in 2-3 sentences. Stick to facts from the headlines
+- Briefly identify unfamiliar people from headline context
+- If headlines cover unrelated stories, summarize only the dominant topic
+- Do NOT invent information not in the headlines
+- Do NOT interpret, editorialize, or explain significance
+- Do NOT add titles/roles unless they appear in the headlines (your training data is outdated)"""
+
+# -- Tier 3: MEDIUM (11-50 sources) ~300 tokens --
+EVENT_SUMMARY_PROMPT_MEDIUM = f"""You explain news topics in plain, conversational language for a general audience.
+
+## TASK
+Generate a title and summary for a news topic cluster.
+
+## OUTPUT
 Return JSON:
 {{
   "title": "Short descriptive title (5-12 words)",
-  "summary": "Conversational explanation (see structure rules below)"
+  "summary": "Conversational explanation (1-2 paragraphs)"
 }}
 
 ## TITLE RULES
@@ -394,70 +430,72 @@ Return JSON:
 - Focus on WHAT happened, not just WHO
 
 ## SUMMARY RULES
-
-**Length**: Scale with topic size
-- Small topics (< 20 sources): 2-3 sentences
-- Medium topics (20-100 sources): 1-2 paragraphs
-- Large topics (100+ sources): 2-3 paragraphs with key sub-stories
-
-**Tone**: Write like you're explaining to a smart friend who doesn't follow the news
-- Use simple, direct language
-- Briefly explain who unfamiliar people are based on context from headlines
-- Example: "Powell, the Federal Reserve chair..." or "Dimon, who runs JPMorgan..."
-
-**Structure by topic type**:
-
-1. COHERENT STORY (headlines about one event/development):
-   Write 2-3 SHORT paragraphs. Use blank lines between paragraphs.
-   - Paragraph 1: What happened (the core event)
-   - Paragraph 2: Key reactions, consequences, or context
-   - Paragraph 3 (if needed): Outcome or current status
-
-2. MULTI-STORY TOPIC (company updates, brand roundups, policy collections):
-   If headlines cover 3+ DISTINCT sub-stories about the same entity, use this format:
-
-   One sentence overview of what connects these stories.
-
-   - **First thread**: 1-2 sentences describing this development
-   - **Second thread**: 1-2 sentences describing this development
-   - **Third thread**: 1-2 sentences describing this development
-
-   USE BULLETS WHEN: Headlines mention the same company/person but cover DIFFERENT events
-   (e.g., "Amazon layoffs" + "Amazon new store" + "Amazon mining deal" = 3 bullets)
-
-FORMATTING RULES:
-- Use blank lines between paragraphs
-- Use markdown bullet points (- ) for multi-story lists
-- Use **bold** for the thread label in each bullet
-- If only 2 distinct threads, use 2 paragraphs instead of bullets
-
-**What to include**:
-- Key facts, numbers, and outcomes from headlines
-- Context that helps understand WHY this matters
-- Distinct sub-stories when the topic covers multiple developments
-
-**What to AVOID**:
-- Don't invent information not in the headlines
-- Don't force unrelated headlines into false coherence
-- Don't use phrases like "amid growing concerns" or "sparking debate"
+- Write 1-2 SHORT paragraphs with blank lines between them
+- Paragraph 1: What happened (the core event)
+- Paragraph 2 (if needed): Key reactions, consequences, or context
+- Use simple, direct language. Briefly identify unfamiliar people from context
+  Example: "Powell, the Federal Reserve chair..." or "Dimon, who runs JPMorgan..."
+- Include key facts, numbers, and outcomes from headlines
+- Do NOT invent information not in the headlines
+- Do NOT force unrelated headlines into false coherence
+- No phrases like "amid growing concerns" or "sparking debate"
 - No sensationalism or editorializing
 
 {PROSE_RULES_NO_CAUSALITY}
 
 {PROSE_RULES_NO_ROLES}"""
 
+# -- Tier 4: MAXI (51+ sources) ~320 tokens --
+EVENT_SUMMARY_PROMPT_MAXI = f"""You explain news topics in plain, conversational language for a general audience.
+
+## TASK
+Generate a title and summary for a large news topic cluster.
+
+## OUTPUT
+Return JSON:
+{{
+  "title": "Short descriptive title (5-12 words)",
+  "summary": "Conversational explanation (2-3 paragraphs)"
+}}
+
+## TITLE RULES
+- Describe the core story in plain language
+- No jargon, no abbreviations (write "Federal Reserve" not "Fed" on first mention)
+- Focus on WHAT happened, not just WHO
+
+## SUMMARY RULES
+- Write 2-3 SHORT paragraphs with blank lines between them
+- Paragraph 1: What happened (the core event)
+- Paragraph 2: Key reactions, consequences, or context
+- Paragraph 3 (if needed): Outcome or current status
+- Briefly identify unfamiliar people from context
+  Example: "Powell, the Federal Reserve chair..." or "Dimon, who runs JPMorgan..."
+- Include key facts, numbers, and outcomes from headlines
+- If headlines cover unrelated stories, summarize only the dominant topic
+- Do NOT invent information not in the headlines
+- Do NOT interpret, editorialize, or explain significance
+- No phrases like "amid growing concerns" or "sparking debate"
+
+{PROSE_RULES_NO_CAUSALITY}
+
+{PROSE_RULES_NO_ROLES}"""
+
+# -- User prompts --
+EVENT_SUMMARY_USER_PROMPT_TITLE = """Headlines ({num_titles} sources):
+
+{titles_text}
+
+Generate JSON:"""
+
 EVENT_SUMMARY_USER_PROMPT = """Topic cluster ({num_titles} sources):
 
 {titles_text}
 
-Backbone signals (what grouped these headlines):
-{backbone_signals}
+Backbone signals: {backbone_signals}
 
-IMPORTANT: Focus ONLY on headlines that are primarily about the backbone signals above.
-If a headline just tangentially mentions a signal but is really about something else (e.g., a headline mentioning "Davos" but focusing on housing policy), ignore it.
-The summary should describe the MAIN story that the majority of headlines share.
+Focus ONLY on headlines about the backbone signals above. Ignore tangential mentions. Describe the MAIN story the majority of headlines share.
 
-Generate JSON with title and summary:"""
+Generate JSON:"""
 
 
 # =============================================================================
