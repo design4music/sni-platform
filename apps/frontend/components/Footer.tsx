@@ -56,6 +56,16 @@ export default function Footer() {
                   Pricing
                 </Link>
               </li>
+              <li>
+                <Link href="/faq" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link href="/known-issues" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Known Issues
+                </Link>
+              </li>
             </ul>
           </div>
 
