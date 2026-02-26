@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 export default function Footer() {
@@ -82,6 +84,14 @@ export default function Footer() {
                 <Link href="/privacy" className="text-dashboard-text-muted hover:text-dashboard-text transition">
                   Privacy Policy
                 </Link>
+              </li>
+              <li>
+                <button
+                  onClick={() => window.dispatchEvent(new Event('show-cookie-banner'))}
+                  className="text-dashboard-text-muted hover:text-dashboard-text transition"
+                >
+                  Cookie Settings
+                </button>
               </li>
             </ul>
           </div>
