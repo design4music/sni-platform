@@ -1128,7 +1128,7 @@ export async function getSignalProfile(
        ORDER BY event_count DESC LIMIT 15`,
       params
     ),
-    // Top events
+    // Top events — require signal in >= 20% of event's titles to avoid spurious matches
     query<{ id: string; title: string; date: string; source_batch_count: number; centroid_label: string; track: string }>(
       `SELECT e.id, COALESCE(e.title, e.topic_core) as title,
               e.date::text as date, e.source_batch_count,
@@ -1136,7 +1136,13 @@ export async function getSignalProfile(
        FROM events_v3 e
        JOIN ctm c ON e.ctm_id = c.id
        JOIN centroids_v3 cv ON c.centroid_id = cv.id
-       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
+       WHERE ${dr.clause} AND e.is_catchall = false AND (
+         SELECT COUNT(*) FILTER (WHERE $${vi} = ANY(tl.${type}))::float
+                / GREATEST(COUNT(*), 1)
+         FROM event_v3_titles evt
+         JOIN title_labels tl ON tl.title_id = evt.title_id
+         WHERE evt.event_id = e.id
+       ) >= 0.2
        ORDER BY e.source_batch_count DESC LIMIT 20`,
       params
     ),

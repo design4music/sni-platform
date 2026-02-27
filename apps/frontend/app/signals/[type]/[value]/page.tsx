@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import MentionTimeline from '@/components/signals/MentionTimeline';
 import HorizontalBars from '@/components/signals/HorizontalBars';
 import { getSignalProfile } from '@/lib/queries';
-import { SignalType, getCountryName, getTrackLabel } from '@/lib/types';
+import { SignalType, SIGNAL_LABELS, getCountryName, getTrackLabel } from '@/lib/types';
 
 export const revalidate = 300;
 
@@ -59,10 +59,17 @@ export default async function SignalDetailPage({ params }: Props) {
     value: t.count,
   }));
 
+  const categoryLabel = SIGNAL_LABELS[signalType];
   const breadcrumb = (
-    <Link href="/signals" className="text-blue-400 hover:text-blue-300 text-sm">
-      &larr; Signals
-    </Link>
+    <div className="flex items-center gap-1 text-sm">
+      <Link href="/signals" className="text-blue-400 hover:text-blue-300">
+        Signals
+      </Link>
+      <span className="text-dashboard-text-muted">/</span>
+      <Link href={`/signals/${type}`} className="text-blue-400 hover:text-blue-300">
+        {categoryLabel}
+      </Link>
+    </div>
   );
 
   return (
@@ -80,13 +87,9 @@ export default async function SignalDetailPage({ params }: Props) {
           </div>
           <span className="text-dashboard-text-muted text-sm whitespace-nowrap">
             {profile.total_events.toLocaleString()} events
+            <span className="text-dashboard-text-muted/60"> (last 30 days)</span>
           </span>
         </div>
-        {profile.context && (
-          <p className="mt-3 text-sm text-dashboard-text-muted leading-relaxed">
-            {profile.context}
-          </p>
-        )}
       </div>
 
       {/* Mention Timeline */}
