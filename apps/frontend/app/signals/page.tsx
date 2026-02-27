@@ -43,8 +43,19 @@ export default async function SignalObservatoryPage() {
         {/* Graph + Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Force-directed graph */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Co-occurrence Network</h2>
+              <p className="text-xs text-dashboard-text-muted hidden sm:block">
+                Hover to highlight connections. Click a node to explore.
+              </p>
+            </div>
             <SignalGraph nodes={graph.nodes} edges={graph.edges} />
+            <p className="text-xs text-dashboard-text-muted">
+              Nodes are the most-mentioned signals across 180+ outlets over the last 30 days.
+              Lines connect signals that appear in the same events. Node size reflects mention frequency.
+              Colors indicate signal type: <span className="text-blue-400">persons</span>, <span className="text-green-400">organizations</span>, <span className="text-orange-400">places</span>, <span className="text-yellow-400">commodities</span>, <span className="text-purple-400">policies</span>, <span className="text-cyan-400">systems</span>, <span className="text-pink-400">events</span>.
+            </p>
           </div>
 
           {/* Category sidebar */}
@@ -78,7 +89,10 @@ export default async function SignalObservatoryPage() {
         {/* Temporal Heatmap */}
         {heatmapSignals.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-3">Signal Activity</h2>
+            <h2 className="text-lg font-semibold mb-1">Signal Activity</h2>
+            <p className="text-xs text-dashboard-text-muted mb-3">
+              Weekly event counts for top signals. Brighter cells indicate higher activity.
+            </p>
             <div className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
               <TemporalHeatmap signals={heatmapSignals} />
             </div>
