@@ -367,6 +367,14 @@ export interface SignalWeekly {
   count: number;
 }
 
+export interface TopicCluster {
+  tag: string;
+  label: string;
+  event_count: number;
+  total_sources: number;
+  top_events: Array<{ id: string; title: string; date: string; source_batch_count: number }>;
+}
+
 export interface SignalProfile {
   signal_type: SignalType;
   value: string;
@@ -384,6 +392,7 @@ export interface SignalProfile {
     centroid_label: string;
     track: string;
   }>;
+  topic_clusters: TopicCluster[];
 }
 
 export interface SignalCategoryEntry extends SignalNode {

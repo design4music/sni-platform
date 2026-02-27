@@ -1,6 +1,6 @@
 import { query } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph, TopicCluster } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return cached('centroids:all', 300, () =>
@@ -1074,7 +1074,15 @@ export async function getSignalProfile(
       WHERE evt.event_id = e.id AND $${vi} = ANY(tl.${type})
     )`;
 
-  const [totalRow, weekly, geo, tracks, coOccurring, topEvents, contextRow] = await Promise.all([
+  // Exclude all tags of the same prefix as the signal type (avoids duplicating Relationships panel)
+  const TAG_PREFIX_MAP: Record<string, string> = {
+    persons: 'person', orgs: 'org', places: 'place',
+  };
+  const selfPrefixPattern = TAG_PREFIX_MAP[type] ? `${TAG_PREFIX_MAP[type]}:%` : '';
+  const selfPrefixIdx = vi + 1;
+  const clusterParams = [...params, selfPrefixPattern];
+
+  const [totalRow, weekly, geo, tracks, coOccurring, topEvents, contextRow, topicClusters] = await Promise.all([
     // Total event count
     query<{ total: number }>(
       `SELECT COUNT(*)::int as total FROM events_v3 e
@@ -1154,6 +1162,55 @@ export async function getSignalProfile(
        ORDER BY month DESC LIMIT 1`,
       [value]
     ),
+    // Topic clusters from event tags
+    query<TopicCluster>(
+      `WITH signal_events AS (
+         SELECT e.id, COALESCE(e.title, e.topic_core) as title,
+                e.date::text as date, e.source_batch_count,
+                COALESCE(e.tags, '{}') as tags
+         FROM events_v3 e
+         WHERE ${dr.clause} AND e.is_catchall = false AND (
+           SELECT COUNT(*) FILTER (WHERE $${vi} = ANY(tl.${type}))::float
+                  / GREATEST(COUNT(*), 1)
+           FROM event_v3_titles evt
+           JOIN title_labels tl ON tl.title_id = evt.title_id
+           WHERE evt.event_id = e.id
+         ) >= 0.2
+       ),
+       tag_freq AS (
+         SELECT tag, COUNT(DISTINCT se.id)::int as freq
+         FROM signal_events se, unnest(se.tags) as tag
+         WHERE tag NOT LIKE $${selfPrefixIdx}
+         GROUP BY tag ORDER BY freq DESC LIMIT 4
+       ),
+       event_best_tag AS (
+         SELECT tf.tag, se.id, se.title, se.date, se.source_batch_count,
+                ROW_NUMBER() OVER (PARTITION BY se.id ORDER BY tf.freq DESC, tf.tag) as tag_pick
+         FROM tag_freq tf
+         JOIN signal_events se ON tf.tag = ANY(se.tags)
+       ),
+       deduped AS (
+         SELECT tag, id, title, date, source_batch_count
+         FROM event_best_tag WHERE tag_pick = 1
+       ),
+       ranked AS (
+         SELECT tag, id, title, date, source_batch_count,
+                COUNT(*) OVER (PARTITION BY tag) as event_count,
+                ROW_NUMBER() OVER (PARTITION BY tag ORDER BY source_batch_count DESC) as rn
+         FROM deduped
+       )
+       SELECT tag, event_count,
+              MAX(title) FILTER (WHERE rn = 1) as label,
+              SUM(source_batch_count)::int as total_sources,
+              json_agg(json_build_object(
+                'id', id, 'title', title, 'date', date,
+                'source_batch_count', source_batch_count
+              ) ORDER BY source_batch_count DESC) FILTER (WHERE rn <= 3) as top_events
+       FROM ranked
+       GROUP BY tag, event_count
+       ORDER BY event_count DESC`,
+      clusterParams
+    ),
   ]);
 
   return {
@@ -1166,6 +1223,7 @@ export async function getSignalProfile(
     tracks,
     co_occurring: coOccurring,
     top_events: topEvents,
+    topic_clusters: topicClusters,
   };
   });
 }

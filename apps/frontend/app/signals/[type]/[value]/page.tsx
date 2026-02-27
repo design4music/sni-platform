@@ -152,39 +152,50 @@ export default async function SignalDetailPage({ params }: Props) {
           <HorizontalBars data={trackData} color="#8b5cf6" />
         </div>
 
-        {/* Top Events */}
+        {/* Key Topics */}
         <div className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
           <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-            Top Events
+            Key Topics
           </h3>
-          {profile.top_events.length > 0 ? (
-            <ul className="space-y-2">
-              {profile.top_events.slice(0, 10).map((ev, i) => (
-                <li key={ev.id}>
-                  <Link
-                    href={`/events/${ev.id}`}
-                    className="flex items-start gap-2 py-1.5 px-2 -mx-2 rounded hover:bg-dashboard-border/50 transition group"
-                  >
-                    <span className="text-xs text-dashboard-text-muted mt-0.5 w-5 shrink-0">
-                      {i + 1}.
+          {profile.topic_clusters.length > 0 ? (
+            <div className="space-y-4">
+              {profile.topic_clusters.map(cluster => (
+                <div key={cluster.tag}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                      {cluster.tag}
                     </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-dashboard-text group-hover:text-blue-400 transition line-clamp-2">
-                        {ev.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5 text-xs text-dashboard-text-muted">
-                        <span>{new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        <span>{ev.source_batch_count} src</span>
-                        <span>{ev.centroid_label}</span>
-                        <span className="text-dashboard-text-muted/60">{getTrackLabel(ev.track)}</span>
-                      </div>
-                    </div>
+                    <span className="text-xs text-dashboard-text-muted ml-auto shrink-0">
+                      {cluster.event_count} ev
+                    </span>
+                  </div>
+                  <Link
+                    href={`/events/${cluster.top_events[0]?.id}`}
+                    className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition line-clamp-1 mb-1 block"
+                  >
+                    {cluster.label}
                   </Link>
-                </li>
+                  <ul className="space-y-0.5">
+                    {cluster.top_events.slice(1).map(ev => (
+                      <li key={ev.id} className="flex items-center gap-1.5">
+                        <span className="text-dashboard-text-muted text-xs">&#183;</span>
+                        <Link
+                          href={`/events/${ev.id}`}
+                          className="text-xs text-dashboard-text-muted hover:text-blue-400 transition truncate"
+                        >
+                          {ev.title}
+                        </Link>
+                        <span className="text-[10px] text-dashboard-text-muted/60 ml-auto shrink-0">
+                          {new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
-            <p className="text-sm text-dashboard-text-muted">No events found.</p>
+            <p className="text-sm text-dashboard-text-muted">No topic clusters found.</p>
           )}
         </div>
       </div>
