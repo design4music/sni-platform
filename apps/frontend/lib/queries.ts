@@ -1220,18 +1220,19 @@ export async function getSignalGraph(perType: number = 8, month?: string): Promi
 /** Top signals for an epic's events (epic detail widget) */
 export async function getTopSignalsForEpic(epicId: string, limit: number = 10): Promise<SignalNode[]> {
   return cached(`signals:epic:${epicId}:${limit}`, 600, () => {
+    const perType = Math.max(limit, 5);
     const sql = SIGNAL_COLUMNS.slice(0, 5).map(col =>
-      `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
-       FROM epic_events ee
-       JOIN event_v3_titles evt ON evt.event_id = ee.event_id
-       JOIN title_labels tl ON tl.title_id = evt.title_id
-       CROSS JOIN LATERAL unnest(tl.${col}) AS val
-       WHERE ee.epic_id = $1 AND ee.is_included = true
-       GROUP BY val ORDER BY event_count DESC LIMIT $2`
+      `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+        FROM epic_events ee
+        JOIN event_v3_titles evt ON evt.event_id = ee.event_id
+        JOIN title_labels tl ON tl.title_id = evt.title_id
+        CROSS JOIN LATERAL unnest(tl.${col}) AS val
+        WHERE ee.epic_id = $1 AND ee.is_included = true
+        GROUP BY val ORDER BY event_count DESC LIMIT ${perType})`
     ).join(' UNION ALL ');
     return query<SignalNode>(
-      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT $2`,
-      [epicId, limit]
+      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT ${limit}`,
+      [epicId]
     );
   });
 }
@@ -1239,6 +1240,7 @@ export async function getTopSignalsForEpic(epicId: string, limit: number = 10): 
 /** Top signals for a specific centroid (country profile widget) */
 export async function getTopSignalsForCentroid(centroidId: string, limit: number = 5): Promise<SignalNode[]> {
   return cached(`signals:centroid:${centroidId}:${limit}`, 300, () => {
+    const perType = Math.max(limit, 5);
     const sql = SIGNAL_COLUMNS.slice(0, 5).map(col =>
       `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
         FROM events_v3 e
@@ -1248,11 +1250,11 @@ export async function getTopSignalsForCentroid(centroidId: string, limit: number
         CROSS JOIN LATERAL unnest(tl.${col}) AS val
         WHERE c.centroid_id = $1 AND e.is_catchall = false
           AND e.date >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY val ORDER BY event_count DESC LIMIT $2)`
+        GROUP BY val ORDER BY event_count DESC LIMIT ${perType})`
     ).join(' UNION ALL ');
     return query<SignalNode>(
-      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT $2`,
-      [centroidId, limit]
+      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT ${limit}`,
+      [centroidId]
     );
   });
 }
