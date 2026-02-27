@@ -1041,7 +1041,7 @@ const UNNEST_ALL_SIGNALS = SIGNAL_COLUMNS.map(col =>
 /** Top N signals per type (nodes for observatory + category index) */
 export async function getTopSignalsAll(perType: number = 8, month?: string): Promise<SignalNode[]> {
   const dr = signalDateRange(month);
-  return cached(`signals:all:${perType}:${month || 'rolling'}`, 300, () => {
+  return cached(`signals:all:${perType}:${month || 'rolling'}`, 3600, () => {
     const sql = SIGNAL_COLUMNS.map(col =>
       `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
         FROM events_v3 e
@@ -1062,6 +1062,7 @@ export async function getSignalProfile(
   month?: string,
 ): Promise<SignalProfile> {
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
+  return cached(`signal-profile:${type}:${value}:${month || 'rolling'}`, 3600, async () => {
   const dr = signalDateRange(month);
   const vi = dr.nextIdx; // param index for signalValue
   const params = [...dr.params, value];
@@ -1166,6 +1167,7 @@ export async function getSignalProfile(
     co_occurring: coOccurring,
     top_events: topEvents,
   };
+  });
 }
 
 /** Co-occurrence graph: nodes + edges for top signals (observatory) */
@@ -1315,7 +1317,7 @@ export async function getSignalCategoryDetail(
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
   const dr = signalDateRange(month);
 
-  return cached(`signal-cat:${type}:${limit}:${month || 'rolling'}`, 300, async () => {
+  return cached(`signal-cat:${type}:${limit}:${month || 'rolling'}`, 3600, async () => {
     // Top signals for this type
     const top = await query<{ value: string; event_count: number }>(
       `SELECT val as value, COUNT(DISTINCT evt.event_id)::int as event_count

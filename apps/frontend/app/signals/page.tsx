@@ -6,7 +6,7 @@ import TemporalHeatmap from '@/components/signals/TemporalHeatmap';
 import { getSignalGraph, getSignalHeatmap } from '@/lib/queries';
 import { SignalType, SIGNAL_LABELS } from '@/lib/types';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Signal Observatory - WorldBrief',
