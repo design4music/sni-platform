@@ -20,7 +20,7 @@ export default function HorizontalBars({ data, color = '#3b82f6' }: Props) {
 
   return (
     <div className="w-full" style={{ height: Math.max(data.length * 28, 120) }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <BarChart data={logData} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 0 }}>
           <XAxis
             type="number"
