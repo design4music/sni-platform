@@ -34,15 +34,28 @@ function FreshnessDot({ lastActive }: { lastActive: string }) {
   );
 }
 
+function parseSignal(raw: string): { type: string; value: string } {
+  const idx = raw.indexOf(':');
+  if (idx > 0) return { type: raw.slice(0, idx), value: raw.slice(idx + 1) };
+  return { type: 'persons', value: raw };
+}
+
 function SignalPills({ signals }: { signals?: string[] }) {
   if (!signals || signals.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1">
-      {signals.map(s => (
-        <span key={s} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400">
-          {s}
-        </span>
-      ))}
+      {signals.map(s => {
+        const { type, value } = parseSignal(s);
+        return (
+          <Link
+            key={s}
+            href={`/signals/${type}/${encodeURIComponent(value)}`}
+            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition"
+          >
+            {value}
+          </Link>
+        );
+      })}
     </div>
   );
 }
@@ -50,20 +63,18 @@ function SignalPills({ signals }: { signals?: string[] }) {
 export default function TrendingCard({ event, compact }: TrendingCardProps) {
   const timeAgo = formatTimeAgo(new Date(event.last_active));
   const trackLabel = getTrackLabel(event.track);
+  const eventHref = `/events/${event.id}`;
 
   if (compact) {
     return (
-      <Link
-        href={`/events/${event.id}`}
-        className="block p-3 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group"
-      >
+      <div className="p-3 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group">
         <div className="flex items-start gap-3">
           <div className="text-blue-400 shrink-0 mt-0.5">
             {getTrackIcon(event.track)}
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
             <h3 className="text-sm font-medium text-dashboard-text group-hover:text-blue-400 transition">
-              {event.title}
+              <Link href={eventHref}>{event.title}</Link>
             </h3>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-dashboard-text-muted">
               <span className="flex items-center gap-1">
@@ -79,16 +90,13 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
             <SignalPills signals={event.top_signals} />
           </div>
         </div>
-      </Link>
+      </div>
     );
   }
 
   // Hero card (default)
   return (
-    <Link
-      href={`/events/${event.id}`}
-      className="block p-5 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition"
-    >
+    <div className="p-5 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition">
       <div className="flex items-center gap-2 mb-3">
         <span className="flex items-center gap-1">
           {event.iso_codes?.slice(0, 3).map(iso => (
@@ -102,9 +110,11 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
         </span>
       </div>
 
-      <h3 className="text-lg font-semibold mb-2">
-        {event.title}
-      </h3>
+      <Link href={eventHref}>
+        <h3 className="text-lg font-semibold mb-2 hover:text-blue-400 transition">
+          {event.title}
+        </h3>
+      </Link>
 
       {event.summary && (
         <p className="text-sm text-dashboard-text-muted leading-relaxed mb-3 line-clamp-4">
@@ -119,6 +129,6 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
       </div>
 
       <SignalPills signals={event.top_signals} />
-    </Link>
+    </div>
   );
 }

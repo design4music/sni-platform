@@ -11,10 +11,11 @@ import {
   getTrackSummaryByCentroidAndMonth,
   getConfiguredTracksForCentroid,
   getCentroidMonthlySummary,
+  getTopSignalsForCentroid,
 } from '@/lib/queries';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { REGIONS, TRACK_LABELS, Track, getTrackLabel } from '@/lib/types';
+import { REGIONS, TRACK_LABELS, Track, getTrackLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 
 export const revalidate = 300;
 
@@ -58,10 +59,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     ? selectedMonth
     : availableMonths[0] || null;
 
-  // Fetch track data and centroid summary for the current month
-  const [monthTrackData, centroidSummary] = await Promise.all([
+  // Fetch track data, centroid summary, and top signals for the current month
+  const [monthTrackData, centroidSummary, topSignals] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
+    getTopSignalsForCentroid(centroid.id),
   ]);
 
   // Build maps of track -> titleCount and track -> lastActive for the current month
@@ -130,6 +132,28 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
               );
             })}
           </nav>
+        </div>
+      )}
+      {topSignals.length > 0 && (
+        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
+            Top Signals
+          </h3>
+          <ul className="space-y-1.5">
+            {topSignals.map(s => (
+              <li key={`${s.signal_type}-${s.value}`}>
+                <Link
+                  href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
+                  className="flex items-center justify-between text-sm py-1 px-2 -mx-2 rounded hover:bg-dashboard-border/50 transition"
+                >
+                  <span className="text-dashboard-text truncate">{s.value}</span>
+                  <span className="text-xs text-dashboard-text-muted shrink-0 ml-2">
+                    {s.event_count}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

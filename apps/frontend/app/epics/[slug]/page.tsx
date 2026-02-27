@@ -4,8 +4,8 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
 import NarrativeCards from '@/components/NarrativeOverlay';
-import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives } from '@/lib/queries';
-import { EpicEvent, EpicNarrative } from '@/lib/types';
+import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives, getTopSignalsForEpic } from '@/lib/queries';
+import { EpicEvent, EpicNarrative, SignalType } from '@/lib/types';
 
 export const revalidate = 600;
 
@@ -117,10 +117,11 @@ export default async function EpicDetailPage({ params }: Props) {
   const epic = await getEpicBySlug(slug);
   if (!epic) return notFound();
 
-  const [events, epicMonths, framedNarratives] = await Promise.all([
+  const [events, epicMonths, framedNarratives, epicSignals] = await Promise.all([
     getEpicEvents(epic.id),
     getEpicMonths(),
     getEpicFramedNarratives(epic.id),
+    getTopSignalsForEpic(epic.id, 12),
   ]);
 
   const { sorted: signalData, globalFreq } = computeSignalComparison(events, epic.anchor_tags);
@@ -236,6 +237,25 @@ export default async function EpicDetailPage({ params }: Props) {
                   {n.description}
                 </p>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Key Signals */}
+      {epicSignals.length > 0 && (
+        <div className="mb-8 pb-8 border-b border-dashboard-border">
+          <h2 className="text-2xl font-bold mb-4">Key Signals</h2>
+          <div className="flex flex-wrap gap-2">
+            {epicSignals.map(s => (
+              <Link
+                key={`${s.signal_type}-${s.value}`}
+                href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm border border-dashboard-border bg-dashboard-surface hover:border-blue-500/50 transition"
+              >
+                <span className="text-dashboard-text">{s.value}</span>
+                <span className="text-xs text-dashboard-text-muted">{s.event_count}</span>
+              </Link>
             ))}
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import TrendingCard from '@/components/TrendingCard';
 import { getTrendingEvents, getTrendingSignals } from '@/lib/queries';
@@ -23,22 +24,33 @@ function TrendingSignalsSidebar({ signals }: { signals: Record<string, { signal_
 
   return (
     <div className="sticky top-24 space-y-6">
-      <h2 className="text-lg font-bold">Trending Signals</h2>
+      <h2 className="text-lg font-bold">
+        <Link href="/signals" className="hover:text-blue-400 transition">
+          Trending Signals
+        </Link>
+      </h2>
       {types.map(type => {
         const items = signals[type];
         if (!items || items.length === 0) return null;
         return (
           <div key={type}>
             <h3 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">
-              {SIGNAL_TYPE_LABELS[type]}
+              <Link href={`/signals/${type}`} className="hover:text-blue-400 transition">
+                {SIGNAL_TYPE_LABELS[type]}
+              </Link>
             </h3>
             <ul className="space-y-1.5">
               {items.map(item => (
-                <li key={item.value} className="flex items-center justify-between text-sm">
-                  <span className="truncate text-dashboard-text">{item.value}</span>
-                  <span className="text-xs text-dashboard-text-muted shrink-0 ml-2">
-                    {item.event_count} {item.event_count === 1 ? 'story' : 'stories'}
-                  </span>
+                <li key={item.value}>
+                  <Link
+                    href={`/signals/${item.signal_type}/${encodeURIComponent(item.value)}`}
+                    className="flex items-center justify-between text-sm py-0.5 rounded hover:text-blue-400 transition"
+                  >
+                    <span className="truncate text-dashboard-text">{item.value}</span>
+                    <span className="text-xs text-dashboard-text-muted shrink-0 ml-2">
+                      {item.event_count} {item.event_count === 1 ? 'story' : 'stories'}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>

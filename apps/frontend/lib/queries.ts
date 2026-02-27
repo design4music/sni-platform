@@ -1,6 +1,6 @@
 import { query } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return cached('centroids:all', 300, () =>
@@ -955,16 +955,20 @@ export async function getTrendingEvents(limit: number = 20): Promise<TrendingEve
        JOIN ctm c ON e.ctm_id = c.id
        JOIN centroids_v3 cv ON c.centroid_id = cv.id
        LEFT JOIN LATERAL (
-         SELECT array_agg(val ORDER BY cnt DESC) as top_signals
+         SELECT array_agg(sig_type || ':' || val ORDER BY cnt DESC) as top_signals
          FROM (
-           SELECT val, COUNT(*) as cnt
-           FROM event_v3_titles evt
-           JOIN title_labels tl ON tl.title_id = evt.title_id
-           CROSS JOIN LATERAL unnest(
-             COALESCE(tl.persons, '{}') || COALESCE(tl.orgs, '{}')
-           ) AS val
-           WHERE evt.event_id = e.id
-           GROUP BY val
+           SELECT sig_type, val, COUNT(*) as cnt FROM (
+             SELECT 'persons' as sig_type, unnest(COALESCE(tl.persons, '{}')) as val
+             FROM event_v3_titles evt
+             JOIN title_labels tl ON tl.title_id = evt.title_id
+             WHERE evt.event_id = e.id
+             UNION ALL
+             SELECT 'orgs' as sig_type, unnest(COALESCE(tl.orgs, '{}')) as val
+             FROM event_v3_titles evt
+             JOIN title_labels tl ON tl.title_id = evt.title_id
+             WHERE evt.event_id = e.id
+           ) expanded
+           GROUP BY sig_type, val
            ORDER BY cnt DESC
            LIMIT 3
          ) sub
@@ -1005,6 +1009,361 @@ export async function getTrendingSignals(): Promise<Record<string, TrendingSigna
       result[col] = rows.filter(r => r.signal_type === col);
     }
     return result;
+  });
+}
+
+// ========================================================================
+// Signal Observatory queries
+// ========================================================================
+
+const SIGNAL_COLUMNS_SET = new Set(SIGNAL_COLUMNS);
+
+function signalDateRange(month?: string) {
+  if (month) {
+    return {
+      clause: `e.date >= ($1 || '-01')::date AND e.date < (($1 || '-01')::date + INTERVAL '1 month')`,
+      params: [month] as unknown[],
+      nextIdx: 2,
+    };
+  }
+  return {
+    clause: `e.date >= CURRENT_DATE - INTERVAL '30 days'`,
+    params: [] as unknown[],
+    nextIdx: 1,
+  };
+}
+
+// Unnest lateral fragment reused in co-occurrence queries
+const UNNEST_ALL_SIGNALS = SIGNAL_COLUMNS.map(col =>
+  `SELECT '${col}'::text as sig_type, unnest(COALESCE(tl.${col}, '{}')) as value`
+).join(' UNION ALL ');
+
+/** Top N signals per type (nodes for observatory + category index) */
+export async function getTopSignalsAll(perType: number = 8, month?: string): Promise<SignalNode[]> {
+  const dr = signalDateRange(month);
+  return cached(`signals:all:${perType}:${month || 'rolling'}`, 300, () => {
+    const sql = SIGNAL_COLUMNS.map(col =>
+      `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+        FROM events_v3 e
+        JOIN event_v3_titles evt ON evt.event_id = e.id
+        JOIN title_labels tl ON tl.title_id = evt.title_id
+        CROSS JOIN LATERAL unnest(tl.${col}) AS val
+        WHERE ${dr.clause} AND e.is_catchall = false
+        GROUP BY val ORDER BY event_count DESC LIMIT ${perType})`
+    ).join(' UNION ALL ');
+    return query<SignalNode>(sql, dr.params);
+  });
+}
+
+/** Full profile for a single signal (detail page) */
+export async function getSignalProfile(
+  type: SignalType,
+  value: string,
+  month?: string,
+): Promise<SignalProfile> {
+  if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
+  const dr = signalDateRange(month);
+  const vi = dr.nextIdx; // param index for signalValue
+  const params = [...dr.params, value];
+
+  const existsFilter = `
+    EXISTS (
+      SELECT 1 FROM event_v3_titles evt
+      JOIN title_labels tl ON tl.title_id = evt.title_id
+      WHERE evt.event_id = e.id AND $${vi} = ANY(tl.${type})
+    )`;
+
+  const [totalRow, weekly, geo, tracks, coOccurring, topEvents, contextRow] = await Promise.all([
+    // Total event count
+    query<{ total: number }>(
+      `SELECT COUNT(*)::int as total FROM events_v3 e
+       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}`,
+      params
+    ),
+    // Weekly mentions
+    query<SignalWeekly>(
+      `SELECT date_trunc('week', e.date)::date::text as week, COUNT(*)::int as count
+       FROM events_v3 e
+       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
+       GROUP BY week ORDER BY week`,
+      params
+    ),
+    // Geographic distribution (via centroid iso_codes)
+    query<{ country: string; count: number }>(
+      `SELECT unnest(cv.iso_codes) as country, COUNT(DISTINCT e.id)::int as count
+       FROM events_v3 e
+       JOIN ctm c ON e.ctm_id = c.id
+       JOIN centroids_v3 cv ON c.centroid_id = cv.id
+       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
+       GROUP BY country ORDER BY count DESC LIMIT 20`,
+      params
+    ),
+    // Track breakdown
+    query<{ track: string; count: number }>(
+      `SELECT c.track, COUNT(DISTINCT e.id)::int as count
+       FROM events_v3 e
+       JOIN ctm c ON e.ctm_id = c.id
+       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
+       GROUP BY c.track ORDER BY count DESC`,
+      params
+    ),
+    // Co-occurring signals (top 15 across all types)
+    query<SignalNode>(
+      `WITH matching_titles AS (
+         SELECT evt.event_id,
+                tl.persons, tl.orgs, tl.places, tl.commodities,
+                tl.policies, tl.systems, tl.named_events
+         FROM event_v3_titles evt
+         JOIN title_labels tl ON tl.title_id = evt.title_id
+         JOIN events_v3 e ON e.id = evt.event_id
+         WHERE ${dr.clause} AND $${vi} = ANY(tl.${type}) AND e.is_catchall = false
+       )
+       SELECT signal_type, value, COUNT(DISTINCT event_id)::int as event_count FROM (
+         ${SIGNAL_COLUMNS.map(col =>
+           `SELECT event_id, '${col}'::text as signal_type, unnest(COALESCE(${col}, '{}')) as value FROM matching_titles`
+         ).join(' UNION ALL ')}
+       ) expanded
+       WHERE NOT (signal_type = '${type}' AND value = $${vi})
+       GROUP BY signal_type, value
+       ORDER BY event_count DESC LIMIT 15`,
+      params
+    ),
+    // Top events
+    query<{ id: string; title: string; date: string; source_batch_count: number; centroid_label: string; track: string }>(
+      `SELECT e.id, COALESCE(e.title, e.topic_core) as title,
+              e.date::text as date, e.source_batch_count,
+              cv.label as centroid_label, c.track
+       FROM events_v3 e
+       JOIN ctm c ON e.ctm_id = c.id
+       JOIN centroids_v3 cv ON c.centroid_id = cv.id
+       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
+       ORDER BY e.source_batch_count DESC LIMIT 20`,
+      params
+    ),
+    // Context from monthly_signal_rankings
+    query<{ context: string }>(
+      `SELECT context FROM monthly_signal_rankings
+       WHERE signal_type = '${type}' AND LOWER(value) = LOWER($1)
+       ORDER BY month DESC LIMIT 1`,
+      [value]
+    ),
+  ]);
+
+  return {
+    signal_type: type,
+    value,
+    total_events: totalRow[0]?.total ?? 0,
+    context: contextRow[0]?.context,
+    weekly,
+    geo,
+    tracks,
+    co_occurring: coOccurring,
+    top_events: topEvents,
+  };
+}
+
+/** Co-occurrence graph: nodes + edges for top signals (observatory) */
+export async function getSignalGraph(perType: number = 8, month?: string): Promise<SignalGraph> {
+  const dr = signalDateRange(month);
+  return cached(`signal-graph:${perType}:${month || 'rolling'}`, 3600, async () => {
+    const nodes = await getTopSignalsAll(perType, month);
+
+    // Build CTE for top signals, then find co-occurrence edges
+    const topCTEs = SIGNAL_COLUMNS.map(col =>
+      `top_${col} AS (
+        SELECT '${col}'::text as signal_type, val as value
+        FROM events_v3 e
+        JOIN event_v3_titles evt ON evt.event_id = e.id
+        JOIN title_labels tl ON tl.title_id = evt.title_id
+        CROSS JOIN LATERAL unnest(tl.${col}) AS val
+        WHERE ${dr.clause} AND e.is_catchall = false
+        GROUP BY val ORDER BY COUNT(DISTINCT evt.event_id) DESC LIMIT ${perType}
+      )`
+    );
+    const allTopUnion = SIGNAL_COLUMNS.map(col =>
+      `SELECT * FROM top_${col}`
+    ).join(' UNION ALL ');
+
+    const edgesSQL = `
+      WITH ${topCTEs.join(',\n')},
+      all_top AS (${allTopUnion}),
+      event_sigs AS (
+        SELECT DISTINCT evt.event_id, expanded.sig_type as signal_type, expanded.value
+        FROM event_v3_titles evt
+        JOIN title_labels tl ON tl.title_id = evt.title_id
+        JOIN events_v3 e ON e.id = evt.event_id
+        CROSS JOIN LATERAL (${UNNEST_ALL_SIGNALS}) expanded(sig_type, value)
+        WHERE ${dr.clause} AND e.is_catchall = false
+          AND EXISTS (SELECT 1 FROM all_top WHERE all_top.signal_type = expanded.sig_type AND all_top.value = expanded.value)
+      )
+      SELECT a.value as source, b.value as target,
+             a.signal_type as source_type, b.signal_type as target_type,
+             COUNT(DISTINCT a.event_id)::int as weight
+      FROM event_sigs a
+      JOIN event_sigs b ON a.event_id = b.event_id
+        AND (a.value, a.signal_type) < (b.value, b.signal_type)
+      GROUP BY source, target, source_type, target_type
+      HAVING COUNT(DISTINCT a.event_id) >= 3
+      ORDER BY weight DESC`;
+
+    const edges = await query<SignalEdge>(edgesSQL, dr.params);
+    return { nodes, edges };
+  });
+}
+
+/** Top signals for an epic's events (epic detail widget) */
+export async function getTopSignalsForEpic(epicId: string, limit: number = 10): Promise<SignalNode[]> {
+  return cached(`signals:epic:${epicId}:${limit}`, 600, () => {
+    const sql = SIGNAL_COLUMNS.slice(0, 5).map(col =>
+      `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+       FROM epic_events ee
+       JOIN event_v3_titles evt ON evt.event_id = ee.event_id
+       JOIN title_labels tl ON tl.title_id = evt.title_id
+       CROSS JOIN LATERAL unnest(tl.${col}) AS val
+       WHERE ee.epic_id = $1 AND ee.is_included = true
+       GROUP BY val ORDER BY event_count DESC LIMIT $2`
+    ).join(' UNION ALL ');
+    return query<SignalNode>(
+      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT $2`,
+      [epicId, limit]
+    );
+  });
+}
+
+/** Top signals for a specific centroid (country profile widget) */
+export async function getTopSignalsForCentroid(centroidId: string, limit: number = 5): Promise<SignalNode[]> {
+  return cached(`signals:centroid:${centroidId}:${limit}`, 300, () => {
+    const sql = SIGNAL_COLUMNS.slice(0, 5).map(col =>
+      `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+        FROM events_v3 e
+        JOIN ctm c ON e.ctm_id = c.id
+        JOIN event_v3_titles evt ON evt.event_id = e.id
+        JOIN title_labels tl ON tl.title_id = evt.title_id
+        CROSS JOIN LATERAL unnest(tl.${col}) AS val
+        WHERE c.centroid_id = $1 AND e.is_catchall = false
+          AND e.date >= CURRENT_DATE - INTERVAL '30 days'
+        GROUP BY val ORDER BY event_count DESC LIMIT $2)`
+    ).join(' UNION ALL ');
+    return query<SignalNode>(
+      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT $2`,
+      [centroidId, limit]
+    );
+  });
+}
+
+/** Weekly heatmap data for top signals (observatory temporal grid) */
+export async function getSignalHeatmap(perType: number = 3, month?: string): Promise<SignalCategoryEntry[]> {
+  const dr = signalDateRange(month);
+  return cached(`signal-heatmap:${perType}:${month || 'rolling'}`, 3600, async () => {
+    const nodes = await getTopSignalsAll(perType, month);
+    if (nodes.length === 0) return [];
+
+    // Fetch weekly counts for all top signals across all types
+    const weeklyParts = SIGNAL_COLUMNS.filter(col => {
+      return nodes.some(n => n.signal_type === col);
+    }).map(col => {
+      const vals = nodes.filter(n => n.signal_type === col).map(n => n.value);
+      if (vals.length === 0) return null;
+      return `SELECT '${col}'::text as signal_type, val as value,
+                     date_trunc('week', e.date)::date::text as week,
+                     COUNT(DISTINCT e.id)::int as count
+              FROM events_v3 e
+              JOIN event_v3_titles evt ON evt.event_id = e.id
+              JOIN title_labels tl ON tl.title_id = evt.title_id
+              CROSS JOIN LATERAL unnest(tl.${col}) AS val
+              WHERE ${dr.clause} AND e.is_catchall = false
+                AND val = ANY($${dr.nextIdx})
+              GROUP BY signal_type, val, week`;
+    }).filter(Boolean);
+
+    if (weeklyParts.length === 0) return nodes.map(n => ({ ...n, weekly: [] }));
+
+    const allValues = nodes.map(n => n.value);
+    const weeklyRows = await query<{ signal_type: string; value: string; week: string; count: number }>(
+      weeklyParts.join(' UNION ALL ') + ' ORDER BY signal_type, value, week',
+      [...dr.params, allValues]
+    );
+
+    const weeklyMap = new Map<string, SignalWeekly[]>();
+    for (const row of weeklyRows) {
+      const key = `${row.signal_type}:${row.value}`;
+      if (!weeklyMap.has(key)) weeklyMap.set(key, []);
+      weeklyMap.get(key)!.push({ week: row.week, count: row.count });
+    }
+
+    return nodes.map(n => ({
+      ...n,
+      weekly: weeklyMap.get(`${n.signal_type}:${n.value}`) || [],
+    }));
+  });
+}
+
+/** Category listing with sparkline data (category page) */
+export async function getSignalCategoryDetail(
+  type: SignalType,
+  limit: number = 10,
+  month?: string,
+): Promise<SignalCategoryEntry[]> {
+  if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
+  const dr = signalDateRange(month);
+
+  return cached(`signal-cat:${type}:${limit}:${month || 'rolling'}`, 300, async () => {
+    // Top signals for this type
+    const top = await query<{ value: string; event_count: number }>(
+      `SELECT val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+       FROM events_v3 e
+       JOIN event_v3_titles evt ON evt.event_id = e.id
+       JOIN title_labels tl ON tl.title_id = evt.title_id
+       CROSS JOIN LATERAL unnest(tl.${type}) AS val
+       WHERE ${dr.clause} AND e.is_catchall = false
+       GROUP BY val ORDER BY event_count DESC LIMIT ${limit}`,
+      dr.params
+    );
+    if (top.length === 0) return [];
+
+    const values = top.map(t => t.value);
+    const vi = dr.nextIdx;
+
+    // Weekly sparklines + contexts in parallel
+    const [weeklyRows, contextRows] = await Promise.all([
+      query<{ value: string; week: string; count: number }>(
+        `SELECT val as value, date_trunc('week', e.date)::date::text as week, COUNT(DISTINCT e.id)::int as count
+         FROM events_v3 e
+         JOIN event_v3_titles evt ON evt.event_id = e.id
+         JOIN title_labels tl ON tl.title_id = evt.title_id
+         CROSS JOIN LATERAL unnest(tl.${type}) AS val
+         WHERE ${dr.clause} AND e.is_catchall = false AND val = ANY($${vi})
+         GROUP BY val, week ORDER BY val, week`,
+        [...dr.params, values]
+      ),
+      query<{ value: string; context: string }>(
+        `SELECT value, context FROM monthly_signal_rankings
+         WHERE signal_type = $1 AND value = ANY($2)
+         ORDER BY month DESC`,
+        [type, values]
+      ),
+    ]);
+
+    // Group weekly data by signal value
+    const weeklyMap = new Map<string, SignalWeekly[]>();
+    for (const row of weeklyRows) {
+      if (!weeklyMap.has(row.value)) weeklyMap.set(row.value, []);
+      weeklyMap.get(row.value)!.push({ week: row.week, count: row.count });
+    }
+
+    // Index contexts (case-insensitive)
+    const contextMap = new Map<string, string>();
+    for (const row of contextRows) {
+      contextMap.set(row.value.toLowerCase(), row.context);
+    }
+
+    return top.map(t => ({
+      signal_type: type,
+      value: t.value,
+      event_count: t.event_count,
+      context: contextMap.get(t.value.toLowerCase()),
+      weekly: weeklyMap.get(t.value) || [],
+    }));
   });
 }
 

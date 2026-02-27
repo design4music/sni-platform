@@ -345,6 +345,56 @@ export interface SearchResult {
   rank: number;
 }
 
+// Signal Observatory types
+
+export interface SignalNode {
+  signal_type: SignalType;
+  value: string;
+  event_count: number;
+  context?: string;
+}
+
+export interface SignalEdge {
+  source: string;
+  target: string;
+  source_type: SignalType;
+  target_type: SignalType;
+  weight: number;
+}
+
+export interface SignalWeekly {
+  week: string;
+  count: number;
+}
+
+export interface SignalProfile {
+  signal_type: SignalType;
+  value: string;
+  total_events: number;
+  context?: string;
+  weekly: SignalWeekly[];
+  geo: Array<{ country: string; count: number }>;
+  tracks: Array<{ track: string; count: number }>;
+  co_occurring: SignalNode[];
+  top_events: Array<{
+    id: string;
+    title: string;
+    date: string;
+    source_batch_count: number;
+    centroid_label: string;
+    track: string;
+  }>;
+}
+
+export interface SignalCategoryEntry extends SignalNode {
+  weekly: SignalWeekly[];
+}
+
+export interface SignalGraph {
+  nodes: SignalNode[];
+  edges: SignalEdge[];
+}
+
 export const SIGNAL_LABELS: Record<SignalType, string> = {
   persons: 'Top Persons',
   orgs: 'Top Organizations',
