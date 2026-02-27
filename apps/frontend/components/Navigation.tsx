@@ -98,6 +98,13 @@ export default function Navigation({
         </Link>
 
         <Link
+          href="/trending"
+          className="text-dashboard-text-muted hover:text-dashboard-text transition"
+        >
+          Trending
+        </Link>
+
+        <Link
           href="/epics"
           className="text-dashboard-text-muted hover:text-dashboard-text transition"
         >
@@ -233,7 +240,7 @@ export default function Navigation({
           {/* Menu Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Main Navigation - Compact icon buttons */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <button
                 onClick={() => setMobileRegionsOpen(!mobileRegionsOpen)}
                 className={`flex flex-col items-center justify-center p-4 rounded-lg bg-dashboard-surface border transition ${
@@ -256,6 +263,17 @@ export default function Navigation({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                 </svg>
                 <span className="text-xs text-dashboard-text-muted">Sources</span>
+              </Link>
+
+              <Link
+                href="/trending"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex flex-col items-center justify-center p-4 rounded-lg bg-dashboard-surface border border-dashboard-border hover:bg-dashboard-border transition"
+              >
+                <svg className="w-6 h-6 text-blue-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span className="text-xs text-dashboard-text-muted">Trending</span>
               </Link>
 
               <Link

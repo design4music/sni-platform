@@ -115,14 +115,28 @@ def dice(set_a, set_b):
     return 2 * len(set_a & set_b) / (len(set_a) + len(set_b))
 
 
-def compute_score(ev_a, ev_b):
-    """Return (score, tag_overlap) between two events."""
+def compute_score(ev_a, ev_b, tag_idf=None):
+    """Return (score, tag_overlap) between two events.
+
+    tag_idf: optional dict mapping tag -> IDF weight (0..1).
+    When provided, shared tags are weighted by IDF so ubiquitous tags
+    (person:trump) contribute less than rare tags (place:el salvador).
+    """
     tags_a = set(ev_a["tags"])
     tags_b = set(ev_b["tags"])
-    tag_overlap = len(tags_a & tags_b)
-    tag_dice = (
-        2 * tag_overlap / (len(tags_a) + len(tags_b)) if (tags_a or tags_b) else 0.0
-    )
+    shared = tags_a & tags_b
+    tag_overlap = len(shared)
+
+    if tag_idf and shared:
+        weighted_shared = sum(tag_idf.get(t, 1.0) for t in shared)
+        weighted_total = sum(tag_idf.get(t, 1.0) for t in tags_a) + sum(
+            tag_idf.get(t, 1.0) for t in tags_b
+        )
+        tag_dice = 2 * weighted_shared / weighted_total if weighted_total else 0.0
+    else:
+        tag_dice = (
+            2 * tag_overlap / (len(tags_a) + len(tags_b)) if (tags_a or tags_b) else 0.0
+        )
 
     words_a = title_words(ev_a["title"])
     words_b = title_words(ev_b["title"])
@@ -174,7 +188,28 @@ def fetch_events(conn, centroid_id, track):
         return cur.fetchall()
 
 
-def chain_pair(earlier_events, later_events, threshold):
+def build_tag_idf(all_events):
+    """Compute IDF weights for tags within a centroid+track bucket.
+
+    IDF = log(N / df) / log(N), normalized to 0..1 range.
+    Tags appearing in every event get weight ~0, rare tags get weight ~1.
+    """
+    import math
+
+    n = len(all_events)
+    if n <= 1:
+        return {}
+    from collections import Counter
+
+    doc_freq = Counter()
+    for ev in all_events:
+        for tag in set(ev["tags"]):
+            doc_freq[tag] += 1
+    log_n = math.log(n)
+    return {tag: math.log(n / df) / log_n for tag, df in doc_freq.items()}
+
+
+def chain_pair(earlier_events, later_events, threshold, tag_idf=None):
     """Match later-month events to best earlier-month candidate. Returns list of (event_id, saga_id) updates."""
     updates = []
     matches = []
@@ -182,7 +217,7 @@ def chain_pair(earlier_events, later_events, threshold):
     for later in later_events:
         best_score, best_overlap, best_earlier = 0, 0, None
         for earlier in earlier_events:
-            score, overlap = compute_score(earlier, later)
+            score, overlap = compute_score(earlier, later, tag_idf)
             if overlap >= 2 and score >= threshold and score > best_score:
                 best_score = score
                 best_overlap = overlap
@@ -230,6 +265,7 @@ def main():
 
     for pair in pairs:
         events = fetch_events(conn, pair["centroid_id"], pair["track"])
+        tag_idf = build_tag_idf(events)
         # Group by month
         by_month = defaultdict(list)
         for ev in events:
@@ -239,7 +275,7 @@ def main():
         for i in range(1, len(months)):
             earlier = by_month[months[i - 1]]
             later = by_month[months[i]]
-            updates, matches = chain_pair(earlier, later, args.threshold)
+            updates, matches = chain_pair(earlier, later, args.threshold, tag_idf)
             total_updates.extend(updates)
             for later_ev, earlier_ev, score, overlap in matches:
                 all_matches.append(
