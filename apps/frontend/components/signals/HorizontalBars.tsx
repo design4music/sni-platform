@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface Props {
@@ -8,7 +9,13 @@ interface Props {
 }
 
 export default function HorizontalBars({ data, color = '#3b82f6' }: Props) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   if (!data || data.length === 0) return null;
+
+  const h = Math.max(data.length * 28, 120);
+  if (!mounted) return <div className="w-full" style={{ height: h }} />;
 
   // Use log scale for display to reduce visual dominance of top items
   // Keep original values for tooltip
@@ -19,8 +26,8 @@ export default function HorizontalBars({ data, color = '#3b82f6' }: Props) {
   }));
 
   return (
-    <div className="w-full" style={{ height: Math.max(data.length * 28, 120) }}>
-      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+    <div className="w-full" style={{ height: h }}>
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart data={logData} layout="vertical" margin={{ top: 0, right: 40, bottom: 0, left: 0 }}>
           <XAxis
             type="number"
