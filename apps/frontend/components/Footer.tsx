@@ -27,8 +27,18 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/global" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Global
+                <Link href="/trending" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Trending
+                </Link>
+              </li>
+              <li>
+                <Link href="/signals" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Signals
+                </Link>
+              </li>
+              <li>
+                <Link href="/epics" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  Epics
                 </Link>
               </li>
               <li>
