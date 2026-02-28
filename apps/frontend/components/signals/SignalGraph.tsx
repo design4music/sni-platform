@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SignalNode, SignalEdge, SignalType } from '@/lib/types';
 
@@ -43,10 +44,10 @@ interface GraphLink {
 interface Props {
   nodes: SignalNode[];
   edges: SignalEdge[];
-  onNodeClick?: (node: SignalNode) => void;
 }
 
-export default function SignalGraph({ nodes, edges, onNodeClick }: Props) {
+export default function SignalGraph({ nodes, edges }: Props) {
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>(null);
@@ -58,7 +59,7 @@ export default function SignalGraph({ nodes, edges, onNodeClick }: Props) {
     function updateSize() {
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        setDimensions({ width: rect.width, height: Math.max(rect.width * 0.65, 400) });
+        setDimensions({ width: rect.width, height: Math.max(rect.width * 0.45, 400) });
       }
     }
     updateSize();
@@ -117,8 +118,8 @@ export default function SignalGraph({ nodes, edges, onNodeClick }: Props) {
       if (!fg) return;
       const charge = fg.d3Force('charge');
       if (!charge) return;
-      charge.strength(-400);
-      fg.d3Force('link')?.distance(120);
+      charge.strength(-300);
+      fg.d3Force('link')?.distance(100);
       fg.d3ReheatSimulation();
       forceConfigured.current = true;
       clearInterval(id);
@@ -198,14 +199,11 @@ export default function SignalGraph({ nodes, edges, onNodeClick }: Props) {
   }, []);
 
   const handleNodeClick = useCallback((node: GraphNode) => {
-    if (onNodeClick) {
-      const original = nodes.find(n => n.signal_type === node.signal_type && n.value === node.label);
-      if (original) onNodeClick(original);
-    }
-  }, [nodes, onNodeClick]);
+    router.push(`/signals/${node.signal_type}/${encodeURIComponent(node.label)}`);
+  }, [router]);
 
   return (
-    <div ref={containerRef} className="w-full rounded-lg border border-dashboard-border bg-[#0f172a] overflow-hidden">
+    <div ref={containerRef} className="w-full rounded-lg border border-dashboard-border bg-[#0f172a] overflow-hidden [&_canvas]:cursor-pointer">
       {dimensions.width > 0 && (
         <ForceGraph2D
           ref={graphRef}

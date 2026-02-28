@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { SignalCategoryEntry, SignalType } from '@/lib/types';
 
 const TYPE_COLORS: Record<SignalType, { base: string; bg: string }> = {
@@ -62,8 +63,13 @@ export default function TemporalHeatmap({ signals }: Props) {
 
             return (
               <tr key={`${s.signal_type}:${s.value}`} className="group">
-                <td className="py-1 pr-3 truncate max-w-[8rem] text-dashboard-text group-hover:text-blue-400 transition">
-                  {s.value}
+                <td className="py-1 pr-3 truncate max-w-[8rem]">
+                  <Link
+                    href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
+                    className="text-dashboard-text hover:text-blue-400 transition"
+                  >
+                    {s.value}
+                  </Link>
                 </td>
                 {weeks.map(w => {
                   const count = countMap.get(w) || 0;

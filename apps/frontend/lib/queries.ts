@@ -1258,23 +1258,25 @@ export async function getTopSignalsForEpic(epicId: string, limit: number = 10): 
 
 /** Top signals for a specific centroid (country profile widget) */
 export async function getTopSignalsForCentroid(centroidId: string, limit: number = 5): Promise<SignalNode[]> {
-  return cached(`signals:centroid:${centroidId}:${limit}`, 300, () => {
+  return cached(`signals:centroid:${centroidId}:${limit}`, 300, async () => {
     const perType = Math.max(limit, 5);
-    const sql = SIGNAL_COLUMNS.slice(0, 5).map(col =>
-      `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
-        FROM events_v3 e
-        JOIN ctm c ON e.ctm_id = c.id
-        JOIN event_v3_titles evt ON evt.event_id = e.id
-        JOIN title_labels tl ON tl.title_id = evt.title_id
-        CROSS JOIN LATERAL unnest(tl.${col}) AS val
-        WHERE c.centroid_id = $1 AND e.is_catchall = false
-          AND e.date >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY val ORDER BY event_count DESC LIMIT ${perType})`
-    ).join(' UNION ALL ');
-    return query<SignalNode>(
-      `SELECT * FROM (${sql}) sub ORDER BY event_count DESC LIMIT ${limit}`,
-      [centroidId]
+    const results = await Promise.all(
+      SIGNAL_COLUMNS.slice(0, 5).map(col =>
+        query<SignalNode>(
+          `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+           FROM events_v3 e
+           JOIN ctm c ON e.ctm_id = c.id
+           JOIN event_v3_titles evt ON evt.event_id = e.id
+           JOIN title_labels tl ON tl.title_id = evt.title_id
+           CROSS JOIN LATERAL unnest(tl.${col}) AS val
+           WHERE c.centroid_id = $1 AND e.is_catchall = false
+             AND e.date >= CURRENT_DATE - INTERVAL '30 days'
+           GROUP BY val ORDER BY event_count DESC LIMIT ${perType}`,
+          [centroidId]
+        )
+      )
     );
+    return results.flat().sort((a, b) => b.event_count - a.event_count).slice(0, limit);
   });
 }
 
