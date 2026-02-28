@@ -9,7 +9,7 @@ import { getNarrativeById } from '@/lib/queries';
 import { getTrackLabel, getCountryName } from '@/lib/types';
 import type { SignalStats } from '@/lib/types';
 
-export const revalidate = 600;
+export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ narrative_id: string }>;

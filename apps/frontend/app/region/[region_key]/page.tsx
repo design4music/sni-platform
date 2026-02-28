@@ -5,11 +5,7 @@ import { getCentroidsByTheater } from '@/lib/queries';
 import { REGIONS, RegionKey } from '@/lib/types';
 import { notFound } from 'next/navigation';
 
-export const revalidate = 300;
-
-export function generateStaticParams() {
-  return Object.keys(REGIONS).map(key => ({ region_key: key.toLowerCase() }));
-}
+export const dynamic = 'force-dynamic';
 
 interface RegionPageProps {
   params: Promise<{ region_key: string }>;

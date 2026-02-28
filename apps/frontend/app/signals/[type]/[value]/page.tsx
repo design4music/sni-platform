@@ -7,7 +7,7 @@ import HorizontalBars from '@/components/signals/HorizontalBars';
 import { getSignalProfile } from '@/lib/queries';
 import { SignalType, SIGNAL_LABELS, getCountryName, getTrackLabel } from '@/lib/types';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const VALID_TYPES = new Set<SignalType>([
   'persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events',

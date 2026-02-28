@@ -7,7 +7,7 @@ import NarrativeCards from '@/components/NarrativeOverlay';
 import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives, getTopSignalsForEpic } from '@/lib/queries';
 import { EpicEvent, EpicNarrative, SignalType } from '@/lib/types';
 
-export const revalidate = 600;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

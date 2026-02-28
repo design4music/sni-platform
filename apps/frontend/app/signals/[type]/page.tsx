@@ -6,15 +6,11 @@ import Sparkline from '@/components/signals/Sparkline';
 import { getSignalCategoryDetail } from '@/lib/queries';
 import { SignalType, SIGNAL_LABELS } from '@/lib/types';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const VALID_TYPES = new Set<SignalType>([
   'persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events',
 ]);
-
-export function generateStaticParams() {
-  return [...VALID_TYPES].map(type => ({ type }));
-}
 
 const TYPE_COLORS: Record<SignalType, string> = {
   persons: '#60a5fa',

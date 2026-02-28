@@ -17,7 +17,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;

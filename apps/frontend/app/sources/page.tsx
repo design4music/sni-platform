@@ -7,7 +7,7 @@ import { getOutletLogoUrl } from '@/lib/logos';
 import SourceSuggestionForm from '@/components/SourceSuggestionForm';
 import SourceCountryAccordion from '@/components/SourceCountryAccordion';
 
-export const revalidate = 600;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Media Sources',

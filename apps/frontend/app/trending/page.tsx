@@ -4,7 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import TrendingCard from '@/components/TrendingCard';
 import { getTrendingEvents, getTrendingSignals } from '@/lib/queries';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Trending Stories - WorldBrief',

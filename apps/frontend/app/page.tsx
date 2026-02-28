@@ -10,7 +10,7 @@ import { getCentroidsByClass, getAllActiveFeeds, getLatestEpics } from '@/lib/qu
 import { REGIONS } from '@/lib/types';
 import Link from 'next/link';
 
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'WorldBrief - Understand the world. Briefly.',
