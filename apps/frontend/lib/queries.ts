@@ -949,7 +949,12 @@ export async function getTrendingEvents(limit: number = 20): Promise<TrendingEve
               LEFT(e.summary, 200) as summary,
               c.centroid_id, cv.label as centroid_label, cv.iso_codes,
               c.track,
-              (e.source_batch_count * pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400)))::numeric(10,2) as trending_score,
+              (e.source_batch_count
+               * pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400))
+               * CASE WHEN EXTRACT(EPOCH FROM (NOW() - e.date::timestamp)) < 86400
+                      THEN 1 + LEAST(e.source_batch_count / GREATEST(EXTRACT(EPOCH FROM (NOW() - e.date::timestamp)) / 3600, 1), 3)
+                      ELSE 1 END
+              )::numeric(10,2) as trending_score,
               sig.top_signals
        FROM events_v3 e
        JOIN ctm c ON e.ctm_id = c.id
