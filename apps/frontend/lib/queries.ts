@@ -1,6 +1,6 @@
 import { query } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph, TopicCluster } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return cached('centroids:all', 300, () =>
@@ -1074,15 +1074,7 @@ export async function getSignalProfile(
       WHERE evt.event_id = e.id AND $${vi} = ANY(tl.${type})
     )`;
 
-  // Exclude all tags of the same prefix as the signal type (avoids duplicating Relationships panel)
-  const TAG_PREFIX_MAP: Record<string, string> = {
-    persons: 'person', orgs: 'org', places: 'place',
-  };
-  const selfPrefixPattern = TAG_PREFIX_MAP[type] ? `${TAG_PREFIX_MAP[type]}:%` : '';
-  const selfPrefixIdx = vi + 1;
-  const clusterParams = [...params, selfPrefixPattern];
-
-  const [totalRow, weekly, geo, tracks, coOccurring, topEvents, contextRow, topicClusters] = await Promise.all([
+  const [totalRow, weekly, geo, tracks, contextRow, relationshipClusters] = await Promise.all([
     // Total event count
     query<{ total: number }>(
       `SELECT COUNT(*)::int as total FROM events_v3 e
@@ -1116,45 +1108,6 @@ export async function getSignalProfile(
        GROUP BY c.track ORDER BY count DESC`,
       params
     ),
-    // Co-occurring signals (top 15 across all types)
-    query<SignalNode>(
-      `WITH matching_titles AS (
-         SELECT evt.event_id,
-                tl.persons, tl.orgs, tl.places, tl.commodities,
-                tl.policies, tl.systems, tl.named_events
-         FROM event_v3_titles evt
-         JOIN title_labels tl ON tl.title_id = evt.title_id
-         JOIN events_v3 e ON e.id = evt.event_id
-         WHERE ${dr.clause} AND $${vi} = ANY(tl.${type}) AND e.is_catchall = false
-       )
-       SELECT signal_type, value, COUNT(DISTINCT event_id)::int as event_count FROM (
-         ${SIGNAL_COLUMNS.map(col =>
-           `SELECT event_id, '${col}'::text as signal_type, unnest(COALESCE(${col}, '{}')) as value FROM matching_titles`
-         ).join(' UNION ALL ')}
-       ) expanded
-       WHERE NOT (signal_type = '${type}' AND value = $${vi})
-       GROUP BY signal_type, value
-       ORDER BY event_count DESC LIMIT 15`,
-      params
-    ),
-    // Top events — require signal in >= 20% of event's titles to avoid spurious matches
-    query<{ id: string; title: string; date: string; source_batch_count: number; centroid_label: string; track: string }>(
-      `SELECT e.id, COALESCE(e.title, e.topic_core) as title,
-              e.date::text as date, e.source_batch_count,
-              cv.label as centroid_label, c.track
-       FROM events_v3 e
-       JOIN ctm c ON e.ctm_id = c.id
-       JOIN centroids_v3 cv ON c.centroid_id = cv.id
-       WHERE ${dr.clause} AND e.is_catchall = false AND (
-         SELECT COUNT(*) FILTER (WHERE $${vi} = ANY(tl.${type}))::float
-                / GREATEST(COUNT(*), 1)
-         FROM event_v3_titles evt
-         JOIN title_labels tl ON tl.title_id = evt.title_id
-         WHERE evt.event_id = e.id
-       ) >= 0.2
-       ORDER BY e.source_batch_count DESC LIMIT 20`,
-      params
-    ),
     // Context from monthly_signal_rankings
     query<{ context: string }>(
       `SELECT context FROM monthly_signal_rankings
@@ -1162,12 +1115,13 @@ export async function getSignalProfile(
        ORDER BY month DESC LIMIT 1`,
       [value]
     ),
-    // Topic clusters from event tags
-    query<TopicCluster>(
+    // Relationship clusters: top co-occurring signals enriched with shared events
+    // 20% density filter on BOTH the primary signal AND each co-signal per event,
+    // so displayed events genuinely involve both signals (not just a passing mention)
+    query<RelationshipCluster>(
       `WITH signal_events AS (
          SELECT e.id, COALESCE(e.title, e.topic_core) as title,
-                e.date::text as date, e.source_batch_count,
-                COALESCE(e.tags, '{}') as tags
+                e.date::text as date, e.source_batch_count
          FROM events_v3 e
          WHERE ${dr.clause} AND e.is_catchall = false AND (
            SELECT COUNT(*) FILTER (WHERE $${vi} = ANY(tl.${type}))::float
@@ -1177,39 +1131,46 @@ export async function getSignalProfile(
            WHERE evt.event_id = e.id
          ) >= 0.2
        ),
-       tag_freq AS (
-         SELECT tag, COUNT(DISTINCT se.id)::int as freq
-         FROM signal_events se, unnest(se.tags) as tag
-         WHERE tag NOT LIKE $${selfPrefixIdx}
-         GROUP BY tag ORDER BY freq DESC LIMIT 4
+       event_cosigs AS (
+         SELECT se.id as event_id, expanded.sig_type as signal_type, expanded.value
+         FROM signal_events se
+         JOIN event_v3_titles evt ON evt.event_id = se.id
+         JOIN title_labels tl ON tl.title_id = evt.title_id
+         CROSS JOIN LATERAL (${UNNEST_ALL_SIGNALS}) expanded(sig_type, value)
+         WHERE NOT (expanded.sig_type = '${type}' AND expanded.value = $${vi})
+         GROUP BY se.id, expanded.sig_type, expanded.value
+         HAVING COUNT(*)::float / GREATEST((SELECT COUNT(*) FROM event_v3_titles e2 WHERE e2.event_id = se.id), 1) >= 0.2
        ),
-       event_best_tag AS (
-         SELECT tf.tag, se.id, se.title, se.date, se.source_batch_count,
-                ROW_NUMBER() OVER (PARTITION BY se.id ORDER BY tf.freq DESC, tf.tag) as tag_pick
-         FROM tag_freq tf
-         JOIN signal_events se ON tf.tag = ANY(se.tags)
+       top_cosigs AS (
+         SELECT signal_type, value, COUNT(DISTINCT event_id)::int as event_count
+         FROM event_cosigs
+         GROUP BY signal_type, value
+         HAVING COUNT(DISTINCT event_id) >= 2
+         ORDER BY event_count DESC LIMIT 20
        ),
-       deduped AS (
-         SELECT tag, id, title, date, source_batch_count
-         FROM event_best_tag WHERE tag_pick = 1
+       title_deduped AS (
+         SELECT tc.signal_type, tc.value, tc.event_count,
+                se.id, se.title, se.date, se.source_batch_count,
+                ROW_NUMBER() OVER (PARTITION BY tc.signal_type, tc.value, se.title ORDER BY se.source_batch_count DESC) as title_pick
+         FROM top_cosigs tc
+         JOIN event_cosigs ec ON ec.signal_type = tc.signal_type AND ec.value = tc.value
+         JOIN signal_events se ON se.id = ec.event_id
        ),
        ranked AS (
-         SELECT tag, id, title, date, source_batch_count,
-                COUNT(*) OVER (PARTITION BY tag) as event_count,
-                ROW_NUMBER() OVER (PARTITION BY tag ORDER BY source_batch_count DESC) as rn
-         FROM deduped
+         SELECT signal_type, value, event_count, id, title, date, source_batch_count,
+                ROW_NUMBER() OVER (PARTITION BY signal_type, value ORDER BY source_batch_count DESC) as rn
+         FROM title_deduped WHERE title_pick = 1
        )
-       SELECT tag, event_count,
+       SELECT signal_type, value, event_count,
               MAX(title) FILTER (WHERE rn = 1) as label,
-              SUM(source_batch_count)::int as total_sources,
               json_agg(json_build_object(
                 'id', id, 'title', title, 'date', date,
                 'source_batch_count', source_batch_count
               ) ORDER BY source_batch_count DESC) FILTER (WHERE rn <= 3) as top_events
        FROM ranked
-       GROUP BY tag, event_count
+       GROUP BY signal_type, value, event_count
        ORDER BY event_count DESC`,
-      clusterParams
+      params
     ),
   ]);
 
@@ -1221,9 +1182,7 @@ export async function getSignalProfile(
     weekly,
     geo,
     tracks,
-    co_occurring: coOccurring,
-    top_events: topEvents,
-    topic_clusters: topicClusters,
+    relationship_clusters: relationshipClusters,
   };
   });
 }

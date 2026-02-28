@@ -367,11 +367,11 @@ export interface SignalWeekly {
   count: number;
 }
 
-export interface TopicCluster {
-  tag: string;
-  label: string;
+export interface RelationshipCluster {
+  signal_type: SignalType;
+  value: string;
   event_count: number;
-  total_sources: number;
+  label: string;
   top_events: Array<{ id: string; title: string; date: string; source_batch_count: number }>;
 }
 
@@ -383,16 +383,7 @@ export interface SignalProfile {
   weekly: SignalWeekly[];
   geo: Array<{ country: string; count: number }>;
   tracks: Array<{ track: string; count: number }>;
-  co_occurring: SignalNode[];
-  top_events: Array<{
-    id: string;
-    title: string;
-    date: string;
-    source_batch_count: number;
-    centroid_label: string;
-    track: string;
-  }>;
-  topic_clusters: TopicCluster[];
+  relationship_clusters: RelationshipCluster[];
 }
 
 export interface SignalCategoryEntry extends SignalNode {

@@ -100,103 +100,82 @@ export default async function SignalDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* 2x2 Grid: Relationships + Geo | Tracks + Top Events */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Relationships */}
-        <div className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
-          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-            Relationships
-          </h3>
-          {profile.co_occurring.length > 0 ? (
-            <ul className="space-y-1.5">
-              {profile.co_occurring.map(co => {
-                const coBadge = TYPE_BADGE[co.signal_type];
+      {/* Relationship Highlights — mega signals (200+ events) get 20, others get 10 */}
+      {profile.relationship_clusters.length > 0 && (() => {
+        const isMega = profile.total_events >= 200;
+        const maxClusters = isMega ? 20 : 10;
+        const visible = profile.relationship_clusters.slice(0, maxClusters);
+        return (
+          <div className="mb-8 p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
+            <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-4">
+              Relationship Highlights
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {visible.map(rc => {
+                const rcBadge = TYPE_BADGE[rc.signal_type];
                 return (
-                  <li key={`${co.signal_type}-${co.value}`}>
-                    <Link
-                      href={`/signals/${co.signal_type}/${encodeURIComponent(co.value)}`}
-                      className="flex items-center gap-2 py-1 px-2 -mx-2 rounded hover:bg-dashboard-border/50 transition group"
-                    >
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${coBadge.bg} border ${coBadge.border} ${coBadge.text}`}>
-                        {coBadge.label}
+                  <div key={`${rc.signal_type}-${rc.value}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${rcBadge.bg} border ${rcBadge.border} ${rcBadge.text}`}>
+                        {rcBadge.label}
                       </span>
-                      <span className="text-sm text-dashboard-text group-hover:text-blue-400 transition truncate">
-                        {co.value}
-                      </span>
+                      <Link
+                        href={`/signals/${rc.signal_type}/${encodeURIComponent(rc.value)}`}
+                        className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition truncate"
+                      >
+                        {rc.value}
+                      </Link>
                       <span className="text-xs text-dashboard-text-muted ml-auto shrink-0">
-                        {co.event_count}
+                        {rc.event_count} ev
                       </span>
-                    </Link>
-                  </li>
+                    </div>
+                    {rc.top_events.length > 0 && (
+                      <>
+                        <Link
+                          href={`/events/${rc.top_events[0].id}`}
+                          className="text-sm text-dashboard-text hover:text-blue-400 transition line-clamp-1 mb-1 block"
+                        >
+                          {rc.label}
+                        </Link>
+                        <ul className="space-y-0.5">
+                          {rc.top_events.slice(1).map(ev => (
+                            <li key={ev.id} className="flex items-center gap-1.5">
+                              <span className="text-dashboard-text-muted text-xs">&#183;</span>
+                              <Link
+                                href={`/events/${ev.id}`}
+                                className="text-xs text-dashboard-text-muted hover:text-blue-400 transition truncate"
+                              >
+                                {ev.title}
+                              </Link>
+                              <span className="text-[10px] text-dashboard-text-muted/60 ml-auto shrink-0">
+                                {new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </div>
                 );
               })}
-            </ul>
-          ) : (
-            <p className="text-sm text-dashboard-text-muted">No co-occurring signals found.</p>
-          )}
-        </div>
+            </div>
+          </div>
+        );
+      })()}
 
-        {/* Geographic Distribution */}
+      {/* Geo + Tracks side by side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
           <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
             Geographic Distribution
           </h3>
           <HorizontalBars data={geoData} color="#3b82f6" />
         </div>
-
-        {/* Theme Breakdown */}
         <div className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
           <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
             Theme Breakdown
           </h3>
           <HorizontalBars data={trackData} color="#8b5cf6" />
-        </div>
-
-        {/* Key Topics */}
-        <div className="p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
-          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-            Key Topics
-          </h3>
-          {profile.topic_clusters.length > 0 ? (
-            <div className="space-y-4">
-              {profile.topic_clusters.map(cluster => (
-                <div key={cluster.tag}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 border border-blue-500/30 text-blue-400">
-                      {cluster.tag}
-                    </span>
-                    <span className="text-xs text-dashboard-text-muted ml-auto shrink-0">
-                      {cluster.event_count} ev
-                    </span>
-                  </div>
-                  <Link
-                    href={`/events/${cluster.top_events[0]?.id}`}
-                    className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition line-clamp-1 mb-1 block"
-                  >
-                    {cluster.label}
-                  </Link>
-                  <ul className="space-y-0.5">
-                    {cluster.top_events.slice(1).map(ev => (
-                      <li key={ev.id} className="flex items-center gap-1.5">
-                        <span className="text-dashboard-text-muted text-xs">&#183;</span>
-                        <Link
-                          href={`/events/${ev.id}`}
-                          className="text-xs text-dashboard-text-muted hover:text-blue-400 transition truncate"
-                        >
-                          {ev.title}
-                        </Link>
-                        <span className="text-[10px] text-dashboard-text-muted/60 ml-auto shrink-0">
-                          {new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-dashboard-text-muted">No topic clusters found.</p>
-          )}
         </div>
       </div>
     </DashboardLayout>
