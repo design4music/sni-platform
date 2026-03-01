@@ -1205,52 +1205,15 @@ export async function getSignalProfile(
 }
 
 /** Co-occurrence graph: nodes + edges for top signals (observatory) */
-export async function getSignalGraph(perType: number = 8, month?: string): Promise<SignalGraph> {
-  const dr = signalDateRange(month);
-  return cached(`signal-graph:${perType}:${month || 'rolling'}`, 3600, async () => {
-    const nodes = await getTopSignalsAll(perType, month);
-
-    // Build CTE for top signals, then find co-occurrence edges
-    const topCTEs = SIGNAL_COLUMNS.map(col =>
-      `top_${col} AS (
-        SELECT '${col}'::text as signal_type, val as value
-        FROM events_v3 e
-        JOIN event_v3_titles evt ON evt.event_id = e.id
-        JOIN title_labels tl ON tl.title_id = evt.title_id
-        CROSS JOIN LATERAL unnest(tl.${col}) AS val
-        WHERE ${dr.clause} AND e.is_catchall = false
-        GROUP BY val ORDER BY COUNT(DISTINCT evt.event_id) DESC LIMIT ${perType}
-      )`
-    );
-    const allTopUnion = SIGNAL_COLUMNS.map(col =>
-      `SELECT * FROM top_${col}`
-    ).join(' UNION ALL ');
-
-    const edgesSQL = `
-      WITH ${topCTEs.join(',\n')},
-      all_top AS (${allTopUnion}),
-      event_sigs AS (
-        SELECT DISTINCT evt.event_id, expanded.sig_type as signal_type, expanded.value
-        FROM event_v3_titles evt
-        JOIN title_labels tl ON tl.title_id = evt.title_id
-        JOIN events_v3 e ON e.id = evt.event_id
-        CROSS JOIN LATERAL (${UNNEST_ALL_SIGNALS}) expanded(sig_type, value)
-        WHERE ${dr.clause} AND e.is_catchall = false
-          AND EXISTS (SELECT 1 FROM all_top WHERE all_top.signal_type = expanded.sig_type AND all_top.value = expanded.value)
-      )
-      SELECT a.value as source, b.value as target,
-             a.signal_type as source_type, b.signal_type as target_type,
-             COUNT(DISTINCT a.event_id)::int as weight
-      FROM event_sigs a
-      JOIN event_sigs b ON a.event_id = b.event_id
-        AND (a.value, a.signal_type) < (b.value, b.signal_type)
-      GROUP BY source, target, source_type, target_type
-      HAVING COUNT(DISTINCT a.event_id) >= 3
-      ORDER BY weight DESC`;
-
-    const edges = await queryNoJIT<SignalEdge>(edgesSQL, dr.params);
-    return { nodes, edges };
-  });
+export async function getSignalGraph(perType: number = 5, month?: string): Promise<SignalGraph> {
+  const period = month || 'rolling';
+  const rows = await query<{ nodes: SignalNode[]; edges: SignalEdge[] }>(
+    `SELECT nodes, edges FROM mv_signal_graph WHERE period = $1`,
+    [period]
+  );
+  if (rows[0]) return rows[0];
+  // Fallback: empty graph if not yet materialized
+  return { nodes: [], edges: [] };
 }
 
 /** Top signals for an epic's events (epic detail widget) */
@@ -1276,7 +1239,7 @@ export async function getTopSignalsForEpic(epicId: string, limit: number = 10): 
 /** Top signals for a specific centroid (pre-computed by pipeline Phase 4.2) */
 export async function getTopSignalsForCentroid(centroidId: string, month?: string): Promise<SignalNode[]> {
   const rows = await query<{ signals: SignalNode[] }>(
-    `SELECT signals FROM centroid_top_signals
+    `SELECT signals FROM mv_centroid_signals
      WHERE centroid_id = $1 AND month = ($2 || '-01')::date`,
     [centroidId, month || new Date().toISOString().slice(0, 7)]
   );

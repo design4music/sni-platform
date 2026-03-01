@@ -565,6 +565,18 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
+    def run_materialize_signals(self):
+        """Materialize top signals per centroid for current unfrozen months."""
+        from pipeline.phase_4.materialize_centroid_signals import materialize
+
+        materialize()
+
+    def run_materialize_signal_graph(self):
+        """Materialize signal co-occurrence graph (rolling 30d)."""
+        from pipeline.phase_4.materialize_signal_graph import materialize
+
+        materialize(period="rolling")
+
     async def run_event_summaries(self, max_events: int = 100):
         """Generate summaries for events that need them"""
         conn = self.get_connection()
@@ -833,6 +845,25 @@ class PipelineDaemon:
                     max_ctms=self.aggregation_max_ctms,
                 ),
                 self.timeout_clustering,
+            )
+            # Phase 4.2: Materialize pre-computed views (mv_* tables)
+            await self.run_with_timeout(
+                "Phase 4.2a: Centroid Top Signals",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2a: Centroid Top Signals",
+                    self.run_materialize_signals,
+                ),
+                300,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2b: Signal Graph",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2b: Signal Graph",
+                    self.run_materialize_signal_graph,
+                ),
+                300,
             )
             self.last_run["clustering"] = time.time()
         else:
