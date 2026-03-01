@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSignalProfile } from '@/lib/queries';
+import { getSignalStats, getRelationshipClusters } from '@/lib/queries';
 import { SignalType } from '@/lib/types';
 
 const VALID_TYPES = new Set<string>([
@@ -17,8 +17,19 @@ export async function GET(
     }
     const decoded = decodeURIComponent(value);
     const month = req.nextUrl.searchParams.get('month') || undefined;
-    const profile = await getSignalProfile(type as SignalType, decoded, month);
-    return NextResponse.json(profile);
+    const [stats, clusters] = await Promise.all([
+      getSignalStats(type as SignalType, decoded, month),
+      getRelationshipClusters(type as SignalType, decoded, month),
+    ]);
+    return NextResponse.json({
+      signal_type: type,
+      value: decoded,
+      total_events: stats.total,
+      weekly: stats.weekly,
+      geo: stats.geo,
+      tracks: stats.tracks,
+      relationship_clusters: clusters,
+    });
   } catch (err: unknown) {
     console.error('signals/[type]/[value] error:', err);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

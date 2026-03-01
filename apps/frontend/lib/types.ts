@@ -375,16 +375,13 @@ export interface RelationshipCluster {
   top_events: Array<{ id: string; title: string; date: string; source_batch_count: number }>;
 }
 
-export interface SignalProfile {
-  signal_type: SignalType;
-  value: string;
-  total_events: number;
-  context?: string;
+export interface SignalDetailStats {
+  total: number;
   weekly: SignalWeekly[];
   geo: Array<{ country: string; count: number }>;
   tracks: Array<{ track: string; count: number }>;
-  relationship_clusters: RelationshipCluster[];
 }
+
 
 export interface SignalCategoryEntry extends SignalNode {
   weekly: SignalWeekly[];

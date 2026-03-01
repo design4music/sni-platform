@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
 export async function getAllCentroids(): Promise<Centroid[]> {
   return cached('centroids:all', 300, () =>
@@ -1072,70 +1072,71 @@ export async function getTopSignalsAll(perType: number = 8, month?: string): Pro
   });
 }
 
-/** Full profile for a single signal (detail page) */
-export async function getSignalProfile(
+/** Stats for a single signal: total, weekly, geo, tracks (single CTE scan) */
+export async function getSignalStats(
   type: SignalType,
   value: string,
   month?: string,
-): Promise<SignalProfile> {
+): Promise<SignalDetailStats> {
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
-  return cached(`signal-profile:${type}:${value}:${month || 'rolling'}`, 3600, async () => {
-  const dr = signalDateRange(month);
-  const vi = dr.nextIdx; // param index for signalValue
-  const params = [...dr.params, value];
+  return cached(`signal-stats:${type}:${value}:${month || 'rolling'}`, 3600, async () => {
+    const dr = signalDateRange(month);
+    const vi = dr.nextIdx;
+    const params = [...dr.params, value];
 
-  const existsFilter = `
-    EXISTS (
-      SELECT 1 FROM event_v3_titles evt
-      JOIN title_labels tl ON tl.title_id = evt.title_id
-      WHERE evt.event_id = e.id AND $${vi} = ANY(tl.${type})
-    )`;
+    const rows = await query<{ total: number; weekly: SignalWeekly[] | null; geo: Array<{ country: string; count: number }> | null; tracks: Array<{ track: string; count: number }> | null }>(
+      `WITH signal_events AS (
+         SELECT DISTINCT e.id, e.date, e.ctm_id
+         FROM events_v3 e
+         JOIN event_v3_titles evt ON evt.event_id = e.id
+         JOIN title_labels tl ON tl.title_id = evt.title_id
+         WHERE ${dr.clause} AND e.is_catchall = false AND $${vi} = ANY(tl.${type})
+       )
+       SELECT
+         (SELECT COUNT(*)::int FROM signal_events) as total,
+         (SELECT json_agg(w ORDER BY w.week) FROM (
+           SELECT date_trunc('week', date)::date::text as week, COUNT(*)::int as count
+           FROM signal_events GROUP BY 1
+         ) w) as weekly,
+         (SELECT json_agg(g ORDER BY g.count DESC) FROM (
+           SELECT unnest(cv.iso_codes) as country, COUNT(DISTINCT se.id)::int as count
+           FROM signal_events se JOIN ctm c ON se.ctm_id = c.id
+           JOIN centroids_v3 cv ON c.centroid_id = cv.id
+           GROUP BY country ORDER BY count DESC LIMIT 20
+         ) g) as geo,
+         (SELECT json_agg(t ORDER BY t.count DESC) FROM (
+           SELECT c.track, COUNT(DISTINCT se.id)::int as count
+           FROM signal_events se JOIN ctm c ON se.ctm_id = c.id
+           GROUP BY c.track ORDER BY count DESC
+         ) t) as tracks`,
+      params
+    );
 
-  const [totalRow, weekly, geo, tracks, contextRow, relationshipClusters] = await Promise.all([
-    // Total event count
-    query<{ total: number }>(
-      `SELECT COUNT(*)::int as total FROM events_v3 e
-       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}`,
-      params
-    ),
-    // Weekly mentions
-    query<SignalWeekly>(
-      `SELECT date_trunc('week', e.date)::date::text as week, COUNT(*)::int as count
-       FROM events_v3 e
-       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
-       GROUP BY week ORDER BY week`,
-      params
-    ),
-    // Geographic distribution (via centroid iso_codes)
-    query<{ country: string; count: number }>(
-      `SELECT unnest(cv.iso_codes) as country, COUNT(DISTINCT e.id)::int as count
-       FROM events_v3 e
-       JOIN ctm c ON e.ctm_id = c.id
-       JOIN centroids_v3 cv ON c.centroid_id = cv.id
-       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
-       GROUP BY country ORDER BY count DESC LIMIT 20`,
-      params
-    ),
-    // Track breakdown
-    query<{ track: string; count: number }>(
-      `SELECT c.track, COUNT(DISTINCT e.id)::int as count
-       FROM events_v3 e
-       JOIN ctm c ON e.ctm_id = c.id
-       WHERE ${dr.clause} AND e.is_catchall = false AND ${existsFilter}
-       GROUP BY c.track ORDER BY count DESC`,
-      params
-    ),
-    // Context from monthly_signal_rankings
-    query<{ context: string }>(
-      `SELECT context FROM monthly_signal_rankings
-       WHERE signal_type = '${type}' AND LOWER(value) = LOWER($1)
-       ORDER BY month DESC LIMIT 1`,
-      [value]
-    ),
-    // Relationship clusters: top co-occurring signals enriched with shared events
+    const row = rows[0];
+    return {
+      total: row?.total ?? 0,
+      weekly: row?.weekly ?? [],
+      geo: row?.geo ?? [],
+      tracks: row?.tracks ?? [],
+    };
+  });
+}
+
+/** Co-occurring signals enriched with shared events (detail page, heavy query) */
+export async function getRelationshipClusters(
+  type: SignalType,
+  value: string,
+  month?: string,
+): Promise<RelationshipCluster[]> {
+  if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
+  return cached(`signal-relationships:${type}:${value}:${month || 'rolling'}`, 3600, async () => {
+    const dr = signalDateRange(month);
+    const vi = dr.nextIdx;
+    const params = [...dr.params, value];
+
     // 20% density filter on BOTH the primary signal AND each co-signal per event,
     // so displayed events genuinely involve both signals (not just a passing mention)
-    queryNoJIT<RelationshipCluster>(
+    return queryNoJIT<RelationshipCluster>(
       `WITH signal_events AS (
          SELECT e.id, COALESCE(e.title, e.topic_core) as title,
                 e.date::text as date, e.source_batch_count
@@ -1188,19 +1189,7 @@ export async function getSignalProfile(
        GROUP BY signal_type, value, event_count
        ORDER BY event_count DESC`,
       params
-    ),
-  ]);
-
-  return {
-    signal_type: type,
-    value,
-    total_events: totalRow[0]?.total ?? 0,
-    context: contextRow[0]?.context,
-    weekly,
-    geo,
-    tracks,
-    relationship_clusters: relationshipClusters,
-  };
+    );
   });
 }
 

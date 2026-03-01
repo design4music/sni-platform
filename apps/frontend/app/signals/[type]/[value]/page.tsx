@@ -1,10 +1,11 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import MentionTimeline from '@/components/signals/MentionTimeline';
 import HorizontalBars from '@/components/signals/HorizontalBars';
-import { getSignalProfile } from '@/lib/queries';
+import { getSignalStats, getRelationshipClusters } from '@/lib/queries';
 import { SignalType, SIGNAL_LABELS, getCountryName, getTrackLabel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -44,17 +45,17 @@ export default async function SignalDetailPage({ params }: Props) {
   if (!VALID_TYPES.has(signalType)) return notFound();
 
   const decoded = decodeURIComponent(value);
-  const profile = await getSignalProfile(signalType, decoded);
-  if (!profile || profile.total_events === 0) return notFound();
+  const stats = await getSignalStats(signalType, decoded);
+  if (!stats || stats.total === 0) return notFound();
 
   const badge = TYPE_BADGE[signalType];
 
-  const geoData = profile.geo.map(g => ({
+  const geoData = stats.geo.map(g => ({
     label: getCountryName(g.country),
     value: g.count,
   }));
 
-  const trackData = profile.tracks.map(t => ({
+  const trackData = stats.tracks.map(t => ({
     label: getTrackLabel(t.track),
     value: t.count,
   }));
@@ -86,82 +87,24 @@ export default async function SignalDetailPage({ params }: Props) {
             </div>
           </div>
           <span className="text-dashboard-text-muted text-sm whitespace-nowrap">
-            {profile.total_events.toLocaleString()} events
+            {stats.total.toLocaleString()} events
             <span className="text-dashboard-text-muted/60"> (last 30 days)</span>
           </span>
         </div>
       </div>
 
       {/* Mention Timeline */}
-      {profile.weekly.length > 0 && (
+      {stats.weekly.length > 0 && (
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Mention Timeline</h2>
-          <MentionTimeline weekly={profile.weekly} />
+          <MentionTimeline weekly={stats.weekly} />
         </div>
       )}
 
-      {/* Relationship Highlights — mega signals (200+ events) get 20, others get 10 */}
-      {profile.relationship_clusters.length > 0 && (() => {
-        const isMega = profile.total_events >= 200;
-        const maxClusters = isMega ? 20 : 10;
-        const visible = profile.relationship_clusters.slice(0, maxClusters);
-        return (
-          <div className="mb-8 p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
-            <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-4">
-              Relationship Highlights
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {visible.map(rc => {
-                const rcBadge = TYPE_BADGE[rc.signal_type];
-                return (
-                  <div key={`${rc.signal_type}-${rc.value}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${rcBadge.bg} border ${rcBadge.border} ${rcBadge.text}`}>
-                        {rcBadge.label}
-                      </span>
-                      <Link
-                        href={`/signals/${rc.signal_type}/${encodeURIComponent(rc.value)}`}
-                        className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition truncate"
-                      >
-                        {rc.value}
-                      </Link>
-                      <span className="text-xs text-dashboard-text-muted ml-auto shrink-0">
-                        {rc.event_count} ev
-                      </span>
-                    </div>
-                    {rc.top_events.length > 0 && (
-                      <>
-                        <Link
-                          href={`/events/${rc.top_events[0].id}`}
-                          className="text-sm text-dashboard-text hover:text-blue-400 transition line-clamp-1 mb-1 block"
-                        >
-                          {rc.label}
-                        </Link>
-                        <ul className="space-y-0.5">
-                          {rc.top_events.slice(1).map(ev => (
-                            <li key={ev.id} className="flex items-center gap-1.5">
-                              <span className="text-dashboard-text-muted text-xs">&#183;</span>
-                              <Link
-                                href={`/events/${ev.id}`}
-                                className="text-xs text-dashboard-text-muted hover:text-blue-400 transition truncate"
-                              >
-                                {ev.title}
-                              </Link>
-                              <span className="text-[10px] text-dashboard-text-muted/60 ml-auto shrink-0">
-                                {new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+      {/* Relationship Highlights — streamed in via Suspense */}
+      <Suspense fallback={<RelationshipSkeleton />}>
+        <RelationshipSection type={signalType} value={decoded} totalEvents={stats.total} />
+      </Suspense>
 
       {/* Geo + Tracks side by side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -179,5 +122,91 @@ export default async function SignalDetailPage({ params }: Props) {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+async function RelationshipSection({ type, value, totalEvents }: { type: SignalType; value: string; totalEvents: number }) {
+  const clusters = await getRelationshipClusters(type, value);
+  if (clusters.length === 0) return null;
+
+  const isMega = totalEvents >= 200;
+  const maxClusters = isMega ? 20 : 10;
+  const visible = clusters.slice(0, maxClusters);
+
+  return (
+    <div className="mb-8 p-4 rounded-lg border border-dashboard-border bg-dashboard-surface">
+      <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-4">
+        Relationship Highlights
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {visible.map(rc => {
+          const rcBadge = TYPE_BADGE[rc.signal_type];
+          return (
+            <div key={`${rc.signal_type}-${rc.value}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${rcBadge.bg} border ${rcBadge.border} ${rcBadge.text}`}>
+                  {rcBadge.label}
+                </span>
+                <Link
+                  href={`/signals/${rc.signal_type}/${encodeURIComponent(rc.value)}`}
+                  className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition truncate"
+                >
+                  {rc.value}
+                </Link>
+                <span className="text-xs text-dashboard-text-muted ml-auto shrink-0">
+                  {rc.event_count} ev
+                </span>
+              </div>
+              {rc.top_events.length > 0 && (
+                <>
+                  <Link
+                    href={`/events/${rc.top_events[0].id}`}
+                    className="text-sm text-dashboard-text hover:text-blue-400 transition line-clamp-1 mb-1 block"
+                  >
+                    {rc.label}
+                  </Link>
+                  <ul className="space-y-0.5">
+                    {rc.top_events.slice(1).map(ev => (
+                      <li key={ev.id} className="flex items-center gap-1.5">
+                        <span className="text-dashboard-text-muted text-xs">&#183;</span>
+                        <Link
+                          href={`/events/${ev.id}`}
+                          className="text-xs text-dashboard-text-muted hover:text-blue-400 transition truncate"
+                        >
+                          {ev.title}
+                        </Link>
+                        <span className="text-[10px] text-dashboard-text-muted/60 ml-auto shrink-0">
+                          {new Date(ev.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RelationshipSkeleton() {
+  return (
+    <div className="mb-8 p-4 rounded-lg border border-dashboard-border bg-dashboard-surface animate-pulse">
+      <div className="h-4 w-48 bg-dashboard-border rounded mb-4" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-16 bg-dashboard-border/50 rounded" />
+              <div className="h-4 w-28 bg-dashboard-border rounded" />
+            </div>
+            <div className="h-4 w-full bg-dashboard-border/50 rounded" />
+            <div className="h-3 w-4/5 bg-dashboard-border/30 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
