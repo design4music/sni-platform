@@ -129,12 +129,18 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
       e.bucket_key,
       e.source_batch_count,
       e.is_catchall,
-      EXISTS (SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
-      array_agg(evt.title_id ORDER BY evt.title_id) as source_title_ids
+      n.entity_id IS NOT NULL as has_narratives,
+      COALESCE(t.title_ids, '{}') as source_title_ids
     FROM events_v3 e
-    LEFT JOIN event_v3_titles evt ON e.id = evt.event_id
+    LEFT JOIN LATERAL (
+      SELECT array_agg(evt.title_id ORDER BY evt.title_id) as title_ids
+      FROM event_v3_titles evt WHERE evt.event_id = e.id
+    ) t ON true
+    LEFT JOIN LATERAL (
+      SELECT entity_id FROM narratives n
+      WHERE n.entity_type = 'event' AND n.entity_id = e.id LIMIT 1
+    ) n ON true
     WHERE e.ctm_id = $1 AND e.source_batch_count > 0
-    GROUP BY e.id, e.date, e.last_active, e.title, e.topic_core, e.summary, e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.is_catchall
     ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
   );
@@ -168,7 +174,7 @@ export async function getCTM(
   const params: any[] = [centroidId, track];
 
   if (month) {
-    queryText += ` AND TO_CHAR(month, 'YYYY-MM') = $3`;
+    queryText += ` AND month = ($3 || '-01')::date`;
     params.push(month);
   } else {
     queryText += ' ORDER BY month DESC LIMIT 1';
