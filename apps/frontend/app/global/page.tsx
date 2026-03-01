@@ -12,8 +12,10 @@ export const metadata: Metadata = {
 };
 
 export default async function GlobalPage() {
-  const systemicCentroids = await getCentroidsByClass('systemic');
-  const geoCentroids = await getCentroidsByClass('geo');
+  const [systemicCentroids, geoCentroids] = await Promise.all([
+    getCentroidsByClass('systemic'),
+    getCentroidsByClass('geo'),
+  ]);
 
   // Non-State Actors are geo centroids with IDs starting with "NON-STATE-"
   const nonStateActors = geoCentroids.filter(c => c.id.startsWith('NON-STATE-'));

@@ -34,3 +34,15 @@ export async function query<T = any>(text: string, params?: any[]): Promise<T[]>
   const result = await pool.query(text, params);
   return result.rows;
 }
+
+export async function queryNoJIT<T = any>(text: string, params?: any[]): Promise<T[]> {
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    await client.query('SET LOCAL jit = off');
+    const result = await client.query(text, params);
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}

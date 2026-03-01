@@ -1,4 +1,4 @@
-import { query } from './db';
+import { query, queryNoJIT } from './db';
 import { cached } from './cache';
 import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalProfile, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
@@ -31,22 +31,24 @@ export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Promise<Centroid[]> {
   return cached(`centroids:class:${centroidClass}`, 300, () =>
     query<Centroid>(
-      `WITH centroid_stats AS (
+      `WITH target_centroids AS (
+        SELECT id FROM centroids_v3 WHERE class = $1 AND is_active = true
+      ),
+      centroid_stats AS (
         SELECT
           ctm.centroid_id,
-          COUNT(DISTINCT t.id)::int AS article_count,
-          COUNT(DISTINCT t.publisher_name) FILTER (WHERE t.publisher_name IS NOT NULL)::int AS source_count,
-          COUNT(DISTINCT t.detected_language) FILTER (WHERE t.detected_language IS NOT NULL)::int AS language_count,
-          MAX(t.pubdate_utc) AS last_article_date
+          SUM(ctm.title_count)::int AS article_count,
+          SUM(e.source_batch_count)::int AS source_count,
+          MAX(COALESCE(e.last_active, e.date)) AS last_article_date
         FROM ctm
-        JOIN title_assignments ta ON ctm.id = ta.ctm_id
-        JOIN titles_v3 t ON ta.title_id = t.id
+        JOIN target_centroids tc ON ctm.centroid_id = tc.id
+        LEFT JOIN events_v3 e ON e.ctm_id = ctm.id
         GROUP BY ctm.centroid_id
       )
       SELECT c.*,
         COALESCE(cs.article_count, 0) AS article_count,
         COALESCE(cs.source_count, 0) AS source_count,
-        COALESCE(cs.language_count, 0) AS language_count,
+        0 AS language_count,
         cs.last_article_date
       FROM centroids_v3 c
       LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
@@ -60,22 +62,24 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Pr
 export async function getCentroidsByTheater(theater: string): Promise<Centroid[]> {
   return cached(`centroids:theater:${theater}`, 300, () =>
     query<Centroid>(
-      `WITH centroid_stats AS (
+      `WITH target_centroids AS (
+        SELECT id FROM centroids_v3 WHERE primary_theater = $1 AND is_active = true
+      ),
+      centroid_stats AS (
         SELECT
           ctm.centroid_id,
-          COUNT(DISTINCT t.id)::int AS article_count,
-          COUNT(DISTINCT t.publisher_name) FILTER (WHERE t.publisher_name IS NOT NULL)::int AS source_count,
-          COUNT(DISTINCT t.detected_language) FILTER (WHERE t.detected_language IS NOT NULL)::int AS language_count,
-          MAX(t.pubdate_utc) AS last_article_date
+          SUM(ctm.title_count)::int AS article_count,
+          SUM(e.source_batch_count)::int AS source_count,
+          MAX(COALESCE(e.last_active, e.date)) AS last_article_date
         FROM ctm
-        JOIN title_assignments ta ON ctm.id = ta.ctm_id
-        JOIN titles_v3 t ON ta.title_id = t.id
+        JOIN target_centroids tc ON ctm.centroid_id = tc.id
+        LEFT JOIN events_v3 e ON e.ctm_id = ctm.id
         GROUP BY ctm.centroid_id
       )
       SELECT c.*,
         COALESCE(cs.article_count, 0) AS article_count,
         COALESCE(cs.source_count, 0) AS source_count,
-        COALESCE(cs.language_count, 0) AS language_count,
+        0 AS language_count,
         cs.last_article_date
       FROM centroids_v3 c
       LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
@@ -1123,7 +1127,7 @@ export async function getSignalProfile(
     // Relationship clusters: top co-occurring signals enriched with shared events
     // 20% density filter on BOTH the primary signal AND each co-signal per event,
     // so displayed events genuinely involve both signals (not just a passing mention)
-    query<RelationshipCluster>(
+    queryNoJIT<RelationshipCluster>(
       `WITH signal_events AS (
          SELECT e.id, COALESCE(e.title, e.topic_core) as title,
                 e.date::text as date, e.source_batch_count
@@ -1236,7 +1240,7 @@ export async function getSignalGraph(perType: number = 8, month?: string): Promi
       HAVING COUNT(DISTINCT a.event_id) >= 3
       ORDER BY weight DESC`;
 
-    const edges = await query<SignalEdge>(edgesSQL, dr.params);
+    const edges = await queryNoJIT<SignalEdge>(edgesSQL, dr.params);
     return { nodes, edges };
   });
 }
@@ -1407,8 +1411,9 @@ export async function getSignalCategoryDetail(
 
 export async function searchAll(q: string): Promise<SearchResult[]> {
   if (!q || q.trim().length === 0) return [];
+  const trimmed = q.trim();
 
-  return query<SearchResult>(
+  return cached(`search:${trimmed.toLowerCase()}`, 300, () => query<SearchResult>(
     `WITH q AS (SELECT websearch_to_tsquery('english', $1) AS tsq)
      SELECT * FROM (
        (SELECT 'event' as type, e.id::text, COALESCE(e.title, e.topic_core) as title,
@@ -1440,6 +1445,6 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
      ) sub
      ORDER BY rank DESC
      LIMIT 30`,
-    [q.trim()]
-  );
+    [trimmed]
+  ));
 }

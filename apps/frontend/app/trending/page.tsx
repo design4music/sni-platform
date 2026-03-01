@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -61,11 +62,13 @@ function TrendingSignalsSidebar({ signals }: { signals: Record<string, { signal_
   );
 }
 
+async function DeferredSignalsSidebar() {
+  const signals = await getTrendingSignals();
+  return <TrendingSignalsSidebar signals={signals} />;
+}
+
 export default async function TrendingPage() {
-  const [events, signals] = await Promise.all([
-    getTrendingEvents(30),
-    getTrendingSignals(),
-  ]);
+  const events = await getTrendingEvents(30);
 
   const heroEvents = events.slice(0, 3);
   const restEvents = events.slice(3);
@@ -99,7 +102,18 @@ export default async function TrendingPage() {
               ))}
             </div>
             <aside>
-              <TrendingSignalsSidebar signals={signals} />
+              <Suspense fallback={
+                <div className="sticky top-24 space-y-6">
+                  <h2 className="text-lg font-bold">Trending Signals</h2>
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-24 rounded bg-dashboard-surface animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              }>
+                <DeferredSignalsSidebar />
+              </Suspense>
             </aside>
           </div>
         )}

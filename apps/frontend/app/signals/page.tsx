@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import SignalGraph from '@/components/signals/SignalGraph';
@@ -22,16 +23,73 @@ const CATEGORIES: { type: SignalType; icon: string; badge: string }[] = [
   { type: 'named_events', icon: 'E', badge: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
 ];
 
-export default async function SignalObservatoryPage() {
-  const [graph, heatmapSignals] = await Promise.all([
-    getSignalGraph(8),
-    getSignalHeatmap(8),
-  ]);
+async function DeferredGraph() {
+  const graph = await getSignalGraph(8);
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Co-occurrence Network</h2>
+        <p className="text-xs text-dashboard-text-muted hidden sm:block">
+          Hover to highlight connections. Click a node to explore.
+        </p>
+      </div>
+      <SignalGraph nodes={graph.nodes} edges={graph.edges} />
+      <p className="text-xs text-dashboard-text-muted">
+        Nodes are the most-mentioned signals across 180+ outlets over the last 30 days.
+        Lines connect signals that appear in the same events. Node size reflects mention frequency.
+        Colors indicate signal type: <span className="text-blue-400">persons</span>, <span className="text-green-400">organizations</span>, <span className="text-orange-400">places</span>, <span className="text-yellow-400">commodities</span>, <span className="text-purple-400">policies</span>, <span className="text-cyan-400">systems</span>, <span className="text-pink-400">events</span>.
+      </p>
+    </div>
+  );
+}
 
+async function DeferredAccordion() {
+  const heatmapSignals = await getSignalHeatmap(8);
+  if (heatmapSignals.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Signal Activity</h2>
+        <p className="text-xs text-dashboard-text-muted">
+          Weekly event counts for top signals by category. Expand a panel to explore.
+        </p>
+      </div>
+      <SignalAccordion signals={heatmapSignals} categories={CATEGORIES} />
+    </div>
+  );
+}
+
+function GraphSkeleton() {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Co-occurrence Network</h2>
+      </div>
+      <div className="w-full rounded-lg border border-dashboard-border bg-[#0f172a] animate-pulse" style={{ height: 400 }} />
+    </div>
+  );
+}
+
+function AccordionSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold mb-1">Signal Activity</h2>
+        <p className="text-xs text-dashboard-text-muted">Loading categories...</p>
+      </div>
+      <div className="space-y-2">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-12 rounded-lg border border-dashboard-border bg-dashboard-surface animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function SignalObservatoryPage() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        {/* Header */}
         <div>
           <h1 className="text-3xl md:text-4xl font-bold mb-2">Signal Observatory</h1>
           <p className="text-dashboard-text-muted">
@@ -39,34 +97,13 @@ export default async function SignalObservatoryPage() {
           </p>
         </div>
 
-        {/* Full-width graph */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Co-occurrence Network</h2>
-            <p className="text-xs text-dashboard-text-muted hidden sm:block">
-              Hover to highlight connections. Click a node to explore.
-            </p>
-          </div>
-          <SignalGraph nodes={graph.nodes} edges={graph.edges} />
-          <p className="text-xs text-dashboard-text-muted">
-            Nodes are the most-mentioned signals across 180+ outlets over the last 30 days.
-            Lines connect signals that appear in the same events. Node size reflects mention frequency.
-            Colors indicate signal type: <span className="text-blue-400">persons</span>, <span className="text-green-400">organizations</span>, <span className="text-orange-400">places</span>, <span className="text-yellow-400">commodities</span>, <span className="text-purple-400">policies</span>, <span className="text-cyan-400">systems</span>, <span className="text-pink-400">events</span>.
-          </p>
-        </div>
+        <Suspense fallback={<GraphSkeleton />}>
+          <DeferredGraph />
+        </Suspense>
 
-        {/* Category accordion with heatmaps */}
-        {heatmapSignals.length > 0 && (
-          <div className="space-y-3">
-            <div>
-              <h2 className="text-lg font-semibold mb-1">Signal Activity</h2>
-              <p className="text-xs text-dashboard-text-muted">
-                Weekly event counts for top signals by category. Expand a panel to explore.
-              </p>
-            </div>
-            <SignalAccordion signals={heatmapSignals} categories={CATEGORIES} />
-          </div>
-        )}
+        <Suspense fallback={<AccordionSkeleton />}>
+          <DeferredAccordion />
+        </Suspense>
       </div>
     </DashboardLayout>
   );
