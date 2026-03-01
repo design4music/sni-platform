@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import EventList from './EventList';
 import OtherCoverage from './OtherCoverage';
 import { Event } from '@/lib/types';
@@ -30,6 +31,7 @@ interface CountryAccordionProps {
   otherEvents: Event[];
   totalSourceCount: number;
   defaultOpen?: boolean;
+  centroidLink?: string;
 }
 
 function sortBySourceCount(events: Event[]) {
@@ -45,6 +47,7 @@ export default function CountryAccordion({
   otherEvents,
   totalSourceCount,
   defaultOpen = false,
+  centroidLink,
 }: CountryAccordionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -61,6 +64,17 @@ export default function CountryAccordion({
               <span className="mr-2"><FlagImg iso2={isoCodes[0]} /></span>
             )}
             {countryName}
+            {centroidLink && (
+              <Link
+                href={centroidLink}
+                scroll
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center ml-2 text-xs text-blue-400/60 hover:text-blue-400 transition align-middle"
+                title={`${countryName} profile`}
+              >
+                &#8599;
+              </Link>
+            )}
           </span>
           {isoCodes.length > 1 && (
             <span className="flex items-center gap-1 mt-0.5">

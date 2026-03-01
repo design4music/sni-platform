@@ -14,7 +14,6 @@ import {
   getMonthTimeline,
   getTitlesByCTM,
   getTracksByCentroid,
-  getOverlappingCentroidsForTrack,
   getFramedNarratives,
 } from '@/lib/queries';
 import NarrativeCards from '@/components/NarrativeOverlay';
@@ -84,33 +83,6 @@ function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
 /* Deferred async server components (wrapped in Suspense)             */
 /* ------------------------------------------------------------------ */
 
-async function OverlappingCentroidsSection({
-  centroidId, track, currentMonth,
-}: {
-  centroidId: string; track: string; currentMonth: string;
-}) {
-  const overlappingCentroids = await getOverlappingCentroidsForTrack(centroidId, track);
-  if (overlappingCentroids.length === 0) return null;
-  return (
-    <div className="hidden lg:block bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-      <h3 className="text-base font-semibold mb-3 text-dashboard-text">
-        &ldquo;{getTrackLabel(track as Track)}&rdquo; Elsewhere
-      </h3>
-      <div className="space-y-1">
-        {overlappingCentroids.slice(0, 5).map(c => (
-          <Link
-            key={c.id}
-            href={`/c/${c.id}/t/${track}?month=${currentMonth}`}
-            className="block px-3 py-2 rounded text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border/50 transition"
-          >
-            {c.label}
-            <span className="text-xs ml-2 opacity-60">({c.overlap_count})</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 async function NarrativeSection({
   entityType, entityId,
@@ -303,14 +275,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         </div>
       )}
 
-      {/* Same track, other centroids (deferred - slow query) */}
-      <Suspense fallback={null}>
-        <OverlappingCentroidsSection
-          centroidId={centroid.id}
-          track={track}
-          currentMonth={currentMonth}
-        />
-      </Suspense>
     </div>
   );
 
@@ -491,6 +455,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                     otherEvents={otherEvents}
                     totalSourceCount={countTitles(events)}
                     defaultOpen={index === 0}
+                    centroidLink={bucketCentroid ? `/c/${bucketKey}/t/${track}?month=${currentMonth}` : undefined}
                   />
                 );
               })}
