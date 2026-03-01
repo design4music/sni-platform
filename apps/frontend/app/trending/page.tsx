@@ -68,7 +68,7 @@ async function DeferredSignalsSidebar() {
 }
 
 export default async function TrendingPage() {
-  const events = await getTrendingEvents(30);
+  const events = await getTrendingEvents(12);
 
   const heroEvents = events.slice(0, 3);
   const restEvents = events.slice(3);

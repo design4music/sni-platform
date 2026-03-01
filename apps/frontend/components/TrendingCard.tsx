@@ -64,10 +64,11 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
   const timeAgo = formatTimeAgo(new Date(event.last_active));
   const trackLabel = getTrackLabel(event.track);
   const eventHref = `/events/${event.id}`;
+  const isEmerging = (Date.now() - new Date(event.last_active).getTime()) < 43200000; // 12h
 
   if (compact) {
     return (
-      <div className="p-3 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group">
+      <div className={`p-3 border bg-dashboard-surface rounded-lg hover:border-blue-500 transition group ${isEmerging ? 'border-yellow-500/40 shadow-[0_0_12px_rgba(234,179,8,0.15)]' : 'border-dashboard-border'}`}>
         <div className="flex items-start gap-3">
           <div className="text-blue-400 shrink-0 mt-0.5">
             {getTrackIcon(event.track)}
@@ -96,7 +97,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
 
   // Hero card (default)
   return (
-    <div className="p-5 border border-dashboard-border bg-dashboard-surface rounded-lg hover:border-blue-500 transition">
+    <div className={`p-5 border bg-dashboard-surface rounded-lg hover:border-blue-500 transition ${isEmerging ? 'border-yellow-500/40 shadow-[0_0_16px_rgba(234,179,8,0.2)]' : 'border-dashboard-border'}`}>
       <div className="flex items-center gap-2 mb-3">
         <span className="flex items-center gap-1">
           {event.iso_codes?.slice(0, 3).map(iso => (

@@ -953,7 +953,11 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
 export async function getTrendingEvents(limit: number = 20): Promise<TrendingEvent[]> {
   return cached(`trending:${limit}`, 300, () =>
     query<TrendingEvent>(
-      `SELECT e.id, COALESCE(e.title, e.topic_core) as title,
+      `SELECT e.id, COALESCE(e.title, e.topic_core, (
+                SELECT t.title_display FROM event_v3_titles evt
+                JOIN titles_v3 t ON t.id = evt.title_id
+                WHERE evt.event_id = e.id LIMIT 1
+              )) as title,
               e.date::text as date, COALESCE(e.last_active, e.date)::text as last_active,
               e.source_batch_count, COALESCE(e.tags, '{}') as tags,
               LEFT(e.summary, 200) as summary,
@@ -1011,7 +1015,7 @@ export async function getTrendingSignals(): Promise<Record<string, TrendingSigna
        WHERE e.source_batch_count >= 5
          AND e.is_catchall = false
          AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
-       GROUP BY val ORDER BY event_count DESC LIMIT 8`
+       GROUP BY val ORDER BY event_count DESC LIMIT 5`
     );
 
     const sql = parts.map(p => `(${p})`).join(' UNION ALL ');
