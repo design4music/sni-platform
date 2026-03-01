@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-02-25
+**Last Updated**: 2026-03-01
 **Status**: Production - Full pipeline operational (4-slot architecture)
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -29,6 +29,10 @@ RSS Feeds (Google News)
 [Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles        |
     |                                                                          |
 [Phase 4.1] Topic Consolidation (anchor-candidate dedup + rescue) --> merged   |
+    |                                                                          |
+[Phase 4.2a] Materialize Centroid Signals --> mv_centroid_signals             |
+    |                                                                          |
+[Phase 4.2b] Materialize Signal Graph --> mv_signal_graph                     |
     |                                                                          |
 [Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags      |
     |                                                                         /
@@ -62,7 +66,7 @@ Phases are grouped into 4 scheduling slots. Within each slot, phases run sequent
 |------|----------|--------|-------------|
 | **INGESTION** | 12 hours | Phase 1 (RSS) + Phase 2 (centroid matching) | all feeds, all titles |
 | **CLASSIFICATION** | 15 minutes | Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks) | 500 titles/run (concurrency=5) |
-| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (anchor-candidate dedup) | all CTMs, 25 CTMs for consolidation |
+| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (dedup) + 4.2a/b (materialization) | all CTMs, 25 CTMs for consolidation |
 | **ENRICHMENT** | 6 hours | Phase 4.5a (event summaries) + 4.5b (CTM digests) | 2000 events, 200 CTMs |
 | **Daily purge** | 24 hours | Remove rejected titles + reset api_error_count | all |
 
@@ -305,6 +309,41 @@ Tested on all 460 Feb 2026 CTMs (69,576 titles): 41 genuine merges, 67 catchall 
 
 ---
 
+## Phase 4.2: Materialized Views (mv_* pattern)
+
+**Scripts**: `pipeline/phase_4/materialize_centroid_signals.py`, `pipeline/phase_4/materialize_signal_graph.py`
+**Runs**: After Phase 4.1 in Slot 3
+
+### Purpose
+
+Pre-compute expensive analytical queries as JSONB rows, replacing multi-second frontend queries with PK lookups (<1ms). Each mv_* table stores pre-computed results that the frontend reads directly instead of running complex SQL.
+
+### Phase 4.2a: Centroid Top Signals
+
+Computes top 5 signals per centroid per month using UNION ALL across 5 signal columns (persons, orgs, places, commodities, policies), ranked by event count.
+
+**Table**: `mv_centroid_signals (centroid_id, month) -> signals JSONB`
+
+**CLI**: `python -m pipeline.phase_4.materialize_centroid_signals [--month 2026-02] [--all]`
+
+**Refresh**: Every Slot 3 cycle for unfrozen months. Frozen months computed once.
+
+### Phase 4.2b: Signal Co-occurrence Graph
+
+Computes the signal co-occurrence network (nodes = top 5 signals per type, edges = co-occurring pairs with weight >= 3 shared events). Uses the same 7-CTE self-join as the previous frontend query but runs offline.
+
+**Table**: `mv_signal_graph (period) -> nodes JSONB, edges JSONB`
+
+**CLI**: `python -m pipeline.phase_4.materialize_signal_graph [--period rolling]`
+
+**Refresh**: Every Slot 3 cycle for "rolling" period (30-day window).
+
+### Design Convention
+
+All materialized view tables follow the `mv_*` naming convention. Each has a corresponding `pipeline/phase_4/materialize_*.py` script exposing `materialize()` (daemon-callable) and `main()` (CLI with argparse). New mv_* tables require: (1) CREATE TABLE locally + on Render, (2) backfill via CLI, (3) hook into daemon Phase 4.2.
+
+---
+
 ## Phase 4.5a: Event Summary Generation
 
 **Script**: `pipeline/phase_4/generate_event_summaries_4_5a.py`
@@ -515,6 +554,21 @@ rai_shifts JSONB, rai_full_analysis TEXT, rai_analyzed_at TIMESTAMPTZ
 UNIQUE(entity_id, label)
 ```
 
+**mv_centroid_signals**: Pre-computed top signals per centroid+month (Phase 4.2a)
+```sql
+centroid_id TEXT, month DATE  -- PK
+signals JSONB  -- [{signal_type, value, event_count}, ...]
+updated_at TIMESTAMPTZ
+```
+
+**mv_signal_graph**: Pre-computed signal co-occurrence graph (Phase 4.2b)
+```sql
+period TEXT  -- PK: 'rolling' or 'YYYY-MM'
+nodes JSONB  -- [{signal_type, value, event_count}, ...]
+edges JSONB  -- [{source, target, source_type, target_type, weight}, ...]
+updated_at TIMESTAMPTZ
+```
+
 **monthly_signal_rankings**: Pre-computed signal rankings with LLM context
 ```sql
 month, signal_type, rank, value, count, context TEXT
@@ -544,6 +598,8 @@ pipeline/
 |-- phase_4/
 |   |-- incremental_clustering.py    # Topic clustering (anchor signals + buckets)
 |   |-- consolidate_topics.py        # Anchor-candidate dedup + catchall rescue
+|   |-- materialize_centroid_signals.py  # mv_centroid_signals (Phase 4.2a)
+|   |-- materialize_signal_graph.py      # mv_signal_graph (Phase 4.2b)
 |   |-- generate_event_summaries_4_5a.py  # Event summaries
 |   |-- generate_summaries_4_5.py    # CTM digests
 |   |-- extract_ctm_narratives.py    # CTM narrative extraction (Phase 5a)

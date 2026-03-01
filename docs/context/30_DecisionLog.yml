@@ -573,3 +573,65 @@ decisions:
       - apps/frontend/components/AnalysisContent.tsx
       - apps/frontend/components/AssessmentScores.tsx
 
+  - id: D-032
+    date: 2026-03-01
+    type: architectural
+    status: accepted
+    title: Materialized view pattern (mv_* tables) for expensive frontend queries
+    rationale: >
+      Several frontend pages ran expensive analytical queries on every request:
+      LATERAL unnest across signal columns, self-joins for co-occurrence graphs,
+      multi-CTE aggregations. On Render's shared Postgres these took 5-30 seconds,
+      making pages unusable even with 1h in-memory caches (first visitor still waits).
+      The mv_* pattern pre-computes these results as JSONB rows in the pipeline daemon,
+      reducing frontend queries to simple PK lookups (<1ms). The daemon refreshes
+      mv_* tables every Slot 3 cycle (~30min), which is fresher than the previous
+      1h frontend cache.
+    implementation:
+      - Table naming convention: mv_* prefix (e.g., mv_centroid_signals, mv_signal_graph)
+      - Scripts: pipeline/phase_4/materialize_*.py (one per table)
+      - Each script exposes materialize() for daemon + main() for CLI backfill
+      - UPSERT via ON CONFLICT DO UPDATE SET ... updated_at = NOW()
+      - Daemon Phase 4.2a (centroid signals) + 4.2b (signal graph), 300s timeout each
+    tables:
+      - mv_centroid_signals: Top 5 signals per centroid+month (PK: centroid_id, month)
+      - mv_signal_graph: Co-occurrence network nodes+edges (PK: period)
+    consequences:
+      - Centroid page signals: 5 parallel LATERAL unnest queries -> PK lookup
+      - Signal Observatory graph: 7-CTE self-join (10s) -> PK lookup (<100ms)
+      - Data staleness ~30min (was 1h with frontend cache)
+      - New mv_* tables must be created on Render + backfilled when added
+      - Pattern is extensible: any heavy analytical query is a candidate
+    references:
+      - pipeline/phase_4/materialize_centroid_signals.py
+      - pipeline/phase_4/materialize_signal_graph.py
+      - pipeline/runner/pipeline_daemon.py (Phase 4.2a + 4.2b)
+
+  - id: D-033
+    date: 2026-03-01
+    type: performance
+    status: accepted
+    title: Frontend query optimization pass (SARGable filters, LATERAL rewrites)
+    rationale: >
+      Multiple frontend queries used TO_CHAR(month, 'YYYY-MM') = $1 in WHERE clauses,
+      which prevents Postgres from using indexes on the month column (non-SARGable).
+      Additionally, getEventsFromV3 used a wide GROUP BY with a correlated EXISTS
+      subquery, and the overlapping centroids sidebar widget ran a 110ms query on
+      every CTM page load. The trending page fetched 30 events when 12 suffice.
+    implementation:
+      - Replaced TO_CHAR(month) with month = ($1 || '-01')::date in 4 queries
+      - Rewrote getEventsFromV3 with LATERAL subqueries (no wide GROUP BY)
+      - Dropped getOverlappingCentroidsForTrack widget, replaced with inline
+        cross-centroid arrow links on bilateral accordion headers (zero-cost)
+      - Trending page reduced from 30 to 12 events, sidebar signals 8 -> 5
+      - Added yellow glow for emerging stories (<12h) on trending cards
+      - Added title fallback to source headline for un-enriched events
+    consequences:
+      - Centroid page TTFB improved (index-backed month lookups)
+      - CTM page drops 110ms sidebar query entirely
+      - Trending page tighter, more focused, better visual hierarchy
+    references:
+      - apps/frontend/lib/queries.ts
+      - apps/frontend/components/TrendingCard.tsx
+      - apps/frontend/components/CountryAccordion.tsx
+
