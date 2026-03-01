@@ -984,8 +984,7 @@ export async function getTrendingEvents(limit: number = 20): Promise<TrendingEve
        ) sig ON true
        WHERE e.source_batch_count >= 5
          AND e.is_catchall = false
-         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '14 days'
-         AND c.is_frozen = false
+         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
        ORDER BY trending_score DESC
        LIMIT $1`,
       [limit]
@@ -1005,8 +1004,7 @@ export async function getTrendingSignals(): Promise<Record<string, TrendingSigna
        CROSS JOIN LATERAL unnest(tl.${col}) AS val
        WHERE e.source_batch_count >= 5
          AND e.is_catchall = false
-         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '14 days'
-         AND c.is_frozen = false
+         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
        GROUP BY val ORDER BY event_count DESC LIMIT 8`
     );
 
