@@ -1264,11 +1264,11 @@ export async function getTopSignalsForEpic(epicId: string, limit: number = 10): 
 }
 
 /** Top signals for a specific centroid (pre-computed by pipeline Phase 4.2) */
-export async function getTopSignalsForCentroid(centroidId: string): Promise<SignalNode[]> {
+export async function getTopSignalsForCentroid(centroidId: string, month?: string): Promise<SignalNode[]> {
   const rows = await query<{ signals: SignalNode[] }>(
     `SELECT signals FROM centroid_top_signals
-     WHERE centroid_id = $1 AND month = date_trunc('month', CURRENT_DATE)`,
-    [centroidId]
+     WHERE centroid_id = $1 AND month = ($2 || '-01')::date`,
+    [centroidId, month || new Date().toISOString().slice(0, 7)]
   );
   return rows[0]?.signals || [];
 }

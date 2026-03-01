@@ -63,7 +63,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const [monthTrackData, centroidSummary, topSignals] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
-    getTopSignalsForCentroid(centroid.id),
+    getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
   ]);
 
   // Build maps of track -> titleCount and track -> lastActive for the current month
