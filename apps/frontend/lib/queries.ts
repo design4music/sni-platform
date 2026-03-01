@@ -507,7 +507,7 @@ export async function getTrackSummaryByCentroidAndMonth(
     LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
     LEFT JOIN events_v3 e ON e.ctm_id = c.id
     WHERE c.centroid_id = $1
-      AND TO_CHAR(c.month, 'YYYY-MM') = $2
+      AND c.month = ($2 || '-01')::date
     GROUP BY c.track
     ORDER BY c.track`,
     [centroidId, month]
@@ -530,7 +530,7 @@ export async function getCentroidMonthlySummary(
   const results = await query<{ summary_text: string; track_count: number; total_events: number }>(
     `SELECT summary_text, track_count, total_events
      FROM centroid_monthly_summaries
-     WHERE centroid_id = $1 AND TO_CHAR(month, 'YYYY-MM') = $2`,
+     WHERE centroid_id = $1 AND month = ($2 || '-01')::date`,
     [centroidId, month]
   );
   return results[0] || null;
