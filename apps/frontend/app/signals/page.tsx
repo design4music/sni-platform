@@ -24,7 +24,7 @@ const CATEGORIES: { type: SignalType; icon: string; badge: string }[] = [
 ];
 
 async function DeferredGraph() {
-  const graph = await getSignalGraph(8);
+  const graph = await getSignalGraph(5);
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
@@ -44,7 +44,7 @@ async function DeferredGraph() {
 }
 
 async function DeferredAccordion() {
-  const heatmapSignals = await getSignalHeatmap(8);
+  const heatmapSignals = await getSignalHeatmap(5);
   if (heatmapSignals.length === 0) return null;
   return (
     <div className="space-y-3">
