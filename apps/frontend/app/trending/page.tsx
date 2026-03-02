@@ -4,6 +4,7 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import TrendingCard from '@/components/TrendingCard';
 import { getTrendingEvents, getTrendingSignals } from '@/lib/queries';
+import { dedupTrendingEvents } from '@/lib/dedup-trending';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,8 @@ async function DeferredSignalsSidebar() {
 }
 
 export default async function TrendingPage() {
-  const events = await getTrendingEvents(12);
+  const raw = await getTrendingEvents(30);
+  const events = dedupTrendingEvents(raw).slice(0, 12);
 
   const heroEvents = events.slice(0, 3);
   const restEvents = events.slice(3);

@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import TrendingCarouselClient from './TrendingCarouselClient';
 import { getTrendingEvents } from '@/lib/queries';
+import { dedupTrendingEvents } from '@/lib/dedup-trending';
 
 export default async function TrendingCarousel() {
-  const events = await getTrendingEvents(12);
+  const raw = await getTrendingEvents(30);
+  const events = dedupTrendingEvents(raw).slice(0, 12);
   if (events.length === 0) return null;
 
   return (
