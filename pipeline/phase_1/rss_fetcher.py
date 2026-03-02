@@ -267,8 +267,16 @@ class RSSFetcher:
                             *entry.updated_parsed[:6], tzinfo=timezone.utc
                         )
 
+                    # Reject entries with no publication date
+                    if not pubdate_utc:
+                        continue
+
+                    # Hard floor: reject titles before 2026 (pipeline start)
+                    if pubdate_utc.year < 2026:
+                        continue
+
                     # Skip if older than watermark
-                    if watermark_date and pubdate_utc and pubdate_utc <= watermark_date:
+                    if watermark_date and pubdate_utc <= watermark_date:
                         continue
 
                     # Track latest pubdate
