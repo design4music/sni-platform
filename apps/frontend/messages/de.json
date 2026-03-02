@@ -193,7 +193,15 @@
     "notFound": "Ereignis nicht gefunden",
     "metaDescription": "Nachrichtenanalyse: {title}. Narrative Perspektiven, Quellenabdeckung und Mediensignale.",
     "summary": "Zusammenfassung",
-    "currentEvent": "Aktuelles Ereignis"
+    "currentEvent": "Aktuelles Ereignis",
+    "headlinesFrom": "{headlines} Schlagzeilen von {publishers} Verlagen",
+    "showMorePublishers": "{count} weitere Verlage anzeigen"
+  },
+  "brief": {
+    "backgroundBrief": "Hintergrundbericht",
+    "updated": "Aktualisiert {date}",
+    "description": "Dieser Bericht skizziert den dauerhaften Kontext fuer {label}, einschliesslich struktureller Einschraenkungen, strategischer Prioritaeten und anhalternder Spannungen. Im Gegensatz zu den monatlichen Track-Zusammenfassungen oben ist er nicht an einen bestimmten Zeitraum gebunden und aendert sich nur, wenn sich die zugrunde liegenden Bedingungen weiterentwickeln.",
+    "snapshot": "Ueberblick"
   },
   "search": {
     "placeholder": "Themen, Laender, Epics suchen...",

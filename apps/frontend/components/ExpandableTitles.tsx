@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Title } from '@/lib/types';
 
 interface PublisherGroup {
@@ -55,7 +56,7 @@ function PublisherFavicon({ publisher }: { publisher: string }) {
   );
 }
 
-function PublisherAccordion({ group, defaultOpen }: { group: PublisherGroup; defaultOpen: boolean }) {
+function PublisherAccordion({ group, defaultOpen, dateFmtLocale }: { group: PublisherGroup; defaultOpen: boolean; dateFmtLocale: string }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -100,7 +101,7 @@ function PublisherAccordion({ group, defaultOpen }: { group: PublisherGroup; def
               <div className="text-xs text-dashboard-text-muted mt-0.5">
                 {title.pubdate_utc && (
                   <span>
-                    {new Date(title.pubdate_utc).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(title.pubdate_utc).toLocaleDateString(dateFmtLocale, { month: 'short', day: 'numeric' })}
                   </span>
                 )}
                 {title.detected_language && title.detected_language !== 'en' && (
@@ -122,6 +123,9 @@ interface ExpandableTitlesProps {
 
 export default function ExpandableTitles({ titles, initialCount = 10 }: ExpandableTitlesProps) {
   const [showAll, setShowAll] = useState(false);
+  const t = useTranslations('event');
+  const locale = useLocale();
+  const dateFmtLocale = locale === 'de' ? 'de-DE' : 'en-US';
 
   const groups = useMemo(() => {
     const map = new Map<string, Title[]>();
@@ -141,11 +145,11 @@ export default function ExpandableTitles({ titles, initialCount = 10 }: Expandab
   return (
     <div>
       <p className="text-sm text-dashboard-text-muted mb-3">
-        {titles.length} headlines from {groups.length} publishers
+        {t('headlinesFrom', { headlines: titles.length, publishers: groups.length })}
       </p>
       <div className="space-y-0.5">
         {visible.map((group, i) => (
-          <PublisherAccordion key={group.publisher} group={group} defaultOpen={i === 0} />
+          <PublisherAccordion key={group.publisher} group={group} defaultOpen={i === 0} dateFmtLocale={dateFmtLocale} />
         ))}
       </div>
       {!showAll && remaining > 0 && (
@@ -153,7 +157,7 @@ export default function ExpandableTitles({ titles, initialCount = 10 }: Expandab
           onClick={() => setShowAll(true)}
           className="mt-3 text-sm text-blue-400 hover:text-blue-300"
         >
-          Show {remaining} more publishers
+          {t('showMorePublishers', { count: remaining })}
         </button>
       )}
     </div>

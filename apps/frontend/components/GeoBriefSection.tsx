@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, ReactNode } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { GeoBriefProfile } from '@/lib/types';
 
 interface GeoBriefSectionProps {
@@ -86,6 +87,10 @@ function AccordionItem({
 }
 
 export default function GeoBriefSection({ profile, updatedAt, centroidLabel, miniMap }: GeoBriefSectionProps) {
+  const t = useTranslations('brief');
+  const locale = useLocale();
+  const dateFmtLocale = locale === 'de' ? 'de-DE' : 'en-US';
+
   if (!profile || profile.schema_version !== 'geo_brief_v0') {
     return null;
   }
@@ -104,20 +109,17 @@ export default function GeoBriefSection({ profile, updatedAt, centroidLabel, min
       <div className="px-6 py-4 border-b border-dashboard-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold">Background Brief</h2>
+            <h2 className="text-2xl font-bold">{t('backgroundBrief')}</h2>
             {flagIso2 && <FlagImg iso2={flagIso2} size={28} />}
           </div>
           {updatedAt && (
             <span className="text-sm text-dashboard-text-muted" suppressHydrationWarning>
-              Updated {new Date(updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+              {t('updated', { date: new Date(updatedAt).toLocaleDateString(dateFmtLocale, { year: 'numeric', month: 'short', day: 'numeric' }) })}
             </span>
           )}
         </div>
         <p className="text-dashboard-text-muted text-sm mt-3 leading-relaxed">
-          This brief outlines the enduring context for {centroidLabel || 'this centroid'},
-          including structural constraints, strategic priorities, and persistent tensions.
-          Unlike the monthly track summaries above, it is not tied to a specific period and
-          changes only when underlying conditions evolve.
+          {t('description', { label: centroidLabel || 'this centroid' })}
         </p>
       </div>
 
@@ -129,7 +131,7 @@ export default function GeoBriefSection({ profile, updatedAt, centroidLabel, min
 
       {hasSnapshot && profile.snapshot && (
         <div className="px-6 py-6 border-b border-dashboard-border">
-          <h3 className="text-lg font-semibold mb-4">Snapshot</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('snapshot')}</h3>
           <table className="w-full">
             <tbody>
               {profile.snapshot.map((row, idx) => (

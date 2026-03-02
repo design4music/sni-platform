@@ -193,7 +193,15 @@
     "notFound": "Event Not Found",
     "metaDescription": "News analysis: {title}. Narrative frames, source coverage, and media signals.",
     "summary": "Summary",
-    "currentEvent": "Current event"
+    "currentEvent": "Current event",
+    "headlinesFrom": "{headlines} headlines from {publishers} publishers",
+    "showMorePublishers": "Show {count} more publishers"
+  },
+  "brief": {
+    "backgroundBrief": "Background Brief",
+    "updated": "Updated {date}",
+    "description": "This brief outlines the enduring context for {label}, including structural constraints, strategic priorities, and persistent tensions. Unlike the monthly track summaries above, it is not tied to a specific period and changes only when underlying conditions evolve.",
+    "snapshot": "Snapshot"
   },
   "search": {
     "placeholder": "Search topics, countries, epics...",
