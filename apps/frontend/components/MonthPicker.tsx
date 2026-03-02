@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRef, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface MonthPickerProps {
   months: string[];  // YYYY-MM format, already sorted descending
@@ -9,11 +10,11 @@ interface MonthPickerProps {
   baseUrl: string;
 }
 
-function formatMonth(month: string): string {
+function formatMonth(month: string, locale: string): string {
   const [year, m] = month.split('-');
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const monthIndex = parseInt(m, 10) - 1;
-  return `${monthNames[monthIndex]} ${year}`;
+  const monthName = new Date(2024, monthIndex).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short' });
+  return `${monthName} ${year}`;
 }
 
 export default function MonthPicker({ months, currentMonth, baseUrl }: MonthPickerProps) {
@@ -34,13 +35,16 @@ export default function MonthPicker({ months, currentMonth, baseUrl }: MonthPick
     }
   }, [currentMonth]);
 
+  const t = useTranslations('nav');
+  const locale = useLocale();
+
   if (months.length === 0) {
     return null;
   }
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-3">View by Month</h3>
+      <h3 className="text-lg font-semibold mb-3">{t('viewByMonth')}</h3>
       <div
         ref={containerRef}
         className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin"
@@ -64,7 +68,7 @@ export default function MonthPicker({ months, currentMonth, baseUrl }: MonthPick
                 }
               `}
             >
-              {formatMonth(month)}
+              {formatMonth(month, locale)}
             </Link>
           );
         })}

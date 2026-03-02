@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { RelatedEvent, getTrackLabel } from '@/lib/types';
+import { RelatedEvent, getTrackLabel, getCentroidLabel } from '@/lib/types';
+import { getTranslations } from 'next-intl/server';
 
 interface RelatedStoriesProps {
   events: RelatedEvent[];
@@ -19,8 +20,12 @@ function FlagImg({ iso2 }: { iso2: string }) {
   );
 }
 
-export default function RelatedStories({ events }: RelatedStoriesProps) {
+export default async function RelatedStories({ events }: RelatedStoriesProps) {
   if (events.length === 0) return null;
+  const t = await getTranslations('event');
+  const tCommon = await getTranslations('common');
+  const tCentroids = await getTranslations('centroids');
+  const tTracks = await getTranslations('tracks');
 
   // Show top event per centroid (most shared titles), skip duplicates
   const seen = new Set<string>();
@@ -34,9 +39,9 @@ export default function RelatedStories({ events }: RelatedStoriesProps) {
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-2">Related Coverage</h2>
+      <h2 className="text-2xl font-bold mb-2">{t('relatedCoverage')}</h2>
       <p className="text-sm text-dashboard-text-muted mb-4">
-        Same story covered from other perspectives
+        {t('relatedCoverageDesc')}
       </p>
       <div className="space-y-2">
         {unique.map((ev) => {
@@ -56,21 +61,21 @@ export default function RelatedStories({ events }: RelatedStoriesProps) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm text-dashboard-text">
-                    {ev.centroid_label}
+                    {getCentroidLabel(ev.centroid_id, ev.centroid_label, tCentroids)}
                   </span>
                   <span className="text-xs text-dashboard-text-muted">
-                    {getTrackLabel(ev.track)}
+                    {getTrackLabel(ev.track, tTracks)}
                   </span>
                 </div>
                 <span className="text-xs text-dashboard-text-muted line-clamp-1">
-                  {ev.title || 'View event'}
+                  {ev.title || t('viewEvent')}
                 </span>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0 text-xs text-dashboard-text-muted">
-                <span>{ev.source_batch_count} sources</span>
+                <span>{tCommon('sourcesCount', { count: ev.source_batch_count })}</span>
                 <span className="px-1.5 py-0.5 rounded bg-dashboard-border"
-                  title={`${ev.shared_titles} headlines appear in both this topic and the related one`}>
-                  {ev.shared_titles} shared
+                  title={t('sharedTitlesTooltip', { count: ev.shared_titles })}>
+                  {t('shared', { count: ev.shared_titles })}
                 </span>
               </div>
             </Link>

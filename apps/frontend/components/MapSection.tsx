@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 
 const WorldMap = dynamic(() => import('./WorldMap'), { ssr: false });
 
@@ -13,13 +14,12 @@ interface MapSectionProps {
 }
 
 export default function MapSection({ centroids }: MapSectionProps) {
+  const t = useTranslations('map');
   return (
     <section>
-      <h2 className="text-3xl font-bold mb-4">Explore the world by country</h2>
+      <h2 className="text-3xl font-bold mb-4">{t('title')}</h2>
       <p className="text-dashboard-text-muted mb-6">
-        Click on any highlighted country or region to see a structured overview of recent developments.
-        Each page brings together the main topics covered in the news, grouped by domain and time period,
-        with links to original sources.
+        {t('subtitle')}
       </p>
       <WorldMap centroids={centroids} />
     </section>

@@ -2,8 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { SignalCategoryEntry, SignalType, SIGNAL_LABELS } from '@/lib/types';
+import { useTranslations } from 'next-intl';
+import { SignalCategoryEntry, SignalType } from '@/lib/types';
 import TemporalHeatmap from './TemporalHeatmap';
+
+const SIGNAL_TYPE_KEY: Record<SignalType, string> = {
+  persons: 'topPersons',
+  orgs: 'topOrgs',
+  places: 'topPlaces',
+  commodities: 'topCommodities',
+  policies: 'topPolicies',
+  systems: 'topSystems',
+  named_events: 'topEvents',
+};
 
 interface CategoryMeta {
   type: SignalType;
@@ -17,6 +28,7 @@ interface Props {
 }
 
 export default function SignalAccordion({ signals, categories }: Props) {
+  const t = useTranslations('signals');
   const [open, setOpen] = useState<Set<SignalType>>(new Set());
 
   const toggle = (type: SignalType) => {
@@ -52,7 +64,7 @@ export default function SignalAccordion({ signals, categories }: Props) {
                 {icon}
               </span>
               <span className="text-sm font-medium text-dashboard-text flex-1">
-                {SIGNAL_LABELS[type]}
+                {t(SIGNAL_TYPE_KEY[type])}
               </span>
               <span className="text-xs text-dashboard-text-muted">{items.length}</span>
               <svg
@@ -71,7 +83,7 @@ export default function SignalAccordion({ signals, categories }: Props) {
                     href={`/signals/${type}`}
                     className="text-xs text-blue-400 hover:text-blue-300 transition"
                   >
-                    View all {SIGNAL_LABELS[type].toLowerCase()} &rarr;
+                    {t('viewAllLink', { label: t(SIGNAL_TYPE_KEY[type]).toLowerCase() })} &rarr;
                   </Link>
                 </div>
               </div>

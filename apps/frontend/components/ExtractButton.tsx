@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface Props {
   entityType: 'event' | 'ctm';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function ExtractButton({ entityType, entityId }: Props) {
+  const t = useTranslations('extract');
   const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function ExtractButton({ entityType, entityId }: Props) {
         href="/auth/signin"
         className="inline-block text-sm px-4 py-2 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text transition-colors"
       >
-        Sign in to extract &amp; analyse
+        {t('signInRequired')}
       </a>
     );
   }
@@ -43,8 +45,8 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       });
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(data.error || `Error ${resp.status}`);
+        const data = await resp.json().catch(() => ({ error: t('requestFailed') }));
+        throw new Error(data.error || t('errorStatus', { status: resp.status }));
       }
 
       const data = await resp.json();
@@ -62,11 +64,11 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       if (data.first_narrative_id) {
         router.push(`/analysis/${data.first_narrative_id}`);
       } else {
-        setError('No narratives were extracted');
+        setError(t('noNarratives'));
         setLoading(false);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : t('unknownError'));
       setLoading(false);
     }
   }
@@ -75,12 +77,12 @@ export default function ExtractButton({ entityType, entityId }: Props) {
     return (
       <div className="space-y-2">
         <div className="text-xs text-amber-300 bg-amber-900/20 border border-amber-700/50 rounded-lg p-3 leading-relaxed">
-          <p className="font-medium mb-1">Mixed topic cluster detected</p>
+          <p className="font-medium mb-1">{t('mixedCluster')}</p>
           <p>{coherenceWarning.reason}</p>
           {coherenceWarning.topics.length > 0 && (
             <ul className="mt-1.5 space-y-0.5 list-disc list-inside text-amber-200/80">
-              {coherenceWarning.topics.map((t, i) => (
-                <li key={i}>{t}</li>
+              {coherenceWarning.topics.map((topic, i) => (
+                <li key={i}>{topic}</li>
               ))}
             </ul>
           )}
@@ -99,10 +101,10 @@ export default function ExtractButton({ entityType, entityId }: Props) {
         {loading ? (
           <>
             <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            Extracting narrative frames...
+            {t('extracting')}
           </>
         ) : (
-          'Extract & Analyse'
+          t('extractAnalyse')
         )}
       </button>
       {error && (

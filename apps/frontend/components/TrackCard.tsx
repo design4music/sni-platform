@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { TRACK_LABELS, Track } from '@/lib/types';
+import { Track, getTrackLabel } from '@/lib/types';
+import { getTranslations } from 'next-intl/server';
 
 interface TrackCardProps {
   centroidId: string;
@@ -94,7 +95,7 @@ export function getTrackIcon(track: string) {
   );
 }
 
-export default function TrackCard({
+export default async function TrackCard({
   centroidId,
   track,
   latestMonth,
@@ -103,13 +104,15 @@ export default function TrackCard({
   hasHistoricalData,
   lastActive
 }: TrackCardProps) {
+  const tTracks = await getTranslations('tracks');
+  const tTrack = await getTranslations('track');
   const href = latestMonth
     ? `/c/${centroidId}/t/${track}?month=${latestMonth}`
     : `/c/${centroidId}/t/${track}`;
 
   const articleCount = titleCount || 0;
   const hasArticles = articleCount > 0;
-  const trackLabel = TRACK_LABELS[track].replace(/^Geo\s+/i, '');
+  const trackLabel = getTrackLabel(track, tTracks).replace(/^Geo\s+/i, '');
 
   // If disabled, render a non-interactive div instead of Link
   if (disabled) {
@@ -133,9 +136,9 @@ export default function TrackCard({
         </div>
         <div className="text-sm text-dashboard-text-muted">
           {hasHistoricalData ? (
-            <span>No coverage this month</span>
+            <span>{tTrack('noCoverageThisMonth')}</span>
           ) : (
-            <span>No data available</span>
+            <span>{tTrack('noDataAvailable')}</span>
           )}
         </div>
       </div>
@@ -158,7 +161,7 @@ export default function TrackCard({
               ? 'bg-green-500/10 border-green-500/30 text-green-400'
               : 'bg-red-500/10 border-red-500/30 text-red-400'
           }`}
-          title={hasArticles ? `${articleCount.toLocaleString()} total articles` : 'No articles yet'}
+          title={hasArticles ? tTrack('totalArticles', { count: articleCount.toLocaleString() }) : tTrack('noArticlesYet')}
         >
           {hasArticles ? (
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -171,12 +174,12 @@ export default function TrackCard({
           )}
           <span className="tabular-nums">{articleCount.toLocaleString()}</span>
           {lastActive && (Date.now() - new Date(lastActive + 'T00:00:00').getTime()) < 172800000 && (
-            <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Active in last 48h" />
+            <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title={tTrack('activeLast48h')} />
           )}
         </span>
       </div>
       <div className="text-sm text-dashboard-text-muted">
-        {latestMonth && <span>Latest: {latestMonth}</span>}
+        {latestMonth && <span>{tTrack('latest')}: {latestMonth}</span>}
       </div>
     </Link>
   );

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function CookieBanner() {
+  const t = useTranslations('cookie');
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -30,9 +32,9 @@ export default function CookieBanner() {
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-dashboard-card/95 backdrop-blur-sm border-t border-dashboard-border px-4 py-3">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         <p className="text-sm text-dashboard-text-muted text-center sm:text-left">
-          We use essential cookies for authentication and optional analytics cookies (Google Analytics) to understand usage.{' '}
+          {t('message')}{' '}
           <Link href="/privacy" className="text-blue-400 hover:text-blue-300 underline">
-            Privacy Policy
+            {t('privacyPolicy')}
           </Link>
         </p>
         <div className="flex gap-2 shrink-0">
@@ -40,13 +42,13 @@ export default function CookieBanner() {
             onClick={() => setConsent('essential')}
             className="px-4 py-1.5 text-sm font-medium border border-dashboard-border hover:bg-dashboard-surface text-dashboard-text rounded transition"
           >
-            Essential only
+            {t('essentialOnly')}
           </button>
           <button
             onClick={() => setConsent('all')}
             className="px-4 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded transition"
           >
-            Accept all
+            {t('acceptAll')}
           </button>
         </div>
       </div>

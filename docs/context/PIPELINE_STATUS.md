@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-03-01
+**Last Updated**: 2026-03-02
 **Status**: Production - Full pipeline operational (4-slot architecture)
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -367,6 +367,13 @@ LLM generates conversational summaries for each event:
 | `enrichment_max_events` | 2000 | Events per run (daemon) |
 | Enrichment interval | 6 hours | Shared with 4.5b |
 
+### German Translation (DE)
+
+After generating each English title/summary, a separate translation call produces `title_de`.
+Uses `translate_title_de()` -- system prompt: "Translate the following news headline to German."
+Temperature 0.2, max_tokens 60. Wrapped in try/except -- returns None on failure (title_de stays NULL).
+Backfill script: `scripts/backfill_title_de.py` (supports `--limit`, `--min-sources`, `--days`).
+
 ---
 
 ## Phase 4.5b: CTM Digest Generation
@@ -380,6 +387,9 @@ LLM generates conversational summaries for each event:
 2. Fetch event summaries for each CTM
 3. LLM generates 150-250 word cohesive digest weighted by source counts
 4. Update `ctm.summary_text`
+5. Translate summary to German via `translate_summary_de()`, update `ctm.summary_text_de`
+
+Backfill script: `scripts/backfill_ctm_summary_de.py` (supports `--limit`, `--month`).
 
 ---
 
@@ -507,6 +517,7 @@ UNIQUE(title_id, centroid_id)
 ```sql
 ctm_id, date, first_seen
 title, summary, tags  -- From Phase 4.5a
+title_de, summary_de   -- German translations (Phase 4.5a + lazy)
 event_type: 'bilateral' | 'domestic' | 'other_international'
 bucket_key, source_batch_count, is_catchall
 topic_core JSONB  -- Anchor signals for consolidation context
@@ -518,6 +529,7 @@ coherence_check JSONB  -- LLM coherence assessment before narrative extraction
 ```sql
 centroid_id, track, month
 title_count, summary_text, is_frozen
+summary_text_de         -- German translation (Phase 4.5b + lazy)
 events_digest JSONB  -- Denormalized event list for frontend
 last_aggregated_at, title_count_at_aggregation  -- Staleness tracking
 ```
@@ -531,6 +543,7 @@ summary_text, track_count, total_events
 **epics**: Cross-country story aggregations
 ```sql
 id, slug, month, title, summary
+title_de, summary_de, timeline_de  -- German translations (freeze + lazy)
 anchor_tags TEXT[], centroid_count, event_count, total_sources
 timeline TEXT, narratives JSONB, centroid_summaries JSONB
 ```
@@ -641,7 +654,17 @@ db/
 
 apps/frontend/
 |-- auth.ts                          # NextAuth v5 config (credentials provider, JWT)
-|-- app/
+|-- middleware.ts                     # next-intl locale detection (URL prefix + Accept-Language + cookie)
+|-- i18n/                            # Internationalization config
+|   |-- config.ts                    # Locale list (en, de), default locale
+|   |-- routing.ts                   # next-intl routing config (pathPrefix strategy)
+|   |-- request.ts                   # Server-side locale resolution
+|   |-- navigation.ts                # Locale-aware Link/redirect/usePathname
+|-- messages/
+|   |-- en.json                      # English UI strings (~300 keys)
+|   |-- de.json                      # German UI strings
+|-- app/[locale]/                    # All pages under locale prefix (en = no prefix, de = /de/...)
+|   |-- layout.tsx                   # NextIntlClientProvider wrapper
 |   |-- c/[centroid_key]/page.tsx    # Centroid page (summary + tracks)
 |   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
 |   |-- events/[event_id]/page.tsx   # Event detail page (saga timeline)
@@ -651,19 +674,22 @@ apps/frontend/
 |   |-- sources/page.tsx             # Media outlet list
 |   |-- sources/[feed_name]/page.tsx # Outlet profile page
 |   |-- search/page.tsx              # Full-text search
-|   |-- trending/page.tsx            # Trending stories (hero cards + compact list + signals sidebar)
-|   |-- trending/loading.tsx         # Trending page skeleton
-|   |-- sign-in/page.tsx             # Authentication sign-in
-|   |-- sign-up/page.tsx             # Authentication sign-up
-|   |-- api/extract-narratives/route.ts  # Proxy to extraction API
-|   |-- api/rai-analyse/route.ts     # On-demand RAI analysis (auth-gated)
-|   |-- api/auth/signup/route.ts     # User registration endpoint
+|   |-- trending/page.tsx            # Trending stories
+|   |-- auth/signin/page.tsx         # Authentication sign-in
+|   |-- auth/signup/page.tsx         # Authentication sign-up
+|   |-- about, faq, methodology, pricing, privacy, terms, known-issues  # Static pages
+|-- app/api/                         # API routes (outside locale routing)
+|   |-- extract-narratives/route.ts  # Proxy to extraction API
+|   |-- rai-analyse/route.ts         # On-demand RAI analysis (auth-gated)
+|   |-- auth/signup/route.ts         # User registration endpoint
+|   |-- translate/route.ts           # Translation API (unused, lazy-translate is server-side)
 |-- lib/
 |   |-- cache.ts                     # In-memory TTL cache (Map-based, lazy cleanup)
 |   |-- db.ts                        # PostgreSQL pool (max 10, idle 30s, conn 5s)
 |   |-- queries.ts                   # All DB queries (11 cached with 5-10 min TTL)
 |   |-- types.ts                     # Shared types (Track, REGIONS, Epic, etc.)
 |   |-- rai-engine.ts               # Local RAI analysis engine (33 modules, DeepSeek)
+|   |-- lazy-translate.ts            # On-demand DE translation via DeepSeek (detail pages)
 |   |-- logos.ts                     # Self-hosted outlet favicon paths
 |-- components/
 |   |-- DashboardLayout.tsx          # Main layout (sidebar + content grid)
@@ -684,6 +710,13 @@ apps/frontend/
 |   |-- TrendingCard.tsx             # Trending event card (hero + compact modes, track icons, flags, signals)
 |   |-- TrendingCarousel.tsx         # Trending carousel server wrapper (fetches 12 events)
 |   |-- TrendingCarouselClient.tsx   # Dot carousel client component (4 frames, auto-advance 8s)
+|   |-- TranslationNotice.tsx        # Yellow beta-notice banner for DE pages
+
+scripts/
+|-- backfill_title_de.py             # Backfill event title_de (--limit, --min-sources, --days)
+|-- backfill_ctm_summary_de.py       # Backfill CTM summary_text_de (--limit, --month)
+|-- translate_epics_de.py            # Translate epic title/summary/timeline (--month, --all)
+|-- translate_centroid_briefs.py     # Translate centroid description + profile_json to DE
 
 archive/phase_4_old/                 # Deprecated Phase 4 scripts
 |-- aggregate_topics.py              # Replaced by consolidate_topics.py
@@ -692,6 +725,43 @@ archive/phase_4_old/                 # Deprecated Phase 4 scripts
 |-- cluster_events_mechanical.py     # Old mechanical clustering
 |-- test_incremental_nondestructive.py  # Old test harness
 ```
+
+---
+
+## Internationalization (i18n)
+
+**Library**: `next-intl` (App Router-native)
+**Locales**: `en` (default, no URL prefix), `de` (URL prefix `/de/...`)
+**Decision**: D-034
+
+### Architecture
+
+1. **URL routing**: Middleware detects locale from URL prefix, `Accept-Language` header, or `NEXT_LOCALE` cookie. English URLs unchanged (`/c/AMERICAS-USA`), German adds prefix (`/de/c/AMERICAS-USA`).
+2. **UI strings**: `messages/en.json` + `messages/de.json` (~300 keys). Server components use `getTranslations()`, client components use `useTranslations()`.
+3. **Content translation (pipeline)**: Phase 4.5a generates `title_de` alongside English titles. Phase 4.5b generates `summary_text_de` alongside CTM digests. Freeze script generates epic `title_de`, `summary_de`, `timeline_de`.
+4. **Content translation (lazy)**: `lib/lazy-translate.ts` -- when a DE user visits a detail page with NULL `_de` fields, translates inline via DeepSeek and caches in DB. Affects event, track (CTM), and epic detail pages.
+5. **Content translation (backfill)**: Scripts for bulk translation of existing content (see File Map > scripts/).
+6. **Query layer**: `locCol(table, col, locale)` helper returns `COALESCE(table.col_de, table.col)` when locale=de, plain `table.col` otherwise. Applied to all content-serving queries.
+7. **Centroid names**: Static translations in `messages/de.json` under `centroids` namespace. `getCentroidLabel()` resolves via `tCentroids` translation function.
+
+### DB Columns (all nullable TEXT, additive)
+
+| Table | DE Columns | Populated By |
+|-------|-----------|-------------|
+| `events_v3` | `title_de`, `summary_de` | Phase 4.5a (title), lazy-translate (both) |
+| `ctm` | `summary_text_de` | Phase 4.5b, lazy-translate |
+| `epics` | `title_de`, `summary_de`, `timeline_de` | Freeze script, lazy-translate |
+| `centroids_v3` | `description_de`, `profile_json_de` | One-time script (`translate_centroid_briefs.py`) |
+
+### Translation Notice
+
+DE detail pages show a static yellow beta-notice banner: "Die deutsche Uebersetzung ist eine Beta-Funktion." Appears on all DE pages regardless of whether content is translated -- sets user expectations. Component: `TranslationNotice.tsx` (simple prop-based, no async).
+
+### Rollback
+
+1. Remove `next-intl` provider, move pages from `app/[locale]/` back to `app/`, delete middleware
+2. `ALTER TABLE events_v3 DROP COLUMN title_de, DROP COLUMN summary_de;` (same for ctm, epics, centroids_v3)
+3. Remove `translate_title_de()` / `translate_summary_de()` calls from pipeline scripts
 
 ---
 
@@ -844,15 +914,24 @@ Frontend connects to DB via `DATABASE_URL` or individual `DB_*` vars (see `apps/
 
 - **Primary path**: Local RAI engine in `lib/rai-engine.ts` (calls DeepSeek directly)
 - **Legacy path**: Remote RAI service at `RAI_API_URL` (retained for `/worldbrief/signals` endpoint)
-- Required env vars: `DEEPSEEK_API_KEY` (frontend), `AUTH_SECRET` (NextAuth JWT signing)
+- Required env vars: `DEEPSEEK_API_KEY` (frontend -- used by RAI engine + lazy DE translation), `AUTH_SECRET` (NextAuth JWT signing)
 
 ---
 
-## Current Status (2026-02-25)
+## Current Status (2026-03-02)
 
-**Operational**: Daemon runs 4-slot architecture (ingestion/classification/clustering/enrichment) + daily purge locally. Narrative extraction and RAI analysis are on-demand (user-triggered, auth-gated). January 2026 frozen with 85 centroid summaries. February 2026 pipeline active. User authentication live. Production site at https://www.worldbrief.info
+**Operational**: Daemon runs 4-slot architecture (ingestion/classification/clustering/enrichment) + daily purge locally. Narrative extraction and RAI analysis are on-demand (user-triggered, auth-gated). January + February 2026 frozen. March 2026 pipeline active. User authentication live. German localization live (beta). Production site at https://www.worldbrief.info
 
-### Recent Changes (2026-02-25)
+### Recent Changes (2026-03-02)
+
+1. **German Localization (D-034)**: Full DE support via `next-intl`. URL-prefix routing (`/de/...`), ~300 translated UI strings, EN|DE toggle in navigation. All pages moved under `app/[locale]/` directory. Middleware handles locale detection from URL, Accept-Language header, and NEXT_LOCALE cookie.
+2. **Content Translation Pipeline**: Phase 4.5a generates `title_de` for new events. Phase 4.5b generates `summary_text_de` for new CTM digests. Freeze script translates epic fields. All via DeepSeek with try/except fallback (NULL on failure).
+3. **Lazy On-Demand Translation**: `lib/lazy-translate.ts` -- DE detail pages (event, track, epic) translate missing `_de` fields inline via DeepSeek on first visit, cache in DB permanently. Subsequent visits serve cached translation instantly.
+4. **Locale-Aware Queries**: `locCol()` helper applies `COALESCE(col_de, col)` when locale=de. All content queries (trending, events, CTMs, epics, centroids) pass locale parameter.
+5. **Translation Backfill Scripts**: `backfill_title_de.py`, `backfill_ctm_summary_de.py`, `translate_epics_de.py`, `translate_centroid_briefs.py` for bulk translation of existing content.
+6. **DB Migration**: Added nullable `_de` TEXT columns to events_v3, ctm, epics, centroids_v3 (additive, no schema risk).
+
+### Previous Changes (2026-02-25)
 
 1. **Saga Chaining: IDF-Weighted Tags**: `chain_event_sagas.py` now computes per-tag IDF weights within each centroid+track bucket. Ubiquitous tags like `person:trump` (IDF 0.28) contribute ~3.5x less than rare tags like `place:el salvador` (IDF 1.0). Threshold raised from 0.3 to 0.35. Eliminates false saga chains between unrelated stories that merely share common topic tags (e.g., different deportation stories all matching on `person:trump` + `topic:deportation`). Re-chained 487 events (down from 746).
 2. **Phase 4.1 Redesign: Anchor-Candidate Dedup**: Complete rewrite of `consolidate_topics.py`. Replaced free-form LLM grouping ("MERGE AGGRESSIVELY") with asymmetric anchor-candidate model where LLM confirms yes/no per candidate pair. Pre-LLM Dice filter (> 0.35) means most buckets skip LLM entirely. Prevents over-merge (e.g., Google bond absorbing 186 unrelated AI/tech titles). Tested on 460 CTMs: 41 genuine merges, 67 catchall rescues, 0 false merges. New prompts: `DEDUP_CONFIRM_*` + `CATCHALL_RESCUE_*`. Removed: `TOPIC_CONSOLIDATION_*`, `TOPIC_MERGE_PROMPT`, `MIXED_TOPIC_REVIEW_PROMPT`.

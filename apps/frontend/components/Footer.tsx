@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const t = useTranslations('footer');
+  const tNav = useTranslations('nav');
 
   return (
     <footer className="border-t border-dashboard-border bg-dashboard-surface mt-16">
@@ -13,37 +16,37 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">WorldBrief</h3>
             <p className="text-dashboard-text-muted text-sm">
-              Understand the world. Briefly.
+              {t('tagline')}
             </p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Navigate</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('navigate')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Home
+                  {t('home')}
                 </Link>
               </li>
               <li>
                 <Link href="/trending" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Trending
+                  {tNav('trending')}
                 </Link>
               </li>
               <li>
                 <Link href="/signals" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Signals
+                  {tNav('signals')}
                 </Link>
               </li>
               <li>
                 <Link href="/epics" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Epics
+                  {tNav('epics')}
                 </Link>
               </li>
               <li>
                 <Link href="/sources" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Sources
+                  {t('sources')}
                 </Link>
               </li>
             </ul>
@@ -51,31 +54,31 @@ export default function Footer() {
 
           {/* Information */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Information</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('information')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/about" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  About
+                  {t('about')}
                 </Link>
               </li>
               <li>
                 <Link href="/methodology" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Methodology
+                  {t('methodology')}
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Pricing
+                  {tNav('pricing')}
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  FAQ
+                  {t('faq')}
                 </Link>
               </li>
               <li>
                 <Link href="/known-issues" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Known Issues
+                  {t('knownIssues')}
                 </Link>
               </li>
             </ul>
@@ -83,16 +86,16 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Legal</h3>
+            <h3 className="text-lg font-semibold mb-4">{t('legal')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/terms" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Terms of Service
+                  {t('terms')}
                 </Link>
               </li>
               <li>
                 <Link href="/privacy" className="text-dashboard-text-muted hover:text-dashboard-text transition">
-                  Privacy Policy
+                  {t('privacy')}
                 </Link>
               </li>
               <li>
@@ -100,7 +103,7 @@ export default function Footer() {
                   onClick={() => window.dispatchEvent(new Event('show-cookie-banner'))}
                   className="text-dashboard-text-muted hover:text-dashboard-text transition"
                 >
-                  Cookie Settings
+                  {t('cookieSettings')}
                 </button>
               </li>
             </ul>
@@ -114,7 +117,7 @@ export default function Footer() {
             <a href="https://www.linkedin.com/in/mmdesign/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition">
               Maksim Micheliov
             </a>
-            . All rights reserved.
+            . {t('allRights')}
           </p>
         </div>
       </div>

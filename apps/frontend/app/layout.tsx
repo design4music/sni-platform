@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import SessionWrapper from '@/components/SessionWrapper';
-import CookieBanner from '@/components/CookieBanner';
 import Analytics from '@/components/Analytics';
 import './globals.css';
 
@@ -30,13 +29,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale?: string }>;
 }) {
+  const { locale } = await params;
+  const lang = locale === 'de' ? 'de' : 'en';
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <head>
         <script
           type="application/ld+json"
@@ -58,7 +62,6 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <SessionWrapper>{children}</SessionWrapper>
-        <CookieBanner />
         <Analytics />
       </body>
     </html>

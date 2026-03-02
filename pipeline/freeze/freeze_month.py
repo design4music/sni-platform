@@ -445,6 +445,84 @@ async def generate_centroid_summaries(conn, month: str, dry_run: bool) -> int:
     return generated
 
 
+async def translate_epic_fields_de(conn, month: str, dry_run: bool) -> int:
+    """Translate epic title/summary/timeline to German for the target month."""
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT id, title, summary, timeline FROM epics
+        WHERE TO_CHAR(month, 'YYYY-MM') = %s
+          AND title IS NOT NULL
+          AND title_de IS NULL
+        """,
+        (month,),
+    )
+    epics = cur.fetchall()
+
+    if not epics:
+        print("  No epics needing DE translation")
+        return 0
+
+    print("  Found %d epics to translate" % len(epics))
+
+    if dry_run:
+        print("  [DRY-RUN] Would translate %d epics" % len(epics))
+        return len(epics)
+
+    from pipeline.phase_4.generate_event_summaries_4_5a import translate_title_de
+
+    translated = 0
+    for epic_id, title, summary, timeline in epics:
+        title_de = await translate_title_de(title) if title else None
+        summary_de = await translate_title_de(summary) if summary else None
+        timeline_de = None
+        if timeline:
+            # Timeline is longer, use a direct translation call
+            headers = {
+                "Authorization": "Bearer %s" % config.deepseek_api_key,
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": config.llm_model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Translate the following text to German. "
+                        "Return only the translation. Preserve markdown formatting.",
+                    },
+                    {"role": "user", "content": timeline},
+                ],
+                "temperature": 0.2,
+                "max_tokens": min(len(timeline) * 2, 4000),
+            }
+            try:
+                async with httpx.AsyncClient(timeout=60) as client:
+                    response = await client.post(
+                        "%s/chat/completions" % config.deepseek_api_url,
+                        headers=headers,
+                        json=payload,
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        timeline_de = data["choices"][0]["message"]["content"].strip()
+            except Exception:
+                pass
+
+        cur.execute(
+            """
+            UPDATE epics SET title_de = %s, summary_de = %s, timeline_de = %s
+            WHERE id = %s
+            """,
+            (title_de, summary_de, timeline_de, epic_id),
+        )
+        conn.commit()
+        label = title[:50] if title else epic_id[:8]
+        print("    Translated: %s" % label)
+        translated += 1
+
+    return translated
+
+
 def purge_rejected_titles(conn, month: str, dry_run: bool) -> dict:
     """Move rejected titles to tombstone table and delete from titles_v3.
 
@@ -607,6 +685,13 @@ async def main():
         print("  Skipped (--skip-llm)")
     else:
         await generate_centroid_summaries(conn, target_month, dry_run)
+
+    # Step 3.5: Translate epic fields to German
+    print("\nStep 3.5: Epic DE translations")
+    if args.skip_llm:
+        print("  Skipped (--skip-llm)")
+    else:
+        await translate_epic_fields_de(conn, target_month, dry_run)
 
     # Step 4: Purge rejected titles to tombstone
     print("\nStep 4: Purge rejected titles")

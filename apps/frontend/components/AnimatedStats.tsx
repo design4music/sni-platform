@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Stat {
   value: number;
@@ -100,6 +101,7 @@ export default function AnimatedStats({
   dailyArticles,
   centroidCount,
 }: AnimatedStatsProps) {
+  const t = useTranslations('stats');
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -122,10 +124,10 @@ export default function AnimatedStats({
   }, []);
 
   const stats: Stat[] = [
-    { value: feedCount, suffix: '+', label: 'RSS feeds monitored', icon: RssIcon },
-    { value: languageCount, suffix: '+', label: 'languages covered', icon: LanguageIcon },
-    { value: dailyArticles, suffix: '+', label: 'articles per day', icon: ArticleIcon },
-    { value: centroidCount, suffix: '', label: 'countries & themes tracked', icon: GlobeIcon },
+    { value: feedCount, suffix: '+', label: t('rssFeeds'), icon: RssIcon },
+    { value: languageCount, suffix: '+', label: t('languages'), icon: LanguageIcon },
+    { value: dailyArticles, suffix: '+', label: t('articlesPerDay'), icon: ArticleIcon },
+    { value: centroidCount, suffix: '', label: t('countriesTracked'), icon: GlobeIcon },
   ];
 
   return (
@@ -137,14 +139,13 @@ export default function AnimatedStats({
       </div>
 
       <p className="text-center text-dashboard-text-muted max-w-2xl mx-auto mb-6">
-        WorldBrief aggregates global reporting, filters for strategic relevance,
-        and synthesizes it into structured briefings by geography and theme.
+        {t('description')}
       </p>
 
       <p className="text-center text-sm text-dashboard-text-muted/70">
-        All summaries are AI-generated.{' '}
+        {t('aiGenerated')}{' '}
         <a href="/methodology" className="text-blue-400/70 hover:text-blue-300 underline">
-          Learn more about our method
+          {t('learnMore')}
         </a>
       </p>
     </section>

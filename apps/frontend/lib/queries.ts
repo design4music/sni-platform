@@ -2,18 +2,34 @@ import { query, queryNoJIT } from './db';
 import { cached } from './cache';
 import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
-export async function getAllCentroids(): Promise<Centroid[]> {
-  return cached('centroids:all', 300, () =>
+export type Locale = 'en' | 'de';
+
+// Helper: returns SQL expression that prefers _de column when locale is 'de'
+function locCol(table: string, col: string, locale?: string): string {
+  if (locale === 'de') return `COALESCE(${table}.${col}_de, ${table}.${col})`;
+  return `${table}.${col}`;
+}
+
+export async function getAllCentroids(locale?: string): Promise<Centroid[]> {
+  return cached(`centroids:all:${locale || 'en'}`, 300, () =>
     query<Centroid>(
-      'SELECT * FROM centroids_v3 WHERE is_active = true ORDER BY class, label'
+      `SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id,
+              ${locCol('centroids_v3', 'description', locale)} as description,
+              ${locale === 'de' ? 'COALESCE(profile_json_de, profile_json)' : 'profile_json'} as profile_json,
+              updated_at
+       FROM centroids_v3 WHERE is_active = true ORDER BY class, label`
     )
   );
 }
 
-export async function getCentroidById(id: string): Promise<Centroid | null> {
-  return cached(`centroid:${id}`, 300, async () => {
+export async function getCentroidById(id: string, locale?: string): Promise<Centroid | null> {
+  return cached(`centroid:${id}:${locale || 'en'}`, 300, async () => {
     const results = await query<Centroid>(
-      'SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id, description, profile_json, updated_at FROM centroids_v3 WHERE id = $1 AND is_active = true',
+      `SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id,
+              ${locCol('centroids_v3', 'description', locale)} as description,
+              ${locale === 'de' ? 'COALESCE(profile_json_de, profile_json)' : 'profile_json'} as profile_json,
+              updated_at
+       FROM centroids_v3 WHERE id = $1 AND is_active = true`,
       [id]
     );
     return results[0] || null;
@@ -28,8 +44,8 @@ export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
   );
 }
 
-export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Promise<Centroid[]> {
-  return cached(`centroids:class:${centroidClass}`, 300, () =>
+export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', locale?: string): Promise<Centroid[]> {
+  return cached(`centroids:class:${centroidClass}:${locale || 'en'}`, 300, () =>
     query<Centroid>(
       `WITH target_centroids AS (
         SELECT id FROM centroids_v3 WHERE class = $1 AND is_active = true
@@ -45,7 +61,9 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Pr
         LEFT JOIN events_v3 e ON e.ctm_id = ctm.id
         GROUP BY ctm.centroid_id
       )
-      SELECT c.*,
+      SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
+        c.track_config_id, c.updated_at,
+        ${locCol('c', 'description', locale)} as description,
         COALESCE(cs.article_count, 0) AS article_count,
         COALESCE(cs.source_count, 0) AS source_count,
         0 AS language_count,
@@ -59,8 +77,8 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic'): Pr
   );
 }
 
-export async function getCentroidsByTheater(theater: string): Promise<Centroid[]> {
-  return cached(`centroids:theater:${theater}`, 300, () =>
+export async function getCentroidsByTheater(theater: string, locale?: string): Promise<Centroid[]> {
+  return cached(`centroids:theater:${theater}:${locale || 'en'}`, 300, () =>
     query<Centroid>(
       `WITH target_centroids AS (
         SELECT id FROM centroids_v3 WHERE primary_theater = $1 AND is_active = true
@@ -76,7 +94,9 @@ export async function getCentroidsByTheater(theater: string): Promise<Centroid[]
         LEFT JOIN events_v3 e ON e.ctm_id = ctm.id
         GROUP BY ctm.centroid_id
       )
-      SELECT c.*,
+      SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
+        c.track_config_id, c.updated_at,
+        ${locCol('c', 'description', locale)} as description,
         COALESCE(cs.article_count, 0) AS article_count,
         COALESCE(cs.source_count, 0) AS source_count,
         0 AS language_count,
@@ -103,7 +123,7 @@ export async function getCTMsByCentroid(centroidId: string): Promise<CTM[]> {
  * Fetch events from events_v3 normalized tables
  * Returns events in same format as events_digest JSONB with bucket metadata
  */
-async function getEventsFromV3(ctmId: string): Promise<Event[]> {
+async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]> {
   const results = await query<{
     id: string;
     date: string;
@@ -122,8 +142,8 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
       e.id,
       e.date::text as date,
       e.last_active::text as last_active,
-      COALESCE(e.title, e.topic_core) as title,
-      e.summary,
+      COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+      ${locCol('e', 'summary', locale)} as summary,
       e.tags,
       e.event_type,
       e.bucket_key,
@@ -164,10 +184,16 @@ async function getEventsFromV3(ctmId: string): Promise<Event[]> {
 export async function getCTM(
   centroidId: string,
   track: string,
-  month?: string
+  month?: string,
+  locale?: string
 ): Promise<CTM | null> {
+  // When locale=de, use COALESCE for summary_text
+  const summaryCol = locale === 'de'
+    ? 'COALESCE(summary_text_de, summary_text) as summary_text'
+    : 'summary_text';
   let queryText = `
-    SELECT * FROM ctm
+    SELECT id, centroid_id, track, month, title_count, ${summaryCol}, is_frozen
+    FROM ctm
     WHERE centroid_id = $1 AND track = $2
   `;
 
@@ -184,7 +210,7 @@ export async function getCTM(
   const ctm = results[0] || null;
 
   if (ctm) {
-    ctm.events_digest = await getEventsFromV3(ctm.id);
+    ctm.events_digest = await getEventsFromV3(ctm.id, locale);
   }
 
   return ctm;
@@ -584,10 +610,12 @@ export async function getEpicMonths(): Promise<string[]> {
   });
 }
 
-export async function getEpicsByMonth(month: string): Promise<Epic[]> {
-  return cached(`epics:month:${month}`, 300, () =>
+export async function getEpicsByMonth(month: string, locale?: string): Promise<Epic[]> {
+  return cached(`epics:month:${month}:${locale || 'en'}`, 300, () =>
     query<Epic>(
-      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month,
+              ${locCol('epics', 'title', locale)} as title,
+              ${locCol('epics', 'summary', locale)} as summary,
               anchor_tags, centroid_count, event_count, total_sources
        FROM epics
        WHERE TO_CHAR(month, 'YYYY-MM') = $1
@@ -597,11 +625,14 @@ export async function getEpicsByMonth(month: string): Promise<Epic[]> {
   );
 }
 
-export async function getEpicBySlug(slug: string): Promise<Epic | null> {
+export async function getEpicBySlug(slug: string, locale?: string): Promise<Epic | null> {
   const results = await query<Epic>(
-    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+    `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month,
+            ${locCol('epics', 'title', locale)} as title,
+            ${locCol('epics', 'summary', locale)} as summary,
             anchor_tags, centroid_count, event_count, total_sources,
-            timeline, narratives, centroid_summaries
+            ${locCol('epics', 'timeline', locale)} as timeline,
+            narratives, centroid_summaries
      FROM epics
      WHERE slug = $1`,
     [slug]
@@ -614,9 +645,12 @@ export async function getAllEpicSlugs(): Promise<string[]> {
   return results.map(r => r.slug);
 }
 
-export async function getEpicEvents(epicId: string): Promise<EpicEvent[]> {
+export async function getEpicEvents(epicId: string, locale?: string): Promise<EpicEvent[]> {
   return query<EpicEvent>(
-    `SELECT e.id as event_id, e.title, e.summary, e.tags,
+    `SELECT e.id as event_id,
+            ${locCol('e', 'title', locale)} as title,
+            ${locCol('e', 'summary', locale)} as summary,
+            e.tags,
             e.source_batch_count, e.date::text as date,
             c.centroid_id, c.track,
             cv.label as centroid_label,
@@ -648,10 +682,12 @@ export async function getEpicCentroidBreakdown(epicId: string): Promise<EpicCent
   );
 }
 
-export async function getLatestEpics(limit: number = 3): Promise<Epic[]> {
-  return cached(`epics:latest:${limit}`, 300, () =>
+export async function getLatestEpics(limit: number = 3, locale?: string): Promise<Epic[]> {
+  return cached(`epics:latest:${limit}:${locale || 'en'}`, 300, () =>
     query<Epic>(
-      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month, title, summary,
+      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month,
+              ${locCol('epics', 'title', locale)} as title,
+              ${locCol('epics', 'summary', locale)} as summary,
               anchor_tags, centroid_count, event_count, total_sources
        FROM epics
        WHERE month = (SELECT MAX(month) FROM epics)
@@ -731,14 +767,14 @@ export async function getSiblingNarratives(
   );
 }
 
-export async function getEventById(eventId: string): Promise<EventDetail | null> {
+export async function getEventById(eventId: string, locale?: string): Promise<EventDetail | null> {
   const results = await query<EventDetail>(
     `SELECT
       e.id,
       e.date::text as date,
       e.last_active::text as last_active,
-      COALESCE(e.title, e.topic_core) as title,
-      e.summary,
+      COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+      ${locCol('e', 'summary', locale)} as summary,
       e.tags,
       e.source_batch_count,
       e.event_type,
@@ -760,10 +796,10 @@ export async function getEventById(eventId: string): Promise<EventDetail | null>
 }
 
 export async function getEventSagaSiblings(
-  saga: string, currentEventId: string
+  saga: string, currentEventId: string, locale?: string
 ): Promise<Array<{ id: string; title: string; date: string; source_batch_count: number; month: string }>> {
   return query<{ id: string; title: string; date: string; source_batch_count: number; month: string }>(
-    `SELECT e.id, COALESCE(e.title, e.topic_core) as title, e.date::text,
+    `SELECT e.id, COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title, e.date::text,
             e.source_batch_count, TO_CHAR(c.month, 'YYYY-MM') as month
      FROM events_v3 e
      JOIN ctm c ON e.ctm_id = c.id
@@ -950,17 +986,17 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
 // Trending events (time-decayed source count)
 // ========================================================================
 
-export async function getTrendingEvents(limit: number = 20): Promise<TrendingEvent[]> {
-  return cached(`trending:${limit}`, 300, () =>
+export async function getTrendingEvents(limit: number = 20, locale?: string): Promise<TrendingEvent[]> {
+  return cached(`trending:${limit}:${locale || 'en'}`, 300, () =>
     query<TrendingEvent>(
-      `SELECT e.id, COALESCE(e.title, e.topic_core, (
+      `SELECT e.id, COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core, (
                 SELECT t.title_display FROM event_v3_titles evt
                 JOIN titles_v3 t ON t.id = evt.title_id
                 WHERE evt.event_id = e.id LIMIT 1
               )) as title,
               e.date::text as date, COALESCE(e.last_active, e.date)::text as last_active,
               e.source_batch_count, COALESCE(e.tags, '{}') as tags,
-              LEFT(e.summary, 200) as summary,
+              LEFT(${locCol('e', 'summary', locale)}, 200) as summary,
               c.centroid_id, cv.label as centroid_label, cv.iso_codes,
               c.track,
               (ln(e.source_batch_count + 1)
@@ -1006,7 +1042,8 @@ export async function getTrendingSignals(): Promise<Record<string, TrendingSigna
   return cached('trending:signals', 300, async () => {
     const types = ['persons', 'orgs', 'places', 'commodities', 'policies'] as const;
     const parts = types.map(col =>
-      `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
+      `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count,
+              SUM(pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400)))::numeric(10,2) as score
        FROM events_v3 e
        JOIN ctm c ON e.ctm_id = c.id
        JOIN event_v3_titles evt ON evt.event_id = e.id
@@ -1015,7 +1052,7 @@ export async function getTrendingSignals(): Promise<Record<string, TrendingSigna
        WHERE e.source_batch_count >= 5
          AND e.is_catchall = false
          AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
-       GROUP BY val ORDER BY event_count DESC LIMIT 5`
+       GROUP BY val ORDER BY score DESC LIMIT 5`
     );
 
     const sql = parts.map(p => `(${p})`).join(' UNION ALL ');
@@ -1066,7 +1103,9 @@ export async function getTopSignalsAll(perType: number = 8, month?: string): Pro
         JOIN title_labels tl ON tl.title_id = evt.title_id
         CROSS JOIN LATERAL unnest(tl.${col}) AS val
         WHERE ${dr.clause} AND e.is_catchall = false
-        GROUP BY val ORDER BY event_count DESC LIMIT ${perType})`
+        GROUP BY val
+        ORDER BY SUM(pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400))) DESC
+        LIMIT ${perType})`
     ).join(' UNION ALL ');
     return query<SignalNode>(sql, dr.params);
   });

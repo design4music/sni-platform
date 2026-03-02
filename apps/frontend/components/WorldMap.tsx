@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { MapContainer, GeoJSON, useMap } from 'react-leaflet';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -54,6 +55,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
   const [isClient, setIsClient] = useState(false);
   const mapInitialized = useRef(false);
   const router = useRouter();
+  const t = useTranslations('map');
 
   useEffect(() => {
     setIsClient(true);
@@ -93,7 +95,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
   if (!isClient || !geoData) {
     return (
       <div className="w-full h-[500px] bg-dashboard-surface rounded-lg flex items-center justify-center">
-        <p className="text-dashboard-text-muted">Loading map...</p>
+        <p className="text-dashboard-text-muted">{t('loading')}</p>
       </div>
     );
   }
@@ -112,7 +114,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
 
     if (centroid) {
       layer.bindTooltip(
-        `<strong>${centroid.label}</strong><br/><span style="opacity:0.7">${centroid.articleCount.toLocaleString()} articles</span>`,
+        `<strong>${centroid.label}</strong><br/><span style="opacity:0.7">${centroid.articleCount.toLocaleString()} ${t('articles')}</span>`,
         { permanent: false, direction: 'top', className: 'map-tooltip' }
       );
 
@@ -199,27 +201,27 @@ export default function WorldMap({ centroids }: WorldMapProps) {
     <div className="w-full h-[500px] rounded-lg overflow-hidden relative">
       {/* Heatmap Legend */}
       <div className="absolute bottom-4 left-4 bg-dashboard-surface/90 backdrop-blur-sm border border-dashboard-border rounded-lg p-3 z-[1000]">
-        <div className="text-xs font-semibold mb-2 text-dashboard-text">Coverage Intensity</div>
+        <div className="text-xs font-semibold mb-2 text-dashboard-text">{t('coverageIntensity')}</div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dc2626' }}></div>
-            <span className="text-xs text-dashboard-text-muted">Very High</span>
+            <span className="text-xs text-dashboard-text-muted">{t('veryHigh')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
-            <span className="text-xs text-dashboard-text-muted">High</span>
+            <span className="text-xs text-dashboard-text-muted">{t('high')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f59e0b' }}></div>
-            <span className="text-xs text-dashboard-text-muted">Medium</span>
+            <span className="text-xs text-dashboard-text-muted">{t('medium')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: '#eab308' }}></div>
-            <span className="text-xs text-dashboard-text-muted">Low</span>
+            <span className="text-xs text-dashboard-text-muted">{t('low')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: '#6b6b4a' }}></div>
-            <span className="text-xs text-dashboard-text-muted">Minimal</span>
+            <span className="text-xs text-dashboard-text-muted">{t('minimal')}</span>
           </div>
         </div>
       </div>

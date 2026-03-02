@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export interface TocSection {
   id: string;
@@ -14,6 +15,7 @@ interface TableOfContentsProps {
 }
 
 export default function TableOfContents({ sections }: TableOfContentsProps) {
+  const tCommon = useTranslations('common');
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export default function TableOfContents({ sections }: TableOfContentsProps) {
   return (
     <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
       <h3 className="text-sm font-semibold mb-3 text-dashboard-text-muted uppercase tracking-wider">
-        On This Page
+        {tCommon('onThisPage')}
       </h3>
       <nav className="space-y-1">
         {sections.map(section => (

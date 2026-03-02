@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
-import { TrendingEvent, getTrackLabel, formatTimeAgo } from '@/lib/types';
+import { TrendingEvent, getTrackLabel, getCentroidLabel, formatTimeAgo } from '@/lib/types';
 import { getTrackIcon } from './TrackCard';
+import { useTranslations } from 'next-intl';
 
 interface TrendingCardProps {
   event: TrendingEvent;
@@ -26,11 +29,11 @@ function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
   );
 }
 
-function FreshnessDot({ lastActive }: { lastActive: string }) {
+function FreshnessDot({ lastActive, title }: { lastActive: string; title: string }) {
   const isRecent = (Date.now() - new Date(lastActive).getTime()) < 172800000;
   if (!isRecent) return null;
   return (
-    <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Active in last 48h" />
+    <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title={title} />
   );
 }
 
@@ -61,8 +64,12 @@ function SignalPills({ signals }: { signals?: string[] }) {
 }
 
 export default function TrendingCard({ event, compact }: TrendingCardProps) {
+  const tTracks = useTranslations('tracks');
+  const tCentroids = useTranslations('centroids');
+  const tCommon = useTranslations('common');
+  const tTrending = useTranslations('trending');
   const timeAgo = formatTimeAgo(new Date(event.last_active));
-  const trackLabel = getTrackLabel(event.track);
+  const trackLabel = getTrackLabel(event.track, tTracks);
   const eventHref = `/events/${event.id}`;
   const isEmerging = (Date.now() - new Date(event.last_active).getTime()) < 43200000; // 12h
 
@@ -82,11 +89,11 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
                 {event.iso_codes?.slice(0, 2).map(iso => (
                   <FlagImg key={iso} iso2={iso} size={14} />
                 ))}
-                {event.centroid_label}
+                {getCentroidLabel(event.centroid_id, event.centroid_label, tCentroids)}
               </span>
-              <span>{event.source_batch_count} sources</span>
+              <span>{tCommon('sourcesCount', { count: event.source_batch_count })}</span>
               {timeAgo && <span>{timeAgo}</span>}
-              <FreshnessDot lastActive={event.last_active} />
+              <FreshnessDot lastActive={event.last_active} title={tTrending('active48h')} />
             </div>
             <SignalPills signals={event.top_signals} />
           </div>
@@ -104,7 +111,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
             <FlagImg key={iso} iso2={iso} />
           ))}
         </span>
-        <span className="text-xs text-dashboard-text-muted truncate">{event.centroid_label}</span>
+        <span className="text-xs text-dashboard-text-muted truncate">{getCentroidLabel(event.centroid_id, event.centroid_label, tCentroids)}</span>
         <span className="flex items-center gap-1.5 ml-auto text-blue-400">
           {getTrackIcon(event.track)}
           <span className="text-xs text-dashboard-text-muted">{trackLabel}</span>
@@ -124,9 +131,9 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
       )}
 
       <div className="flex items-center gap-3 text-xs text-dashboard-text-muted mb-2">
-        <span>{event.source_batch_count} sources</span>
+        <span>{tCommon('sourcesCount', { count: event.source_batch_count })}</span>
         {timeAgo && <span>{timeAgo}</span>}
-        <FreshnessDot lastActive={event.last_active} />
+        <FreshnessDot lastActive={event.last_active} title={tTrending('active48h')} />
       </div>
 
       <SignalPills signals={event.top_signals} />

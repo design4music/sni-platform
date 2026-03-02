@@ -1,20 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Props {
   weekly: { week: string; count: number }[];
 }
 
-function formatWeek(w: string) {
-  const d = new Date(w);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
 export default function MentionTimeline({ weekly }: Props) {
+  const locale = useLocale();
+  const tCommon = useTranslations('common');
+  const dateFmtLocale = locale === 'de' ? 'de-DE' : 'en-US';
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  function formatWeek(w: string) {
+    const d = new Date(w);
+    return d.toLocaleDateString(dateFmtLocale, { month: 'short', day: 'numeric' });
+  }
 
   if (!weekly || weekly.length === 0) return null;
   if (!mounted) return <div className="w-full h-56" />;
@@ -50,7 +54,7 @@ export default function MentionTimeline({ weekly }: Props) {
               fontSize: 12,
             }}
             labelFormatter={(label) => formatWeek(String(label))}
-            formatter={(value) => [value, 'Events']}
+            formatter={(value) => [value, tCommon('events')]}
           />
           <Area
             type="monotone"

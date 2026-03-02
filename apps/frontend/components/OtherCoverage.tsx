@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Event, Title } from '@/lib/types';
 
 interface OtherCoverageProps {
@@ -9,15 +10,15 @@ interface OtherCoverageProps {
   flat?: boolean;        // If true, render without accordion wrapper (no main topics exist)
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, dateFmtLocale: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(dateFmtLocale, { month: 'short', day: 'numeric' });
 }
 
-function DateRange({ date, lastActive }: { date: string; lastActive?: string }) {
-  const first = formatDate(date);
+function DateRange({ date, lastActive, dateFmtLocale }: { date: string; lastActive?: string; dateFmtLocale: string }) {
+  const first = formatDate(date, dateFmtLocale);
   if (lastActive && lastActive !== date) {
-    return <span>{first} — {formatDate(lastActive)}</span>;
+    return <span>{first} — {formatDate(lastActive, dateFmtLocale)}</span>;
   }
   return <span>{first}</span>;
 }
@@ -47,7 +48,7 @@ function TitleLink({ title }: { title: Title }) {
 }
 
 /** A small topic: date + title + indented linked titles. */
-function SmallTopic({ event }: { event: Event }) {
+function SmallTopic({ event, dateFmtLocale }: { event: Event; dateFmtLocale: string }) {
   const titles = event.resolvedTitles || [];
   const topicTitle = event.title || event.summary || 'Untitled topic';
 
@@ -55,7 +56,7 @@ function SmallTopic({ event }: { event: Event }) {
     <div className="mb-3">
       <div className="flex items-baseline gap-2 text-sm">
         <span className="text-xs text-dashboard-text-muted flex-shrink-0">
-          <DateRange date={event.date} lastActive={event.last_active} />
+          <DateRange date={event.date} lastActive={event.last_active} dateFmtLocale={dateFmtLocale} />
         </span>
         <span className="font-medium text-dashboard-text">{topicTitle}</span>
         <span className="text-xs text-dashboard-text-muted flex-shrink-0">
@@ -77,6 +78,10 @@ function countTitles(events: Event[]) {
 
 export default function OtherCoverage({ label, events, flat = false }: OtherCoverageProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const tTrack = useTranslations('track');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+  const dateFmtLocale = locale === 'de' ? 'de-DE' : 'en-US';
 
   const totalSources = countTitles(events);
   if (totalSources === 0) return null;
@@ -98,7 +103,7 @@ export default function OtherCoverage({ label, events, flat = false }: OtherCove
       {smallTopics.length > 0 && (
         <div className="mb-4">
           {smallTopics.map((event, i) => (
-            <SmallTopic key={event.event_id || i} event={event} />
+            <SmallTopic key={event.event_id || i} event={event} dateFmtLocale={dateFmtLocale} />
           ))}
         </div>
       )}
@@ -108,7 +113,7 @@ export default function OtherCoverage({ label, events, flat = false }: OtherCove
         <div>
           {smallTopics.length > 0 && (
             <p className="text-xs text-dashboard-text-muted/60 uppercase tracking-wide mb-2">
-              Unclustered ({singletonTitles.length})
+              {tTrack('unclustered')} ({singletonTitles.length})
             </p>
           )}
           <div className="space-y-0.5">
@@ -117,7 +122,7 @@ export default function OtherCoverage({ label, events, flat = false }: OtherCove
             ))}
             {singletonTitles.length > 30 && (
               <p className="text-xs text-dashboard-text-muted pt-1">
-                ... and {singletonTitles.length - 30} more
+                {tTrack('andMore', { count: singletonTitles.length - 30 })}
               </p>
             )}
           </div>
@@ -141,7 +146,7 @@ export default function OtherCoverage({ label, events, flat = false }: OtherCove
         <span className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>
           &#9656;
         </span>
-        {label} ({totalSources} sources)
+        {label} ({tCommon('sourcesCount', { count: totalSources })})
       </button>
 
       {isOpen && content}

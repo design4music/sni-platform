@@ -100,15 +100,24 @@ export interface Feed {
 export type Track = string;
 
 // Convert track slug to human-readable label
-export function getTrackLabel(track: string): string {
-  // Remove "geo_" prefix if present (geographic tracks)
+// Pass a translation function (from useTranslations('tracks') or getTranslations('tracks')) for locale-aware labels
+export function getTrackLabel(track: string, t?: (key: string) => string): string {
+  if (t) {
+    try { return t(track); } catch { /* fallback below */ }
+  }
   const withoutPrefix = track.replace(/^geo_/, '');
-
-  // Convert underscore to space and title case each word
   return withoutPrefix
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+// Get localized centroid display name, falling back to DB label
+export function getCentroidLabel(centroidId: string, dbLabel: string, t?: (key: string) => string): string {
+  if (t) {
+    try { return t(centroidId); } catch { /* fallback below */ }
+  }
+  return dbLabel;
 }
 
 // Legacy TRACK_LABELS for backward compatibility - now uses dynamic function

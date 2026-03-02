@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import EventList from './EventList';
 import OtherCoverage from './OtherCoverage';
 import { Event } from '@/lib/types';
@@ -49,6 +50,8 @@ export default function CountryAccordion({
   defaultOpen = false,
   centroidLink,
 }: CountryAccordionProps) {
+  const tTrack = useTranslations('track');
+  const tCommon = useTranslations('common');
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
@@ -86,7 +89,7 @@ export default function CountryAccordion({
         </span>
         <span className="flex items-center gap-3 flex-shrink-0">
           <span className="text-sm text-dashboard-text-muted">
-            {mainEvents.length} topics | {totalSourceCount} sources
+            {tCommon('topicsCount', { count: mainEvents.length })} | {tCommon('sourcesCount', { count: totalSourceCount })}
           </span>
           <span
             className={`text-dashboard-text-muted transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
@@ -108,14 +111,14 @@ export default function CountryAccordion({
               />
               {otherEvents.length > 0 && (
                 <OtherCoverage
-                  label={`Other ${countryName} Coverage`}
+                  label={tTrack('otherCoverage', { country: countryName })}
                   events={otherEvents}
                 />
               )}
             </>
           ) : otherEvents.length > 0 ? (
             <OtherCoverage
-              label={`Other ${countryName} Coverage`}
+              label={tTrack('otherCoverage', { country: countryName })}
               events={otherEvents}
               flat
             />

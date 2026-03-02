@@ -1,4 +1,5 @@
 import { SignalStats } from '@/lib/types';
+import { getTranslations } from 'next-intl/server';
 
 interface SignalDashboardProps {
   stats: SignalStats;
@@ -27,7 +28,7 @@ function MiniBar({ label, count, maxCount }: { label: string; count: number; max
   );
 }
 
-function LanguagePills({ distribution }: { distribution: Record<string, number> }) {
+function LanguagePills({ distribution, titlesPctFn, moreLangsTooltipFn, moreCountFn }: { distribution: Record<string, number>; titlesPctFn: (count: number, pct: number) => string; moreLangsTooltipFn: (count: number) => string; moreCountFn: (count: number) => string }) {
   const sorted = Object.entries(distribution).sort((a, b) => b[1] - a[1]);
   const total = sorted.reduce((s, [, v]) => s + v, 0);
   // Only show languages with at least 1% share
@@ -42,7 +43,7 @@ function LanguagePills({ distribution }: { distribution: Record<string, number> 
           <span
             key={lang}
             className="text-[10px] px-1.5 py-0.5 rounded bg-dashboard-border text-dashboard-text-muted"
-            title={`${count} titles (${pct}%)`}
+            title={titlesPctFn(count, pct)}
           >
             {lang.toUpperCase()} {pct}%
           </span>
@@ -50,40 +51,41 @@ function LanguagePills({ distribution }: { distribution: Record<string, number> 
       })}
       {hiddenCount > 0 && (
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-dashboard-border text-dashboard-text-muted"
-          title={`${hiddenCount} more languages with less than 1% each`}>
-          +{hiddenCount} more
+          title={moreLangsTooltipFn(hiddenCount)}>
+          {moreCountFn(hiddenCount)}
         </span>
       )}
     </div>
   );
 }
 
-export default function SignalDashboard({ stats }: SignalDashboardProps) {
+export default async function SignalDashboard({ stats }: SignalDashboardProps) {
+  const t = await getTranslations('stats');
   const topPublisherMax = stats.top_publishers?.[0]?.count || 1;
   const topPersonMax = stats.top_persons?.[0]?.count || 1;
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Topic Stats</h2>
+      <h2 className="text-2xl font-bold">{t('topicStats')}</h2>
 
       {/* Top row: key stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Headlines" value={stats.title_count} tooltip="Total number of news headlines collected for this topic" />
+        <StatCard label={t('headlines')} value={stats.title_count} tooltip={t('headlinesTooltip')} />
         <StatCard
-          label="Publishers"
+          label={t('publishers')}
           value={stats.publisher_count}
-          sub={`HHI ${(stats.publisher_hhi * 100).toFixed(1)}%`}
-          tooltip={`Herfindahl-Hirschman Index measures source concentration. Below 5% = highly diverse, 5-15% = moderate, above 15% = concentrated. Current: ${(stats.publisher_hhi * 100).toFixed(1)}%`}
+          sub={t('hhi', { value: (stats.publisher_hhi * 100).toFixed(1) })}
+          tooltip={t('hhiTooltip', { value: (stats.publisher_hhi * 100).toFixed(1) })}
         />
-        <StatCard label="Languages" value={stats.language_count} tooltip="Number of distinct languages detected across all headlines" />
-        <StatCard label="Date Span" value={`${stats.date_range_days}d`} tooltip={`Coverage spans ${stats.date_range_days} days from first to last headline`} />
+        <StatCard label={t('languagesLabel')} value={stats.language_count} tooltip={t('languagesTooltip')} />
+        <StatCard label={t('dateSpan')} value={t('daysShort', { count: stats.date_range_days })} tooltip={t('dateSpanTooltip', { count: stats.date_range_days })} />
       </div>
 
       {/* Top publishers + top persons side by side */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {stats.top_publishers && stats.top_publishers.length > 0 && (
           <div className="bg-dashboard-border/30 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-dashboard-text mb-3">Top Publishers</h3>
+            <h3 className="text-sm font-semibold text-dashboard-text mb-3">{t('topPublishers')}</h3>
             <div className="space-y-1.5">
               {stats.top_publishers.map(p => (
                 <MiniBar key={p.name} label={p.name} count={p.count} maxCount={topPublisherMax} />
@@ -93,7 +95,7 @@ export default function SignalDashboard({ stats }: SignalDashboardProps) {
         )}
         {stats.top_persons && stats.top_persons.length > 0 && (
           <div className="bg-dashboard-border/30 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-dashboard-text mb-3">Top Persons</h3>
+            <h3 className="text-sm font-semibold text-dashboard-text mb-3">{t('topPersons')}</h3>
             <div className="space-y-1.5">
               {stats.top_persons.map(p => (
                 <MiniBar key={p.name} label={p.name} count={p.count} maxCount={topPersonMax} />
@@ -106,8 +108,13 @@ export default function SignalDashboard({ stats }: SignalDashboardProps) {
       {/* Language distribution */}
       {stats.language_distribution && (
         <div className="bg-dashboard-border/30 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-dashboard-text mb-2">Language Distribution</h3>
-          <LanguagePills distribution={stats.language_distribution} />
+          <h3 className="text-sm font-semibold text-dashboard-text mb-2">{t('languageDistribution')}</h3>
+          <LanguagePills
+            distribution={stats.language_distribution}
+            titlesPctFn={(count, pct) => t('titlesPct', { count, pct })}
+            moreLangsTooltipFn={(count) => t('moreLangsTooltip', { count })}
+            moreCountFn={(count) => t('moreCount', { count })}
+          />
         </div>
       )}
     </div>

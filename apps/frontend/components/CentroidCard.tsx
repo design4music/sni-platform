@@ -1,12 +1,17 @@
 import Link from 'next/link';
-import { Centroid } from '@/lib/types';
+import { Centroid, getCentroidLabel } from '@/lib/types';
+import { getTranslations } from 'next-intl/server';
 
 interface CentroidCardProps {
   centroid: Centroid;
   showClass?: boolean;
 }
 
-export default function CentroidCard({ centroid, showClass = false }: CentroidCardProps) {
+export default async function CentroidCard({ centroid, showClass = false }: CentroidCardProps) {
+  const t = await getTranslations('centroidCard');
+  const tTrending = await getTranslations('trending');
+  const tCommon = await getTranslations('common');
+  const tCentroids = await getTranslations('centroids');
   const articleCount = centroid.article_count || 0;
   const hasArticles = articleCount > 0;
   const sourceCount = centroid.source_count || 0;
@@ -22,7 +27,7 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1">
-            <h3 className="text-lg font-semibold flex-1">{centroid.label}</h3>
+            <h3 className="text-lg font-semibold flex-1">{getCentroidLabel(centroid.id, centroid.label, tCentroids)}</h3>
             {centroid.article_count !== undefined && (
               <span
                 className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium ${
@@ -30,7 +35,7 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
                     ? 'bg-green-500/10 border-green-500/30 text-green-400'
                     : 'bg-red-500/10 border-red-500/30 text-red-400'
                 }`}
-                title={hasArticles ? `${articleCount.toLocaleString()} total articles` : 'No articles yet'}
+                title={hasArticles ? `${articleCount.toLocaleString()} ${t('totalArticles')}` : t('noArticles')}
               >
                 {hasArticles ? (
                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -43,7 +48,7 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
                 )}
                 <span className="tabular-nums">{articleCount.toLocaleString()}</span>
                 {isFresh && (
-                  <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Active in last 48h" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title={tTrending('active48h')} />
                 )}
               </span>
             )}
@@ -54,20 +59,20 @@ export default function CentroidCard({ centroid, showClass = false }: CentroidCa
           {hasArticles && (sourceCount > 0 || languageCount > 0) && (
             <div className="flex flex-wrap gap-3 text-xs text-dashboard-text-muted mt-2">
               {sourceCount > 0 && (
-                <span title={`${sourceCount} distinct news sources`}>
-                  {sourceCount} sources
+                <span title={`${sourceCount} ${t('distinctSources')}`}>
+                  {sourceCount} {tCommon('sources')}
                 </span>
               )}
               {languageCount > 0 && (
-                <span title={`Coverage in ${languageCount} languages`}>
-                  {languageCount} {languageCount === 1 ? 'language' : 'languages'}
+                <span title={`${t('coverageIn')} ${languageCount} ${t('languages')}`}>
+                  {languageCount} {languageCount === 1 ? t('language') : t('languages')}
                 </span>
               )}
             </div>
           )}
           {showClass && (
             <span className="text-xs px-2 py-1 rounded bg-dashboard-border text-dashboard-text-muted inline-block mt-2">
-              {centroid.class === 'geo' ? 'Geographic' : 'Systemic'}
+              {centroid.class === 'geo' ? t('geographic') : t('systemic')}
             </span>
           )}
         </div>

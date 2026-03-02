@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import { SignalCategoryEntry, SignalType } from '@/lib/types';
 
 const TYPE_COLORS: Record<SignalType, { base: string; bg: string }> = {
@@ -18,6 +19,8 @@ interface Props {
 }
 
 export default function TemporalHeatmap({ signals }: Props) {
+  const locale = useLocale();
+  const dateFmtLocale = locale === 'de' ? 'de-DE' : 'en-US';
   if (!signals || signals.length === 0) return null;
 
   // Collect all unique weeks, sorted
@@ -39,7 +42,7 @@ export default function TemporalHeatmap({ signals }: Props) {
   // Format week for header
   function fmtWeek(w: string) {
     const d = new Date(w);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return d.toLocaleDateString(dateFmtLocale, { month: 'short', day: 'numeric' });
   }
 
   return (

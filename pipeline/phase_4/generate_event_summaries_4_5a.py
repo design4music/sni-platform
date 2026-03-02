@@ -39,6 +39,48 @@ from core.prompts import (
 MIN_SUMMARY_SOURCES = 5  # Below this: title only, no summary
 
 
+async def translate_title_de(title: str) -> str | None:
+    """Translate an English event title to German. Returns None on failure."""
+    headers = {
+        "Authorization": "Bearer %s" % config.deepseek_api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": config.llm_model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "Translate the following news headline to German. "
+                "Return only the translation, nothing else.",
+            },
+            {"role": "user", "content": title},
+        ],
+        "temperature": 0.2,
+        "max_tokens": 60,
+    }
+
+    from core.llm_utils import async_check_rate_limit
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            for _attempt in range(3):
+                response = await client.post(
+                    "%s/chat/completions" % config.deepseek_api_url,
+                    headers=headers,
+                    json=payload,
+                )
+                if await async_check_rate_limit(response, _attempt):
+                    continue
+                if response.status_code != 200:
+                    return None
+                break
+
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip().strip('"')
+    except Exception:
+        return None
+
+
 def get_backbone_signals(conn, event_id: str) -> dict:
     """Compute backbone signals (what grouped these headlines) from title_labels.
 
@@ -605,6 +647,9 @@ async def process_event(
             title = result["title"]
             summary = result["summary"] if not title_only else None
 
+            # Translate title to German (separate call, failure = NULL)
+            title_de = await translate_title_de(title) if title else None
+
             # Derive tags from backbone signals (the actual clustering anchors)
             tags = signals_to_tags(backbone, min_freq=2)
 
@@ -624,6 +669,7 @@ async def process_event(
                     UPDATE events_v3
                     SET title = %s,
                         summary = %s,
+                        title_de = %s,
                         tags = %s,
                         first_seen = %s,
                         date = %s,
@@ -631,12 +677,22 @@ async def process_event(
                         updated_at = NOW()
                     WHERE id = %s
                     """,
-                    (title, summary, tags, first_seen, last_seen, event["id"]),
+                    (
+                        title,
+                        summary,
+                        title_de,
+                        tags,
+                        first_seen,
+                        last_seen,
+                        event["id"],
+                    ),
                 )
             conn.commit()
 
             # Print progress
             print("  [%3d] %s" % (event["count"], title[:60]))
+            if title_de:
+                print("    DE: %s" % title_de[:60])
             if summary:
                 summary_preview = summary.replace("\n", " ")[:100]
                 print("        %s..." % summary_preview)

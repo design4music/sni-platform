@@ -635,3 +635,50 @@ decisions:
       - apps/frontend/components/TrendingCard.tsx
       - apps/frontend/components/CountryAccordion.tsx
 
+  - id: D-034
+    date: 2026-03-02
+    type: frontend
+    status: accepted
+    title: German (DE) localization via next-intl with lazy content translation
+    rationale: >
+      German-language users want to read WorldBrief in German. The implementation
+      covers two layers: (1) interface -- static UI strings, navigation, headings,
+      static pages via next-intl message files (~300 keys), and (2) content -- LLM-
+      generated event titles, CTM summaries, epic narratives via DeepSeek translation.
+      Content translation uses three strategies: pipeline-time (new content gets _de
+      alongside English), lazy on-demand (detail pages translate missing _de fields
+      inline on first DE visit and cache in DB), and backfill scripts (bulk translation
+      of existing content). All changes are additive -- nullable _de columns, i18n
+      wrapper, locale cookie. English URLs unchanged; German adds /de/ prefix.
+    implementation:
+      - next-intl with pathPrefix strategy (en = no prefix, de = /de/...)
+      - Middleware detects locale from URL prefix, Accept-Language, NEXT_LOCALE cookie
+      - All pages moved from app/ to app/[locale]/ (API routes stay at root)
+      - EN|DE toggle in Navigation.tsx sets cookie + navigates
+      - locCol() helper in queries.ts returns COALESCE(col_de, col) for locale=de
+      - lib/lazy-translate.ts for inline DeepSeek translation on detail pages
+      - Phase 4.5a generates title_de, Phase 4.5b generates summary_text_de
+      - Freeze script generates epic DE fields
+      - Static beta-notice banner on all DE detail pages (TranslationNotice.tsx)
+    consequences:
+      - All existing English URLs unchanged (zero SEO impact)
+      - German URLs are purely additive (/de/c/AMERICAS-USA, etc.)
+      - First DE visit to untranslated detail page has ~1-2s extra latency (DeepSeek call)
+      - Subsequent visits serve cached translation from DB
+      - Estimated additional DeepSeek cost: ~EUR 0.02-0.05/day
+    rollback:
+      - Remove next-intl, move pages back from app/[locale]/ to app/
+      - DROP COLUMN _de columns from events_v3, ctm, epics, centroids_v3
+      - Remove translate calls from pipeline scripts
+    references:
+      - apps/frontend/middleware.ts
+      - apps/frontend/i18n/ (config.ts, routing.ts, request.ts, navigation.ts)
+      - apps/frontend/messages/en.json, de.json
+      - apps/frontend/lib/lazy-translate.ts
+      - apps/frontend/components/TranslationNotice.tsx
+      - db/migrations/20260302_add_de_columns.sql
+      - scripts/backfill_title_de.py
+      - scripts/backfill_ctm_summary_de.py
+      - scripts/translate_epics_de.py
+      - scripts/translate_centroid_briefs.py
+

@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 const SOURCES = [
   'Reuters', 'BBC', 'France 24', 'CNN', 'AP News',
   'Financial Times', 'The Guardian', 'Al Jazeera', 'Al Arabiya',
@@ -8,17 +10,18 @@ const SOURCES = [
 ];
 
 export default function SourceCarousel({ feedCount }: { feedCount: number }) {
+  const t = useTranslations('home');
   const items = [...SOURCES, ...SOURCES];
 
   return (
     <section className="pt-8">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold">Our Sources</h2>
+        <h2 className="text-3xl font-bold">{t('ourSources')}</h2>
         <a
           href="/sources"
           className="text-dashboard-text-muted hover:text-blue-300 transition mt-2 inline-block"
         >
-          {feedCount}+ international news sources across all regions
+          {t('sourcesDescription', { count: feedCount })}
         </a>
       </div>
 

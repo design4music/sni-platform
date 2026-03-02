@@ -30,8 +30,46 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
-from core.llm_utils import fix_role_hallucinations
+from core.llm_utils import async_check_rate_limit, fix_role_hallucinations
 from core.prompts import CTM_SUMMARY_SYSTEM_PROMPT, CTM_SUMMARY_USER_PROMPT
+
+
+async def translate_summary_de(text: str) -> str | None:
+    """Translate a CTM summary to German. Returns None on failure."""
+    headers = {
+        "Authorization": "Bearer %s" % config.deepseek_api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": config.llm_model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "Translate the following news summary to German. "
+                "Preserve paragraph structure. Return only the translation.",
+            },
+            {"role": "user", "content": text},
+        ],
+        "temperature": 0.2,
+        "max_tokens": min(len(text) * 2, 4000),
+    }
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            for _attempt in range(3):
+                response = await client.post(
+                    "%s/chat/completions" % config.deepseek_api_url,
+                    headers=headers,
+                    json=payload,
+                )
+                if await async_check_rate_limit(response, _attempt):
+                    continue
+                if response.status_code != 200:
+                    return None
+                break
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return None
 
 
 def get_events_for_ctm(conn, ctm_id: str) -> list:
@@ -304,6 +342,11 @@ async def process_single_ctm(
             word_count = len(summary.split())
             print(f"  OK: {word_count} words")
 
+            # Translate summary to German
+            summary_de = await translate_summary_de(summary)
+            if summary_de:
+                print("  DE: %d words" % len(summary_de.split()))
+
             # Update CTM with summary and track event count for incremental logic
             event_count = len(events)
             with conn.cursor() as cur:
@@ -311,12 +354,13 @@ async def process_single_ctm(
                     """
                     UPDATE ctm
                     SET summary_text = %s,
+                        summary_text_de = %s,
                         updated_at = NOW(),
                         last_summary_at = NOW(),
                         event_count_at_summary = %s
                     WHERE id = %s
                 """,
-                    (summary, event_count, ctm_id),
+                    (summary, summary_de, event_count, ctm_id),
                 )
             conn.commit()
 

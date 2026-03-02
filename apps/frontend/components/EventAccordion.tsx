@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Title } from '@/lib/types';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface EventAccordionProps {
   event: {
@@ -29,16 +30,15 @@ function TagPill({ tag }: { tag: string }) {
   );
 }
 
-function formatDate(dateStr: string): string {
-  // Convert "2026-01-22" to "Jan 22"
+function formatDate(dateStr: string, locale: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric' });
 }
 
-function DateRange({ date, last_active }: { date: string; last_active?: string }) {
-  const formattedFirst = formatDate(date);
+function DateRange({ date, last_active, locale }: { date: string; last_active?: string; locale: string }) {
+  const formattedFirst = formatDate(date, locale);
   if (last_active && last_active !== date) {
-    const formattedLast = formatDate(last_active);
+    const formattedLast = formatDate(last_active, locale);
     return (
       <span className="text-dashboard-text-muted">
         {formattedFirst} — {formattedLast}
@@ -49,6 +49,10 @@ function DateRange({ date, last_active }: { date: string; last_active?: string }
 }
 
 export default function EventAccordion({ event, index, compact = false }: EventAccordionProps) {
+  const tTrending = useTranslations('trending');
+  const tCommon = useTranslations('common');
+  const tEvent = useTranslations('event');
+  const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
 
   const relatedTitles = event.resolvedTitles || [];
@@ -62,9 +66,9 @@ export default function EventAccordion({ event, index, compact = false }: EventA
           <div className="flex-1">
             {/* Date range */}
             <p className="text-xs mb-1 flex items-center">
-              <DateRange date={event.date} last_active={event.last_active} />
+              <DateRange date={event.date} last_active={event.last_active} locale={locale} />
               {event.last_active && (Date.now() - new Date(event.last_active + 'T00:00:00').getTime()) < 172800000 && (
-                <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title="Active in last 48h" />
+                <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title={tTrending('active48h')} />
               )}
             </p>
             {/* Title if available, otherwise summary */}
@@ -130,7 +134,7 @@ export default function EventAccordion({ event, index, compact = false }: EventA
                 href={`/events/${event.event_id}`}
                 className="inline-block mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
-                View all {sourceCount} sources &rarr;
+                {tEvent('viewAllSources', { count: sourceCount })}
               </Link>
             )}
           </div>
@@ -145,9 +149,9 @@ export default function EventAccordion({ event, index, compact = false }: EventA
         <div className="flex-1">
           {/* Date range */}
           <p className="text-sm mb-1 flex items-center">
-            <DateRange date={event.date} last_active={event.last_active} />
+            <DateRange date={event.date} last_active={event.last_active} locale={locale} />
             {event.last_active && (Date.now() - new Date(event.last_active + 'T00:00:00').getTime()) < 172800000 && (
-              <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title="Active in last 48h" />
+              <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title={tTrending('active48h')} />
             )}
           </p>
           {/* Title if available */}
@@ -183,7 +187,7 @@ export default function EventAccordion({ event, index, compact = false }: EventA
               className="text-sm text-blue-400 hover:text-blue-300 transition"
               aria-expanded={isOpen}
             >
-              {isOpen ? '\u2212' : '+'} {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
+              {isOpen ? '\u2212' : '+'} {sourceCount} {sourceCount === 1 ? tCommon('source') : tCommon('sources')}
             </button>
           )}
         </div>
@@ -220,7 +224,7 @@ export default function EventAccordion({ event, index, compact = false }: EventA
               href={`/events/${event.event_id}`}
               className="inline-block text-sm text-blue-400 hover:text-blue-300 transition-colors"
             >
-              View all {sourceCount} sources &rarr;
+              {tEvent('viewAllSources', { count: sourceCount })}
             </Link>
           )}
         </div>

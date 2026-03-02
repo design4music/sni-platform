@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { Epic } from '@/lib/types';
+import { getTranslations } from 'next-intl/server';
 
 interface EpicCardProps {
   epic: Epic;
 }
 
-export default function EpicCard({ epic }: EpicCardProps) {
+export default async function EpicCard({ epic }: EpicCardProps) {
+  const tCommon = await getTranslations('common');
   const truncatedSummary = epic.summary
     ? epic.summary.length > 150
       ? epic.summary.slice(0, 150) + '...'
@@ -22,9 +24,9 @@ export default function EpicCard({ epic }: EpicCardProps) {
       </h3>
 
       <div className="flex flex-wrap gap-3 text-xs text-dashboard-text-muted mb-3">
-        <span>{epic.centroid_count} countries</span>
-        <span>{epic.event_count} topics</span>
-        <span>{epic.total_sources} sources</span>
+        <span>{tCommon('countriesCount', { count: epic.centroid_count })}</span>
+        <span>{tCommon('topicsCount', { count: epic.event_count })}</span>
+        <span>{tCommon('sourcesCount', { count: epic.total_sources })}</span>
       </div>
 
       {epic.anchor_tags.length > 0 && (
