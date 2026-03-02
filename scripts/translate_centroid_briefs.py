@@ -57,6 +57,22 @@ async def translate_profile(client: httpx.AsyncClient, profile: dict) -> dict:
     """Translate a GeoBriefProfile dict, section by section."""
     result = dict(profile)
 
+    # Translate snapshot rows (label + value)
+    if "snapshot" in profile and profile["snapshot"]:
+        translated_snapshot = []
+        for row in profile["snapshot"]:
+            new_row = dict(row)
+            if row.get("label"):
+                t = await translate_text(client, row["label"])
+                if t:
+                    new_row["label"] = t
+            if row.get("value"):
+                t = await translate_text(client, row["value"])
+                if t:
+                    new_row["value"] = t
+            translated_snapshot.append(new_row)
+        result["snapshot"] = translated_snapshot
+
     # Translate sections
     if "sections" in profile and profile["sections"]:
         translated_sections = []
