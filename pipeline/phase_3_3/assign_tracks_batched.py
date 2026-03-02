@@ -658,7 +658,10 @@ async def process_batch(max_titles=None):
 
         # Group by ALL centroids (each title appears in multiple groups)
         grouped = group_titles_by_all_centroids(titles)
-        print(f"Grouped into {len(grouped)} centroids")
+        # Option B: SYS centroids are tags only -- skip CTM/event creation
+        sys_count = sum(1 for k in grouped if k.startswith("SYS-"))
+        grouped = {k: v for k, v in grouped.items() if not k.startswith("SYS-")}
+        print(f"Grouped into {len(grouped)} centroids (skipped {sys_count} SYS)")
         print()
 
         # Process each centroid group
