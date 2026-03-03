@@ -180,7 +180,8 @@ export default async function EpicDetailPage({ params }: Props) {
     displayLabel: getDisplayLabel(centroidId, group.label, t, tCentroids),
     events: group.events,
     isoCodes: isoLookup[centroidId] || null,
-    summary: epic.centroid_summaries?.[centroidId] || null,
+    summary: (locale === 'de' && epic.centroid_summaries_de?.[centroidId])
+      || epic.centroid_summaries?.[centroidId] || null,
   }));
 
   const breadcrumb = (

@@ -632,7 +632,7 @@ export async function getEpicBySlug(slug: string, locale?: string): Promise<Epic
             ${locCol('epics', 'summary', locale)} as summary,
             anchor_tags, centroid_count, event_count, total_sources,
             ${locCol('epics', 'timeline', locale)} as timeline,
-            narratives, centroid_summaries
+            narratives, centroid_summaries, centroid_summaries_de
      FROM epics
      WHERE slug = $1`,
     [slug]
@@ -1179,18 +1179,23 @@ export async function getRelationshipClusters(
   type: SignalType,
   value: string,
   month?: string,
+  locale?: string,
 ): Promise<RelationshipCluster[]> {
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
-  return cached(`signal-relationships:${type}:${value}:${month || 'rolling'}`, 3600, async () => {
+  return cached(`signal-relationships:${type}:${value}:${month || 'rolling'}:${locale || 'en'}`, 3600, async () => {
     const dr = signalDateRange(month);
     const vi = dr.nextIdx;
     const params = [...dr.params, value];
+
+    const titleExpr = locale === 'de'
+      ? 'COALESCE(e.title_de, e.title, e.topic_core)'
+      : 'COALESCE(e.title, e.topic_core)';
 
     // 20% density filter on BOTH the primary signal AND each co-signal per event,
     // so displayed events genuinely involve both signals (not just a passing mention)
     return queryNoJIT<RelationshipCluster>(
       `WITH signal_events AS (
-         SELECT e.id, COALESCE(e.title, e.topic_core) as title,
+         SELECT e.id, ${titleExpr} as title,
                 e.date::text as date, e.source_batch_count
          FROM events_v3 e
          WHERE ${dr.clause} AND e.is_catchall = false AND (

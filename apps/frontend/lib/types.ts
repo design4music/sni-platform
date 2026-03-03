@@ -259,6 +259,7 @@ export interface Epic {
   timeline: string | null;
   narratives: EpicNarrative[] | null;
   centroid_summaries: Record<string, string> | null;
+  centroid_summaries_de: Record<string, string> | null;
 }
 
 export interface EpicEvent {

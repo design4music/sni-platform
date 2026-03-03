@@ -156,7 +156,7 @@ export default async function SignalDetailPage({ params }: Props) {
 async function RelationshipSection({ type, value, totalEvents }: { type: SignalType; value: string; totalEvents: number }) {
   const t = await getTranslations('signals');
   const locale = await getLocale();
-  const clusters = await getRelationshipClusters(type, value);
+  const clusters = await getRelationshipClusters(type, value, undefined, locale);
   if (clusters.length === 0) return null;
 
   const isMega = totalEvents >= 200;

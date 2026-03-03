@@ -829,9 +829,51 @@ def generate_centroid_summaries(title, events, wiki_ref=None):
         return None
 
 
+def translate_centroid_summaries_de(summaries):
+    """Translate centroid_summaries dict values to German."""
+    if not summaries:
+        return None
+    prompt = (
+        "Translate the values of this JSON object to German. "
+        "Keep the keys exactly as-is. Return ONLY valid JSON, nothing else.\n\n"
+        + json.dumps(summaries, ensure_ascii=False)
+    )
+    headers = {
+        "Authorization": "Bearer %s" % config.deepseek_api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": config.llm_model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.2,
+        "max_tokens": 4000,
+    }
+    try:
+        resp = httpx.post(
+            "%s/chat/completions" % config.deepseek_api_url,
+            headers=headers,
+            json=payload,
+            timeout=90,
+        )
+        if resp.status_code != 200:
+            print(
+                "    WARN: centroid summaries DE translation failed (%d)"
+                % resp.status_code
+            )
+            return None
+        content = resp.json()["choices"][0]["message"]["content"].strip()
+        if content.startswith("```"):
+            content = content.split("\n", 1)[1]
+            content = content.rsplit("```", 1)[0]
+        return json.loads(content)
+    except Exception as e:
+        print("    WARN: centroid summaries DE translation error: %s" % e)
+        return None
+
+
 UPDATE_ENRICHMENT = """
 UPDATE epics SET timeline = %s, narratives = %s, centroid_summaries = %s,
-       updated_at = NOW()
+       centroid_summaries_de = %s, updated_at = NOW()
 WHERE id = %s
 """
 
@@ -863,6 +905,9 @@ def enrich_epic(conn, epic_id, title, events, anchor_tags=None, month_str=None):
     print("  Enriching: centroid summaries...")
     centroid_sums = generate_centroid_summaries(title, events, wiki_ref)
 
+    print("  Translating: centroid summaries (DE)...")
+    centroid_sums_de = translate_centroid_summaries_de(centroid_sums)
+
     cur = conn.cursor()
     cur.execute(
         UPDATE_ENRICHMENT,
@@ -870,6 +915,7 @@ def enrich_epic(conn, epic_id, title, events, anchor_tags=None, month_str=None):
             timeline,
             json.dumps(narratives) if narratives else None,
             json.dumps(centroid_sums) if centroid_sums else None,
+            json.dumps(centroid_sums_de) if centroid_sums_de else None,
             str(epic_id),
         ),
     )
