@@ -867,11 +867,12 @@ export async function getRelatedEvents(
 
 const SIGNAL_COLUMNS: SignalType[] = ['persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events'];
 
-export async function getTopSignalsByMonth(month: string, limit: number = 5): Promise<Record<SignalType, TopSignal[]>> {
-  return cached(`signals:${month}`, 600, async () => {
+export async function getTopSignalsByMonth(month: string, limit: number = 5, locale?: string): Promise<Record<SignalType, TopSignal[]>> {
+  return cached(`signals:${month}:${locale || 'en'}`, 600, async () => {
   // Try pre-computed rankings first (has LLM context)
+  const contextCol = locale === 'de' ? 'COALESCE(context_de, context)' : 'context';
   const precomputed = await query<TopSignal>(
-    `SELECT signal_type, value, count, context
+    `SELECT signal_type, value, count, ${contextCol} as context
      FROM monthly_signal_rankings
      WHERE month = ($1 || '-01')::date
      ORDER BY signal_type, rank`,

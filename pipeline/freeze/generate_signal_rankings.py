@@ -321,6 +321,40 @@ async def generate_context(month, signal_type, value, count, topics_text):
         return data["choices"][0]["message"]["content"].strip()
 
 
+async def translate_context_de(text):
+    """Translate a context string to German."""
+    if not text:
+        return None
+    headers = {
+        "Authorization": "Bearer %s" % config.deepseek_api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": config.llm_model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "Translate to German. Return only the translation.",
+            },
+            {"role": "user", "content": text},
+        ],
+        "temperature": 0.2,
+        "max_tokens": 300,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "%s/chat/completions" % config.deepseek_api_url,
+                headers=headers,
+                json=payload,
+            )
+            if resp.status_code != 200:
+                return None
+            return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception:
+        return None
+
+
 def save_rankings(conn, month, rankings):
     """Insert or update rankings into the table."""
     cur = conn.cursor()
@@ -329,19 +363,20 @@ def save_rankings(conn, month, rankings):
         "DELETE FROM monthly_signal_rankings WHERE month = %s", (month + "-01",)
     )
     for signal_type, items in rankings.items():
-        for rank, (value, count, context) in enumerate(items, 1):
+        for rank, (value, count, context, context_de) in enumerate(items, 1):
             cur.execute(
                 """
                 INSERT INTO monthly_signal_rankings
-                    (month, signal_type, value, rank, count, context)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (month, signal_type, value, rank, count, context, context_de)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (month, signal_type, value)
                 DO UPDATE SET rank = EXCLUDED.rank,
                               count = EXCLUDED.count,
                               context = EXCLUDED.context,
+                              context_de = EXCLUDED.context_de,
                               created_at = NOW()
             """,
-                (month + "-01", signal_type, value, rank, count, context),
+                (month + "-01", signal_type, value, rank, count, context, context_de),
             )
     conn.commit()
     cur.close()
@@ -390,13 +425,16 @@ async def main():
                 print("  Top events preview:")
                 for line in topics_text.split("\n")[:6]:
                     print("    %s" % line)
-                rankings[signal_type].append((value, count, None))
+                rankings[signal_type].append((value, count, None, None))
             else:
                 context = await generate_context(
                     args.month, signal_type, value, count, topics_text
                 )
                 print("  Context: %s" % context)
-                rankings[signal_type].append((value, count, context))
+                context_de = await translate_context_de(context)
+                if context_de:
+                    print("  Context (DE): %s" % context_de)
+                rankings[signal_type].append((value, count, context, context_de))
 
     if args.apply:
         save_rankings(conn, args.month, rankings)

@@ -48,7 +48,7 @@ export default async function EpicsPage({ params, searchParams }: Props) {
   const currentMonth = sp.month || months[0] || '';
   const [epics, topSignals] = await Promise.all([
     currentMonth ? getEpicsByMonth(currentMonth, locale) : Promise.resolve([]),
-    currentMonth ? getTopSignalsByMonth(currentMonth) : Promise.resolve(null),
+    currentMonth ? getTopSignalsByMonth(currentMonth, 5, locale) : Promise.resolve(null),
   ]);
 
   // Cap epics at 9 for a clean 3x3 grid
