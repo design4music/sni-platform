@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
-const DEEPSEEK_API_URL = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1';
+const DEEPSEEK_BASE = process.env.DEEPSEEK_API_URL?.replace(/\/chat\/completions$/, '')
+  || 'https://api.deepseek.com/v1';
 
 // Allowed entity_type -> table/column mappings
-const FIELD_MAP: Record<string, Record<string, { table: string; pk: string; src: string; dest: string }>> = {
+const FIELD_MAP: Record<string, Record<string, { table: string; pk: string; src: string; dest: string; isArray?: boolean }>> = {
   event: {
     summary: { table: 'events_v3', pk: 'id', src: 'summary', dest: 'summary_de' },
     title: { table: 'events_v3', pk: 'id', src: 'title', dest: 'title_de' },
@@ -18,11 +19,20 @@ const FIELD_MAP: Record<string, Record<string, { table: string; pk: string; src:
     title: { table: 'epics', pk: 'id', src: 'title', dest: 'title_de' },
     timeline: { table: 'epics', pk: 'id', src: 'timeline', dest: 'timeline_de' },
   },
+  narrative: {
+    label: { table: 'narratives', pk: 'id', src: 'label', dest: 'label_de' },
+    description: { table: 'narratives', pk: 'id', src: 'description', dest: 'description_de' },
+    moral_frame: { table: 'narratives', pk: 'id', src: 'moral_frame', dest: 'moral_frame_de' },
+    rai_full_analysis: { table: 'narratives', pk: 'id', src: 'rai_full_analysis', dest: 'rai_full_analysis_de' },
+    rai_synthesis: { table: 'narratives', pk: 'id', src: 'rai_synthesis', dest: 'rai_synthesis_de' },
+    rai_conflicts: { table: 'narratives', pk: 'id', src: 'rai_conflicts', dest: 'rai_conflicts_de', isArray: true },
+    rai_blind_spots: { table: 'narratives', pk: 'id', src: 'rai_blind_spots', dest: 'rai_blind_spots_de', isArray: true },
+  },
 };
 
 async function translateText(text: string): Promise<string | null> {
   try {
-    const response = await fetch(`${DEEPSEEK_API_URL}/chat/completions`, {
+    const response = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
@@ -33,12 +43,12 @@ async function translateText(text: string): Promise<string | null> {
         messages: [
           {
             role: 'system',
-            content: 'Translate the following text to German. Return only the translation, nothing else. Preserve any markdown formatting.',
+            content: 'Translate the following text to German. Return only the translation, nothing else. Preserve any markdown formatting. If the input is JSON, translate the string values but preserve the JSON structure exactly.',
           },
           { role: 'user', content: text },
         ],
         temperature: 0.2,
-        max_tokens: Math.min(text.length * 2, 4000),
+        max_tokens: Math.min(text.length * 2, 8000),
       }),
     });
 
@@ -93,10 +103,13 @@ export async function POST(req: NextRequest) {
       [entity_id]
     );
 
-    const sourceText = srcRows[0]?.[mapping.src];
-    if (!sourceText) {
+    const rawSource = srcRows[0]?.[mapping.src];
+    if (!rawSource) {
       return NextResponse.json({ error: 'No source text to translate' }, { status: 404 });
     }
+
+    // JSONB columns come as objects — stringify for translation
+    const sourceText = typeof rawSource === 'string' ? rawSource : JSON.stringify(rawSource);
 
     // Translate
     const translated = await translateText(sourceText);
@@ -104,13 +117,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Translation failed' }, { status: 502 });
     }
 
+    // For text[] columns, parse the JSON array string and save as Postgres array
+    let dbValue: string | string[] = translated;
+    if (mapping.isArray) {
+      try {
+        const parsed = JSON.parse(translated);
+        dbValue = Array.isArray(parsed) ? parsed : [translated];
+      } catch {
+        dbValue = [translated];
+      }
+    }
+
     // Cache in DB
     await query(
       `UPDATE ${mapping.table} SET ${mapping.dest} = $1 WHERE ${mapping.pk} = $2`,
-      [translated, entity_id]
+      [dbValue, entity_id]
     );
 
-    return NextResponse.json({ translated });
+    return NextResponse.json({ translated: dbValue });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }

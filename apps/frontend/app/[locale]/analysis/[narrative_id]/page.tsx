@@ -8,17 +8,18 @@ import AssessmentScores from '@/components/AssessmentScores';
 import { getNarrativeById } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel, getCountryName } from '@/lib/types';
 import type { SignalStats } from '@/lib/types';
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { ensureDE } from '@/lib/lazy-translate';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  params: Promise<{ narrative_id: string }>;
+  params: Promise<{ locale: string; narrative_id: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { narrative_id } = await params;
-  const n = await getNarrativeById(narrative_id);
+  const { locale, narrative_id } = await params;
+  const n = await getNarrativeById(narrative_id, locale);
   if (!n) return { title: 'Analysis Not Found' };
   return {
     title: `${n.label} | Analysis`,
@@ -41,14 +42,25 @@ function MiniBar({ label, count, maxCount }: { label: string; count: number; max
 }
 
 export default async function AnalysisPage({ params }: Props) {
-  const { narrative_id } = await params;
-  const n = await getNarrativeById(narrative_id);
+  const { locale, narrative_id } = await params;
+  let n = await getNarrativeById(narrative_id, locale);
   if (!n) return notFound();
+
+  // Lazy-translate narrative metadata for DE users
+  if (locale === 'de') {
+    const de = await ensureDE('narratives', 'id', n.id, [
+      { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
+      { src: 'description', dest: 'description_de', text: n.description || '' },
+      { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
+    ]);
+    if (de.label) n = { ...n, label: de.label };
+    if (de.description) n = { ...n, description: de.description };
+    if (de.moral_frame) n = { ...n, moral_frame: de.moral_frame };
+  }
 
   const tCentroids = await getTranslations('centroids');
   const tTracks = await getTranslations('tracks');
   const tAnalysis = await getTranslations('analysis');
-  const locale = await getLocale();
 
   const stats: SignalStats | null = n.signal_stats
     ? (typeof n.signal_stats === 'string' ? JSON.parse(n.signal_stats as unknown as string) : n.signal_stats)
@@ -255,7 +267,7 @@ export default async function AnalysisPage({ params }: Props) {
       )}
 
       {/* Analysis content (client component) */}
-      <AnalysisContent narrative={n} sampleTitles={sampleTitles} />
+      <AnalysisContent narrative={n} sampleTitles={sampleTitles} locale={locale} />
     </DashboardLayout>
   );
 }

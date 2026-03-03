@@ -78,12 +78,27 @@ function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
 /* Deferred async server components                                   */
 /* ------------------------------------------------------------------ */
 
-async function EventSidebar({ eventId, coherenceCheck }: {
+async function EventSidebar({ eventId, coherenceCheck, locale }: {
   eventId: string;
   coherenceCheck?: { reason: string; topics?: string[] } | null;
+  locale?: string;
 }) {
   const t = await getTranslations('event');
-  const narratives = await getFramedNarratives('event', eventId);
+  const narratives = await getFramedNarratives('event', eventId, locale);
+
+  // Lazy-translate narrative card fields for DE users
+  if (locale === 'de') {
+    for (const n of narratives) {
+      const de = await ensureDE('narratives', 'id', n.id, [
+        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
+        { src: 'description', dest: 'description_de', text: n.description || '' },
+        { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
+      ]);
+      if (de.label) n.label = de.label;
+      if (de.description) n.description = de.description;
+      if (de.moral_frame) n.moral_frame = de.moral_frame;
+    }
+  }
 
   const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
   const signalStats = rawStats?.title_count ? rawStats : null;
@@ -128,8 +143,8 @@ async function EventSidebar({ eventId, coherenceCheck }: {
   );
 }
 
-async function EventSignalSection({ eventId }: { eventId: string }) {
-  const narratives = await getFramedNarratives('event', eventId);
+async function EventSignalSection({ eventId, locale }: { eventId: string; locale?: string }) {
+  const narratives = await getFramedNarratives('event', eventId, locale);
   const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
   const signalStats = rawStats?.title_count ? rawStats : null;
 
@@ -222,7 +237,7 @@ export default async function EventDetailPage({ params }: Props) {
 
   const sidebar = (
     <Suspense fallback={sidebarFallback}>
-      <EventSidebar eventId={event_id} coherenceCheck={event.coherence_check} />
+      <EventSidebar eventId={event_id} coherenceCheck={event.coherence_check} locale={locale} />
     </Suspense>
   );
 
@@ -314,7 +329,7 @@ export default async function EventDetailPage({ params }: Props) {
 
       {/* Topic Stats (deferred - depends on narratives) */}
       <Suspense fallback={null}>
-        <EventSignalSection eventId={event_id} />
+        <EventSignalSection eventId={event_id} locale={locale} />
       </Suspense>
 
       {/* Related Coverage (deferred) */}

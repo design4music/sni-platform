@@ -606,7 +606,31 @@
     "geographicFocus": "Geographischer Schwerpunkt",
     "moreCount": "+{count} weitere",
     "mentions": "{count} Nennungen",
-    "llmDisclaimer": "Diese Analyse wurde von einem KI-Sprachmodell (DeepSeek) im Rahmen des RAI-Analyseframeworks erstellt. Sie basiert auf den auf dieser Seite gezeigten Berichterstattungsdaten. Die Analyse spiegelt die verfuegbaren Daten wider und kann Auslassungen oder Fehlinterpretationen enthalten. Sie sollte als strukturierter Ausgangspunkt fuer kritisches Denken betrachtet werden, nicht als endgueltige Bewertung."
+    "llmDisclaimer": "Diese Analyse wurde von einem KI-Sprachmodell (DeepSeek) im Rahmen des RAI-Analyseframeworks erstellt. Sie basiert auf den auf dieser Seite gezeigten Berichterstattungsdaten. Die Analyse spiegelt die verfuegbaren Daten wider und kann Auslassungen oder Fehlinterpretationen enthalten. Sie sollte als strukturierter Ausgangspunkt fuer kritisches Denken betrachtet werden, nicht als endgueltige Bewertung.",
+    "synthesis": "Synthese",
+    "conflicts": "Konflikte",
+    "blindSpots": "Blinde Flecken",
+    "sampleHeadlines": "Beispiel-Schlagzeilen",
+    "generating": "Analyse wird erstellt... (kann bis zu einer Minute dauern)",
+    "translateAnalysis": "Analyse auf Deutsch uebersetzen",
+    "translatingAnalysis": "Wird uebersetzt...",
+    "signInToGenerate": "Anmelden zur Analyseerstellung"
+  },
+  "assessmentScores": {
+    "title": "Bewertungsergebnisse",
+    "adequacy": "Angemessenheit",
+    "bias": "Verzerrung",
+    "coherence": "Kohaerenz",
+    "credibility": "Glaubwuerdigkeit",
+    "evidenceQuality": "Beweisqualitaet",
+    "relevance": "Relevanz",
+    "safety": "Sicherheit"
+  },
+  "narrativeCards": {
+    "title": "Narrativ-Rahmen",
+    "subtitle": "{frames} konkurrierende Rahmen ueber {headlines} Schlagzeilen.",
+    "analyse": "Analysieren",
+    "signInToAnalyse": "Anmelden zur Analyse"
   },
   "terms": {
     "title": "Nutzungsbedingungen",

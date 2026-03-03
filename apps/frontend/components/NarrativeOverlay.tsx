@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useTranslations, useLocale } from 'next-intl';
 import { FramedNarrative, FrameStats } from '@/lib/types';
 
 interface NarrativeCardsProps {
@@ -11,6 +12,9 @@ interface NarrativeCardsProps {
 
 export default function NarrativeCards({ narratives, layout = 'sidebar' }: NarrativeCardsProps) {
   const { data: session } = useSession();
+  const t = useTranslations('narrativeCards');
+  const locale = useLocale();
+  const prefix = locale === 'de' ? '/de' : '';
 
   if (narratives.length === 0) return null;
 
@@ -18,9 +22,9 @@ export default function NarrativeCards({ narratives, layout = 'sidebar' }: Narra
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-2 text-dashboard-text">Narrative Frames</h3>
+      <h3 className="text-lg font-semibold mb-2 text-dashboard-text">{t('title')}</h3>
       <p className="text-xs text-dashboard-text-muted mb-3">
-        {narratives.length} competing frames across {totalTitles} headlines.
+        {t('subtitle', { frames: narratives.length, headlines: totalTitles })}
       </p>
       <div className={layout === 'grid'
         ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
@@ -72,17 +76,17 @@ export default function NarrativeCards({ narratives, layout = 'sidebar' }: Narra
               {/* Analyse link */}
               {session?.user ? (
                 <Link
-                  href={`/analysis/${n.id}`}
+                  href={`${prefix}/analysis/${n.id}`}
                   className="mt-2 inline-block text-xs px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
                 >
-                  Analyse
+                  {t('analyse')}
                 </Link>
               ) : (
                 <a
                   href="/auth/signin"
                   className="mt-2 inline-block text-xs px-3 py-1 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text transition-colors"
                 >
-                  Sign in to analyse
+                  {t('signInToAnalyse')}
                 </a>
               )}
             </div>

@@ -698,9 +698,12 @@ export async function getLatestEpics(limit: number = 3, locale?: string): Promis
   );
 }
 
-export async function getEpicFramedNarratives(epicId: string): Promise<FramedNarrative[]> {
+export async function getEpicFramedNarratives(epicId: string, locale?: string): Promise<FramedNarrative[]> {
   return query<FramedNarrative>(
-    `SELECT id, label, description, moral_frame, title_count,
+    `SELECT id, ${locCol('narratives', 'label', locale)} as label,
+            ${locCol('narratives', 'description', locale)} as description,
+            ${locCol('narratives', 'moral_frame', locale)} as moral_frame,
+            title_count,
             top_sources, proportional_sources, top_countries, sample_titles,
             rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
             rai_shifts, rai_full_analysis, rai_analyzed_at::text,
@@ -716,14 +719,21 @@ export async function getEpicFramedNarratives(epicId: string): Promise<FramedNar
 // Generic narrative + event detail queries
 // ========================================================================
 
-export async function getNarrativeById(id: string): Promise<NarrativeDetail | null> {
+export async function getNarrativeById(id: string, locale?: string): Promise<NarrativeDetail | null> {
   const results = await query<NarrativeDetail>(
-    `SELECT n.id, n.label, n.moral_frame, n.description, n.title_count,
+    `SELECT n.id, ${locCol('n', 'label', locale)} as label,
+            ${locCol('n', 'moral_frame', locale)} as moral_frame,
+            ${locCol('n', 'description', locale)} as description,
+            n.title_count,
             n.sample_titles, n.top_sources, n.proportional_sources, n.top_countries,
             n.entity_type, n.entity_id,
             n.signal_stats, n.rai_signals, n.rai_signals_at::text,
-            n.rai_full_analysis, n.rai_adequacy, n.rai_synthesis,
-            n.rai_conflicts, n.rai_blind_spots, n.rai_shifts, n.rai_analyzed_at::text,
+            n.rai_full_analysis, n.rai_full_analysis_de,
+            n.rai_adequacy,
+            ${locCol('n', 'rai_synthesis', locale)} as rai_synthesis,
+            ${locale === 'de' ? 'COALESCE(n.rai_conflicts_de, n.rai_conflicts)' : 'n.rai_conflicts'} as rai_conflicts,
+            ${locale === 'de' ? 'COALESCE(n.rai_blind_spots_de, n.rai_blind_spots)' : 'n.rai_blind_spots'} as rai_blind_spots,
+            n.rai_shifts, n.rai_analyzed_at::text,
             COALESCE(ct.centroid_id, c.centroid_id) as centroid_id,
             c2.label as centroid_name,
             COALESCE(ct.track, c.track) as track,
@@ -741,10 +751,13 @@ export async function getNarrativeById(id: string): Promise<NarrativeDetail | nu
 }
 
 export async function getFramedNarratives(
-  entityType: string, entityId: string
+  entityType: string, entityId: string, locale?: string
 ): Promise<FramedNarrative[]> {
   return query<FramedNarrative>(
-    `SELECT id, label, description, moral_frame, title_count,
+    `SELECT id, ${locCol('narratives', 'label', locale)} as label,
+            ${locCol('narratives', 'description', locale)} as description,
+            ${locCol('narratives', 'moral_frame', locale)} as moral_frame,
+            title_count,
             top_sources, proportional_sources, top_countries, sample_titles,
             rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
             rai_shifts, rai_full_analysis, rai_analyzed_at::text,

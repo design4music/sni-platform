@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Shifts {
   overall_score?: number;
@@ -18,7 +19,17 @@ interface Props {
   initialShifts: Shifts | null;
 }
 
+const SHIFT_KEYS: Record<string, string> = {
+  bias_score: 'bias',
+  coherence_score: 'coherence',
+  credibility_score: 'credibility',
+  evidence_quality: 'evidenceQuality',
+  relevance_score: 'relevance',
+  safety_score: 'safety',
+};
+
 export default function AssessmentScores({ initialAdequacy, initialShifts }: Props) {
+  const t = useTranslations('assessmentScores');
   const [adequacy, setAdequacy] = useState<number | null>(initialAdequacy);
   const [shifts, setShifts] = useState<Shifts | null>(initialShifts);
 
@@ -36,12 +47,12 @@ export default function AssessmentScores({ initialAdequacy, initialShifts }: Pro
 
   return (
     <div className="bg-dashboard-border/30 rounded-lg p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-dashboard-text">Assessment Scores</h3>
+      <h3 className="text-sm font-semibold text-dashboard-text">{t('title')}</h3>
 
       {adequacy != null && (
         <div>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-dashboard-text-muted">Adequacy</span>
+            <span className="text-xs text-dashboard-text-muted">{t('adequacy')}</span>
             <span className="text-xs font-medium">{Math.round(adequacy * 100)}%</span>
           </div>
           <div className="h-1.5 bg-dashboard-border rounded-full overflow-hidden">
@@ -59,7 +70,8 @@ export default function AssessmentScores({ initialAdequacy, initialShifts }: Pro
         .filter(([k]) => !['overall_score', 'adequacy'].includes(k))
         .map(([key, val]) => {
           if (typeof val !== 'number') return null;
-          const label = key.replace(/_score$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          const tKey = SHIFT_KEYS[key] || key;
+          const label = t.has(tKey) ? t(tKey) : key.replace(/_score$/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
           const pct = Math.round(val * 100);
           return (
             <div key={key}>

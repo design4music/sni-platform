@@ -318,6 +318,10 @@ export interface NarrativeDetail extends FramedNarrative {
   track: string | null;
   event_title: string | null;
   event_id: string | null;
+  rai_full_analysis_de: RaiSection[] | string | null;
+  rai_synthesis_de: string | null;
+  rai_conflicts_de: string[] | null;
+  rai_blind_spots_de: string[] | null;
 }
 
 export interface TrendingEvent {

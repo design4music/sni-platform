@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface Props {
   entityType: 'event' | 'ctm';
@@ -14,6 +14,7 @@ export default function ExtractButton({ entityType, entityId }: Props) {
   const t = useTranslations('extract');
   const { data: session } = useSession();
   const router = useRouter();
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coherenceWarning, setCoherenceWarning] = useState<{
@@ -62,7 +63,8 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       }
 
       if (data.first_narrative_id) {
-        router.push(`/analysis/${data.first_narrative_id}`);
+        const prefix = locale === 'de' ? '/de' : '';
+        router.push(`${prefix}/analysis/${data.first_narrative_id}`);
       } else {
         setError(t('noNarratives'));
         setLoading(false);

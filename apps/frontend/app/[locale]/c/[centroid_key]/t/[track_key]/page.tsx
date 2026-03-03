@@ -92,11 +92,25 @@ function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
 
 
 async function NarrativeSection({
-  entityType, entityId, narrativeFramesLabel, noNarrativesLabel,
+  entityType, entityId, narrativeFramesLabel, noNarrativesLabel, locale,
 }: {
-  entityType: 'event' | 'ctm'; entityId: string; narrativeFramesLabel: string; noNarrativesLabel: string;
+  entityType: 'event' | 'ctm'; entityId: string; narrativeFramesLabel: string; noNarrativesLabel: string; locale?: string;
 }) {
-  const narratives = await getFramedNarratives(entityType, entityId);
+  const narratives = await getFramedNarratives(entityType, entityId, locale);
+
+  // Lazy-translate narrative card fields for DE users
+  if (locale === 'de') {
+    for (const n of narratives) {
+      const de = await ensureDE('narratives', 'id', n.id, [
+        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
+        { src: 'description', dest: 'description_de', text: n.description || '' },
+        { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
+      ]);
+      if (de.label) n.label = de.label;
+      if (de.description) n.description = de.description;
+      if (de.moral_frame) n.moral_frame = de.moral_frame;
+    }
+  }
   if (narratives.length > 0) {
     return (
       <div id="section-narratives" className="mb-8">
@@ -367,7 +381,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             </div>
           </div>
         }>
-          <NarrativeSection entityType="ctm" entityId={ctm.id} narrativeFramesLabel={t('narrativeFrames')} noNarrativesLabel={t('noNarratives')} />
+          <NarrativeSection entityType="ctm" entityId={ctm.id} narrativeFramesLabel={t('narrativeFrames')} noNarrativesLabel={t('noNarratives')} locale={locale} />
         </Suspense>
       )}
 

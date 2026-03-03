@@ -144,9 +144,23 @@ export default async function EpicDetailPage({ params }: Props) {
   const [events, epicMonths, framedNarratives, epicSignals] = await Promise.all([
     getEpicEvents(epic.id, locale),
     getEpicMonths(),
-    getEpicFramedNarratives(epic.id),
+    getEpicFramedNarratives(epic.id, locale),
     getTopSignalsForEpic(epic.id, 12),
   ]);
+
+  // Lazy-translate narrative card fields for DE users
+  if (locale === 'de') {
+    for (const n of framedNarratives) {
+      const de = await ensureDE('narratives', 'id', n.id, [
+        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
+        { src: 'description', dest: 'description_de', text: n.description || '' },
+        { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
+      ]);
+      if (de.label) n.label = de.label;
+      if (de.description) n.description = de.description;
+      if (de.moral_frame) n.moral_frame = de.moral_frame;
+    }
+  }
 
   const { sorted: signalData, globalFreq } = computeSignalComparison(events, epic.anchor_tags);
   const groupedEvents = groupEventsByCentroid(events);

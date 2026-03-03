@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import type { RaiSection, NarrativeDetail } from '@/lib/types';
 
 /** Apply inline markdown formatting (bold, italic). */
@@ -82,18 +83,32 @@ function renderMarkdown(text: string): React.ReactNode {
 interface AnalysisContentProps {
   narrative: NarrativeDetail;
   sampleTitles: Array<{ title: string; publisher: string }>;
+  locale?: string;
 }
 
-export default function AnalysisContent({ narrative, sampleTitles }: AnalysisContentProps) {
+export default function AnalysisContent({ narrative, sampleTitles, locale }: AnalysisContentProps) {
   const { data: session } = useSession();
+  const t = useTranslations('analysis');
   const [sections, setSections] = useState<RaiSection[] | null>(null);
   const [synthesis, setSynthesis] = useState<string | null>(narrative.rai_synthesis || null);
   const [conflicts, setConflicts] = useState<string[] | null>(narrative.rai_conflicts || null);
   const [blindSpots, setBlindSpots] = useState<string[] | null>(narrative.rai_blind_spots || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [translatedAnalysis, setTranslatedAnalysis] = useState<RaiSection[] | null>(null);
 
   useEffect(() => {
+    // Check for cached DE translation first
+    if (locale === 'de' && narrative.rai_full_analysis_de) {
+      const deSections = typeof narrative.rai_full_analysis_de === 'string'
+        ? JSON.parse(narrative.rai_full_analysis_de)
+        : narrative.rai_full_analysis_de;
+      if (Array.isArray(deSections)) {
+        setTranslatedAnalysis(deSections);
+      }
+    }
+
     // If already cached, use it
     if (narrative.rai_full_analysis) {
       const existing = typeof narrative.rai_full_analysis === 'string'
@@ -143,7 +158,57 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [narrative, session]);
+  }, [narrative, session, locale]);
+
+  async function translateField(field: string) {
+    const resp = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        entity_type: 'narrative',
+        entity_id: narrative.id,
+        field,
+        locale: 'de',
+      }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.translated ?? null;
+  }
+
+  async function handleTranslate() {
+    setTranslating(true);
+    try {
+      const results = await Promise.all([
+        translateField('rai_full_analysis'),
+        translateField('rai_synthesis'),
+        translateField('rai_conflicts'),
+        translateField('rai_blind_spots'),
+      ]);
+
+      // Main analysis sections
+      if (results[0]) {
+        const parsed = typeof results[0] === 'string' ? JSON.parse(results[0]) : results[0];
+        if (Array.isArray(parsed)) setTranslatedAnalysis(parsed);
+      }
+      // Synthesis
+      if (results[1]) setSynthesis(typeof results[1] === 'string' ? results[1] : null);
+      // Conflicts
+      if (results[2]) {
+        const arr = typeof results[2] === 'string' ? JSON.parse(results[2]) : results[2];
+        if (Array.isArray(arr)) setConflicts(arr);
+      }
+      // Blind spots
+      if (results[3]) {
+        const arr = typeof results[3] === 'string' ? JSON.parse(results[3]) : results[3];
+        if (Array.isArray(arr)) setBlindSpots(arr);
+      }
+    } catch {
+      // Silently fail — user can retry
+    } finally {
+      setTranslating(false);
+    }
+  }
 
   if (!session?.user && !narrative.rai_full_analysis) {
     return (
@@ -152,13 +217,15 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
           href="/auth/signin"
           className="text-sm px-4 py-2 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text transition-colors"
         >
-          Sign in to generate analysis
+          {t('signInToGenerate')}
         </a>
       </div>
     );
   }
 
   const hasSynthesisSection = synthesis || (conflicts && conflicts.length > 0) || (blindSpots && blindSpots.length > 0);
+  const displaySections = (locale === 'de' && translatedAnalysis) ? translatedAnalysis : sections;
+  const showTranslateBtn = locale === 'de' && sections && !translatedAnalysis;
 
   return (
     <div>
@@ -169,15 +236,35 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          Generating analysis... (this may take up to a minute)
+          {t('generating')}
         </div>
       )}
 
       {/* Error */}
       {error && <p className="text-red-400 py-4">{error}</p>}
 
+      {/* Translate button for DE users */}
+      {showTranslateBtn && (
+        <div className="mb-6">
+          <button
+            onClick={handleTranslate}
+            disabled={translating}
+            className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-wait text-white transition-colors"
+          >
+            {translating ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {t('translatingAnalysis')}
+              </>
+            ) : (
+              t('translateAnalysis')
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Analysis sections */}
-      {sections && sections.map((s) => (
+      {displaySections && displaySections.map((s) => (
         <div key={s.heading} className="mb-6">
           <h2 className="text-xl font-semibold text-dashboard-text mb-2 mt-8">
             {s.heading}
@@ -195,14 +282,14 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
         <div className="mt-10 pt-8 border-t border-dashboard-border space-y-6">
           {synthesis && (
             <div>
-              <h2 className="text-xl font-semibold text-dashboard-text mb-2">Synthesis</h2>
+              <h2 className="text-xl font-semibold text-dashboard-text mb-2">{t('synthesis')}</h2>
               <p className="text-base text-dashboard-text-muted leading-relaxed">{synthesis}</p>
             </div>
           )}
 
           {conflicts && conflicts.length > 0 && (
             <div>
-              <h2 className="text-xl font-semibold text-dashboard-text mb-2">Conflicts</h2>
+              <h2 className="text-xl font-semibold text-dashboard-text mb-2">{t('conflicts')}</h2>
               <ul className="space-y-1.5">
                 {conflicts.map((c, i) => (
                   <li key={i} className="text-base text-dashboard-text-muted leading-relaxed flex items-start gap-2">
@@ -216,7 +303,7 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
 
           {blindSpots && blindSpots.length > 0 && (
             <div>
-              <h2 className="text-xl font-semibold text-dashboard-text mb-2">Blind Spots</h2>
+              <h2 className="text-xl font-semibold text-dashboard-text mb-2">{t('blindSpots')}</h2>
               <ul className="space-y-1.5">
                 {blindSpots.map((b, i) => (
                   <li key={i} className="text-base text-dashboard-text-muted leading-relaxed flex items-start gap-2">
@@ -233,7 +320,7 @@ export default function AnalysisContent({ narrative, sampleTitles }: AnalysisCon
       {/* Sample Headlines appendix */}
       {sampleTitles.length > 0 && (
         <div className="mt-10 pt-8 border-t border-dashboard-border">
-          <h2 className="text-xl font-semibold text-dashboard-text mb-4">Sample Headlines</h2>
+          <h2 className="text-xl font-semibold text-dashboard-text mb-4">{t('sampleHeadlines')}</h2>
           <ul className="space-y-2">
             {sampleTitles.slice(0, 15).map((sample, i) => (
               <li key={i} className="text-sm flex items-start gap-2">

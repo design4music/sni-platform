@@ -606,7 +606,31 @@
     "geographicFocus": "Geographic Focus",
     "moreCount": "+{count} more",
     "mentions": "{count} mentions",
-    "llmDisclaimer": "This analysis is produced by an AI language model (DeepSeek) operating under the RAI analytical framework. It is based on the coverage data shown on this page. The analysis reflects the available data and may contain omissions or misinterpretations. It should be treated as a structured starting point for critical thinking, not as a definitive assessment."
+    "llmDisclaimer": "This analysis is produced by an AI language model (DeepSeek) operating under the RAI analytical framework. It is based on the coverage data shown on this page. The analysis reflects the available data and may contain omissions or misinterpretations. It should be treated as a structured starting point for critical thinking, not as a definitive assessment.",
+    "synthesis": "Synthesis",
+    "conflicts": "Conflicts",
+    "blindSpots": "Blind Spots",
+    "sampleHeadlines": "Sample Headlines",
+    "generating": "Generating analysis... (this may take up to a minute)",
+    "translateAnalysis": "Translate analysis to German",
+    "translatingAnalysis": "Translating...",
+    "signInToGenerate": "Sign in to generate analysis"
+  },
+  "assessmentScores": {
+    "title": "Assessment Scores",
+    "adequacy": "Adequacy",
+    "bias": "Bias",
+    "coherence": "Coherence",
+    "credibility": "Credibility",
+    "evidenceQuality": "Evidence Quality",
+    "relevance": "Relevance",
+    "safety": "Safety"
+  },
+  "narrativeCards": {
+    "title": "Narrative Frames",
+    "subtitle": "{frames} competing frames across {headlines} headlines.",
+    "analyse": "Analyse",
+    "signInToAnalyse": "Sign in to analyse"
   },
   "terms": {
     "title": "Terms of Service",
