@@ -53,7 +53,7 @@ export interface RaiScores {
   synthesis?: string;
 }
 
-// ---- Premises (46) -------------------------------------------------------
+// ---- Premises (54) -------------------------------------------------------
 
 const PREMISE_LIBRARY: Record<string, RaiPremise> = {
   // D1: Power & Governance
@@ -68,6 +68,10 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
   'D1.3': {
     title: 'Power is sustained through economic architecture',
     content: 'Control over capital flows, debt, resource distribution, and media ownership often underlies political stability more than formal institutions or laws. Ownership replaces force, creating systemic compliance even in "free" societies.',
+  },
+  'D1.4': {
+    title: 'International law and institutions are instruments of power, not neutral arbiters',
+    content: 'The UN Security Council, ICC, WTO, and IMF were designed by post-WWII victors and reflect their structural interests. Selective enforcement is not an aberration but a feature: some leaders are indicted while others enjoy impunity, some invasions trigger sanctions while others receive diplomatic cover. The phrase "rules-based order" itself is a narrative that privileges those who wrote the rules. Media coverage that invokes "international law" as an objective standard without examining whose law, enforced by whom, and against whom, is performing advocacy disguised as reporting.',
   },
   // D2: Geopolitical Order & Conflict
   'D2.1': {
@@ -106,6 +110,10 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
     title: 'Kinetic action and structural position can point in opposite directions',
     content: 'The party advancing militarily may be the party structurally besieged -- acting from encirclement, existential threat, or accumulated provocation. The party absorbing strikes may simultaneously be the party applying long-term systemic pressure through alliances, sanctions, or expansion. Collapsing "who is shooting" into "who is the aggressor" produces shallow analysis. Adequate assessment requires examining kinetic reality, structural position, and historical sequence independently before synthesis.',
   },
+  'D2.10': {
+    title: 'Sanctions are economic warfare with civilian casualties',
+    content: 'Economic sanctions, SWIFT exclusion, asset freezes, and trade embargoes cause measurable civilian harm -- hunger, medical shortages, infrastructure collapse, excess mortality -- but are narratively positioned as "peaceful alternatives to military action." Media coverage systematically separates the imposition of sanctions from their human cost, treating the policy decision as news and the suffering as background. This framing asymmetry allows economic siege to escape the moral scrutiny applied to kinetic warfare. Adequate analysis must treat sanctions as a form of force and audit their consequences with the same rigor applied to military operations.',
+  },
   // D3: Information & Perception
   'D3.1': {
     title: 'Information is a commodity in peace and a weapon in systemic conflict',
@@ -131,6 +139,10 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
     title: 'Structural diversity is not epistemic diversity',
     content: 'A hundred voices speaking in harmony are one voice amplified. Large media ecosystems -- spanning multiple countries, languages, and brands -- can exhibit high statistical diversity while sharing upstream information chains (wire services, intelligence briefings, editorial assumptions). True source independence is measured not by brand count but by the independence of originating information and by willingness to carry narratives that contradict bloc consensus. Isolated or non-aligned media nodes may appear "one-sided" by mechanical metrics precisely because they lack allied amplification networks -- not because their content is less factual.',
   },
+  'D3.7': {
+    title: 'The language of description is itself a framing device',
+    content: 'Before any opinion is offered, the vocabulary of supposedly neutral reporting pre-encodes judgment. "Regime" vs "government," "militant" vs "fighter," "annexation" vs "reunification," "intervention" vs "invasion" -- these choices establish moral orientation before the reader reaches the editorial line. The most effective framing is invisible: it lives in word selection, not in argument. Media analysis that audits explicit claims but accepts descriptive vocabulary at face value misses the deepest layer of bias.',
+  },
   // D4: Civilization & Culture
   'D4.1': {
     title: 'Cultural self-image distorts memory',
@@ -152,6 +164,10 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
     title: 'Culture encodes strategy',
     content: 'Deep-seated cultural traits -- whether collectivist or individualist, honor-based or legality-based -- shape behavior in diplomacy, warfare, and negotiation. What seems irrational to outsiders may follow a coherent internal logic.',
   },
+  'D4.6': {
+    title: 'Civilizational universalism is projection, not discovery',
+    content: 'What passes for "universal values" -- human rights, democratic governance, individual liberty, market freedom -- has a specific genealogy: Enlightenment European philosophy, post-1945 American institutional design, Cold War ideological competition. These values are not inherently wrong, but their claim to universality obscures their origin and serves the interests of civilizations with the greatest narrative reach. Media coverage that treats Western liberal norms as the neutral baseline from which all deviations are measured is not reporting -- it is civilizational advocacy. Adequate analysis examines whose universalism is being applied and what it displaces.',
+  },
   // D5: System Dynamics & Complexity
   'D5.1': {
     title: 'Systems behave through feedback, not intention',
@@ -172,6 +188,10 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
   'D5.5': {
     title: 'Narratives are the software of systems',
     content: 'The shared stories people believe about their system enable it to function. When narratives degrade, the system behavioral code becomes corrupted. Crises of legitimacy are often preceded by narrative entropy.',
+  },
+  'D5.6': {
+    title: 'Complex systems produce outcomes no actor intended or controls',
+    content: 'Global finance, migration flows, pandemic spread, climate feedback, and arms races generate emergent results that cannot be attributed to any single conspiracy or plan. Yet media narratives demand identifiable villains and heroes -- collapsing systemic causation into personal agency. Both conspiratorial over-attribution ("they planned this") and naive agency-denial ("nobody is responsible") fail the complexity test. Adequate analysis must sit with irreducible causal ambiguity: multiple actors contributing to outcomes none of them fully designed, in systems none of them fully control.',
   },
   // D6: Ethics & Judgment
   'D6.1': {
@@ -262,7 +282,7 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
   },
 };
 
-// ---- Modules (33) -- keyed by ID for lookup after selection ----------------
+// ---- Modules (37) -- keyed by ID for lookup after selection ----------------
 
 const MODULE_LIBRARY: Record<string, RaiModule> = {
   // -- Cross-Level (CL) --
@@ -383,7 +403,7 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
       'Deconstruction without grounding is intellectual entertainment.',
       'Proportionality is the bridge between fact and framing.',
     ],
-    philosophical_anchoring: ['D2.8', 'D2.9', 'D6.1'],
+    philosophical_anchoring: ['D2.8', 'D2.9', 'D2.10'],
   },
   'CL-7': {
     id: 'CL-7',
@@ -556,6 +576,23 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
     ],
     philosophical_anchoring: ['D2.1', 'D3.3', 'D6.5'],
   },
+  'FL-10': {
+    id: 'FL-10',
+    name: 'Linguistic Framing Audit',
+    purpose: 'Audit the descriptive vocabulary of coverage for invisible bias encoded in word choice. Detect asymmetric naming conventions, loaded terminology, and emotional register that pre-frames the reader\'s perception before any explicit opinion is offered.',
+    core_questions: [
+      'What naming conventions are used for each actor -- president vs dictator, government vs regime, defense vs aggression?',
+      'Are equivalent actions by different parties described with equivalent language, or does vocabulary shift with allegiance?',
+      'What emotional register does the descriptive vocabulary establish -- alarm, sympathy, contempt, neutrality?',
+      'Would substituting symmetrical terms for all sides change the reader\'s instinctive moral orientation?',
+    ],
+    wisdom_injected: [
+      'The deepest bias is the one that looks like plain language.',
+      'Rename the actors and watch the story change sides.',
+      'Vocabulary is the first battlefield -- everything after is commentary.',
+    ],
+    philosophical_anchoring: ['D3.7', 'D3.1', 'D4.6'],
+  },
   // -- Narrative-Level (NL) --
   'NL-1': {
     id: 'NL-1',
@@ -572,7 +609,7 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
       'Every chain has a beginning -- but not every beginning is the truth.',
       'The origin you choose is the side you have chosen.',
     ],
-    philosophical_anchoring: ['D4.1', 'D4.3', 'D7.2'],
+    philosophical_anchoring: ['D4.1', 'D5.6', 'D7.2'],
   },
   'NL-2': {
     id: 'NL-2',
@@ -653,6 +690,23 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
       'Gaps are not accidents -- they are choices.',
     ],
     philosophical_anchoring: ['D4.1', 'D7.1', 'D3.2'],
+  },
+  'NL-7': {
+    id: 'NL-7',
+    name: 'Legal and Institutional Legitimacy Audit',
+    purpose: 'Examine how international law, institutional endorsements (UN, ICC, WTO), and "rules-based order" claims are deployed in narrative framing. Assess whether legal and institutional standards are applied consistently across all parties or selectively to legitimize allies and delegitimize adversaries.',
+    core_questions: [
+      'When "international law" is invoked, is the specific legal basis identified, or is it used as rhetorical authority?',
+      'Are the same legal standards applied consistently to all actors in the narrative, or do allies receive exemptions?',
+      'Which international institutions are cited as authoritative, and which are dismissed or absent?',
+      'Does the narrative treat institutional endorsement as proof of legitimacy, or does it examine the institution\'s own power structure and incentives?',
+    ],
+    wisdom_injected: [
+      'The law is a shield for those who wrote it and a cage for those who didn\'t.',
+      'Selective enforcement is not justice -- it is strategy in judicial clothing.',
+      'Ask not what the rule says, but who enforces it and against whom.',
+    ],
+    philosophical_anchoring: ['D1.4', 'D6.2', 'D2.7'],
   },
   // -- System-Level (SL) --
   'SL-1': {
@@ -837,7 +891,7 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
 // ---- Module Catalog (compact, for selector prompt) ------------------------
 
 const CORE_MODULE_IDS = ['CL-0', 'CL-6', 'NL-3', 'SL-8'];
-const FALLBACK_MODULE_IDS = ['NL-1', 'FL-2', 'FL-3'];
+const FALLBACK_MODULE_IDS = ['NL-1', 'FL-2', 'FL-3', 'CL-5'];
 
 const MODULE_CATALOG: Array<{ id: string; summary: string }> = [
   { id: 'CL-1', summary: 'Trace fact-to-narrative linkage and compression distortion' },
@@ -855,11 +909,13 @@ const MODULE_CATALOG: Array<{ id: string; summary: string }> = [
   { id: 'FL-7', summary: 'Calibrate skepticism by stakes and risk context' },
   { id: 'FL-8', summary: 'Anchor claims in specific verifiable time and place' },
   { id: 'FL-9', summary: 'Detect judgment-distorting toxic labels' },
+  { id: 'FL-10', summary: 'Audit descriptive vocabulary for invisible bias and asymmetric naming' },
   { id: 'NL-1', summary: 'Evaluate cause-effect chain logic and start-point bias' },
   { id: 'NL-2', summary: 'Test narrative internal coherence and plausibility' },
   { id: 'NL-4', summary: 'Identify group identity and historical trauma framing' },
   { id: 'NL-5', summary: 'Flag distorting metaphors, analogies, and symbols' },
   { id: 'NL-6', summary: 'Identify strategic narrative gaps and omissions' },
+  { id: 'NL-7', summary: 'Audit legal/institutional legitimacy claims and selective enforcement' },
   { id: 'SL-1', summary: 'Map power, incentive, and benefit structures' },
   { id: 'SL-2', summary: 'Examine institutional enforcement and suppression' },
   { id: 'SL-3', summary: 'Uncover collective memory and identity exploitation' },
@@ -917,7 +973,7 @@ function buildSelectorPrompt(
   lines.push(
     '',
     '4 core modules are already included (CL-0, CL-6, NL-3, SL-8).',
-    'Select exactly 3 additional modules from the list below.',
+    'Select exactly 4 additional modules from the list below.',
     '',
     'AVAILABLE MODULES:',
   );
@@ -927,10 +983,11 @@ function buildSelectorPrompt(
 
   lines.push(
     '',
-    'Respond with exactly 3 module IDs and a brief rationale, one per line:',
+    'Respond with exactly 4 module IDs and a brief rationale, one per line:',
     'FL-3: [rationale]',
     'NL-1: [rationale]',
     'SL-1: [rationale]',
+    'NL-7: [rationale]',
   );
 
   return lines.join('\n');
@@ -966,7 +1023,7 @@ export async function selectModules(
           model: DEEPSEEK_MODEL,
           messages: [{ role: 'user', content: prompt }],
           temperature: 0,
-          max_tokens: 200,
+          max_tokens: 250,
         }),
         signal: controller.signal,
       });
@@ -997,16 +1054,16 @@ export async function selectModules(
     for (const id of matches) {
       if (validIds.has(id) && !selected.includes(id)) {
         selected.push(id);
-        if (selected.length === 3) break;
+        if (selected.length === 4) break;
       }
     }
 
-    if (selected.length < 3) {
+    if (selected.length < 4) {
       console.log(`[RAI selector] Only ${selected.length} valid IDs found, padding with fallback`);
       for (const fb of FALLBACK_MODULE_IDS) {
         if (!selected.includes(fb)) {
           selected.push(fb);
-          if (selected.length === 3) break;
+          if (selected.length === 4) break;
         }
       }
     }
