@@ -98,6 +98,14 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
     title: 'Strategic interests are survival logic dressed in moral clothing',
     content: 'Behind every noble speech about peace and values is a spreadsheet calculating market access, resource control, and strategic leverage. States act not out of virtue, but necessity -- or appetite. Moral narratives are often retrofitted onto strategic decisions.',
   },
+  'D2.8': {
+    title: 'Material damage is not a narrative -- it is a fact that precedes interpretation',
+    content: 'Before deconstructing how an event is framed, establish what physically occurred. Verified destruction, death, sovereignty violation, or assassination carries inherent weight that critical analysis cannot deconstruct away. A bombed capital is not a "framing choice." A killed leader is not a "narrative strategy." Confusing proportionate reaction with strategic manipulation is itself a form of analytical distortion. The critical apparatus must be anchored in material reality, or it degenerates into cynicism.',
+  },
+  'D2.9': {
+    title: 'Kinetic action and structural position can point in opposite directions',
+    content: 'The party advancing militarily may be the party structurally besieged -- acting from encirclement, existential threat, or accumulated provocation. The party absorbing strikes may simultaneously be the party applying long-term systemic pressure through alliances, sanctions, or expansion. Collapsing "who is shooting" into "who is the aggressor" produces shallow analysis. Adequate assessment requires examining kinetic reality, structural position, and historical sequence independently before synthesis.',
+  },
   // D3: Information & Perception
   'D3.1': {
     title: 'Information is a commodity in peace and a weapon in systemic conflict',
@@ -118,6 +126,10 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
   'D3.5': {
     title: 'Large-scale protests are rarely spontaneous',
     content: 'Mass participation may appear organic, but major movements that gain traction nearly always rest on pre-existing infrastructure: trained organizers, aligned institutions, sympathetic media, and international funding streams.',
+  },
+  'D3.6': {
+    title: 'Structural diversity is not epistemic diversity',
+    content: 'A hundred voices speaking in harmony are one voice amplified. Large media ecosystems -- spanning multiple countries, languages, and brands -- can exhibit high statistical diversity while sharing upstream information chains (wire services, intelligence briefings, editorial assumptions). True source independence is measured not by brand count but by the independence of originating information and by willingness to carry narratives that contradict bloc consensus. Isolated or non-aligned media nodes may appear "one-sided" by mechanical metrics precisely because they lack allied amplification networks -- not because their content is less factual.',
   },
   // D4: Civilization & Culture
   'D4.1': {
@@ -355,6 +367,40 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
       'Consistency is the test of principle.',
     ],
     philosophical_anchoring: ['D2.1', 'D6.1', 'D3.3'],
+  },
+  'CL-6': {
+    id: 'CL-6',
+    name: 'Material Impact Grounding',
+    purpose: 'Establish verified material facts (actions, casualties, destruction, sovereignty violations) before evaluating narrative framing. Distinguish proportionate reaction from strategic amplification. Anchor critical analysis in physical reality.',
+    core_questions: [
+      'What physical actions are confirmed across multiple independent source chains (not just multiple brands in the same bloc)?',
+      'What is the scale of material harm -- deaths, destruction, territorial change, leadership elimination?',
+      'Is the narrative reaction proportionate to the verified material impact, or is it amplified/minimized?',
+      'Where does confirmed material fact end and interpretive framing begin?',
+    ],
+    wisdom_injected: [
+      'A bombed city does not need a narrative to be real.',
+      'Deconstruction without grounding is intellectual entertainment.',
+      'Proportionality is the bridge between fact and framing.',
+    ],
+    philosophical_anchoring: ['D2.8', 'D2.9', 'D6.1'],
+  },
+  'CL-7': {
+    id: 'CL-7',
+    name: 'Coverage Ecosystem Diagnosis',
+    purpose: 'Assess whether source diversity metrics reflect genuine epistemic independence or bloc-level narrative alignment. Identify structurally absent perspectives and estimate what the coverage gap conceals.',
+    core_questions: [
+      'Do high publisher/language counts reflect independent information chains or aligned bloc amplification?',
+      'Which actors, regions, or perspectives are structurally absent from the source ecosystem?',
+      'Are non-aligned or isolated sources being dismissed by mechanical diversity metrics?',
+      'What would the narrative look like if the invisible side had equal media reach?',
+    ],
+    wisdom_injected: [
+      'Count the voices, then check if they share a throat.',
+      'Absence of coverage is not absence of reality.',
+      'The loudest room is not the most informed.',
+    ],
+    philosophical_anchoring: ['D3.6', 'D3.1', 'D2.6'],
   },
   // -- Fact-Level (FL) --
   'FL-1': {
@@ -790,7 +836,7 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
 
 // ---- Module Catalog (compact, for selector prompt) ------------------------
 
-const CORE_MODULE_IDS = ['CL-0', 'NL-3', 'SL-8'];
+const CORE_MODULE_IDS = ['CL-0', 'CL-6', 'NL-3', 'SL-8'];
 const FALLBACK_MODULE_IDS = ['NL-1', 'FL-2', 'FL-3'];
 
 const MODULE_CATALOG: Array<{ id: string; summary: string }> = [
@@ -799,6 +845,7 @@ const MODULE_CATALOG: Array<{ id: string; summary: string }> = [
   { id: 'CL-3', summary: 'Map layered/nested narratives and meta-narrative shields' },
   { id: 'CL-4', summary: 'Detect moral language fused with strategic motives' },
   { id: 'CL-5', summary: 'Enforce consistent evaluation standards across all actors' },
+  { id: 'CL-7', summary: 'Diagnose coverage ecosystem for bloc alignment vs epistemic independence' },
   { id: 'FL-1', summary: 'Isolate, verify, and anchor core factual claims' },
   { id: 'FL-2', summary: 'Detect unnatural amplification or suppression patterns' },
   { id: 'FL-3', summary: 'Audit source independence, diversity, and coordination' },
@@ -869,7 +916,7 @@ function buildSelectorPrompt(
 
   lines.push(
     '',
-    '3 core modules are already included (CL-0, NL-3, SL-8).',
+    '4 core modules are already included (CL-0, CL-6, NL-3, SL-8).',
     'Select exactly 3 additional modules from the list below.',
     '',
     'AVAILABLE MODULES:',
