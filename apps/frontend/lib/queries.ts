@@ -53,8 +53,8 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', loc
       centroid_stats AS (
         SELECT
           ctm.centroid_id,
-          SUM(ctm.title_count)::int AS article_count,
           SUM(e.source_batch_count)::int AS source_count,
+          SUM(CASE WHEN ctm.month = date_trunc('month', CURRENT_DATE) THEN e.source_batch_count ELSE 0 END)::int AS month_source_count,
           MAX(COALESCE(e.last_active, e.date)) AS last_article_date
         FROM ctm
         JOIN target_centroids tc ON ctm.centroid_id = tc.id
@@ -64,9 +64,8 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', loc
       SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
         c.track_config_id, c.updated_at,
         ${locCol('c', 'description', locale)} as description,
-        COALESCE(cs.article_count, 0) AS article_count,
         COALESCE(cs.source_count, 0) AS source_count,
-        0 AS language_count,
+        COALESCE(cs.month_source_count, 0) AS month_source_count,
         cs.last_article_date
       FROM centroids_v3 c
       LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
@@ -86,8 +85,8 @@ export async function getCentroidsByTheater(theater: string, locale?: string): P
       centroid_stats AS (
         SELECT
           ctm.centroid_id,
-          SUM(ctm.title_count)::int AS article_count,
           SUM(e.source_batch_count)::int AS source_count,
+          SUM(CASE WHEN ctm.month = date_trunc('month', CURRENT_DATE) THEN e.source_batch_count ELSE 0 END)::int AS month_source_count,
           MAX(COALESCE(e.last_active, e.date)) AS last_article_date
         FROM ctm
         JOIN target_centroids tc ON ctm.centroid_id = tc.id
@@ -97,9 +96,8 @@ export async function getCentroidsByTheater(theater: string, locale?: string): P
       SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
         c.track_config_id, c.updated_at,
         ${locCol('c', 'description', locale)} as description,
-        COALESCE(cs.article_count, 0) AS article_count,
         COALESCE(cs.source_count, 0) AS source_count,
-        0 AS language_count,
+        COALESCE(cs.month_source_count, 0) AS month_source_count,
         cs.last_article_date
       FROM centroids_v3 c
       LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id

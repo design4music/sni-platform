@@ -9,26 +9,37 @@ function getConsent(): string | null {
   return match ? match[1] : null;
 }
 
+function gtag(...args: unknown[]) {
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push(args);
+}
+
 function loadGA4() {
   if (document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA_ID}"]`)) return;
+
+  // Set default consent to denied (cookieless, GDPR-safe)
+  gtag('consent', 'default', {
+    analytics_storage: 'denied',
+  });
 
   const script = document.createElement('script');
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
   script.async = true;
   document.head.appendChild(script);
 
-  window.dataLayer = window.dataLayer || [];
-  function gtag(...args: unknown[]) {
-    window.dataLayer.push(args);
-  }
   gtag('js', new Date());
   gtag('config', GA_ID);
+
+  // If user already accepted, upgrade to full tracking
+  if (getConsent() === 'all') {
+    gtag('consent', 'update', { analytics_storage: 'granted' });
+  }
 }
 
-function removeGA4() {
-  const script = document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA_ID}"]`);
-  if (script) script.remove();
-  window.dataLayer = [];
+function updateConsent(value: string) {
+  gtag('consent', 'update', {
+    analytics_storage: value === 'all' ? 'granted' : 'denied',
+  });
 }
 
 declare global {
@@ -39,15 +50,10 @@ declare global {
 
 export default function Analytics() {
   useEffect(() => {
-    if (getConsent() === 'all') loadGA4();
+    loadGA4();
 
     function onChange(e: Event) {
-      const detail = (e as CustomEvent).detail;
-      if (detail === 'all') {
-        loadGA4();
-      } else {
-        removeGA4();
-      }
+      updateConsent((e as CustomEvent).detail);
     }
     window.addEventListener('cookie-consent-changed', onChange);
     return () => window.removeEventListener('cookie-consent-changed', onChange);

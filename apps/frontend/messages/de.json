@@ -287,12 +287,8 @@
     "loading": "Karte wird geladen..."
   },
   "centroidCard": {
-    "totalArticles": "Artikel gesamt",
-    "noArticles": "Noch keine Artikel",
-    "distinctSources": "verschiedene Nachrichtenquellen",
-    "coverageIn": "Berichterstattung in",
-    "languages": "Sprachen",
-    "language": "Sprache",
+    "thisMonth": "Quellen diesen Monat",
+    "allTime": "Quellen gesamt",
     "geographic": "Geographisch",
     "systemic": "Systemisch"
   },
@@ -306,7 +302,12 @@
     "topicsCount": "{count} Themen",
     "countriesCount": "{count} Laender",
     "events": "Ereignisse",
-    "translatedNotice": "Die deutsche Uebersetzung ist eine Beta-Funktion. Einige Inhalte werden moeglicherweise noch auf Englisch angezeigt und nach und nach uebersetzt."
+    "translatedNotice": "Die deutsche Uebersetzung ist eine Beta-Funktion. Einige Inhalte werden moeglicherweise noch auf Englisch angezeigt und nach und nach uebersetzt.",
+    "justNow": "Gerade eben",
+    "hoursAgo": "vor {count} Std.",
+    "daysAgo": "vor {count} T.",
+    "monthsAgo": "vor {count} Mon.",
+    "slogan": "Die Welt verstehen. Kurz gefasst."
   },
   "sources": {
     "title": "Medienquellen",

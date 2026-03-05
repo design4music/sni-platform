@@ -8,9 +8,8 @@ export interface Centroid {
   iso_codes?: string[];
   track_config_id?: string;
   description?: string;
-  article_count?: number;
   source_count?: number;
-  language_count?: number;
+  month_source_count?: number;
   last_article_date?: Date;
   profile_json?: GeoBriefProfile;
   updated_at?: Date;
@@ -495,7 +494,9 @@ export function getIsoFromBucketKey(bucketKey: string): string {
 }
 
 // Utility function to format relative time
-export function formatTimeAgo(date: Date | null | undefined): string {
+// t: a next-intl translator for the 'common' namespace
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formatTimeAgo(date: Date | null | undefined, t: (key: string, values?: any) => string): string {
   if (!date) return '';
 
   const now = new Date();
@@ -504,13 +505,13 @@ export function formatTimeAgo(date: Date | null | undefined): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffHours < 1) {
-    return 'Just now';
+    return t('justNow');
   } else if (diffHours < 24) {
-    return `${diffHours}h ago`;
+    return t('hoursAgo', { count: diffHours });
   } else if (diffDays < 30) {
-    return `${diffDays}d ago`;
+    return t('daysAgo', { count: diffDays });
   } else {
     const diffMonths = Math.floor(diffDays / 30);
-    return `${diffMonths}mo ago`;
+    return t('monthsAgo', { count: diffMonths });
   }
 }

@@ -287,12 +287,8 @@
     "loading": "Loading map..."
   },
   "centroidCard": {
-    "totalArticles": "total articles",
-    "noArticles": "No articles yet",
-    "distinctSources": "distinct news sources",
-    "coverageIn": "Coverage in",
-    "languages": "languages",
-    "language": "language",
+    "thisMonth": "sources this month",
+    "allTime": "sources all time",
     "geographic": "Geographic",
     "systemic": "Systemic"
   },
@@ -306,7 +302,12 @@
     "topicsCount": "{count} topics",
     "countriesCount": "{count} countries",
     "events": "Events",
-    "translatedNotice": "German translation is a beta feature. Some content may still appear in English and will be translated gradually."
+    "translatedNotice": "German translation is a beta feature. Some content may still appear in English and will be translated gradually.",
+    "justNow": "Just now",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago",
+    "monthsAgo": "{count}mo ago",
+    "slogan": "Understand the world. Briefly."
   },
   "sources": {
     "title": "Media Sources",

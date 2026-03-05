@@ -68,7 +68,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
   const tCentroids = useTranslations('centroids');
   const tCommon = useTranslations('common');
   const tTrending = useTranslations('trending');
-  const timeAgo = formatTimeAgo(new Date(event.last_active));
+  const timeAgo = formatTimeAgo(new Date(event.last_active), tCommon);
   const trackLabel = getTrackLabel(event.track, tTracks);
   const eventHref = `/events/${event.id}`;
   const isEmerging = (Date.now() - new Date(event.last_active).getTime()) < 43200000; // 12h

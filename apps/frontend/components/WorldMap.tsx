@@ -12,20 +12,20 @@ interface WorldMapProps {
     id: string;
     label: string;
     iso_codes?: string[];
-    article_count?: number;
+    source_count?: number;
   }>;
 }
 
 // Heatmap color function - uses logarithmic scale for better distribution
 // All colors in warm tones (yellow to red) for cohesive look
-function getHeatmapColor(articleCount: number, maxCount: number): string {
-  if (articleCount === 0 || maxCount === 0) {
+function getHeatmapColor(sourceCount: number, maxCount: number): string {
+  if (sourceCount === 0 || maxCount === 0) {
     return '#4a4a3a'; // very pale warm gray for no coverage
   }
 
   // Use log scale to compress the range and show more color variation
   // Adding 1 to avoid log(0)
-  const logCount = Math.log10(articleCount + 1);
+  const logCount = Math.log10(sourceCount + 1);
   const logMax = Math.log10(maxCount + 1);
   const intensity = logCount / logMax;
 
@@ -70,11 +70,11 @@ export default function WorldMap({ centroids }: WorldMapProps) {
     }
   }, []);
 
-  const isoToCentroid = new Map<string, { id: string; label: string; allIsoCodes: string[]; articleCount: number }>();
-  const centroidRef = useRef<Map<string, { id: string; label: string; allIsoCodes: string[]; articleCount: number }>>(new Map());
+  const isoToCentroid = new Map<string, { id: string; label: string; allIsoCodes: string[]; sourceCount: number }>();
+  const centroidRef = useRef<Map<string, { id: string; label: string; allIsoCodes: string[]; sourceCount: number }>>(new Map());
 
   // Calculate max article count for heatmap scaling
-  const maxArticleCount = Math.max(...centroids.map(c => c.article_count || 0), 1);
+  const maxSourceCount = Math.max(...centroids.map(c => c.source_count || 0), 1);
 
   centroids.forEach(c => {
     if (c.iso_codes) {
@@ -82,7 +82,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
         id: c.id,
         label: c.label,
         allIsoCodes: c.iso_codes,
-        articleCount: c.article_count || 0
+        sourceCount: c.source_count || 0
       };
       c.iso_codes.forEach(iso => {
         isoToCentroid.set(iso.toUpperCase(), centroidData);
@@ -114,7 +114,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
 
     if (centroid) {
       layer.bindTooltip(
-        `<strong>${centroid.label}</strong><br/><span style="opacity:0.7">${centroid.articleCount.toLocaleString()} ${t('articles')}</span>`,
+        `<strong>${centroid.label}</strong><br/><span style="opacity:0.7">${centroid.sourceCount.toLocaleString()} ${t('articles')}</span>`,
         { permanent: false, direction: 'top', className: 'map-tooltip' }
       );
 
@@ -157,7 +157,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
               if (layerIso === 'CN-TW') layerIso = 'TW';
 
               if (centroid.allIsoCodes.includes(layerIso)) {
-                const heatmapColor = getHeatmapColor(centroid.articleCount, maxArticleCount);
+                const heatmapColor = getHeatmapColor(centroid.sourceCount, maxSourceCount);
                 l.setStyle({
                   fillColor: heatmapColor,
                   fillOpacity: 0.6,
@@ -185,7 +185,7 @@ export default function WorldMap({ centroids }: WorldMapProps) {
 
     const centroid = isoToCentroid.get(iso2);
     const heatmapColor = centroid
-      ? getHeatmapColor(centroid.articleCount, maxArticleCount)
+      ? getHeatmapColor(centroid.sourceCount, maxSourceCount)
       : '#374151';
 
     return {
