@@ -60,6 +60,7 @@ class PipelineDaemon:
         self.classification_interval = 900  # 15 minutes - Phase 3.1 + 3.2 + 3.3
         self.clustering_interval = 1800  # 30 minutes - Phase 4 + 4.1
         self.enrichment_interval = 21600  # 6 hours - Phase 4.5a + 4.5b
+        self.social_interval = 10800  # 3 hours - Slot 5: Social Posting
         self.purge_interval = 86400  # 24 hours - daily cleanup
 
         # Last run timestamps
@@ -68,6 +69,7 @@ class PipelineDaemon:
             "classification": 0,
             "clustering": 0,
             "enrichment": 0,
+            "social": 0,
             "purge": 0,
         }
 
@@ -86,6 +88,7 @@ class PipelineDaemon:
         self.timeout_classification = 1200  # 20 min for 3.1 + 3.2 + 3.3
         self.timeout_clustering = 900  # 15 min for Phase 4 + 4.1
         self.timeout_enrichment = 7200  # 120 min for 4.5a + 4.5b
+        self.timeout_social = 300  # 5 min for social posting
         self.timeout_purge = 300  # 5 min for daily cleanup
 
         # Connection pool (minconn=2, maxconn=10)
@@ -610,6 +613,16 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
+    def _run_social(self):
+        """Run social posting (Slot 5)."""
+        conn = self.get_connection()
+        try:
+            from pipeline.social.social_posting import run_social_posting
+
+            return run_social_posting(conn, self.config)
+        finally:
+            self.return_connection(conn)
+
     def run_daily_purge(self):
         """Purge rejected titles older than 24h to tombstone table."""
         conn = self.get_connection()
@@ -903,6 +916,24 @@ class PipelineDaemon:
             )
             print("\nSlot 4 ENRICHMENT: next in %ds" % remaining)
 
+        # --- SLOT 5: SOCIAL POSTING ---
+        if self.should_run_slot("social") and self.config.social_posting_enabled:
+            await self.run_with_timeout(
+                "Phase 5: Social Posting",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 5: Social Posting",
+                    self._run_social,
+                ),
+                self.timeout_social,
+            )
+            self.last_run["social"] = time.time()
+        elif self.config.social_posting_enabled:
+            remaining = int(
+                self.social_interval - (time.time() - self.last_run["social"])
+            )
+            print("\nSlot 5 SOCIAL: next in %ds" % remaining)
+
         # --- DAILY PURGE ---
         if self.should_run_slot("purge"):
             await self.run_with_timeout(
@@ -952,6 +983,11 @@ class PipelineDaemon:
             "  Slot 4 ENRICHMENT:     %dh  (Phase 4.5a + 4.5b)"
             % (self.enrichment_interval // 3600)
         )
+        if self.config.social_posting_enabled:
+            print(
+                "  Slot 5 SOCIAL:         %dh  (Social Posting)"
+                % (self.social_interval // 3600)
+            )
         print("  Daily Purge:           %dh" % (self.purge_interval // 3600))
         print("\nBatch Sizes:")
         print("  Classification: %d titles/run" % self.classification_batch_size)

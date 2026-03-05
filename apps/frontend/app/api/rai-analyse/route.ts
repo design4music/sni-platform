@@ -15,10 +15,16 @@ import type { SignalStats } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth check
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Sign in to analyse' }, { status: 401 });
+    // Internal API key bypass for daemon social posting
+    const authHeader = req.headers.get('authorization');
+    const internalKey = process.env.RAI_INTERNAL_KEY;
+    const isInternal = internalKey && authHeader === `Bearer ${internalKey}`;
+
+    if (!isInternal) {
+      const session = await auth();
+      if (!session?.user) {
+        return NextResponse.json({ error: 'Sign in to analyse' }, { status: 401 });
+      }
     }
 
     const { narrative_id } = await req.json();

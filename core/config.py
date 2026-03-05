@@ -122,6 +122,21 @@ class SNIConfig(BaseSettings):
     v3_ctm_table: str = Field(default="ctm", env="V3_CTM_TABLE")
     v3_titles_table: str = Field(default="titles_v3", env="V3_TITLES_TABLE")
 
+    # ========================================================================
+    # Slot 5: Social Posting
+    # ========================================================================
+    social_posting_enabled: bool = Field(default=False, env="SOCIAL_POSTING_ENABLED")
+    social_base_url: str = Field(
+        default="https://www.worldbrief.info", env="SOCIAL_BASE_URL"
+    )
+    rai_internal_key: Optional[str] = Field(default=None, env="RAI_INTERNAL_KEY")
+    telegram_bot_token: Optional[str] = Field(default=None, env="TELEGRAM_BOT_TOKEN")
+    telegram_channel_id: Optional[str] = Field(default=None, env="TELEGRAM_CHANNEL_ID")
+    x_api_key: Optional[str] = Field(default=None, env="X_API_KEY")
+    x_api_secret: Optional[str] = Field(default=None, env="X_API_SECRET")
+    x_access_token: Optional[str] = Field(default=None, env="X_ACCESS_TOKEN")
+    x_access_secret: Optional[str] = Field(default=None, env="X_ACCESS_SECRET")
+
     # Language Support
     primary_language: str = Field(default="en", env="PRIMARY_LANGUAGE")
     supported_languages: str = Field(
