@@ -60,7 +60,7 @@ class PipelineDaemon:
         self.classification_interval = 900  # 15 minutes - Phase 3.1 + 3.2 + 3.3
         self.clustering_interval = 1800  # 30 minutes - Phase 4 + 4.1
         self.enrichment_interval = 21600  # 6 hours - Phase 4.5a + 4.5b
-        self.social_interval = 10800  # 3 hours - Slot 5: Social Posting
+        self.social_interval = 3600  # 1 hour - Slot 5: Social Posting (testing)
         self.purge_interval = 86400  # 24 hours - daily cleanup
 
         # Last run timestamps

@@ -25,12 +25,73 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config  # noqa: E402
 
 # ---------------------------------------------------------------------------
+# Deduplication
+# ---------------------------------------------------------------------------
+
+
+def _title_words(title):
+    """Lowercase word set for overlap comparison."""
+    return set(title.lower().split())
+
+
+def _is_duplicate_title(title, posted_titles, threshold=0.6):
+    """Check if title overlaps > threshold with any already-posted title."""
+    words = _title_words(title)
+    if not words:
+        return False
+    for posted in posted_titles:
+        posted_words = _title_words(posted)
+        if not posted_words:
+            continue
+        overlap = len(words & posted_words) / min(len(words), len(posted_words))
+        if overlap > threshold:
+            return True
+    return False
+
+
+def _get_posted_titles(conn, post_type, days=3):
+    """Fetch titles of recently posted events for dedup."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT COALESCE(e.title, '') FROM social_posts sp
+            JOIN events_v3 e ON e.id = sp.entity_id
+            WHERE sp.post_type = %s AND sp.error IS NULL
+              AND sp.posted_at > NOW() - make_interval(days => %s)
+            """,
+            (post_type, days),
+        )
+        return [row[0] for row in cur.fetchall()]
+
+
+# ---------------------------------------------------------------------------
 # Content Selection (SQL)
 # ---------------------------------------------------------------------------
 
 
+def _enrich_event_stats(conn, event):
+    """Add publisher_count and language_count to event dict."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT COUNT(DISTINCT t.publisher_name) as pubs,
+                   COUNT(DISTINCT t.detected_language) as langs
+            FROM event_v3_titles evt
+            JOIN titles_v3 t ON t.id = evt.title_id
+            WHERE evt.event_id = %s
+            """,
+            (str(event["id"]),),
+        )
+        row = cur.fetchone()
+        event["publisher_count"] = row[0]
+        event["language_count"] = row[1]
+    return event
+
+
 def select_trending_event(conn):
-    """Top trending event not yet posted, using the same formula as frontend."""
+    """Top trending event not yet posted, with dedup against recent posts."""
+    posted_titles = _get_posted_titles(conn, "trending")
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             """
@@ -49,6 +110,7 @@ def select_trending_event(conn):
               AND e.is_catchall = false
               AND e.title IS NOT NULL
               AND e.summary IS NOT NULL
+              AND LENGTH(TRIM(e.summary)) > 20
               AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '3 days'
               AND NOT EXISTS (
                   SELECT 1 FROM social_posts sp
@@ -56,10 +118,17 @@ def select_trending_event(conn):
                     AND sp.error IS NULL
               )
             ORDER BY trending_score DESC
-            LIMIT 1
+            LIMIT 20
             """
         )
-        return cur.fetchone()
+        candidates = cur.fetchall()
+
+    for event in candidates:
+        if not _is_duplicate_title(event["title"], posted_titles):
+            return _enrich_event_stats(conn, event)
+        print("  Dedup skip: %s" % event["title"][:60])
+
+    return None
 
 
 def select_ctm_spotlight(conn):
@@ -88,7 +157,11 @@ def select_ctm_spotlight(conn):
 
 
 def select_narrative_candidate(conn):
-    """Top event for Narrative of the Day. Higher bar than trending."""
+    """Top event for Narrative of the Day. Higher bar, with dedup."""
+    posted_titles = _get_posted_titles(conn, "narrative_of_day") + _get_posted_titles(
+        conn, "trending"
+    )
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             """
@@ -101,6 +174,7 @@ def select_narrative_candidate(conn):
               AND e.is_catchall = false
               AND e.title IS NOT NULL
               AND e.summary IS NOT NULL
+              AND LENGTH(TRIM(e.summary)) > 20
               AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '2 days'
               AND NOT EXISTS (
                   SELECT 1 FROM social_posts sp
@@ -108,10 +182,17 @@ def select_narrative_candidate(conn):
                     AND sp.error IS NULL
               )
             ORDER BY e.source_batch_count DESC
-            LIMIT 1
+            LIMIT 10
             """
         )
-        return cur.fetchone()
+        candidates = cur.fetchall()
+
+    for event in candidates:
+        if not _is_duplicate_title(event["title"], posted_titles):
+            return _enrich_event_stats(conn, event)
+        print("  Dedup skip (narrative): %s" % event["title"][:60])
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -248,56 +329,130 @@ def _truncate(text, max_len):
     return text[: max_len - 3].rsplit(" ", 1)[0] + "..."
 
 
+def _stats_line(event):
+    """Build stats string like '179 articles, 75 outlets, 12 languages'."""
+    parts = ["%d articles" % event["source_batch_count"]]
+    pubs = event.get("publisher_count") or 0
+    langs = event.get("language_count") or 0
+    if pubs:
+        parts.append("%d outlets" % pubs)
+    if langs > 1:
+        parts.append("%d languages" % langs)
+    return ", ".join(parts)
+
+
+_TRACK_DISPLAY = {
+    "geo_security": "Security",
+    "geo_politics": "Politics",
+    "geo_economy": "Economy",
+    "geo_information": "Information",
+    "geo_energy": "Energy",
+    "energy_conflict": "Energy Conflict",
+}
+
+
+def _topic_path(event):
+    """Build 'Label > Track' string with human-readable track name."""
+    label = event.get("centroid_label") or ""
+    track = event.get("track") or ""
+    display_track = _TRACK_DISPLAY.get(track, track)
+    if label and display_track:
+        return "%s > %s" % (label, display_track)
+    return label or display_track
+
+
+def _escape_html(text):
+    """Escape HTML special chars for Telegram HTML mode."""
+    if not text:
+        return ""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+_TRENDING_FOOTER = (
+    "<i>Trending story tracked by WorldBrief -- "
+    "AI-powered, fully automated media intelligence with worldwide reach.\n"
+    "worldbrief.info</i>"
+)
+
+_CTM_FOOTER = (
+    "<i>Topic spotlight from WorldBrief -- "
+    "AI-powered, fully automated media intelligence with worldwide reach.\n"
+    "worldbrief.info</i>"
+)
+
+_NARRATIVE_FOOTER = (
+    "<i>Narrative of the Day from WorldBrief -- "
+    "AI-powered, fully automated media intelligence with worldwide reach.\n"
+    "worldbrief.info</i>"
+)
+
+
 def format_telegram_trending(event, base_url):
-    """Trending event post for Telegram."""
+    """Trending event post for Telegram (HTML mode)."""
     url = "%s/events/%s" % (base_url.rstrip("/"), event["id"])
-    summary = _truncate(event["summary"], 300)
-    return ("*%s*\n\n" "%s\n\n" "Sources: %d | %s\n" "[Read more](%s)") % (
-        _escape_md(event["title"]),
+    summary = _escape_html(_truncate(event["summary"], 300))
+    stats = _stats_line(event)
+    topic = _escape_html(_topic_path(event))
+
+    return (
+        "<b>%s</b>\n\n"
+        "%s\n\n"
+        "%s: %s\n"
+        '<a href="%s">Read the full story, view sources and explore media narratives</a>\n\n'
+        "%s"
+    ) % (
+        _escape_html(event["title"]),
         summary,
-        event["source_batch_count"],
-        event.get("centroid_label") or event.get("track") or "",
+        topic,
+        stats,
         url,
+        _TRENDING_FOOTER,
     )
 
 
 def format_telegram_ctm(ctm, base_url):
-    """CTM spotlight post for Telegram."""
+    """CTM spotlight post for Telegram (HTML mode)."""
     url = "%s/c/%s/t/%s" % (
         base_url.rstrip("/"),
         ctm["centroid_id"],
         ctm["track"],
     )
-    summary = _truncate(ctm["summary_text"], 400)
+    summary = _escape_html(_truncate(ctm["summary_text"], 400))
     return (
-        "*%s* - %s\n\n" "%s\n\n" "Tracking %d headlines\n" "[Explore topic](%s)"
+        "<b>%s</b> -- %s\n\n"
+        "%s\n\n"
+        "Tracking %d headlines\n"
+        '<a href="%s">Explore the topic, view event timeline and related coverage</a>\n\n'
+        "%s"
     ) % (
-        _escape_md(ctm["centroid_label"]),
-        ctm["track"],
+        _escape_html(ctm["centroid_label"]),
+        _escape_html(ctm["track"]),
         summary,
         ctm["title_count"],
         url,
+        _CTM_FOOTER,
     )
 
 
 def format_telegram_narrative(event, frames, analysis, base_url):
-    """Flagship Narrative of the Day for Telegram."""
+    """Flagship Narrative of the Day for Telegram (HTML mode)."""
     sections, scores = analysis
     narrative_id = frames[0]["id"] if frames else ""
     analysis_url = "%s/analysis/%s" % (base_url.rstrip("/"), narrative_id)
     event_url = "%s/events/%s" % (base_url.rstrip("/"), event["id"])
 
-    lines = ["*Narrative of the Day*\n"]
-    lines.append("*%s*\n" % _escape_md(event["title"]))
+    lines = ["<b>Narrative of the Day</b>\n"]
+    lines.append("<b>%s</b>\n" % _escape_html(event["title"]))
 
-    # Frame highlights
     for f in frames[:3]:
         lines.append(
-            "- *%s*: %s"
-            % (_escape_md(f["label"]), _truncate(f.get("description") or "", 120))
+            "- <b>%s</b>: %s"
+            % (
+                _escape_html(f["label"]),
+                _escape_html(_truncate(f.get("description") or "", 120)),
+            )
         )
 
-    # RAI excerpt
     if scores:
         adequacy = scores.get("adequacy")
         if adequacy is not None:
@@ -305,13 +460,17 @@ def format_telegram_narrative(event, frames, analysis, base_url):
 
         blind_spots = scores.get("blind_spots")
         if blind_spots and isinstance(blind_spots, list):
-            lines.append("Blind spots: %s" % ", ".join(blind_spots[:3]))
+            lines.append("Blind spots: %s" % _escape_html(", ".join(blind_spots[:3])))
 
         synthesis = scores.get("synthesis")
         if synthesis:
-            lines.append("\n_%s_" % _truncate(synthesis, 200))
+            lines.append("\n<i>%s</i>" % _escape_html(_truncate(synthesis, 200)))
 
-    lines.append("\n[Full analysis](%s) | [Event](%s)" % (analysis_url, event_url))
+    lines.append(
+        '\n<a href="%s">Read full AI analysis</a> | <a href="%s">View event and sources</a>'
+        % (analysis_url, event_url)
+    )
+    lines.append("\n%s" % _NARRATIVE_FOOTER)
     return "\n".join(lines)
 
 
@@ -366,34 +525,6 @@ def format_x_narrative_thread(event, frames, analysis, base_url):
     return [_truncate(t, 280) for t in tweets]
 
 
-def _escape_md(text):
-    """Escape Telegram Markdown v1 special chars."""
-    if not text:
-        return ""
-    for ch in (
-        "_",
-        "*",
-        "[",
-        "]",
-        "(",
-        ")",
-        "~",
-        "`",
-        ">",
-        "#",
-        "+",
-        "-",
-        "=",
-        "|",
-        "{",
-        "}",
-        ".",
-        "!",
-    ):
-        text = text.replace(ch, "\\" + ch)
-    return text
-
-
 # ---------------------------------------------------------------------------
 # Platform Clients
 # ---------------------------------------------------------------------------
@@ -405,7 +536,7 @@ def post_telegram(text, bot_token, channel_id):
     payload = {
         "chat_id": channel_id,
         "text": text,
-        "parse_mode": "Markdown",
+        "parse_mode": "HTML",
         "disable_web_page_preview": False,
     }
     try:
@@ -729,20 +860,20 @@ def run_social_posting(conn, cfg):
 
     results = {"narrative_of_day": 0, "ctm_spotlight": 0, "trending": 0}
 
-    # Narrative of the Day: once per day, after 6 UTC
-    if narrative_count == 0 and hour_utc >= 6:
+    # Narrative of the Day: up to 2/day, after 6 UTC
+    if narrative_count < 2 and hour_utc >= 6:
         r = try_narrative_of_day(conn, base_url, internal_key)
         if r:
             results["narrative_of_day"] = 1
 
-    # CTM spotlight: once per day
-    if ctm_count < 1:
+    # CTM spotlight: up to 3/day
+    if ctm_count < 3:
         r = try_ctm_spotlight(conn, base_url)
         if r:
             results["ctm_spotlight"] = 1
 
-    # Trending: up to 4 per day
-    if trending_count < 4:
+    # Trending: up to 8/day
+    if trending_count < 8:
         r = try_trending(conn, base_url)
         if r:
             results["trending"] = 1
@@ -765,6 +896,12 @@ def main():
         "--platform",
         choices=["telegram", "x"],
         help="Post to one platform only",
+    )
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=1,
+        help="Number of posts to send (default 1)",
     )
     args = parser.parse_args()
 
@@ -790,11 +927,22 @@ def main():
     print()
 
     if args.type == "trending":
-        try_trending(conn, base_url, args.platform, args.dry_run)
+        for i in range(args.count):
+            if args.count > 1:
+                print("[%d/%d]" % (i + 1, args.count))
+            try_trending(conn, base_url, args.platform, args.dry_run)
     elif args.type == "ctm_spotlight":
-        try_ctm_spotlight(conn, base_url, args.platform, args.dry_run)
+        for i in range(args.count):
+            if args.count > 1:
+                print("[%d/%d]" % (i + 1, args.count))
+            try_ctm_spotlight(conn, base_url, args.platform, args.dry_run)
     elif args.type == "narrative_of_day":
-        try_narrative_of_day(conn, base_url, internal_key, args.platform, args.dry_run)
+        for i in range(args.count):
+            if args.count > 1:
+                print("[%d/%d]" % (i + 1, args.count))
+            try_narrative_of_day(
+                conn, base_url, internal_key, args.platform, args.dry_run
+            )
     else:
         run_social_posting(conn, config)
 

@@ -251,6 +251,61 @@ TRACK_DISCRIMINATORS = {
 }
 
 
+# =============================================================================
+# IMPORTANCE SCORING CONSTANTS
+# =============================================================================
+
+# Action class -> severity score (0.0 to 1.0)
+# T2 (coercive) and T7 (incidents) are highest severity
+ACTION_CLASS_SEVERITY = {
+    # T2: Coercive operations
+    "MILITARY_OPERATION": 1.0,
+    "LAW_ENFORCEMENT_OPERATION": 0.7,
+    "SANCTION_ENFORCEMENT": 0.6,
+    # T7: Incidents
+    "SECURITY_INCIDENT": 0.9,
+    "SOCIAL_INCIDENT": 0.7,
+    "ECONOMIC_DISRUPTION": 0.6,
+    # T4: Strategic shifts
+    "STRATEGIC_REALIGNMENT": 0.5,
+    "ALLIANCE_COORDINATION": 0.3,
+    "MULTILATERAL_ACTION": 0.3,
+    # T1: Formal decisions
+    "LEGAL_RULING": 0.2,
+    "LEGISLATIVE_DECISION": 0.2,
+    "POLICY_CHANGE": 0.3,
+    "REGULATORY_ACTION": 0.2,
+    # T3: Resource/capability
+    "RESOURCE_ALLOCATION": 0.15,
+    "INFRASTRUCTURE_DEVELOPMENT": 0.1,
+    "CAPABILITY_TRANSFER": 0.2,
+    # T5: Pressure
+    "POLITICAL_PRESSURE": 0.2,
+    "ECONOMIC_PRESSURE": 0.3,
+    "DIPLOMATIC_PRESSURE": 0.2,
+    "INFORMATION_INFLUENCE": 0.15,
+    # T6: Resistance
+    "LEGAL_CONTESTATION": 0.2,
+    "INSTITUTIONAL_RESISTANCE": 0.2,
+    "COLLECTIVE_PROTEST": 0.4,
+}
+
+# Actor patterns indicating head-of-state level (used with action escalation)
+EXECUTIVE_ACTOR_PATTERNS = {
+    "_EXECUTIVE",
+    "_HEAD_OF_STATE",
+    "_PRESIDENT",
+    "_PRIME_MINISTER",
+}
+
+# Action classes that combine with executive actors for escalation signal
+ESCALATION_ACTION_CLASSES = {
+    "MILITARY_OPERATION",
+    "LAW_ENFORCEMENT_OPERATION",
+    "STRATEGIC_REALIGNMENT",
+    "SECURITY_INCIDENT",
+}
+
 # Circuit breaker: max API errors before excluding a title from queue
 MAX_API_ERRORS = 3
 

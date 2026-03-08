@@ -95,7 +95,7 @@ def load_bucket_data(conn, ctm_id):
     # Get all events (include title for compact prompt representation)
     cur.execute(
         """SELECT e.id, e.bucket_key, e.source_batch_count, e.is_catchall,
-                  e.topic_core, e.event_type, e.title
+                  e.topic_core, e.event_type, e.title, e.importance_score
            FROM events_v3 e
            WHERE e.ctm_id = %s
            ORDER BY e.source_batch_count DESC NULLS LAST""",
@@ -134,6 +134,7 @@ def load_bucket_data(conn, ctm_id):
         topic_core,
         event_type,
         title,
+        imp_score,
     ) in events_raw:
         if bucket_key:
             bk = bucket_key
@@ -157,6 +158,7 @@ def load_bucket_data(conn, ctm_id):
                     "count": count or 0,
                     "title": title,
                     "topic_core": topic_core,
+                    "importance_score": imp_score or 0.0,
                 }
             )
 
@@ -348,7 +350,16 @@ def _find_merge_candidates(events, dice_threshold=0.35):
             if dice >= dice_threshold:
                 ci = events[i]["count"] or 0
                 cj = events[j]["count"] or 0
-                if ci >= cj:
+                imp_i = events[i].get("importance_score", 0) or 0
+                imp_j = events[j].get("importance_score", 0) or 0
+                # High-importance events strongly prefer anchor role
+                if imp_i - imp_j > 0.3:
+                    is_anchor.add(i)
+                    is_candidate.add(j)
+                elif imp_j - imp_i > 0.3:
+                    is_anchor.add(j)
+                    is_candidate.add(i)
+                elif ci >= cj:
                     is_anchor.add(i)
                     is_candidate.add(j)
                 else:

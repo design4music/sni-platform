@@ -484,9 +484,11 @@ def load_titles_needing_extraction(
 
 
 def write_to_db(conn, results: list[dict]) -> int:
-    """Write labels and signals to database."""
+    """Write labels and signals to database, then compute importance scores."""
     if not results:
         return 0
+
+    from core.importance import score_title
 
     cur = conn.cursor()
 
@@ -548,6 +550,47 @@ def write_to_db(conn, results: list[dict]) -> int:
         except Exception as e:
             logger.error(
                 "Failed to insert label for {}: {}".format(r["title_id"][:8], e)
+            )
+
+    # Compute importance scores for inserted titles
+    if inserted > 0:
+        title_ids = [r["title_id"] for r in results]
+        cur.execute(
+            """SELECT id, centroid_ids, title_display
+               FROM titles_v3 WHERE id = ANY(%s::uuid[])""",
+            (title_ids,),
+        )
+        centroid_map = {
+            str(row[0]): (row[1] or [], row[2] or "") for row in cur.fetchall()
+        }
+
+        for r in results:
+            tid = r["title_id"]
+            centroid_ids, title_display = centroid_map.get(tid, ([], ""))
+            signals = {
+                st: r.get(st) or []
+                for st in (
+                    "persons",
+                    "orgs",
+                    "places",
+                    "commodities",
+                    "policies",
+                    "systems",
+                    "named_events",
+                )
+            }
+            imp_score, imp_components = score_title(
+                title_display,
+                centroid_ids,
+                r.get("action_class"),
+                r.get("actor"),
+                signals,
+            )
+            cur.execute(
+                """UPDATE title_labels
+                   SET importance_score = %s, importance_components = %s
+                   WHERE title_id = %s""",
+                (imp_score, json.dumps(imp_components), tid),
             )
 
     conn.commit()

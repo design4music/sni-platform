@@ -168,7 +168,7 @@ def load_existing_topics(conn, ctm_id: str) -> tuple:
     # Load all events for this CTM
     cur.execute(
         """
-        SELECT id, event_type, bucket_key, is_catchall
+        SELECT id, event_type, bucket_key, is_catchall, importance_score
         FROM events_v3
         WHERE ctm_id = %s
         """,
@@ -180,7 +180,7 @@ def load_existing_topics(conn, ctm_id: str) -> tuple:
     catchall_ids = {}
     topic_counter = 0
 
-    for event_id, event_type, bucket_key, is_catchall in events:
+    for event_id, event_type, bucket_key, is_catchall, imp_score in events:
         key = (event_type, bucket_key)
 
         if is_catchall:
@@ -229,6 +229,7 @@ def load_existing_topics(conn, ctm_id: str) -> tuple:
         for t in titles_data[1:]:
             topic.add_title(t)
         topic.event_id = str(event_id)
+        topic.importance_score = imp_score or 0.0
 
         existing_topics[key].append(topic)
 
@@ -268,6 +269,44 @@ def match_new_titles_to_existing(
             unmatched.append(title)
 
     return dict(matched), unmatched
+
+
+def _score_and_update_event(cur, event_id):
+    """Compute and store importance score for an event."""
+    from core.importance import score_event
+
+    cur.execute(
+        """SELECT tl.importance_score, t.publisher_name, t.detected_language,
+                  t.pubdate_utc, ta.track
+           FROM event_v3_titles evt
+           JOIN titles_v3 t ON t.id = evt.title_id
+           LEFT JOIN title_labels tl ON tl.title_id = t.id
+           LEFT JOIN title_assignments ta ON ta.title_id = t.id
+           WHERE evt.event_id = %s""",
+        (event_id,),
+    )
+    rows = [
+        {
+            "importance_score": r[0],
+            "publisher_name": r[1],
+            "detected_language": r[2],
+            "pubdate_utc": r[3],
+            "track": r[4],
+        }
+        for r in cur.fetchall()
+    ]
+    if not rows:
+        return
+
+    import json
+
+    score, components = score_event(rows)
+    cur.execute(
+        """UPDATE events_v3
+           SET importance_score = %s, importance_components = %s
+           WHERE id = %s""",
+        (score, json.dumps(components), event_id),
+    )
 
 
 def write_incremental_results(
@@ -324,6 +363,7 @@ def write_incremental_results(
                     """,
                     (event_id, last_date.date() if last_date else None, event_id),
                 )
+                _score_and_update_event(cur, event_id)
 
         # B. Create new events from clustered unmatched titles
         for topic in new_topics:
@@ -367,6 +407,7 @@ def write_incremental_results(
                     (event_id, t["id"]),
                 )
 
+            _score_and_update_event(cur, event_id)
             written += 1
 
         # C. Route sub-threshold leftovers to catchall
