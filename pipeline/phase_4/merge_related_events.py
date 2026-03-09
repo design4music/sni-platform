@@ -58,7 +58,9 @@ MERGE when:
 KEEP SEPARATE when:
 - Events share a theme but cover genuinely different developments
 - Events involve the same actors but different actions (e.g., "Trump tariffs" vs "Trump Greenland")
+- Events involve the same country pair but different topics (e.g., "US threatens Spain over bases" vs "Amazon invests in Spain" are SEPARATE)
 - Connection is only thematic (both about "economy" or "security" is NOT enough)
+- One event is about government policy and the other about private sector activity, even if same countries
 
 When in doubt, keep SEPARATE. A wrong merge destroys information. A missed merge is harmless.
 
