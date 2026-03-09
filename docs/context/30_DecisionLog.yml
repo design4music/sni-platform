@@ -743,3 +743,47 @@ decisions:
       - db/migrations/20260309_add_merged_into.sql
       - docs/importance_scoring.md (v2 section)
 
+  - id: D-037
+    date: 2026-03-09
+    type: performance
+    status: accepted
+    title: Aggressive ISR caching -- remove force-dynamic from all public pages
+    rationale: >
+      All 23 pages used export const dynamic = 'force-dynamic', meaning every
+      single page request triggered full server-side rendering with fresh DB
+      queries against Render's shared Postgres. On the starter tier, complex
+      queries (LATERAL UNNEST for trending signals, multi-CTE aggregations for
+      centroid pages) took 10-30 seconds each, causing 1-2 minute total page
+      load times. Content updates daily via the pipeline, not in real-time,
+      making aggressive caching safe. The in-memory TTL cache (lib/cache.ts)
+      only helped repeat visitors within 5 minutes -- first visitors and
+      post-deploy cold starts always paid full query cost.
+    implementation:
+      - Replaced force-dynamic with revalidate = 3600 on all data pages
+        (home, trending, centroids, tracks, events, epics, signals, regions, sources)
+      - Static content pages (about, faq, terms, privacy, methodology, pricing,
+        known-issues) set to revalidate = 86400 (24h)
+      - Search page and analysis page keep force-dynamic (user-specific queries)
+      - Auth layout keeps force-dynamic (session-dependent)
+      - CDN cache headers in next.config.js (s-maxage) now complement ISR
+        instead of being overridden by force-dynamic
+    safety:
+      - Extraction flow is safe because ExtractButton (client component) calls
+        /api/extract-narratives, then router.push() navigates to /analysis/{id}
+        which is force-dynamic. User never stays on cached event page expecting
+        inline update.
+      - Pages using searchParams (?month=) cache each URL variant separately
+      - Render does NOT auto-deploy from git, so cache is only reset on
+        manual deploy (which is fine for daily update cadence)
+    consequences:
+      - First visitor per hour per page pays full DB query cost
+      - All subsequent visitors get instant cached HTML (< 100ms)
+      - Post-deploy cold start affects only first visitor per route
+      - Data staleness max 1 hour (acceptable for daily pipeline updates)
+      - In-memory query cache (lib/cache.ts) becomes less critical but still
+        helps within the same revalidation window
+    references:
+      - apps/frontend/app/[locale]/*/page.tsx (20 files changed)
+      - apps/frontend/next.config.js (CDN headers)
+      - D-028 (original ISR + caching decision, now superseded by 1h TTLs)
+
