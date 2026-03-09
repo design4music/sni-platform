@@ -133,6 +133,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     event_type: string | null;
     bucket_key: string | null;
     source_batch_count: number;
+    importance_score: number | null;
     is_catchall: boolean;
     has_narratives: boolean;
   }>(
@@ -146,6 +147,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       e.event_type,
       e.bucket_key,
       e.source_batch_count,
+      e.importance_score,
       e.is_catchall,
       n.entity_id IS NOT NULL as has_narratives,
       COALESCE(t.title_ids, '{}') as source_title_ids
@@ -159,7 +161,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       WHERE n.entity_type = 'event' AND n.entity_id = e.id LIMIT 1
     ) n ON true
     WHERE e.ctm_id = $1 AND e.source_batch_count > 0 AND e.merged_into IS NULL
-    ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
+    ORDER BY e.is_catchall ASC, CASE WHEN e.importance_score >= 0.5 THEN 0 ELSE 1 END, e.source_batch_count DESC`,
     [ctmId]
   );
 
@@ -174,6 +176,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     event_type: r.event_type as Event['event_type'],
     bucket_key: r.bucket_key,
     source_count: r.source_batch_count,
+    importance_score: r.importance_score || undefined,
     is_catchall: r.is_catchall,
     has_narratives: r.has_narratives,
   }));

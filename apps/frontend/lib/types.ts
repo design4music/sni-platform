@@ -62,6 +62,7 @@ export interface Event {
   bucket_key?: string | null;
   alias?: string | null;
   source_count?: number;
+  importance_score?: number;
   is_catchall?: boolean;
   has_narratives?: boolean;
   resolvedTitles?: Title[];

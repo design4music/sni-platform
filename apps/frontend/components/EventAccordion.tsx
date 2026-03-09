@@ -14,6 +14,7 @@ interface EventAccordionProps {
     tags?: string[];
     source_title_ids?: string[];
     source_count?: number;
+    importance_score?: number;
     event_id?: string;
     has_narratives?: boolean;
     resolvedTitles?: Title[];
@@ -58,10 +59,11 @@ export default function EventAccordion({ event, index, compact = false }: EventA
   const relatedTitles = event.resolvedTitles || [];
   const hasRelatedTitles = relatedTitles.length > 0;
   const sourceCount = event.source_count || relatedTitles.length;
+  const isImportant = (event.importance_score || 0) >= 0.5;
 
   if (compact) {
     return (
-      <div className="py-2">
+      <div className={`py-2 ${isImportant ? 'border-l-2 border-yellow-500/60 pl-2' : ''}`}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             {/* Date range */}
@@ -144,7 +146,7 @@ export default function EventAccordion({ event, index, compact = false }: EventA
   }
 
   return (
-    <div className="border-l-4 border-blue-500 pl-4 py-2">
+    <div className={`border-l-4 pl-4 py-2 ${isImportant ? 'border-yellow-500/60 shadow-[0_0_12px_rgba(234,179,8,0.12)]' : 'border-blue-500'}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           {/* Date range */}
