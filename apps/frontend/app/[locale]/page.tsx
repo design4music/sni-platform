@@ -11,7 +11,7 @@ import { REGIONS, getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
 import { getTranslations, setRequestLocale, getLocale } from 'next-intl/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: rebuild every 5 min
 
 export const metadata: Metadata = {
   title: 'WorldBrief - Understand the world. Briefly.',

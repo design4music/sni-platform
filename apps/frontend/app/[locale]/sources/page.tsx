@@ -8,7 +8,7 @@ import SourceSuggestionForm from '@/components/SourceSuggestionForm';
 import SourceCountryAccordion from '@/components/SourceCountryAccordion';
 import { getTranslations } from 'next-intl/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('sources');

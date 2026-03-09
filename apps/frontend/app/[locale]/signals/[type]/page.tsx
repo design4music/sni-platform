@@ -17,7 +17,7 @@ const SIGNAL_TYPE_KEY: Record<SignalType, string> = {
   named_events: 'topEvents',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 const VALID_TYPES = new Set<SignalType>([
   'persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events',

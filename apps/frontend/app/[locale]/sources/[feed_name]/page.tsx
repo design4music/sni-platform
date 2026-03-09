@@ -8,7 +8,7 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface OutletPageProps {
   params: Promise<{ feed_name: string }>;

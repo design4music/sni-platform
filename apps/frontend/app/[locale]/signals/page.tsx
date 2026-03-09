@@ -7,7 +7,7 @@ import { getSignalGraph, getSignalHeatmap } from '@/lib/queries';
 import { SignalType } from '@/lib/types';
 import { getTranslations } from 'next-intl/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('signals');

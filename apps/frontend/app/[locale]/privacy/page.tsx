@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import { getTranslations } from 'next-intl/server';
-export const dynamic = 'force-dynamic';
+export const revalidate = 86400;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('privacy');

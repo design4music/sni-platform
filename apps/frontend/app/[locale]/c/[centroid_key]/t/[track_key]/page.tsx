@@ -26,7 +26,7 @@ import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
 import TranslationNotice from '@/components/TranslationNotice';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: TrackPageProps): Promise<Metadata> {
   const { centroid_key, track_key } = await params;
