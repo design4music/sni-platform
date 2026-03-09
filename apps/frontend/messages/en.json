@@ -52,7 +52,8 @@
     "story": "story",
     "stories": "stories",
     "empty": "No trending stories found. Check back soon.",
-    "active48h": "Active in last 48h"
+    "active48h": "Active in last 48h",
+    "also": "Also"
   },
   "epics": {
     "title": "Monthly Intelligence",

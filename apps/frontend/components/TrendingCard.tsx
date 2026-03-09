@@ -5,11 +5,11 @@ import { TrendingEvent, getTrackLabel, getCentroidLabel, formatTimeAgo } from '@
 import { getTrackIcon } from './TrackCard';
 import { useTranslations } from 'next-intl';
 
-function Perspectives({ perspectives, tCentroids }: { perspectives?: TrendingEvent[]; tCentroids: any }) {
+function Perspectives({ perspectives, tCentroids, alsoLabel }: { perspectives?: TrendingEvent[]; tCentroids: any; alsoLabel: string }) {
   if (!perspectives || perspectives.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-dashboard-text-muted">
-      <span>Also:</span>
+      <span>{alsoLabel}:</span>
       {perspectives.map(p => (
         <Link
           key={p.id}
@@ -118,7 +118,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
               <FreshnessDot lastActive={event.last_active} title={tTrending('active48h')} />
             </div>
             <SignalPills signals={event.top_signals} />
-            <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} />
+            <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} alsoLabel={tTrending('also')} />
           </div>
         </div>
       </div>
@@ -160,7 +160,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
       </div>
 
       <SignalPills signals={event.top_signals} />
-      <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} />
+      <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} alsoLabel={tTrending('also')} />
     </div>
   );
 }
