@@ -6,7 +6,7 @@ import { REGIONS, RegionKey } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import { getTranslations, getLocale } from 'next-intl/server';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 interface RegionPageProps {
   params: Promise<{ region_key: string }>;

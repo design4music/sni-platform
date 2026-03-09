@@ -19,7 +19,7 @@ const SIGNAL_CATEGORY_KEY: Record<SignalType, string> = {
 };
 import { getTranslations, getLocale } from 'next-intl/server';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 const VALID_TYPES = new Set<SignalType>([
   'persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events',

@@ -7,7 +7,7 @@ import { getEpicMonths, getEpicsByMonth, getTopSignalsByMonth } from '@/lib/quer
 import { SignalType } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('epics');

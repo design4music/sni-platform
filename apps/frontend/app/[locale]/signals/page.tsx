@@ -7,7 +7,7 @@ import { getSignalGraph, getSignalHeatmap } from '@/lib/queries';
 import { SignalType } from '@/lib/types';
 import { getTranslations } from 'next-intl/server';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('signals');

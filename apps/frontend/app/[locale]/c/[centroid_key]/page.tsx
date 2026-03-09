@@ -18,7 +18,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;
