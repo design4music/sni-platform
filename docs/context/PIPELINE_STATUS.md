@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Documentation
 
-**Last Updated**: 2026-03-02
+**Last Updated**: 2026-03-09
 **Status**: Production - Full pipeline operational (4-slot architecture)
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -21,14 +21,18 @@ RSS Feeds (Google News)
 [Phase 2] Centroid Matching --> titles_v3 (centroid_ids, status='assigned')    |
     |                                                                          |
 [Phase 3.1] Label + Signal Extraction --> title_labels (combined LLM call)    | DAEMON
-    |                                                                          | (automated)
+    |         + Importance Scoring --> title_labels.importance_score            | (automated)
+    |                                                                          |
 [Phase 3.2] Entity Centroid Backfill --> entity_countries -> centroids        |
     |                                                                          |
 [Phase 3.3] Intel Gating + Track Assignment --> title_assignments + ctm       |
     |                                                                          |
 [Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles        |
+    |         + Event Importance Scoring --> events_v3.importance_score         |
     |                                                                          |
 [Phase 4.1] Topic Consolidation (anchor-candidate dedup + rescue) --> merged   |
+    |                                                                          |
+[Phase 4.3] Cross-Bucket Event Merging (LLM) --> events_v3.merged_into       |
     |                                                                          |
 [Phase 4.2a] Materialize Centroid Signals --> mv_centroid_signals             |
     |                                                                          |
@@ -66,7 +70,7 @@ Phases are grouped into 4 scheduling slots. Within each slot, phases run sequent
 |------|----------|--------|-------------|
 | **INGESTION** | 12 hours | Phase 1 (RSS) + Phase 2 (centroid matching) | all feeds, all titles |
 | **CLASSIFICATION** | 15 minutes | Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks) | 500 titles/run (concurrency=5) |
-| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (dedup) + 4.2a/b (materialization) | all CTMs, 25 CTMs for consolidation |
+| **CLUSTERING** | 30 minutes | Phase 4 (event clustering) + 4.1 (dedup) + 4.3 (cross-bucket merge) + 4.2a/b (materialization) | all CTMs, 25 CTMs for consolidation, 10 CTMs for merge |
 | **ENRICHMENT** | 6 hours | Phase 4.5a (event summaries) + 4.5b (CTM digests) | 2000 events, 200 CTMs |
 | **Daily purge** | 24 hours | Remove rejected titles + reset api_error_count | all |
 
@@ -306,6 +310,83 @@ Conservative deduplication of mechanically clustered topics using an asymmetric 
 ### Validation
 
 Tested on all 460 Feb 2026 CTMs (69,576 titles): 41 genuine merges, 67 catchall rescues, 0 false merges. Previous system would have produced hundreds of merges, many incorrect.
+
+---
+
+## Importance Scoring
+
+**Module**: `core/importance.py`
+**Design doc**: `docs/importance_scoring.md`
+**DB columns**: `title_labels.importance_score` (FLOAT), `events_v3.importance_score` (FLOAT), both with `importance_components` (JSONB)
+
+### Purpose
+
+Identify the top 1-2% of genuinely significant stories for special treatment: tighter merging, higher UI visibility, and priority in consolidation.
+
+### Title-Level Scoring (0.0-1.0)
+
+Computed inline during Phase 3.1 (after label extraction). Five weighted signals:
+
+| Signal | Weight | Source |
+|--------|--------|--------|
+| Centroid convergence | 0.15 | Count of centroid_ids on the title |
+| Action class severity | 0.25 | T1-T7 mapping (MILITARY_OPERATION=1.0, SECURITY_INCIDENT=0.9, etc.) |
+| Casualty/scale language | 0.25 | Regex scan for magnitude indicators (numbers + killed/dead/wounded, "coup", "martial law") |
+| Actor escalation | 0.20 | Head of state + coercive action class combination |
+| Signal density | 0.15 | Count of distinct entity signals in title_labels |
+
+### Event-Level Scoring (0.0-1.0)
+
+Computed inline during Phase 4 (after clustering). Five weighted signals:
+
+| Signal | Weight | Source |
+|--------|--------|--------|
+| Title score p90 | 0.30 | 90th percentile of title importance scores in the event |
+| Velocity | 0.25 | Max titles in any 6h sliding window |
+| Cross-track resonance | 0.15 | Number of distinct tracks covering the same signals |
+| Source diversity | 0.15 | Unique publishers / total sources (diversity ratio) |
+| Size factor | 0.15 | Source count mapped to 0-1 scale (50+ sources = 1.0) |
+
+### UI Treatment
+
+Events with importance_score >= 0.5 are elevated to the top of their bucket on CTM pages and highlighted with a yellow left border (matching the trending/emerging visual style).
+
+---
+
+## Phase 4.3: Cross-Bucket Event Merging
+
+**Script**: `pipeline/phase_4/merge_related_events.py`
+**Runs**: After Phase 4.1, before Phase 4.2 in Slot 3 (max 10 CTMs/run)
+
+### Purpose
+
+Events fragment across geographic buckets (domestic vs bilateral) and due to weak early signal overlap. The same story appears as 2-4 separate events. Phase 4.3 uses an LLM to read all event titles+summaries in a CTM (compact, no raw headlines), group events that describe the same story, and merge them.
+
+### Mechanics
+
+1. **Qualification**: Only CTMs where at least one event has `importance_score >= 0.5` and >= 4 non-catchall events
+2. **LLM call**: DeepSeek reads event list (short IDs, bucket type, source count, title, summary snippet). Returns JSON merge groups with updated title + summary
+3. **Anchor selection**: Domestic events preferred (within a centroid, the story is domestic). Fallback to highest source count if no domestic event has >= 50% of the largest event's sources
+4. **Execution**: Re-link titles from absorbed events to anchor, update anchor title/summary/source_count, set `merged_into` on absorbed events
+5. **Soft delete**: Absorbed events retain their data but are hidden via `WHERE e.merged_into IS NULL` in all frontend list queries. Single-event lookups (by ID) are not filtered
+
+### DB
+
+- `events_v3.merged_into` (UUID FK -> events_v3.id) -- soft-delete pointer
+- `idx_events_v3_merged_into` -- partial index WHERE merged_into IS NOT NULL
+
+### Results
+
+Initial backfill across all months: 414 qualifying CTMs processed. Iran Security: 79 -> 51 events. Iran Energy: 18 -> 3 events (oil/Hormuz crisis unified). US Security: 161 -> 127 events.
+
+### CLI
+
+```
+python pipeline/phase_4/merge_related_events.py --dry-run          # preview all unfrozen CTMs
+python pipeline/phase_4/merge_related_events.py --include-frozen   # process all months
+python pipeline/phase_4/merge_related_events.py --ctm-id <uuid>    # single CTM
+python pipeline/phase_4/merge_related_events.py --centroid MIDEAST-IRAN --track geo_politics
+```
 
 ---
 

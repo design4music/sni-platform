@@ -682,3 +682,64 @@ decisions:
       - scripts/translate_epics_de.py
       - scripts/translate_centroid_briefs.py
 
+  - id: D-035
+    date: 2026-03-08
+    type: architectural
+    status: accepted
+    title: Event importance scoring system (title-level + event-level)
+    rationale: >
+      The pipeline treated all titles and events equally. The top 1-2% of genuinely
+      significant stories (mass casualties, military operations, head-of-state actions)
+      deserve special treatment: tighter merging, higher UI visibility, priority in
+      consolidation. A two-level mechanical scoring system (no LLM) computes importance
+      at title ingestion (Phase 3.1) and event clustering (Phase 4) time. Title scores
+      combine 5 signals (centroid convergence, action severity, casualty language, actor
+      escalation, signal density). Event scores combine 5 signals (title p90, velocity,
+      cross-track resonance, source diversity, size factor). Both produce 0.0-1.0 scores.
+    implementation:
+      - core/importance.py (score_title, score_event)
+      - Wired into Phase 3.1 (extract_labels.py) and Phase 4 (incremental_clustering.py)
+      - importance_score used for anchor priority in Phase 4.1 consolidation
+      - DB columns: title_labels.importance_score, events_v3.importance_score (+ JSONB components)
+      - Backfilled 108k titles + 8.3k events
+    consequences:
+      - Enables Phase 4.3 merge qualification (only high-importance CTMs)
+      - Enables UI elevation of important events
+      - Zero LLM cost (purely mechanical signals)
+      - importance_score >= 0.5 threshold identifies top ~5% of events
+    references:
+      - core/importance.py
+      - docs/importance_scoring.md
+      - db/migrations/20260308_add_importance_scores.sql
+      - scripts/backfill_importance.py
+
+  - id: D-036
+    date: 2026-03-09
+    type: architectural
+    status: accepted
+    title: Phase 4.3 cross-bucket event merging (LLM-based)
+    rationale: >
+      Events fragment across geographic buckets (domestic vs bilateral) and due to
+      weak early signal overlap. The same story (e.g., Khamenei killed + succession +
+      international reaction) appeared as 2-7 separate events. Phase 4.3 uses an LLM
+      to read all event titles+summaries in a CTM, group same-story events, and merge
+      them by re-linking titles to a surviving anchor. Only runs on CTMs with at least
+      one high-importance event (>= 0.5) and >= 4 events. Anchor selection prefers
+      domestic events but requires >= 50% of largest event's source count. Absorbed
+      events are soft-deleted via merged_into FK. LLM also produces updated title
+      and summary for the merged anchor event.
+    implementation:
+      - pipeline/phase_4/merge_related_events.py
+      - Daemon Slot 3: after Phase 4.1, before Phase 4.2 (10 CTMs/run)
+      - CLI supports --dry-run, --include-frozen, --ctm-id, --limit
+      - Frontend queries filter WHERE e.merged_into IS NULL
+    consequences:
+      - Iran Security: 79 -> 51 events. Iran Energy: 18 -> 3 events
+      - Fewer, bigger events without merging unrelated content
+      - Soft delete preserves all data (reversible)
+      - ~$0.17 to process all 414 qualifying CTMs (DeepSeek)
+    references:
+      - pipeline/phase_4/merge_related_events.py
+      - db/migrations/20260309_add_merged_into.sql
+      - docs/importance_scoring.md (v2 section)
+
