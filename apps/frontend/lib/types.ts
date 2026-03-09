@@ -339,6 +339,7 @@ export interface TrendingEvent {
   track: string;
   trending_score: number;
   top_signals?: string[];
+  perspectives?: TrendingEvent[];
 }
 
 export interface TrendingSignal {

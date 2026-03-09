@@ -5,6 +5,28 @@ import { TrendingEvent, getTrackLabel, getCentroidLabel, formatTimeAgo } from '@
 import { getTrackIcon } from './TrackCard';
 import { useTranslations } from 'next-intl';
 
+function Perspectives({ perspectives, tCentroids }: { perspectives?: TrendingEvent[]; tCentroids: any }) {
+  if (!perspectives || perspectives.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-dashboard-text-muted">
+      <span>Also:</span>
+      {perspectives.map(p => (
+        <Link
+          key={p.id}
+          href={`/events/${p.id}`}
+          className="inline-flex items-center gap-1 hover:text-blue-400 transition"
+        >
+          {p.iso_codes?.slice(0, 1).map(iso => (
+            <FlagImg key={iso} iso2={iso} size={12} />
+          ))}
+          <span>{getCentroidLabel(p.centroid_id, p.centroid_label, tCentroids)}</span>
+          <span className="text-dashboard-text-muted/60">({p.source_batch_count})</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 interface TrendingCardProps {
   event: TrendingEvent;
   compact?: boolean;
@@ -96,6 +118,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
               <FreshnessDot lastActive={event.last_active} title={tTrending('active48h')} />
             </div>
             <SignalPills signals={event.top_signals} />
+            <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} />
           </div>
         </div>
       </div>
@@ -137,6 +160,7 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
       </div>
 
       <SignalPills signals={event.top_signals} />
+      <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} />
     </div>
   );
 }

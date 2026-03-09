@@ -13,16 +13,24 @@ function titleDice(a: string, b: string): number {
 }
 
 /**
- * Deduplicate trending events by title similarity.
- * Keeps the highest-scoring event from each cluster (input must be pre-sorted by score).
+ * Group trending events by title similarity.
+ * The highest-scoring event becomes the primary; similar events from other
+ * centroids are attached as perspectives (input must be pre-sorted by score).
  * Threshold 0.55 catches cross-centroid near-duplicates while keeping distinct stories.
  */
 export function dedupTrendingEvents(events: TrendingEvent[], threshold = 0.55): TrendingEvent[] {
-  const kept: TrendingEvent[] = [];
+  const groups: TrendingEvent[] = [];
   for (const ev of events) {
-    if (!kept.some(k => titleDice(k.title, ev.title) >= threshold)) {
-      kept.push(ev);
+    const match = groups.find(k => titleDice(k.title, ev.title) >= threshold);
+    if (match) {
+      // Attach as perspective if from a different centroid
+      if (ev.centroid_id !== match.centroid_id) {
+        if (!match.perspectives) match.perspectives = [];
+        match.perspectives.push(ev);
+      }
+    } else {
+      groups.push({ ...ev });
     }
   }
-  return kept;
+  return groups;
 }
