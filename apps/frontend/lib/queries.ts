@@ -109,11 +109,13 @@ export async function getCentroidsByTheater(theater: string, locale?: string): P
 }
 
 export async function getCTMsByCentroid(centroidId: string): Promise<CTM[]> {
-  return query<CTM>(
-    `SELECT * FROM ctm
-     WHERE centroid_id = $1
-     ORDER BY month DESC, track`,
-    [centroidId]
+  return cached(`ctms:centroid:${centroidId}`, 3600, () =>
+    query<CTM>(
+      `SELECT * FROM ctm
+       WHERE centroid_id = $1
+       ORDER BY month DESC, track`,
+      [centroidId]
+    )
   );
 }
 
@@ -122,6 +124,7 @@ export async function getCTMsByCentroid(centroidId: string): Promise<CTM[]> {
  * Returns events in same format as events_digest JSONB with bucket metadata
  */
 async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]> {
+  return cached(`events:v3:${ctmId}:${locale || 'en'}`, 3600, async () => {
   const results = await query<{
     id: string;
     date: string;
@@ -180,6 +183,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     is_catchall: r.is_catchall,
     has_narratives: r.has_narratives,
   }));
+  });
 }
 
 export async function getCTM(
@@ -188,75 +192,85 @@ export async function getCTM(
   month?: string,
   locale?: string
 ): Promise<CTM | null> {
-  // When locale=de, use COALESCE for summary_text
-  const summaryCol = locale === 'de'
-    ? 'COALESCE(summary_text_de, summary_text) as summary_text'
-    : 'summary_text';
-  let queryText = `
-    SELECT id, centroid_id, track, month, title_count, ${summaryCol}, is_frozen
-    FROM ctm
-    WHERE centroid_id = $1 AND track = $2
-  `;
+  return cached(`ctm:${centroidId}:${track}:${month || 'latest'}:${locale || 'en'}`, 3600, async () => {
+    // When locale=de, use COALESCE for summary_text
+    const summaryCol = locale === 'de'
+      ? 'COALESCE(summary_text_de, summary_text) as summary_text'
+      : 'summary_text';
+    let queryText = `
+      SELECT id, centroid_id, track, month, title_count, ${summaryCol}, is_frozen
+      FROM ctm
+      WHERE centroid_id = $1 AND track = $2
+    `;
 
-  const params: any[] = [centroidId, track];
+    const params: any[] = [centroidId, track];
 
-  if (month) {
-    queryText += ` AND month = ($3 || '-01')::date`;
-    params.push(month);
-  } else {
-    queryText += ' ORDER BY month DESC LIMIT 1';
-  }
+    if (month) {
+      queryText += ` AND month = ($3 || '-01')::date`;
+      params.push(month);
+    } else {
+      queryText += ' ORDER BY month DESC LIMIT 1';
+    }
 
-  const results = await query<CTM>(queryText, params);
-  const ctm = results[0] || null;
+    const results = await query<CTM>(queryText, params);
+    const ctm = results[0] || null;
 
-  if (ctm) {
-    ctm.events_digest = await getEventsFromV3(ctm.id, locale);
-  }
+    if (ctm) {
+      ctm.events_digest = await getEventsFromV3(ctm.id, locale);
+    }
 
-  return ctm;
+    return ctm;
+  });
 }
 
 export async function getCTMMonths(centroidId: string, track: string): Promise<string[]> {
-  const results = await query<{ month: string }>(
-    `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month FROM ctm
-     WHERE centroid_id = $1 AND track = $2
-     ORDER BY month DESC`,
-    [centroidId, track]
-  );
-  return results.map(r => r.month);
+  return cached(`ctmMonths:${centroidId}:${track}`, 3600, async () => {
+    const results = await query<{ month: string }>(
+      `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month FROM ctm
+       WHERE centroid_id = $1 AND track = $2
+       ORDER BY month DESC`,
+      [centroidId, track]
+    );
+    return results.map(r => r.month);
+  });
 }
 
 export async function getMonthTimeline(
   centroidId: string, track: string
 ): Promise<{ month: string; title_count: number; is_frozen: boolean }[]> {
-  return query<{ month: string; title_count: number; is_frozen: boolean }>(
-    `SELECT TO_CHAR(month, 'YYYY-MM') as month, title_count, is_frozen
-     FROM ctm
-     WHERE centroid_id = $1 AND track = $2
-     ORDER BY month DESC`,
-    [centroidId, track]
+  return cached(`monthTimeline:${centroidId}:${track}`, 3600, () =>
+    query<{ month: string; title_count: number; is_frozen: boolean }>(
+      `SELECT TO_CHAR(month, 'YYYY-MM') as month, title_count, is_frozen
+       FROM ctm
+       WHERE centroid_id = $1 AND track = $2
+       ORDER BY month DESC`,
+      [centroidId, track]
+    )
   );
 }
 
 export async function getTitlesByCTM(ctmId: string): Promise<Title[]> {
-  return query<Title>(
-    `SELECT t.* FROM titles_v3 t
-     JOIN title_assignments ta ON t.id = ta.title_id
-     WHERE ta.ctm_id = $1
-     ORDER BY t.pubdate_utc DESC`,
-    [ctmId]
+  return cached(`titles:ctm:${ctmId}`, 3600, () =>
+    query<Title>(
+      `SELECT t.* FROM titles_v3 t
+       JOIN title_assignments ta ON t.id = ta.title_id
+       WHERE ta.ctm_id = $1
+       ORDER BY t.pubdate_utc DESC`,
+      [ctmId]
+    )
   );
 }
 
 export async function getTracksByCentroid(centroidId: string): Promise<string[]> {
-  const results = await query<{ track: string }>(
-    `SELECT DISTINCT track FROM ctm
-     WHERE centroid_id = $1
-     ORDER BY track`,
-    [centroidId]
-  );
-  return results.map(r => r.track);
+  return cached(`tracks:centroid:${centroidId}`, 3600, async () => {
+    const results = await query<{ track: string }>(
+      `SELECT DISTINCT track FROM ctm
+       WHERE centroid_id = $1
+       ORDER BY track`,
+      [centroidId]
+    );
+    return results.map(r => r.track);
+  });
 }
 
 export async function getCentroidsWithTrack(track: string): Promise<Centroid[]> {
@@ -514,14 +528,16 @@ export async function getOverlappingCentroidsForTrack(
  * Get all months that have any CTM data for a centroid (across all tracks)
  */
 export async function getAvailableMonthsForCentroid(centroidId: string): Promise<string[]> {
-  const results = await query<{ month: string }>(
-    `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month
-     FROM ctm
-     WHERE centroid_id = $1
-     ORDER BY month DESC`,
-    [centroidId]
-  );
-  return results.map(r => r.month);
+  return cached(`months:centroid:${centroidId}`, 3600, async () => {
+    const results = await query<{ month: string }>(
+      `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month
+       FROM ctm
+       WHERE centroid_id = $1
+       ORDER BY month DESC`,
+      [centroidId]
+    );
+    return results.map(r => r.month);
+  });
 }
 
 /**
@@ -531,26 +547,28 @@ export async function getTrackSummaryByCentroidAndMonth(
   centroidId: string,
   month: string
 ): Promise<Array<{ track: string; titleCount: number; lastActive: string | null }>> {
-  const results = await query<{ track: string; title_count: number; last_active: string | null }>(
-    `SELECT
-      c.track,
-      COUNT(DISTINCT ta.title_id)::int as title_count,
-      MAX(e.last_active)::text as last_active
-    FROM ctm c
-    LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
-    LEFT JOIN events_v3 e ON e.ctm_id = c.id
-    WHERE c.centroid_id = $1
-      AND c.month = ($2 || '-01')::date
-    GROUP BY c.track
-    ORDER BY c.track`,
-    [centroidId, month]
-  );
+  return cached(`trackSummary:${centroidId}:${month}`, 3600, async () => {
+    const results = await query<{ track: string; title_count: number; last_active: string | null }>(
+      `SELECT
+        c.track,
+        COUNT(DISTINCT ta.title_id)::int as title_count,
+        MAX(e.last_active)::text as last_active
+      FROM ctm c
+      LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
+      LEFT JOIN events_v3 e ON e.ctm_id = c.id
+      WHERE c.centroid_id = $1
+        AND c.month = ($2 || '-01')::date
+      GROUP BY c.track
+      ORDER BY c.track`,
+      [centroidId, month]
+    );
 
-  return results.map(r => ({
-    track: r.track,
-    titleCount: r.title_count,
-    lastActive: r.last_active,
-  }));
+    return results.map(r => ({
+      track: r.track,
+      titleCount: r.title_count,
+      lastActive: r.last_active,
+    }));
+  });
 }
 
 /**
@@ -560,42 +578,46 @@ export async function getCentroidMonthlySummary(
   centroidId: string,
   month: string
 ): Promise<{ summary_text: string; track_count: number; total_events: number } | null> {
-  const results = await query<{ summary_text: string; track_count: number; total_events: number }>(
-    `SELECT summary_text, track_count, total_events
-     FROM centroid_monthly_summaries
-     WHERE centroid_id = $1 AND month = ($2 || '-01')::date`,
-    [centroidId, month]
-  );
-  return results[0] || null;
+  return cached(`centroidSummary:${centroidId}:${month}`, 3600, async () => {
+    const results = await query<{ summary_text: string; track_count: number; total_events: number }>(
+      `SELECT summary_text, track_count, total_events
+       FROM centroid_monthly_summaries
+       WHERE centroid_id = $1 AND month = ($2 || '-01')::date`,
+      [centroidId, month]
+    );
+    return results[0] || null;
+  });
 }
 
 /**
  * Get all configured tracks for a centroid from track_configs
  */
 export async function getConfiguredTracksForCentroid(centroidId: string): Promise<string[]> {
-  // First try to get tracks from the centroid's assigned track_config
-  const results = await query<{ tracks: string[] }>(
-    `SELECT tc.tracks
-     FROM centroids_v3 c
-     JOIN track_configs tc ON c.track_config_id = tc.id
-     WHERE c.id = $1`,
-    [centroidId]
-  );
+  return cached(`configTracks:${centroidId}`, 3600, async () => {
+    // First try to get tracks from the centroid's assigned track_config
+    const results = await query<{ tracks: string[] }>(
+      `SELECT tc.tracks
+       FROM centroids_v3 c
+       JOIN track_configs tc ON c.track_config_id = tc.id
+       WHERE c.id = $1`,
+      [centroidId]
+    );
 
-  if (results.length > 0 && results[0].tracks) {
-    return results[0].tracks;
-  }
+    if (results.length > 0 && results[0].tracks) {
+      return results[0].tracks;
+    }
 
-  // Fall back to default track_config
-  const defaultResults = await query<{ tracks: string[] }>(
-    `SELECT tracks FROM track_configs WHERE is_default = TRUE`
-  );
+    // Fall back to default track_config
+    const defaultResults = await query<{ tracks: string[] }>(
+      `SELECT tracks FROM track_configs WHERE is_default = TRUE`
+    );
 
-  if (defaultResults.length > 0 && defaultResults[0].tracks) {
-    return defaultResults[0].tracks;
-  }
+    if (defaultResults.length > 0 && defaultResults[0].tracks) {
+      return defaultResults[0].tracks;
+    }
 
-  return [];
+    return [];
+  });
 }
 
 // ========================================================================
@@ -782,6 +804,7 @@ export async function getSiblingNarratives(
 }
 
 export async function getEventById(eventId: string, locale?: string): Promise<EventDetail | null> {
+  return cached(`event:${eventId}:${locale || 'en'}`, 3600, async () => {
   const results = await query<EventDetail>(
     `SELECT
       e.id,
@@ -807,6 +830,7 @@ export async function getEventById(eventId: string, locale?: string): Promise<Ev
     [eventId]
   );
   return results[0] || null;
+  });
 }
 
 export async function getEventSagaSiblings(
@@ -824,14 +848,16 @@ export async function getEventSagaSiblings(
 }
 
 export async function getEventTitles(eventId: string): Promise<Title[]> {
-  return query<Title>(
-    `SELECT t.id, t.title_display, t.url_gnews, t.publisher_name,
-            t.pubdate_utc, t.detected_language, t.processing_status
-     FROM event_v3_titles et
-     JOIN titles_v3 t ON et.title_id = t.id
-     WHERE et.event_id = $1
-     ORDER BY t.pubdate_utc DESC`,
-    [eventId]
+  return cached(`eventTitles:${eventId}`, 3600, () =>
+    query<Title>(
+      `SELECT t.id, t.title_display, t.url_gnews, t.publisher_name,
+              t.pubdate_utc, t.detected_language, t.processing_status
+       FROM event_v3_titles et
+       JOIN titles_v3 t ON et.title_id = t.id
+       WHERE et.event_id = $1
+       ORDER BY t.pubdate_utc DESC`,
+      [eventId]
+    )
   );
 }
 
