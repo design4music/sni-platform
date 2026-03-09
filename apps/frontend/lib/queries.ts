@@ -11,7 +11,7 @@ function locCol(table: string, col: string, locale?: string): string {
 }
 
 export async function getAllCentroids(locale?: string): Promise<Centroid[]> {
-  return cached(`centroids:all:${locale || 'en'}`, 300, () =>
+  return cached(`centroids:all:${locale || 'en'}`, 3600, () =>
     query<Centroid>(
       `SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id,
               ${locCol('centroids_v3', 'description', locale)} as description,
@@ -23,7 +23,7 @@ export async function getAllCentroids(locale?: string): Promise<Centroid[]> {
 }
 
 export async function getCentroidById(id: string, locale?: string): Promise<Centroid | null> {
-  return cached(`centroid:${id}:${locale || 'en'}`, 300, async () => {
+  return cached(`centroid:${id}:${locale || 'en'}`, 3600, async () => {
     const results = await query<Centroid>(
       `SELECT id, label, class, primary_theater, is_active, iso_codes, track_config_id,
               ${locCol('centroids_v3', 'description', locale)} as description,
@@ -45,7 +45,7 @@ export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
 }
 
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', locale?: string): Promise<Centroid[]> {
-  return cached(`centroids:class:${centroidClass}:${locale || 'en'}`, 300, () =>
+  return cached(`centroids:class:${centroidClass}:${locale || 'en'}`, 3600, () =>
     query<Centroid>(
       `WITH target_centroids AS (
         SELECT id FROM centroids_v3 WHERE class = $1 AND is_active = true
@@ -77,7 +77,7 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', loc
 }
 
 export async function getCentroidsByTheater(theater: string, locale?: string): Promise<Centroid[]> {
-  return cached(`centroids:theater:${theater}:${locale || 'en'}`, 300, () =>
+  return cached(`centroids:theater:${theater}:${locale || 'en'}`, 3600, () =>
     query<Centroid>(
       `WITH target_centroids AS (
         SELECT id FROM centroids_v3 WHERE primary_theater = $1 AND is_active = true
@@ -429,7 +429,7 @@ const PUBLISHER_MAP_VALUES = `
   ('Yonhap', 'Yonhap News Agency'), ('Yonhap', 'en.yna.co.kr')`;
 
 export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: number; assigned_titles: number })[]> {
-  return cached('feeds:active', 600, () => query<Feed & { total_titles: number; assigned_titles: number }>(
+  return cached('feeds:active', 3600, () => query<Feed & { total_titles: number; assigned_titles: number }>(
     `WITH publisher_map(feed_name, publisher_name) AS (VALUES
   ${PUBLISHER_MAP_VALUES}
      ),
@@ -487,7 +487,7 @@ export async function getOverlappingCentroidsForTrack(
   centroidId: string,
   track: string
 ): Promise<Array<Centroid & { overlap_count: number }>> {
-  return cached(`overlap:${centroidId}:${track}`, 600, () =>
+  return cached(`overlap:${centroidId}:${track}`, 3600, () =>
     query<Centroid & { overlap_count: number }>(
       `SELECT
         c.id, c.label, c.class, c.primary_theater,
@@ -603,7 +603,7 @@ export async function getConfiguredTracksForCentroid(centroidId: string): Promis
 // ========================================================================
 
 export async function getEpicMonths(): Promise<string[]> {
-  return cached('epic:months', 600, async () => {
+  return cached('epic:months', 3600, async () => {
     const results = await query<{ month: string }>(
       "SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month FROM epics ORDER BY month DESC"
     );
@@ -612,7 +612,7 @@ export async function getEpicMonths(): Promise<string[]> {
 }
 
 export async function getEpicsByMonth(month: string, locale?: string): Promise<Epic[]> {
-  return cached(`epics:month:${month}:${locale || 'en'}`, 300, () =>
+  return cached(`epics:month:${month}:${locale || 'en'}`, 3600, () =>
     query<Epic>(
       `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month,
               ${locCol('epics', 'title', locale)} as title,
@@ -684,7 +684,7 @@ export async function getEpicCentroidBreakdown(epicId: string): Promise<EpicCent
 }
 
 export async function getLatestEpics(limit: number = 3, locale?: string): Promise<Epic[]> {
-  return cached(`epics:latest:${limit}:${locale || 'en'}`, 300, () =>
+  return cached(`epics:latest:${limit}:${locale || 'en'}`, 3600, () =>
     query<Epic>(
       `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month,
               ${locCol('epics', 'title', locale)} as title,
@@ -869,7 +869,7 @@ export async function getRelatedEvents(
 const SIGNAL_COLUMNS: SignalType[] = ['persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events'];
 
 export async function getTopSignalsByMonth(month: string, limit: number = 5, locale?: string): Promise<Record<SignalType, TopSignal[]>> {
-  return cached(`signals:${month}:${locale || 'en'}`, 600, async () => {
+  return cached(`signals:${month}:${locale || 'en'}`, 3600, async () => {
   // Try pre-computed rankings first (has LLM context)
   const contextCol = locale === 'de' ? 'COALESCE(context_de, context)' : 'context';
   const precomputed = await query<TopSignal>(
@@ -1002,7 +1002,7 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
 // ========================================================================
 
 export async function getTrendingEvents(limit: number = 20, locale?: string): Promise<TrendingEvent[]> {
-  return cached(`trending:${limit}:${locale || 'en'}`, 300, () =>
+  return cached(`trending:${limit}:${locale || 'en'}`, 3600, () =>
     query<TrendingEvent>(
       `SELECT e.id, COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core, (
                 SELECT t.title_display FROM event_v3_titles evt
@@ -1055,7 +1055,7 @@ export async function getTrendingEvents(limit: number = 20, locale?: string): Pr
 }
 
 export async function getTrendingSignals(): Promise<Record<string, TrendingSignal[]>> {
-  return cached('trending:signals', 300, async () => {
+  return cached('trending:signals', 3600, async () => {
     const types = ['persons', 'orgs', 'places', 'commodities', 'policies'] as const;
     const parts = types.map(col =>
       `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count,
@@ -1268,7 +1268,7 @@ export async function getSignalGraph(perType: number = 5, month?: string): Promi
 
 /** Top signals for an epic's events (epic detail widget) */
 export async function getTopSignalsForEpic(epicId: string, limit: number = 10): Promise<SignalNode[]> {
-  return cached(`signals:epic:${epicId}:${limit}`, 600, () => {
+  return cached(`signals:epic:${epicId}:${limit}`, 3600, () => {
     const perType = Math.max(limit, 5);
     const sql = SIGNAL_COLUMNS.slice(0, 5).map(col =>
       `(SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count
@@ -1420,7 +1420,7 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
   if (!q || q.trim().length === 0) return [];
   const trimmed = q.trim();
 
-  return cached(`search:${trimmed.toLowerCase()}`, 300, () => query<SearchResult>(
+  return cached(`search:${trimmed.toLowerCase()}`, 3600, () => query<SearchResult>(
     `WITH q AS (SELECT websearch_to_tsquery('english', $1) AS tsq)
      SELECT * FROM (
        (SELECT 'event' as type, e.id::text, COALESCE(e.title, e.topic_core) as title,
