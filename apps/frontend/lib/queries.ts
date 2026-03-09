@@ -158,7 +158,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       SELECT entity_id FROM narratives n
       WHERE n.entity_type = 'event' AND n.entity_id = e.id LIMIT 1
     ) n ON true
-    WHERE e.ctm_id = $1 AND e.source_batch_count > 0
+    WHERE e.ctm_id = $1 AND e.source_batch_count > 0 AND e.merged_into IS NULL
     ORDER BY e.is_catchall ASC, e.source_batch_count DESC`,
     [ctmId]
   );
@@ -814,7 +814,7 @@ export async function getEventSagaSiblings(
             e.source_batch_count, TO_CHAR(c.month, 'YYYY-MM') as month
      FROM events_v3 e
      JOIN ctm c ON e.ctm_id = c.id
-     WHERE e.saga = $1 AND e.id != $2
+     WHERE e.saga = $1 AND e.id != $2 AND e.merged_into IS NULL
      ORDER BY e.date ASC`,
     [saga, currentEventId]
   );
@@ -1042,6 +1042,7 @@ export async function getTrendingEvents(limit: number = 20, locale?: string): Pr
        ) sig ON true
        WHERE e.source_batch_count >= 5
          AND e.is_catchall = false
+         AND e.merged_into IS NULL
          AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
        ORDER BY trending_score DESC
        LIMIT $1`,
@@ -1063,6 +1064,7 @@ export async function getTrendingSignals(): Promise<Record<string, TrendingSigna
        CROSS JOIN LATERAL unnest(tl.${col}) AS val
        WHERE e.source_batch_count >= 5
          AND e.is_catchall = false
+         AND e.merged_into IS NULL
          AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
        GROUP BY val ORDER BY score DESC LIMIT 5`
     );
@@ -1114,7 +1116,7 @@ export async function getTopSignalsAll(perType: number = 8, month?: string): Pro
         JOIN event_v3_titles evt ON evt.event_id = e.id
         JOIN title_labels tl ON tl.title_id = evt.title_id
         CROSS JOIN LATERAL unnest(tl.${col}) AS val
-        WHERE ${dr.clause} AND e.is_catchall = false
+        WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL
         GROUP BY val
         ORDER BY SUM(pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400))) DESC
         LIMIT ${perType})`
@@ -1141,7 +1143,7 @@ export async function getSignalStats(
          FROM events_v3 e
          JOIN event_v3_titles evt ON evt.event_id = e.id
          JOIN title_labels tl ON tl.title_id = evt.title_id
-         WHERE ${dr.clause} AND e.is_catchall = false AND $${vi} = ANY(tl.${type})
+         WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL AND $${vi} = ANY(tl.${type})
        )
        SELECT
          (SELECT COUNT(*)::int FROM signal_events) as total,
@@ -1197,7 +1199,7 @@ export async function getRelationshipClusters(
          SELECT e.id, ${titleExpr} as title,
                 e.date::text as date, e.source_batch_count
          FROM events_v3 e
-         WHERE ${dr.clause} AND e.is_catchall = false AND (
+         WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL AND (
            SELECT COUNT(*) FILTER (WHERE $${vi} = ANY(tl.${type}))::float
                   / GREATEST(COUNT(*), 1)
            FROM event_v3_titles evt
@@ -1311,7 +1313,7 @@ export async function getSignalHeatmap(perType: number = 3, month?: string): Pro
               JOIN event_v3_titles evt ON evt.event_id = e.id
               JOIN title_labels tl ON tl.title_id = evt.title_id
               CROSS JOIN LATERAL unnest(tl.${col}) AS val
-              WHERE ${dr.clause} AND e.is_catchall = false
+              WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL
                 AND val = ANY($${dr.nextIdx})
               GROUP BY signal_type, val, week`;
     }).filter(Boolean);
@@ -1355,7 +1357,7 @@ export async function getSignalCategoryDetail(
        JOIN event_v3_titles evt ON evt.event_id = e.id
        JOIN title_labels tl ON tl.title_id = evt.title_id
        CROSS JOIN LATERAL unnest(tl.${type}) AS val
-       WHERE ${dr.clause} AND e.is_catchall = false
+       WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL
        GROUP BY val ORDER BY event_count DESC LIMIT ${limit}`,
       dr.params
     );
@@ -1372,7 +1374,7 @@ export async function getSignalCategoryDetail(
          JOIN event_v3_titles evt ON evt.event_id = e.id
          JOIN title_labels tl ON tl.title_id = evt.title_id
          CROSS JOIN LATERAL unnest(tl.${type}) AS val
-         WHERE ${dr.clause} AND e.is_catchall = false AND val = ANY($${vi})
+         WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL AND val = ANY($${vi})
          GROUP BY val, week ORDER BY val, week`,
         [...dr.params, values]
       ),
@@ -1427,6 +1429,7 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
         JOIN centroids_v3 cv ON c.centroid_id = cv.id
         CROSS JOIN q
         WHERE to_tsvector('english', COALESCE(e.title,'') || ' ' || COALESCE(e.summary,'')) @@ q.tsq
+          AND e.merged_into IS NULL
         ORDER BY rank DESC LIMIT 15)
        UNION ALL
        (SELECT 'centroid' as type, cv.id, cv.label as title,

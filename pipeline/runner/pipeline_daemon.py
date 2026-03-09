@@ -45,6 +45,10 @@ from pipeline.phase_4.generate_summaries_4_5 import (
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
+from pipeline.phase_4.merge_related_events import (
+    find_ctms_needing_merge,
+)
+from pipeline.phase_4.merge_related_events import process_ctm_merge as phase43_merge
 
 
 class PipelineDaemon:
@@ -568,6 +572,33 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
+    def run_event_merge(self, max_ctms: int = 10):
+        """Phase 4.3: Cross-bucket event merging for high-importance CTMs."""
+        conn = self.get_connection()
+        try:
+            ctms = find_ctms_needing_merge(conn)
+            if not ctms:
+                print("No CTMs need cross-bucket merging")
+                return
+
+            ctms = ctms[:max_ctms]
+            print("Phase 4.3: {} CTMs qualifying for merge".format(len(ctms)))
+            total = 0
+            for ctm in ctms:
+                try:
+                    merged = phase43_merge(conn, ctm["ctm_id"])
+                    total += merged
+                except Exception as e:
+                    print(
+                        "  Merge failed for {} / {}: {}".format(
+                            ctm["centroid_id"], ctm["track"], e
+                        )
+                    )
+            if total:
+                print("Phase 4.3: merged {} events total".format(total))
+        finally:
+            self.return_connection(conn)
+
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
         from pipeline.phase_4.materialize_centroid_signals import materialize
@@ -858,6 +889,16 @@ class PipelineDaemon:
                     max_ctms=self.aggregation_max_ctms,
                 ),
                 self.timeout_clustering,
+            )
+            # Phase 4.3: Cross-Bucket Event Merging
+            await self.run_with_timeout(
+                "Phase 4.3: Event Merge",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.3: Event Merge",
+                    self.run_event_merge,
+                ),
+                300,
             )
             # Phase 4.2: Materialize pre-computed views (mv_* tables)
             await self.run_with_timeout(

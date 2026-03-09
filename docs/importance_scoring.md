@@ -45,8 +45,31 @@ Titles about genuinely important events tend to be entity-rich (multiple persons
 
 ## What Changes for High-Importance Events
 
-- **A.** Lower JOIN_THRESHOLD for high-importance clusters (tighter matching, less leakage)
-- **B.** Dedicated LLM pass for high-importance clusters (re-examine membership, split/merge with more care)
-- **C.** Priority in Phase 4.1 consolidation (high-importance events become anchors first, attracting fragments)
-- **D.** UI treatment (pinning, visual weight, alerts)
-- **E.** More aggressive catchall rescue (really try to pull related titles out of catchalls into the important cluster)
+- **A.** ~~Lower JOIN_THRESHOLD~~ (rejected -- risks absorbing irrelevant titles)
+- **B.** Phase 4.3: Cross-bucket LLM merge for high-importance CTMs (implemented v2)
+- **C.** Priority in Phase 4.1 consolidation (high-importance events become anchors first)
+- **D.** UI treatment (pinning, visual weight, alerts) -- future
+- **E.** ~~More aggressive catchall rescue~~ (deferred -- Phase 4.3 merge is the better approach)
+
+---
+
+## Phase 4.3: Cross-Bucket Event Merging (v2, 2026-03-09)
+
+**Problem:** Events fragment across geographic buckets (domestic vs bilateral) and
+due to weak early signal overlap. The same story appears as 2-4 separate events.
+
+**Solution:** LLM reads all event titles+summaries in a CTM (compact, no raw headlines).
+Groups events that describe the same story. Merges by re-linking titles to the
+surviving anchor event and updating its title+summary inline.
+
+**Anchor selection:** Domestic events preferred (within a centroid, the story is domestic).
+Fallback to highest source count if no domestic event has >= 50% of the largest event's sources.
+
+**Scope:** Only CTMs where at least one event has importance_score >= 0.5 and >= 4 events.
+
+**DB:** `events_v3.merged_into` (UUID FK) -- soft-delete for absorbed events.
+Frontend queries filter `WHERE e.merged_into IS NULL`.
+
+**Daemon placement:** Slot 3, after Phase 4.1 (consolidation), before Phase 4.2 (materialization).
+
+**Results (dry-run, top 5 CTMs):** 60 events merged. Iran Security: 53 -> 24 events.
