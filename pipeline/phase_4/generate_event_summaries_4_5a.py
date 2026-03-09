@@ -464,11 +464,9 @@ def get_events_needing_summaries(
                 ctm_iso_codes[cid] = set(row[0])
 
         for event in events:
-            is_domestic = event["bucket_key"] is None
-            if is_domestic:
-                event["centroid_countries"] = ctm_iso_codes.get(event["ctm_id"], set())
-            else:
-                event["centroid_countries"] = set()
+            # Both domestic and bilateral events get centroid countries
+            # so [D]/[F] tagging works for all event types
+            event["centroid_countries"] = ctm_iso_codes.get(event["ctm_id"], set())
 
         return events
 
@@ -501,7 +499,6 @@ async def generate_event_data(
 
     # Use core titles for summary, but note if outliers exist
     titles_to_use = core_titles if core_titles else titles
-    titles_sample = titles_to_use[:max_titles]
 
     # Domestic perspective: label headlines [D] domestic / [F] foreign
     perspective_note = ""
@@ -510,6 +507,30 @@ async def generate_event_data(
         title_to_country = {}
         for t, cc in zip(titles, title_countries or []):
             title_to_country[t] = cc
+
+        # Split into domestic and foreign pools
+        domestic_pool = []
+        foreign_pool = []
+        for t in titles_to_use:
+            cc = title_to_country.get(t)
+            if cc and cc in centroid_countries:
+                domestic_pool.append(t)
+            else:
+                foreign_pool.append(t)
+
+        # Oversample domestic: guarantee 30-40% of slots for domestic titles
+        if domestic_pool and foreign_pool:
+            domestic_target = max(
+                len(domestic_pool),
+                int(max_titles * 0.35),
+            )
+            domestic_target = min(domestic_target, len(domestic_pool), max_titles)
+            foreign_target = max_titles - domestic_target
+            titles_sample = (
+                domestic_pool[:domestic_target] + foreign_pool[:foreign_target]
+            )
+        else:
+            titles_sample = titles_to_use[:max_titles]
 
         domestic_lines = []
         foreign_lines = []
@@ -524,13 +545,29 @@ async def generate_event_data(
         titles_text = "\n".join(domestic_lines + foreign_lines)
 
         if domestic_lines:
-            perspective_note = (
-                "\n\nPERSPECTIVE: This is a DOMESTIC topic. "
-                "Headlines marked [D] are from domestic media and set the tone. "
-                "Headlines marked [F] are from foreign media -- use for facts only, "
-                "do NOT adopt their framing or editorial stance."
+            is_domestic = not any(
+                t
+                for t in titles_sample
+                if title_to_country.get(t)
+                and title_to_country.get(t) not in centroid_countries
             )
+            if is_domestic:
+                perspective_note = (
+                    "\n\nPERSPECTIVE: This is a DOMESTIC topic. "
+                    "Headlines marked [D] are from domestic media and set the tone. "
+                    "Headlines marked [F] are from foreign media -- use for facts only, "
+                    "do NOT adopt their framing or editorial stance."
+                )
+            else:
+                perspective_note = (
+                    "\n\nPERSPECTIVE: This topic is viewed from the centroid's vantage point. "
+                    "Headlines marked [D] are from the centroid's domestic media -- "
+                    "prioritize their framing, terminology, and narrative emphasis. "
+                    "Headlines marked [F] provide additional context but should NOT "
+                    "override the domestic perspective."
+                )
     else:
+        titles_sample = titles_to_use[:max_titles]
         titles_text = "\n".join("- %s" % t for t in titles_sample)
 
     if len(titles_to_use) > max_titles:

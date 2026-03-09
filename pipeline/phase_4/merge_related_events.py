@@ -66,7 +66,8 @@ When in doubt, keep SEPARATE. A wrong merge destroys information. A missed merge
 
 For each merged group, also produce:
 - An updated title (under 120 chars) that captures the full story
-- An updated summary (2-4 sentences) incorporating all merged perspectives"""
+- An updated summary (2-4 sentences) written from the centroid's perspective -- \
+prioritize how this story matters to and is framed by the centroid country"""
 
 MERGE_USER_PROMPT = """CTM: {centroid_label} / {track} / {month}
 
@@ -155,23 +156,26 @@ def get_ctm_info(conn, ctm_id):
     return {"label": row[0], "track": row[1], "month": row[2]}
 
 
-def find_ctms_needing_merge(conn):
+def find_ctms_needing_merge(conn, include_frozen=False):
     """Find CTMs with at least one high-importance event and enough events to merge."""
     cur = conn.cursor()
+    frozen_clause = "" if include_frozen else "AND ct.is_frozen = FALSE"
     cur.execute(
         """SELECT ct.id, ct.centroid_id, ct.track,
                   COUNT(e.id) as event_count,
                   MAX(e.importance_score) as max_importance
            FROM ctm ct
            JOIN events_v3 e ON e.ctm_id = ct.id
-           WHERE ct.is_frozen = FALSE
-             AND e.is_catchall = FALSE
+           WHERE e.is_catchall = FALSE
              AND e.merged_into IS NULL
              AND e.title IS NOT NULL
+             {}
            GROUP BY ct.id, ct.centroid_id, ct.track
            HAVING MAX(e.importance_score) >= %s
               AND COUNT(e.id) >= %s
-           ORDER BY MAX(e.importance_score) DESC""",
+           ORDER BY MAX(e.importance_score) DESC""".format(
+            frozen_clause
+        ),
         (CTM_IMPORTANCE_THRESHOLD, MIN_EVENTS_FOR_MERGE),
     )
     return [
@@ -427,10 +431,10 @@ def process_ctm_merge(conn, ctm_id, dry_run=False):
     return merged
 
 
-def run_all(dry_run=False, limit=None):
+def run_all(dry_run=False, limit=None, include_frozen=False):
     """Find all CTMs needing merge and process them."""
     conn = get_connection()
-    ctms = find_ctms_needing_merge(conn)
+    ctms = find_ctms_needing_merge(conn, include_frozen=include_frozen)
     print("Found {} CTMs qualifying for merge pass".format(len(ctms)))
 
     if limit:
@@ -460,6 +464,11 @@ def main():
         "--dry-run", action="store_true", help="Show merges without executing"
     )
     parser.add_argument("--limit", type=int, help="Max CTMs to process")
+    parser.add_argument(
+        "--include-frozen",
+        action="store_true",
+        help="Also process frozen (past-month) CTMs",
+    )
     args = parser.parse_args()
 
     if args.ctm_id:
@@ -482,7 +491,11 @@ def main():
             print("CTM not found")
         conn.close()
     else:
-        run_all(dry_run=args.dry_run, limit=args.limit)
+        run_all(
+            dry_run=args.dry_run,
+            limit=args.limit,
+            include_frozen=args.include_frozen,
+        )
 
 
 if __name__ == "__main__":
