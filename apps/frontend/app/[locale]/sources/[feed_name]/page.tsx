@@ -374,35 +374,47 @@ export default async function OutletPage({ params }: OutletPageProps) {
           </div>
         )}
 
-        {/* Top Topics */}
-        {profile.top_ctms.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-2xl font-bold mb-4">{tSources('topTopics')}</h2>
-            <div className="grid gap-3">
-              {profile.top_ctms.map(ctm => (
-                <Link
-                  key={ctm.ctm_id}
-                  href={`/c/${ctm.centroid_id}/t/${ctm.track}?month=${ctm.month}`}
-                  className="block p-4 bg-dashboard-surface border border-dashboard-border rounded-lg hover:border-blue-500/50 transition"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">{getCentroidLabel(ctm.centroid_id, ctm.label, tCentroids)}</span>
-                      <span className="text-dashboard-text-muted mx-2">/</span>
-                      <span className="text-dashboard-text-muted">
-                        {getTrackLabel(ctm.track as Track, tTracks)}
-                      </span>
-                    </div>
-                    <span className="text-sm text-dashboard-text-muted tabular-nums">
-                      {ctm.count} {tSources('articles')}
-                    </span>
-                  </div>
-                  <div className="text-xs text-dashboard-text-muted mt-1">{ctm.month}</div>
-                </Link>
-              ))}
+        {/* Top Topics (aggregated by centroid+track across months, max 9) */}
+        {profile.top_ctms.length > 0 && (() => {
+          const agg = new Map<string, { centroid_id: string; track: string; label: string; total: number; months: string[] }>();
+          for (const ctm of profile.top_ctms) {
+            const key = `${ctm.centroid_id}::${ctm.track}`;
+            const existing = agg.get(key);
+            if (existing) {
+              existing.total += ctm.count;
+              if (!existing.months.includes(ctm.month)) existing.months.push(ctm.month);
+            } else {
+              agg.set(key, { centroid_id: ctm.centroid_id, track: ctm.track, label: ctm.label, total: ctm.count, months: [ctm.month] });
+            }
+          }
+          const topics = [...agg.values()].sort((a, b) => b.total - a.total).slice(0, 9);
+          return (
+            <div className="mb-10">
+              <h2 className="text-2xl font-bold mb-4">{tSources('topTopics')}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {topics.map(t => {
+                  const latestMonth = t.months.sort().reverse()[0];
+                  return (
+                    <Link
+                      key={`${t.centroid_id}::${t.track}`}
+                      href={`/c/${t.centroid_id}/t/${t.track}?month=${latestMonth}`}
+                      className="block p-4 bg-dashboard-surface border border-dashboard-border rounded-lg hover:border-blue-500/50 transition"
+                    >
+                      <div className="font-medium truncate">{getCentroidLabel(t.centroid_id, t.label, tCentroids)}</div>
+                      <div className="text-sm text-dashboard-text-muted mt-0.5">
+                        {getTrackLabel(t.track as Track, tTracks)}
+                      </div>
+                      <div className="flex items-center justify-between mt-2 text-xs text-dashboard-text-muted">
+                        <span className="tabular-nums">{t.total} {tSources('articles')}</span>
+                        <span>{t.months.length > 1 ? `${t.months.length} months` : latestMonth}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Narrative Frames */}
         {narrativeFrames.length > 0 && (
@@ -412,7 +424,7 @@ export default async function OutletPage({ params }: OutletPageProps) {
               {tSources('narrativeFramesDesc')}
             </p>
             <div className="grid gap-3">
-              {narrativeFrames.map((frame, i) => {
+              {narrativeFrames.slice(0, 5).map((frame, i) => {
                 const content = (
                   <div className="p-4 bg-dashboard-surface border border-dashboard-border rounded-lg hover:border-blue-500/50 transition">
                     <div className="font-medium">{frame.label}</div>

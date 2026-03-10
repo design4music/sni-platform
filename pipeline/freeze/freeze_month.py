@@ -693,12 +693,21 @@ async def main():
     else:
         await translate_epic_fields_de(conn, target_month, dry_run)
 
-    # Step 4: Purge rejected titles to tombstone
-    print("\nStep 4: Purge rejected titles")
+    # Step 4: Publisher stance scoring
+    print("\nStep 4: Publisher stance scoring")
+    if args.skip_llm:
+        print("  Skipped (--skip-llm)")
+    else:
+        from pipeline.phase_4.score_publisher_stance import run as run_stance
+
+        run_stance(target_month, dry_run=dry_run)
+
+    # Step 5: Purge rejected titles to tombstone
+    print("\nStep 5: Purge rejected titles")
     purge_rejected_titles(conn, target_month, dry_run)
 
-    # Step 5: Freeze all CTMs
-    print("\nStep 5: Freeze all CTMs")
+    # Step 6: Freeze all CTMs
+    print("\nStep 6: Freeze all CTMs")
     freeze_month(conn, target_month, dry_run)
 
     # Final stats
