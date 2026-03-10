@@ -82,7 +82,7 @@ export default function SourceCountryAccordion({ countryCode, countryName, feeds
                   className="w-5 h-5 flex-shrink-0 object-contain"
                 />
                 <Link
-                  href={`/sources/${encodeURIComponent(feed.name)}`}
+                  href={`/sources/${encodeURIComponent(feed.name).replace(/\./g, '%2E')}`}
                   className="font-medium text-dashboard-text group-hover:text-blue-400 transition-colors flex-1 min-w-0 truncate"
                 >
                   {feed.name}
