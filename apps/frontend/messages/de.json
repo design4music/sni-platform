@@ -353,7 +353,14 @@
     "peakHour": "Spitzenstunde: {hour} UTC",
     "focusBroad": "Breit",
     "focusModerate": "Mittel",
-    "focusNarrow": "Eng"
+    "focusNarrow": "Eng",
+    "stanceTitle": "Redaktionelle Haltung",
+    "stanceDesc": "KI-bewerteter Ton der Schlagzeilen dieser Quelle gegenueber jedem Land/Region (-2 feindlich bis +2 unterstuetzend).",
+    "stanceHostile": "Feindlich",
+    "stanceCritical": "Kritisch",
+    "stanceNeutral": "Neutral",
+    "stanceFavorable": "Wohlwollend",
+    "stanceSupportive": "Unterstuetzend"
   },
   "about": {
     "metaTitle": "Ueber uns",

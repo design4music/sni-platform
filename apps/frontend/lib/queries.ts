@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
 export type Locale = 'en' | 'de';
 
@@ -1029,6 +1029,18 @@ export async function getPublisherStats(feedName: string): Promise<PublisherStat
     [feedName]
   );
   return rows[0]?.stats || null;
+}
+
+export async function getPublisherStance(feedName: string): Promise<StanceScore[]> {
+  return query<StanceScore>(
+    `SELECT ps.centroid_id, cv.label as centroid_label,
+            ps.score, ps.confidence, ps.sample_size
+     FROM publisher_stance ps
+     JOIN centroids_v3 cv ON cv.id = ps.centroid_id
+     WHERE ps.feed_name = $1
+     ORDER BY ps.month DESC, ABS(ps.score) DESC`,
+    [feedName]
+  );
 }
 
 export async function getAllPublisherStats(): Promise<Record<string, PublisherStats>> {

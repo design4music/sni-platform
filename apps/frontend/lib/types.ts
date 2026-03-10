@@ -319,6 +319,14 @@ export interface PublisherStats {
   narrative_frame_count: number;
 }
 
+export interface StanceScore {
+  centroid_id: string;
+  centroid_label: string;
+  score: number;
+  confidence: number;
+  sample_size: number;
+}
+
 export interface OutletNarrativeFrame {
   entity_type: string;
   entity_id: string;

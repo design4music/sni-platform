@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
-import { getOutletProfile, getOutletNarrativeFrames, getPublisherStats } from '@/lib/queries';
+import { getOutletProfile, getOutletNarrativeFrames, getPublisherStats, getPublisherStance } from '@/lib/queries';
 import { getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
-import { getTrackLabel, getCentroidLabel, Track, PublisherStats } from '@/lib/types';
+import { getTrackLabel, getCentroidLabel, Track, PublisherStats, StanceScore } from '@/lib/types';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -106,6 +106,67 @@ function DowChart({ distribution }: { distribution: Record<string, number> }) {
   );
 }
 
+function stanceColor(score: number): string {
+  if (score >= 1.0) return 'bg-green-500/80 text-white';
+  if (score >= 0.3) return 'bg-green-500/40 text-green-200';
+  if (score > -0.3) return 'bg-gray-500/30 text-gray-300';
+  if (score > -1.0) return 'bg-red-500/40 text-red-200';
+  return 'bg-red-500/80 text-white';
+}
+
+function stanceLabel(score: number, t: (key: string) => string): string {
+  if (score >= 1.0) return t('stanceSupportive');
+  if (score >= 0.3) return t('stanceFavorable');
+  if (score > -0.3) return t('stanceNeutral');
+  if (score > -1.0) return t('stanceCritical');
+  return t('stanceHostile');
+}
+
+function StanceGrid({ scores, tSources, tCentroids }: { scores: StanceScore[]; tSources: (key: string) => string; tCentroids: (key: string) => string }) {
+  if (scores.length === 0) return null;
+
+  // Sort by absolute score descending (most opinionated first)
+  const sorted = [...scores].sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+
+  return (
+    <div className="mb-10">
+      <h2 className="text-2xl font-bold mb-2">{tSources('stanceTitle')}</h2>
+      <p className="text-sm text-dashboard-text-muted mb-4">{tSources('stanceDesc')}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        {sorted.map(s => {
+          const sign = s.score > 0 ? '+' : '';
+          return (
+            <div
+              key={s.centroid_id}
+              className={`rounded-lg px-3 py-2.5 ${stanceColor(s.score)} transition-colors`}
+              title={`${(s.confidence * 100).toFixed(0)}% conf | ${s.sample_size} titles sampled`}
+            >
+              <div className="font-medium text-sm truncate">
+                {getCentroidLabel(s.centroid_id, s.centroid_label, tCentroids)}
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-lg font-bold tabular-nums">
+                  {sign}{s.score.toFixed(1)}
+                </span>
+                <span className="text-[10px] opacity-75">
+                  {stanceLabel(s.score, tSources)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-dashboard-text-muted">
+        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/80 inline-block" /> -2 {tSources('stanceHostile')}</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/40 inline-block" /> -1 {tSources('stanceCritical')}</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-gray-500/30 inline-block" /> 0 {tSources('stanceNeutral')}</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/40 inline-block" /> +1 {tSources('stanceFavorable')}</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/80 inline-block" /> +2 {tSources('stanceSupportive')}</span>
+      </div>
+    </div>
+  );
+}
+
 export default async function OutletPage({ params }: OutletPageProps) {
   const { feed_name } = await params;
   const name = decodeURIComponent(feed_name);
@@ -114,10 +175,11 @@ export default async function OutletPage({ params }: OutletPageProps) {
   const tTracks = await getTranslations('tracks');
   const tSources = await getTranslations('sources');
 
-  const [profile, narrativeFrames, stats] = await Promise.all([
+  const [profile, narrativeFrames, stats, stanceScores] = await Promise.all([
     getOutletProfile(name),
     getOutletNarrativeFrames(name),
     getPublisherStats(name),
+    getPublisherStance(name),
   ]);
 
   if (!profile) notFound();
@@ -231,6 +293,11 @@ export default async function OutletPage({ params }: OutletPageProps) {
             <h2 className="text-2xl font-bold mb-4">{tSources('coverageByRegion')}</h2>
             <OutletMapSection centroids={mapCentroids} />
           </div>
+        )}
+
+        {/* Stance scores */}
+        {stanceScores.length > 0 && (
+          <StanceGrid scores={stanceScores} tSources={tSources} tCentroids={tCentroids} />
         )}
 
         {/* Two-column: actors + domains */}

@@ -353,7 +353,14 @@
     "peakHour": "peak hour: {hour} UTC",
     "focusBroad": "Broad",
     "focusModerate": "Moderate",
-    "focusNarrow": "Narrow"
+    "focusNarrow": "Narrow",
+    "stanceTitle": "Editorial Stance",
+    "stanceDesc": "LLM-scored tone of this outlet's headlines toward each country/region (-2 hostile to +2 supportive).",
+    "stanceHostile": "Hostile",
+    "stanceCritical": "Critical",
+    "stanceNeutral": "Neutral",
+    "stanceFavorable": "Favorable",
+    "stanceSupportive": "Supportive"
   },
   "about": {
     "metaTitle": "About",
