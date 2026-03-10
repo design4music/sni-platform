@@ -1,8 +1,8 @@
 # Publisher-Level Analysis Plan
 
-**Status:** Reviewed -- ready for implementation in sequence
+**Status:** Phase 2 complete (UI shipped, prompt recalibrated, re-score pending)
 **Created:** 2026-03-10
-**Reviewed:** 2026-03-10
+**Last Updated:** 2026-03-10
 
 ---
 
@@ -14,7 +14,7 @@ Current `/sources/[feed_name]` page is descriptive but passive -- it says "CNN w
 
 ---
 
-## Phase 1: Publisher Analytics Dashboard (Option C) -- SQL-Only
+## Phase 1: Publisher Analytics Dashboard -- COMPLETE
 
 **What:** Purely statistical metrics computed from existing data. No LLM needed.
 
@@ -28,89 +28,86 @@ Current `/sources/[feed_name]` page is descriptive but passive -- it says "CNN w
 | Temporal pattern | Publication cadence, peak hours, day-of-week | `titles_v3.pub_date` |
 | Signal richness | Avg persons/orgs/places per title | `title_labels` signal columns |
 
-**Implementation:**
-- All SQL aggregations, materializable as `mv_publisher_stats`.
-- Daemon computes during Slot 3 (after clustering), refreshes monthly windows.
-- Cheapest and fastest option to build (~1-2 days).
-
-**UI:**
-- Enhance existing `/sources/[feed_name]` page with these stats.
-- Add sortable columns to `/sources` directory page (focus, diversity, etc.).
-- Comparison mode deferred to future version.
+**Built:**
+- `mv_publisher_stats` materialized view, refreshed by daemon Slot 3
+- `/sources/[feed_name]` page: stats grid, track distribution bar, coverage map, top actors, DOW chart, top topics (3-col aggregated), narrative frames (top 5)
+- `/sources` directory: sortable accordion with analytics badges (HHI, signal richness, top track)
+- Loading skeleton for publisher page
 
 ---
 
-## Phase 2: Publisher Stance Scoring (Option B)
+## Phase 2: Publisher Stance Scoring -- COMPLETE (re-score pending)
 
 **What:** For each (publisher, centroid, month) tuple, compute a sentiment/stance score.
-*"How does CNN cover Russia this month?" -> Score from -2 (hostile) to +2 (supportive).*
 
-**How:**
-- Collect all publisher titles assigned to a given centroid within a month.
-- LLM scores a sample batch for tone/framing on a 5-point scale.
-- Store in new table: `publisher_stance(publisher_name, centroid_id, month, score, confidence, sample_size, computed_at)`.
+**DB table:** `publisher_stance(feed_name, centroid_id, month, score, confidence, sample_size, sample_titles, computed_at)`
 
-**Monthly cadence (part of freeze process):**
-- Computed per-month, integrated into the monthly freeze workflow.
-- Enables tracking sentiment shifts over time (e.g., CNN's Russia coverage hardening after Feb 2026).
-- Current month displays last month's score until new month freezes.
+**Current data:** 690 scores, 85 publishers x 47 centroids, 2 months (Jan + Feb 2026)
 
-**Media conglomerate detection:**
-- Compute stance vectors (one score per centroid) for each publisher.
-- Cluster publishers by cosine similarity of their stance vectors.
-- Similarity > 0.85 likely indicates shared editorial alignment.
+### Built:
+- **Scoring script:** `pipeline/phase_4/score_publisher_stance.py` -- uses PUBLISHER_MAP for name variants, samples 30 titles, LLM scores on -2..+2 scale
+- **Prompt:** `core/prompts.py` STANCE_SYSTEM + STANCE_USER (moved from inline)
+- **Freeze integration:** Step 4 in `pipeline/freeze/freeze_month.py`
+- **Publisher page:** StanceGrid component -- color-coded grid with temporal delta arrows
+- **Centroid page:** StanceSidebar -- bucketed groups (Adversarial/Skeptical/Reportorial/Constructive/Promotional), top 5 per bucket, expand for more
+- **Alignment page:** `/sources/alignment` -- full heatmap (publishers x centroids), cosine similarity sort, min-coverage filter
+- **OutletLogo component:** `components/OutletLogo.tsx` -- img with initials fallback on error
 
-**Cost estimate:**
-- ~400 feeds x ~50 active centroids = 20K pairs.
-- Filter to pairs with 20+ titles -> likely ~2-3K viable pairs per month.
-- At ~$0.001/pair with DeepSeek -> ~$3 total per monthly run.
+### Known Issues:
+1. **Scores need re-generation.** Original prompt had negative skew -- reporting on wars/crises was scored as "Critical" instead of neutral. Prompt recalibrated 2026-03-10:
+   - Old scale: Hostile / Critical / Neutral / Favorable / Supportive
+   - New scale: Adversarial / Skeptical / Reportorial / Constructive / Promotional
+   - Key fix: explicit instruction that factual reporting on negative events = score 0
+   - **Action needed:** TRUNCATE publisher_stance, re-run scoring for Jan + Feb
+2. **Render backfill in progress.** publisher_name normalization (Option C) UPDATE running on Render via temp table. ~46k rows remaining as of last check. Do NOT start another bulk UPDATE -- wait for completion, then verify with: `SELECT COUNT(*) FROM titles_v3 t JOIN feeds f ON f.id = t.feed_id WHERE t.publisher_name <> f.name`
+3. **Render deploy needed.** Latest code pushed (commit a79a19b) but Render deploy not yet triggered.
 
-**UI:**
-- Publisher page: stance map (color-coded score per centroid).
-- Centroid page: "Publisher Sentiment" tab (all outlets ranked by stance).
-- Media alignment page nested under `/sources/alignment` (heatmap + clustering).
-- If quality is confirmed adequate (manual check): display stance score everywhere we show centroid+outlet together.
+### Publisher Naming (Option C) -- COMPLETE locally, syncing to Render
+- `publisher_name` now overridden with `feeds.name` at ingestion (Phase 1 `rss_fetcher.py`)
+- Local backfill done (59k rows, 0 mismatches)
+- Render backfill in progress via COPY pipe + temp table
+- PUBLISHER_MAP in queries.ts can be removed after Render sync confirmed
+- Feed renames applied: TASS Russian -> TASS, TASS (en) -> TASS (EN), rt.com -> RT, France 24 (en) -> France 24 (EN)
 
----
-
-## Phase 3: Publisher-Scoped Narrative Extraction (Option A)
-
-**What:** Extract one dominant narrative per publisher for a given entity (CTM, event, or epic).
-
-**Scope:**
-- Top 10 publishers by title count for each entity.
-- Minimum threshold: 10+ titles per publisher for that entity.
-- Start with epics (most data available), then extend to large events.
-
-**How:**
-- Filter entity's titles to a single publisher.
-- LLM extracts 1 dominant narrative frame.
-- Store in `narratives` table with new column `publisher_filter TEXT` (NULL = all sources).
-- Pipeline-generated (batch), not on-demand.
-
-**Quality gate:**
-- Manual review of initial results required before broad rollout.
-- If quality is good: include publisher narratives everywhere in pipeline generation and consider phasing out current generic (outlet-agnostic) narrative extraction.
-- RAI analysis remains on-demand regardless.
-
-**UI (to decide after quality review):**
-- Options: event sidebar, accordion tabs per publisher, or dedicated section.
-- Decision deferred until we see actual output quality.
+### Middleware fix
+- `/logos/*` added to i18n middleware exclusion list (was returning 404 for all outlet logos)
+- Full exclusion: `/((?!api|_next|flags/|geo/|logos/).*)`
 
 ---
 
-## Phase 4 (Future): Comparative Framing Analysis (Option D)
+## Phase 3: Stance-Clustered Narrative Extraction -- PLANNED (revised)
 
-**What:** Compare how different publishers frame the *same* event.
-*"5 publishers covered the Iran strike -- here's how their framing diverged."*
+**Original plan:** Per-publisher narrative extraction (Option A). Extract one narrative per publisher per entity.
 
-**How:**
-- For events with 3+ publishers each having 5+ titles.
-- LLM receives all titles grouped by publisher.
-- Prompt: "Compare how each outlet framed this event. Note differences in emphasis, attribution, and tone."
-- Output: structured comparative analysis with divergence score.
+**Revised plan:** Extract narratives by **stance cluster** instead of individual publishers.
 
-**Deferred.** Documented for future implementation. Revisit after Phase 3 quality is confirmed.
+**Rationale:** Publishers with similar stance scores (e.g. Fox News -1.8, Telegraph -1.7 on Iran) produce near-identical narratives. Clustering by stance and extracting one narrative per cluster is cheaper and more insightful.
+
+**Design philosophy:** This platform compresses for clarity, not exhaustive research. 1000 articles become a 250-word summary. Same principle applies here: not "how 85 publishers each covered Iran" but "here are the 3 genuinely different ways this story was told." Frames must be REAL (grounded in actual headline clusters), not hypothetical categories the LLM invents.
+
+**Approach:**
+1. For a given entity (epic, large event, or CTM), group publishers into 3-4 stance clusters using their centroid stance scores
+2. Sample headlines from each cluster
+3. LLM extracts one dominant narrative frame per cluster
+4. Result: "How the skeptical press framed this" vs "How the constructive press framed this"
+
+**This merges Phase 3 + Phase 4** (comparative framing) -- you get the cross-publisher comparison without per-publisher extraction as intermediate step.
+
+**Prerequisites:**
+- Re-scored stance data with calibrated prompt (Phase 2 action item)
+- Enough data (2+ months) to form stable clusters
+
+**Open questions:**
+- Cluster method: simple score buckets vs k-means vs cosine similarity groups?
+- Minimum cluster size for meaningful extraction?
+- Where to display: entity page sidebar, dedicated tab, or inline?
+- How to label clusters in the UI? By score range or by discovered characteristics?
+
+---
+
+## Phase 4 (Future): Comparative Framing Analysis -- DEFERRED
+
+Subsumed into revised Phase 3. If stance-clustered narratives work well, this becomes unnecessary as a separate phase.
 
 ---
 
@@ -119,11 +116,15 @@ Current `/sources/[feed_name]` page is descriptive but passive -- it says "CNN w
 | # | Question | Decision |
 |---|---|---|
 | Q1 | Stance scoring: per-month or rolling? | **Per-month, part of freeze process.** Enables temporal tracking. |
-| Q2 | Option A granularity? | **Epic first** (most data), then large events. Top 10 publishers, 10+ titles. |
+| Q2 | Option A granularity? | **Revised:** Stance-cluster based, not per-publisher. |
 | Q3 | Auth-gated or public? | **Decide later.** First confirm product quality. |
-| Q4 | Media alignment page location? | **Nested under `/sources`** for now. |
+| Q4 | Media alignment page location? | **`/sources/alignment`** -- shipped. |
+| Q5 | Publisher naming architecture? | **Option C:** Override publisher_name with feeds.name at ingestion. PUBLISHER_MAP to be removed after full Render sync. |
+| Q6 | Scoring prompt bias? | **Recalibrated.** "Reportorial" replaces "Neutral" as center of scale. Explicit instruction: factual reporting on negative events = 0. |
 
 ## Open Questions
 
-- UI for publisher narratives: sidebar vs accordion vs dedicated section? (decide after Phase 3 quality review)
-- If publisher narratives are good enough, do we fully replace generic narratives or keep both?
+- Phase 3 cluster method and minimum cluster size
+- UI for stance-clustered narratives
+- Whether to increase sample size (currently 30 titles) or add second LLM for cross-validation
+- When to remove PUBLISHER_MAP from queries.ts (after Render sync confirmed + 1 month of clean ingestion)

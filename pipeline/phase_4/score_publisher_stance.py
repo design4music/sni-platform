@@ -26,6 +26,7 @@ if sys.platform == "win32":
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.config import config
 from core.llm_utils import check_rate_limit, extract_json
+from core.prompts import STANCE_SYSTEM, STANCE_USER
 
 MIN_TITLES = 20
 SAMPLE_SIZE = 30
@@ -70,33 +71,6 @@ for _fn, _var in _PAIRS:
         PUBLISHER_MAP[_fn] = []
     if _var:
         PUBLISHER_MAP[_fn].append(_var)
-
-# -- Prompts --
-
-STANCE_SYSTEM = (
-    "You are a media-tone analyst. You assess the editorial tone of news "
-    "headlines from a specific publisher toward a specific country or region."
-)
-
-STANCE_USER = """Publisher: {feed_name}
-Country/Region: {centroid_label} ({centroid_id})
-Month: {month}
-
-Below are {sample_count} headlines from this publisher about this region.
-
-{titles_block}
-
-Rate the overall editorial TONE of these headlines toward {centroid_label} on this scale:
--2 = Hostile (demonizing, enemy framing, calls for punishment)
--1 = Critical (negative framing, emphasis on threats/failures)
- 0 = Neutral (factual reporting, balanced framing)
-+1 = Favorable (positive framing, emphasis on achievements/cooperation)
-+2 = Supportive (advocacy, ally framing, promotion)
-
-Consider: word choice, what is emphasized vs omitted, framing of actors, implied moral judgments.
-
-Return ONLY a JSON object:
-{{"score": <float from -2.0 to 2.0>, "confidence": <float 0-1>, "reasoning": "<1 sentence>"}}"""
 
 
 def get_connection():

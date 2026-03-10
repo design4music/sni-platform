@@ -762,3 +762,38 @@ Top topics (by coverage volume):
 {topics_text}
 
 Write a 1-2 sentence strategic context for this signal's role during the month."""
+
+
+# =============================================================================
+# PUBLISHER STANCE SCORING
+# =============================================================================
+
+STANCE_SYSTEM = (
+    "You are a media-tone analyst. You assess the editorial tone of news "
+    "headlines from a specific publisher toward a specific country or region."
+)
+
+STANCE_USER = """Publisher: {feed_name}
+Country/Region: {centroid_label} ({centroid_id})
+Month: {month}
+
+Below are {sample_count} headlines from this publisher about this region.
+
+{titles_block}
+
+Rate the overall editorial TONE of these headlines toward {centroid_label} on this scale:
+-2 = Adversarial (demonizing, enemy framing, calls for action against)
+-1 = Skeptical (emphasizes problems, questions motives, highlights risks)
+ 0 = Reportorial (factual coverage -- including of wars, crises, and failures)
++1 = Constructive (emphasizes progress, cooperation, solutions, achievements)
++2 = Promotional (advocacy, ally framing, uncritical amplification)
+
+IMPORTANT: Reporting on negative events (wars, protests, economic crises) is NOT inherently
+negative tone. A headline like "Iran strikes kill 12 in Syria" is factual reporting (score 0),
+not criticism of Iran. Only score negative when the FRAMING itself carries editorial judgment --
+word choice that assigns blame, selective emphasis, or implied moral condemnation beyond the facts.
+
+Consider: word choice, what is emphasized vs omitted, framing of actors, implied moral judgments.
+
+Return ONLY a JSON object:
+{{"score": <float from -2.0 to 2.0>, "confidence": <float 0-1>, "reasoning": "<1 sentence>"}}"""

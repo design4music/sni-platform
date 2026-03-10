@@ -204,11 +204,11 @@ export default function AlignmentHeatmap({ publishers, centroids }: AlignmentHea
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-3 mt-4 text-[10px] text-dashboard-text-muted">
-        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-red-500 inline-block" /> Hostile</span>
-        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-red-500/40 inline-block" /> Critical</span>
-        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-gray-500/30 inline-block" /> Neutral</span>
-        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-green-500/40 inline-block" /> Favorable</span>
-        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-green-500 inline-block" /> Supportive</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-red-500 inline-block" /> Adversarial</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-red-500/40 inline-block" /> Skeptical</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-gray-500/30 inline-block" /> Reportorial</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-green-500/40 inline-block" /> Constructive</span>
+        <span className="flex items-center gap-1"><span className="w-4 h-3 rounded-sm bg-green-500 inline-block" /> Promotional</span>
       </div>
       <p className="text-center text-[10px] text-dashboard-text-muted mt-2">
         Click a publisher row to sort others by editorial similarity (cosine distance).

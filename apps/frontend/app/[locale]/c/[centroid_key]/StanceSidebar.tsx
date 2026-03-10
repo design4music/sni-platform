@@ -26,11 +26,11 @@ interface StanceSidebarProps {
 
 function bucketize(scores: StanceEntry[]): StanceBucket[] {
   const buckets: StanceBucket[] = [
-    { label: 'Hostile', color: 'text-red-400', bg: 'bg-red-500/80', entries: [] },
-    { label: 'Critical', color: 'text-red-300', bg: 'bg-red-500/40', entries: [] },
-    { label: 'Neutral', color: 'text-gray-400', bg: 'bg-gray-500/30', entries: [] },
-    { label: 'Favorable', color: 'text-green-300', bg: 'bg-green-500/40', entries: [] },
-    { label: 'Supportive', color: 'text-green-400', bg: 'bg-green-500/80', entries: [] },
+    { label: 'Adversarial', color: 'text-red-400', bg: 'bg-red-500/80', entries: [] },
+    { label: 'Skeptical', color: 'text-red-300', bg: 'bg-red-500/40', entries: [] },
+    { label: 'Reportorial', color: 'text-gray-400', bg: 'bg-gray-500/30', entries: [] },
+    { label: 'Constructive', color: 'text-green-300', bg: 'bg-green-500/40', entries: [] },
+    { label: 'Promotional', color: 'text-green-400', bg: 'bg-green-500/80', entries: [] },
   ];
 
   for (const s of scores) {
