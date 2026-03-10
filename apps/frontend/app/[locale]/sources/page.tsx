@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import { getAllActiveFeeds } from '@/lib/queries';
+import { getAllActiveFeeds, getAllPublisherStats } from '@/lib/queries';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Feed } from '@/lib/types';
+import { Feed, PublisherStats } from '@/lib/types';
 import { COUNTRY_TO_REGION, getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
 import SourceSuggestionForm from '@/components/SourceSuggestionForm';
@@ -37,11 +37,24 @@ function groupFeedsByRegionAndCountry(feeds: (Feed & { total_titles: number; ass
 
 export default async function SourcesPage() {
   const t = await getTranslations('sources');
-  const feeds = await getAllActiveFeeds();
+  const [feeds, statsMap] = await Promise.all([
+    getAllActiveFeeds(),
+    getAllPublisherStats(),
+  ]);
   const groupedFeeds = groupFeedsByRegionAndCountry(feeds);
 
   const regionOrder = ['Americas', 'Europe', 'Asia', 'Middle East', 'Africa', 'Oceania', 'International Organizations'];
   const sortedRegions = regionOrder.filter(r => groupedFeeds[r]);
+
+  // Collect all i18n strings needed by the client component
+  const labels = {
+    statArticles: t('statArticles'),
+    statGeoFocus: t('statGeoFocus'),
+    statSignalRichness: t('statSignalRichness'),
+    focusBroad: t('focusBroad'),
+    focusModerate: t('focusModerate'),
+    focusNarrow: t('focusNarrow'),
+  };
 
   return (
     <DashboardLayout>
@@ -69,7 +82,15 @@ export default async function SourcesPage() {
             }).map(([countryCode, countryFeeds]) => {
               const feedsWithMeta = countryFeeds.map(feed => {
                 const domain = feed.source_domain || feed.url.replace(/^https?:\/\//, '').split('/')[0];
-                return { ...feed, domain, logoUrl: getOutletLogoUrl(domain, 32) };
+                const s = statsMap[feed.name];
+                return {
+                  ...feed,
+                  domain,
+                  logoUrl: getOutletLogoUrl(domain, 32),
+                  geo_hhi: s?.geo_hhi ?? null,
+                  signal_richness: s?.signal_richness ?? null,
+                  top_track: s ? Object.entries(s.track_distribution).sort((a, b) => b[1] - a[1])[0]?.[0] || null : null,
+                };
               });
               return (
                 <SourceCountryAccordion
@@ -77,6 +98,7 @@ export default async function SourcesPage() {
                   countryCode={countryCode}
                   countryName={getCountryName(countryCode)}
                   feeds={feedsWithMeta}
+                  labels={labels}
                 />
               );
             })}

@@ -1031,6 +1031,17 @@ export async function getPublisherStats(feedName: string): Promise<PublisherStat
   return rows[0]?.stats || null;
 }
 
+export async function getAllPublisherStats(): Promise<Record<string, PublisherStats>> {
+  return cached('publisher-stats:all', 3600, async () => {
+    const rows = await query<{ feed_name: string; stats: PublisherStats }>(
+      'SELECT feed_name, stats FROM mv_publisher_stats'
+    );
+    const map: Record<string, PublisherStats> = {};
+    for (const r of rows) map[r.feed_name] = r.stats;
+    return map;
+  });
+}
+
 // ========================================================================
 // Trending events (time-decayed source count)
 // ========================================================================
