@@ -365,6 +365,8 @@ const PUBLISHER_MAP_VALUES = `
   ('Fars News', 'farsnews.ir'), ('Fars News', 'Fars News Agency'), ('Fars News', 'خبرگزاری فارس'),
   ('Folha de S.Paulo', 'UOL'),
   ('Fox News', 'foxnews.com'),
+  ('France 24', 'France24'), ('France 24', 'france24.com'),
+  ('France 24 (EN)', 'France 24'),
   ('Frankfurter Allgemeine', 'FAZ'),
   ('Gazeta.ru', 'gazeta.ru'),
   ('Globe and Mail', 'The Globe and Mail'),
@@ -411,6 +413,7 @@ const PUBLISHER_MAP_VALUES = `
   ('Punch', 'Punch Newspapers'),
   ('Republic TV', 'republic.tv'),
   ('RIA Novosti', 'ria.ru'),
+  ('RT', 'rt.com'), ('RT', 'Russia Today'),
   ('Slovak Spectator', 'The Slovak Spectator'),
   ('Sputnik', 'sputniknews.com'),
   ('Süddeutsche Zeitung', 'SZ.de'), ('Süddeutsche Zeitung', 'SZ Immobilienmarkt'), ('Süddeutsche Zeitung', 'sueddeutsche.de'),
@@ -418,8 +421,8 @@ const PUBLISHER_MAP_VALUES = `
   ('Sydney Morning Herald', 'The Sydney Morning Herald'), ('Sydney Morning Herald', 'SMH.com.au'),
   ('Tagesschau', 'tagesschau.de'),
   ('Tasnim News', 'tasnimnews.com'),
-  ('TASS', 'tass.com'),
-  ('TASS Russian', 'tass.ru'),
+  ('TASS (EN)', 'tass.com'),
+  ('TASS', 'tass.ru'),
   ('Tengrinews', 'Tengrinews.kz'),
   ('The Astana Times', 'astanatimes.com'),
   ('The Hindu', 'thehindu.com'),
@@ -1034,12 +1037,61 @@ export async function getPublisherStats(feedName: string): Promise<PublisherStat
 export async function getPublisherStance(feedName: string): Promise<StanceScore[]> {
   return query<StanceScore>(
     `SELECT ps.centroid_id, cv.label as centroid_label,
-            ps.score, ps.confidence, ps.sample_size
+            ps.score, ps.confidence, ps.sample_size,
+            TO_CHAR(ps.month, 'YYYY-MM') as month
      FROM publisher_stance ps
      JOIN centroids_v3 cv ON cv.id = ps.centroid_id
      WHERE ps.feed_name = $1
      ORDER BY ps.month DESC, ABS(ps.score) DESC`,
     [feedName]
+  );
+}
+
+export interface CentroidStanceScore {
+  feed_name: string;
+  source_domain: string | null;
+  score: number;
+  confidence: number;
+  sample_size: number;
+  month: string;
+}
+
+export async function getStanceForCentroid(centroidId: string): Promise<CentroidStanceScore[]> {
+  // Get latest month's stance data for this centroid
+  return query<CentroidStanceScore>(
+    `SELECT ps.feed_name, f.source_domain, ps.score, ps.confidence,
+            ps.sample_size, TO_CHAR(ps.month, 'YYYY-MM') as month
+     FROM publisher_stance ps
+     LEFT JOIN feeds f ON f.name = ps.feed_name
+     WHERE ps.centroid_id = $1
+       AND ps.month = (SELECT MAX(month) FROM publisher_stance WHERE centroid_id = $1)
+     ORDER BY ps.score ASC`,
+    [centroidId]
+  );
+}
+
+export interface AlignmentRow {
+  feed_name: string;
+  source_domain: string | null;
+  country_code: string | null;
+  centroid_id: string;
+  centroid_label: string;
+  score: number;
+  confidence: number;
+}
+
+export async function getStanceMatrix(): Promise<AlignmentRow[]> {
+  return cached('stance-matrix:latest', 3600, () =>
+    query<AlignmentRow>(
+      `SELECT ps.feed_name, f.source_domain, f.country_code,
+              ps.centroid_id, cv.label as centroid_label,
+              ps.score, ps.confidence
+       FROM publisher_stance ps
+       JOIN centroids_v3 cv ON cv.id = ps.centroid_id
+       LEFT JOIN feeds f ON f.name = ps.feed_name AND f.is_active = true
+       WHERE ps.month = (SELECT MAX(month) FROM publisher_stance)
+       ORDER BY ps.feed_name, cv.label`
+    )
   );
 }
 

@@ -140,6 +140,7 @@
   "centroid": {
     "strategicTracks": "Strategische Bereiche",
     "topSignals": "Top-Signale",
+    "publisherSentiment": "Redaktionelle Haltung",
     "noTracks": "Keine Bereiche fuer dieses Thema konfiguriert",
     "notFound": "Land nicht gefunden",
     "metaDescription": "{label} Nachrichtenbriefing: strategische Bereiche, Themenzusammenfassungen und mehrsprachige Quellenanalyse internationaler Medien.",
@@ -360,7 +361,9 @@
     "stanceCritical": "Kritisch",
     "stanceNeutral": "Neutral",
     "stanceFavorable": "Wohlwollend",
-    "stanceSupportive": "Unterstuetzend"
+    "stanceSupportive": "Unterstuetzend",
+    "alignmentTitle": "Medien-Alignment",
+    "alignmentDesc": "Redaktioneller Ton grosser Medien gegenueber Laendern und Regionen. Klicken Sie auf eine Zeile, um nach redaktioneller Aehnlichkeit zu sortieren."
   },
   "about": {
     "metaTitle": "Ueber uns",

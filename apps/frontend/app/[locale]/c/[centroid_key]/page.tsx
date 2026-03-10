@@ -13,10 +13,14 @@ import {
   getConfiguredTracksForCentroid,
   getCentroidMonthlySummary,
   getTopSignalsForCentroid,
+  getStanceForCentroid,
 } from '@/lib/queries';
+import { getOutletLogoUrl } from '@/lib/logos';
+import StanceSidebar from './StanceSidebar';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
+import type { CentroidStanceScore } from '@/lib/queries';
 
 export const revalidate = 3600;
 
@@ -68,10 +72,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     : availableMonths[0] || null;
 
   // Fetch track data, centroid summary, and top signals for the current month
-  const [monthTrackData, centroidSummary, topSignals] = await Promise.all([
+  const [monthTrackData, centroidSummary, topSignals, stanceScores] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
+    getStanceForCentroid(centroid.id),
   ]);
 
   // Build maps of track -> titleCount and track -> lastActive for the current month
@@ -147,22 +152,35 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
             {t('topSignals')}
           </h3>
-          <ul className="space-y-1.5">
-            {topSignals.map(s => (
-              <li key={`${s.signal_type}-${s.value}`}>
+          <div className="flex flex-wrap gap-1.5">
+            {topSignals.map(s => {
+              const typeLabel = s.signal_type.replace(/s$/, '').replace(/_/g, ' ');
+              return (
                 <Link
+                  key={`${s.signal_type}-${s.value}`}
                   href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
-                  className="flex items-center justify-between text-sm py-1 px-2 -mx-2 rounded hover:bg-dashboard-border/50 transition"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition text-[11px]"
                 >
-                  <span className="text-dashboard-text truncate">{s.value}</span>
-                  <span className="text-xs text-dashboard-text-muted shrink-0 ml-2">
-                    {s.event_count}
-                  </span>
+                  <span className="text-blue-400/70">{typeLabel}:</span>
+                  <span className="text-dashboard-text truncate max-w-[100px]">{s.value}</span>
+                  <span className="text-dashboard-text-muted tabular-nums">{s.event_count}</span>
                 </Link>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </div>
         </div>
+      )}
+      {stanceScores.length > 0 && (
+        <StanceSidebar
+          scores={stanceScores.map(s => ({
+            feed_name: s.feed_name,
+            source_domain: s.source_domain,
+            score: s.score,
+            logoUrl: s.source_domain ? getOutletLogoUrl(s.source_domain, 16) : null,
+          }))}
+          month={stanceScores[0]?.month || ''}
+          title={t('publisherSentiment')}
+        />
       )}
     </div>
   );

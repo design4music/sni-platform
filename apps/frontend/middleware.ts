@@ -5,5 +5,5 @@ export default createMiddleware(routing);
 
 export const config = {
   // Match all paths except api, _next, and public static assets
-  matcher: ['/((?!api|_next|flags/|geo/).*)'],
+  matcher: ['/((?!api|_next|flags/|geo/|logos/).*)'],
 };

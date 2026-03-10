@@ -140,6 +140,7 @@
   "centroid": {
     "strategicTracks": "Strategic Tracks",
     "topSignals": "Top Signals",
+    "publisherSentiment": "Publisher Sentiment",
     "noTracks": "No tracks configured for this centroid",
     "notFound": "Country Not Found",
     "metaDescription": "{label} news briefing: strategic tracks, topic summaries, and multilingual source analysis from international media.",
@@ -360,7 +361,9 @@
     "stanceCritical": "Critical",
     "stanceNeutral": "Neutral",
     "stanceFavorable": "Favorable",
-    "stanceSupportive": "Supportive"
+    "stanceSupportive": "Supportive",
+    "alignmentTitle": "Media Alignment",
+    "alignmentDesc": "Editorial tone of major publishers toward countries and regions. Click a row to sort by editorial similarity."
   },
   "about": {
     "metaTitle": "About",

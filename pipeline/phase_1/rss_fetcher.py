@@ -189,7 +189,9 @@ class RSSFetcher:
 
         return None
 
-    def fetch_feed(self, feed_id: str, feed_url: str) -> Tuple[List[Dict], Dict]:
+    def fetch_feed(
+        self, feed_id: str, feed_url: str, feed_name: str = ""
+    ) -> Tuple[List[Dict], Dict]:
         """
         Fetch and parse RSS feed.
 
@@ -294,6 +296,10 @@ class RSSFetcher:
                     publisher_name, publisher_domain = self.extract_real_publisher(
                         entry, feed
                     )
+
+                    # Override with canonical feed name (Option C normalization)
+                    if feed_name:
+                        publisher_name = feed_name
 
                     # Normalize title with NFKC
                     title_display, hash_base = self.normalize_title(

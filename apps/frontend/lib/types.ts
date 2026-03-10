@@ -325,6 +325,7 @@ export interface StanceScore {
   score: number;
   confidence: number;
   sample_size: number;
+  month?: string;
 }
 
 export interface OutletNarrativeFrame {

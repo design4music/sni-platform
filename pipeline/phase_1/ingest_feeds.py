@@ -113,7 +113,9 @@ def run_ingestion(max_feeds=None, country_code=None):
 
         try:
             # Fetch and insert
-            articles, feed_stats = fetcher.fetch_feed(feed["id"], feed["url"])
+            articles, feed_stats = fetcher.fetch_feed(
+                feed["id"], feed["url"], feed["name"]
+            )
 
             # Update overall stats
             stats["feeds_processed"] += 1

@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import OutletMapSection from './OutletMapSection';
+import OutletLogo from '@/components/OutletLogo';
 
 export const revalidate = 3600;
 
@@ -125,21 +126,39 @@ function stanceLabel(score: number, t: (key: string) => string): string {
 function StanceGrid({ scores, tSources, tCentroids }: { scores: StanceScore[]; tSources: (key: string) => string; tCentroids: (key: string) => string }) {
   if (scores.length === 0) return null;
 
-  // Sort by absolute score descending (most opinionated first)
-  const sorted = [...scores].sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+  // Group by month
+  const months = [...new Set(scores.map(s => s.month!).filter(Boolean))].sort().reverse();
+  const latestMonth = months[0];
+
+  // Build previous month lookup for trend arrows
+  const prevMonth = months[1];
+  const prevScores = prevMonth
+    ? new Map(scores.filter(s => s.month === prevMonth).map(s => [s.centroid_id, s.score]))
+    : null;
+
+  // Show latest month scores
+  const current = scores.filter(s => s.month === latestMonth);
+  const sorted = [...current].sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
 
   return (
     <div className="mb-10">
-      <h2 className="text-2xl font-bold mb-2">{tSources('stanceTitle')}</h2>
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-2xl font-bold">{tSources('stanceTitle')}</h2>
+        {months.length > 0 && (
+          <span className="text-sm text-dashboard-text-muted">{latestMonth}</span>
+        )}
+      </div>
       <p className="text-sm text-dashboard-text-muted mb-4">{tSources('stanceDesc')}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
         {sorted.map(s => {
           const sign = s.score > 0 ? '+' : '';
+          const prev = prevScores?.get(s.centroid_id);
+          const delta = prev !== undefined ? s.score - prev : null;
           return (
             <div
               key={s.centroid_id}
               className={`rounded-lg px-3 py-2.5 ${stanceColor(s.score)} transition-colors`}
-              title={`${(s.confidence * 100).toFixed(0)}% conf | ${s.sample_size} titles sampled`}
+              title={`${(s.confidence * 100).toFixed(0)}% conf | ${s.sample_size} titles${delta !== null ? ` | ${delta > 0 ? '+' : ''}${delta.toFixed(1)} vs ${prevMonth}` : ''}`}
             >
               <div className="font-medium text-sm truncate">
                 {getCentroidLabel(s.centroid_id, s.centroid_label, tCentroids)}
@@ -148,8 +167,15 @@ function StanceGrid({ scores, tSources, tCentroids }: { scores: StanceScore[]; t
                 <span className="text-lg font-bold tabular-nums">
                   {sign}{s.score.toFixed(1)}
                 </span>
-                <span className="text-[10px] opacity-75">
-                  {stanceLabel(s.score, tSources)}
+                <span className="flex items-center gap-1">
+                  {delta !== null && Math.abs(delta) >= 0.3 && (
+                    <span className={`text-[10px] font-medium ${delta > 0 ? 'text-green-300' : 'text-red-300'}`}>
+                      {delta > 0 ? '\u2191' : '\u2193'}
+                    </span>
+                  )}
+                  <span className="text-[10px] opacity-75">
+                    {stanceLabel(s.score, tSources)}
+                  </span>
                 </span>
               </div>
             </div>
@@ -210,9 +236,7 @@ export default async function OutletPage({ params }: OutletPageProps) {
             &larr; {tSources('allSources')}
           </Link>
           <div className="flex items-center gap-4 mt-4">
-            {domain && (
-              <img src={logoUrl} alt="" className="w-12 h-12 object-contain rounded" />
-            )}
+            <OutletLogo src={logoUrl} name={profile.feed_name} size={48} className="rounded" />
             <div>
               <h1 className="text-3xl md:text-4xl font-bold">{profile.feed_name}</h1>
               <div className="flex flex-wrap items-center gap-3 text-dashboard-text-muted mt-1">
