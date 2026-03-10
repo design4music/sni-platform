@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
 export type Locale = 'en' | 'de';
 
@@ -961,14 +961,14 @@ export async function getOutletProfile(feedName: string): Promise<OutletProfile 
   const cte = feedPubsCTE();
 
   const [coverageRes, ctmsRes, countRes] = await Promise.all([
-    query<{ centroid_id: string; label: string; count: number }>(
+    query<{ centroid_id: string; label: string; iso_codes: string[] | null; count: number }>(
       `${cte}
-       SELECT ta.centroid_id, cv.label, COUNT(*)::int as count
+       SELECT ta.centroid_id, cv.label, cv.iso_codes, COUNT(*)::int as count
        FROM titles_v3 t
        JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name
        JOIN title_assignments ta ON ta.title_id = t.id
        JOIN centroids_v3 cv ON cv.id = ta.centroid_id
-       GROUP BY ta.centroid_id, cv.label
+       GROUP BY ta.centroid_id, cv.label, cv.iso_codes
        ORDER BY count DESC`,
       [feedName]
     ),
@@ -1021,6 +1021,14 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
      LIMIT 30`,
     [feedName]
   );
+}
+
+export async function getPublisherStats(feedName: string): Promise<PublisherStats | null> {
+  const rows = await query<{ stats: PublisherStats }>(
+    'SELECT stats FROM mv_publisher_stats WHERE feed_name = $1',
+    [feedName]
+  );
+  return rows[0]?.stats || null;
 }
 
 // ========================================================================

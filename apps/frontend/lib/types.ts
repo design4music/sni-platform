@@ -298,8 +298,25 @@ export interface OutletProfile {
   country_code: string | null;
   language_code: string | null;
   article_count: number;
-  centroid_coverage: { centroid_id: string; label: string; count: number }[];
+  centroid_coverage: { centroid_id: string; label: string; iso_codes: string[] | null; count: number }[];
   top_ctms: { ctm_id: string; centroid_id: string; track: string; month: string; label: string; count: number }[];
+}
+
+export interface PublisherStats {
+  title_count: number;
+  centroid_count: number;
+  track_distribution: Record<string, number>;
+  geo_hhi: number;
+  geo_gini: number;
+  top_centroids: { name: string; count: number; share: number }[];
+  top_actors: { name: string; count: number; share: number }[];
+  action_distribution: Record<string, number>;
+  domain_distribution: Record<string, number>;
+  language_distribution: Record<string, number>;
+  signal_richness: number;
+  dow_distribution: Record<string, number>;
+  peak_hour: number | null;
+  narrative_frame_count: number;
 }
 
 export interface OutletNarrativeFrame {

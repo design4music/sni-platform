@@ -611,6 +611,12 @@ class PipelineDaemon:
 
         materialize(period="rolling")
 
+    def run_materialize_publisher_stats(self):
+        """Materialize publisher analytics (all active feeds)."""
+        from pipeline.phase_4.materialize_publisher_stats import materialize
+
+        materialize()
+
     async def run_event_summaries(self, max_events: int = 100):
         """Generate summaries for events that need them"""
         conn = self.get_connection()
@@ -918,6 +924,15 @@ class PipelineDaemon:
                     self.run_materialize_signal_graph,
                 ),
                 300,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2c: Publisher Stats",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2c: Publisher Stats",
+                    self.run_materialize_publisher_stats,
+                ),
+                600,
             )
             self.last_run["clustering"] = time.time()
         else:
