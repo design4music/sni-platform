@@ -282,7 +282,7 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
   },
 };
 
-// ---- Modules (37) -- keyed by ID for lookup after selection ----------------
+// ---- Modules (38) -- keyed by ID for lookup after selection ----------------
 
 const MODULE_LIBRARY: Record<string, RaiModule> = {
   // -- Cross-Level (CL) --
@@ -592,6 +592,23 @@ const MODULE_LIBRARY: Record<string, RaiModule> = {
       'Vocabulary is the first battlefield -- everything after is commentary.',
     ],
     philosophical_anchoring: ['D3.7', 'D3.1', 'D4.6'],
+  },
+  'FL-11': {
+    id: 'FL-11',
+    name: 'Action-Statement Coherence Audit',
+    purpose: 'Compare actors\' stated positions, commitments, and declarations with their observable actions, timing, and resource allocation. Identify gaps where actions contradict or undermine stated intentions. Note when timing of actions (e.g., military strikes during negotiations) reveals strategic intent that official statements obscure.',
+    core_questions: [
+      'Do the actor\'s observable actions align with their stated positions and commitments?',
+      'Does the timing of key actions (military, economic, diplomatic) contradict or undermine official rhetoric?',
+      'Where does resource allocation (military spending, proxy funding, sanctions enforcement) reveal priorities that differ from stated goals?',
+      'If you ignored all statements and judged only by actions, what story would emerge?',
+    ],
+    wisdom_injected: [
+      'Watch the hands, not the mouth.',
+      'Timing is the confession that words try to retract.',
+      'When actions and statements diverge, actions are the truth.',
+    ],
+    philosophical_anchoring: ['D1.1', 'D6.2', 'D5.6'],
   },
   // -- Narrative-Level (NL) --
   'NL-1': {
@@ -910,6 +927,7 @@ const MODULE_CATALOG: Array<{ id: string; summary: string }> = [
   { id: 'FL-8', summary: 'Anchor claims in specific verifiable time and place' },
   { id: 'FL-9', summary: 'Detect judgment-distorting toxic labels' },
   { id: 'FL-10', summary: 'Audit descriptive vocabulary for invisible bias and asymmetric naming' },
+  { id: 'FL-11', summary: 'Compare stated positions with observable actions, timing, and resource allocation' },
   { id: 'NL-1', summary: 'Evaluate cause-effect chain logic and start-point bias' },
   { id: 'NL-2', summary: 'Test narrative internal coherence and plausibility' },
   { id: 'NL-4', summary: 'Identify group identity and historical trauma framing' },
@@ -1399,3 +1417,268 @@ export function resolveModules(ids: string[]): RaiModule[] {
 
 /** Core module IDs that are always included in analysis. */
 export { CORE_MODULE_IDS };
+
+
+// ---- Comparative Analysis (multi-narrative) --------------------------------
+
+export interface ClusterNarrative {
+  cluster_label: string;       // critical | reportorial | supportive
+  cluster_publishers: string[];
+  cluster_score_avg: number;
+  label: string;               // narrative frame label
+  description: string | null;
+  moral_frame: string | null;
+  sample_titles: Array<{ title: string; publisher: string }>;
+  title_count: number;
+}
+
+export interface ComparativeScores {
+  frame_divergence: number;
+  collective_blind_spots: string[];
+  synthesis: string;
+}
+
+export async function selectComparativeModules(
+  narratives: ClusterNarrative[],
+  context: AnalysisContext,
+  stats: SignalStats | null,
+): Promise<string[]> {
+  const SELECTOR_TIMEOUT_MS = 15_000;
+
+  try {
+    if (!DEEPSEEK_API_KEY) return FALLBACK_MODULE_IDS;
+
+    const lines: string[] = [
+      'You are selecting analytical modules for a COMPARATIVE media framing analysis.',
+      'Multiple editorial clusters are being analysed simultaneously.',
+      '',
+    ];
+
+    for (const n of narratives) {
+      lines.push(`CLUSTER "${n.cluster_label}" (${n.cluster_publishers.slice(0, 5).join(', ')}): ${n.label}`);
+      if (n.moral_frame) lines.push(`  Moral frame: ${n.moral_frame}`);
+    }
+
+    lines.push(
+      '',
+      `EVENT: ${context.event_title || 'N/A'}  |  REGION: ${context.centroid_name || 'N/A'}  |  TRACK: ${context.track || 'N/A'}`,
+    );
+
+    if (stats) {
+      lines.push('', 'COVERAGE DATA:');
+      lines.push(`- Publishers: ${stats.publisher_count}, HHI: ${stats.publisher_hhi.toFixed(3)}`);
+      lines.push(`- Languages: ${stats.language_count}`);
+      lines.push(`- Date span: ${stats.date_range_days} days`);
+    }
+
+    lines.push(
+      '',
+      '4 core modules are already included (CL-0, CL-6, NL-3, SL-8).',
+      'Select exactly 4 additional modules best suited for CROSS-CLUSTER comparison.',
+      '',
+      'AVAILABLE MODULES:',
+    );
+    for (const entry of MODULE_CATALOG) {
+      lines.push(`${entry.id}: ${entry.summary}`);
+    }
+    lines.push(
+      '',
+      'Respond with exactly 4 module IDs and a brief rationale, one per line:',
+    );
+
+    const prompt = lines.join('\n');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), SELECTOR_TIMEOUT_MS);
+
+    let raw: string;
+    try {
+      const res = await fetch(DEEPSEEK_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: DEEPSEEK_MODEL,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0,
+          max_tokens: 250,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) return FALLBACK_MODULE_IDS;
+      const data = await res.json();
+      raw = data.choices?.[0]?.message?.content || '';
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!raw) return FALLBACK_MODULE_IDS;
+
+    const validIds = new Set(MODULE_CATALOG.map((e) => e.id));
+    const matches = raw.match(/(CL-\d+|FL-\d+|NL-\d+|SL-\d+)/g) || [];
+    const selected: string[] = [];
+    for (const id of matches) {
+      if (validIds.has(id) && !selected.includes(id)) {
+        selected.push(id);
+        if (selected.length === 4) break;
+      }
+    }
+
+    for (const fb of FALLBACK_MODULE_IDS) {
+      if (selected.length >= 4) break;
+      if (!selected.includes(fb)) selected.push(fb);
+    }
+
+    return selected;
+  } catch {
+    return FALLBACK_MODULE_IDS;
+  }
+}
+
+export function buildComparativePrompt(
+  narratives: ClusterNarrative[],
+  context: AnalysisContext,
+  modules: RaiModule[],
+  stats?: SignalStats | null,
+): string {
+  const parts: string[] = [];
+
+  // 1. System frame
+  parts.push(
+    'You are operating under the **Real Artificial Intelligence (RAI) Framework**.',
+    'This is a **comparative media framing analysis** of news coverage from the WorldBrief intelligence platform.',
+    '',
+    'You are analysing ' + narratives.length + ' competing narrative clusters for the same event.',
+    'Each cluster groups publishers with similar editorial stance.',
+    '',
+    'Your task:',
+    '- For each analytical module, write a SINGLE comparative assessment',
+    '- Identify where the clusters CONVERGE (shared assumptions)',
+    '- Identify where they DIVERGE (contested elements)',
+    '- Note what each cluster OMITS that another includes',
+    '- Note what ALL clusters omit (collective blind spots)',
+    '',
+    'Do NOT analyse each cluster separately. Write as a strategic analyst',
+    'producing one integrated comparative brief.',
+    '',
+    '**CORE RULE -- ACTOR MAPPING:** Identify ALL actors -- whether direct parties, indirect influencers, or background beneficiaries -- whose interests, lobbying, or actions have a significant impact on the situation. Do not limit your analysis to the actors the coverage names. Examine who is missing from the frame and why. Actors who benefit from being invisible in the narrative are often the most important to surface. Pay special attention to actors who: (a) lobby for or against resolution, (b) take military or economic actions that contradict stated diplomatic goals, (c) shape the policy of direct parties through institutional influence. If such actors are downplayed or absent in coverage, dedicate a separate subsection to their structural role.',
+    '',
+  );
+
+  // 2. Context
+  parts.push('**GEOPOLITICAL CONTEXT:**');
+  if (context.centroid_name) parts.push(`Region: ${context.centroid_name}`);
+  if (context.track) parts.push(`Track: ${context.track}`);
+  if (context.event_title) parts.push(`Event: ${context.event_title}`);
+  parts.push('');
+
+  // 3. Cluster narratives
+  parts.push('**COMPETING NARRATIVE CLUSTERS:**');
+  parts.push('');
+  for (const n of narratives) {
+    const pubList = n.cluster_publishers.slice(0, 8).join(', ');
+    const extra = n.cluster_publishers.length > 8
+      ? ` (+${n.cluster_publishers.length - 8} more)` : '';
+    parts.push(`**${n.cluster_label.toUpperCase()} cluster** (avg stance: ${n.cluster_score_avg.toFixed(1)})`);
+    parts.push(`Publishers: ${pubList}${extra}`);
+    parts.push(`Frame: "${n.label}"`);
+    if (n.description) parts.push(`Stance: ${n.description}`);
+    if (n.moral_frame) parts.push(`Moral framing: ${n.moral_frame}`);
+    parts.push(`Titles: ${n.title_count}`);
+
+    if (n.sample_titles.length > 0) {
+      parts.push('Sample headlines:');
+      for (const h of n.sample_titles.slice(0, 8)) {
+        parts.push(`- "${h.title}" (${h.publisher})`);
+      }
+    }
+    parts.push('');
+  }
+
+  // 4. Coverage statistics
+  if (stats) {
+    parts.push(formatStatsBlock(stats));
+    parts.push('');
+  }
+
+  // 5. Module descriptions with premises
+  parts.push(formatModulesForPrompt(modules));
+
+  // 6. Output format
+  parts.push(
+    '**OUTPUT FORMAT INSTRUCTIONS:**',
+    '- Use `## ` (h2) for each module heading',
+    '- Each section must be COMPARATIVE -- reference multiple clusters, not one at a time',
+    '- Use bullet lists for specific findings',
+    '- Mark philosophical insights with `> ` blockquote syntax',
+    '- Keep each section to 2-4 paragraphs max',
+    '- After all module sections, add `## Actors Beyond the Frame`',
+    '  Dedicate this section to actors whose influence is significant but',
+    '  who are underrepresented or absent in coverage. For each, explain their',
+    '  structural interest, observable actions, and why coverage minimizes them.',
+    '- Then add `## Convergence & Collective Blind Spots`',
+    '  listing what ALL clusters share and what none of them cover',
+    '- Then add `## Unstated Assumptions & Structural Questions`',
+    '  For each cluster, identify the foundational assumption that is',
+    '  TAKEN FOR GRANTED rather than argued. Then ask: what structural,',
+    '  historical, or strategic context -- if true -- would fundamentally',
+    '  change the interpretation? You are not asserting these alternatives',
+    '  are true. You are noting that the coverage does not examine them.',
+    '- Finally add `## Further Investigation`',
+    '  This section helps readers develop their OWN structural understanding. Include:',
+    '  1. **Historical context to study** (2-3 specific periods or events essential for understanding this topic -- e.g. treaties, coups, wars, economic shifts)',
+    '  2. **Recommended reading** (2-3 well-known, widely-cited books or academic works directly relevant to the structural dynamics at play. Only recommend books you are HIGHLY CONFIDENT exist and are widely cited. If unsure about a specific title, suggest the topic area instead.)',
+    '  3. **Questions to investigate** (3-4 specific questions the reader should research independently -- focused on structural factors, economic interests, historical patterns, and power dynamics that the coverage does not examine)',
+    '  4. **Economic and structural factors** (key economic relationships, dependencies, or leverage points that shape the actors\' real constraints -- often invisible in media coverage)',
+    '',
+  );
+
+  // 7. Premise citation
+  parts.push(
+    'When referencing RAI premises (D1.1, D2.5, etc.), always explain what the premise says inline rather than just citing the ID. The reader does not have access to the premise library.',
+    '',
+  );
+
+  // 8. Structural metrics -- no per-cluster scores (prone to LLM bias)
+  parts.push(
+    '**STRUCTURAL METRICS:**',
+    '',
+    'Do NOT score individual clusters. The prose analysis IS the assessment.',
+    '',
+    '**At the end of your analysis**, output a metrics block in this exact format:',
+    '',
+    'SCORES: {"frame_divergence": <0-1>, "collective_blind_spots": ["...", "..."], "synthesis": "<1-2 sentence overall assessment>"}',
+    '',
+    'frame_divergence: 0 = clusters agree, 1 = maximally opposed.',
+    'The metrics must reflect your actual analysis. Do NOT use placeholder values.',
+  );
+
+  return parts.join('\n');
+}
+
+export function parseComparativeScores(raw: string): ComparativeScores {
+  const defaults: ComparativeScores = {
+    frame_divergence: 0.5,
+    collective_blind_spots: [],
+    synthesis: '',
+  };
+
+  let m = raw.match(/SCORES:\s*(\{[\s\S]*?\})\s*$/m);
+  if (!m) {
+    m = raw.match(/```(?:json)?\s*(\{[^`]*"cluster_scores"[^`]*\})\s*```/);
+  }
+  if (!m) return defaults;
+
+  try {
+    const parsed = JSON.parse(m[1]);
+    return {
+      frame_divergence: parsed.frame_divergence ?? 0.5,
+      collective_blind_spots: parsed.collective_blind_spots || [],
+      synthesis: parsed.synthesis || '',
+    };
+  } catch {
+    return defaults;
+  }
+}

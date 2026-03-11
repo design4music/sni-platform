@@ -5,11 +5,12 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import NarrativeCards from '@/components/NarrativeOverlay';
 import RaiSidebar from '@/components/RaiSidebar';
+import StanceClusterCard from '@/components/StanceClusterCard';
 import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
 import ExtractButton from '@/components/ExtractButton';
-import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -86,6 +87,12 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
   const t = await getTranslations('event');
   const narratives = await getFramedNarratives('event', eventId, locale);
 
+  // Check for stance-clustered narratives (new comparative system)
+  const stanceClusters = await getStanceNarratives('event', eventId, locale);
+  const entityAnalysis = stanceClusters.length > 0
+    ? await getEntityAnalysis('event', eventId, locale)
+    : null;
+
   // Lazy-translate narrative card fields for DE users
   if (locale === 'de') {
     for (const n of narratives) {
@@ -104,35 +111,58 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
   const signalStats = rawStats?.title_count ? rawStats : null;
   const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
 
+  // Legacy narratives (non-stance-clustered)
+  const legacyNarratives = narratives.filter(
+    (n) => !n.extraction_method || n.extraction_method !== 'stance_clustered'
+  );
+
   return (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {narratives.length > 0 ? (
-        <NarrativeCards narratives={narratives} />
-      ) : coherenceCheck ? (
-        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
-          <h3 className="text-sm font-semibold text-amber-300">{t('mixedCluster')}</h3>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            {coherenceCheck.reason}
-          </p>
-          {coherenceCheck.topics?.length && coherenceCheck.topics.length > 0 && (
-            <ul className="text-xs text-dashboard-text-muted space-y-0.5 list-disc list-inside">
-              {coherenceCheck.topics.map((topic: string, i: number) => (
-                <li key={i}>{topic}</li>
-              ))}
-            </ul>
+      {/* Stance-clustered coverage landscape (new system) */}
+      {stanceClusters.length > 0 && (
+        <StanceClusterCard
+          clusters={stanceClusters}
+          entityType="event"
+          entityId={eventId}
+          synthesis={entityAnalysis?.synthesis || entityAnalysis?.scores?.synthesis}
+          blindSpots={entityAnalysis?.blind_spots || entityAnalysis?.scores?.collective_blind_spots}
+          frameDivergence={entityAnalysis?.scores?.frame_divergence}
+          hasFullReport={!!entityAnalysis?.sections}
+        />
+      )}
+
+      {/* Legacy narrative cards (shown if no stance clusters, or alongside for transition) */}
+      {stanceClusters.length === 0 && (
+        <>
+          {legacyNarratives.length > 0 ? (
+            <NarrativeCards narratives={legacyNarratives} />
+          ) : coherenceCheck ? (
+            <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
+              <h3 className="text-sm font-semibold text-amber-300">{t('mixedCluster')}</h3>
+              <p className="text-xs text-dashboard-text-muted leading-relaxed">
+                {coherenceCheck.reason}
+              </p>
+              {coherenceCheck.topics?.length && coherenceCheck.topics.length > 0 && (
+                <ul className="text-xs text-dashboard-text-muted space-y-0.5 list-disc list-inside">
+                  {coherenceCheck.topics.map((topic: string, i: number) => (
+                    <li key={i}>{topic}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
+              <h3 className="text-sm font-semibold text-dashboard-text">{t('narrativeAnalysis')}</h3>
+              <p className="text-xs text-dashboard-text-muted leading-relaxed">
+                {t('extractDescription')}
+              </p>
+              <p className="text-xs text-dashboard-text-muted leading-relaxed">
+                {t('extractTiming')}
+              </p>
+              <ExtractButton entityType="event" entityId={eventId} />
+            </div>
           )}
-        </div>
-      ) : (
-        <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-dashboard-text">{t('narrativeAnalysis')}</h3>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            {t('extractDescription')}
-          </p>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            {t('extractTiming')}
-          </p>
-          <ExtractButton entityType="event" entityId={eventId} />
-        </div>
+        </>
       )}
 
       {/* Coverage Assessment */}

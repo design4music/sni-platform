@@ -787,12 +787,71 @@ export async function getFramedNarratives(
             top_sources, proportional_sources, top_countries, sample_titles,
             rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
             rai_shifts, rai_full_analysis, rai_analyzed_at::text,
-            signal_stats, rai_signals, rai_signals_at::text
+            signal_stats, rai_signals, rai_signals_at::text,
+            extraction_method, cluster_label, cluster_publishers, cluster_score_avg
      FROM narratives
      WHERE entity_type = $1 AND entity_id = $2
      ORDER BY title_count DESC`,
     [entityType, entityId]
   );
+}
+
+export interface StanceNarrative {
+  id: string;
+  label: string;
+  description: string | null;
+  moral_frame: string | null;
+  title_count: number;
+  cluster_label: string;
+  cluster_publishers: string[];
+  cluster_score_avg: number;
+}
+
+export async function getStanceNarratives(
+  entityType: string, entityId: string, locale?: string
+): Promise<StanceNarrative[]> {
+  return query<StanceNarrative>(
+    `SELECT id, ${locCol('narratives', 'label', locale)} as label,
+            ${locCol('narratives', 'description', locale)} as description,
+            ${locCol('narratives', 'moral_frame', locale)} as moral_frame,
+            title_count, cluster_label, cluster_publishers, cluster_score_avg
+     FROM narratives
+     WHERE entity_type = $1 AND entity_id = $2
+       AND extraction_method = 'stance_clustered'
+     ORDER BY cluster_score_avg ASC`,
+    [entityType, entityId]
+  );
+}
+
+export interface EntityAnalysis {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  cluster_count: number;
+  sections: string | null;
+  scores: { frame_divergence?: number; collective_blind_spots?: string[]; synthesis?: string } | null;
+  synthesis: string | null;
+  blind_spots: string[] | null;
+  conflicts: string[] | null;
+  created_at: string;
+}
+
+export async function getEntityAnalysis(
+  entityType: string, entityId: string, locale?: string
+): Promise<EntityAnalysis | null> {
+  const rows = await query<EntityAnalysis>(
+    `SELECT id, entity_type, entity_id, cluster_count,
+            ${locale === 'de' ? 'COALESCE(sections_de, sections)' : 'sections'} as sections,
+            scores,
+            ${locale === 'de' ? 'COALESCE(synthesis_de, synthesis)' : 'synthesis'} as synthesis,
+            ${locale === 'de' ? 'COALESCE(blind_spots_de, blind_spots)' : 'blind_spots'} as blind_spots,
+            ${locale === 'de' ? 'COALESCE(conflicts_de, conflicts)' : 'conflicts'} as conflicts,
+            created_at::text
+     FROM entity_analyses
+     WHERE entity_type = $1 AND entity_id = $2`,
+    [entityType, entityId]
+  );
+  return rows.length > 0 ? rows[0] : null;
 }
 
 export async function getSiblingNarratives(

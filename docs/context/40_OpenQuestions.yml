@@ -39,3 +39,42 @@ questions:
       previously-extracted entities. Monitor usage patterns first.
     related_decisions:
       - D-030 (on-demand extraction)
+
+  - id: Q-003
+    date: 2026-03-11
+    status: future_goal
+    title: "RAI: Temporal depth -- track narrative evolution over time"
+    context: >
+      Intelligence analysis tracks how narratives EVOLVE over time. When a narrative
+      suddenly shifts, that's a signal. Currently RAI analyses a single month's snapshot.
+      Temporal depth would compare how the same entity's coverage framing changes across
+      months -- detecting narrative shifts, escalation patterns, and opinion convergence
+      or divergence over time.
+    challenges:
+      - Requires multiple months of stance-clustered narratives for the same entity
+      - Entity identity across months is tricky (CTMs change, events are ephemeral)
+      - Epics are the natural unit for temporal tracking (persistent across months)
+      - Need data accumulation before this becomes feasible
+    possible_directions:
+      - Epic-level narrative timeline (compare extraction results month over month)
+      - Narrative shift detection (alert when cluster composition changes significantly)
+      - Stance drift tracking (publisher stance scores over time for same centroid)
+
+  - id: Q-004
+    date: 2026-03-11
+    status: future_goal
+    title: "RAI: Structural prediction -- test analytical quality via forecasting"
+    context: >
+      If the structural analysis is good, it should have predictive power. Given
+      mapped power structures, incentive alignments, historical patterns, and
+      structural constraints, the system could generate probabilistic assessments
+      of likely outcomes -- not prophecy, but the same logic insurance actuaries
+      use. Structural conditions predict outcomes better than stated intentions.
+    challenges:
+      - Requires careful framing to avoid appearing as fortune-telling
+      - Predictions must be testable and revisitable (requires tracking mechanism)
+      - LLM predictions are educated pattern-matching, not causal models
+    possible_directions:
+      - "Structural outlook" section in analysis identifying most likely trajectories
+      - Revisit mechanism -- compare past structural predictions with actual developments
+      - Confidence calibration based on how well-constrained the structural factors are

@@ -797,3 +797,43 @@ Consider: word choice, what is emphasized vs omitted, framing of actors, implied
 
 Return ONLY a JSON object:
 {{"score": <float from -2.0 to 2.0>, "confidence": <float 0-1>, "reasoning": "<1 sentence>"}}"""
+
+
+# =============================================================================
+# STANCE-CLUSTERED NARRATIVE EXTRACTION
+# =============================================================================
+
+STANCE_NARRATIVE_SYSTEM = (
+    "You are a media-framing analyst. You describe the dominant narrative "
+    "frame used by a pre-grouped cluster of publishers covering a geopolitical "
+    "event. You focus on editorial stance -- who is cast as right vs wrong, "
+    "what is emphasized, what is omitted."
+)
+
+STANCE_NARRATIVE_USER = """{entity_context}
+
+Below are headlines grouped by editorial stance cluster.
+Each cluster contains publishers with similar editorial tone toward this region.
+For each cluster, identify the single dominant narrative frame -- how this
+group of publishers collectively framed this story.
+
+{clusters_block}
+
+RULES:
+1. For each cluster, return ONE narrative frame that captures the dominant editorial stance
+2. Each frame MUST assign moral roles (hero/villain, victim/aggressor, right/wrong)
+3. The frame must reflect what this cluster EMPHASIZES and what it OMITS
+4. Include the headline indices (1-based, per cluster) that best exemplify the frame
+5. If a cluster has genuinely neutral/factual coverage, say so -- but still note what it emphasizes vs omits
+6. Every cluster MUST have a descriptive label (max 6 words) -- never use "?" or empty labels. For neutral clusters, name the framing angle (e.g. "Cautious diplomacy under threat")
+
+REJECT these frame types:
+- Topic descriptions ("Diplomatic efforts", "Military operations")
+- Frames where all clusters would agree
+
+Return a JSON array with one entry per cluster, in the same order as presented:
+[
+  {{"cluster": "cluster_label", "label": "short frame name (max 6 words)", "description": "1-2 sentence explanation of editorial stance, what is emphasized, what is omitted", "moral_frame": "Hero: X, Villain: Y (or Neutral)", "exemplar_indices": [1, 3, 5]}}
+]
+
+Return ONLY the JSON array."""

@@ -57,7 +57,7 @@ function renderMarkdown(text: string): React.ReactNode {
       continue;
     }
 
-    const bullet = line.match(/^[\-\*]\s+(.+)$/);
+    const bullet = line.match(/^\s*[\-\*]\s+(.+)$/);
     if (bullet) {
       listItems.push(bullet[1]);
       continue;

@@ -197,6 +197,11 @@ export interface FramedNarrative {
   signal_stats: SignalStats | null;
   rai_signals: RaiSignals | null;
   rai_signals_at: string | null;
+  // Stance-clustered extraction fields
+  extraction_method: string | null;
+  cluster_label: string | null;
+  cluster_publishers: string[] | null;
+  cluster_score_avg: number | null;
 }
 
 // Per-frame stats computed at extraction time (stored in signal_stats JSONB)
