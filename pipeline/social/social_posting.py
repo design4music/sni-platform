@@ -132,16 +132,18 @@ def select_trending_event(conn):
 
 
 def select_ctm_spotlight(conn):
-    """CTM with freshest summary, not posted in last 7 days."""
+    """CTM with substantial summary, not posted in last 7 days."""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             """
             SELECT c.id, c.centroid_id, c.track, c.title_count,
-                   c.summary_text, cv.label as centroid_label
+                   c.summary_text, cv.label as centroid_label,
+                   (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id) as event_count
             FROM ctm c
             JOIN centroids_v3 cv ON cv.id = c.centroid_id
             WHERE c.summary_text IS NOT NULL
-              AND c.title_count >= 50
+              AND LENGTH(c.summary_text) >= 200
+              AND c.title_count >= 100
               AND c.is_frozen = false
               AND NOT EXISTS (
                   SELECT 1 FROM social_posts sp
@@ -149,7 +151,7 @@ def select_ctm_spotlight(conn):
                     AND sp.error IS NULL
                     AND sp.posted_at > NOW() - INTERVAL '7 days'
               )
-            ORDER BY c.last_summary_at DESC NULLS LAST
+            ORDER BY c.title_count DESC
             LIMIT 1
             """
         )
@@ -320,6 +322,19 @@ def ensure_rai_analysis(narrative_id, base_url, internal_key):
 # ---------------------------------------------------------------------------
 
 
+def _clean_summary(text):
+    """Strip markdown headers and extra whitespace from LLM summaries."""
+    if not text:
+        return ""
+    import re
+
+    # Remove ### headers
+    text = re.sub(r"^#{1,4}\s+\w+\s*\n?", "", text, flags=re.MULTILINE)
+    # Collapse multiple newlines
+    text = re.sub(r"\n{2,}", "\n\n", text)
+    return text.strip()
+
+
 def _truncate(text, max_len):
     """Truncate text to max_len, adding ... if needed."""
     if not text:
@@ -390,7 +405,7 @@ _NARRATIVE_FOOTER = (
 def format_telegram_trending(event, base_url):
     """Trending event post for Telegram (HTML mode)."""
     url = "%s/events/%s" % (base_url.rstrip("/"), event["id"])
-    summary = _escape_html(_truncate(event["summary"], 300))
+    summary = _escape_html(_truncate(_clean_summary(event["summary"]), 300))
     stats = _stats_line(event)
     topic = _escape_html(_topic_path(event))
 
@@ -410,6 +425,15 @@ def format_telegram_trending(event, base_url):
     )
 
 
+def _ctm_stats_line(ctm):
+    """Build CTM stats like 'Tracking 425 headlines across 12 events'."""
+    parts = ["Tracking %d headlines" % ctm["title_count"]]
+    events = ctm.get("event_count") or 0
+    if events:
+        parts.append("across %d events" % events)
+    return " ".join(parts)
+
+
 def format_telegram_ctm(ctm, base_url):
     """CTM spotlight post for Telegram (HTML mode)."""
     url = "%s/c/%s/t/%s" % (
@@ -417,18 +441,18 @@ def format_telegram_ctm(ctm, base_url):
         ctm["centroid_id"],
         ctm["track"],
     )
-    summary = _escape_html(_truncate(ctm["summary_text"], 400))
+    summary = _escape_html(_truncate(_clean_summary(ctm["summary_text"]), 400))
     return (
         "<b>%s</b> -- %s\n\n"
         "%s\n\n"
-        "Tracking %d headlines\n"
+        "%s\n"
         '<a href="%s">Explore the topic, view event timeline and related coverage</a>\n\n'
         "%s"
     ) % (
         _escape_html(ctm["centroid_label"]),
-        _escape_html(ctm["track"]),
+        _escape_html(_TRACK_DISPLAY.get(ctm["track"], ctm["track"])),
         summary,
-        ctm["title_count"],
+        _ctm_stats_line(ctm),
         url,
         _CTM_FOOTER,
     )
