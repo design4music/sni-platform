@@ -5,9 +5,8 @@ import {
   buildAnalysisPrompt,
   callDeepSeek,
   parseAnalysisResponse,
-  selectModules,
+  selectModulesByLabels,
   resolveModules,
-  CORE_MODULE_IDS,
   NarrativeInput,
   AnalysisContext,
 } from '@/lib/rai-engine';
@@ -139,9 +138,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Select modules: 3 core + 3 LLM-selected
-    const selectedIds = await selectModules(narrative, context, stats);
-    const modules = resolveModules([...CORE_MODULE_IDS, ...selectedIds]);
+    // Select modules deterministically by labels (no LLM call needed)
+    const moduleIds = selectModulesByLabels(null);
+    const modules = resolveModules(moduleIds);
 
     // Build prompt, call DeepSeek, parse response
     const prompt = buildAnalysisPrompt(narrative, context, modules, stats);

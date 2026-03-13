@@ -9,16 +9,8 @@ import type { SignalStats } from '@/lib/types';
 
 export interface RaiModule {
   id: string;
-  name: string;
-  purpose: string;
-  core_questions: string[];
-  wisdom_injected: string[];
-  philosophical_anchoring: string[]; // premise IDs
-}
-
-export interface RaiPremise {
-  title: string;
-  content: string;
+  tag: string;
+  command: string;
 }
 
 export interface NarrativeInput {
@@ -55,7 +47,7 @@ export interface RaiScores {
 
 // ---- Premises (54) -------------------------------------------------------
 
-const PREMISE_LIBRARY: Record<string, RaiPremise> = {
+const PREMISE_LIBRARY: Record<string, { title: string; content: string }> = {
   // D1: Power & Governance
   'D1.1': {
     title: 'Power is rarely surrendered; it is redistributed through ritual, consensus, or coercion',
@@ -285,853 +277,113 @@ const PREMISE_LIBRARY: Record<string, RaiPremise> = {
 // ---- Modules (38) -- keyed by ID for lookup after selection ----------------
 
 const MODULE_LIBRARY: Record<string, RaiModule> = {
-  // -- Cross-Level (CL) --
-  'CL-0': {
-    id: 'CL-0',
-    name: 'Narrative Contextualization and Framing Assessment',
-    purpose: 'Contextualize the narrative frame within the broader event and assess its framing strategy. Evaluate what framing choices were made, what moral simplification reveals about the source ecosystem, and how the narrative positions itself relative to the full scope of the event.',
-    core_questions: [
-      'How does this narrative frame position itself relative to the broader event?',
-      'What framing choices (emphasis, omission, moral anchoring) shape this narrative?',
-      'What does the moral simplification reveal about the source ecosystem producing it?',
-      'Are there factual, narrative, or systemic components being conflated or separated?',
-    ],
-    wisdom_injected: [
-      'Every frame is a choice -- and every choice reveals an agenda.',
-      'Moral simplification is not clarity; it is strategy.',
-      'Honor the complexity. Clean the lens.',
-    ],
-    philosophical_anchoring: ['D1.1', 'D6.2'],
+  'M01': {
+    id: 'M01', tag: 'FRAME_CONTEXT',
+    command: 'Deconstruct the framing strategy. CHECK: emphasis/omission choices, moral simplification, narrative compression, symbolic/metaphorical shortcuts, conflation of factual and ideological layers.',
   },
-  'CL-1': {
-    id: 'CL-1',
-    name: 'Narrative Logic Compression',
-    purpose: 'Trace how individual facts are being linked into narrative arcs -- and identify compression, distortion, or omission in that linkage.',
-    core_questions: [
-      'Are facts cherry-picked or overpacked?',
-      'Are connections between events natural or forced?',
-      'Are narrative arcs formed by implication instead of logic?',
-      'What causal assumptions are embedded in the story structure?',
-    ],
-    wisdom_injected: [
-      'Narrative is the space between facts.',
-      'Compression is the birthplace of distortion.',
-      'What connects may also disconnect.',
-    ],
-    philosophical_anchoring: ['D1.3', 'D4.1', 'D7.2'],
+  'M02': {
+    id: 'M02', tag: 'SYMMETRY_AUDIT',
+    command: 'Test evaluative consistency across all actors. CHECK: asymmetric naming (regime vs government, militant vs fighter), toxic labels replacing evidence, emotional register shifts by allegiance, standard-bending for allies.',
   },
-  'CL-2': {
-    id: 'CL-2',
-    name: 'Epistemic Load Balance',
-    purpose: 'Test how knowledge burdens are distributed: What is assumed vs. what is proven? What must the audience infer, accept, or ignore?',
-    core_questions: [
-      'What "common sense" is assumed?',
-      'Are any critical elements left implicit?',
-      'Does the burden of proof fall unfairly on one side?',
-      'What knowledge gaps are being papered over?',
-    ],
-    wisdom_injected: [
-      'What\'s not said may cost more than what is.',
-      'A rigged narrative hides its load.',
-      'Assumptions are the invisible architecture of argument.',
-    ],
-    philosophical_anchoring: ['D2.2', 'D6.6'],
+  'M03': {
+    id: 'M03', tag: 'MATERIAL_GROUND',
+    command: 'Establish verified material facts before evaluating framing. CHECK: confirmed actions across independent source chains, scale of harm (deaths, destruction, territorial change), time/place anchoring of claims, where fact ends and interpretation begins.',
   },
-  'CL-3': {
-    id: 'CL-3',
-    name: 'Narrative Stack Tracking',
-    purpose: 'Map layered or nested narratives -- how facts support storylines, which support ideologies, which support strategic goals.',
-    core_questions: [
-      'What deeper story does this surface claim support?',
-      'How many layers deep does the logic go?',
-      'Are meta-narratives functioning as shields or amplifiers?',
-      'Which narrative layer is doing the real work?',
-    ],
-    wisdom_injected: [
-      'Some stories wear other stories like armor.',
-      'The first claim is often the bait.',
-      'Depth reveals direction.',
-    ],
-    philosophical_anchoring: ['D4.2', 'D6.3', 'D7.1'],
+  'M04': {
+    id: 'M04', tag: 'SOURCE_ECOSYSTEM',
+    command: 'Assess whether source diversity reflects epistemic independence or bloc amplification. CHECK: upstream information chains shared across brands, structurally absent perspectives, primary speech omitted or paraphrased away, amplification/suppression asymmetries.',
   },
-  'CL-4': {
-    id: 'CL-4',
-    name: 'Moral and Strategic Fusion Detection',
-    purpose: 'Identify moments where moral language is fused with strategic logic to mask real motivations or trigger tribal response.',
-    core_questions: [
-      'Are moral claims used to justify strategic actions?',
-      'Is moral framing exaggerated to obscure realism?',
-      'What would the statement sound like if stripped of moral charge?',
-      'Does virtue signaling serve strategic functions?',
-    ],
-    wisdom_injected: [
-      'Moral words win wars -- on screens.',
-      'Look where the virtue points -- then follow the money.',
-      'Strategic necessity wears moral clothing.',
-    ],
-    philosophical_anchoring: ['D6.2', 'D6.4', 'D6.5'],
+  'M05': {
+    id: 'M05', tag: 'SCALE_SELECTION',
+    command: 'Test whether facts are cherry-picked or proportionate. CHECK: strategic selection of facts to steer perception, scale inflation/minimization, baseline manipulation, omission of contextualizing data.',
   },
-  'CL-5': {
-    id: 'CL-5',
-    name: 'Evaluative Symmetry Enforcement',
-    purpose: 'Ensure actors, events, or claims are judged by consistent standards -- even if they belong to different camps, cultures, or ideologies.',
-    core_questions: [
-      'Would this action be praised or condemned if done by the other side?',
-      'Are similar acts being framed in opposite ways?',
-      'Is the framework itself being bent to spare allies?',
-      'What would neutral evaluation look like?',
-    ],
-    wisdom_injected: [
-      'If it\'s wrong for them, it\'s wrong for you.',
-      'Truth wears no uniform.',
-      'Consistency is the test of principle.',
-    ],
-    philosophical_anchoring: ['D2.1', 'D6.1', 'D3.3'],
+  'M06': {
+    id: 'M06', tag: 'CAUSAL_LOGIC',
+    command: 'Evaluate the cause-effect chain for coherence and start-point bias. CHECK: strategic starting-point selection, suppressed earlier causes, narrative contradictions, plausibility of causal leaps, internal consistency.',
   },
-  'CL-6': {
-    id: 'CL-6',
-    name: 'Material Impact Grounding',
-    purpose: 'Establish verified material facts (actions, casualties, destruction, sovereignty violations) before evaluating narrative framing. Distinguish proportionate reaction from strategic amplification. Anchor critical analysis in physical reality.',
-    core_questions: [
-      'What physical actions are confirmed across multiple independent source chains (not just multiple brands in the same bloc)?',
-      'What is the scale of material harm -- deaths, destruction, territorial change, leadership elimination?',
-      'Is the narrative reaction proportionate to the verified material impact, or is it amplified/minimized?',
-      'Where does confirmed material fact end and interpretive framing begin?',
-    ],
-    wisdom_injected: [
-      'A bombed city does not need a narrative to be real.',
-      'Deconstruction without grounding is intellectual entertainment.',
-      'Proportionality is the bridge between fact and framing.',
-    ],
-    philosophical_anchoring: ['D2.8', 'D2.9', 'D2.10'],
+  'M07': {
+    id: 'M07', tag: 'COMPETING_FRAMES',
+    command: 'Surface alternative narratives and identify what is missing. CHECK: competing interpretations from other actors/cultures, facts emphasized vs ignored per frame, strategic narrative gaps, synthesizability of competing versions.',
   },
-  'CL-7': {
-    id: 'CL-7',
-    name: 'Coverage Ecosystem Diagnosis',
-    purpose: 'Assess whether source diversity metrics reflect genuine epistemic independence or bloc-level narrative alignment. Identify structurally absent perspectives and estimate what the coverage gap conceals.',
-    core_questions: [
-      'Do high publisher/language counts reflect independent information chains or aligned bloc amplification?',
-      'Which actors, regions, or perspectives are structurally absent from the source ecosystem?',
-      'Are non-aligned or isolated sources being dismissed by mechanical diversity metrics?',
-      'What would the narrative look like if the invisible side had equal media reach?',
-    ],
-    wisdom_injected: [
-      'Count the voices, then check if they share a throat.',
-      'Absence of coverage is not absence of reality.',
-      'The loudest room is not the most informed.',
-    ],
-    philosophical_anchoring: ['D3.6', 'D3.1', 'D2.6'],
+  'M08': {
+    id: 'M08', tag: 'IDENTITY_LEGITIMACY',
+    command: 'Detect identity, memory, and institutional legitimacy exploitation. CHECK: weaponized historical trauma, selective collective memory, group identity centering/erasure, international law invoked as rhetorical authority, selective institutional enforcement.',
   },
-  // -- Fact-Level (FL) --
-  'FL-1': {
-    id: 'FL-1',
-    name: 'Claim Clarity and Anchoring',
-    purpose: 'Isolate and verify the core factual claims. Ensure each is specific, testable, and anchored in time/place.',
-    core_questions: [
-      'What exactly is being claimed -- and is it stated as a fact?',
-      'Is it time-stamped and location-bound?',
-      'Is it observable or measurable?',
-      'Is it distorted by metaphor or emotional language?',
-    ],
-    wisdom_injected: [
-      'Epistemic humility: Flag unverifiables, don\'t guess.',
-      'Linguistic precision: Strip rhetoric, keep signal.',
-      'Facts live in time and space.',
-    ],
-    philosophical_anchoring: ['D1.1', 'D1.2', 'D2.1'],
+  'M09': {
+    id: 'M09', tag: 'POWER_PURPOSE',
+    command: 'Map who benefits and the deeper function of the framing. CHECK: material/symbolic advantage flows, incentive-value misalignment, mobilization vs distraction goals, audience targeting (feel/think/act).',
   },
-  'FL-2': {
-    id: 'FL-2',
-    name: 'Asymmetrical Amplification Awareness',
-    purpose: 'Detect whether claims are being unnaturally promoted or suppressed due to information control asymmetries.',
-    core_questions: [
-      'Is the claim widely echoed across high-power media or ignored despite relevance?',
-      'Are opposing versions of the claim visible and credible?',
-      'Who has the megaphone? Who has been silenced?',
-      'What explains the amplification pattern?',
-    ],
-    wisdom_injected: [
-      'What is repeated is not necessarily true.',
-      'Silence is often manufactured.',
-      'Volume reveals agenda.',
-    ],
-    philosophical_anchoring: ['D3.2', 'D5.1', 'D6.6'],
+  'M10': {
+    id: 'M10', tag: 'INSTITUTIONAL_CONTROL',
+    command: 'Examine how institutions enforce or simulate opposition. CHECK: aligned institutional promotion, dissent punishment mechanisms, performative resistance masking power, control through laws/funding/censure.',
   },
-  'FL-3': {
-    id: 'FL-3',
-    name: 'Source Independence Audit',
-    purpose: 'Evaluate the independence, diversity, and reliability of sources cited or implied. Spot coordinated narratives or echo chambers.',
-    core_questions: [
-      'Are the cited sources directly involved, third-party, or anonymous?',
-      'Is there over-reliance on aligned actors?',
-      'Do citations originate from power-linked networks (gov, media groups, NGOs)?',
-      'What does the source ecosystem reveal about the claim?',
-    ],
-    wisdom_injected: [
-      'Power speaks in chorus.',
-      'Independence is not a brand, it is a structure.',
-      'Follow the source chain to find the source.',
-    ],
-    philosophical_anchoring: ['D2.3', 'D5.2', 'D3.2'],
+  'M11': {
+    id: 'M11', tag: 'FEEDBACK_LOOPS',
+    command: 'Identify recursive reinforcement and consensus simulation. CHECK: systematic rebuttal exclusion, loyalty-rewarding feedback channels, dissent pathologization, closed-loop distortion patterns.',
   },
-  'FL-4': {
-    id: 'FL-4',
-    name: 'Strategic Relevance and Selection',
-    purpose: 'Evaluate whether a fact is strategically chosen to steer perception or obscure larger realities.',
-    core_questions: [
-      'Is the fact central to the story or a distraction?',
-      'Would omitting this fact mislead? Would adding a suppressed one clarify?',
-      'Is it cherry-picked to create a false narrative?',
-      'What does the selection pattern reveal about intent?',
-    ],
-    wisdom_injected: [
-      'The truth may be in what\'s unsaid.',
-      'Strategic omission is the most elegant lie.',
-      'Selection reveals intention.',
-    ],
-    philosophical_anchoring: ['D4.2', 'D7.2', 'D8.2'],
+  'M12': {
+    id: 'M12', tag: 'STRATEGIC_FORECAST',
+    command: 'Project claims forward and track narrative evolution. CHECK: logical consequences if interpretation is true, claim shifts under pressure, abandoned/reinterpreted past claims, risk-context proportionality.',
   },
-  'FL-5': {
-    id: 'FL-5',
-    name: 'Scale and Proportion Calibration',
-    purpose: 'Prevent inflation or minimization of facts through poor scale framing.',
-    core_questions: [
-      'Is this fact being framed as exceptional or representative?',
-      'Are numbers proportionate or manipulated by percent, scope, or baseline?',
-      'Would this framing hold across equivalent cases?',
-      'What does proper contextualization reveal?',
-    ],
-    wisdom_injected: [
-      'Big data can lie small, and small facts can scream.',
-      'Context is the compass of honesty.',
-      'Scale without context is manipulation.',
-    ],
-    philosophical_anchoring: ['D1.2', 'D1.3', 'D8.1'],
+  'M13': {
+    id: 'M13', tag: 'EPISTEMIC_LOAD',
+    command: 'Test how knowledge burdens are distributed. CHECK: unstated assumptions treated as common sense, implicit critical elements, asymmetric burden of proof, knowledge gaps papered over.',
   },
-  'FL-6': {
-    id: 'FL-6',
-    name: 'Neglected Primary Speech Recognition',
-    purpose: 'Identify whether primary actor statements have been omitted or misrepresented.',
-    core_questions: [
-      'Has the subject of the claim spoken directly on the matter?',
-      'Are those statements missing, cherry-picked, or distorted?',
-      'What would direct quotes reveal that paraphrases hide?',
-      'Why might primary speech be avoided or filtered?',
-    ],
-    wisdom_injected: [
-      'Let them speak -- then check the echo.',
-      'Silencing someone by paraphrase is still silencing.',
-      'Primary speech reveals primary intent.',
-    ],
-    philosophical_anchoring: ['D2.3', 'D3.1', 'D6.1'],
+  'M14': {
+    id: 'M14', tag: 'MORAL_STRATEGIC',
+    command: 'Detect moral language masking strategy and narrative stacking. CHECK: virtue signaling serving strategic functions, moral framing exaggerated to obscure realism, layered narratives where surface claims shield deeper agendas.',
   },
-  'FL-7': {
-    id: 'FL-7',
-    name: 'Risk Context Adjustment',
-    purpose: 'Tune skepticism based on stakes. Differentiate casual errors from high-stakes manipulations.',
-    core_questions: [
-      'Is this claim embedded in a low-risk or high-risk topic (e.g., war, finance, biopolitics)?',
-      'Do the consequences of falsehood justify higher scrutiny?',
-      'What interests are served by belief or disbelief?',
-      'How does risk level affect evidentiary standards?',
-    ],
-    wisdom_injected: [
-      'The higher the cost of the lie, the deeper you dig.',
-      'Low-risk truths may not deserve your time. High-risk lies always do.',
-      'Stakes determine standards.',
-    ],
-    philosophical_anchoring: ['D7.2', 'D8.3', 'D8.5'],
+  'M15': {
+    id: 'M15', tag: 'ACTION_COHERENCE',
+    command: 'Compare stated positions with observable actions. CHECK: action-statement gaps, timing contradictions (e.g. strikes during negotiations), resource allocation revealing true priorities, what actions alone reveal.',
   },
-  'FL-8': {
-    id: 'FL-8',
-    name: 'Time & Place Anchoring',
-    purpose: 'Ensure all factual claims are tied to specific, verifiable moments and locations.',
-    core_questions: [
-      'Is there a clear timestamp and identifiable location?',
-      'Are those consistent with known records or conflicting claims?',
-      'Is ambiguity being used to protect from accountability?',
-      'What does temporal-spatial precision reveal or conceal?',
-    ],
-    wisdom_injected: [
-      'Truth lives in time. Lies float.',
-      'No fact should be homeless.',
-      'Precision prevents manipulation.',
-    ],
-    philosophical_anchoring: ['D1.2', 'D7.1', 'D7.4'],
-  },
-  'FL-9': {
-    id: 'FL-9',
-    name: 'Toxic Label Audit',
-    purpose: 'Detect and neutralize judgment-distorting terms like "conspiracy theory," "populist," or "authoritarian regime" that may preempt empirical evaluation.',
-    core_questions: [
-      'Is the claim being disqualified due to who says it rather than what is said?',
-      'Are rhetorical labels replacing evidence or logic?',
-      'Does the claim violate reality, or just elite preferences?',
-      'What happens when we strip away the labels and examine the substance?',
-    ],
-    wisdom_injected: [
-      'Adequacy trumps acceptability.',
-      'A claim\'s origin does not determine its validity.',
-      'Ideological hygiene is not a proxy for truth.',
-    ],
-    philosophical_anchoring: ['D2.1', 'D3.3', 'D6.5'],
-  },
-  'FL-10': {
-    id: 'FL-10',
-    name: 'Linguistic Framing Audit',
-    purpose: 'Audit the descriptive vocabulary of coverage for invisible bias encoded in word choice. Detect asymmetric naming conventions, loaded terminology, and emotional register that pre-frames the reader\'s perception before any explicit opinion is offered.',
-    core_questions: [
-      'What naming conventions are used for each actor -- president vs dictator, government vs regime, defense vs aggression?',
-      'Are equivalent actions by different parties described with equivalent language, or does vocabulary shift with allegiance?',
-      'What emotional register does the descriptive vocabulary establish -- alarm, sympathy, contempt, neutrality?',
-      'Would substituting symmetrical terms for all sides change the reader\'s instinctive moral orientation?',
-    ],
-    wisdom_injected: [
-      'The deepest bias is the one that looks like plain language.',
-      'Rename the actors and watch the story change sides.',
-      'Vocabulary is the first battlefield -- everything after is commentary.',
-    ],
-    philosophical_anchoring: ['D3.7', 'D3.1', 'D4.6'],
-  },
-  'FL-11': {
-    id: 'FL-11',
-    name: 'Action-Statement Coherence Audit',
-    purpose: 'Compare actors\' stated positions, commitments, and declarations with their observable actions, timing, and resource allocation. Identify gaps where actions contradict or undermine stated intentions. Note when timing of actions (e.g., military strikes during negotiations) reveals strategic intent that official statements obscure.',
-    core_questions: [
-      'Do the actor\'s observable actions align with their stated positions and commitments?',
-      'Does the timing of key actions (military, economic, diplomatic) contradict or undermine official rhetoric?',
-      'Where does resource allocation (military spending, proxy funding, sanctions enforcement) reveal priorities that differ from stated goals?',
-      'If you ignored all statements and judged only by actions, what story would emerge?',
-    ],
-    wisdom_injected: [
-      'Watch the hands, not the mouth.',
-      'Timing is the confession that words try to retract.',
-      'When actions and statements diverge, actions are the truth.',
-    ],
-    philosophical_anchoring: ['D1.1', 'D6.2', 'D5.6'],
-  },
-  // -- Narrative-Level (NL) --
-  'NL-1': {
-    id: 'NL-1',
-    name: 'Cause-Effect Chain Analysis',
-    purpose: 'Evaluate whether cause-and-effect logic is coherent, plausible, and properly sequenced -- with careful attention to where the chain begins.',
-    core_questions: [
-      'Are causes and consequences logically connected?',
-      'Is the sequence clear, or manipulated to create confusion or moral reversal?',
-      'Are plausible alternative causes or interpretations acknowledged?',
-      'Start-Point Bias Check: Is the chosen starting point contested or strategically selected? Are earlier causes being ignored?',
-    ],
-    wisdom_injected: [
-      'Causality is not a straight line -- it is a choice of lens.',
-      'Every chain has a beginning -- but not every beginning is the truth.',
-      'The origin you choose is the side you have chosen.',
-    ],
-    philosophical_anchoring: ['D4.1', 'D5.6', 'D7.2'],
-  },
-  'NL-2': {
-    id: 'NL-2',
-    name: 'Narrative Plausibility & Internal Coherence',
-    purpose: 'Test the story\'s internal logic, character consistency, and plausibility without external verification.',
-    core_questions: [
-      'Do events follow naturally within the narrative?',
-      'Are motivations consistent with known actor behavior?',
-      'Are narrative contradictions explained or ignored?',
-      'Does the story require magical thinking or implausible leaps?',
-    ],
-    wisdom_injected: [
-      'Even lies must make sense -- if they don\'t, question harder.',
-      'Inconsistency is often the fingerprint of fiction.',
-    ],
-    philosophical_anchoring: ['D1.3', 'D4.1', 'D6.1'],
-  },
-  'NL-3': {
-    id: 'NL-3',
-    name: 'Competing Narratives Contrast',
-    purpose: 'Surface alternative narratives to evaluate blind spots, cultural framings, or missing dimensions.',
-    core_questions: [
-      'What other groups or actors interpret this differently?',
-      'What facts do those narratives emphasize or ignore?',
-      'Are they mutually exclusive or potentially synthesizable?',
-      'Who benefits from each version?',
-    ],
-    wisdom_injected: [
-      'The truth may be divided, but the lies are often complete.',
-      'Multiple lenses sharpen the image.',
-    ],
-    philosophical_anchoring: ['D3.3', 'D6.1', 'D8.4'],
-  },
-  'NL-4': {
-    id: 'NL-4',
-    name: 'Identity, Memory, and Group Interest Framing',
-    purpose: 'Identify how group identities, historical trauma, and loyalty shape narrative preference and perception.',
-    core_questions: [
-      'What group identities are centered, valorized, or demonized?',
-      'Are historical grievances reactivated?',
-      'How is loyalty framed: as honor, duty, betrayal, or survival?',
-      'What moral or symbolic rewards are attached to belief?',
-    ],
-    wisdom_injected: [
-      'We see through the stories we inherit.',
-      'Group truth is not whole truth.',
-    ],
-    philosophical_anchoring: ['D3.1', 'D6.3', 'D7.1'],
-  },
-  'NL-5': {
-    id: 'NL-5',
-    name: 'Allegory, Analogy, and Symbol Injection',
-    purpose: 'Flag where metaphor, analogy, or symbolism is distorting clarity or smuggling ideology.',
-    core_questions: [
-      'Are historical analogies accurate or manipulative?',
-      'Are symbols used to oversimplify or moralize?',
-      'Does the analogy illuminate -- or obscure -- the situation?',
-      'What emotional payload is the metaphor carrying?',
-    ],
-    wisdom_injected: [
-      'Symbols short-circuit thinking when unchecked.',
-      'Not all rhymes in history are honest.',
-    ],
-    philosophical_anchoring: ['D1.3', 'D4.2', 'D6.2'],
-  },
-  'NL-6': {
-    id: 'NL-6',
-    name: 'Narrative Gaps',
-    purpose: 'Identify what\'s missing from the story that would change interpretation or conclusion.',
-    core_questions: [
-      'What key actors, events, or timeframes are absent?',
-      'Would including missing elements change the moral or causal assessment?',
-      'Are gaps strategic omissions or natural limitations?',
-      'What would a more complete picture reveal?',
-    ],
-    wisdom_injected: [
-      'What\'s missing may matter more than what\'s present.',
-      'Gaps are not accidents -- they are choices.',
-    ],
-    philosophical_anchoring: ['D4.1', 'D7.1', 'D3.2'],
-  },
-  'NL-7': {
-    id: 'NL-7',
-    name: 'Legal and Institutional Legitimacy Audit',
-    purpose: 'Examine how international law, institutional endorsements (UN, ICC, WTO), and "rules-based order" claims are deployed in narrative framing. Assess whether legal and institutional standards are applied consistently across all parties or selectively to legitimize allies and delegitimize adversaries.',
-    core_questions: [
-      'When "international law" is invoked, is the specific legal basis identified, or is it used as rhetorical authority?',
-      'Are the same legal standards applied consistently to all actors in the narrative, or do allies receive exemptions?',
-      'Which international institutions are cited as authoritative, and which are dismissed or absent?',
-      'Does the narrative treat institutional endorsement as proof of legitimacy, or does it examine the institution\'s own power structure and incentives?',
-    ],
-    wisdom_injected: [
-      'The law is a shield for those who wrote it and a cage for those who didn\'t.',
-      'Selective enforcement is not justice -- it is strategy in judicial clothing.',
-      'Ask not what the rule says, but who enforces it and against whom.',
-    ],
-    philosophical_anchoring: ['D1.4', 'D6.2', 'D2.7'],
-  },
-  // -- System-Level (SL) --
-  'SL-1': {
-    id: 'SL-1',
-    name: 'Power and Incentive Mapping',
-    purpose: 'Trace who benefits -- economically, politically, strategically -- from a given claim or interpretation.',
-    core_questions: [
-      'What actors gain material or symbolic advantage?',
-      'Are the incentives aligned with claimed values?',
-      'Are incentives obscured, denied, or misattributed?',
-    ],
-    wisdom_injected: [
-      'Follow the gain, not the claim.',
-      'Who benefits is not who speaks -- but who wins.',
-    ],
-    philosophical_anchoring: ['D5.1', 'D5.3', 'D8.2'],
-  },
-  'SL-2': {
-    id: 'SL-2',
-    name: 'Institutional Behavior and Enforcement Patterns',
-    purpose: 'Examine how institutions (governments, media, NGOs) adopt, enforce, or suppress specific claims or framings.',
-    core_questions: [
-      'Are institutions aligned in promoting a particular position?',
-      'Is dissent punished or discouraged?',
-      'What control mechanisms (laws, funding, censure) are in play?',
-    ],
-    wisdom_injected: [
-      'Institutions protect stories before people.',
-      'Censorship is a form of narrative hygiene.',
-    ],
-    philosophical_anchoring: ['D5.2', 'D5.3', 'D8.3'],
-  },
-  'SL-3': {
-    id: 'SL-3',
-    name: 'Identity and Memory Exploitation',
-    purpose: 'Uncover how collective memory, trauma, and identity are used to frame or justify current interpretations.',
-    core_questions: [
-      'What past events are invoked to legitimize the present?',
-      'Are traumas weaponized or selectively remembered?',
-      'Whose identity is being centered -- or erased?',
-    ],
-    wisdom_injected: [
-      'The past is not dead -- it\'s rebranded.',
-      'Memory is power disguised as history.',
-    ],
-    philosophical_anchoring: ['D3.1', 'D6.3', 'D7.1'],
-  },
-  'SL-4': {
-    id: 'SL-4',
-    name: 'Function and Purpose Analysis',
-    purpose: 'Determine the deeper goal of a claim or framing -- mobilization, justification, distraction, polarization.',
-    core_questions: [
-      'What action does the message inspire or block?',
-      'Is the goal moral, strategic, emotional, or institutional?',
-      'Is the audience meant to feel, think, or act?',
-    ],
-    wisdom_injected: [
-      'Messages are weapons with audiences as targets.',
-      'Purpose reveals design -- even in lies.',
-    ],
-    philosophical_anchoring: ['D4.2', 'D4.4', 'D5.3'],
-  },
-  'SL-5': {
-    id: 'SL-5',
-    name: 'Systemic Resistance and Inversion',
-    purpose: 'Detect if a claim resists dominant systems or mimics resistance while reinforcing the same structures.',
-    core_questions: [
-      'Is the framing genuinely oppositional or performative?',
-      'Does it invert dominant logic or disguise it?',
-      'Who adopts the resistance framing -- and why?',
-    ],
-    wisdom_injected: [
-      'Not all rebels seek revolution. Some just want a turn at the throne.',
-      'Inversion is not liberation.',
-    ],
-    philosophical_anchoring: ['D4.3', 'D5.3', 'D6.3'],
-  },
-  'SL-6': {
-    id: 'SL-6',
-    name: 'Feedback Systems and Loop Control',
-    purpose: 'Identify recursive reinforcement loops that bias understanding, suppress contradiction, or simulate consensus.',
-    core_questions: [
-      'Are rebuttals systematically excluded?',
-      'Do feedback channels reward loyalty over accuracy?',
-      'Is dissent pathologized (e.g., labeled disloyal, irrational)?',
-    ],
-    wisdom_injected: [
-      'What repeats, rules.',
-      'Broken echo is still an echo.',
-    ],
-    philosophical_anchoring: ['D5.2', 'D7.3', 'D8.4'],
-  },
-  'SL-7': {
-    id: 'SL-7',
-    name: 'Strategic Forecast and Predictive Testing',
-    purpose: 'Test the implications of claims by projecting future actions, outcomes, or contradictions.',
-    core_questions: [
-      'If the interpretation is true, what logically follows?',
-      'Are predicted outcomes consistent with observed reality?',
-      'Do real-world results falsify or validate the framing?',
-    ],
-    wisdom_injected: [
-      'Truth has a trajectory.',
-      'Prediction reveals what belief conceals.',
-    ],
-    philosophical_anchoring: ['D7.2', 'D7.4', 'D8.5'],
-  },
-  'SL-8': {
-    id: 'SL-8',
-    name: 'Systemic Blind Spots and Vulnerabilities',
-    purpose: 'Reveal what the system or dominant information flow cannot process -- its blind spots, silences, or forbidden truths.',
-    core_questions: [
-      'What facts or arguments are persistently excluded?',
-      'What questions cannot be asked in polite society?',
-      'What knowledge is penalized?',
-    ],
-    wisdom_injected: [
-      'Systems fear what they cannot metabolize.',
-      'The unspeakable reveals the ungovernable.',
-    ],
-    philosophical_anchoring: ['D3.2', 'D5.3', 'D8.4'],
-  },
-  'SL-9': {
-    id: 'SL-9',
-    name: 'Adaptive Evolution Awareness',
-    purpose: 'Track how claims or framing evolve in response to public reaction, internal contradiction, or external pressure.',
-    core_questions: [
-      'Has the claim subtly shifted its framing?',
-      'Are past claims abandoned or reinterpreted?',
-      'Are inconsistencies explained or ignored?',
-    ],
-    wisdom_injected: [
-      'The first draft of a lie often dies a hero.',
-      'What adapts survives -- but not always with its soul.',
-    ],
-    philosophical_anchoring: ['D7.3', 'D7.4', 'D8.6'],
-  },
-  'SL-10': {
-    id: 'SL-10',
-    name: 'Feedback Loop Mapping and Distortion Patterns',
-    purpose: 'Map and detect distortions in closed-loop information systems.',
-    core_questions: [
-      'Who inputs, moderates, and echoes information?',
-      'Where does distortion occur and for what purpose?',
-    ],
-    wisdom_injected: [
-      'Echo makes truth louder -- or drowns it.',
-    ],
-    philosophical_anchoring: ['D5.2', 'D7.3', 'D8.4'],
-  },
-  'SL-11': {
-    id: 'SL-11',
-    name: 'Technocratic Logic and Algorithmic Governance',
-    purpose: 'Evaluate how algorithms, models, and technocratic claims shape or substitute political logic.',
-    core_questions: [
-      'What decisions are outsourced to systems?',
-      'Are algorithmic claims used rhetorically?',
-      'Does technical neutrality mask ideology?',
-    ],
-    wisdom_injected: [
-      'What looks neutral may be coded.',
-      'Math is not morality.',
-    ],
-    philosophical_anchoring: ['D5.3', 'D8.6', 'D8.7'],
-  },
-  'SL-12': {
-    id: 'SL-12',
-    name: 'Digital Infrastructure Control and Dependency',
-    purpose: 'Assess how digital platforms, infrastructure, and dependencies shape strategic behavior and control over information.',
-    core_questions: [
-      'Who owns and governs the digital pipes?',
-      'What happens if the infrastructure is withdrawn?',
-      'Are dependencies used as leverage?',
-    ],
-    wisdom_injected: [
-      'He who controls the pipe controls the pressure.',
-    ],
-    philosophical_anchoring: ['D5.2', 'D8.2', 'D8.7'],
+  'M16': {
+    id: 'M16', tag: 'BLIND_SPOTS_TECH',
+    command: 'Reveal systemic blind spots and digital power structures. CHECK: persistently excluded facts/arguments, penalized knowledge, algorithmic governance masking ideology, digital infrastructure dependencies as leverage.',
   },
 };
 
 // ---- Module Catalog (compact, for selector prompt) ------------------------
 
-const CORE_MODULE_IDS = ['CL-0', 'CL-6', 'NL-3', 'SL-8'];
-const FALLBACK_MODULE_IDS = ['NL-1', 'FL-2', 'FL-3', 'CL-5'];
+const CORE_MODULE_IDS = ['M01', 'M03', 'M07', 'M16'];
+const FALLBACK_ADDITIONAL = ['M06', 'M09', 'M04', 'M02'];
 
-const MODULE_CATALOG: Array<{ id: string; summary: string }> = [
-  { id: 'CL-1', summary: 'Trace fact-to-narrative linkage and compression distortion' },
-  { id: 'CL-2', summary: 'Test assumption burden and hidden inference gaps' },
-  { id: 'CL-3', summary: 'Map layered/nested narratives and meta-narrative shields' },
-  { id: 'CL-4', summary: 'Detect moral language fused with strategic motives' },
-  { id: 'CL-5', summary: 'Enforce consistent evaluation standards across all actors' },
-  { id: 'CL-7', summary: 'Diagnose coverage ecosystem for bloc alignment vs epistemic independence' },
-  { id: 'FL-1', summary: 'Isolate, verify, and anchor core factual claims' },
-  { id: 'FL-2', summary: 'Detect unnatural amplification or suppression patterns' },
-  { id: 'FL-3', summary: 'Audit source independence, diversity, and coordination' },
-  { id: 'FL-4', summary: 'Evaluate strategic fact selection and cherry-picking' },
-  { id: 'FL-5', summary: 'Prevent scale inflation/minimization in fact framing' },
-  { id: 'FL-6', summary: 'Identify omitted or misrepresented primary actor speech' },
-  { id: 'FL-7', summary: 'Calibrate skepticism by stakes and risk context' },
-  { id: 'FL-8', summary: 'Anchor claims in specific verifiable time and place' },
-  { id: 'FL-9', summary: 'Detect judgment-distorting toxic labels' },
-  { id: 'FL-10', summary: 'Audit descriptive vocabulary for invisible bias and asymmetric naming' },
-  { id: 'FL-11', summary: 'Compare stated positions with observable actions, timing, and resource allocation' },
-  { id: 'NL-1', summary: 'Evaluate cause-effect chain logic and start-point bias' },
-  { id: 'NL-2', summary: 'Test narrative internal coherence and plausibility' },
-  { id: 'NL-4', summary: 'Identify group identity and historical trauma framing' },
-  { id: 'NL-5', summary: 'Flag distorting metaphors, analogies, and symbols' },
-  { id: 'NL-6', summary: 'Identify strategic narrative gaps and omissions' },
-  { id: 'NL-7', summary: 'Audit legal/institutional legitimacy claims and selective enforcement' },
-  { id: 'SL-1', summary: 'Map power, incentive, and benefit structures' },
-  { id: 'SL-2', summary: 'Examine institutional enforcement and suppression' },
-  { id: 'SL-3', summary: 'Uncover collective memory and identity exploitation' },
-  { id: 'SL-4', summary: 'Determine deeper purpose: mobilize, justify, distract' },
-  { id: 'SL-5', summary: 'Detect performative resistance masking power structures' },
-  { id: 'SL-6', summary: 'Identify recursive reinforcement loops and false consensus' },
-  { id: 'SL-7', summary: 'Project future outcomes to test claim validity' },
-  { id: 'SL-9', summary: 'Track claim evolution under pressure and contradiction' },
-  { id: 'SL-10', summary: 'Map distortion in closed information loops' },
-  { id: 'SL-11', summary: 'Evaluate technocratic and algorithmic governance claims' },
-  { id: 'SL-12', summary: 'Assess digital infrastructure control and dependencies' },
-];
+const LABEL_MODULE_MAP: Record<string, string[]> = {
+  conflict_military:     ['M06', 'M08', 'M09', 'M15'],
+  conflict_diplomatic:   ['M02', 'M06', 'M09', 'M15'],
+  power_institutional:   ['M09', 'M10', 'M13', 'M14'],
+  economic_leverage:     ['M05', 'M09', 'M12', 'M15'],
+  information_control:   ['M02', 'M04', 'M11', 'M13'],
+  identity_mobilization: ['M02', 'M08', 'M10', 'M14'],
+  sovereignty_violation: ['M06', 'M08', 'M12', 'M15'],
+  humanitarian:          ['M02', 'M05', 'M08', 'M14'],
+};
 
-// ---- Module Selector ------------------------------------------------------
-
-function buildSelectorPrompt(
-  narrative: NarrativeInput,
-  context: AnalysisContext,
-  stats: SignalStats | null,
-): string {
-  const lines: string[] = [
-    'You are selecting analytical modules for a media narrative analysis.',
-    '',
-    `NARRATIVE: ${narrative.label}`,
-  ];
-  if (narrative.moral_frame) lines.push(`MORAL FRAME: ${narrative.moral_frame}`);
-  lines.push(
-    `EVENT: ${context.event_title || 'N/A'}  |  REGION: ${context.centroid_name || 'N/A'}  |  TRACK: ${context.track || 'N/A'}`,
-    `ENTITY TYPE: ${context.entity_type}`,
-  );
-
-  if (stats) {
-    lines.push('', 'COVERAGE DATA:');
-    lines.push(`- Publishers: ${stats.publisher_count}, concentration (HHI): ${stats.publisher_hhi.toFixed(3)}`);
-    // Language distribution: top 3
-    const langEntries = Object.entries(stats.language_distribution)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([lang, count]) => `${lang} ${count}`)
-      .join(', ');
-    lines.push(`- Languages: ${stats.language_count} (${langEntries})`);
-    // Geographic focus: top 5 countries
-    const geoEntries = Object.entries(stats.entity_country_distribution || {})
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([cc, count]) => `${cc} (${count})`)
-      .join(', ');
-    if (geoEntries) lines.push(`- Geographic focus: ${geoEntries}`);
-    // Key actors
-    const actorNames = (stats.top_actors || []).slice(0, 5).map((a) => a.name).join(', ');
-    if (actorNames) lines.push(`- Key actors: ${actorNames}`);
-    lines.push(`- Date span: ${stats.date_range_days} days`);
-  }
-
-  lines.push(
-    '',
-    '4 core modules are already included (CL-0, CL-6, NL-3, SL-8).',
-    'Select exactly 4 additional modules from the list below.',
-    '',
-    'AVAILABLE MODULES:',
-  );
-  for (const entry of MODULE_CATALOG) {
-    lines.push(`${entry.id}: ${entry.summary}`);
-  }
-
-  lines.push(
-    '',
-    'Respond with exactly 4 module IDs and a brief rationale, one per line:',
-    'FL-3: [rationale]',
-    'NL-1: [rationale]',
-    'SL-1: [rationale]',
-    'NL-7: [rationale]',
-  );
-
-  return lines.join('\n');
-}
-
-export async function selectModules(
-  narrative: NarrativeInput,
-  context: AnalysisContext,
-  stats: SignalStats | null,
-): Promise<string[]> {
-  const SELECTOR_TIMEOUT_MS = 15_000;
-
-  try {
-    if (!DEEPSEEK_API_KEY) {
-      console.log('[RAI selector] No API key, using fallback modules');
-      return FALLBACK_MODULE_IDS;
-    }
-
-    const prompt = buildSelectorPrompt(narrative, context, stats);
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), SELECTOR_TIMEOUT_MS);
-
-    let raw: string;
-    try {
-      const res = await fetch(DEEPSEEK_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0,
-          max_tokens: 250,
-        }),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error(`[RAI selector] API error ${res.status}: ${text.slice(0, 200)}`);
-        return FALLBACK_MODULE_IDS;
-      }
-
-      const data = await res.json();
-      raw = data.choices?.[0]?.message?.content || '';
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (!raw) {
-      console.log('[RAI selector] Empty response, using fallback');
-      return FALLBACK_MODULE_IDS;
-    }
-
-    console.log('[RAI selector] Response:', raw);
-
-    // Extract module IDs from response
-    const validIds = new Set(MODULE_CATALOG.map((e) => e.id));
-    const matches = raw.match(/(CL-\d+|FL-\d+|NL-\d+|SL-\d+)/g) || [];
-    const selected: string[] = [];
-    for (const id of matches) {
-      if (validIds.has(id) && !selected.includes(id)) {
-        selected.push(id);
-        if (selected.length === 4) break;
+/** Select modules by analytical labels. Returns deduplicated list of core + label-mapped modules. */
+export function selectModulesByLabels(labels: string[] | null): string[] {
+  const ids = new Set(CORE_MODULE_IDS);
+  if (labels && labels.length > 0) {
+    for (const label of labels) {
+      const mapped = LABEL_MODULE_MAP[label];
+      if (mapped) {
+        for (const id of mapped) ids.add(id);
       }
     }
-
-    if (selected.length < 4) {
-      console.log(`[RAI selector] Only ${selected.length} valid IDs found, padding with fallback`);
-      for (const fb of FALLBACK_MODULE_IDS) {
-        if (!selected.includes(fb)) {
-          selected.push(fb);
-          if (selected.length === 4) break;
-        }
-      }
-    }
-
-    console.log('[RAI selector] Selected modules:', selected.join(', '));
-    return selected;
-  } catch (err) {
-    console.error('[RAI selector] Error:', err);
-    return FALLBACK_MODULE_IDS;
+  } else {
+    // No labels available -- use balanced fallback
+    for (const id of FALLBACK_ADDITIONAL) ids.add(id);
   }
+  return Array.from(ids);
 }
 
 // ---- Prompt Builder -------------------------------------------------------
 
 function formatModulesForPrompt(modules: RaiModule[]): string {
-  const moduleIds = modules.map((m) => m.id);
-  const lines: string[] = [
-    '**SELECTED RAI ANALYSIS COMPONENTS:**',
-    '',
-    `**Execution Order:** ${moduleIds.join(' -> ')}`,
-    '',
-  ];
-
+  const lines: string[] = ['**ANALYSIS DIMENSIONS:**', ''];
   for (const mod of modules) {
-    lines.push(`**${mod.id}: ${mod.name}**`);
-    lines.push(`*Purpose:* ${mod.purpose}`);
-    lines.push('');
-    lines.push('*Core Questions:*');
-    for (const q of mod.core_questions) {
-      lines.push(`- ${q}`);
-    }
-    lines.push('');
-    lines.push('*Philosophical Anchoring:*');
-    for (const pid of mod.philosophical_anchoring) {
-      const premise = PREMISE_LIBRARY[pid];
-      if (premise) {
-        lines.push(`- **${pid}**: ${premise.title}`);
-        lines.push(`  ${premise.content}`);
-      }
-    }
-    lines.push('');
-    lines.push('*Wisdom Guidance:*');
-    for (const w of mod.wisdom_injected) {
-      lines.push(`- *${w}*`);
-    }
-    lines.push('');
-    lines.push('---');
-    lines.push('');
+    lines.push(`[${mod.id}] ${mod.tag}: ${mod.command}`);
   }
-
+  lines.push('');
   return lines.join('\n');
 }
 
@@ -1232,17 +484,12 @@ export function buildAnalysisPrompt(
   // 7. Output format instructions
   parts.push(
     '**OUTPUT FORMAT INSTRUCTIONS:**',
-    '- Use `## ` (h2) for each module heading (e.g., ## CL-0: Narrative Contextualization)',
+    '- Use `## ` (h2) for each dimension heading using the tag name (e.g., ## Frame & Context Assessment, ## Symmetry Audit)',
+    '- Do NOT include module IDs (M01, M02...) in headings -- use descriptive titles only',
     '- Use bullet lists for findings and blind spots',
     '- Keep each section to 2-4 paragraphs max',
-    '- Mark philosophical insights with `> ` blockquote syntax',
-    '- Use `### ` (h3) for sub-sections within a module if needed',
-    '',
-  );
-
-  // 8. Premise citation instruction
-  parts.push(
-    'When referencing RAI premises (D1.1, D2.5, etc.), always explain what the premise says inline rather than just citing the ID. The reader does not have access to the premise library.',
+    '- Mark key insights with `> ` blockquote syntax',
+    '- Use `### ` (h3) for sub-sections if needed',
     '',
   );
 
@@ -1264,9 +511,9 @@ const DEEPSEEK_API_URL =
   process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
-const DEEPSEEK_TIMEOUT_MS = 120_000;
+const DEEPSEEK_TIMEOUT_MS = 150_000;
 
-export async function callDeepSeek(prompt: string): Promise<string> {
+export async function callDeepSeek(prompt: string, maxTokens: number = 4000): Promise<string> {
   if (!DEEPSEEK_API_KEY) {
     throw new Error('DEEPSEEK_API_KEY not configured');
   }
@@ -1285,7 +532,7 @@ export async function callDeepSeek(prompt: string): Promise<string> {
         model: DEEPSEEK_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
-        max_tokens: 4000,
+        max_tokens: maxTokens,
       }),
       signal: controller.signal,
     });
@@ -1301,6 +548,11 @@ export async function callDeepSeek(prompt: string): Promise<string> {
       throw new Error('DeepSeek returned empty response');
     }
     return content;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('DeepSeek request timed out');
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
@@ -1416,7 +668,7 @@ export function resolveModules(ids: string[]): RaiModule[] {
 }
 
 /** Core module IDs that are always included in analysis. */
-export { CORE_MODULE_IDS };
+export { CORE_MODULE_IDS, LABEL_MODULE_MAP };
 
 
 // ---- Comparative Analysis (multi-narrative) --------------------------------
@@ -1430,6 +682,34 @@ export interface ClusterNarrative {
   moral_frame: string | null;
   sample_titles: Array<{ title: string; publisher: string }>;
   title_count: number;
+  centroid_name?: string;      // for cross-centroid unified analysis
+}
+
+export interface CentroidTimeline {
+  centroid_name: string;
+  events: Array<{
+    title: string;
+    date: string;
+    importance_score: number | null;
+    source_count: number;
+  }>;
+}
+
+function formatTimelineBlock(timelines: CentroidTimeline[]): string {
+  if (timelines.length === 0) return '';
+  const parts: string[] = [];
+  parts.push('**PRIOR EVENTS (90-day timeline):**');
+  parts.push('Reference specific prior events when they explain current framing choices.');
+  parts.push('');
+  for (const tl of timelines) {
+    parts.push(`${tl.centroid_name}:`);
+    const sorted = [...tl.events].sort((a, b) => a.date.localeCompare(b.date));
+    for (const ev of sorted) {
+      parts.push(`- ${ev.date}: ${ev.title} (${ev.source_count} sources)`);
+    }
+    parts.push('');
+  }
+  return parts.join('\n');
 }
 
 export interface ComparativeScores {
@@ -1438,132 +718,25 @@ export interface ComparativeScores {
   synthesis: string;
 }
 
-export async function selectComparativeModules(
-  narratives: ClusterNarrative[],
-  context: AnalysisContext,
-  stats: SignalStats | null,
-): Promise<string[]> {
-  const SELECTOR_TIMEOUT_MS = 15_000;
-
-  try {
-    if (!DEEPSEEK_API_KEY) return FALLBACK_MODULE_IDS;
-
-    const lines: string[] = [
-      'You are selecting analytical modules for a COMPARATIVE media framing analysis.',
-      'Multiple editorial clusters are being analysed simultaneously.',
-      '',
-    ];
-
-    for (const n of narratives) {
-      lines.push(`CLUSTER "${n.cluster_label}" (${n.cluster_publishers.slice(0, 5).join(', ')}): ${n.label}`);
-      if (n.moral_frame) lines.push(`  Moral frame: ${n.moral_frame}`);
-    }
-
-    lines.push(
-      '',
-      `EVENT: ${context.event_title || 'N/A'}  |  REGION: ${context.centroid_name || 'N/A'}  |  TRACK: ${context.track || 'N/A'}`,
-    );
-
-    if (stats) {
-      lines.push('', 'COVERAGE DATA:');
-      lines.push(`- Publishers: ${stats.publisher_count}, HHI: ${stats.publisher_hhi.toFixed(3)}`);
-      lines.push(`- Languages: ${stats.language_count}`);
-      lines.push(`- Date span: ${stats.date_range_days} days`);
-    }
-
-    lines.push(
-      '',
-      '4 core modules are already included (CL-0, CL-6, NL-3, SL-8).',
-      'Select exactly 4 additional modules best suited for CROSS-CLUSTER comparison.',
-      '',
-      'AVAILABLE MODULES:',
-    );
-    for (const entry of MODULE_CATALOG) {
-      lines.push(`${entry.id}: ${entry.summary}`);
-    }
-    lines.push(
-      '',
-      'Respond with exactly 4 module IDs and a brief rationale, one per line:',
-    );
-
-    const prompt = lines.join('\n');
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), SELECTOR_TIMEOUT_MS);
-
-    let raw: string;
-    try {
-      const res = await fetch(DEEPSEEK_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0,
-          max_tokens: 250,
-        }),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) return FALLBACK_MODULE_IDS;
-      const data = await res.json();
-      raw = data.choices?.[0]?.message?.content || '';
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (!raw) return FALLBACK_MODULE_IDS;
-
-    const validIds = new Set(MODULE_CATALOG.map((e) => e.id));
-    const matches = raw.match(/(CL-\d+|FL-\d+|NL-\d+|SL-\d+)/g) || [];
-    const selected: string[] = [];
-    for (const id of matches) {
-      if (validIds.has(id) && !selected.includes(id)) {
-        selected.push(id);
-        if (selected.length === 4) break;
-      }
-    }
-
-    for (const fb of FALLBACK_MODULE_IDS) {
-      if (selected.length >= 4) break;
-      if (!selected.includes(fb)) selected.push(fb);
-    }
-
-    return selected;
-  } catch {
-    return FALLBACK_MODULE_IDS;
-  }
-}
-
 export function buildComparativePrompt(
   narratives: ClusterNarrative[],
   context: AnalysisContext,
   modules: RaiModule[],
   stats?: SignalStats | null,
+  timelines?: CentroidTimeline[],
 ): string {
   const parts: string[] = [];
 
   // 1. System frame
   parts.push(
-    'You are operating under the **Real Artificial Intelligence (RAI) Framework**.',
-    'This is a **comparative media framing analysis** of news coverage from the WorldBrief intelligence platform.',
+    'You are a strategic analyst. Produce a comparative media framing analysis of ' + narratives.length + ' editorial stance groups covering the same event.',
     '',
-    'You are analysing ' + narratives.length + ' competing narrative clusters for the same event.',
-    'Each cluster groups publishers with similar editorial stance.',
+    'Write ONE integrated brief. For each analysis dimension:',
+    '- Where editorial groups CONVERGE (shared assumptions) and DIVERGE (contested elements)',
+    '- What each group OMITS that another includes',
+    '- What ALL groups omit (collective blind spots)',
     '',
-    'Your task:',
-    '- For each analytical module, write a SINGLE comparative assessment',
-    '- Identify where the clusters CONVERGE (shared assumptions)',
-    '- Identify where they DIVERGE (contested elements)',
-    '- Note what each cluster OMITS that another includes',
-    '- Note what ALL clusters omit (collective blind spots)',
-    '',
-    'Do NOT analyse each cluster separately. Write as a strategic analyst',
-    'producing one integrated comparative brief.',
-    '',
-    '**CORE RULE -- ACTOR MAPPING:** Identify ALL actors -- whether direct parties, indirect influencers, or background beneficiaries -- whose interests, lobbying, or actions have a significant impact on the situation. Do not limit your analysis to the actors the coverage names. Examine who is missing from the frame and why. Actors who benefit from being invisible in the narrative are often the most important to surface. Pay special attention to actors who: (a) lobby for or against resolution, (b) take military or economic actions that contradict stated diplomatic goals, (c) shape the policy of direct parties through institutional influence. If such actors are downplayed or absent in coverage, dedicate a separate subsection to their structural role.',
+    '**ACTOR MAPPING:** Surface ALL actors with significant impact -- direct parties, indirect influencers, background beneficiaries. Actors invisible in coverage are often most important. Flag actors who: (a) lobby for/against resolution, (b) act contrary to stated goals, (c) shape policy through institutional influence.',
     '',
   );
 
@@ -1574,23 +747,25 @@ export function buildComparativePrompt(
   if (context.event_title) parts.push(`Event: ${context.event_title}`);
   parts.push('');
 
-  // 3. Cluster narratives
-  parts.push('**COMPETING NARRATIVE CLUSTERS:**');
+  // 2b. Centroid timeline (temporal context)
+  if (timelines && timelines.length > 0) {
+    parts.push(formatTimelineBlock(timelines));
+  }
+
+  // 3. Editorial stance groups
+  parts.push('**EDITORIAL STANCE GROUPS:**');
   parts.push('');
   for (const n of narratives) {
-    const pubList = n.cluster_publishers.slice(0, 8).join(', ');
-    const extra = n.cluster_publishers.length > 8
-      ? ` (+${n.cluster_publishers.length - 8} more)` : '';
-    parts.push(`**${n.cluster_label.toUpperCase()} cluster** (avg stance: ${n.cluster_score_avg.toFixed(1)})`);
-    parts.push(`Publishers: ${pubList}${extra}`);
+    const pubList = n.cluster_publishers.slice(0, 5).join(', ');
+    const extra = n.cluster_publishers.length > 5
+      ? ` +${n.cluster_publishers.length - 5}` : '';
+    parts.push(`**${n.cluster_label.toUpperCase()}** (stance ${n.cluster_score_avg.toFixed(1)}, ${n.title_count} titles, ${n.cluster_publishers.length} publishers: ${pubList}${extra})`);
     parts.push(`Frame: "${n.label}"`);
-    if (n.description) parts.push(`Stance: ${n.description}`);
-    if (n.moral_frame) parts.push(`Moral framing: ${n.moral_frame}`);
-    parts.push(`Titles: ${n.title_count}`);
+    if (n.description) parts.push(`Position: ${n.description}`);
+    if (n.moral_frame) parts.push(`Moral frame: ${n.moral_frame}`);
 
     if (n.sample_titles.length > 0) {
-      parts.push('Sample headlines:');
-      for (const h of n.sample_titles.slice(0, 8)) {
+      for (const h of n.sample_titles.slice(0, 5)) {
         parts.push(`- "${h.title}" (${h.publisher})`);
       }
     }
@@ -1606,53 +781,108 @@ export function buildComparativePrompt(
   // 5. Module descriptions with premises
   parts.push(formatModulesForPrompt(modules));
 
-  // 6. Output format
+  // 6. Output format + metrics
   parts.push(
-    '**OUTPUT FORMAT INSTRUCTIONS:**',
-    '- Use `## ` (h2) for each module heading',
-    '- Each section must be COMPARATIVE -- reference multiple clusters, not one at a time',
-    '- Use bullet lists for specific findings',
-    '- Mark philosophical insights with `> ` blockquote syntax',
-    '- Keep each section to 2-4 paragraphs max',
-    '- After all module sections, add `## Actors Beyond the Frame`',
-    '  Dedicate this section to actors whose influence is significant but',
-    '  who are underrepresented or absent in coverage. For each, explain their',
-    '  structural interest, observable actions, and why coverage minimizes them.',
-    '- Then add `## Convergence & Collective Blind Spots`',
-    '  listing what ALL clusters share and what none of them cover',
-    '- Then add `## Unstated Assumptions & Structural Questions`',
-    '  For each cluster, identify the foundational assumption that is',
-    '  TAKEN FOR GRANTED rather than argued. Then ask: what structural,',
-    '  historical, or strategic context -- if true -- would fundamentally',
-    '  change the interpretation? You are not asserting these alternatives',
-    '  are true. You are noting that the coverage does not examine them.',
-    '- Finally add `## Further Investigation`',
-    '  This section helps readers develop their OWN structural understanding. Include:',
-    '  1. **Historical context to study** (2-3 specific periods or events essential for understanding this topic -- e.g. treaties, coups, wars, economic shifts)',
-    '  2. **Recommended reading** (2-3 well-known, widely-cited books or academic works directly relevant to the structural dynamics at play. Only recommend books you are HIGHLY CONFIDENT exist and are widely cited. If unsure about a specific title, suggest the topic area instead.)',
-    '  3. **Questions to investigate** (3-4 specific questions the reader should research independently -- focused on structural factors, economic interests, historical patterns, and power dynamics that the coverage does not examine)',
-    '  4. **Economic and structural factors** (key economic relationships, dependencies, or leverage points that shape the actors\' real constraints -- often invisible in media coverage)',
+    '**OUTPUT FORMAT:**',
+    'Use `## ` (h2) per analysis dimension with descriptive titles (e.g. ## Frame & Context Assessment, ## Symmetry Audit).',
+    'Do NOT include module IDs (M01, M02...) in headings.',
+    'Each section: comparative, 2-3 paragraphs. Use `> ` for key insights.',
+    'Use plain language throughout -- no internal codes, framework IDs, or technical jargon.',
+    'Refer to editorial groups by their stance label (e.g. "the critical group", "the reportorial group"), not as "clusters" or "centroids".',
+    '',
+    'After analysis dimensions, add:',
+    '`## Actors Beyond the Frame` -- actors with significant but underrepresented influence. For each: structural interest, actions, why coverage minimizes them.',
+    '`## Convergence & Collective Blind Spots` -- shared assumptions and gaps across ALL editorial groups.',
+    '`## Further Investigation` -- 2-3 historical periods to study, 2-3 books (only cite well-known works), 3-4 research questions, key economic/structural factors invisible in coverage.',
+    '',
+    'End with: SCORES: {"frame_divergence": <0-1>, "collective_blind_spots": ["..."], "synthesis": "<1-2 sentence assessment>"}',
+  );
+
+  return parts.join('\n');
+}
+
+/**
+ * Build a unified comparative prompt for cross-centroid sibling events.
+ * Groups narratives by centroid and adds a "Coverage Lens Shift" section.
+ */
+export function buildUnifiedComparativePrompt(
+  narrativesByCentroid: Map<string, ClusterNarrative[]>,
+  siblingEvents: Array<{ centroid_name: string; event_title: string; source_count: number }>,
+  modules: RaiModule[],
+  stats?: SignalStats | null,
+  timelines?: CentroidTimeline[],
+): string {
+  const parts: string[] = [];
+
+  // 1. System frame
+  parts.push(
+    'You are a strategic analyst. Produce a cross-country comparative analysis: the SAME event appears under DIFFERENT country coverage ecosystems, each with its own publisher composition.',
+    'Publisher migration between editorial stance groups across countries IS the core signal.',
+    '',
+    'Write ONE integrated brief. For each analysis dimension:',
+    '- How framing shifts across country lenses',
+    '- Publishers that change editorial stance across countries and why',
+    '- Where groups CONVERGE, DIVERGE, and what each country\'s coverage OMITS',
+    '',
+    '**ACTOR MAPPING:** Surface ALL actors with significant impact -- direct, indirect, invisible. Flag actors who: (a) lobby for/against resolution, (b) act contrary to stated goals, (c) shape policy through institutional influence.',
     '',
   );
 
-  // 7. Premise citation
-  parts.push(
-    'When referencing RAI premises (D1.1, D2.5, etc.), always explain what the premise says inline rather than just citing the ID. The reader does not have access to the premise library.',
-    '',
-  );
+  // 2. Cross-country events context
+  parts.push('**CROSS-COUNTRY COVERAGE:**');
+  for (const ev of siblingEvents) {
+    parts.push(`- **${ev.centroid_name}**: "${ev.event_title}" (${ev.source_count} sources)`);
+  }
+  parts.push('');
 
-  // 8. Structural metrics -- no per-cluster scores (prone to LLM bias)
+  // 2b. Country timelines (temporal context)
+  if (timelines && timelines.length > 0) {
+    parts.push(formatTimelineBlock(timelines));
+  }
+
+  // 3. Editorial stance groups by country
+  parts.push('**EDITORIAL STANCE GROUPS BY COUNTRY:**');
+  parts.push('');
+  for (const [centroidName, narratives] of narrativesByCentroid) {
+    parts.push(`### ${centroidName.toUpperCase()}`);
+    for (const n of narratives) {
+      const pubList = n.cluster_publishers.slice(0, 5).join(', ');
+      const extra = n.cluster_publishers.length > 5
+        ? ` +${n.cluster_publishers.length - 5}` : '';
+      parts.push(`**${n.cluster_label.toUpperCase()}** (stance ${n.cluster_score_avg.toFixed(1)}, ${n.title_count} titles, ${n.cluster_publishers.length} publishers: ${pubList}${extra})`);
+      parts.push(`Frame: "${n.label}"`);
+      if (n.description) parts.push(`Position: ${n.description}`);
+      if (n.moral_frame) parts.push(`Moral frame: ${n.moral_frame}`);
+
+      if (n.sample_titles.length > 0) {
+        for (const h of n.sample_titles.slice(0, 3)) {
+          parts.push(`- "${h.title}" (${h.publisher})`);
+        }
+      }
+      parts.push('');
+    }
+  }
+
+  // 4. Analysis dimensions
+  parts.push(formatModulesForPrompt(modules));
+
+  // 5. Output format + metrics
   parts.push(
-    '**STRUCTURAL METRICS:**',
+    '**OUTPUT FORMAT:**',
+    'Use `## ` (h2) per analysis dimension with descriptive titles (e.g. ## Frame & Context Assessment, ## Symmetry Audit).',
+    'Do NOT include module IDs (M01, M02...) in headings.',
+    'Each section: comparative across countries, 2-3 paragraphs. Use `> ` for key insights.',
+    'Use plain language throughout -- no internal codes, framework IDs, or technical jargon.',
+    'Refer to editorial groups by their stance label (e.g. "the critical group", "the supportive group"), not as "clusters".',
+    'Refer to country coverage by country name, not as "centroids".',
     '',
-    'Do NOT score individual clusters. The prose analysis IS the assessment.',
+    'After analysis dimensions, add:',
+    '`## Coverage Lens Shift` -- CORE SECTION. How publishers shift editorial stance across countries, frames that appear/disappear per country lens.',
+    '`## Actors Beyond the Frame` -- Actors with significant but underrepresented influence.',
+    '`## Convergence & Collective Blind Spots` -- Shared assumptions and gaps across ALL countries.',
+    '`## Further Investigation` -- 2-3 historical periods, 2-3 books (well-known only), 3-4 research questions, key economic/structural factors.',
     '',
-    '**At the end of your analysis**, output a metrics block in this exact format:',
-    '',
-    'SCORES: {"frame_divergence": <0-1>, "collective_blind_spots": ["...", "..."], "synthesis": "<1-2 sentence overall assessment>"}',
-    '',
-    'frame_divergence: 0 = clusters agree, 1 = maximally opposed.',
-    'The metrics must reflect your actual analysis. Do NOT use placeholder values.',
+    'End with: SCORES: {"frame_divergence": <0-1>, "collective_blind_spots": ["..."], "synthesis": "<1-2 sentence assessment>"}',
   );
 
   return parts.join('\n');
