@@ -670,7 +670,7 @@
     "signInToAnalyse": "Anmelden zur Analyse"
   },
   "stanceCluster": {
-    "title": "Berichterstattungslandschaft",
+    "title": "Medienlandschaft",
     "clusterCount": "{count} redaktionelle Cluster, {titles} Schlagzeilen analysiert",
     "publishers": "{count} Herausgeber",
     "morePublishers": "+{count} weitere",
@@ -679,7 +679,7 @@
     "viewFullAnalysis": "Vollstaendige Analyse ansehen",
     "deepAnalysis": "Tiefenanalyse",
     "signInForAnalysis": "Anmelden fuer Tiefenanalyse",
-    "highDivergence": "Hohe Divergenz",
+    "highDivergence": "Stark divergent",
     "mediumDivergence": "Mittlere Divergenz",
     "lowDivergence": "Niedrige Divergenz",
     "analysing": "Redaktionelle Positionen werden analysiert..."
