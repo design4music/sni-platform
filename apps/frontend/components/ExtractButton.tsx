@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 
 interface Props {
-  entityType: 'event' | 'ctm';
+  entityType: 'event';
   entityId: string;
 }
 
@@ -14,7 +14,6 @@ export default function ExtractButton({ entityType, entityId }: Props) {
   const t = useTranslations('extract');
   const { data: session } = useSession();
   const router = useRouter();
-  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coherenceWarning, setCoherenceWarning] = useState<{
@@ -65,10 +64,6 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       if (data.has_stance) {
         // Stance extraction succeeded -- refresh page to show StanceClusterCard
         router.refresh();
-      } else if (data.first_narrative_id) {
-        // Legacy extraction (CTM/epic) -- navigate to analysis page
-        const prefix = locale === 'de' ? '/de' : '';
-        router.push(`${prefix}/analysis/${data.first_narrative_id}`);
       } else {
         setError(t('noNarratives'));
         setLoading(false);

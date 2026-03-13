@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
-import NarrativeCards from '@/components/NarrativeOverlay';
-import { getEpicBySlug, getEpicEvents, getEpicMonths, getEpicFramedNarratives, getTopSignalsForEpic } from '@/lib/queries';
+import { getEpicBySlug, getEpicEvents, getEpicMonths, getTopSignalsForEpic } from '@/lib/queries';
 import { EpicEvent, EpicNarrative, SignalType, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -141,26 +140,11 @@ export default async function EpicDetailPage({ params }: Props) {
     if (de.timeline) epic = { ...epic, timeline: de.timeline };
   }
 
-  const [events, epicMonths, framedNarratives, epicSignals] = await Promise.all([
+  const [events, epicMonths, epicSignals] = await Promise.all([
     getEpicEvents(epic.id, locale),
     getEpicMonths(),
-    getEpicFramedNarratives(epic.id, locale),
     getTopSignalsForEpic(epic.id, 12),
   ]);
-
-  // Lazy-translate narrative card fields for DE users
-  if (locale === 'de') {
-    for (const n of framedNarratives) {
-      const de = await ensureDE('narratives', 'id', n.id, [
-        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
-        { src: 'description', dest: 'description_de', text: n.description || '' },
-        { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
-      ]);
-      if (de.label) n.label = de.label;
-      if (de.description) n.description = de.description;
-      if (de.moral_frame) n.moral_frame = de.moral_frame;
-    }
-  }
 
   const { sorted: signalData, globalFreq } = computeSignalComparison(events, epic.anchor_tags);
   const groupedEvents = groupEventsByCentroid(events);
@@ -220,8 +204,63 @@ export default async function EpicDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* How It Was Framed - interactive cards with overlay */}
-      <NarrativeCards narratives={framedNarratives} />
+      {/* Key Signals */}
+      {epicSignals.length > 0 && (
+        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-dashboard-text">{t('keySignals')}</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {epicSignals.map(s => (
+              <Link
+                key={`${s.signal_type}-${s.value}`}
+                href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-dashboard-border hover:border-blue-500/50 transition"
+              >
+                <span className="text-dashboard-text">{s.value}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tag distribution by country */}
+      {signalData.length > 0 && (
+        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-dashboard-text">{t('signalComparison')}</h3>
+          <div className="space-y-3">
+            {signalData.map(([centroidId, tags]) => {
+              const top = Object.entries(tags)
+                .sort((a, b) => b[1][0] - a[1][0])
+                .slice(0, 5);
+              if (top.length === 0) return null;
+              return (
+                <div key={centroidId}>
+                  <p className="text-xs font-medium text-dashboard-text-muted mb-1 truncate">
+                    {getDisplayLabel(centroidId, centroidId, t, tCentroids)}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {top.map(([tag, [sources]]) => {
+                      const unique = (globalFreq[tag] || 0) <= 3;
+                      return (
+                        <span
+                          key={tag}
+                          className={`text-xs px-1.5 py-0.5 rounded ${
+                            unique
+                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                              : 'bg-dashboard-border/60 text-dashboard-text-muted'
+                          }`}
+                        >
+                          {tag} <span className="opacity-60">{sources}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 
@@ -282,73 +321,12 @@ export default async function EpicDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Key Signals */}
-      {epicSignals.length > 0 && (
-        <div className="mb-8 pb-8 border-b border-dashboard-border">
-          <h2 className="text-2xl font-bold mb-4">{t('keySignals')}</h2>
-          <div className="flex flex-wrap gap-2">
-            {epicSignals.map(s => (
-              <Link
-                key={`${s.signal_type}-${s.value}`}
-                href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm border border-dashboard-border bg-dashboard-surface hover:border-blue-500/50 transition"
-              >
-                <span className="text-dashboard-text">{s.value}</span>
-                <span className="text-xs text-dashboard-text-muted">{s.event_count}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Coverage by Country */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">
         <h2 className="text-2xl font-bold mb-4">{t('coverageByCountry')}</h2>
         <EpicCountries groups={countryGroups} />
       </div>
 
-      {/* Signal Comparison (collapsed) */}
-      {signalData.length > 0 && (
-        <details className="group">
-          <summary className="cursor-pointer flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-border/50 hover:bg-dashboard-border transition-colors list-none">
-            <span
-              className="text-dashboard-text-muted transition-transform duration-200 group-open:rotate-90"
-            >
-              &#9656;
-            </span>
-            <span className="text-lg font-semibold text-dashboard-text">{t('signalComparison')}</span>
-            <span className="text-sm text-dashboard-text-muted ml-auto">
-              {t('tagDistribution')}
-            </span>
-          </summary>
-          <div className="mt-4 pl-4">
-            <p className="text-sm text-dashboard-text-muted mb-4">
-              {t('topTagsNote')}
-            </p>
-            <div className="space-y-2 font-mono text-sm">
-              {signalData.map(([centroidId, tags]) => {
-                const top = Object.entries(tags)
-                  .sort((a, b) => b[1][0] - a[1][0])
-                  .slice(0, 6);
-                if (top.length === 0) return null;
-                return (
-                  <div key={centroidId} className="flex gap-4">
-                    <span className="text-dashboard-text-muted w-48 flex-shrink-0 truncate">
-                      {centroidId}
-                    </span>
-                    <span className="text-dashboard-text">
-                      {top.map(([tag, [, count]]) => {
-                        const marker = (globalFreq[tag] || 0) <= 3 ? '*' : '';
-                        return `${marker}${tag}(${count})`;
-                      }).join('  ')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </details>
-      )}
     </DashboardLayout>
   );
 }

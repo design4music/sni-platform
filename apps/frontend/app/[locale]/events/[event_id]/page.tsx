@@ -11,7 +11,7 @@ import RelatedStories from '@/components/RelatedStories';
 import ExtractButton from '@/components/ExtractButton';
 import AnalysisPrefetch from '@/components/AnalysisPrefetch';
 import NarrativePrefetch from '@/components/NarrativePrefetch';
-import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getEventSiblings, getRelatedEvents } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -92,15 +92,21 @@ async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourc
 
   // Check for stance-clustered narratives (new comparative system)
   const stanceClusters = await getStanceNarratives('event', eventId, locale);
+
+  // Lazy-translate stance narrative fields for DE users
+  if (locale === 'de') {
+    for (const n of stanceClusters) {
+      const de = await ensureDE('narratives', 'id', n.id, [
+        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
+        { src: 'description', dest: 'description_de', text: n.description || '' },
+      ]);
+      if (de.label) n.label = de.label;
+      if (de.description) n.description = de.description;
+    }
+  }
+
   const entityAnalysis = stanceClusters.length > 0
     ? await getEntityAnalysis('event', eventId, locale)
-    : null;
-
-  // Check for cross-centroid siblings
-  const siblings = await getEventSiblings(eventId, locale);
-  const siblingGroup = siblings.length >= 2 ? siblings[0].sibling_group : null;
-  const siblingAnalysis = siblingGroup
-    ? await getEntityAnalysis('sibling_group', siblingGroup, locale)
     : null;
 
   const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
@@ -118,69 +124,29 @@ async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourc
         <>
           <StanceClusterCard
             clusters={stanceClusters}
-            entityType={siblingGroup ? 'sibling_group' : 'event'}
-            entityId={siblingGroup || eventId}
+            entityType="event"
+            entityId={eventId}
             synthesis={entityAnalysis?.synthesis || entityAnalysis?.scores?.synthesis}
             blindSpots={entityAnalysis?.blind_spots || entityAnalysis?.scores?.collective_blind_spots}
             frameDivergence={entityAnalysis?.scores?.frame_divergence}
-            hasFullReport={!!(siblingAnalysis?.sections || entityAnalysis?.sections)}
-            siblings={siblings.length >= 2 ? siblings.map((s) => ({
-              event_id: s.event_id,
-              centroid_name: s.centroid_name,
-              source_count: s.source_count,
-              is_current: s.event_id === eventId,
-            })) : undefined}
+            hasFullReport={!!entityAnalysis?.sections}
           />
           {/* Staleness check for growing current-month events */}
           {autoExtractEligible && (
             <NarrativePrefetch entityType="event" entityId={eventId} />
           )}
           {/* Pre-trigger analysis in background so it's cached when user clicks */}
-          {!(siblingAnalysis?.sections || entityAnalysis?.sections) && (
+          {!entityAnalysis?.sections && (
             <AnalysisPrefetch
-              entityType={siblingGroup ? 'sibling_group' : 'event'}
-              entityId={siblingGroup || eventId}
+              entityType="event"
+              entityId={eventId}
             />
           )}
         </>
       )}
 
-      {/* Sibling group analysis link for events without own stance clusters */}
-      {stanceClusters.length === 0 && siblingGroup && (
-        <div className="bg-dashboard-card rounded-lg p-5 space-y-3 border border-dashboard-border">
-          <h3 className="text-sm font-semibold text-dashboard-text">Cross-Perspective Analysis</h3>
-          <p className="text-xs text-dashboard-text-muted leading-relaxed">
-            This event is part of a cross-centroid story covered by {siblings.length} perspectives.
-          </p>
-          {siblings.length >= 2 && (
-            <div className="space-y-1">
-              {siblings.map((s) => (
-                <div key={s.event_id} className={`text-xs flex items-center gap-2 ${s.event_id === eventId ? 'text-dashboard-text font-medium' : 'text-dashboard-text-muted'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
-                  <span className="truncate">{s.centroid_name}</span>
-                  <span className="text-dashboard-text-muted/60 ml-auto shrink-0">{s.source_count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          <a
-            href={`/${locale}/analysis/comparative/sibling_group/${siblingGroup}`}
-            className={`inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded transition-colors ${
-              siblingAnalysis?.sections
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                : 'bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'
-            }`}
-          >
-            {siblingAnalysis?.sections ? 'View Full Analysis' : 'Deep Analysis'}
-          </a>
-          {!(siblingAnalysis?.sections) && (
-            <AnalysisPrefetch entityType="sibling_group" entityId={siblingGroup} />
-          )}
-        </div>
-      )}
-
-      {/* No stance clusters yet, no sibling group */}
-      {stanceClusters.length === 0 && !siblingGroup && (
+      {/* No stance clusters yet */}
+      {stanceClusters.length === 0 && (
         <>
           {coherenceCheck ? (
             <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
@@ -352,6 +318,16 @@ export default async function EventDetailPage({ params }: Props) {
                 className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400"
               >
                 {tag}
+              </span>
+            ))}
+          </div>
+        )}
+        {event.absorbed_centroids && event.absorbed_centroids.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <span className="text-xs text-dashboard-text-muted">{t('alsoCovers')}:</span>
+            {event.absorbed_centroids.map((c) => (
+              <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                {c}
               </span>
             ))}
           </div>

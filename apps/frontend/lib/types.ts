@@ -144,6 +144,7 @@ export interface EventDetail {
   track: string;
   month: string;
   coherence_check: { coherent: false; reason: string; topics: string[] } | null;
+  absorbed_centroids: string[] | null;
 }
 
 export interface RelatedEvent {
@@ -340,20 +341,6 @@ export interface OutletNarrativeFrame {
   description: string | null;
   title_count: number;
   entity_label: string;
-}
-
-export interface NarrativeDetail extends FramedNarrative {
-  entity_type: string;
-  entity_id: string;
-  centroid_id: string | null;
-  centroid_name: string | null;
-  track: string | null;
-  event_title: string | null;
-  event_id: string | null;
-  rai_full_analysis_de: RaiSection[] | string | null;
-  rai_synthesis_de: string | null;
-  rai_conflicts_de: string[] | null;
-  rai_blind_spots_de: string[] | null;
 }
 
 export interface TrendingEvent {

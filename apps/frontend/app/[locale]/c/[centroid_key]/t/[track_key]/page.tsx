@@ -14,10 +14,7 @@ import {
   getMonthTimeline,
   getTitlesByCTM,
   getTracksByCentroid,
-  getFramedNarratives,
 } from '@/lib/queries';
-import NarrativeCards from '@/components/NarrativeOverlay';
-import ExtractButton from '@/components/ExtractButton';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTrackLabel, getCentroidLabel, getCountryName, getIsoFromBucketKey, Track, Event, Title } from '@/lib/types';
@@ -90,44 +87,6 @@ function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
 /* Deferred async server components (wrapped in Suspense)             */
 /* ------------------------------------------------------------------ */
 
-
-async function NarrativeSection({
-  entityType, entityId, narrativeFramesLabel, noNarrativesLabel, locale,
-}: {
-  entityType: 'event' | 'ctm'; entityId: string; narrativeFramesLabel: string; noNarrativesLabel: string; locale?: string;
-}) {
-  const narratives = await getFramedNarratives(entityType, entityId, locale);
-
-  // Lazy-translate narrative card fields for DE users
-  if (locale === 'de') {
-    for (const n of narratives) {
-      const de = await ensureDE('narratives', 'id', n.id, [
-        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
-        { src: 'description', dest: 'description_de', text: n.description || '' },
-        { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
-      ]);
-      if (de.label) n.label = de.label;
-      if (de.description) n.description = de.description;
-      if (de.moral_frame) n.moral_frame = de.moral_frame;
-    }
-  }
-  if (narratives.length > 0) {
-    return (
-      <div id="section-narratives" className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">{narrativeFramesLabel}</h2>
-        <NarrativeCards narratives={narratives} layout="grid" />
-      </div>
-    );
-  }
-  return (
-    <div id="section-narratives" className="mb-8 p-6 rounded-lg border border-dashboard-border bg-dashboard-surface text-center">
-      <p className="text-sm text-dashboard-text-muted mb-3">
-        {noNarrativesLabel}
-      </p>
-      <ExtractButton entityType={entityType} entityId={entityId} />
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Main page component                                                */
@@ -368,21 +327,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             })}
           </div>
         </div>
-      )}
-
-      {/* Narrative Frames (deferred via Suspense, only if CTM has a summary) */}
-      {ctm.summary_text && (
-        <Suspense fallback={
-          <div id="section-narratives" className="mb-8 animate-pulse">
-            <div className="h-7 w-48 bg-dashboard-border rounded mb-4" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
-              <div className="h-32 bg-dashboard-surface border border-dashboard-border rounded-lg" />
-            </div>
-          </div>
-        }>
-          <NarrativeSection entityType="ctm" entityId={ctm.id} narrativeFramesLabel={t('narrativeFrames')} noNarrativesLabel={t('noNarratives')} locale={locale} />
-        </Suspense>
       )}
 
       {/* Events content */}

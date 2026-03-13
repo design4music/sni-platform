@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, NarrativeDetail, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
 
 export type Locale = 'en' | 'de';
 
@@ -147,8 +147,8 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
       ${locCol('e', 'summary', locale)} as summary,
       e.tags,
-      e.event_type,
-      e.bucket_key,
+      COALESCE(ab.event_type, e.event_type) as event_type,
+      COALESCE(ab.bucket_key, e.bucket_key) as bucket_key,
       e.source_batch_count,
       e.importance_score,
       e.is_catchall,
@@ -163,7 +163,19 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       SELECT entity_id FROM narratives n
       WHERE n.entity_type = 'event' AND n.entity_id = e.id LIMIT 1
     ) n ON true
-    WHERE e.ctm_id = $1 AND e.source_batch_count > 0 AND e.merged_into IS NULL
+    LEFT JOIN LATERAL (
+      SELECT absorbed.event_type, absorbed.bucket_key
+      FROM events_v3 absorbed
+      WHERE absorbed.merged_into = e.id AND absorbed.ctm_id = $1
+      ORDER BY absorbed.source_batch_count DESC
+      LIMIT 1
+    ) ab ON e.ctm_id != $1
+    WHERE e.source_batch_count > 0
+      AND e.merged_into IS NULL
+      AND (
+        e.ctm_id = $1
+        OR ab.event_type IS NOT NULL
+      )
     ORDER BY e.is_catchall ASC, CASE WHEN e.importance_score >= 0.5 THEN 0 ELSE 1 END, e.source_batch_count DESC`,
     [ctmId]
   );
@@ -724,58 +736,6 @@ export async function getLatestEpics(limit: number = 3, locale?: string): Promis
   );
 }
 
-export async function getEpicFramedNarratives(epicId: string, locale?: string): Promise<FramedNarrative[]> {
-  return query<FramedNarrative>(
-    `SELECT id, ${locCol('narratives', 'label', locale)} as label,
-            ${locCol('narratives', 'description', locale)} as description,
-            ${locCol('narratives', 'moral_frame', locale)} as moral_frame,
-            title_count,
-            top_sources, proportional_sources, top_countries, sample_titles,
-            rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
-            rai_shifts, rai_full_analysis, rai_analyzed_at::text,
-            signal_stats, rai_signals, rai_signals_at::text
-     FROM narratives
-     WHERE entity_type = 'epic' AND entity_id = $1
-     ORDER BY title_count DESC`,
-    [epicId]
-  );
-}
-
-// ========================================================================
-// Generic narrative + event detail queries
-// ========================================================================
-
-export async function getNarrativeById(id: string, locale?: string): Promise<NarrativeDetail | null> {
-  const results = await query<NarrativeDetail>(
-    `SELECT n.id, ${locCol('n', 'label', locale)} as label,
-            ${locCol('n', 'moral_frame', locale)} as moral_frame,
-            ${locCol('n', 'description', locale)} as description,
-            n.title_count,
-            n.sample_titles, n.top_sources, n.proportional_sources, n.top_countries,
-            n.entity_type, n.entity_id,
-            n.signal_stats, n.rai_signals, n.rai_signals_at::text,
-            n.rai_full_analysis, n.rai_full_analysis_de,
-            n.rai_adequacy,
-            ${locCol('n', 'rai_synthesis', locale)} as rai_synthesis,
-            ${locale === 'de' ? 'COALESCE(n.rai_conflicts_de, n.rai_conflicts)' : 'n.rai_conflicts'} as rai_conflicts,
-            ${locale === 'de' ? 'COALESCE(n.rai_blind_spots_de, n.rai_blind_spots)' : 'n.rai_blind_spots'} as rai_blind_spots,
-            n.rai_shifts, n.rai_analyzed_at::text,
-            COALESCE(ct.centroid_id, c.centroid_id) as centroid_id,
-            c2.label as centroid_name,
-            COALESCE(ct.track, c.track) as track,
-            COALESCE(e.title, e.topic_core) as event_title,
-            e.id as event_id
-     FROM narratives n
-     LEFT JOIN events_v3 e ON n.entity_type = 'event' AND n.entity_id = e.id
-     LEFT JOIN ctm ct ON n.entity_type = 'event' AND e.ctm_id = ct.id
-     LEFT JOIN ctm c ON n.entity_type = 'ctm' AND n.entity_id = c.id
-     LEFT JOIN centroids_v3 c2 ON c2.id = COALESCE(ct.centroid_id, c.centroid_id)
-     WHERE n.id = $1`,
-    [id]
-  );
-  return results[0] || null;
-}
-
 export async function getFramedNarratives(
   entityType: string, entityId: string, locale?: string
 ): Promise<FramedNarrative[]> {
@@ -930,44 +890,6 @@ export async function getCentroidTimeline(
   return rows;
 }
 
-export interface SiblingEvent {
-  event_id: string;
-  title: string;
-  source_count: number;
-  centroid_name: string;
-  sibling_group: string;
-}
-
-export async function getEventSiblings(eventId: string, locale?: string): Promise<SiblingEvent[]> {
-  const rows = await query<SiblingEvent>(
-    `SELECT e.id as event_id,
-            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
-            e.source_batch_count as source_count,
-            cv.label as centroid_name,
-            e.sibling_group::text
-     FROM events_v3 e
-     JOIN ctm ON ctm.id = e.ctm_id
-     JOIN centroids_v3 cv ON cv.id = ctm.centroid_id
-     WHERE e.sibling_group = (
-       SELECT sibling_group FROM events_v3 WHERE id = $1 AND sibling_group IS NOT NULL
-     )
-     ORDER BY e.source_batch_count DESC`,
-    [eventId]
-  );
-  return rows;
-}
-
-export async function getSiblingNarratives(
-  entityType: string, entityId: string
-): Promise<Array<{ id: string; label: string }>> {
-  return query<{ id: string; label: string }>(
-    `SELECT id, label FROM narratives
-     WHERE entity_type = $1 AND entity_id = $2
-     ORDER BY title_count DESC`,
-    [entityType, entityId]
-  );
-}
-
 export async function getEventById(eventId: string, locale?: string): Promise<EventDetail | null> {
   return cached(`event:${eventId}:${locale || 'en'}`, 3600, async () => {
   const results = await query<EventDetail>(
@@ -987,7 +909,8 @@ export async function getEventById(eventId: string, locale?: string): Promise<Ev
       cv.label as centroid_label,
       c.track,
       TO_CHAR(c.month, 'YYYY-MM') as month,
-      e.coherence_check
+      e.coherence_check,
+      e.absorbed_centroids
     FROM events_v3 e
     JOIN ctm c ON e.ctm_id = c.id
     JOIN centroids_v3 cv ON c.centroid_id = cv.id

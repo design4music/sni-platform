@@ -197,7 +197,8 @@
     "summary": "Zusammenfassung",
     "currentEvent": "Aktuelles Ereignis",
     "headlinesFrom": "{headlines} Schlagzeilen von {publishers} Verlagen",
-    "showMorePublishers": "{count} weitere Verlage anzeigen"
+    "showMorePublishers": "{count} weitere Verlage anzeigen",
+    "alsoCovers": "Auch relevant fuer"
   },
   "brief": {
     "backgroundBrief": "Hintergrundbericht",
@@ -667,6 +668,42 @@
     "subtitle": "{frames} konkurrierende Rahmen ueber {headlines} Schlagzeilen.",
     "analyse": "Analysieren",
     "signInToAnalyse": "Anmelden zur Analyse"
+  },
+  "stanceCluster": {
+    "title": "Berichterstattungslandschaft",
+    "clusterCount": "{count} redaktionelle Cluster, {titles} Schlagzeilen analysiert",
+    "publishers": "{count} Herausgeber",
+    "morePublishers": "+{count} weitere",
+    "summary": "Zusammenfassung",
+    "blindSpots": "Kollektive blinde Flecken",
+    "viewFullAnalysis": "Vollstaendige Analyse ansehen",
+    "deepAnalysis": "Tiefenanalyse",
+    "signInForAnalysis": "Anmelden fuer Tiefenanalyse",
+    "highDivergence": "Hohe Divergenz",
+    "mediumDivergence": "Mittlere Divergenz",
+    "lowDivergence": "Niedrige Divergenz",
+    "analysing": "Redaktionelle Positionen werden analysiert..."
+  },
+  "comparative": {
+    "title": "Vergleichende Medienanalyse",
+    "breadcrumbAnalysis": "Vergleichende Analyse",
+    "clustersAnalysed": "Analysierte Cluster",
+    "clustersHeadlines": "{clusters} Cluster, {headlines} Schlagzeilen",
+    "publishersTitles": "{publishers} Herausgeber, {titles} Titel",
+    "structuralMetrics": "Strukturelle Metriken",
+    "frameDivergence": "Frame-Divergenz",
+    "blindSpots": "Blinde Flecken",
+    "howToRead": "Hinweise zur Interpretation",
+    "howToReadP1": "Diese Analyse untersucht die Medienberichterstattung, nicht die Realitaet selbst. Die Berichterstattung ist das einzige verfuegbare Rohmaterial. Wenn die gesamte Berichterstattung verzerrt ist, koennen wir nur die Verzerrung feststellen.",
+    "howToReadP2": "Wir bewerten strukturelle Kohaerenz: Motive, Anreize, historische Muster und Machtdynamiken. Wir fragen, was angesichts der Funktionsweise der Welt Sinn ergibt -- nicht, was eine einzelne Quelle als wahr behauptet.",
+    "llmDisclaimer": "Diese Analyse wurde von einem KI-System im Rahmen des RAI-Frameworks erstellt. Sie untersucht Muster in der Medienberichterstattung, nicht die zugrunde liegende Realitaet. Nutzen Sie sie als Ausgangspunkt fuer Ihre eigene Recherche, nicht als abschliessende Bewertung.",
+    "signInToGenerate": "Anmelden, um eine vergleichende Tiefenanalyse zu erstellen.",
+    "signIn": "Anmelden",
+    "generating": "Vergleichende Analyse ueber 8 Dimensionen wird erstellt...",
+    "generatingTime": "Dies dauert in der Regel 1-2 Minuten",
+    "retry": "Erneut versuchen",
+    "synthesis": "Synthese",
+    "collectiveBlindSpots": "Kollektive blinde Flecken"
   },
   "terms": {
     "title": "Nutzungsbedingungen",

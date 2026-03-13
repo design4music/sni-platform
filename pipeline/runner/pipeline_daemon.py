@@ -49,6 +49,9 @@ from pipeline.phase_4.merge_related_events import (
     find_ctms_needing_merge,
 )
 from pipeline.phase_4.merge_related_events import process_ctm_merge as phase43_merge
+from pipeline.phase_4.merge_sibling_events import (
+    run_sibling_merge as phase44_sibling_merge,
+)
 
 
 class PipelineDaemon:
@@ -599,6 +602,14 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
+    def run_sibling_merge(self, max_months=3):
+        """Phase 4.4: Cross-centroid sibling event merging."""
+        conn = self.get_connection()
+        try:
+            phase44_sibling_merge(conn=conn, max_months=max_months)
+        finally:
+            self.return_connection(conn)
+
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
         from pipeline.phase_4.materialize_centroid_signals import materialize
@@ -903,6 +914,16 @@ class PipelineDaemon:
                     self.run_phase_with_retry,
                     "Phase 4.3: Event Merge",
                     self.run_event_merge,
+                ),
+                300,
+            )
+            # Phase 4.4: Cross-Centroid Sibling Merge
+            await self.run_with_timeout(
+                "Phase 4.4: Sibling Merge",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.4: Sibling Merge",
+                    self.run_sibling_merge,
                 ),
                 300,
             )
