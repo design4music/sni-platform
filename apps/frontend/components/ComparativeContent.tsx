@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import type { EntityAnalysis } from '@/lib/queries';
 import type { RaiSection } from '@/lib/types';
@@ -144,44 +144,51 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
     cachedAnalysis?.blind_spots || cachedAnalysis?.scores?.collective_blind_spots || null
   );
 
-  async function handleGenerate() {
+  const triggered = useRef(false);
+
+  useEffect(() => {
+    if (sections.length > 0) return;
+    if (!session?.user) return;
+    if (triggered.current) return;
+    triggered.current = true;
+
     setLoading(true);
     setError(null);
-    try {
-      const resp = await fetch('/api/rai-analyse-comparative', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entity_type: entityType, entity_id: entityId }),
-      });
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(data.error || `Error ${resp.status}`);
-      }
-      const data = await resp.json();
 
-      let newSections: RaiSection[] = [];
-      if (data.sections) {
-        if (typeof data.sections === 'string') {
-          try {
-            const parsed = JSON.parse(data.sections);
-            newSections = Array.isArray(parsed) ? parsed : parseSections(data.sections);
-          } catch {
-            newSections = parseSections(data.sections);
-          }
-        } else if (Array.isArray(data.sections)) {
-          newSections = data.sections;
+    fetch('/api/rai-analyse-comparative', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity_type: entityType, entity_id: entityId }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({ error: 'Request failed' }));
+          throw new Error(data.error || `Error ${res.status}`);
         }
-      }
-
-      setSections(newSections);
-      setSynthesis(data.synthesis || data.scores?.synthesis || null);
-      setBlindSpots(data.blind_spots || data.scores?.collective_blind_spots || null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  }
+        return res.json();
+      })
+      .then((data) => {
+        let newSections: RaiSection[] = [];
+        if (data.sections) {
+          if (typeof data.sections === 'string') {
+            try {
+              const parsed = JSON.parse(data.sections);
+              newSections = Array.isArray(parsed) ? parsed : parseSections(data.sections);
+            } catch {
+              newSections = parseSections(data.sections);
+            }
+          } else if (Array.isArray(data.sections)) {
+            newSections = data.sections;
+          }
+        }
+        setSections(newSections);
+        setSynthesis(data.synthesis || data.scores?.synthesis || null);
+        setBlindSpots(data.blind_spots || data.scores?.collective_blind_spots || null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : 'Unknown error'))
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, entityType, entityId]);
 
   // No analysis yet -- show generate button
   if (sections.length === 0) {
@@ -199,29 +206,31 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
       );
     }
 
-    return (
-      <div className="text-center py-12">
-        <p className="text-dashboard-text-muted mb-4">
-          Generate a full comparative analysis across all editorial clusters using
-          the RAI Framework (12 analytical modules).
-        </p>
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="inline-flex items-center gap-2 text-sm px-6 py-2.5 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-wait text-white transition-colors"
-        >
-          {loading ? (
-            <>
-              <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Analysing...
-            </>
-          ) : (
-            'Generate Deep Analysis'
-          )}
-        </button>
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
-      </div>
-    );
+    if (loading) {
+      return (
+        <div className="text-center py-12">
+          <span className="inline-block w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mb-4" />
+          <p className="text-dashboard-text-muted">Generating comparative analysis across 8 dimensions...</p>
+          <p className="text-sm text-dashboard-text-muted/60 mt-2">This typically takes 1-2 minutes</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-sm text-red-400 mb-2">{error}</p>
+          <button
+            onClick={() => { triggered.current = false; setError(null); }}
+            className="text-sm px-4 py-2 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    return null;
   }
 
   // Render the report

@@ -10,6 +10,7 @@ import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
 import ExtractButton from '@/components/ExtractButton';
+import AnalysisPrefetch from '@/components/AnalysisPrefetch';
 import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getEventSiblings, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
@@ -127,25 +128,68 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
       {/* Stance-clustered coverage landscape (new system) */}
       {stanceClusters.length > 0 && (
-        <StanceClusterCard
-          clusters={stanceClusters}
-          entityType={siblingGroup ? 'sibling_group' : 'event'}
-          entityId={siblingGroup || eventId}
-          synthesis={entityAnalysis?.synthesis || entityAnalysis?.scores?.synthesis}
-          blindSpots={entityAnalysis?.blind_spots || entityAnalysis?.scores?.collective_blind_spots}
-          frameDivergence={entityAnalysis?.scores?.frame_divergence}
-          hasFullReport={!!(siblingAnalysis?.sections || entityAnalysis?.sections)}
-          siblings={siblings.length >= 2 ? siblings.map((s) => ({
-            event_id: s.event_id,
-            centroid_name: s.centroid_name,
-            source_count: s.source_count,
-            is_current: s.event_id === eventId,
-          })) : undefined}
-        />
+        <>
+          <StanceClusterCard
+            clusters={stanceClusters}
+            entityType={siblingGroup ? 'sibling_group' : 'event'}
+            entityId={siblingGroup || eventId}
+            synthesis={entityAnalysis?.synthesis || entityAnalysis?.scores?.synthesis}
+            blindSpots={entityAnalysis?.blind_spots || entityAnalysis?.scores?.collective_blind_spots}
+            frameDivergence={entityAnalysis?.scores?.frame_divergence}
+            hasFullReport={!!(siblingAnalysis?.sections || entityAnalysis?.sections)}
+            siblings={siblings.length >= 2 ? siblings.map((s) => ({
+              event_id: s.event_id,
+              centroid_name: s.centroid_name,
+              source_count: s.source_count,
+              is_current: s.event_id === eventId,
+            })) : undefined}
+          />
+          {/* Pre-trigger analysis in background so it's cached when user clicks */}
+          {!(siblingAnalysis?.sections || entityAnalysis?.sections) && (
+            <AnalysisPrefetch
+              entityType={siblingGroup ? 'sibling_group' : 'event'}
+              entityId={siblingGroup || eventId}
+            />
+          )}
+        </>
+      )}
+
+      {/* Sibling group analysis link for events without own stance clusters */}
+      {stanceClusters.length === 0 && siblingGroup && (
+        <div className="bg-dashboard-card rounded-lg p-5 space-y-3 border border-dashboard-border">
+          <h3 className="text-sm font-semibold text-dashboard-text">Cross-Perspective Analysis</h3>
+          <p className="text-xs text-dashboard-text-muted leading-relaxed">
+            This event is part of a cross-centroid story covered by {siblings.length} perspectives.
+          </p>
+          {siblings.length >= 2 && (
+            <div className="space-y-1">
+              {siblings.map((s) => (
+                <div key={s.event_id} className={`text-xs flex items-center gap-2 ${s.event_id === eventId ? 'text-dashboard-text font-medium' : 'text-dashboard-text-muted'}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                  <span className="truncate">{s.centroid_name}</span>
+                  <span className="text-dashboard-text-muted/60 ml-auto shrink-0">{s.source_count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <a
+            href={`/${locale}/analysis/comparative/sibling_group/${siblingGroup}`}
+            className={`inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded transition-colors ${
+              siblingAnalysis?.sections
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                : 'bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'
+            }`}
+          >
+            {siblingAnalysis?.sections ? 'View Full Analysis' : 'Deep Analysis'}
+          </a>
+          {!(siblingAnalysis?.sections) && (
+            <AnalysisPrefetch entityType="sibling_group" entityId={siblingGroup} />
+          )}
+        </div>
       )}
 
       {/* Legacy narrative cards (shown if no stance clusters, or alongside for transition) */}
-      {stanceClusters.length === 0 && (
+      {stanceClusters.length === 0 && !siblingGroup && (
         <>
           {legacyNarratives.length > 0 ? (
             <NarrativeCards narratives={legacyNarratives} />
