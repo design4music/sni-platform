@@ -10,7 +10,7 @@ import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
 import ExtractButton from '@/components/ExtractButton';
-import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getEventSiblings, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -93,6 +93,13 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
     ? await getEntityAnalysis('event', eventId, locale)
     : null;
 
+  // Check for cross-centroid siblings
+  const siblings = await getEventSiblings(eventId, locale);
+  const siblingGroup = siblings.length >= 2 ? siblings[0].sibling_group : null;
+  const siblingAnalysis = siblingGroup
+    ? await getEntityAnalysis('sibling_group', siblingGroup, locale)
+    : null;
+
   // Lazy-translate narrative card fields for DE users
   if (locale === 'de') {
     for (const n of narratives) {
@@ -122,12 +129,18 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
       {stanceClusters.length > 0 && (
         <StanceClusterCard
           clusters={stanceClusters}
-          entityType="event"
-          entityId={eventId}
+          entityType={siblingGroup ? 'sibling_group' : 'event'}
+          entityId={siblingGroup || eventId}
           synthesis={entityAnalysis?.synthesis || entityAnalysis?.scores?.synthesis}
           blindSpots={entityAnalysis?.blind_spots || entityAnalysis?.scores?.collective_blind_spots}
           frameDivergence={entityAnalysis?.scores?.frame_divergence}
-          hasFullReport={!!entityAnalysis?.sections}
+          hasFullReport={!!(siblingAnalysis?.sections || entityAnalysis?.sections)}
+          siblings={siblings.length >= 2 ? siblings.map((s) => ({
+            event_id: s.event_id,
+            centroid_name: s.centroid_name,
+            source_count: s.source_count,
+            is_current: s.event_id === eventId,
+          })) : undefined}
         />
       )}
 

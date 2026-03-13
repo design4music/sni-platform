@@ -13,6 +13,13 @@ interface ClusterInfo {
   description: string | null;
 }
 
+interface SiblingInfo {
+  event_id: string;
+  centroid_name: string;
+  source_count: number;
+  is_current: boolean;
+}
+
 interface Props {
   clusters: ClusterInfo[];
   entityType: string;
@@ -21,6 +28,7 @@ interface Props {
   blindSpots?: string[] | null;
   frameDivergence?: number | null;
   hasFullReport?: boolean;
+  siblings?: SiblingInfo[];
 }
 
 const CLUSTER_COLORS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
@@ -66,6 +74,7 @@ export default function StanceClusterCard({
   blindSpots,
   frameDivergence,
   hasFullReport,
+  siblings,
 }: Props) {
   const { data: session } = useSession();
   const locale = useLocale();
@@ -83,6 +92,22 @@ export default function StanceClusterCard({
       <p className="text-xs text-dashboard-text-muted">
         {clusters.length} editorial clusters, {totalTitles} headlines analysed
       </p>
+
+      {/* Cross-centroid siblings */}
+      {siblings && siblings.length >= 2 && (
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-dashboard-text-muted">
+          <span>Also covered under:</span>
+          {siblings.filter((s) => !s.is_current).map((s, i) => (
+            <span key={s.event_id}>
+              {i > 0 && <span className="text-dashboard-text-muted/40">,</span>}
+              {' '}
+              <Link href={`/events/${s.event_id}`} className="text-blue-400 hover:text-blue-300">
+                {s.centroid_name}
+              </Link>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Cluster cards */}
       <div className="space-y-2">

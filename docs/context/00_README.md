@@ -13,8 +13,11 @@ This repository contains the World Brief strategic intelligence system.
 3. `30_DecisionLog.yml`
    Why key decisions were made
 
-4. `PIPELINE_STATUS.md`  
+4. `PIPELINE_STATUS.md`
    What exists right now (pipeline + frontend)
+
+5. `70_AnalyticalExpansion.md`
+   Where we are going next (analytical capabilities roadmap)
 
 ## Quick Orientation
 

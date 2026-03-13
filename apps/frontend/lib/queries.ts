@@ -854,6 +854,109 @@ export async function getEntityAnalysis(
   return rows.length > 0 ? rows[0] : null;
 }
 
+export interface TimelineEvent {
+  title: string;
+  date: string;
+  importance_score: number | null;
+  source_count: number;
+  tags: string[] | null;
+}
+
+export async function getCentroidTimeline(
+  centroidId: string,
+  excludeEventIds: string[] = [],
+  relevanceTags: string[] = [],
+  days: number = 90,
+  limit: number = 15,
+  boostBucketKeys: string[] = [],
+  beforeDate?: string,
+): Promise<TimelineEvent[]> {
+  // Fetch events BEFORE the analyzed event (or before NOW if no date given)
+  // This prevents "future" events from contaminating the analysis context
+  const anchor = beforeDate || new Date().toISOString().slice(0, 10);
+
+  if (relevanceTags.length === 0) {
+    const params: unknown[] = [centroidId, excludeEventIds, days, limit, anchor];
+    if (boostBucketKeys.length > 0) params.push(boostBucketKeys);
+    const bucketBoost = boostBucketKeys.length > 0
+      ? `+ CASE WHEN e.bucket_key = ANY($6::text[]) THEN 0.3 ELSE 0 END` : '';
+    const rows = await query<TimelineEvent>(
+      `SELECT
+         COALESCE(e.title, e.topic_core) as title,
+         e.date::text as date,
+         e.importance_score,
+         e.source_batch_count as source_count,
+         e.tags
+       FROM events_v3 e
+       JOIN ctm ON ctm.id = e.ctm_id
+       WHERE ctm.centroid_id = $1
+         AND e.date >= $5::date - ($3 || ' days')::interval
+         AND e.date <= $5::date
+         AND e.merged_into IS NULL
+         AND NOT (e.id = ANY($2::uuid[]))
+         AND e.source_batch_count >= 15
+       ORDER BY (COALESCE(e.importance_score, 0.1) ${bucketBoost}) DESC
+       LIMIT $4`,
+      params
+    );
+    return rows;
+  }
+
+  const params: unknown[] = [centroidId, excludeEventIds, days, relevanceTags, limit, anchor];
+  if (boostBucketKeys.length > 0) params.push(boostBucketKeys);
+  const bucketBoost = boostBucketKeys.length > 0
+    ? `+ CASE WHEN e.bucket_key = ANY($7::text[]) THEN 0.3 ELSE 0 END` : '';
+  const rows = await query<TimelineEvent>(
+    `SELECT
+       COALESCE(e.title, e.topic_core) as title,
+       e.date::text as date,
+       e.importance_score,
+       e.source_batch_count as source_count,
+       e.tags
+     FROM events_v3 e
+     JOIN ctm ON ctm.id = e.ctm_id
+     WHERE ctm.centroid_id = $1
+       AND e.date >= $6::date - ($3 || ' days')::interval
+       AND e.date <= $6::date
+       AND e.merged_into IS NULL
+       AND NOT (e.id = ANY($2::uuid[]))
+       AND e.source_batch_count >= 15
+     ORDER BY (COALESCE(e.importance_score, 0.1) + 0.3 * COALESCE(array_length(
+       ARRAY(SELECT unnest(COALESCE(e.tags, ARRAY[]::text[])) INTERSECT SELECT unnest($4::text[])), 1
+     ), 0) ${bucketBoost}) DESC
+     LIMIT $5`,
+    params
+  );
+  return rows;
+}
+
+export interface SiblingEvent {
+  event_id: string;
+  title: string;
+  source_count: number;
+  centroid_name: string;
+  sibling_group: string;
+}
+
+export async function getEventSiblings(eventId: string, locale?: string): Promise<SiblingEvent[]> {
+  const rows = await query<SiblingEvent>(
+    `SELECT e.id as event_id,
+            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+            e.source_batch_count as source_count,
+            cv.label as centroid_name,
+            e.sibling_group::text
+     FROM events_v3 e
+     JOIN ctm ON ctm.id = e.ctm_id
+     JOIN centroids_v3 cv ON cv.id = ctm.centroid_id
+     WHERE e.sibling_group = (
+       SELECT sibling_group FROM events_v3 WHERE id = $1 AND sibling_group IS NOT NULL
+     )
+     ORDER BY e.source_batch_count DESC`,
+    [eventId]
+  );
+  return rows;
+}
+
 export async function getSiblingNarratives(
   entityType: string, entityId: string
 ): Promise<Array<{ id: string; label: string }>> {
