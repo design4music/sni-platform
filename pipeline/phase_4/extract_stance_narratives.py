@@ -305,7 +305,9 @@ def call_extraction_llm(entity_context, clusters_block):
 # ---------------------------------------------------------------------------
 
 
-def save_stance_narratives(conn, entity_type, entity_id, frames, cluster_meta):
+def save_stance_narratives(
+    conn, entity_type, entity_id, frames, cluster_meta, source_batch_count=None
+):
     """Save extracted stance-clustered narratives.
 
     cluster_meta: dict of cluster_label -> {publishers, avg_score, titles, sample_titles}
@@ -368,7 +370,8 @@ def save_stance_narratives(conn, entity_type, entity_id, frames, cluster_meta):
 
             # Frame-level stats
             signal_stats = {
-                "source_count_at_extraction": len(meta["sampled"]),
+                "source_count_at_extraction": source_batch_count
+                or len(meta["sampled"]),
                 "cluster_publishers": meta["publishers"],
                 "cluster_avg_score": meta["avg_score"],
                 "frame_title_count": len(meta["sampled"]),
@@ -534,7 +537,14 @@ def extract_stance_narratives(conn, entity_type, entity_id, dry_run=False):
         return {"cluster_count": len(cluster_samples), "narrative_count": 0}
 
     # 6. Save
-    saved = save_stance_narratives(conn, entity_type, entity_id, frames, cluster_meta)
+    saved = save_stance_narratives(
+        conn,
+        entity_type,
+        entity_id,
+        frames,
+        cluster_meta,
+        source_batch_count=entity.get("source_batch_count"),
+    )
 
     print("\nSaved %d stance-clustered narratives:" % saved)
     for f in frames:

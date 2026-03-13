@@ -21,8 +21,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from core.signal_stats import compute_ctm_stats, compute_event_stats
-from pipeline.epics.build_epics import fetch_wikipedia_context
+from core.signal_stats import compute_ctm_stats
 from pipeline.phase_4.extract_ctm_narratives import (
     extract_narratives_llm as ctm_extract_llm,
 )
@@ -35,15 +34,10 @@ from pipeline.phase_4.extract_ctm_narratives import (
     save_narratives as ctm_save_narratives,
 )
 from pipeline.phase_4.extract_event_narratives import (
-    extract_narratives_llm as event_extract_llm,
-)
-from pipeline.phase_4.extract_event_narratives import (
-    fetch_event_by_id,
-    fetch_event_titles,
     get_db_connection,
 )
-from pipeline.phase_4.extract_event_narratives import (
-    save_narratives as event_save_narratives,
+from pipeline.phase_4.extract_stance_narratives import (
+    extract_stance_narratives,
 )
 
 EXTRACTION_API_KEY = os.environ.get("EXTRACTION_API_KEY", "")
@@ -65,6 +59,7 @@ app = FastAPI(title="SNI Extraction API")
 class ExtractRequest(BaseModel):
     entity_type: str  # "event" or "ctm"
     entity_id: str
+    force: bool = False
 
 
 def _check_auth(request: Request):
@@ -93,65 +88,26 @@ def _is_incoherent(result) -> dict | None:
     return None
 
 
-def _extract_event(conn, entity_id: str) -> dict:
-    """Extract narratives for an event."""
-    event = fetch_event_by_id(conn, entity_id)
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+def _extract_event(conn, entity_id: str, force: bool = False) -> dict:
+    """Extract stance-clustered narratives for an event."""
+    if force:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM narratives WHERE entity_type = 'event' AND entity_id = %s "
+                "AND extraction_method = 'stance_clustered'",
+                (entity_id,),
+            )
+            cur.execute(
+                "DELETE FROM entity_analyses WHERE entity_type = 'event' AND entity_id = %s",
+                (entity_id,),
+            )
+        conn.commit()
 
-    titles = fetch_event_titles(conn, event["id"])
-    if len(titles) < 5:
+    result = extract_stance_narratives(conn, "event", entity_id)
+    if not result or result["narrative_count"] == 0:
         raise HTTPException(
-            status_code=422,
-            detail="Only %d titles - need at least 5" % len(titles),
+            status_code=422, detail="Could not extract stance narratives"
         )
-
-    sampled = sample_titles(titles, time_stratify=True)
-    hint = _frame_hint(len(sampled))
-
-    # Wikipedia context
-    wiki_context = None
-    try:
-        wiki_context = fetch_wikipedia_context(event["title"], [], month_str=None)
-    except Exception:
-        pass
-
-    frames, _, _ = event_extract_llm(
-        event,
-        sampled,
-        wiki_context,
-        frame_hint=hint,
-        pre_instructions=COHERENCE_CHECK,
-    )
-
-    # Check coherence
-    incoherent = _is_incoherent(frames)
-    if incoherent:
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE events_v3 SET coherence_check = %s WHERE id = %s",
-                (json.dumps(incoherent), str(event["id"])),
-            )
-        conn.commit()
-        return incoherent
-
-    if not frames or not isinstance(frames, list):
-        raise HTTPException(status_code=500, detail="LLM returned no frames")
-
-    event_save_narratives(
-        conn, event["id"], frames, sampled, event["source_batch_count"]
-    )
-
-    # Compute signal stats for each narrative
-    stats = compute_event_stats(conn, event["id"])
-    if stats:
-        with conn.cursor() as cur:
-            cur.execute(
-                """UPDATE narratives SET signal_stats = %s
-                   WHERE entity_type = 'event' AND entity_id = %s""",
-                (json.dumps(stats), str(event["id"])),
-            )
-        conn.commit()
 
     return {"narratives": _fetch_saved_narratives(conn, "event", entity_id)}
 
@@ -232,7 +188,7 @@ async def extract(body: ExtractRequest, request: Request):
     conn = get_db_connection()
     try:
         if body.entity_type == "event":
-            result = _extract_event(conn, body.entity_id)
+            result = _extract_event(conn, body.entity_id, force=body.force)
         else:
             result = _extract_ctm(conn, body.entity_id)
 

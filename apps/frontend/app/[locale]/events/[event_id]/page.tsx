@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-import NarrativeCards from '@/components/NarrativeOverlay';
 import RaiSidebar from '@/components/RaiSidebar';
 import StanceClusterCard from '@/components/StanceClusterCard';
 import ExpandableTitles from '@/components/ExpandableTitles';
@@ -11,6 +10,7 @@ import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
 import ExtractButton from '@/components/ExtractButton';
 import AnalysisPrefetch from '@/components/AnalysisPrefetch';
+import NarrativePrefetch from '@/components/NarrativePrefetch';
 import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getEventSiblings, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
@@ -80,10 +80,12 @@ function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
 /* Deferred async server components                                   */
 /* ------------------------------------------------------------------ */
 
-async function EventSidebar({ eventId, coherenceCheck, locale }: {
+async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourceBatchCount }: {
   eventId: string;
   coherenceCheck?: { reason: string; topics?: string[] } | null;
   locale?: string;
+  eventMonth?: string;
+  sourceBatchCount?: number;
 }) {
   const t = await getTranslations('event');
   const narratives = await getFramedNarratives('event', eventId, locale);
@@ -101,28 +103,13 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
     ? await getEntityAnalysis('sibling_group', siblingGroup, locale)
     : null;
 
-  // Lazy-translate narrative card fields for DE users
-  if (locale === 'de') {
-    for (const n of narratives) {
-      const de = await ensureDE('narratives', 'id', n.id, [
-        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
-        { src: 'description', dest: 'description_de', text: n.description || '' },
-        { src: 'moral_frame', dest: 'moral_frame_de', text: n.moral_frame || '' },
-      ]);
-      if (de.label) n.label = de.label;
-      if (de.description) n.description = de.description;
-      if (de.moral_frame) n.moral_frame = de.moral_frame;
-    }
-  }
-
   const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
   const signalStats = rawStats?.title_count ? rawStats : null;
   const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
 
-  // Legacy narratives (non-stance-clustered)
-  const legacyNarratives = narratives.filter(
-    (n) => !n.extraction_method || n.extraction_method !== 'stance_clustered'
-  );
+  // Auto-extract eligibility: current month, no coherence failure
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const autoExtractEligible = !coherenceCheck && eventMonth === currentMonth;
 
   return (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
@@ -144,6 +131,10 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
               is_current: s.event_id === eventId,
             })) : undefined}
           />
+          {/* Staleness check for growing current-month events */}
+          {autoExtractEligible && (
+            <NarrativePrefetch entityType="event" entityId={eventId} />
+          )}
           {/* Pre-trigger analysis in background so it's cached when user clicks */}
           {!(siblingAnalysis?.sections || entityAnalysis?.sections) && (
             <AnalysisPrefetch
@@ -188,12 +179,10 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
         </div>
       )}
 
-      {/* Legacy narrative cards (shown if no stance clusters, or alongside for transition) */}
+      {/* No stance clusters yet, no sibling group */}
       {stanceClusters.length === 0 && !siblingGroup && (
         <>
-          {legacyNarratives.length > 0 ? (
-            <NarrativeCards narratives={legacyNarratives} />
-          ) : coherenceCheck ? (
+          {coherenceCheck ? (
             <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
               <h3 className="text-sm font-semibold text-amber-300">{t('mixedCluster')}</h3>
               <p className="text-xs text-dashboard-text-muted leading-relaxed">
@@ -207,14 +196,13 @@ async function EventSidebar({ eventId, coherenceCheck, locale }: {
                 </ul>
               )}
             </div>
+          ) : autoExtractEligible ? (
+            <NarrativePrefetch entityType="event" entityId={eventId} />
           ) : (
             <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
               <h3 className="text-sm font-semibold text-dashboard-text">{t('narrativeAnalysis')}</h3>
               <p className="text-xs text-dashboard-text-muted leading-relaxed">
                 {t('extractDescription')}
-              </p>
-              <p className="text-xs text-dashboard-text-muted leading-relaxed">
-                {t('extractTiming')}
               </p>
               <ExtractButton entityType="event" entityId={eventId} />
             </div>
@@ -324,7 +312,7 @@ export default async function EventDetailPage({ params }: Props) {
 
   const sidebar = (
     <Suspense fallback={sidebarFallback}>
-      <EventSidebar eventId={event_id} coherenceCheck={event.coherence_check} locale={locale} />
+      <EventSidebar eventId={event_id} coherenceCheck={event.coherence_check} locale={locale} eventMonth={event.month} sourceBatchCount={event.source_batch_count} />
     </Suspense>
   );
 

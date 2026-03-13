@@ -62,7 +62,11 @@ export default function ExtractButton({ entityType, entityId }: Props) {
         return;
       }
 
-      if (data.first_narrative_id) {
+      if (data.has_stance) {
+        // Stance extraction succeeded -- refresh page to show StanceClusterCard
+        router.refresh();
+      } else if (data.first_narrative_id) {
+        // Legacy extraction (CTM/epic) -- navigate to analysis page
         const prefix = locale === 'de' ? '/de' : '';
         router.push(`${prefix}/analysis/${data.first_narrative_id}`);
       } else {
