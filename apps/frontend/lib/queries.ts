@@ -140,43 +140,38 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     is_catchall: boolean;
     has_narratives: boolean;
   }>(
-    `SELECT
-      e.id,
-      e.date::text as date,
-      e.last_active::text as last_active,
-      COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
-      ${locCol('e', 'summary', locale)} as summary,
-      e.tags,
-      COALESCE(ab.event_type, e.event_type) as event_type,
-      COALESCE(ab.bucket_key, e.bucket_key) as bucket_key,
-      e.source_batch_count,
-      e.importance_score,
-      e.is_catchall,
-      n.entity_id IS NOT NULL as has_narratives,
-      COALESCE(t.title_ids, '{}') as source_title_ids
-    FROM events_v3 e
-    LEFT JOIN LATERAL (
-      SELECT array_agg(evt.title_id ORDER BY evt.title_id) as title_ids
-      FROM event_v3_titles evt WHERE evt.event_id = e.id
-    ) t ON true
-    LEFT JOIN LATERAL (
-      SELECT entity_id FROM narratives n
-      WHERE n.entity_type = 'event' AND n.entity_id = e.id LIMIT 1
-    ) n ON true
-    LEFT JOIN LATERAL (
-      SELECT absorbed.event_type, absorbed.bucket_key
-      FROM events_v3 absorbed
-      WHERE absorbed.merged_into = e.id AND absorbed.ctm_id = $1
-      ORDER BY absorbed.source_batch_count DESC
-      LIMIT 1
-    ) ab ON e.ctm_id != $1
-    WHERE e.source_batch_count > 0
-      AND e.merged_into IS NULL
-      AND (
-        e.ctm_id = $1
-        OR ab.event_type IS NOT NULL
-      )
-    ORDER BY e.is_catchall ASC, CASE WHEN e.importance_score >= 0.5 THEN 0 ELSE 1 END, e.source_batch_count DESC`,
+    `SELECT id, date, last_active, title, summary, tags, event_type, bucket_key,
+      source_batch_count, importance_score, is_catchall, has_narratives, source_title_ids
+    FROM (
+      -- Native events for this CTM
+      SELECT
+        e.id, e.date::text as date, e.last_active::text as last_active,
+        COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+        ${locCol('e', 'summary', locale)} as summary,
+        e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.importance_score,
+        e.is_catchall,
+        EXISTS(SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
+        COALESCE((SELECT array_agg(evt.title_id ORDER BY evt.title_id) FROM event_v3_titles evt WHERE evt.event_id = e.id), '{}') as source_title_ids
+      FROM events_v3 e
+      WHERE e.ctm_id = $1 AND e.source_batch_count > 0 AND e.merged_into IS NULL
+
+      UNION ALL
+
+      -- Anchor events that absorbed an event from this CTM
+      SELECT
+        e.id, e.date::text as date, e.last_active::text as last_active,
+        COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+        ${locCol('e', 'summary', locale)} as summary,
+        e.tags, ab.event_type, ab.bucket_key, e.source_batch_count, e.importance_score,
+        e.is_catchall,
+        EXISTS(SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
+        COALESCE((SELECT array_agg(evt.title_id ORDER BY evt.title_id) FROM event_v3_titles evt WHERE evt.event_id = e.id), '{}') as source_title_ids
+      FROM events_v3 ab
+      JOIN events_v3 e ON e.id = ab.merged_into
+      WHERE ab.ctm_id = $1 AND ab.merged_into IS NOT NULL
+        AND e.ctm_id <> $1 AND e.merged_into IS NULL AND e.source_batch_count > 0
+    ) combined
+    ORDER BY is_catchall ASC, CASE WHEN importance_score >= 0.5 THEN 0 ELSE 1 END, source_batch_count DESC`,
     [ctmId]
   );
 
