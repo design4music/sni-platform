@@ -30,20 +30,42 @@ export function getPool(): Pool {
   return pool;
 }
 
+function isConnectionError(err: any): boolean {
+  const msg = err?.message || '';
+  return msg.includes('Connection terminated') || msg.includes('ECONNREFUSED')
+    || msg.includes('ETIMEDOUT') || msg.includes('connection timeout');
+}
+
 export async function query<T = any>(text: string, params?: any[]): Promise<T[]> {
   const pool = getPool();
-  const result = await pool.query(text, params);
-  return result.rows;
+  try {
+    const result = await pool.query(text, params);
+    return result.rows;
+  } catch (err) {
+    if (isConnectionError(err)) {
+      console.warn('[db] connection failed, returning empty:', (err as Error).message);
+      return [];
+    }
+    throw err;
+  }
 }
 
 export async function queryNoJIT<T = any>(text: string, params?: any[]): Promise<T[]> {
   const pool = getPool();
-  const client = await pool.connect();
   try {
-    await client.query('SET LOCAL jit = off');
-    const result = await client.query(text, params);
-    return result.rows;
-  } finally {
-    client.release();
+    const client = await pool.connect();
+    try {
+      await client.query('SET LOCAL jit = off');
+      const result = await client.query(text, params);
+      return result.rows;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    if (isConnectionError(err)) {
+      console.warn('[db] connection failed, returning empty:', (err as Error).message);
+      return [];
+    }
+    throw err;
   }
 }
