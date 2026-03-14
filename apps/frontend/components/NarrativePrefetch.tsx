@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import ExtractButton from './ExtractButton';
 
 export default function NarrativePrefetch({ entityType, entityId }: {
   entityType: 'event' | 'ctm';
@@ -12,8 +13,9 @@ export default function NarrativePrefetch({ entityType, entityId }: {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations('stanceCluster');
+  const tEvent = useTranslations('event');
   const fired = useRef(false);
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<'loading' | 'done' | 'failed'>('loading');
 
   useEffect(() => {
     if (status === 'loading' || !session?.user || fired.current) return;
@@ -27,14 +29,35 @@ export default function NarrativePrefetch({ entityType, entityId }: {
       .then((r) => r.json())
       .then((data) => {
         console.log('[NarrativePrefetch] response:', data);
-        if (data.has_stance) router.refresh();
+        if (data.has_stance && data.status !== 'cached') {
+          router.refresh();
+          setState('done');
+        } else if (data.has_stance) {
+          setState('done');
+        } else {
+          setState('failed');
+        }
       })
-      .catch((err) => { console.error('[NarrativePrefetch] error:', err); })
-      .finally(() => setDone(true));
+      .catch((err) => {
+        console.error('[NarrativePrefetch] error:', err);
+        setState('failed');
+      });
   }, [session, status, entityType, entityId, router]);
 
-  // Hide after done, or if user is not signed in
-  if (done || status === 'unauthenticated') return null;
+  if (status === 'unauthenticated' || state === 'done') return null;
+
+  // Auto-extraction failed -- fall back to manual extract button
+  if (state === 'failed') {
+    return (
+      <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-dashboard-text">{tEvent('narrativeAnalysis')}</h3>
+        <p className="text-xs text-dashboard-text-muted leading-relaxed">
+          {tEvent('extractDescription')}
+        </p>
+        <ExtractButton entityType="event" entityId={entityId} />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
