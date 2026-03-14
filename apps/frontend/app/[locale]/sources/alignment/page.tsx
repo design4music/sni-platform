@@ -7,7 +7,7 @@ import { getOutletLogoUrl } from '@/lib/logos';
 import Link from 'next/link';
 import AlignmentHeatmap from './AlignmentHeatmap';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {

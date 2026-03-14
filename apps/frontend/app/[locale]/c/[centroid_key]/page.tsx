@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 import type { CentroidStanceScore } from '@/lib/queries';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;

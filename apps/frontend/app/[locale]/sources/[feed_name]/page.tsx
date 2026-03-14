@@ -10,7 +10,7 @@ import Link from 'next/link';
 import OutletMapSection from './OutletMapSection';
 import OutletLogo from '@/components/OutletLogo';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 interface OutletPageProps {
   params: Promise<{ feed_name: string }>;
