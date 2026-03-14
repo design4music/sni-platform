@@ -150,6 +150,8 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
     cachedAnalysis?.blind_spots || cachedAnalysis?.scores?.collective_blind_spots || null
   );
 
+  const [createdAt, setCreatedAt] = useState<string | null>(cachedAnalysis?.created_at || null);
+  const [regenerating, setRegenerating] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
@@ -188,6 +190,7 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
         setSections(newSections);
         setSynthesis(data.synthesis || data.scores?.synthesis || null);
         setBlindSpots(data.blind_spots || data.scores?.collective_blind_spots || null);
+        if (data.created_at) setCreatedAt(data.created_at);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Unknown error'))
       .finally(() => setLoading(false));
@@ -235,6 +238,46 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
     }
 
     return null;
+  }
+
+  async function regenerateAnalysis() {
+    if (!session?.user) return;
+    setRegenerating(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/rai-analyse-comparative', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity_type: entityType, entity_id: entityId, force: true }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(data.error || `Error ${res.status}`);
+      }
+      const data = await res.json();
+      let newSections: RaiSection[] = [];
+      if (data.sections) {
+        if (typeof data.sections === 'string') {
+          try {
+            const parsed = JSON.parse(data.sections);
+            newSections = Array.isArray(parsed) ? parsed : parseSections(data.sections);
+          } catch {
+            newSections = parseSections(data.sections);
+          }
+        } else if (Array.isArray(data.sections)) {
+          newSections = data.sections;
+        }
+      }
+      setSections(newSections);
+      setSynthesis(data.synthesis || data.scores?.synthesis || null);
+      setBlindSpots(data.blind_spots || data.scores?.collective_blind_spots || null);
+      setCreatedAt(new Date().toISOString());
+      setTranslatedSections(null); // clear stale DE translation
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Regeneration failed');
+    } finally {
+      setRegenerating(false);
+    }
   }
 
   async function translateReport() {
@@ -286,6 +329,34 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
   // Render the report
   return (
     <div>
+      {/* Report date + regenerate */}
+      <div className="flex items-center gap-3 mb-6 text-sm text-dashboard-text-muted">
+        {createdAt && (
+          <span>
+            {t('generatedOn')}{' '}
+            {new Date(createdAt).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
+              year: 'numeric', month: 'short', day: 'numeric',
+            })}
+          </span>
+        )}
+        {session?.user && (
+          <button
+            onClick={regenerateAnalysis}
+            disabled={regenerating}
+            className="px-3 py-1 rounded bg-dashboard-border hover:text-dashboard-text disabled:opacity-50 transition-colors"
+          >
+            {regenerating ? (
+              <>
+                <span className="inline-block w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin mr-1.5 align-middle" />
+                {t('regenerating')}
+              </>
+            ) : (
+              t('regenerate')
+            )}
+          </button>
+        )}
+      </div>
+
       {/* Translate button for DE users */}
       {showTranslateBtn && (
         <div className="mb-6">

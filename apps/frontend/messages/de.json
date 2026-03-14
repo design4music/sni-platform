@@ -703,7 +703,10 @@
     "generatingTime": "Dies dauert in der Regel 1-2 Minuten",
     "retry": "Erneut versuchen",
     "synthesis": "Synthese",
-    "collectiveBlindSpots": "Kollektive blinde Flecken"
+    "collectiveBlindSpots": "Kollektive blinde Flecken",
+    "generatedOn": "Erstellt am",
+    "regenerate": "Neu generieren",
+    "regenerating": "Wird neu generiert..."
   },
   "terms": {
     "title": "Nutzungsbedingungen",

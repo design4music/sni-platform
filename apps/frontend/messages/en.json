@@ -703,7 +703,10 @@
     "generatingTime": "This typically takes 1-2 minutes",
     "retry": "Retry",
     "synthesis": "Synthesis",
-    "collectiveBlindSpots": "Collective Blind Spots"
+    "collectiveBlindSpots": "Collective Blind Spots",
+    "generatedOn": "Generated on",
+    "regenerate": "Regenerate",
+    "regenerating": "Regenerating..."
   },
   "terms": {
     "title": "Terms of Service",

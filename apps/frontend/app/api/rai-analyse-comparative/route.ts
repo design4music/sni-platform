@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const { entity_type, entity_id } = await req.json();
+    const { entity_type, entity_id, force } = await req.json();
     if (!entity_type || !entity_id) {
       return NextResponse.json(
         { error: 'Missing entity_type or entity_id' },
@@ -37,19 +37,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check cache
-    const cached = await query<{
+    // Check cache (skip if force regeneration requested)
+    const cached = !force ? await query<{
       sections: string | null;
       scores: unknown;
       synthesis: string | null;
       blind_spots: string[] | null;
       conflicts: string[] | null;
+      created_at: string;
     }>(
-      `SELECT sections, scores, synthesis, blind_spots, conflicts
+      `SELECT sections, scores, synthesis, blind_spots, conflicts, created_at
        FROM entity_analyses
        WHERE entity_type = $1 AND entity_id = $2`,
       [entity_type, entity_id]
-    );
+    ) : [];
 
     if (cached.length > 0 && cached[0].sections) {
       let sections = cached[0].sections;
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
         synthesis: cached[0].synthesis,
         blind_spots: cached[0].blind_spots,
         conflicts: cached[0].conflicts,
+        created_at: cached[0].created_at,
       });
     }
 
