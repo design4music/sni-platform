@@ -21,6 +21,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from core.prompts import COHERENCE_CHECK
 from core.signal_stats import compute_ctm_stats
 from pipeline.phase_4.extract_ctm_narratives import (
     extract_narratives_llm as ctm_extract_llm,
@@ -41,17 +42,6 @@ from pipeline.phase_4.extract_stance_narratives import (
 )
 
 EXTRACTION_API_KEY = os.environ.get("EXTRACTION_API_KEY", "")
-
-COHERENCE_CHECK = """IMPORTANT: Before extracting frames, assess whether these headlines \
-cover a SINGLE coherent story or MULTIPLE UNRELATED topics.
-
-If the headlines are about different, unrelated subjects (not just different angles on \
-the same story), respond ONLY with this JSON object:
-{"coherent": false, "reason": "one sentence explaining the topic mix", \
-"topics": ["Topic A", "Topic B"]}
-
-Only proceed with frame extraction if the headlines genuinely cover the same overarching \
-event or story from different editorial stances."""
 
 app = FastAPI(title="SNI Extraction API")
 

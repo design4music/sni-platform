@@ -192,17 +192,6 @@ Chains grow across months via reused saga UUIDs stored in `events_v3.saga`.
 
 ---
 
-## What This Model Is Not
-
-- Not probabilistic clustering
-- Not topic modeling
-- Not sentiment analysis
-- Not real-time streaming intelligence
-
-SNI is a **strategic aggregation engine**, not a discovery toy.
-
----
-
 ## Frontend Layer
 
 The frontend is primarily a **read-only presentation layer** over the database.
@@ -211,44 +200,6 @@ It introduces no intelligence, inference, or interpretation of pipeline data.
 Two exceptions have controlled write paths:
 - **Authentication**: User registration and sign-in (NextAuth v5, credentials)
 - **On-demand extraction/analysis**: Triggers extraction + RAI analysis, caches results in DB
-
-### Principles
-- Centroid-first navigation
-- CTM is the atomic unit of displayed intelligence
-- No aggregation or transformation beyond what exists in DB
-- Write paths limited to auth and extraction triggers
-
-### Caching Strategy
-- **ISR revalidation**: Pages cached as static HTML (5 min for hot pages, 10 min for cold)
-- **In-memory query cache**: Map-based TTL cache for 9 frequent DB queries (lib/cache.ts)
-- **Optimized SQL**: Expensive correlated subqueries replaced with CTEs
-- **No Redis**: Single instance, in-memory cache sufficient
-- Search page remains force-dynamic (user-specific query)
-
-### Content Types
-
-| Type | URL Pattern | Source |
-|------|-------------|--------|
-| Centroid overview | `/c/{centroid_id}` | centroids_v3 + centroid_monthly_summaries |
-| CTM track page | `/c/{centroid_id}/t/{track}` | ctm + events_v3 + narratives |
-| Event detail | `/events/{event_id}` | events_v3 + narratives + saga siblings |
-| Epic list | `/epics` | epics (month-navigated) |
-| Epic detail | `/epics/{slug}` | epics + epic_events + narratives |
-| Sources list | `/sources` | feeds (active outlets) |
-| Outlet profile | `/sources/{feed_name}` | feeds + titles_v3 + narratives |
-| Analysis | `/analysis/{narrative_id}` | narratives + signal_stats + rai_signals |
-| Search | `/search` | Full-text search across centroids, events, CTMs |
-
-### Navigation Model
-
-Home
--> Region/System -> Centroid -> Track -> CTM (summary + events + sources)
-                                     -> Extract & Analyse -> Analysis page (scores + prose)
-                                     -> Event detail (summary + saga timeline + narratives + sources)
-                                         -> Extract & Analyse -> Analysis page
--> Epics -> Epic detail (timeline + centroid perspectives + narratives)
--> Sources -> Outlet profile (coverage map + narrative participation)
--> Search -> Full-text results
 
 ### Architectural Constraint
 

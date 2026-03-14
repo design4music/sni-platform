@@ -26,6 +26,7 @@ import psycopg2
 
 from core.config import config
 from core.llm_utils import extract_json
+from core.prompts import MERGE_SYSTEM_PROMPT, MERGE_USER_PROMPT
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(errors="replace")
@@ -39,61 +40,7 @@ CTM_IMPORTANCE_THRESHOLD = 0.5
 # Minimum events in a CTM to bother with merge pass
 MIN_EVENTS_FOR_MERGE = 4
 
-# =============================================================================
-# PROMPTS
-# =============================================================================
-
-MERGE_SYSTEM_PROMPT = """You identify news events that describe the SAME real-world story \
-within a country's intelligence briefing.
-
-Events may appear separate because they entered through different geographic angles \
-(domestic vs bilateral) or because early clustering split them before the full picture emerged. \
-Your job: find groups that are clearly the SAME story and should be merged.
-
-MERGE when:
-- Events describe the same core development from different angles (domestic vs international framing)
-- One event is a direct sub-story of another (e.g., "Leader killed" and "Succession begins" = same story arc)
-- Events cover the same specific action/decision but emphasize different actors involved
-
-KEEP SEPARATE when:
-- Events share a theme but cover genuinely different developments
-- Events involve the same actors but different actions (e.g., "Trump tariffs" vs "Trump Greenland")
-- Events involve the same country pair but different topics (e.g., "US threatens Spain over bases" vs "Amazon invests in Spain" are SEPARATE)
-- Connection is only thematic (both about "economy" or "security" is NOT enough)
-- One event is about government policy and the other about private sector activity, even if same countries
-
-When in doubt, keep SEPARATE. A wrong merge destroys information. A missed merge is harmless.
-
-For each merged group, also produce:
-- An updated title (under 120 chars) that captures the full story
-- An updated summary (2-4 sentences) written from the centroid's perspective -- \
-prioritize how this story matters to and is framed by the centroid country"""
-
-MERGE_USER_PROMPT = """CTM: {centroid_label} / {track} / {month}
-
-Events (ID, bucket, sources, title, summary):
-{events_text}
-
-Which events describe the SAME real-world story and should be merged?
-
-Return JSON:
-{{
-  "groups": [
-    {{
-      "event_ids": ["id1", "id2", ...],
-      "updated_title": "Merged title capturing full story",
-      "updated_summary": "2-4 sentence summary incorporating all perspectives."
-    }}
-  ]
-}}
-
-Rules:
-- Only include groups of 2+ events that should merge. Omit singletons.
-- If no merges are needed, return {{"groups": []}}
-- event_ids must be valid IDs from the list above
-- An event may appear in at most one group
-- updated_title must be under 120 characters"""
-
+# Prompts imported from core.prompts: MERGE_SYSTEM_PROMPT, MERGE_USER_PROMPT
 
 # =============================================================================
 # DATABASE

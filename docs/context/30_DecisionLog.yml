@@ -6,27 +6,19 @@ decisions:
     status: accepted
     title: Replace Neo4j graph clustering with centroid-based architecture
     rationale:
-      - Graph clustering was expensive and opaque
-      - PostgreSQL-only architecture reduces complexity
-      - Centroids provide explicit, auditable narrative anchors
+      - Graph clustering expensive and opaque; centroids provide auditable narrative anchors
     consequences:
-      - No emergent topic discovery
-      - Manual centroid curation required
-    references:
-      - V3_PIPELINE_STATUS.md
+      - No emergent topic discovery; manual centroid curation required
 
   - id: D-002
     date: 2025-11-03
     type: data-model
     status: accepted
-    title: Adopt CTM (Centroid–Track–Month) as atomic intelligence unit
+    title: Adopt CTM (Centroid-Track-Month) as atomic intelligence unit
     rationale:
-      - Aligns aggregation with strategic time horizons
-      - Prevents narrative drift across months
-      - Simplifies frontend consumption
+      - Aligns aggregation with strategic time horizons, prevents narrative drift
     consequences:
-      - Titles are demoted to inputs
-      - CTMs become primary analysis objects
+      - CTMs become primary analysis objects; titles demoted to inputs
 
   - id: D-003
     date: 2025-11-05
@@ -34,12 +26,9 @@ decisions:
     status: accepted
     title: Restrict LLMs to judgment-only tasks
     rationale:
-      - LLMs are unreliable for structural grouping
-      - Determinism required for clustering
+      - LLMs unreliable for structural grouping; determinism required for clustering
     scope:
-      - Track assignment
-      - Event extraction
-      - Narrative summarization
+      - Track assignment, event extraction, narrative summarization
 
   - id: D-004
     date: 2025-11-06
@@ -47,11 +36,9 @@ decisions:
     status: accepted
     title: Introduce stop-word and language false-positive filtering
     rationale:
-      - Prevent cultural/sport contamination
-      - Eliminate Romance-language alias collisions
-    impact:
-      - Reduced false positives
-      - Cleaner systemic centroids
+      - Prevent cultural/sport contamination and Romance-language alias collisions
+    consequences:
+      - Reduced false positives, cleaner systemic centroids
 
   - id: D-005
     date: 2025-11-07
@@ -59,11 +46,9 @@ decisions:
     status: accepted
     title: Implement dynamic track configuration system
     rationale:
-      - One-size-fits-all tracks reduce precision
-      - Domains require domain-specific track vocabularies
+      - One-size-fits-all tracks reduce precision; domains need specific vocabularies
     consequences:
-      - Track logic moves to database
-      - No redeploy required for track edits
+      - Track logic moves to database; no redeploy for track edits
 
   - id: D-006
     date: 2026-01-02
@@ -71,30 +56,9 @@ decisions:
     status: accepted
     title: Switch from sequential 3-pass early-exit to accumulative centroid matching
     rationale:
-      - Sequential passes missed bilateral relationships (Denmark+Trump matched only Denmark)
-      - Early-exit prevented multi-centroid assignment needed for relationship tracking
-      - Accumulative matching enables comprehensive event aggregation per centroid
-      - Supports bilateral relationship queries (all US-Russia interaction events)
+      - Sequential passes missed bilateral relationships; early-exit prevented multi-centroid assignment
     consequences:
-      - Higher centroid assignments per title (44% multi-centroid vs ~5% before)
-      - Increased CTM volume (more centroids per title → more CTMs)
-      - Pass concept obsolete (all patterns checked regardless of centroid class)
-      - Removed is_macro field from centroids_v3 schema
-    implementation:
-      - Hash-based single-word matching (O(1) lookup, 3600+ aliases)
-      - Precompiled regex patterns (1700+ patterns compiled once)
-      - Script-aware matching (word boundaries for ASCII, substring for CJK/Arabic)
-      - Batched database updates for 2K+ titles/day scale
-      - Hyphenated compound splitting (China-made matches China)
-      - Diacritic normalization (Côte d'Ivoire matches Cote d'Ivoire)
-    performance:
-      - Coverage increased from ~45% to 66.5% on test dataset (872 titles)
-      - Multi-centroid rate: 44% (259/580 matched titles)
-      - Centroid coverage: 77.6% (66/85 centroids matched)
-    references:
-      - Phase 2 implementation: v3/phase_2/match_centroids.py
-      - Taxonomy migration: db/migrate_taxonomy_simplify_schema.py
-      - Schema migration: db/migrate_drop_is_macro.py
+      - 44% multi-centroid rate (vs ~5% before); pass concept obsolete; removed is_macro field
 
   - id: D-007
     date: 2026-01-09
@@ -102,23 +66,9 @@ decisions:
     status: accepted
     title: Implement dynamic focus lines for Phase 4.2 summary generation
     rationale:
-      - Prevent forced narrative coherence across thematically unrelated events
-      - Enable centroid-specific and track-specific guidance for LLM
-      - Address temporal drift (LLM inferring roles/titles from training data)
-    implementation:
-      - track_configs.llm_summary_centroid_focus (TEXT) - structural focus per centroid type
-      - track_configs.llm_summary_track_focus (JSONB) - domain focus per track (GEO only)
-      - Prompt allows 2-4 paragraphs based on natural thematic grouping
-      - Anti-coherence instruction: "Do NOT force unrelated events into false narrative"
-      - Temporal grounding: "Do NOT infer current offices or roles unless explicitly stated"
+      - Prevent forced coherence across unrelated events; enable centroid/track-specific LLM guidance
     consequences:
-      - More accurate multi-event summaries (e.g., USA humanitarian CTM with Venezuela + domestic)
-      - Reduced hallucination of current political roles
-      - Better thematic separation in complex CTMs
-    references:
-      - v3/phase_4/generate_summaries.py
-      - v3/phase_4/test_summary_single_ctm.py
-      - db/migrations/20260109_add_summary_focus_lines.sql
+      - More accurate summaries; reduced hallucination of current political roles
 
   - id: D-008
     date: 2026-01-12
@@ -126,664 +76,272 @@ decisions:
     status: accepted
     title: Complete Phase 4 daemon integration with monitoring
     rationale:
-      - Phase 4 needed production orchestration alongside Phases 1-3
-      - Summary length creep is a real concern as titles accumulate daily
-      - Need observability for accumulation behavior before over-engineering CTW
-    implementation:
-      - Integrated Phase 4.1 (events) and 4.2 (summaries) into daemon
-      - Added word count monitoring after each Phase 4.2 run
-      - 1-hour interval for Phase 4 (less frequent than matching/assignment)
-      - 50 CTM batch size for enrichment
-      - Fixed SQL bug in assign_tracks.py (line 290: check title_assignments table)
-    testing_plan:
-      - Run daemon for 3-5 consecutive days
-      - Monitor summary word counts (target: 150-250 words)
-      - Track which CTMs grow fastest
-      - Determine if current architecture handles accumulation or if CTW needed
+      - Phase 4 needed production orchestration; summary length creep is a concern
     consequences:
-      - Full 4-phase pipeline operational in production mode
-      - Data-driven decision on CTM vs CTW architecture
-      - Word count monitoring detects length bloat early
-    references:
-      - v3/runner/pipeline_daemon.py
-      - v3/runner/README.md
+      - Full 4-phase pipeline operational; word count monitoring detects length bloat
 
   - id: D-009
     date: 2026-01-16
     type: documentation
     status: accepted
     title: Consolidate frontend documentation into CoC and Status
-    rationale: >
-      Frontend is a non-intelligent consumer layer. Separate frontend docs
-      caused duplication and drift. All frontend knowledge now lives in
-      PIPELINE_STATUS.md as descriptive state.
-    status: accepted
-
-  - id: D-010
-    date: 2025-10-28
-    type: architecture
-    status: accepted
-    title: Replace Neo4j graph clustering with centroid-based PostgreSQL architecture
-    rationale: >
-      The previous v2 implementation relied on Neo4j graph clustering with PageRank,
-      which introduced operational complexity, cost, and opaque behavior.
-      The v3 design replaces this with explicit centroid-based matching implemented
-      directly in PostgreSQL. This simplifies the architecture, improves performance,
-      increases debuggability, and removes the dependency on graph infrastructure,
-      while preserving strategic coverage and auditability.
+    rationale:
+      - Frontend is a consumer layer; separate docs caused duplication and drift
 
   - id: D-011
     date: 2026-01-07
     type: data_model
     status: accepted
-    title: Adopt many-to-many title–centroid–track relationships
-    rationale: >
-      Earlier designs forced a single track assignment per title, which caused
-      logical inconsistencies when the same title was relevant to multiple centroids.
-      The system now models title–centroid–track relationships explicitly, allowing
-      each title to be analyzed independently in each strategic context.
-      This preserves real-world complexity and prevents information loss.
+    title: Adopt many-to-many title-centroid-track relationships
+    rationale:
+      - Single track per title caused inconsistencies; explicit M:N preserves real-world complexity
+    consequences:
+      - Each title analyzed independently in each strategic context
 
   - id: D-012
     date: 2025-11-02
     type: filtering
     status: accepted
     title: Apply stop-word filtering only to systemic centroid matching
-    rationale: >
-      Strategic clusters were contaminated by culture and sports terms when applying
-      systemic matching. A stop-word list is now applied exclusively to the systemic
-      pass, while theater and macro matching remain unrestricted.
-      This balances recall and precision by protecting high-level geographic anchors
-      while tightening mid-level thematic centroids.
+    rationale:
+      - Culture/sports contaminated systemic matching; stop-words applied only to systemic pass
 
   - id: D-013
     date: 2025-11-06
     type: filtering
     status: accepted
     title: Mitigate Romance-language false positives in centroid matching
-    rationale: >
-      Romance-language articles produced false positives due to common articles
-      (e.g., “il”, “la”) matching centroid aliases. The solution combined multiple
-      measures: filtering Romance articles, removing uncommon ISO codes, and deleting
-      ambiguous aliases (e.g., “IL” for Israel). This eliminated recurrent false
-      assignments without harming recall.
+    rationale:
+      - Romance-language articles ("il", "la") matched aliases; fixed by filtering + removing ambiguous codes
 
   - id: D-014
     date: 2025-11-04
     type: taxonomy
     status: accepted
     title: Simplify taxonomy by removing redundant aliases
-    rationale: >
-      The taxonomy accumulated excessive redundancy across languages and formal names,
-      increasing maintenance burden and false positives. A systematic pruning removed
-      3,266 redundant aliases (22.3%) while retaining non-Latin scripts essential for
-      global coverage. This improved performance, clarity, and maintainability.
+    rationale:
+      - Pruned 3,266 redundant aliases (22.3%) while retaining non-Latin scripts
 
   - id: D-015
     date: 2025-11-07
     type: classification
     status: accepted
     title: Introduce dynamic, centroid-specific track configurations
-    rationale: >
-      A single universal track list forced heterogeneous content into overly generic
-      classifications. The system now supports centroid-specific track configurations
-      stored in the database, allowing tech, climate, and quiet geographic centroids
-      to use tailored track sets. This improves classification accuracy, reduces
-      fragmentation, and enables domain expertise without code redeployment.
+    rationale:
+      - Centroid-specific track configs in DB; tailored track sets without code redeployment
 
   - id: D-016
     date: 2026-01-07
     type: filtering
     status: accepted
     title: Add LLM-based strategic gating before track assignment
-    rationale: >
-      Mechanical filtering alone allowed some non-strategic content to pass into
-      Phase 3. A two-stage LLM process was introduced: first, a strategic relevance
-      gate (accept/reject), followed by track assignment for accepted titles.
-      Rejected titles are explicitly marked to preserve auditability.
+    rationale:
+      - Two-stage LLM: strategic relevance gate then track assignment; rejects marked for audit
 
   - id: D-017
     date: 2025-11-07
     type: orchestration
     status: accepted
     title: Use sequential pipeline execution with adaptive scheduling
-    rationale: >
-      Although parallel execution is possible, the pipeline currently runs sequentially
-      with phase-specific intervals. This design matches the actual bottlenecks
-      (I/O-bound ingestion, fast mechanical matching, LLM-limited phases) and favors
-      simplicity, observability, and debuggability. Parallelization is deferred until
-      empirically required.
+    rationale:
+      - Sequential matches actual bottlenecks; parallelization deferred until empirically required
 
   - id: D-018
     date: 2026-01-18
     type: data_model
     status: accepted
     title: Normalize events into dedicated tables (events_v3)
-    rationale: >
-      Events were stored as JSONB arrays inside CTM rows (events_digest), making
-      per-event updates impossible without rewriting the entire payload. Migrated to
-      normalized events_v3 + event_v3_titles tables, enabling individual event summaries,
-      incremental clustering, and independent lifecycle management. Each event now has
-      its own row with title, summary, tags, source_batch_count, and bucket metadata.
+    rationale:
+      - JSONB arrays in CTM rows made per-event updates impossible; normalized to events_v3 + event_v3_titles
     consequences:
-      - Per-event LLM summary generation (Phase 4.5a) becomes possible
-      - Incremental clustering can append titles to existing events
-      - Frontend queries events directly instead of parsing JSONB
-    references:
-      - db/migrations/20260117_create_events_v3_tables.sql
+      - Per-event LLM summaries, incremental clustering, direct frontend queries
 
   - id: D-019
     date: 2026-01-26
     type: architectural
     status: accepted
     title: Signal-based mechanical topic clustering (Phase 4)
-    rationale: >
-      Replaced LLM-based event extraction with deterministic clustering using typed
-      signals (persons, orgs, places, commodities, policies, systems, named_events).
-      Early titles define anchor signals that lock after 5 titles, preventing topic
-      drift. Later titles match via weighted signal overlap. Geographic bucketing
-      (domestic, bilateral-XX, other_international) structures events spatially.
-      Sub-threshold titles route to catchall events per bucket.
+    rationale:
+      - Deterministic clustering via typed signals; anchors lock after 5 titles preventing drift
     consequences:
-      - Deterministic, reproducible clustering (no LLM variance)
-      - LLM restricted to summary generation only (Phase 4.5a/4.5b)
-      - Track-specific signal weights tune clustering per domain
-      - Catchall events ensure 100% title coverage
-    references:
-      - pipeline/phase_4/incremental_clustering.py
-      - core/config.py (TRACK_WEIGHTS, ANCHOR_LOCK_THRESHOLD, JOIN_THRESHOLD)
+      - LLM restricted to summary generation; catchall events ensure 100% title coverage
 
   - id: D-020
     date: 2026-01-30
     type: architectural
     status: accepted
     title: Restructure phases -- label extraction before intel gating
-    rationale: >
-      Previously, intel gating and track assignment ran before label extraction,
-      meaning the LLM gating call had no entity/signal context. Reordering to
-      3.1 (labels + signals) -> 3.2 (entity backfill) -> 3.3 (gating + tracks)
-      gives Phase 3.3 richer context, enables mechanical pre-gating on safe label
-      patterns (skipping LLM for obvious accepts), and reduces unnecessary API calls
-      by ~30%.
+    rationale:
+      - Reorder to 3.1 (labels) -> 3.2 (entity backfill) -> 3.3 (gating); reduces API calls ~30%
     consequences:
-      - Phase 3.3 can use label-based heuristics before calling LLM
-      - Entity backfill adds centroid assignments before track routing
-      - Pipeline phases renumbered from 3.5/3.6 to 3.1/3.2/3.3
+      - Phase 3.3 uses label-based heuristics before calling LLM
 
   - id: D-021
     date: 2026-01-29
     type: operational
     status: accepted
     title: Monthly freeze process with centroid-level cross-track summaries
-    rationale: >
-      End-of-month boundary needed to prevent unbounded CTM growth and to produce
-      archival-quality summaries. The freeze script marks all CTMs as frozen, generates
-      a cross-track centroid summary via LLM (one paragraph per strategic track,
-      200-300 words), and stores it in centroid_monthly_summaries. New titles after
-      freeze go into fresh CTMs for the next month. Frontend switches to a different
-      layout for frozen months (summary in main content, track nav in sticky sidebar).
+    rationale:
+      - Prevents unbounded CTM growth; freeze generates cross-track centroid summary via LLM
     consequences:
-      - Clean monthly boundaries for historical browsing
-      - Centroid summaries provide executive-level cross-domain overview
-      - Frozen CTMs and events are immutable (no re-clustering)
-    references:
-      - db/scripts/freeze_month.py
-      - db/migrations/20260129_add_centroid_summaries_and_purge.sql
+      - Clean monthly boundaries; frozen CTMs/events immutable
 
   - id: D-022
     date: 2026-02-01
     type: architectural
     status: accepted
     title: Non-destructive incremental clustering (Phase 4)
-    rationale: >
-      Phase 4 previously deleted all events for a CTM and rebuilt from scratch on
-      every run, destroying LLM-generated summaries and event identity. Replaced with
-      incremental approach: load only titles not yet linked to any event, match against
-      existing events by signal overlap, create new events only for unmatched clusters.
-      Existing event metadata (title, summary, tags) is never overwritten. Phase 4.5a
-      uses summary_source_count to detect events that grew significantly and need
-      re-summarization.
+    rationale:
+      - Old approach deleted all events per CTM each run; incremental loads only unlinked titles
     consequences:
-      - LLM summaries survive across pipeline runs
-      - Event IDs are stable (can be bookmarked/referenced)
-      - First run on empty CTM behaves identically to old cold path
-      - events_v3.summary column changed to nullable
-    references:
-      - pipeline/phase_4/incremental_clustering.py (process_ctm_for_daemon)
-      - db/migrations/20260201_add_summary_source_count.sql
+      - LLM summaries survive across runs; event IDs stable (bookmarkable)
 
   - id: D-023
     date: 2026-01-30
     type: operational
     status: accepted
     title: Local-dev / remote-demo deployment split
-    rationale: >
-      Running the pipeline on both local and remote would double LLM API costs and
-      create data divergence. Local environment is the source of truth for development
-      and data. Render.com hosts a read-only demo: Next.js frontend + managed PostgreSQL
-      snapshot. Pipeline worker is suspended on Render. Database is synced via
-      pg_dump/pg_restore from the local Docker PostgreSQL container when needed.
+    rationale:
+      - Local is source of truth; Render hosts read-only demo with snapshot DB
     consequences:
-      - No live pipeline on remote (demo is a point-in-time snapshot)
-      - Database updates require manual dump/restore cycle
-      - Frontend code auto-deploys via Render on git push to main
-    references:
-      - render.yaml
-      - pipeline/runner/sni-v3-pipeline.service (reference only, not active on Render)
+      - No live pipeline on remote; DB updates require manual dump/restore
 
   - id: D-024
     date: 2026-02-17
     type: architectural
     status: accepted
     title: Two-tier RAI signal architecture (local stats + remote interpretation)
-    rationale: >
-      RAI previously received thin payloads (narrative label, moral frame, 15 headlines)
-      and had to guess about source diversity and geographic bias. WB's DB already has
-      rich structured data (title_labels with actors, domains, entity_countries, languages).
-      Tier 1 computes hard stats locally (publisher HHI, language distribution, entity
-      countries, domain balance, actor concentration) with no LLM calls. Tier 2 sends
-      stats to RAI for compact JSON interpretation via a new /worldbrief/signals endpoint.
-      This makes RAI data-driven instead of speculative.
+    rationale:
+      - Tier 1 computes hard stats locally (no LLM); Tier 2 sends stats for JSON interpretation
     consequences:
-      - signal_stats JSONB stores Tier 1 stats per narrative
-      - rai_signals JSONB stores Tier 2 compact signals (no HTML)
-      - Full HTML analysis preserved via --full flag for on-demand use
-      - ~10-15s per signal call vs ~50-60s for full analysis
-    references:
-      - core/signal_stats.py
-      - pipeline/phase_4/analyze_event_rai.py
-      - RAI app.py (/api/v1/worldbrief/signals)
+      - signal_stats + rai_signals JSONB per narrative; ~10-15s vs ~50-60s for full analysis
 
   - id: D-025
     date: 2026-02-17
     type: operational
     status: accepted
     title: Automated narrative extraction with refresh mode (Phase 5)
-    rationale: >
-      Narrative extraction was previously manual. CTMs and events grow continuously as
-      new titles arrive. Phase 5 runs daily (24h interval) in the daemon, processing
-      both new entities and refreshing existing ones whose source count grew significantly.
-      CTM refresh triggers at +100 titles, event refresh at +50 sources. Frozen CTMs
-      are skipped. Language-stratified sampling ensures editorial diversity in frame
-      discovery. Scripts kept separate (CTM, event, epic) because fetch logic, sampling
-      strategy, and prompts differ meaningfully per entity type.
+    rationale:
+      - Daily daemon phase; CTM refresh at +100 titles, event at +50 sources
     consequences:
-      - Narratives stay current as coverage builds during the month
-      - Refresh deletes old frames and re-extracts fresh ones
-      - Event script tracks source_count_at_extraction in signal_stats JSONB
-      - Epic narratives remain manual (post-freeze only)
-    references:
-      - pipeline/phase_4/extract_ctm_narratives.py
-      - pipeline/phase_4/extract_event_narratives.py
-      - pipeline/runner/pipeline_daemon.py (Phase 5a + 5b)
+      - Narratives stay current; refresh deletes old frames and re-extracts
 
   - id: D-026
     date: 2026-02-20
     type: data_model
     status: accepted
     title: Event saga chaining across months via tag+title Dice similarity
-    rationale: >
-      Individual events within CTMs had no connection to their continuations in
-      adjacent months. The saga column on events_v3 (TEXT, previously NULL) was
-      designed for this. Algorithm uses tag overlap (exact match on type:value
-      strings) plus title word Dice similarity, with thresholds of tag_overlap>=2
-      and combined score>=0.3. Dice chosen over Jaccard because it is less punitive
-      when tag set sizes differ (3-tag event vs 8-tag event). Each later-month event
-      matches its single best earlier-month candidate; saga UUIDs chain forward as
-      new months are processed. No LLM involved -- purely mechanical.
+    rationale:
+      - Tag overlap + title Dice similarity (no LLM); Dice less punitive than Jaccard for unequal sets
     consequences:
-      - 432 story chains linked across Jan-Feb (757 events updated)
-      - Event detail page shows Story Timeline with linked siblings
-      - Chains grow automatically as future months are processed
-      - Same saga may appear across multiple centroids (same story, different perspectives)
-    references:
-      - pipeline/phase_4/chain_event_sagas.py
-      - apps/frontend/app/events/[event_id]/page.tsx
+      - 432 story chains linked across Jan-Feb (757 events); chains grow automatically
 
   - id: D-027
     date: 2026-02-20
     type: frontend
     status: accepted
     title: Media outlet profile pages
-    rationale: >
-      The sources list page showed feeds but provided no analytical depth. Outlet
-      profile pages at /sources/{feed_name} show each outlet's geographic coverage
-      distribution, top CTMs by article volume, and narrative frames where the outlet
-      appears as a top source. Publisher name normalization (variant names -> canonical
-      feed name) handled via a shared CTE mapping. This enables users to assess
-      individual outlet coverage patterns and potential editorial focus areas.
-    consequences:
-      - New route /sources/[feed_name] with server-side rendering
-      - Queries use publisher_map CTE for multi-name outlets (e.g., BBC World = BBC)
-      - Narrative participation shows frames where outlet is a top_source
-    references:
-      - apps/frontend/app/sources/[feed_name]/page.tsx
-      - apps/frontend/lib/queries.ts (getOutletProfile, getOutletNarrativeFrames)
+    rationale:
+      - Outlet pages show geographic coverage, top CTMs, narrative frames per publisher
 
   - id: D-028
     date: 2026-02-21
     type: frontend
     status: accepted
     title: ISR revalidation + in-memory cache + SQL optimization
-    rationale: >
-      All 13 pages used force-dynamic, hitting PostgreSQL on every request with
-      zero caching. Heaviest queries used correlated subqueries scanning titles_v3
-      (~100k rows) per centroid. Sitemap ran ~100 sequential queries. On Render
-      starter tier with remote Postgres, this caused 2-6 second page loads.
-      Data changes daily (pipeline runs), not in real-time, so caching is safe.
-    implementation:
-      - ISR revalidation replaces force-dynamic (300s for hot pages, 600s for cold)
-      - In-memory Map-based TTL cache wraps 9 frequent queries (lib/cache.ts)
-      - getCentroidsByClass/Theater rewritten from 4 correlated subqueries to single CTE
-      - Sitemap N+1 eliminated (101 queries -> 1 JOIN)
-      - generateStaticParams for region pages (6 paths from REGIONS constant)
-      - Connection pool tuned (max 10, idle 30s, connection timeout 5s)
-      - About/disclaimer fully static; search keeps force-dynamic
+    rationale:
+      - All pages used force-dynamic (2-6s loads); data changes daily so caching is safe
     consequences:
-      - Pages served as cached HTML for 5-10 min after first request
-      - Cold requests still hit DB but benefit from query cache + optimized SQL
-      - No Redis needed (single Render instance, in-memory sufficient)
-      - generateStaticParams removed from centroid/epic pages (overwhelmed remote DB at build)
-      - Cache TTLs hardcoded next to usage (no config file -- simple, rarely changed)
-    references:
-      - apps/frontend/lib/cache.ts
-      - apps/frontend/lib/db.ts
-      - apps/frontend/lib/queries.ts
+      - Pages cached 5-10 min; no Redis needed; query cache + optimized SQL for cold requests
 
   - id: D-029
     date: 2026-02-21
     type: architectural
     status: accepted
     title: Add email/password authentication with NextAuth v5
-    rationale: >
-      The frontend was fully public with no user state. Adding authentication
-      enables gating high-value features (narrative extraction, RAI analysis)
-      behind sign-in, creating value differentiation for registered users and
-      a future paywall path. NextAuth v5 chosen for native Next.js App Router
-      integration, credential-based auth (email + bcrypt-hashed password),
-      and session management via JWT.
+    rationale:
+      - Gates high-value features behind sign-in; NextAuth v5 for App Router, credential auth, JWT
     consequences:
-      - Sign-in/sign-up pages at /sign-in, /sign-up
-      - SessionWrapper provides client-side session context
-      - Navigation shows user menu with sign-out for authenticated users
-      - Extraction and analysis API routes check session before proceeding
-      - Frontend is no longer stateless -- has user sessions
-    references:
-      - apps/frontend/auth.ts
-      - apps/frontend/app/sign-in/page.tsx
-      - apps/frontend/app/sign-up/page.tsx
-      - apps/frontend/app/api/auth/signup/route.ts
+      - Extraction and analysis API routes require session; frontend has user state
 
   - id: D-030
     date: 2026-02-21
     type: architectural
     status: accepted
     title: Move narrative extraction and RAI analysis to on-demand (remove daemon Phases 5 & 6)
-    rationale: >
-      Phases 5 (narrative extraction) and 6 (RAI analysis) ran automatically in the
-      daemon on a 24h cycle, consuming LLM API credits for all qualifying entities
-      regardless of whether anyone viewed them. Moving to on-demand extraction
-      (triggered by user clicking "Extract & Analyse") achieves three goals:
-      (1) simplifies the pipeline (fewer daemon phases = less fragility),
-      (2) creates value behind sign-in (extraction requires authentication),
-      (3) eliminates background LLM spend (API calls only when users request them).
-      A FastAPI extraction service (api/extraction_api.py) handles extraction requests,
-      calling the same underlying scripts. The frontend routes (extract-narratives,
-      rai-analyse) proxy to this service and cache results in the DB. Existing
-      narratives already in the DB remain untouched.
+    rationale:
+      - Phases 5/6 consumed LLM credits regardless of viewership; on-demand eliminates background spend
     consequences:
-      - Daemon reduced to Phases 1-4.5b + daily purge
-      - First-time visitors see "Extract & Analyse" CTA instead of pre-computed narratives
-      - Extraction scripts unchanged (extraction API imports from them)
-      - Config variables (v3_p5_min_titles etc.) retained for script thresholds
-      - No auto-refresh of stale narratives (see OpenQuestions Q-001)
-      - No re-extraction path for existing narratives (see OpenQuestions Q-002)
-    references:
-      - api/extraction_api.py
-      - apps/frontend/app/api/extract-narratives/route.ts
-      - apps/frontend/app/api/rai-analyse/route.ts
-      - apps/frontend/components/ExtractButton.tsx
-      - pipeline/runner/pipeline_daemon.py (Phase 5/6 removed)
+      - Daemon reduced to Phases 1-4.5b + daily purge; visitors see "Extract & Analyse" CTA
 
   - id: D-031
     date: 2026-02-21
     type: architectural
     status: accepted
     title: Port RAI analysis engine locally (eliminate remote RAI intermediary)
-    rationale: >
-      RAI analysis previously required a round-trip to a separate Render-hosted
-      RAI service, which called DeepSeek and returned results. This added latency,
-      an extra deployment to maintain, and an opaque intermediary. The analysis
-      engine was ported directly into the frontend as lib/rai-engine.ts: prompt
-      builder, DeepSeek API caller, response parser, 33 analytical modules with
-      46 premises. An LLM pre-pass selects 3 context-appropriate modules per
-      entity, making analysis targeted rather than generic. Signal stats from
-      Tier 1 (core/signal_stats.py) are injected into the prompt for data-driven
-      analysis. The remote RAI service is retained for the /worldbrief/signals
-      endpoint but is no longer in the critical path.
+    rationale:
+      - Eliminated remote intermediary; ported to lib/rai-engine.ts (33 modules, 46 premises)
     consequences:
-      - Analysis runs directly from frontend API route (no intermediary hop)
-      - 33 modules with 46 premises (up from 6 modules / 14 premises)
-      - LLM selects 3 modules per analysis (context-appropriate, not fixed)
-      - Dedicated /analysis/[narrative_id] page with sidebar scores + prose
-      - DeepSeek API key required in frontend env vars
-    references:
-      - apps/frontend/lib/rai-engine.ts
-      - apps/frontend/app/analysis/[narrative_id]/page.tsx
-      - apps/frontend/components/AnalysisContent.tsx
-      - apps/frontend/components/AssessmentScores.tsx
+      - Analysis runs directly from frontend API route; DeepSeek API key needed in frontend
 
   - id: D-032
     date: 2026-03-01
     type: architectural
     status: accepted
     title: Materialized view pattern (mv_* tables) for expensive frontend queries
-    rationale: >
-      Several frontend pages ran expensive analytical queries on every request:
-      LATERAL unnest across signal columns, self-joins for co-occurrence graphs,
-      multi-CTE aggregations. On Render's shared Postgres these took 5-30 seconds,
-      making pages unusable even with 1h in-memory caches (first visitor still waits).
-      The mv_* pattern pre-computes these results as JSONB rows in the pipeline daemon,
-      reducing frontend queries to simple PK lookups (<1ms). The daemon refreshes
-      mv_* tables every Slot 3 cycle (~30min), which is fresher than the previous
-      1h frontend cache.
-    implementation:
-      - Table naming convention: mv_* prefix (e.g., mv_centroid_signals, mv_signal_graph)
-      - Scripts: pipeline/phase_4/materialize_*.py (one per table)
-      - Each script exposes materialize() for daemon + main() for CLI backfill
-      - UPSERT via ON CONFLICT DO UPDATE SET ... updated_at = NOW()
-      - Daemon Phase 4.2a (centroid signals) + 4.2b (signal graph), 300s timeout each
-    tables:
-      - mv_centroid_signals: Top 5 signals per centroid+month (PK: centroid_id, month)
-      - mv_signal_graph: Co-occurrence network nodes+edges (PK: period)
+    rationale:
+      - Pre-compute expensive queries (5-30s) as JSONB rows; frontend does PK lookups (<1ms)
     consequences:
-      - Centroid page signals: 5 parallel LATERAL unnest queries -> PK lookup
-      - Signal Observatory graph: 7-CTE self-join (10s) -> PK lookup (<100ms)
-      - Data staleness ~30min (was 1h with frontend cache)
-      - New mv_* tables must be created on Render + backfilled when added
-      - Pattern is extensible: any heavy analytical query is a candidate
-    references:
-      - pipeline/phase_4/materialize_centroid_signals.py
-      - pipeline/phase_4/materialize_signal_graph.py
-      - pipeline/runner/pipeline_daemon.py (Phase 4.2a + 4.2b)
+      - Data staleness ~30min (was 1h); pattern extensible to any heavy analytical query
 
   - id: D-033
     date: 2026-03-01
     type: performance
     status: accepted
     title: Frontend query optimization pass (SARGable filters, LATERAL rewrites)
-    rationale: >
-      Multiple frontend queries used TO_CHAR(month, 'YYYY-MM') = $1 in WHERE clauses,
-      which prevents Postgres from using indexes on the month column (non-SARGable).
-      Additionally, getEventsFromV3 used a wide GROUP BY with a correlated EXISTS
-      subquery, and the overlapping centroids sidebar widget ran a 110ms query on
-      every CTM page load. The trending page fetched 30 events when 12 suffice.
-    implementation:
-      - Replaced TO_CHAR(month) with month = ($1 || '-01')::date in 4 queries
-      - Rewrote getEventsFromV3 with LATERAL subqueries (no wide GROUP BY)
-      - Dropped getOverlappingCentroidsForTrack widget, replaced with inline
-        cross-centroid arrow links on bilateral accordion headers (zero-cost)
-      - Trending page reduced from 30 to 12 events, sidebar signals 8 -> 5
-      - Added yellow glow for emerging stories (<12h) on trending cards
-      - Added title fallback to source headline for un-enriched events
+    rationale:
+      - SARGable date filters, LATERAL rewrites, dropped 110ms sidebar widget
     consequences:
-      - Centroid page TTFB improved (index-backed month lookups)
-      - CTM page drops 110ms sidebar query entirely
-      - Trending page tighter, more focused, better visual hierarchy
-    references:
-      - apps/frontend/lib/queries.ts
-      - apps/frontend/components/TrendingCard.tsx
-      - apps/frontend/components/CountryAccordion.tsx
+      - Index-backed month lookups; CTM page drops unnecessary sidebar query
 
   - id: D-034
     date: 2026-03-02
     type: frontend
     status: accepted
     title: German (DE) localization via next-intl with lazy content translation
-    rationale: >
-      German-language users want to read WorldBrief in German. The implementation
-      covers two layers: (1) interface -- static UI strings, navigation, headings,
-      static pages via next-intl message files (~300 keys), and (2) content -- LLM-
-      generated event titles, CTM summaries, epic narratives via DeepSeek translation.
-      Content translation uses three strategies: pipeline-time (new content gets _de
-      alongside English), lazy on-demand (detail pages translate missing _de fields
-      inline on first DE visit and cache in DB), and backfill scripts (bulk translation
-      of existing content). All changes are additive -- nullable _de columns, i18n
-      wrapper, locale cookie. English URLs unchanged; German adds /de/ prefix.
-    implementation:
-      - next-intl with pathPrefix strategy (en = no prefix, de = /de/...)
-      - Middleware detects locale from URL prefix, Accept-Language, NEXT_LOCALE cookie
-      - All pages moved from app/ to app/[locale]/ (API routes stay at root)
-      - EN|DE toggle in Navigation.tsx sets cookie + navigates
-      - locCol() helper in queries.ts returns COALESCE(col_de, col) for locale=de
-      - lib/lazy-translate.ts for inline DeepSeek translation on detail pages
-      - Phase 4.5a generates title_de, Phase 4.5b generates summary_text_de
-      - Freeze script generates epic DE fields
-      - Static beta-notice banner on all DE detail pages (TranslationNotice.tsx)
+    rationale:
+      - Interface layer (~300 next-intl keys) + content layer (DeepSeek translation)
+      - Three strategies -- pipeline-time, lazy on-demand (first DE visit + DB cache), backfill
     consequences:
-      - All existing English URLs unchanged (zero SEO impact)
-      - German URLs are purely additive (/de/c/AMERICAS-USA, etc.)
-      - First DE visit to untranslated detail page has ~1-2s extra latency (DeepSeek call)
-      - Subsequent visits serve cached translation from DB
-      - Estimated additional DeepSeek cost: ~EUR 0.02-0.05/day
-    rollback:
-      - Remove next-intl, move pages back from app/[locale]/ to app/
-      - DROP COLUMN _de columns from events_v3, ctm, epics, centroids_v3
-      - Remove translate calls from pipeline scripts
-    references:
-      - apps/frontend/middleware.ts
-      - apps/frontend/i18n/ (config.ts, routing.ts, request.ts, navigation.ts)
-      - apps/frontend/messages/en.json, de.json
-      - apps/frontend/lib/lazy-translate.ts
-      - apps/frontend/components/TranslationNotice.tsx
-      - db/migrations/20260302_add_de_columns.sql
-      - scripts/backfill_title_de.py
-      - scripts/backfill_ctm_summary_de.py
-      - scripts/translate_epics_de.py
-      - scripts/translate_centroid_briefs.py
+      - English URLs unchanged; German adds /de/ prefix
+      - First DE visit to untranslated page has ~1-2s extra latency (DeepSeek call)
 
   - id: D-035
     date: 2026-03-08
     type: architectural
     status: accepted
     title: Event importance scoring system (title-level + event-level)
-    rationale: >
-      The pipeline treated all titles and events equally. The top 1-2% of genuinely
-      significant stories (mass casualties, military operations, head-of-state actions)
-      deserve special treatment: tighter merging, higher UI visibility, priority in
-      consolidation. A two-level mechanical scoring system (no LLM) computes importance
-      at title ingestion (Phase 3.1) and event clustering (Phase 4) time. Title scores
-      combine 5 signals (centroid convergence, action severity, casualty language, actor
-      escalation, signal density). Event scores combine 5 signals (title p90, velocity,
-      cross-track resonance, source diversity, size factor). Both produce 0.0-1.0 scores.
-    implementation:
-      - core/importance.py (score_title, score_event)
-      - Wired into Phase 3.1 (extract_labels.py) and Phase 4 (incremental_clustering.py)
-      - importance_score used for anchor priority in Phase 4.1 consolidation
-      - DB columns: title_labels.importance_score, events_v3.importance_score (+ JSONB components)
-      - Backfilled 108k titles + 8.3k events
+    rationale:
+      - Two-level mechanical scoring (no LLM); title 5 signals + event 5 signals -> 0.0-1.0
     consequences:
-      - Enables Phase 4.3 merge qualification (only high-importance CTMs)
-      - Enables UI elevation of important events
-      - Zero LLM cost (purely mechanical signals)
-      - importance_score >= 0.5 threshold identifies top ~5% of events
-    references:
-      - core/importance.py
-      - docs/importance_scoring.md
-      - db/migrations/20260308_add_importance_scores.sql
-      - scripts/backfill_importance.py
+      - Threshold 0.5+ identifies top ~5%; enables merge qualification and UI elevation
 
   - id: D-036
     date: 2026-03-09
     type: architectural
     status: accepted
     title: Phase 4.3 cross-bucket event merging (LLM-based)
-    rationale: >
-      Events fragment across geographic buckets (domestic vs bilateral) and due to
-      weak early signal overlap. The same story (e.g., Khamenei killed + succession +
-      international reaction) appeared as 2-7 separate events. Phase 4.3 uses an LLM
-      to read all event titles+summaries in a CTM, group same-story events, and merge
-      them by re-linking titles to a surviving anchor. Only runs on CTMs with at least
-      one high-importance event (>= 0.5) and >= 4 events. Anchor selection prefers
-      domestic events but requires >= 50% of largest event's source count. Absorbed
-      events are soft-deleted via merged_into FK. LLM also produces updated title
-      and summary for the merged anchor event.
-    implementation:
-      - pipeline/phase_4/merge_related_events.py
-      - Daemon Slot 3: after Phase 4.1, before Phase 4.2 (10 CTMs/run)
-      - CLI supports --dry-run, --include-frozen, --ctm-id, --limit
-      - Frontend queries filter WHERE e.merged_into IS NULL
+    rationale:
+      - Same story fragmented across buckets (2-7 events); LLM groups and merges to anchor
     consequences:
-      - Iran Security: 79 -> 51 events. Iran Energy: 18 -> 3 events
-      - Fewer, bigger events without merging unrelated content
-      - Soft delete preserves all data (reversible)
-      - ~$0.17 to process all 414 qualifying CTMs (DeepSeek)
-    references:
-      - pipeline/phase_4/merge_related_events.py
-      - db/migrations/20260309_add_merged_into.sql
-      - docs/importance_scoring.md (v2 section)
+      - Soft delete via merged_into FK (reversible); ~$0.17 for all 414 qualifying CTMs
 
   - id: D-037
     date: 2026-03-09
     type: performance
     status: accepted
     title: Aggressive ISR caching -- remove force-dynamic from all public pages
-    rationale: >
-      All 23 pages used export const dynamic = 'force-dynamic', meaning every
-      single page request triggered full server-side rendering with fresh DB
-      queries against Render's shared Postgres. On the starter tier, complex
-      queries (LATERAL UNNEST for trending signals, multi-CTE aggregations for
-      centroid pages) took 10-30 seconds each, causing 1-2 minute total page
-      load times. Content updates daily via the pipeline, not in real-time,
-      making aggressive caching safe. The in-memory TTL cache (lib/cache.ts)
-      only helped repeat visitors within 5 minutes -- first visitors and
-      post-deploy cold starts always paid full query cost.
-    implementation:
-      - Replaced force-dynamic with revalidate = 3600 on all data pages
-        (home, trending, centroids, tracks, events, epics, signals, regions, sources)
-      - Static content pages (about, faq, terms, privacy, methodology, pricing,
-        known-issues) set to revalidate = 86400 (24h)
-      - Search page and analysis page keep force-dynamic (user-specific queries)
-      - Auth layout keeps force-dynamic (session-dependent)
-      - CDN cache headers in next.config.js (s-maxage) now complement ISR
-        instead of being overridden by force-dynamic
-    safety:
-      - Extraction flow is safe because ExtractButton (client component) calls
-        /api/extract-narratives, then router.push() navigates to /analysis/{id}
-        which is force-dynamic. User never stays on cached event page expecting
-        inline update.
-      - Pages using searchParams (?month=) cache each URL variant separately
-      - Render does NOT auto-deploy from git, so cache is only reset on
-        manual deploy (which is fine for daily update cadence)
+    rationale:
+      - All 23 pages force-dynamic (10-30s queries); content updates daily so 1h cache safe
     consequences:
-      - First visitor per hour per page pays full DB query cost
-      - All subsequent visitors get instant cached HTML (< 100ms)
-      - Post-deploy cold start affects only first visitor per route
-      - Data staleness max 1 hour (acceptable for daily pipeline updates)
-      - In-memory query cache (lib/cache.ts) becomes less critical but still
-        helps within the same revalidation window
-    references:
-      - apps/frontend/app/[locale]/*/page.tsx (20 files changed)
-      - apps/frontend/next.config.js (CDN headers)
-      - D-028 (original ISR + caching decision, now superseded by 1h TTLs)
-
+      - revalidate=3600 data / 86400 static; subsequent visitors get cached HTML (<100ms)
