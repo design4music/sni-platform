@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import type { EntityAnalysis } from '@/lib/queries';
 import type { RaiSection } from '@/lib/types';
 
@@ -116,12 +117,17 @@ interface Props {
   entityType: string;
   entityId: string;
   cachedAnalysis: EntityAnalysis | null;
+  locale?: string;
 }
 
-export default function ComparativeContent({ entityType, entityId, cachedAnalysis }: Props) {
+export default function ComparativeContent({ entityType, entityId, cachedAnalysis, locale }: Props) {
   const { data: session } = useSession();
+  const t = useTranslations('comparative');
+  const tAnalysis = useTranslations('analysis');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [translatedSections, setTranslatedSections] = useState<RaiSection[] | null>(null);
   const [sections, setSections] = useState<RaiSection[]>(() => {
     if (!cachedAnalysis?.sections) return [];
     const raw = cachedAnalysis.sections;
@@ -144,13 +150,11 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
     cachedAnalysis?.blind_spots || cachedAnalysis?.scores?.collective_blind_spots || null
   );
 
-  const triggered = useRef(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (sections.length > 0) return;
     if (!session?.user) return;
-    if (triggered.current) return;
-    triggered.current = true;
 
     setLoading(true);
     setError(null);
@@ -188,19 +192,19 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
       .catch((err) => setError(err instanceof Error ? err.message : 'Unknown error'))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, entityType, entityId]);
+  }, [session, entityType, entityId, retryCount]);
 
   // No analysis yet -- show generate button
   if (sections.length === 0) {
     if (!session?.user) {
       return (
         <div className="text-center py-12">
-          <p className="text-dashboard-text-muted mb-4">Sign in to generate a deep comparative analysis.</p>
+          <p className="text-dashboard-text-muted mb-4">{t('signInToGenerate')}</p>
           <a
             href="/auth/signin"
             className="inline-block text-sm px-4 py-2 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text transition-colors"
           >
-            Sign in
+            {t('signIn')}
           </a>
         </div>
       );
@@ -210,8 +214,8 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
       return (
         <div className="text-center py-12">
           <span className="inline-block w-6 h-6 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin mb-4" />
-          <p className="text-dashboard-text-muted">Generating comparative analysis across 8 dimensions...</p>
-          <p className="text-sm text-dashboard-text-muted/60 mt-2">This typically takes 1-2 minutes</p>
+          <p className="text-dashboard-text-muted">{t('generating')}</p>
+          <p className="text-sm text-dashboard-text-muted/60 mt-2">{t('generatingTime')}</p>
         </div>
       );
     }
@@ -221,10 +225,10 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
         <div className="text-center py-12">
           <p className="text-sm text-red-400 mb-2">{error}</p>
           <button
-            onClick={() => { triggered.current = false; setError(null); }}
+            onClick={() => setRetryCount((c) => c + 1)}
             className="text-sm px-4 py-2 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text transition-colors"
           >
-            Retry
+            {t('retry')}
           </button>
         </div>
       );
@@ -233,10 +237,76 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
     return null;
   }
 
+  async function translateReport() {
+    if (!cachedAnalysis?.id) return;
+    setTranslating(true);
+    try {
+      const resp = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_type: 'entity_analysis',
+          entity_id: cachedAnalysis.id,
+          field: 'sections',
+          locale: 'de',
+        }),
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.translated) {
+        const raw = typeof data.translated === 'string' ? data.translated : '';
+        setTranslatedSections(parseSections(raw));
+      }
+
+      // Also translate synthesis
+      const synthResp = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_type: 'entity_analysis',
+          entity_id: cachedAnalysis.id,
+          field: 'synthesis',
+          locale: 'de',
+        }),
+      });
+      if (synthResp.ok) {
+        const synthData = await synthResp.json();
+        if (synthData.translated) setSynthesis(synthData.translated);
+      }
+    } catch {
+      // Silent fail -- user can retry
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  const displaySections = (locale === 'de' && translatedSections) ? translatedSections : sections;
+  const showTranslateBtn = locale === 'de' && sections.length > 0 && !translatedSections;
+
   // Render the report
   return (
     <div>
-      {sections.map((section, idx) => (
+      {/* Translate button for DE users */}
+      {showTranslateBtn && (
+        <div className="mb-6">
+          <button
+            onClick={translateReport}
+            disabled={translating}
+            className="text-sm px-4 py-2 rounded bg-dashboard-border text-dashboard-text-muted hover:text-dashboard-text disabled:opacity-50 transition-colors"
+          >
+            {translating ? (
+              <>
+                <span className="inline-block w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2 align-middle" />
+                {tAnalysis('translatingAnalysis')}
+              </>
+            ) : (
+              tAnalysis('translateAnalysis')
+            )}
+          </button>
+        </div>
+      )}
+
+      {displaySections.map((section, idx) => (
         <div key={idx} className="mb-6">
           <h2 className="text-xl font-semibold text-dashboard-text mt-8 mb-2">
             {section.heading}
@@ -254,13 +324,13 @@ export default function ComparativeContent({ entityType, entityId, cachedAnalysi
         <div className="border-t border-dashboard-border pt-8 mt-8">
           {synthesis && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-dashboard-text mb-2">Synthesis</h3>
+              <h3 className="text-lg font-semibold text-dashboard-text mb-2">{t('synthesis')}</h3>
               <p className="text-base text-dashboard-text-muted leading-relaxed">{synthesis}</p>
             </div>
           )}
           {blindSpots && blindSpots.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-dashboard-text mb-2">Collective Blind Spots</h3>
+              <h3 className="text-lg font-semibold text-dashboard-text mb-2">{t('collectiveBlindSpots')}</h3>
               <ul className="space-y-1.5">
                 {blindSpots.map((s, i) => (
                   <li key={i} className="text-base text-dashboard-text-muted leading-relaxed flex items-start gap-2">
