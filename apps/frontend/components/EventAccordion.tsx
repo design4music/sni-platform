@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Title } from '@/lib/types';
 import { useTranslations, useLocale } from 'next-intl';
+import ExternalLink from './ExternalLink';
 
 interface EventAccordionProps {
   event: {
@@ -118,14 +119,9 @@ export default function EventAccordion({ event, index, compact = false }: EventA
             {relatedTitles.slice(0, 10).map(title => (
               <div key={title.id} className="text-xs text-dashboard-text-muted">
                 {title.url_gnews ? (
-                  <a
-                    href={title.url_gnews}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300"
-                  >
+                  <ExternalLink href={title.url_gnews} className="text-blue-400 hover:text-blue-300">
                     {title.title_display}
-                  </a>
+                  </ExternalLink>
                 ) : (
                   <span>{title.title_display}</span>
                 )}
@@ -147,42 +143,40 @@ export default function EventAccordion({ event, index, compact = false }: EventA
 
   return (
     <div className={`border-l-4 pl-4 py-2 ${isImportant ? 'border-yellow-500/60 shadow-[0_0_12px_rgba(234,179,8,0.12)]' : 'border-blue-500'}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          {/* Date range */}
-          <p className="text-sm mb-1 flex items-center">
+      <div>
+        {/* Title if available */}
+        {event.title ? (
+          <>
+            {event.event_id ? (
+              <Link href={`/events/${event.event_id}`} className="text-lg font-semibold text-dashboard-text hover:text-blue-400 transition-colors mb-1 block">
+                {event.title}
+              </Link>
+            ) : (
+              <p className="text-lg font-semibold text-dashboard-text mb-1">
+                {event.title}
+              </p>
+            )}
+            <p className="text-dashboard-text">{event.summary}</p>
+          </>
+        ) : (
+          <p className="text-dashboard-text">{event.summary}</p>
+        )}
+        {/* Tags */}
+        {event.tags && event.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {event.tags.map((tag, i) => (
+              <TagPill key={i} tag={tag} />
+            ))}
+          </div>
+        )}
+        {/* Date + sources row */}
+        <div className="flex items-center gap-3 mt-2 text-sm">
+          <span className="flex items-center">
             <DateRange date={event.date} last_active={event.last_active} locale={locale} />
             {event.last_active && (Date.now() - new Date(event.last_active + 'T00:00:00').getTime()) < 172800000 && (
               <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse ml-2" title={tTrending('active48h')} />
             )}
-          </p>
-          {/* Title if available */}
-          {event.title ? (
-            <>
-              {event.event_id ? (
-                <Link href={`/events/${event.event_id}`} className="text-lg font-semibold text-dashboard-text hover:text-blue-400 transition-colors mb-1 block">
-                  {event.title}
-                </Link>
-              ) : (
-                <p className="text-lg font-semibold text-dashboard-text mb-1">
-                  {event.title}
-                </p>
-              )}
-              <p className="text-dashboard-text">{event.summary}</p>
-            </>
-          ) : (
-            <p className="text-dashboard-text">{event.summary}</p>
-          )}
-          {/* Tags */}
-          {event.tags && event.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {event.tags.map((tag, i) => (
-                <TagPill key={i} tag={tag} />
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+          </span>
           {sourceCount > 0 && (
             <button
               onClick={() => setIsOpen(!isOpen)}

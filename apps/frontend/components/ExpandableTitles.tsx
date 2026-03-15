@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Title } from '@/lib/types';
+import ExternalLink from './ExternalLink';
 
 interface PublisherGroup {
   publisher: string;
@@ -87,14 +88,9 @@ function PublisherAccordion({ group, defaultOpen, dateFmtLocale }: { group: Publ
           {group.titles.map(title => (
             <div key={title.id} className="py-1.5">
               {title.url_gnews ? (
-                <a
-                  href={title.url_gnews}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-dashboard-text hover:text-blue-400 transition"
-                >
+                <ExternalLink href={title.url_gnews} className="text-sm text-dashboard-text hover:text-blue-400 transition">
                   {title.title_display}
-                </a>
+                </ExternalLink>
               ) : (
                 <span className="text-sm text-dashboard-text">{title.title_display}</span>
               )}

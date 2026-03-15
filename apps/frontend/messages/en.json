@@ -320,7 +320,10 @@
     "hoursAgo": "{count}h ago",
     "daysAgo": "{count}d ago",
     "monthsAgo": "{count}mo ago",
-    "slogan": "Understand the world. Briefly."
+    "slogan": "Understand the world. Briefly.",
+    "leavingConfirm": "You are leaving WorldBrief for an external publisher website.",
+    "cancel": "Stay here",
+    "continue": "Continue"
   },
   "sources": {
     "title": "Media Sources",

@@ -51,7 +51,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https://lh3.googleusercontent.com https://media.licdn.com https://platform-lookaside.fbsbx.com",
+              "img-src 'self' data: https://lh3.googleusercontent.com https://media.licdn.com https://platform-lookaside.fbsbx.com https://flagcdn.com",
               "font-src 'self'",
               "connect-src 'self' https://*.google-analytics.com https://www.googletagmanager.com",
               "frame-src 'none'",

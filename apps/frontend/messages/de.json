@@ -320,7 +320,10 @@
     "hoursAgo": "vor {count} Std.",
     "daysAgo": "vor {count} T.",
     "monthsAgo": "vor {count} Mon.",
-    "slogan": "Die Welt verstehen. Kurz gefasst."
+    "slogan": "Die Welt verstehen. Kurz gefasst.",
+    "leavingConfirm": "Sie verlassen WorldBrief und werden zur Website des Herausgebers weitergeleitet.",
+    "cancel": "Hier bleiben",
+    "continue": "Weiter"
   },
   "sources": {
     "title": "Medienquellen",

@@ -9,16 +9,18 @@ import { Event } from '@/lib/types';
 
 function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
   if (!iso2 || iso2.length !== 2) return null;
+  const code = iso2.toLowerCase();
   return (
     <span className="inline-flex items-center justify-center rounded border border-blue-500/30 bg-blue-500/10 overflow-hidden align-middle"
       style={{ width: size + 6, height: Math.round(size * 0.75) + 4 }}>
       <img
-        src={`/flags/${iso2.toLowerCase()}.png`}
+        src={`https://flagcdn.com/w40/${code}.png`}
         alt={iso2}
         width={size}
         height={Math.round(size * 0.75)}
         className="opacity-70"
         style={{ objectFit: 'contain', filter: 'saturate(0.6) brightness(0.9)' }}
+        loading="lazy"
       />
     </span>
   );
@@ -80,10 +82,13 @@ export default function CountryAccordion({
             )}
           </span>
           {isoCodes.length > 1 && (
-            <span className="flex items-center gap-1 mt-0.5">
-              {isoCodes.map(iso => (
+            <span className="flex items-center gap-1 mt-0.5 flex-wrap max-w-[260px] md:max-w-none">
+              {isoCodes.slice(0, 12).map(iso => (
                 <FlagImg key={iso} iso2={iso} size={16} />
               ))}
+              {isoCodes.length > 12 && (
+                <span className="text-xs text-dashboard-text-muted">+{isoCodes.length - 12}</span>
+              )}
             </span>
           )}
         </span>

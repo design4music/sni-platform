@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Event, Title } from '@/lib/types';
+import ExternalLink from './ExternalLink';
 
 interface OtherCoverageProps {
   label: string;
@@ -27,14 +28,9 @@ function TitleLink({ title }: { title: Title }) {
   return (
     <div className="py-0.5 text-sm">
       {title.url_gnews ? (
-        <a
-          href={title.url_gnews}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-dashboard-text-muted hover:text-blue-400 transition"
-        >
+        <ExternalLink href={title.url_gnews} className="text-dashboard-text-muted hover:text-blue-400 transition">
           {title.title_display}
-        </a>
+        </ExternalLink>
       ) : (
         <span className="text-dashboard-text-muted">{title.title_display}</span>
       )}
