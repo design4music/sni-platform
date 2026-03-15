@@ -276,6 +276,56 @@ export function buildAnalysisPrompt(
   return parts.join('\n');
 }
 
+// ---- User Input Prompt (freeform text analysis) ----------------------------
+
+export function buildUserInputPrompt(
+  userText: string,
+  modules: RaiModule[],
+): string {
+  const parts: string[] = [];
+
+  parts.push(
+    'You are operating under the **Real Artificial Intelligence (RAI) Framework**.',
+    'A user has submitted a text for critical analysis. This could be a news narrative, a political claim, a media excerpt, or any geopolitical statement.',
+    '',
+    'Your task:',
+    '- Deconstruct the framing, assumptions, and implicit claims in the text',
+    '- Identify what perspectives, facts, or actors are missing or underrepresented',
+    '- Assess logical coherence, evidence quality, and potential bias',
+    '- Highlight blind spots and suggest what a fuller picture would include',
+    '',
+  );
+
+  parts.push('**USER-SUBMITTED TEXT:**');
+  parts.push('```');
+  parts.push(userText);
+  parts.push('```');
+  parts.push('');
+
+  // Module descriptions
+  parts.push(formatModulesForPrompt(modules));
+
+  parts.push(
+    '**OUTPUT FORMAT INSTRUCTIONS:**',
+    '- Use `## ` (h2) for each dimension heading using descriptive titles',
+    '- Do NOT include module IDs (M01, M02...) in headings',
+    '- Use bullet lists for findings and blind spots',
+    '- Keep each section to 2-4 paragraphs max',
+    '- Mark key insights with `> ` blockquote syntax',
+    '',
+  );
+
+  parts.push(
+    '**At the end of your analysis**, output a scoring block in this exact format:',
+    '',
+    'SCORES: {"frame_divergence": <0.0-1.0>, "collective_blind_spots": ["...", "..."], "synthesis": "<1-2 sentence summary>"}',
+    '',
+    'The scores must reflect your actual analysis. Do NOT use placeholder values.',
+  );
+
+  return parts.join('\n');
+}
+
 // ---- DeepSeek Caller ------------------------------------------------------
 
 const DEEPSEEK_API_URL =

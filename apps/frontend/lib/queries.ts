@@ -1672,3 +1672,37 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
     [trimmed]
   ));
 }
+
+// ========================================================================
+// Focus country: top recent events for a centroid
+export interface FocusEvent {
+  id: string;
+  title: string;
+  date: string;
+  source_batch_count: number;
+  tags: string[];
+  summary: string | null;
+}
+
+export async function getFocusCountryEvents(
+  centroidId: string,
+  limit: number = 5,
+  locale?: string
+): Promise<FocusEvent[]> {
+  return query<FocusEvent>(
+    `SELECT e.id,
+            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+            e.date::text as date, e.source_batch_count,
+            COALESCE(e.tags, '{}') as tags,
+            LEFT(${locCol('e', 'summary', locale)}, 200) as summary
+     FROM events_v3 e
+     JOIN ctm c ON e.ctm_id = c.id
+     WHERE c.centroid_id = $1
+       AND e.is_catchall = false
+       AND e.merged_into IS NULL
+       AND e.source_batch_count >= 5
+     ORDER BY COALESCE(e.last_active, e.date) DESC
+     LIMIT $2`,
+    [centroidId, limit]
+  );
+}

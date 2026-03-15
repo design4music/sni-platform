@@ -4,9 +4,12 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import SocialButtons from '@/components/SocialButtons';
 
 export default function SignInPage() {
   const router = useRouter();
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,7 +29,7 @@ export default function SignInPage() {
     setLoading(false);
 
     if (res?.error) {
-      setError('Invalid email or password');
+      setError(t('invalidCredentials'));
       return;
     }
 
@@ -37,7 +40,18 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#0a0e1a' }}>
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-white text-center mb-8">Sign in to WorldBrief</h1>
+        <h1 className="text-2xl font-bold text-white text-center mb-8">{t('signInTitle')}</h1>
+
+        <SocialButtons />
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-700" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-[#0a0e1a] px-3 text-gray-500">{t('orContinueWith')}</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -47,7 +61,7 @@ export default function SignInPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">{t('emailLabel')}</label>
             <input
               id="email"
               type="email"
@@ -60,7 +74,7 @@ export default function SignInPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">Password</label>
+            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">{t('passwordLabel')}</label>
             <input
               id="password"
               type="password"
@@ -77,14 +91,14 @@ export default function SignInPage() {
             disabled={loading}
             className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? t('signingIn') : t('signIn')}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          No account?{' '}
+          {t('noAccount')}{' '}
           <Link href="/auth/signup" className="text-blue-400 hover:text-blue-300 transition">
-            Sign up
+            {t('signUp')}
           </Link>
         </p>
       </div>

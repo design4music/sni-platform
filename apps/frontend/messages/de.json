@@ -14,7 +14,8 @@
     "current": "(aktuell)",
     "openMenu": "Menu oeffnen",
     "closeMenu": "Menu schliessen",
-    "previousMonthsArchive": "Fruehere Monate (Archiv)"
+    "previousMonthsArchive": "Fruehere Monate (Archiv)",
+    "profile": "Profil"
   },
   "regions": {
     "africa": "Afrika",
@@ -38,7 +39,10 @@
     "coverageNote": "Die Abdeckung variiert je nach Land und Region, abhaengig von verfuegbaren Medienquellen.",
     "crossCountry": "Laenderuebergreifende Geschichten",
     "ourSources": "Unsere Quellen",
-    "sourcesDescription": "{count}+ internationale Nachrichtenquellen aus allen Regionen"
+    "sourcesDescription": "{count}+ internationale Nachrichtenquellen aus allen Regionen",
+    "focusCountry": "Ihr Fokus: {country}",
+    "noDeviations": "Keine ungewoehnliche Aktivitaet erkannt",
+    "noRecentEvents": "Keine aktuellen Ereignisse gefunden"
   },
   "trending": {
     "title": "Aktuelle Geschichten",
@@ -846,5 +850,51 @@
     "issue6What": "Eine Laender- oder Themenseiten-Zusammenfassung erwaehnt eine aktuelle Entwicklung nicht.",
     "issue6Why": "Monatliche Zusammenfassungen werden periodisch (alle 6 Stunden) mit einer Abklingzeit regeneriert. Ereignisse, die zwischen den Zyklen erscheinen, werden erst bei der naechsten Regenerierung beruecksichtigt.",
     "issue6Status": "Konzeptionsbedingt -- ein Gleichgewicht zwischen Aktualitaet und Rechenkosten. Einzelne Ereignisse werden schneller aktualisiert als monatliche Zusammenfassungen."
+  },
+  "profile": {
+    "title": "Profil",
+    "account": "Konto",
+    "signedInWith": "Angemeldet mit {provider}",
+    "displayName": "Anzeigename",
+    "focusCountry": "Fokusland",
+    "focusCountryDescription": "Waehlen Sie ein Land oder eine Region zum Verfolgen. Ihre Startseite zeigt einen personalisierten Bereich mit aktuellen Entwicklungen und ungewoehnlichen Aktivitaeten fuer dieses Gebiet. Sie koennen die Auswahl jederzeit aendern oder entfernen.",
+    "noFocusCountry": "-- Keine Auswahl --",
+    "saveChanges": "Aenderungen speichern",
+    "saving": "Wird gespeichert...",
+    "saved": "Gespeichert",
+    "raiAnalyst": "RAI Analyst",
+    "raiDescription": "Reichen Sie einen beliebigen Text zur kritischen Analyse mit dem RAI-Framework ein. Fuegen Sie einen Nachrichtenartikel, eine politische Aussage, einen Medienausschnitt oder eine geopolitische Darstellung ein. Der Analyst zerlegt die Rahmung, identifiziert blinde Flecken und bewertet die Kohaerenz. Dies ist ein Einmal-Analyse-Tool, kein Gespraech.",
+    "raiExamples": "Was gut funktioniert:",
+    "raiExample1": "Ein Nachrichtenartikel oder Kommentar ueber ein geopolitisches Ereignis",
+    "raiExample2": "Eine politische Erklaerung oder Regierungspressemitteilung",
+    "raiExample3": "Ein Social-Media-Beitrag mit Behauptungen ueber internationale Angelegenheiten",
+    "raiPlaceholder": "Fuegen Sie den zu analysierenden Text hier ein...",
+    "analyse": "Analysieren",
+    "analysing": "Wird analysiert...",
+    "analysisHistory": "Ihre Analysen",
+    "originalInput": "Originaltext",
+    "focusCountrySection": "Ihr Fokusland",
+    "focusCountryEmpty": "Waehlen Sie ein Fokusland in Ihrem Profil, um hier personalisierte Entwicklungen zu sehen.",
+    "focusCountryDeviations": "Ungewoehnliche Aktivitaet",
+    "focusCountryTopEvents": "Aktuelle Themen",
+    "goToProfile": "Zum Profil"
+  },
+  "auth": {
+    "signInTitle": "Bei WorldBrief anmelden",
+    "signUpTitle": "Konto erstellen",
+    "orContinueWith": "oder weiter mit",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "confirmLabel": "Passwort bestaetigen",
+    "nameLabel": "Name (optional)",
+    "signIn": "Anmelden",
+    "signingIn": "Wird angemeldet...",
+    "signUp": "Registrieren",
+    "creatingAccount": "Konto wird erstellt...",
+    "noAccount": "Kein Konto?",
+    "hasAccount": "Bereits ein Konto?",
+    "invalidCredentials": "Ungueltige E-Mail oder Passwort",
+    "passwordMin": "Passwort muss mindestens 8 Zeichen lang sein",
+    "passwordMismatch": "Passwoerter stimmen nicht ueberein"
   }
 }

@@ -14,7 +14,8 @@
     "current": "(current)",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "previousMonthsArchive": "Previous Months (Archive)"
+    "previousMonthsArchive": "Previous Months (Archive)",
+    "profile": "Profile"
   },
   "regions": {
     "africa": "Africa",
@@ -38,7 +39,10 @@
     "coverageNote": "Coverage varies by country and region depending on available media sources.",
     "crossCountry": "Cross-Country Stories",
     "ourSources": "Our Sources",
-    "sourcesDescription": "{count}+ international news sources across all regions"
+    "sourcesDescription": "{count}+ international news sources across all regions",
+    "focusCountry": "Your Focus: {country}",
+    "noDeviations": "No unusual activity detected",
+    "noRecentEvents": "No recent events found"
   },
   "trending": {
     "title": "Trending Stories",
@@ -846,5 +850,51 @@
     "issue6What": "A country or theme page summary doesn't mention a recent development.",
     "issue6Why": "Monthly digests regenerate periodically (every 6 hours) with a cooldown. Events that appear between cycles aren't reflected until the next regeneration.",
     "issue6Status": "By design -- balances freshness against compute cost. Individual events update faster than monthly digests."
+  },
+  "profile": {
+    "title": "Profile",
+    "account": "Account",
+    "signedInWith": "Signed in with {provider}",
+    "displayName": "Display name",
+    "focusCountry": "Focus Country",
+    "focusCountryDescription": "Choose any country or region to follow. Your homepage will show a personalized section with the latest developments and unusual activity for this area. You can change or remove it at any time.",
+    "noFocusCountry": "-- None selected --",
+    "saveChanges": "Save changes",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "raiAnalyst": "RAI Analyst",
+    "raiDescription": "Submit any text for critical analysis using the RAI Framework. Paste a news article, political claim, media excerpt, or geopolitical narrative. The analyst will deconstruct its framing, identify blind spots, and assess its coherence. This is a one-shot analysis tool, not a conversation.",
+    "raiExamples": "What works well:",
+    "raiExample1": "A news article or editorial about a geopolitical event",
+    "raiExample2": "A political statement or government press release",
+    "raiExample3": "A social media post making claims about international affairs",
+    "raiPlaceholder": "Paste the text you want to analyse here...",
+    "analyse": "Analyse",
+    "analysing": "Analysing...",
+    "analysisHistory": "Your Analyses",
+    "originalInput": "Original input",
+    "focusCountrySection": "Your Focus Country",
+    "focusCountryEmpty": "Pick a focus country in your profile to see personalized developments here.",
+    "focusCountryDeviations": "Unusual activity",
+    "focusCountryTopEvents": "Latest topics",
+    "goToProfile": "Go to Profile"
+  },
+  "auth": {
+    "signInTitle": "Sign in to WorldBrief",
+    "signUpTitle": "Create your account",
+    "orContinueWith": "or continue with",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "confirmLabel": "Confirm password",
+    "nameLabel": "Name (optional)",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "signUp": "Sign Up",
+    "creatingAccount": "Creating account...",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "invalidCredentials": "Invalid email or password",
+    "passwordMin": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match"
   }
 }

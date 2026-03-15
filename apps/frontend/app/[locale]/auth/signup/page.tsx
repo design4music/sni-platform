@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import SocialButtons from '@/components/SocialButtons';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -18,11 +21,11 @@ export default function SignUpPage() {
     setError('');
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('passwordMin'));
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError(t('passwordMismatch'));
       return;
     }
 
@@ -48,7 +51,18 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#0a0e1a' }}>
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-white text-center mb-8">Create your account</h1>
+        <h1 className="text-2xl font-bold text-white text-center mb-8">{t('signUpTitle')}</h1>
+
+        <SocialButtons />
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-700" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-[#0a0e1a] px-3 text-gray-500">{t('orContinueWith')}</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -58,7 +72,7 @@ export default function SignUpPage() {
           )}
 
           <div>
-            <label htmlFor="name" className="block text-sm text-gray-400 mb-1">Name (optional)</label>
+            <label htmlFor="name" className="block text-sm text-gray-400 mb-1">{t('nameLabel')}</label>
             <input
               id="name"
               type="text"
@@ -70,7 +84,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">Email</label>
+            <label htmlFor="email" className="block text-sm text-gray-400 mb-1">{t('emailLabel')}</label>
             <input
               id="email"
               type="email"
@@ -83,7 +97,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">Password</label>
+            <label htmlFor="password" className="block text-sm text-gray-400 mb-1">{t('passwordLabel')}</label>
             <input
               id="password"
               type="password"
@@ -96,7 +110,7 @@ export default function SignUpPage() {
           </div>
 
           <div>
-            <label htmlFor="confirm" className="block text-sm text-gray-400 mb-1">Confirm password</label>
+            <label htmlFor="confirm" className="block text-sm text-gray-400 mb-1">{t('confirmLabel')}</label>
             <input
               id="confirm"
               type="password"
@@ -113,14 +127,14 @@ export default function SignUpPage() {
             disabled={loading}
             className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
           >
-            {loading ? 'Creating account...' : 'Sign Up'}
+            {loading ? t('creatingAccount') : t('signUp')}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          Already have an account?{' '}
+          {t('hasAccount')}{' '}
           <Link href="/auth/signin" className="text-blue-400 hover:text-blue-300 transition">
-            Sign in
+            {t('signIn')}
           </Link>
         </p>
       </div>

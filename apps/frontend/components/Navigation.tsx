@@ -195,6 +195,12 @@ export default function Navigation({
                     )}
                     <p className="text-xs text-dashboard-text-muted truncate">{session.user.email}</p>
                   </div>
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-sm text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"
+                  >
+                    {t('profile')}
+                  </Link>
                   <button
                     onClick={() => signOut()}
                     className="w-full text-left px-4 py-2 text-sm text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"
@@ -426,6 +432,13 @@ export default function Navigation({
                     )}
                     <p className="text-xs text-dashboard-text-muted truncate">{session.user.email}</p>
                   </div>
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3 text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition border-b border-dashboard-border/50"
+                  >
+                    {t('profile')}
+                  </Link>
                   <button
                     onClick={() => { signOut(); setMobileMenuOpen(false); }}
                     className="w-full text-left px-4 py-3 text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border transition"

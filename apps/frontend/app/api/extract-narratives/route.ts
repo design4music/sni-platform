@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing entity_type or entity_id' }, { status: 400 });
     }
 
-    if (!['event', 'ctm'].includes(entity_type)) {
-      return NextResponse.json({ error: 'entity_type must be event or ctm' }, { status: 400 });
+    if (entity_type !== 'event') {
+      return NextResponse.json({ error: 'entity_type must be event' }, { status: 400 });
     }
 
     // Check for existing stance-clustered narratives

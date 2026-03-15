@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     let eventDate: string | undefined;
 
-    if (entity_type === 'event') {
+    {
       const rows = await query<{
         centroid_id: string;
         centroid_name: string;
@@ -137,22 +137,6 @@ export async function POST(req: NextRequest) {
       }
       eventDate = rows[0].event_date;
       context = { ...rows[0], entity_type: 'event' };
-    } else {
-      const rows = await query<{
-        centroid_id: string;
-        centroid_name: string;
-        track: string;
-      }>(
-        `SELECT c.centroid_id, cv.label as centroid_name, c.track
-         FROM ctm c
-         JOIN centroids_v3 cv ON cv.id = c.centroid_id
-         WHERE c.id = $1`,
-        [entity_id]
-      );
-      if (rows.length === 0) {
-        return NextResponse.json({ error: 'CTM not found' }, { status: 404 });
-      }
-      context = { ...rows[0], event_title: '', entity_type: 'ctm' };
     }
 
     // Use signal_stats from first narrative that has them

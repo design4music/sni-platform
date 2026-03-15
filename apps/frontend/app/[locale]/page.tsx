@@ -6,6 +6,7 @@ import MapSection from '@/components/MapSection';
 import SourceCarousel from '@/components/SourceCarousel';
 import AnimatedStats from '@/components/AnimatedStats';
 import EpicCard from '@/components/EpicCard';
+import FocusCountrySection from '@/components/FocusCountrySection';
 import { getCentroidsByClass, getAllActiveFeeds, getLatestEpics } from '@/lib/queries';
 import { REGIONS, getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
@@ -100,6 +101,11 @@ export default async function HomePage({
             </Link>
           </div>
         </section>
+
+        {/* Focus Country (logged-in users with focus centroid) */}
+        <Suspense fallback={null}>
+          <FocusCountrySection />
+        </Suspense>
 
         {/* Trending Now (deferred via Suspense) */}
         <Suspense fallback={
