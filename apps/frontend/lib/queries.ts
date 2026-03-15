@@ -1150,6 +1150,33 @@ export async function getStanceForCentroid(centroidId: string): Promise<Centroid
   );
 }
 
+export interface DeviationFlag {
+  type: string;
+  z?: number;
+  current?: number;
+  baseline_mean?: number;
+  actor?: string;
+}
+
+export interface CentroidDeviation {
+  centroid_id: string;
+  week: string;
+  metrics: Record<string, unknown>;
+  deviations: DeviationFlag[];
+}
+
+export async function getCentroidDeviations(centroidId: string): Promise<CentroidDeviation | null> {
+  const rows = await query<CentroidDeviation>(
+    `SELECT centroid_id, TO_CHAR(week, 'YYYY-MM-DD') as week, metrics, deviations
+     FROM mv_centroid_baselines
+     WHERE centroid_id = $1 AND deviations IS NOT NULL
+     ORDER BY week DESC
+     LIMIT 1`,
+    [centroidId]
+  );
+  return rows[0] || null;
+}
+
 export interface AlignmentRow {
   feed_name: string;
   source_domain: string | null;

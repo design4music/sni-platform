@@ -74,7 +74,7 @@ Return ONLY valid JSON: {{"1": "track_name", "2": "track_name"}}"""
 LABEL_SIGNAL_EXTRACTION_PROMPT = """You are an expert news analyst. Extract structured event labels AND typed signals from news titles.
 
 ## PART 1: EVENT LABEL
-Format: ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET)
+Format: ACTOR -> ACTION_CLASS -> DOMAIN -> TARGET (TARGET is REQUIRED; use "NONE" for non-directed events)
 
 ACTION CLASSES (7-tier hierarchy - lower tier = higher priority):
 {action_classes}

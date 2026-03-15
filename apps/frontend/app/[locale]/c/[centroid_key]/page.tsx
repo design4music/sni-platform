@@ -14,8 +14,10 @@ import {
   getCentroidMonthlySummary,
   getTopSignalsForCentroid,
   getStanceForCentroid,
+  getCentroidDeviations,
 } from '@/lib/queries';
 import { getOutletLogoUrl } from '@/lib/logos';
+import DeviationCard from '@/components/DeviationCard';
 import StanceSidebar from './StanceSidebar';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -72,11 +74,12 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     : availableMonths[0] || null;
 
   // Fetch track data, centroid summary, and top signals for the current month
-  const [monthTrackData, centroidSummary, topSignals, stanceScores] = await Promise.all([
+  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     getStanceForCentroid(centroid.id),
+    getCentroidDeviations(centroid.id),
   ]);
 
   // Build maps of track -> titleCount and track -> lastActive for the current month
@@ -169,6 +172,12 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             })}
           </div>
         </div>
+      )}
+      {deviationData && deviationData.deviations && deviationData.deviations.length > 0 && (
+        <DeviationCard
+          week={deviationData.week}
+          deviations={deviationData.deviations}
+        />
       )}
       {stanceScores.length > 0 && (
         <StanceSidebar

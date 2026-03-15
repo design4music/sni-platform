@@ -146,7 +146,13 @@
     "metaDescription": "{label} news briefing: strategic tracks, topic summaries, and multilingual source analysis from international media.",
     "trackDescription": "This is a monthly strategic snapshot of developments related to {label}, organized by domain. Each card represents a distinct analytical track, summarizing how events and narratives evolved during the month within that sphere. Together, they form a cross-sectional view of the country's strategic activity for the selected period.",
     "monthlyOverview": "Monthly Overview",
-    "summaryStats": "Based on {events} topics across {tracks} tracks"
+    "summaryStats": "Based on {events} topics across {tracks} tracks",
+    "unusualActivity": "Unusual Activity",
+    "comparedToBaseline": "Week of {week}, compared to 12-week average",
+    "deviationEventSpike": "{count} topics this week ({mult} the usual {avg})",
+    "deviationEventDrop": "Only {count} topics this week ({mult} the usual {avg})",
+    "deviationPolarity": "Tone shifted: {now}% cooperative vs usual {was}%",
+    "deviationNewActor": "{actor} appeared as a top actor for the first time"
   },
   "track": {
     "domestic": "Domestic",

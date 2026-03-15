@@ -227,7 +227,7 @@ TARGET NORMALIZATION (CRITICAL FOR CLUSTERING):
    - Gaza, Palestinian territories -> PS
    - Crimea, Donbas -> UA (contested, use internationally recognized)
 
-7. OMIT TARGET (use null) WHEN:
+7. TARGET IS REQUIRED. Use "NONE" WHEN:
    - Target is vague ("various countries", "the world")
    - Target is the same as actor's country (domestic policy)
    - No clear external target exists
@@ -369,3 +369,47 @@ def validate_domain(domain: str) -> bool:
 def get_action_class_tier(action_class: str) -> int:
     """Get the tier number for an action class (1-7, or 99 if invalid)."""
     return ACTION_CLASS_TIERS.get(action_class, 99)
+
+
+# =============================================================================
+# POLARITY CLASSIFICATION - Cooperative / Conflictual / Neutral
+# =============================================================================
+
+ACTION_CLASS_POLARITY = {
+    # Cooperative (5)
+    "ALLIANCE_COORDINATION": "COOPERATIVE",
+    "MULTILATERAL_ACTION": "COOPERATIVE",
+    "INFRASTRUCTURE_DEVELOPMENT": "COOPERATIVE",
+    "RESOURCE_ALLOCATION": "COOPERATIVE",
+    "CAPABILITY_TRANSFER": "COOPERATIVE",
+    # Conflictual (7)
+    "MILITARY_OPERATION": "CONFLICTUAL",
+    "LAW_ENFORCEMENT_OPERATION": "CONFLICTUAL",
+    "SANCTION_ENFORCEMENT": "CONFLICTUAL",
+    "SECURITY_INCIDENT": "CONFLICTUAL",
+    "ECONOMIC_PRESSURE": "CONFLICTUAL",
+    "ECONOMIC_DISRUPTION": "CONFLICTUAL",
+    "COLLECTIVE_PROTEST": "CONFLICTUAL",
+    # Neutral (11)
+    "LEGAL_RULING": "NEUTRAL",
+    "LEGISLATIVE_DECISION": "NEUTRAL",
+    "POLICY_CHANGE": "NEUTRAL",
+    "REGULATORY_ACTION": "NEUTRAL",
+    "STRATEGIC_REALIGNMENT": "NEUTRAL",
+    "POLITICAL_PRESSURE": "NEUTRAL",
+    "DIPLOMATIC_PRESSURE": "NEUTRAL",
+    "INFORMATION_INFLUENCE": "NEUTRAL",
+    "LEGAL_CONTESTATION": "NEUTRAL",
+    "INSTITUTIONAL_RESISTANCE": "NEUTRAL",
+    "SOCIAL_INCIDENT": "NEUTRAL",
+}
+
+# Ensure every action class has a polarity
+assert set(ACTION_CLASS_POLARITY.keys()) == set(
+    ACTION_CLASSES.keys()
+), "ACTION_CLASS_POLARITY must cover all action classes"
+
+
+def get_polarity(action_class: str) -> str:
+    """Get polarity for an action class. Returns 'NEUTRAL' for unknown."""
+    return ACTION_CLASS_POLARITY.get(action_class, "NEUTRAL")
