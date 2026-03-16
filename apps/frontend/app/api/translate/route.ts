@@ -28,6 +28,12 @@ const FIELD_MAP: Record<string, Record<string, { table: string; pk: string; src:
     rai_conflicts: { table: 'narratives', pk: 'id', src: 'rai_conflicts', dest: 'rai_conflicts_de', isArray: true },
     rai_blind_spots: { table: 'narratives', pk: 'id', src: 'rai_blind_spots', dest: 'rai_blind_spots_de', isArray: true },
   },
+  entity_analysis: {
+    sections: { table: 'entity_analyses', pk: 'id', src: 'sections', dest: 'sections_de' },
+    synthesis: { table: 'entity_analyses', pk: 'id', src: 'synthesis', dest: 'synthesis_de' },
+    blind_spots: { table: 'entity_analyses', pk: 'id', src: 'blind_spots', dest: 'blind_spots_de', isArray: true },
+    conflicts: { table: 'entity_analyses', pk: 'id', src: 'conflicts', dest: 'conflicts_de', isArray: true },
+  },
 };
 
 async function translateText(text: string): Promise<string | null> {

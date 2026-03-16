@@ -345,3 +345,69 @@ decisions:
       - All 23 pages force-dynamic (10-30s queries); content updates daily so 1h cache safe
     consequences:
       - revalidate=3600 data / 86400 static; subsequent visitors get cached HTML (<100ms)
+
+  - id: D-038
+    date: 2026-03-10
+    type: architectural
+    status: accepted
+    title: Stance-clustered narratives replace LLM-generated narrative frames
+    rationale:
+      - Old approach: LLM invented narrative frames from headlines (hallucination-prone, unstable across runs)
+      - New approach: group publishers by their stance scores (critical < -0.5, reportorial, supportive > 0.5), sample headlines per cluster, LLM only names the dominant frame within each real editorial grouping
+      - Narratives now grounded in observable publisher behavior, not LLM imagination
+    consequences:
+      - 1-3 narratives per entity (was unbounded); extraction_method = 'stance_clustered'
+      - Extraction moved to on-demand (D-030); old framed narratives retained read-only
+
+  - id: D-039
+    date: 2026-03-12
+    type: architectural
+    status: accepted
+    title: Comparative cross-cluster analysis (entity_analyses)
+    rationale:
+      - Per-narrative analysis missed the inter-cluster picture; comparative analysis reads ALL stance clusters together and produces one integrated brief covering convergence, divergence, omissions, and collective blind spots
+      - Analysis stored per entity (entity_type + entity_id) not per narrative
+    consequences:
+      - entity_analyses table (sections JSONB, synthesis, blind_spots, conflicts)
+      - Frontend page at /analysis/comparative/[entity_type]/[entity_id]
+      - Supports regeneration (force flag) and DE translation
+
+  - id: D-040
+    date: 2026-03-12
+    type: analytical
+    status: accepted
+    title: Centroid timeline as temporal context for analysis (90-day window)
+    rationale:
+      - Analysis without history misses escalation patterns and recurring themes
+      - Feed the LLM the top ~10 most important events from the same centroid within 90 days BEFORE the analyzed event (never after, to prevent future-leak)
+      - Events ranked by importance_score + tag overlap with analyzed event
+    consequences:
+      - Timeline block injected into comparative prompt; analyst can trace escalation arcs
+      - getCentroidTimeline query with tag-boost scoring and beforeDate anchor
+
+  - id: D-041
+    date: 2026-03-14
+    type: architectural
+    status: accepted
+    title: Label-based deterministic module selection for RAI analysis
+    rationale:
+      - Old approach used LLM to pick which analysis modules to apply (slow, non-deterministic)
+      - New approach: selectModulesByLabels() maps event labels to modules mechanically
+      - 16 consolidated modules in rai-engine.ts, command-format prompts
+    consequences:
+      - No LLM call for module selection; analysis prompt assembled deterministically
+      - Modules cover: actor mapping, omission detection, framing devices, historical context, etc.
+
+  - id: D-042
+    date: 2026-03-14
+    type: operational
+    status: accepted
+    title: Token-conscious prompt engineering as ongoing practice
+    rationale:
+      - Triggered by bloated comparative analysis prompt (~18K tokens across prompts + context docs)
+      - Audit found ~43% reduction possible without meaning loss: tables over prose, deduplicated rules, deleted dead code (PREMISE_LIBRARY ~330 lines), consolidated 4 PROSE_RULES blocks into 1
+      - Every token in a prompt is paid per-call across thousands of invocations; small savings compound
+    consequences:
+      - All new prompts must follow: no filler openers ("You are a helpful..."), imperative voice, say each rule once, tables for structured data, bullets for constraints
+      - Shared prompt fragments extracted to core/prompts.py (PROSE_RULES, MERGE prompts, COHERENCE_CHECK)
+      - Context docs trimmed: PIPELINE_STATUS 1135->256 lines, DecisionLog 789->347, ProjectModel 260->210

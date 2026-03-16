@@ -1701,6 +1701,8 @@ export async function getFocusCountryEvents(
        AND e.is_catchall = false
        AND e.merged_into IS NULL
        AND e.source_batch_count >= 5
+       AND e.title IS NOT NULL
+       AND e.summary IS NOT NULL
      ORDER BY COALESCE(e.last_active, e.date) DESC
      LIMIT $2`,
     [centroidId, limit]

@@ -6,22 +6,19 @@ import Facebook from 'next-auth/providers/facebook';
 import bcrypt from 'bcryptjs';
 import { query } from '@/lib/db';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  trustHost: true,
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID || '',
-      clientSecret: process.env.AUTH_GOOGLE_SECRET || '',
-    }),
-    LinkedIn({
-      clientId: process.env.AUTH_LINKEDIN_ID || '',
-      clientSecret: process.env.AUTH_LINKEDIN_SECRET || '',
-    }),
-    Facebook({
-      clientId: process.env.AUTH_FACEBOOK_ID || '',
-      clientSecret: process.env.AUTH_FACEBOOK_SECRET || '',
-    }),
-    Credentials({
+import type { Provider } from 'next-auth/providers';
+
+const providers: Provider[] = [];
+if (process.env.AUTH_GOOGLE_ID) {
+  providers.push(Google({ clientId: process.env.AUTH_GOOGLE_ID, clientSecret: process.env.AUTH_GOOGLE_SECRET! }));
+}
+if (process.env.AUTH_LINKEDIN_ID) {
+  providers.push(LinkedIn({ clientId: process.env.AUTH_LINKEDIN_ID, clientSecret: process.env.AUTH_LINKEDIN_SECRET! }));
+}
+if (process.env.AUTH_FACEBOOK_ID) {
+  providers.push(Facebook({ clientId: process.env.AUTH_FACEBOOK_ID, clientSecret: process.env.AUTH_FACEBOOK_SECRET! }));
+}
+providers.push(Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
@@ -44,7 +41,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return { id: user.id, email: user.email, name: user.name };
       },
     }),
-  ],
+  );
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
+  providers,
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/auth/signin',

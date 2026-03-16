@@ -102,11 +102,6 @@ export default async function HomePage({
           </div>
         </section>
 
-        {/* Focus Country (logged-in users with focus centroid) */}
-        <Suspense fallback={null}>
-          <FocusCountrySection />
-        </Suspense>
-
         {/* Trending Now (deferred via Suspense) */}
         <Suspense fallback={
           <div className="animate-pulse">
@@ -121,13 +116,18 @@ export default async function HomePage({
           <TrendingCarousel />
         </Suspense>
 
+        {/* Focus Country (logged-in users with focus centroid) */}
+        <Suspense fallback={null}>
+          <FocusCountrySection />
+        </Suspense>
+
         {/* Map */}
         <MapSection centroids={geoCentroidsWithMap} />
 
         {/* Regions */}
         <section>
           <h2 className="text-3xl font-bold mb-6">{t('worldRegions')}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(REGIONS).map(([key, _label]) => {
               const names = centroidsByRegion[key] || [];
               const tKey = regionKeyMap[key] || key.toLowerCase();
