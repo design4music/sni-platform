@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
@@ -36,6 +37,7 @@ interface ProfileClientProps {
 
 export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
   const { data: session, update: updateSession } = useSession();
+  const router = useRouter();
   const t = useTranslations('profile');
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -76,11 +78,11 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, focus_centroid: focusCentroid || null }),
     });
-    // Trigger session refresh to update JWT with new focus_centroid
+    // Trigger JWT refresh with new focus_centroid, then hard-reload
+    // to bust all caches (client router cache, in-memory query cache)
     await updateSession();
     setSaveMsg(t('saved'));
     setSaving(false);
-    setTimeout(() => setSaveMsg(''), 3000);
   }
 
   async function handleSubmitAnalysis() {

@@ -21,3 +21,10 @@ export async function cached<T>(
 
   return value;
 }
+
+/** Remove all entries whose key starts with the given prefix. */
+export function invalidateCache(prefix: string) {
+  for (const key of store.keys()) {
+    if (key.startsWith(prefix)) store.delete(key);
+  }
+}

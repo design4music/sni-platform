@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { query } from '@/lib/db';
 
@@ -60,6 +61,9 @@ export async function PATCH(req: NextRequest) {
     `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIdx}`,
     params as any[]
   );
+
+  // Bust Next.js full-route cache so home page re-renders with new focus country
+  revalidatePath('/');
 
   return NextResponse.json({ ok: true });
 }
