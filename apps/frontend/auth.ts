@@ -2,7 +2,6 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import LinkedIn from 'next-auth/providers/linkedin';
-import Facebook from 'next-auth/providers/facebook';
 import bcrypt from 'bcryptjs';
 import { query } from '@/lib/db';
 
@@ -14,9 +13,6 @@ if (process.env.AUTH_GOOGLE_ID) {
 }
 if (process.env.AUTH_LINKEDIN_ID) {
   providers.push(LinkedIn({ clientId: process.env.AUTH_LINKEDIN_ID, clientSecret: process.env.AUTH_LINKEDIN_SECRET! }));
-}
-if (process.env.AUTH_FACEBOOK_ID) {
-  providers.push(Facebook({ clientId: process.env.AUTH_FACEBOOK_ID, clientSecret: process.env.AUTH_FACEBOOK_SECRET! }));
 }
 providers.push(Credentials({
       credentials: {
