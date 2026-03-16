@@ -21,12 +21,9 @@ export async function GET() {
   const rows = await query<{
     id: string;
     title: string | null;
-    input_text: string;
-    sections: string | null;
-    synthesis: string | null;
     created_at: string;
   }>(
-    `SELECT id, title, input_text, sections, synthesis, created_at
+    `SELECT entity_id as id, title, created_at
      FROM entity_analyses
      WHERE entity_type = 'user_input' AND user_id = $1
      ORDER BY created_at DESC
@@ -34,10 +31,7 @@ export async function GET() {
     [session.user.id]
   );
 
-  return NextResponse.json(rows.map(r => ({
-    ...r,
-    sections: typeof r.sections === 'string' ? JSON.parse(r.sections) : r.sections,
-  })));
+  return NextResponse.json(rows);
 }
 
 export async function POST(req: NextRequest) {

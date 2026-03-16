@@ -25,9 +25,6 @@ interface UserProfile {
 interface AnalysisEntry {
   id: string;
   title: string | null;
-  input_text: string;
-  sections: unknown;
-  synthesis: string | null;
   created_at: string;
 }
 
@@ -52,7 +49,6 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
   const [analysing, setAnalysing] = useState(false);
   const [analysisError, setAnalysisError] = useState('');
   const [analyses, setAnalyses] = useState<AnalysisEntry[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/profile')
@@ -100,17 +96,8 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
         setAnalysisError(data.error || 'Analysis failed');
         return;
       }
-      // Add to top of list
-      setAnalyses(prev => [{
-        id: data.id,
-        title: inputText.length > 80 ? inputText.slice(0, 77) + '...' : inputText,
-        input_text: inputText,
-        sections: data.sections,
-        synthesis: data.synthesis,
-        created_at: new Date().toISOString(),
-      }, ...prev]);
-      setExpandedId(data.id);
-      setInputText('');
+      // Redirect to the dedicated analysis page
+      router.push(`/analysis/user/${data.id}`);
     } catch {
       setAnalysisError('Network error');
     } finally {
@@ -249,44 +236,21 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
             </h3>
             <div className="space-y-2">
               {analyses.map(a => (
-                <div key={a.id} className="border border-dashboard-border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-dashboard-border/30 transition text-left"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-dashboard-text truncate">{a.title}</p>
-                      <p className="text-xs text-dashboard-text-muted">
-                        {new Date(a.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <svg
-                      className={`w-4 h-4 text-dashboard-text-muted transition-transform ${expandedId === a.id ? 'rotate-180' : ''}`}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {expandedId === a.id && (
-                    <div className="px-4 pb-4 border-t border-dashboard-border/50">
-                      {a.synthesis && (
-                        <p className="text-sm text-dashboard-text mt-3 mb-2 italic">{a.synthesis}</p>
-                      )}
-                      {Array.isArray(a.sections) && a.sections.map((sec: any, i: number) => (
-                        <div key={i} className="mt-3">
-                          <h4 className="text-sm font-semibold text-dashboard-text">{sec.heading}</h4>
-                          {sec.paragraphs?.map((p: string, j: number) => (
-                            <p key={j} className="text-sm text-dashboard-text-muted mt-1">{p}</p>
-                          ))}
-                        </div>
-                      ))}
-                      <div className="mt-3 pt-2 border-t border-dashboard-border/30">
-                        <p className="text-xs text-dashboard-text-muted">{t('originalInput')}:</p>
-                        <p className="text-xs text-dashboard-text-muted mt-1 whitespace-pre-wrap">{a.input_text}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Link
+                  key={a.id}
+                  href={`/analysis/user/${a.id}`}
+                  className="flex items-center justify-between px-4 py-3 border border-dashboard-border rounded-lg hover:bg-dashboard-border/30 transition"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-dashboard-text truncate">{a.title}</p>
+                    <p className="text-xs text-dashboard-text-muted">
+                      {new Date(a.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <svg className="w-4 h-4 text-dashboard-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
               ))}
             </div>
           </div>
