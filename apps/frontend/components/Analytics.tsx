@@ -17,9 +17,9 @@ function gtag(...args: unknown[]) {
 function loadGA4() {
   if (document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${GA_ID}"]`)) return;
 
-  // Set default consent to denied (cookieless, GDPR-safe)
+  // Always grant analytics — GDPR consent banner to be re-added later
   gtag('consent', 'default', {
-    analytics_storage: 'denied',
+    analytics_storage: 'granted',
   });
 
   const script = document.createElement('script');
@@ -29,11 +29,6 @@ function loadGA4() {
 
   gtag('js', new Date());
   gtag('config', GA_ID);
-
-  // If user already accepted, upgrade to full tracking
-  if (getConsent() === 'all') {
-    gtag('consent', 'update', { analytics_storage: 'granted' });
-  }
 }
 
 function updateConsent(value: string) {
