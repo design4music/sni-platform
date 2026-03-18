@@ -464,6 +464,21 @@ export interface StrategicNarrative {
   opposes?: string[] | null;
 }
 
+export interface NarrativeMapEntry {
+  id: string;
+  meta_narrative_id: string;
+  meta_name: string;
+  actor_centroid: string | null;
+  actor_label: string | null;
+  actor_iso_codes: string[] | null;
+  name: string;
+  claim: string | null;
+  actor_prefixes: string[] | null;
+  related_centroids: string[] | null;
+  tier: 'operational' | 'ideological' | null;
+  event_count: number;
+}
+
 export interface EventNarrativeLink {
   narrative_id: string;
   narrative_name: string;

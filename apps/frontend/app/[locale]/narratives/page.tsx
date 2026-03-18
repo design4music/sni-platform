@@ -71,9 +71,17 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('title')}</h1>
-        <p className="text-dashboard-text-muted">{t('subtitle')}</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('title')}</h1>
+          <p className="text-dashboard-text-muted">{t('subtitle')}</p>
+        </div>
+        <Link
+          href="/narratives/map"
+          className="shrink-0 px-4 py-2 bg-dashboard-surface-raised border border-dashboard-border rounded-lg text-sm text-dashboard-text hover:border-blue-500 transition"
+        >
+          Map View
+        </Link>
       </div>
 
       <NarrativeFilterBar

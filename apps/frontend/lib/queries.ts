@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry } from './types';
 
 export type Locale = 'en' | 'de';
 
@@ -1971,4 +1971,34 @@ export async function getNarrativesForEpic(epicId: string, locale?: string): Pro
     }
     return Array.from(map.values());
   });
+}
+
+// ── Narrative Map ────────────────────────────────────────────────
+
+export async function getNarrativeMapData(locale?: string): Promise<NarrativeMapEntry[]> {
+  return cached(`narrative_map:all:${locale || 'en'}`, 1800, () =>
+    query<NarrativeMapEntry>(
+      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
+              sn.actor_centroid, c.label as actor_label, c.iso_codes as actor_iso_codes,
+              ${locCol('sn', 'name', locale)} as name,
+              ${locCol('sn', 'claim', locale)} as claim,
+              sn.actor_prefixes, sn.related_centroids, sn.tier,
+              COUNT(esn.event_id)::int as event_count
+       FROM strategic_narratives sn
+       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
+       WHERE sn.is_active = true
+       GROUP BY sn.id, mn.id, mn.name, mn.name_de, c.id
+       ORDER BY COUNT(esn.event_id) DESC`
+    )
+  );
+}
+
+export async function getCentroidIsoMap(): Promise<{ id: string; iso_codes: string[] }[]> {
+  return cached('centroid_iso_map', 3600, () =>
+    query<{ id: string; iso_codes: string[] }>(
+      `SELECT id, iso_codes FROM centroids_v3 WHERE is_active = true AND iso_codes IS NOT NULL`
+    )
+  );
 }

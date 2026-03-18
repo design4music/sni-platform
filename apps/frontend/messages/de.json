@@ -927,5 +927,24 @@
     "strategicNarratives": "Strategische Narrative",
     "sharedEvents": "gemeinsame Ereignisse",
     "viewAll": "Alle anzeigen"
+  },
+  "narrativeMap": {
+    "title": "Narrativ-Karte",
+    "subtitle": "Erkunden Sie, wie Laender strategische Narrative projizieren und empfangen",
+    "metaDescription": "Interaktive Karte strategischer Narrativstroeme zwischen Laendern -- sehen Sie, was jede Nation sagt und was andere ueber sie sagen.",
+    "outgoing": "Ausgehend",
+    "incoming": "Eingehend",
+    "outgoingHeader": "Was {country} sagt",
+    "incomingHeader": "Was andere ueber {country} sagen",
+    "noNarratives": "Keine Narrative fuer dieses Land gefunden",
+    "showMore": "{count} weitere anzeigen",
+    "showLess": "Weniger anzeigen",
+    "events": "Ereignisse",
+    "ideological": "Ideologisch",
+    "selected": "Ausgewaehlt",
+    "targets": "Ziele",
+    "sources": "Quellen",
+    "loading": "Karte wird geladen...",
+    "clickCountry": "Klicken Sie auf ein Land, um seine Narrative zu erkunden"
   }
 }

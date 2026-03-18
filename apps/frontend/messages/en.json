@@ -927,5 +927,24 @@
     "strategicNarratives": "Strategic Narratives",
     "sharedEvents": "shared events",
     "viewAll": "View all"
+  },
+  "narrativeMap": {
+    "title": "Narrative Map",
+    "subtitle": "Explore how countries project and receive strategic narratives",
+    "metaDescription": "Interactive map of strategic narrative flows between countries -- see what each nation says and what others say about it.",
+    "outgoing": "Outgoing",
+    "incoming": "Incoming",
+    "outgoingHeader": "What {country} says",
+    "incomingHeader": "What others say about {country}",
+    "noNarratives": "No narratives found for this country",
+    "showMore": "Show {count} more",
+    "showLess": "Show less",
+    "events": "events",
+    "ideological": "Ideological",
+    "selected": "Selected",
+    "targets": "Targets",
+    "sources": "Sources",
+    "loading": "Loading map...",
+    "clickCountry": "Click a country to explore its narratives"
   }
 }
