@@ -4,8 +4,8 @@ SNI v3 Pipeline Daemon -- 4-Slot Architecture
 Scheduling slots (phases run sequentially within each slot):
 - Slot 1 INGESTION   (12h):  Phase 1 (RSS) + Phase 2 (centroid matching)
 - Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
-- Slot 3 CLUSTERING  (30m):  Phase 4 (event clustering) + 4.1 (topic aggregation)
-- Slot 4 ENRICHMENT  (6h):   Phase 4.5a (event summaries) + 4.5b (CTM summaries)
+- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1 + 4.3 + 4.4 + 4.2a-f (incl. narrative matching)
+- Slot 4 ENRICHMENT  (6h):   Phase 4.5a + 4.5b + 4.2g (LLM narrative discovery) + 4.2h (LLM review)
 - Daily purge: Remove rejected titles + reset api_error_count
 
 Features:
@@ -640,6 +640,24 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_match_narratives(self):
+        """Match events to strategic narratives (mechanical scoring)."""
+        from pipeline.phase_4.match_narratives import match_events
+
+        match_events(batch_size=2000)
+
+    def run_narrative_llm_discovery(self):
+        """LLM narrative discovery for ideological tier (new events only)."""
+        from pipeline.phase_4.match_narratives_llm import match_narratives_llm
+
+        match_narratives_llm(only_new=True)
+
+    def run_narrative_llm_review(self):
+        """LLM review of mechanical narrative matches (prune false positives)."""
+        from pipeline.phase_4.review_narratives_llm import review_operational
+
+        review_operational()
+
     async def run_event_summaries(self, max_events: int = 100):
         """Generate summaries for events that need them"""
         conn = self.get_connection()
@@ -985,6 +1003,15 @@ class PipelineDaemon:
                 ),
                 300,
             )
+            await self.run_with_timeout(
+                "Phase 4.2f: Narrative Matching",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2f: Narrative Matching",
+                    self.run_match_narratives,
+                ),
+                300,
+            )
             self.last_run["clustering"] = time.time()
         else:
             remaining = int(
@@ -1016,6 +1043,26 @@ class PipelineDaemon:
                     self.timeout_enrichment,
                 )
                 self.monitor_summary_word_counts()
+            # Phase 4.2g: LLM narrative discovery (ideological tier, new events only)
+            await self.run_with_timeout(
+                "Phase 4.2g: LLM Narrative Discovery",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2g: LLM Narrative Discovery",
+                    self.run_narrative_llm_discovery,
+                ),
+                600,
+            )
+            # Phase 4.2h: LLM narrative review (operational tier, prune false positives)
+            await self.run_with_timeout(
+                "Phase 4.2h: LLM Narrative Review",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2h: LLM Narrative Review",
+                    self.run_narrative_llm_review,
+                ),
+                600,
+            )
             self.last_run["enrichment"] = time.time()
         else:
             remaining = int(
