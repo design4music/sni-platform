@@ -435,6 +435,43 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   named_events: 'Top Events',
 };
 
+// Narrative Mapping types
+export interface MetaNarrative {
+  id: string;
+  name: string;
+  description: string;
+  signals: Record<string, unknown> | null;
+  sort_order: number;
+}
+
+export interface StrategicNarrative {
+  id: string;
+  meta_narrative_id: string;
+  meta_name?: string;
+  category: string | null;
+  actor_centroid: string | null;
+  actor_label?: string;
+  name: string;
+  claim: string | null;
+  normative_conclusion: string | null;
+  keywords: string[] | null;
+  action_classes: string[] | null;
+  domains: string[] | null;
+  event_count?: number;
+  tier?: 'operational' | 'ideological';
+  matching_guidance?: string | null;
+  aligned_with?: string[] | null;
+  opposes?: string[] | null;
+}
+
+export interface EventNarrativeLink {
+  narrative_id: string;
+  narrative_name: string;
+  actor_centroid: string | null;
+  actor_label: string | null;
+  confidence: number;
+}
+
 export const REGIONS = {
   EUROPE: 'Europe',
   ASIA: 'Asia',

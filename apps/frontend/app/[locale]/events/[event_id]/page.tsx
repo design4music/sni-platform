@@ -11,6 +11,7 @@ import RelatedStories from '@/components/RelatedStories';
 import ExtractButton from '@/components/ExtractButton';
 import AnalysisPrefetch from '@/components/AnalysisPrefetch';
 import NarrativePrefetch from '@/components/NarrativePrefetch';
+import EventNarrativeBadges from '@/components/narratives/EventNarrativeBadges';
 import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
@@ -119,7 +120,12 @@ async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourc
 
   return (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {/* Stance-clustered coverage landscape (new system) */}
+      {/* Strategic narratives (geopolitical context) */}
+      <Suspense fallback={null}>
+        <EventNarrativeBadges eventId={eventId} variant="sidebar" />
+      </Suspense>
+
+      {/* Stance-clustered coverage landscape (media framing) */}
       {stanceClusters.length > 0 && (
         <>
           <StanceClusterCard
@@ -332,6 +338,10 @@ export default async function EventDetailPage({ params }: Props) {
             ))}
           </div>
         )}
+        {/* Strategic narrative badges (inline) */}
+        <Suspense fallback={null}>
+          <EventNarrativeBadges eventId={event_id} />
+        </Suspense>
       </div>
 
       {/* Story Timeline */}

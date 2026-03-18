@@ -19,8 +19,10 @@ import {
 import { getOutletLogoUrl } from '@/lib/logos';
 import DeviationCard from '@/components/DeviationCard';
 import StanceSidebar from './StanceSidebar';
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 import type { CentroidStanceScore } from '@/lib/queries';
 
@@ -299,6 +301,10 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
+        {/* Narrative section (deferred) */}
+        <Suspense fallback={null}>
+          <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
+        </Suspense>
       </div>
     </DashboardLayout>
   );

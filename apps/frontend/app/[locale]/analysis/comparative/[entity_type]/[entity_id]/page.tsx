@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import ComparativeContent from '@/components/ComparativeContent';
-import { getEntityAnalysis, getStanceNarratives } from '@/lib/queries';
+import { getEntityAnalysis, getStanceNarratives, getNarrativesForEvent } from '@/lib/queries';
 import { query } from '@/lib/db';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -62,6 +62,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `Analysis: ${ctx.event_title.slice(0, 60)}`
     : 'Comparative Analysis';
   return { title, description: 'Comparative media framing analysis across editorial clusters' };
+}
+
+async function StrategicNarrativesSidebar({ entityType, entityId }: { entityType: string; entityId: string }) {
+  if (entityType !== 'event') return null;
+  const links = await getNarrativesForEvent(entityId);
+  if (links.length === 0) return null;
+
+  return (
+    <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-dashboard-text">Strategic Narratives</h3>
+      <p className="text-xs text-dashboard-text-muted leading-relaxed">
+        Geopolitical narratives connected to this event
+      </p>
+      <div className="space-y-1.5">
+        {links.map(link => (
+          <Link
+            key={link.narrative_id}
+            href={`/narratives/${link.narrative_id}`}
+            className="flex items-center gap-2 text-xs hover:text-purple-400 transition"
+          >
+            <span className="text-purple-400/70 shrink-0">&bull;</span>
+            <span className="text-dashboard-text truncate">{link.narrative_name}</span>
+            {link.actor_label && (
+              <span className="text-dashboard-text-muted shrink-0">{link.actor_label}</span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 async function AnalysisSidebar({
@@ -158,6 +188,11 @@ async function AnalysisSidebar({
           )}
         </div>
       )}
+
+      {/* Strategic narratives */}
+      <Suspense fallback={null}>
+        <StrategicNarrativesSidebar entityType={entityType} entityId={entityId} />
+      </Suspense>
 
       {/* How to read */}
       <div className="bg-dashboard-border/30 rounded-lg p-4 space-y-2">

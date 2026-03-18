@@ -194,10 +194,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     tocSections.push({ id: 'section-summary', label: t('summary') });
   }
 
-  if (ctm.summary_text) {
-    tocSections.push({ id: 'section-narratives', label: t('narrativeFrames') });
-  }
-
   if (domesticEvents.length > 0) {
     tocSections.push({ id: 'section-domestic', label: t('domestic') });
   }

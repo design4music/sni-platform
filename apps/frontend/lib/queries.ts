@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink } from './types';
 
 export type Locale = 'en' | 'de';
 
@@ -1707,4 +1707,268 @@ export async function getFocusCountryEvents(
      LIMIT $2`,
     [centroidId, limit]
   );
+}
+
+// ── Narrative Mapping queries ──────────────────────────────────────
+
+export async function getAllMetaNarratives(locale?: string): Promise<MetaNarrative[]> {
+  return cached(`meta_narratives:all:${locale || 'en'}`, 3600, () =>
+    query<MetaNarrative>(
+      `SELECT id, ${locCol('meta_narratives', 'name', locale)} as name,
+              ${locCol('meta_narratives', 'description', locale)} as description,
+              signals, sort_order
+       FROM meta_narratives ORDER BY sort_order`
+    )
+  );
+}
+
+export async function getMetaNarrativeById(id: string, locale?: string): Promise<MetaNarrative | null> {
+  return cached(`meta_narrative:${id}:${locale || 'en'}`, 3600, async () => {
+    const rows = await query<MetaNarrative>(
+      `SELECT id, ${locCol('meta_narratives', 'name', locale)} as name,
+              ${locCol('meta_narratives', 'description', locale)} as description,
+              signals, sort_order
+       FROM meta_narratives WHERE id = $1`,
+      [id]
+    );
+    return rows[0] || null;
+  });
+}
+
+export async function getStrategicNarratives(locale?: string): Promise<StrategicNarrative[]> {
+  return cached(`strategic_narratives:all:${locale || 'en'}`, 1800, () =>
+    query<StrategicNarrative>(
+      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
+              sn.category, sn.actor_centroid, c.label as actor_label,
+              ${locCol('sn', 'name', locale)} as name,
+              ${locCol('sn', 'claim', locale)} as claim,
+              sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
+              sn.tier, sn.aligned_with, sn.opposes,
+              COUNT(esn.event_id)::int as event_count
+       FROM strategic_narratives sn
+       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
+       WHERE sn.is_active = true
+       GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de
+       ORDER BY mn.sort_order, sn.name`
+    )
+  );
+}
+
+export async function getStrategicNarrativeById(id: string, locale?: string): Promise<StrategicNarrative | null> {
+  return cached(`strategic_narrative:${id}:${locale || 'en'}`, 3600, async () => {
+    const rows = await query<StrategicNarrative>(
+      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
+              sn.category, sn.actor_centroid, c.label as actor_label,
+              ${locCol('sn', 'name', locale)} as name,
+              ${locCol('sn', 'claim', locale)} as claim,
+              sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
+              COUNT(esn.event_id)::int as event_count
+       FROM strategic_narratives sn
+       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
+       WHERE sn.id = $1
+       GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de`,
+      [id]
+    );
+    return rows[0] || null;
+  });
+}
+
+export async function getNarrativeWeeklyActivity(narrativeId: string): Promise<SignalWeekly[]> {
+  return cached(`narrative_weekly:${narrativeId}`, 1800, () =>
+    query<SignalWeekly>(
+      `SELECT date_trunc('week', e.date::date)::text as week, COUNT(*)::int as count
+       FROM event_strategic_narratives esn
+       JOIN events_v3 e ON e.id = esn.event_id
+       WHERE esn.narrative_id = $1
+         AND e.date >= now() - interval '90 days'
+       GROUP BY week ORDER BY week`,
+      [narrativeId]
+    )
+  );
+}
+
+export async function getNarrativeEvents(narrativeId: string, limit: number = 50, locale?: string): Promise<(EventDetail & { confidence: number })[]> {
+  return cached(`narrative_events:${narrativeId}:${limit}:${locale || 'en'}`, 900, () =>
+    query<EventDetail & { confidence: number }>(
+      `SELECT e.id, e.date::text as date, ${locCol('e', 'title', locale)} as title,
+              LEFT(${locCol('e', 'summary', locale)}, 200) as summary,
+              e.source_batch_count, e.tags,
+              c.centroid_id, cv.label as centroid_label, c.track,
+              esn.confidence
+       FROM event_strategic_narratives esn
+       JOIN events_v3 e ON e.id = esn.event_id
+       JOIN ctm c ON c.id = e.ctm_id
+       JOIN centroids_v3 cv ON cv.id = c.centroid_id
+       WHERE esn.narrative_id = $1
+         AND e.title IS NOT NULL
+       ORDER BY e.date DESC
+       LIMIT $2`,
+      [narrativeId, limit]
+    )
+  );
+}
+
+export async function getNarrativesForEvent(eventId: string): Promise<EventNarrativeLink[]> {
+  return cached(`event_narratives:${eventId}`, 3600, () =>
+    query<EventNarrativeLink>(
+      `SELECT esn.narrative_id, sn.name as narrative_name,
+              sn.actor_centroid, c.label as actor_label,
+              esn.confidence
+       FROM event_strategic_narratives esn
+       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       WHERE esn.event_id = $1
+       ORDER BY esn.confidence DESC`,
+      [eventId]
+    )
+  );
+}
+
+export async function getNarrativesForCentroid(centroidId: string, locale?: string): Promise<StrategicNarrative[]> {
+  return cached(`centroid_narratives:${centroidId}:${locale || 'en'}`, 1800, () =>
+    query<StrategicNarrative>(
+      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
+              sn.category, sn.actor_centroid, c.label as actor_label,
+              ${locCol('sn', 'name', locale)} as name,
+              ${locCol('sn', 'claim', locale)} as claim,
+              sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
+              COUNT(esn.event_id)::int as event_count
+       FROM strategic_narratives sn
+       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
+       WHERE sn.actor_centroid = $1 AND sn.is_active = true
+       GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de
+       ORDER BY event_count DESC`,
+      [centroidId]
+    )
+  );
+}
+
+export async function getCompetingNarratives(narrativeId: string): Promise<(StrategicNarrative & { shared_events: number })[]> {
+  return cached(`competing_narratives:${narrativeId}`, 1800, () =>
+    query<StrategicNarrative & { shared_events: number }>(
+      `SELECT sn.id, sn.name, sn.actor_centroid, c.label as actor_label,
+              sn.meta_narrative_id, sn.claim,
+              COUNT(*)::int as shared_events
+       FROM event_strategic_narratives esn1
+       JOIN event_strategic_narratives esn2 ON esn2.event_id = esn1.event_id AND esn2.narrative_id != esn1.narrative_id
+       JOIN strategic_narratives sn ON sn.id = esn2.narrative_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       WHERE esn1.narrative_id = $1
+         AND sn.actor_centroid != (SELECT actor_centroid FROM strategic_narratives WHERE id = $1)
+       GROUP BY sn.id, c.label
+       ORDER BY shared_events DESC
+       LIMIT 10`,
+      [narrativeId]
+    )
+  );
+}
+
+export async function getNarrativeSparklines(): Promise<Record<string, SignalWeekly[]>> {
+  return cached('narrative_sparklines:all', 1800, async () => {
+    const rows = await query<{ narrative_id: string; week: string; count: number }>(
+      `SELECT narrative_id, week, event_count as count
+       FROM narrative_weekly_activity
+       WHERE week >= (now() - interval '90 days')::date::text
+       ORDER BY week`
+    );
+    const map: Record<string, SignalWeekly[]> = {};
+    for (const r of rows) {
+      if (!map[r.narrative_id]) map[r.narrative_id] = [];
+      map[r.narrative_id].push({ week: r.week, count: r.count });
+    }
+    return map;
+  });
+}
+
+export async function getMetaNarrativeActivity(metaId: string): Promise<SignalWeekly[]> {
+  return cached(`meta_narrative_activity:${metaId}`, 1800, () =>
+    query<SignalWeekly>(
+      `SELECT date_trunc('week', e.date::date)::text as week, COUNT(*)::int as count
+       FROM event_strategic_narratives esn
+       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+       JOIN events_v3 e ON e.id = esn.event_id
+       WHERE sn.meta_narrative_id = $1
+         AND e.date >= now() - interval '90 days'
+       GROUP BY week ORDER BY week`,
+      [metaId]
+    )
+  );
+}
+
+// Top narrative per event (for trending cards: one badge per event, from its own centroid)
+export async function getTopNarrativePerEvent(eventIds: string[]): Promise<Record<string, EventNarrativeLink>> {
+  if (eventIds.length === 0) return {};
+  return cached(`top_narrative_per_event:${eventIds.sort().join(',')}`, 1800, async () => {
+    const rows = await query<EventNarrativeLink & { event_id: string }>(
+      `SELECT DISTINCT ON (esn.event_id)
+              esn.event_id::text as event_id,
+              esn.narrative_id, sn.name as narrative_name,
+              sn.actor_centroid, c.label as actor_label,
+              esn.confidence
+       FROM event_strategic_narratives esn
+       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+       JOIN events_v3 e ON e.id = esn.event_id
+       JOIN ctm ct ON ct.id = e.ctm_id
+       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
+       WHERE esn.event_id = ANY($1::uuid[])
+         AND sn.actor_centroid = ct.centroid_id
+       ORDER BY esn.event_id, esn.confidence DESC`,
+      [eventIds]
+    );
+    const map: Record<string, EventNarrativeLink> = {};
+    for (const r of rows) {
+      map[r.event_id] = r;
+    }
+    return map;
+  });
+}
+
+// Narratives for an epic's events, grouped by centroid
+export async function getNarrativesForEpic(epicId: string, locale?: string): Promise<{
+  centroid_id: string;
+  centroid_label: string;
+  narratives: { id: string; name: string; event_count: number }[];
+}[]> {
+  return cached(`epic_narratives:${epicId}:${locale || 'en'}`, 1800, async () => {
+    const rows = await query<{
+      centroid_id: string;
+      centroid_label: string;
+      narrative_id: string;
+      narrative_name: string;
+      event_count: number;
+    }>(
+      `SELECT sn.actor_centroid as centroid_id, cv.label as centroid_label,
+              sn.id as narrative_id, ${locCol('sn', 'name', locale)} as narrative_name,
+              COUNT(DISTINCT esn.event_id)::int as event_count
+       FROM epic_events ee
+       JOIN event_strategic_narratives esn ON esn.event_id = ee.event_id
+       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+       LEFT JOIN centroids_v3 cv ON cv.id = sn.actor_centroid
+       WHERE ee.epic_id = $1
+         AND sn.actor_centroid IS NOT NULL
+       GROUP BY sn.actor_centroid, cv.label, sn.id, sn.name, sn.name_de
+       HAVING COUNT(DISTINCT esn.event_id) >= 2
+       ORDER BY cv.label, event_count DESC`,
+      [epicId]
+    );
+    // Group by centroid
+    const map = new Map<string, { centroid_id: string; centroid_label: string; narratives: { id: string; name: string; event_count: number }[] }>();
+    for (const r of rows) {
+      if (!map.has(r.centroid_id)) {
+        map.set(r.centroid_id, { centroid_id: r.centroid_id, centroid_label: r.centroid_label, narratives: [] });
+      }
+      map.get(r.centroid_id)!.narratives.push({
+        id: r.narrative_id,
+        name: r.narrative_name,
+        event_count: r.event_count,
+      });
+    }
+    return Array.from(map.values());
+  });
 }

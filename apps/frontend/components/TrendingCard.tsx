@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { TrendingEvent, getTrackLabel, getCentroidLabel, formatTimeAgo } from '@/lib/types';
+import { TrendingEvent, EventNarrativeLink, getTrackLabel, getCentroidLabel, formatTimeAgo } from '@/lib/types';
 import { getTrackIcon } from './TrackCard';
 import { useTranslations } from 'next-intl';
 
@@ -30,6 +30,7 @@ function Perspectives({ perspectives, tCentroids, alsoLabel }: { perspectives?: 
 interface TrendingCardProps {
   event: TrendingEvent;
   compact?: boolean;
+  narrative?: EventNarrativeLink;
 }
 
 function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
@@ -65,6 +66,18 @@ function parseSignal(raw: string): { type: string; value: string } {
   return { type: 'persons', value: raw };
 }
 
+function NarrativeBadge({ narrative }: { narrative?: EventNarrativeLink }) {
+  if (!narrative) return null;
+  return (
+    <Link
+      href={`/narratives/${narrative.narrative_id}`}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 transition truncate max-w-full"
+    >
+      <span className="truncate">{narrative.narrative_name}</span>
+    </Link>
+  );
+}
+
 function SignalPills({ signals }: { signals?: string[] }) {
   if (!signals || signals.length === 0) return null;
   return (
@@ -85,7 +98,7 @@ function SignalPills({ signals }: { signals?: string[] }) {
   );
 }
 
-export default function TrendingCard({ event, compact }: TrendingCardProps) {
+export default function TrendingCard({ event, compact, narrative }: TrendingCardProps) {
   const tTracks = useTranslations('tracks');
   const tCentroids = useTranslations('centroids');
   const tCommon = useTranslations('common');
@@ -117,7 +130,10 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
               {timeAgo && <span>{timeAgo}</span>}
               <FreshnessDot lastActive={event.last_active} title={tTrending('active48h')} />
             </div>
-            <SignalPills signals={event.top_signals} />
+            <div className="flex flex-wrap items-center gap-1">
+              <NarrativeBadge narrative={narrative} />
+              <SignalPills signals={event.top_signals} />
+            </div>
             <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} alsoLabel={tTrending('also')} />
           </div>
         </div>
@@ -159,7 +175,10 @@ export default function TrendingCard({ event, compact }: TrendingCardProps) {
         <FreshnessDot lastActive={event.last_active} title={tTrending('active48h')} />
       </div>
 
-      <SignalPills signals={event.top_signals} />
+      <div className="flex flex-wrap items-center gap-1">
+        <NarrativeBadge narrative={narrative} />
+        <SignalPills signals={event.top_signals} />
+      </div>
       <Perspectives perspectives={event.perspectives} tCentroids={tCentroids} alsoLabel={tTrending('also')} />
     </div>
   );

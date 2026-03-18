@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import TrendingCard from '@/components/TrendingCard';
-import { getTrendingEvents, getTrendingSignals } from '@/lib/queries';
+import { getTrendingEvents, getTrendingSignals, getTopNarrativePerEvent } from '@/lib/queries';
 import { dedupTrendingEvents } from '@/lib/dedup-trending';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
@@ -82,6 +82,9 @@ export default async function TrendingPage({
   const raw = await getTrendingEvents(30, locale);
   const events = dedupTrendingEvents(raw).slice(0, 12);
 
+  // Fetch top narrative per event (one badge per card, from event's own centroid)
+  const narrativeMap = await getTopNarrativePerEvent(events.map(e => e.id));
+
   const heroEvents = events.slice(0, 3);
   const restEvents = events.slice(3);
 
@@ -100,7 +103,7 @@ export default async function TrendingPage({
         {heroEvents.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {heroEvents.map(event => (
-              <TrendingCard key={event.id} event={event} />
+              <TrendingCard key={event.id} event={event} narrative={narrativeMap[event.id]} />
             ))}
           </div>
         )}
@@ -110,7 +113,7 @@ export default async function TrendingPage({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-2">
               {restEvents.map(event => (
-                <TrendingCard key={event.id} event={event} compact />
+                <TrendingCard key={event.id} event={event} compact narrative={narrativeMap[event.id]} />
               ))}
             </div>
             <aside>

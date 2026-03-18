@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
-import { getEpicBySlug, getEpicEvents, getEpicMonths, getTopSignalsForEpic } from '@/lib/queries';
+import { getEpicBySlug, getEpicEvents, getEpicMonths, getTopSignalsForEpic, getNarrativesForEpic } from '@/lib/queries';
 import { EpicEvent, EpicNarrative, SignalType, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -140,10 +140,11 @@ export default async function EpicDetailPage({ params }: Props) {
     if (de.timeline) epic = { ...epic, timeline: de.timeline };
   }
 
-  const [events, epicMonths, epicSignals] = await Promise.all([
+  const [events, epicMonths, epicSignals, epicNarratives] = await Promise.all([
     getEpicEvents(epic.id, locale),
     getEpicMonths(),
     getTopSignalsForEpic(epic.id, 12),
+    getNarrativesForEpic(epic.id, locale),
   ]);
 
   const { sorted: signalData, globalFreq } = computeSignalComparison(events, epic.anchor_tags);
@@ -222,41 +223,33 @@ export default async function EpicDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Tag distribution by country */}
-      {signalData.length > 0 && (
+      {/* Narratives by country */}
+      {epicNarratives.length > 0 && (
         <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-dashboard-text">{t('signalComparison')}</h3>
+          <h3 className="text-sm font-semibold text-dashboard-text">{t('narratives')}</h3>
           <div className="space-y-3">
-            {signalData.map(([centroidId, tags]) => {
-              const top = Object.entries(tags)
-                .sort((a, b) => b[1][0] - a[1][0])
-                .slice(0, 5);
-              if (top.length === 0) return null;
-              return (
-                <div key={centroidId}>
-                  <p className="text-xs font-medium text-dashboard-text-muted mb-1 truncate">
-                    {getDisplayLabel(centroidId, centroidId, t, tCentroids)}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {top.map(([tag, [sources]]) => {
-                      const unique = (globalFreq[tag] || 0) <= 3;
-                      return (
-                        <span
-                          key={tag}
-                          className={`text-xs px-1.5 py-0.5 rounded ${
-                            unique
-                              ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
-                              : 'bg-dashboard-border/60 text-dashboard-text-muted'
-                          }`}
-                        >
-                          {tag} <span className="opacity-60">{sources}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
+            {epicNarratives.map(group => (
+              <div key={group.centroid_id}>
+                <p className="text-xs font-medium text-dashboard-text-muted mb-1.5 truncate">
+                  <Link href={`/c/${group.centroid_id}`} className="hover:text-blue-400 transition">
+                    {getDisplayLabel(group.centroid_id, group.centroid_label, t, tCentroids)}
+                  </Link>
+                </p>
+                <div className="space-y-1">
+                  {group.narratives.slice(0, 3).map(n => (
+                    <Link
+                      key={n.id}
+                      href={`/narratives/${n.id}`}
+                      className="flex items-center gap-2 text-xs hover:text-purple-400 transition"
+                    >
+                      <span className="text-purple-400/70 shrink-0">&bull;</span>
+                      <span className="text-dashboard-text truncate">{n.name}</span>
+                      <span className="text-dashboard-text-muted shrink-0">{n.event_count}</span>
+                    </Link>
+                  ))}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}
