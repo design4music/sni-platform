@@ -1,6 +1,6 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Reference
 
-**Last Updated**: 2026-03-14
+**Last Updated**: 2026-03-18
 **Status**: Production - Full pipeline operational (4-slot architecture)
 **Live URL**: https://www.worldbrief.info
 **Branch**: `main`
@@ -46,6 +46,12 @@ RSS Feeds (Google News)
 [Phase 4.2a] Materialize Centroid Signals --> mv_centroid_signals        |
     |                                                                     |
 [Phase 4.2b] Materialize Signal Graph --> mv_signal_graph                |
+    |                                                                     |
+[Phase 4.2f] Narrative Matching (mechanical) --> event_strategic_narratives |
+    |                                                                     |
+[Phase 4.2g] Narrative Matching (LLM, ideological) --> "                 |
+    |                                                                     |
+[Phase 4.2h] Narrative Review (LLM, operational) --> prune false pos.    |
     |                                                                     |
 [Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags |
     |                                                                    /
@@ -104,7 +110,12 @@ Phases 5/6 (narratives, RAI) removed from daemon in D-030 -- now on-demand via f
 | **epic_events** | epic_id, event_id, is_included BOOLEAN |
 | **narratives** | entity_type (ctm/event/epic), entity_id UUID, label, description, moral_frame, signal_stats JSONB, rai_signals JSONB, rai_signals_at TIMESTAMPTZ -- UNIQUE(entity_id, label) |
 | **feeds** | url, name, country_code, language, strip_patterns, is_active |
-| **users** | email, password_hash, name, created_at |
+| **entity_analyses** | entity_type (event/ctm/epic/user_input), entity_id UUID, user_id UUID, input_text TEXT, title TEXT, sections TEXT (JSON), scores JSONB, synthesis TEXT, blind_spots TEXT[], created_at -- UNIQUE(entity_type, entity_id) |
+| **meta_narratives** | id TEXT PK, name, description, signals JSONB, sort_order |
+| **strategic_narratives** | id TEXT PK, meta_narrative_id FK, category, actor_centroid FK, name, claim, keywords TEXT[], action_classes TEXT[], domains TEXT[], tier (operational/ideological), matching_guidance TEXT, aligned_with TEXT[], opposes TEXT[], example_event_ids UUID[] |
+| **event_strategic_narratives** | (event_id, narrative_id) PK, confidence REAL, matched_signals JSONB |
+| **narrative_weekly_activity** | (narrative_id, week) PK, event_count INT |
+| **users** | email, password_hash, name, avatar_url, auth_provider, provider_id, focus_centroid, role, plan |
 
 ### Materialized View Tables
 
@@ -146,6 +157,9 @@ pipeline/
 |   |-- extract_ctm_narratives.py    # CTM narrative extraction (Phase 5a)
 |   |-- extract_event_narratives.py  # Event narrative extraction (Phase 5b)
 |   |-- analyze_event_rai.py         # RAI signal analysis (on-demand)
+|   |-- match_narratives.py          # Phase 4.2f: Mechanical narrative matching (CTM structural + label-based)
+|   |-- match_narratives_llm.py      # Phase 4.2g: LLM discovery for ideological narratives
+|   |-- review_narratives_llm.py     # Phase 4.2h: LLM review of operational matches
 |   |-- chain_event_sagas.py         # Cross-month event saga linking
 |
 |-- epics/                           # Epic lifecycle (cron/manual)
@@ -178,7 +192,7 @@ db/
 |-- migrations/                      # SQL migrations
 
 apps/frontend/
-|-- auth.ts                          # NextAuth v5 config (credentials provider, JWT)
+|-- auth.ts                          # NextAuth v5 config (Google, LinkedIn, credentials; JWT)
 |-- middleware.ts                     # next-intl locale detection
 |-- i18n/                            # Internationalization config
 |-- messages/
@@ -189,6 +203,12 @@ apps/frontend/
 |   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
 |   |-- events/[event_id]/page.tsx   # Event detail page (saga timeline)
 |   |-- analysis/[narrative_id]/page.tsx  # RAI analysis page
+|   |-- analysis/comparative/[entity_type]/[entity_id]/page.tsx  # Comparative analysis
+|   |-- analysis/user/[id]/page.tsx # User-submitted RAI analysis
+|   |-- profile/page.tsx            # User profile + RAI analyst
+|   |-- narratives/page.tsx           # Narrative landscape (9 meta-groups, filters)
+|   |-- narratives/[id]/page.tsx     # Narrative detail (claim, timeline, events)
+|   |-- narratives/meta/[id]/page.tsx # Meta-narrative page
 |   |-- epics/page.tsx               # Epic list page
 |   |-- epics/[slug]/page.tsx        # Epic detail page
 |   |-- sources/page.tsx             # Media outlet list
@@ -201,6 +221,9 @@ apps/frontend/
 |   |-- extract-narratives/route.ts  # Proxy to extraction API
 |   |-- rai-analyse/route.ts         # On-demand RAI analysis (auth-gated)
 |   |-- auth/signup/route.ts         # User registration
+|   |-- profile/route.ts            # User profile CRUD
+|   |-- user-analyse/route.ts       # User RAI analyst (GET list, POST submit)
+|   |-- rai-analyse-comparative/route.ts  # Comparative analysis generation
 |-- lib/
 |   |-- cache.ts                     # In-memory TTL cache
 |   |-- db.ts                        # PostgreSQL pool (max 10)
@@ -245,12 +268,23 @@ Always run pg_dump/pg_restore via `docker exec` -- no local binaries on Windows.
 - Worker: Currently suspended (pipeline runs locally only)
 - Custom domain: www.worldbrief.info (SSL via Let's Encrypt)
 - Analytics: Google Analytics 4 (G-LF3GZ04SMF)
-- Env vars: `DATABASE_URL`, `DEEPSEEK_API_KEY`, `AUTH_SECRET`
+- Env vars: `DATABASE_URL`, `DEEPSEEK_API_KEY`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID/SECRET`, `AUTH_LINKEDIN_ID/SECRET`
 
 ---
 
-## Current Status (2026-03-14)
+## Current Status (2026-03-18)
 
 **Operational**: Daemon runs 4-slot architecture locally. Jan + Feb 2026 frozen. March 2026
-pipeline active. Narrative extraction and RAI analysis on-demand (auth-gated). German
+pipeline active. Media framing extraction and RAI analysis on-demand (auth-gated). German
 localization live (beta). Production site at https://www.worldbrief.info.
+
+**Strategic Narratives** (D-045): 260 narratives under 9 meta-narratives. Two-tier matching:
+mechanical (CTM structural + label-based) for operational, LLM for ideological. 4569 event-
+narrative links. 228/260 narratives with matched events. Frontend: landscape page, detail pages,
+centroid/event/trending/epic integration. Aligned/opposing clusters manually curated for 65
+narratives. Event-level extraction renamed from "narrative frames" to "media framing" (D-046).
+
+**Auth**: Social login (Google verified, LinkedIn live). Facebook dropped (D-043).
+NextAuth v5 with JWT strategy.
+
+**Analytics**: GA4 enabled without consent gate (consent to be re-added for GDPR later).

@@ -411,3 +411,59 @@ decisions:
       - All new prompts must follow: no filler openers ("You are a helpful..."), imperative voice, say each rule once, tables for structured data, bullets for constraints
       - Shared prompt fragments extracted to core/prompts.py (PROSE_RULES, MERGE prompts, COHERENCE_CHECK)
       - Context docs trimmed: PIPELINE_STATUS 1135->256 lines, DecisionLog 789->347, ProjectModel 260->210
+
+  - id: D-043
+    date: 2026-03-16
+    type: frontend
+    status: accepted
+    title: Social OAuth (Google, LinkedIn) + Facebook dropped
+    rationale:
+      - Google OAuth verified and public; LinkedIn live without verification
+      - Facebook developer console unreliable (App Domains won't save, callback errors); dropped
+    consequences:
+      - NextAuth v5 uses AUTH_URL + AUTH_SECRET (not NEXTAUTH_URL/NEXTAUTH_SECRET)
+      - Data deletion page removed; Facebook provider removed from auth.ts
+
+  - id: D-044
+    date: 2026-03-16
+    type: frontend
+    status: accepted
+    title: User RAI Analyst with dedicated report pages
+    rationale:
+      - Profile-based free-text RAI analysis; inline accordion replaced with dedicated pages
+      - Reuses ComparativeContent for full markdown rendering (bold, lists, blockquotes)
+    consequences:
+      - /analysis/user/[id] pages; analysis history on profile links out instead of expanding inline
+      - Standalone RAI app (rai-companion) ready to archive
+
+  - id: D-045
+    date: 2026-03-18
+    type: architectural
+    status: accepted
+    title: Strategic narrative mapping system (meta-narratives, strategic narratives, event matching)
+    rationale:
+      - 260 strategic narratives (actor-bound geopolitical claims) organized under 9 meta-narratives
+      - Two-tier taxonomy -- operational (concrete actions) vs ideological (worldview/values)
+      - Mechanical matching (CTM structural + label-based) handles operational tier
+      - LLM matching handles ideological tier (narrative-centric, one call per narrative)
+      - LLM review prunes false positives from mechanical matches
+      - Manual curation of aligned_with/opposes for narrative clustering
+    consequences:
+      - New tables: meta_narratives, strategic_narratives, event_strategic_narratives, narrative_weekly_activity
+      - strategic_narratives enriched with: tier, matching_guidance, aligned_with, opposes, example_event_ids
+      - Phase 4.2f (mechanical) + 4.2g (LLM discovery) + 4.2h (LLM review) in matching pipeline
+      - Frontend: /narratives landscape, /narratives/[id] detail, /narratives/meta/[id]
+      - Narrative integration on centroid pages, event pages, trending cards, epic sidebar, comparative analysis
+      - Event-level "narrative frames" renamed to "media framing" to avoid term overload
+
+  - id: D-046
+    date: 2026-03-18
+    type: terminology
+    status: accepted
+    title: Reserve "narrative" for strategic/meta level; event-level extraction renamed "media framing"
+    rationale:
+      - "Narrative" was overloaded -- strategic geopolitical claims vs event-level stance clustering
+      - Users confused by seeing "Narrative Analysis" (media framing) alongside "Strategic Narratives" (geopolitical)
+    consequences:
+      - All event/CTM-level UI labels changed from "Narrative Frames" to "Media Framing"
+      - i18n keys updated in en.json and de.json across event, track, source, extract namespaces

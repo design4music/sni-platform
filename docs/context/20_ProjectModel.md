@@ -115,6 +115,48 @@ Journalistic, strategic tone. No opinion, no speculation.
 
 ---
 
+## Phase 4.2f/g/h -- Strategic Narrative Matching
+
+**Purpose**: Connect events to 260 persistent strategic narratives (actor-bound
+geopolitical claims) organized under 9 meta-narratives.
+
+### Taxonomy
+- **Meta-narratives** (9): World-ordering lenses (Great Power Competition, Liberal
+  International Order, Sovereign Resistance, etc.)
+- **Strategic narratives** (260): Actor-specific claims ("UK leads European support
+  for Ukraine", "Dollar dominance must be broken")
+- **Two tiers**: Operational (118, concrete actions) vs Ideological (142, worldview/values)
+
+### Matching Pipeline (3 stages)
+
+**4.2f Mechanical matching** (`match_narratives.py`):
+- CTM structural: forward (centroid->bilateral with related), reverse, posture mode
+- Label-based: protagonist gate + action gate + keyword gate
+- Related centroids derived from actor_prefixes + keyword-to-centroid map
+- Works well for operational narratives; coarse for ideological
+
+**4.2g LLM discovery** (`match_narratives_llm.py`):
+- Narrative-centric: one LLM call per ideological narrative
+- Pre-filters events by keyword overlap with `matching_guidance`
+- Prompt: claim + guidance + 3 example events + candidate list -> LLM picks matches
+- ~118 calls for full archive
+
+**4.2h LLM review** (`review_narratives_llm.py`):
+- Reviews mechanical matches for false positives
+- One call per operational narrative: "which events don't belong?"
+- ~108 calls, typically prunes 25-30% of mechanical matches
+
+### Manual Enrichment
+- `matching_guidance`: plain-language description of what events look like (LLM prompt)
+- `example_event_ids`: 3-5 confirmed good matches (few-shot context)
+- `aligned_with` / `opposes`: manually curated narrative clusters
+
+**Output**:
+- `event_strategic_narratives` (event_id, narrative_id, confidence, matched_signals)
+- `narrative_weekly_activity` (pre-computed sparkline data)
+
+---
+
 ## On-Demand Extraction & Analysis (formerly Phases 5 & 6)
 
 Narrative extraction and RAI analysis are **on-demand, user-triggered**
@@ -197,9 +239,10 @@ Chains grow across months via reused saga UUIDs stored in `events_v3.saga`.
 The frontend is primarily a **read-only presentation layer** over the database.
 It introduces no intelligence, inference, or interpretation of pipeline data.
 
-Two exceptions have controlled write paths:
-- **Authentication**: User registration and sign-in (NextAuth v5, credentials)
+Three controlled write paths:
+- **Authentication**: Social login (Google, LinkedIn) + credentials (NextAuth v5, JWT)
 - **On-demand extraction/analysis**: Triggers extraction + RAI analysis, caches results in DB
+- **User RAI Analyst**: Free-text analysis submitted from profile, stored per-user, dedicated report pages
 
 ### Architectural Constraint
 
