@@ -66,7 +66,9 @@ class PipelineDaemon:
         self.ingestion_interval = 43200  # 12 hours - Phase 1 + 2
         self.classification_interval = 900  # 15 minutes - Phase 3.1 + 3.2 + 3.3
         self.clustering_interval = 1800  # 30 minutes - Phase 4 + 4.1
-        self.enrichment_interval = 21600  # 6 hours - Phase 4.5a + 4.5b
+        self.enrichment_interval = (
+            10800  # 3 hours - Phase 4.5a + 4.5b (smaller batches, more frequent)
+        )
         self.social_interval = 3600  # 1 hour - Slot 5: Social Posting (testing)
         self.purge_interval = 86400  # 24 hours - daily cleanup
 
@@ -83,7 +85,7 @@ class PipelineDaemon:
         # Batch sizes
         self.classification_batch_size = 500  # Titles per 3.1 and 3.3 run
         self.aggregation_max_ctms = 25  # CTMs per 4.1 run
-        self.enrichment_max_events = 2000  # Events per 4.5a run
+        self.enrichment_max_events = 500  # Events per 4.5a run
         self.enrichment_max_ctms = 200  # CTMs per 4.5b run
 
         # Retry configuration
@@ -94,7 +96,7 @@ class PipelineDaemon:
         self.timeout_ingestion = 1200  # 20 min for RSS + centroid matching
         self.timeout_classification = 1200  # 20 min for 3.1 + 3.2 + 3.3
         self.timeout_clustering = 900  # 15 min for Phase 4 + 4.1
-        self.timeout_enrichment = 7200  # 120 min for 4.5a + 4.5b
+        self.timeout_enrichment = 10800  # 180 min for 4.5a + 4.5b
         self.timeout_social = 300  # 5 min for social posting
         self.timeout_purge = 300  # 5 min for daily cleanup
 

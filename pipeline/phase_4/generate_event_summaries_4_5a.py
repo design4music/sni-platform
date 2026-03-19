@@ -39,8 +39,95 @@ from core.prompts import (
 MIN_SUMMARY_SOURCES = 5  # Below this: title only, no summary
 
 
+async def translate_titles_de_batch(
+    titles: list[tuple[str, str]],
+    batch_size: int = 25,
+) -> dict[str, str]:
+    """Translate event titles to German in batches. Returns {event_id: title_de}.
+
+    Args:
+        titles: list of (event_id, english_title)
+        batch_size: titles per LLM call
+    """
+    if not titles:
+        return {}
+
+    from core.llm_utils import async_check_rate_limit
+
+    results: dict[str, str] = {}
+    headers = {
+        "Authorization": "Bearer %s" % config.deepseek_api_key,
+        "Content-Type": "application/json",
+    }
+
+    for i in range(0, len(titles), batch_size):
+        batch = titles[i : i + batch_size]
+        # Build numbered list for translation
+        lines = []
+        for idx, (_, title) in enumerate(batch, 1):
+            lines.append("%d. %s" % (idx, title))
+        user_content = "\n".join(lines)
+
+        payload = {
+            "model": config.llm_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Translate each numbered news headline to German. "
+                    "Return one translation per line, keeping the same numbering. "
+                    "Return only the numbered translations, nothing else.",
+                },
+                {"role": "user", "content": user_content},
+            ],
+            "temperature": 0.2,
+            "max_tokens": batch_size * 40,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                for _attempt in range(3):
+                    response = await client.post(
+                        "%s/chat/completions" % config.deepseek_api_url,
+                        headers=headers,
+                        json=payload,
+                    )
+                    if await async_check_rate_limit(response, _attempt):
+                        continue
+                    if response.status_code != 200:
+                        break
+                    break
+                else:
+                    continue
+
+                if response.status_code != 200:
+                    continue
+
+                content = response.json()["choices"][0]["message"]["content"].strip()
+                # Parse numbered lines: "1. Translation here"
+                for line in content.split("\n"):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    # Remove numbering prefix (e.g. "1. ", "12. ")
+                    parts = line.split(". ", 1)
+                    if len(parts) == 2 and parts[0].strip().isdigit():
+                        num = int(parts[0].strip()) - 1
+                        if 0 <= num < len(batch):
+                            event_id = batch[num][0]
+                            results[event_id] = parts[1].strip()
+
+        except Exception as e:
+            print("  DE batch translation error: %s" % e)
+
+    return results
+
+
 async def translate_title_de(title: str) -> str | None:
-    """Translate an English event title to German. Returns None on failure."""
+    """Translate a single English event title to German. Returns None on failure.
+
+    NOTE: For batch processing, use translate_titles_de_batch() instead.
+    This is kept for one-off / on-demand use.
+    """
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
         "Content-Type": "application/json",
@@ -684,9 +771,6 @@ async def process_event(
             title = result["title"]
             summary = result["summary"] if not title_only else None
 
-            # Translate title to German (separate call, failure = NULL)
-            title_de = await translate_title_de(title) if title else None
-
             # Derive tags from backbone signals (the actual clustering anchors)
             tags = signals_to_tags(backbone, min_freq=2)
 
@@ -699,14 +783,13 @@ async def process_event(
                 first_seen = event.get("first_seen") or event.get("date")
                 last_seen = event.get("date")
 
-            # Update event with all fields
+            # Update event (title_de set later in batch)
             with conn.cursor() as cur:
                 cur.execute(
                     """
                     UPDATE events_v3
                     SET title = %s,
                         summary = %s,
-                        title_de = %s,
                         tags = %s,
                         first_seen = %s,
                         date = %s,
@@ -717,7 +800,6 @@ async def process_event(
                     (
                         title,
                         summary,
-                        title_de,
                         tags,
                         first_seen,
                         last_seen,
@@ -728,8 +810,6 @@ async def process_event(
 
             # Print progress
             print("  [%3d] %s" % (event["count"], title[:60]))
-            if title_de:
-                print("    DE: %s" % title_de[:60])
             if summary:
                 summary_preview = summary.replace("\n", " ")[:100]
                 print("        %s..." % summary_preview)
@@ -737,12 +817,12 @@ async def process_event(
                 print("        (title only)")
             print("        tags: %s" % tags[:5])
 
-            return True
+            return title
 
         except Exception as e:
             print("  X Error for %s: %s" % (event["id"][:8], e))
             conn.rollback()
-            return False
+            return None
 
 
 async def process_events(
@@ -807,7 +887,10 @@ async def process_events(
         semaphore = asyncio.Semaphore(concurrency)
 
         # Process CTM-by-CTM: complete one CTM before starting the next
+        # process_event returns the EN title (str) on success, None on error
         results = []
+        titles_for_de = []  # (event_id, english_title)
+
         for ctm_idx, (ctm_id_key, ctm_events) in enumerate(ctm_groups.items(), 1):
             # Look up centroid/track for logging
             with conn.cursor() as cur:
@@ -825,9 +908,13 @@ async def process_events(
 
             tasks = [process_event(semaphore, conn, event) for event in ctm_events]
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-            results.extend(batch_results)
 
-        success = sum(1 for r in results if r is True)
+            for event, result in zip(ctm_events, batch_results):
+                results.append(result)
+                if isinstance(result, str) and result:
+                    titles_for_de.append((event["id"], result))
+
+        success = sum(1 for r in results if isinstance(r, str) and r)
         errors = len(results) - success
 
         print("")
@@ -837,6 +924,24 @@ async def process_events(
         print("Total events:  %d" % len(events))
         print("Processed:     %d" % success)
         print("Errors:        %d" % errors)
+
+        # Batch-translate titles to German (25 per LLM call instead of 1:1)
+        if titles_for_de:
+            print(
+                "\nTranslating %d titles to German (batches of 25)..."
+                % len(titles_for_de)
+            )
+            de_translations = await translate_titles_de_batch(titles_for_de)
+            de_count = 0
+            with conn.cursor() as cur:
+                for event_id, title_de in de_translations.items():
+                    cur.execute(
+                        "UPDATE events_v3 SET title_de = %s WHERE id = %s",
+                        (title_de, event_id),
+                    )
+                    de_count += 1
+            conn.commit()
+            print("  DE translations: %d/%d" % (de_count, len(titles_for_de)))
 
     finally:
         conn.close()
