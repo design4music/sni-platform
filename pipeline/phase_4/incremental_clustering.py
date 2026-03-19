@@ -44,6 +44,11 @@ EMERGENCE_THRESHOLD = 3
 # Similarity threshold for joining existing topic
 JOIN_THRESHOLD = 0.2
 
+# Max titles before a topic is "full" and stops accepting new titles.
+# Prevents mega-clusters during dominant news events (wars, crises).
+# New titles that would match a full topic start a fresh topic instead.
+MAX_TOPIC_SIZE = 200
+
 
 def get_weights(track: str) -> dict:
     return get_track_weights(track)
@@ -258,6 +263,9 @@ def match_new_titles_to_existing(
         best_score = join_threshold
 
         for topic in existing_topics:
+            # Skip full topics -- prevents mega-clusters
+            if len(topic.titles) >= MAX_TOPIC_SIZE:
+                continue
             score = topic.match_score(title, weights, discriminators)
             if score > best_score:
                 best_score = score
@@ -265,6 +273,8 @@ def match_new_titles_to_existing(
 
         if best_topic:
             matched[best_topic.event_id].append(title)
+            # Track growth so cap applies within this batch too
+            best_topic.titles.append(title)
         else:
             unmatched.append(title)
 
@@ -691,6 +701,28 @@ class IncrementalTopic:
                 if anchor_sigs and title_sigs and not (anchor_sigs & title_sigs):
                     return 0.0  # Hard reject - different org/commodity
 
+        # Large topics require higher specificity: titles must share a
+        # places/named_events/commodities signal, not just generic orgs.
+        # This prevents war-coverage black holes where every headline about
+        # the same conflict matches on shared orgs (IRGC, IDF, NATO).
+        if self.anchors_locked and len(self.titles) >= 50:
+            specific_types = {"places", "named_events", "commodities", "policies"}
+            has_specific_overlap = False
+            for token in title_tokens:
+                sig_type = token.split(":")[0]
+                if sig_type in specific_types and token in self.anchor_signals:
+                    has_specific_overlap = True
+                    break
+            if not has_specific_overlap:
+                # Also check co-occurring signals (top frequent non-anchors)
+                frequent = {
+                    t
+                    for t, c in self.signal_counts.items()
+                    if c >= len(self.titles) // 4 and t.split(":")[0] in specific_types
+                }
+                if frequent and not (title_tokens & frequent):
+                    return 0.0
+
         # Calculate weighted overlap with anchors (if locked) or all signals
         compare_set = (
             self.anchor_signals
@@ -766,6 +798,9 @@ def cluster_incrementally(
         best_score = join_threshold
 
         for topic in topics:
+            # Skip full topics -- prevents mega-clusters
+            if len(topic.titles) >= MAX_TOPIC_SIZE:
+                continue
             score = topic.match_score(title, weights, discriminators)
             if score > best_score:
                 best_score = score
