@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import (
+    HIGH_FREQ_ORGS,
     HIGH_FREQ_PERSONS,
     SIGNAL_TYPES,
     config,
@@ -628,13 +629,12 @@ class IncrementalTopic:
                 normalized = val.upper() if sig_type == "persons" else val
                 token = "{}:{}".format(sig_type, normalized)
 
-                # Skip high-freq persons for matching (they don't discriminate)
-                if (
-                    for_matching
-                    and sig_type == "persons"
-                    and normalized in HIGH_FREQ_PERSONS
-                ):
-                    continue
+                # Skip high-freq signals for matching (they don't discriminate)
+                if for_matching:
+                    if sig_type == "persons" and normalized in HIGH_FREQ_PERSONS:
+                        continue
+                    if sig_type == "orgs" and normalized in HIGH_FREQ_ORGS:
+                        continue
 
                 tokens.add(token)
         return tokens
@@ -656,9 +656,11 @@ class IncrementalTopic:
             self.anchor_signals = set()
             for token, count in self.signal_counts.items():
                 if count >= threshold:
-                    # Exclude high-freq persons from anchors
+                    # Exclude high-freq signals from anchors
                     sig_type, val = token.split(":", 1)
                     if sig_type == "persons" and val in HIGH_FREQ_PERSONS:
+                        continue
+                    if sig_type == "orgs" and val in HIGH_FREQ_ORGS:
                         continue
                     self.anchor_signals.add(token)
 

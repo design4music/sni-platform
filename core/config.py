@@ -200,6 +200,10 @@ SIGNAL_TYPES = [
 # These appear across many unrelated stories and reduce clustering quality
 HIGH_FREQ_PERSONS = {"TRUMP", "BIDEN", "PUTIN", "ZELENSKY", "XI"}
 
+# High-frequency orgs to exclude from clustering anchor signals
+# Same logic: too generic to discriminate between stories
+HIGH_FREQ_ORGS = {"PENTAGON", "IDF", "NATO", "FBI", "CIA", "UN", "EU", "WHITE HOUSE"}
+
 # Signal weights by track - higher weight = more discriminating for that track
 TRACK_WEIGHTS = {
     "geo_economy": {
