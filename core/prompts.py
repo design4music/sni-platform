@@ -170,15 +170,16 @@ Your job: find groups that are clearly the SAME story and should be merged.
 
 MERGE when:
 - Events describe the same core development from different angles (domestic vs international framing)
-- One event is a direct sub-story of another (e.g., "Leader killed" and "Succession begins" = same story arc)
 - Events cover the same specific action/decision but emphasize different actors involved
 
 KEEP SEPARATE when:
 - Events share a theme but cover genuinely different developments
 - Events involve the same actors but different actions (e.g., "Trump tariffs" vs "Trump Greenland")
-- Events involve the same country pair but different topics (e.g., "US threatens Spain over bases" vs "Amazon invests in Spain" are SEPARATE)
+- Events are different military operations, even if part of the same war (e.g., "carrier deployment" vs "nuclear doctrine shift" vs "anti-drone systems to Cyprus" are THREE separate events)
+- Events involve the same country pair but different topics
 - Connection is only thematic (both about "economy" or "security" is NOT enough)
-- One event is about government policy and the other about private sector activity, even if same countries
+- One event is about government policy and the other about private sector activity
+- Events are related sub-stories within a broader crisis but involve different specific actions or decisions
 
 When in doubt, keep SEPARATE. A wrong merge destroys information. A missed merge is harmless.
 

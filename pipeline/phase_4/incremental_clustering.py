@@ -42,7 +42,7 @@ ANCHOR_LOCK_THRESHOLD = 5
 EMERGENCE_THRESHOLD = 3
 
 # Similarity threshold for joining existing topic
-JOIN_THRESHOLD = 0.2
+JOIN_THRESHOLD = 0.25
 
 # Max titles before a topic is "full" and stops accepting new titles.
 # Prevents mega-clusters during dominant news events (wars, crises).
@@ -705,7 +705,7 @@ class IncrementalTopic:
         # places/named_events/commodities signal, not just generic orgs.
         # This prevents war-coverage black holes where every headline about
         # the same conflict matches on shared orgs (IRGC, IDF, NATO).
-        if self.anchors_locked and len(self.titles) >= 50:
+        if self.anchors_locked and len(self.titles) >= 30:
             specific_types = {"places", "named_events", "commodities", "policies"}
             has_specific_overlap = False
             for token in title_tokens:
