@@ -1163,6 +1163,156 @@ def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> i
 
 
 # =============================================================================
+# RECLUSTER FROM SCRATCH
+# =============================================================================
+
+
+def recluster_ctm(ctm_id: str, dry_run: bool = True):
+    """Wipe existing events for a CTM and recluster ALL titles from scratch.
+
+    This is destructive: all events, title links, narrative matches, and
+    summaries for this CTM are deleted before re-clustering.
+
+    Usage:
+        python -m pipeline.phase_4.incremental_clustering --ctm-id <id> --recluster --write
+    """
+    conn = get_connection()
+    ctm_info = get_ctm_info(conn, ctm_id)
+    if not ctm_info:
+        print("CTM not found: {}".format(ctm_id))
+        conn.close()
+        return
+
+    centroid_id = ctm_info["centroid_id"]
+    track = ctm_info["track"]
+    print("RECLUSTER: {} / {} / {}".format(centroid_id, track, ctm_info["month"]))
+
+    # Load ALL titles for this CTM
+    all_titles = load_titles_chronological(conn, ctm_id)
+    print("Total titles: {}".format(len(all_titles)))
+
+    if not all_titles:
+        print("No titles to cluster.")
+        conn.close()
+        return
+
+    # Filter publisher signals
+    publisher_patterns = load_publisher_patterns(conn)
+    for t in all_titles:
+        t["orgs"] = filter_publisher_signals(t.get("orgs", []), publisher_patterns)
+
+    weights = get_weights(track)
+    discriminators = get_discriminators(track)
+
+    print("\nTrack config:")
+    print(
+        "  Weights: {}".format(
+            ", ".join("{}={:.1f}".format(k, v) for k, v in weights.items())
+        )
+    )
+    print("  Discriminators: {}".format(discriminators))
+    print("  Join threshold: {}".format(JOIN_THRESHOLD))
+    print("  Max topic size: {}".format(MAX_TOPIC_SIZE))
+
+    # Bucket and cluster
+    buckets = bucket_titles_by_centroid(all_titles, centroid_id)
+    print("\nBuckets:")
+    print("  Domestic: {} titles".format(len(buckets["domestic"])))
+    for c in sorted(buckets["bilateral"], key=lambda x: -len(buckets["bilateral"][x])):
+        print("  Bilateral {}: {} titles".format(c, len(buckets["bilateral"][c])))
+    print(
+        "  Other International: {} titles".format(len(buckets["other_international"]))
+    )
+
+    bucketed_topics = {"domestic": [], "bilateral": {}, "other_international": []}
+
+    for event_type, bucket_key, bucket_titles in _iterate_buckets(buckets):
+        topics = cluster_incrementally(bucket_titles, weights, discriminators)
+        emerged = [t for t in topics if len(t.titles) >= 2]
+        label = event_type if not bucket_key else "{} {}".format(event_type, bucket_key)
+        print(
+            "  {}: {} titles -> {} topics ({} emerged)".format(
+                label, len(bucket_titles), len(topics), len(emerged)
+            )
+        )
+        if event_type == "domestic":
+            bucketed_topics["domestic"] = topics
+        elif event_type == "bilateral":
+            bucketed_topics["bilateral"][bucket_key] = topics
+        else:
+            bucketed_topics["other_international"] = topics
+
+    # Summary
+    all_topics = bucketed_topics["domestic"] + bucketed_topics["other_international"]
+    for bk_topics in bucketed_topics["bilateral"].values():
+        all_topics.extend(bk_topics)
+    emerged_topics = [t for t in all_topics if len(t.titles) >= 2]
+    total_in_topics = sum(len(t.titles) for t in emerged_topics)
+    print(
+        "\nSummary: {} emerged topics covering {} titles ({} catchall)".format(
+            len(emerged_topics),
+            total_in_topics,
+            len(all_titles) - total_in_topics,
+        )
+    )
+
+    # Show top topics
+    emerged_topics.sort(key=lambda t: -len(t.titles))
+    print("\nTop topics:")
+    for t in emerged_topics[:15]:
+        anchor_str = t.get_anchor_summary()
+        print("  {:4d} titles  {}".format(len(t.titles), anchor_str))
+
+    if dry_run:
+        print("\nDRY RUN -- no database changes. Use --write to apply.")
+        conn.close()
+        return
+
+    # DESTRUCTIVE: delete existing events and re-create
+    print("\nWiping existing events for CTM {}...".format(ctm_id))
+    cur = conn.cursor()
+
+    # Clear merged_into references pointing to events in this CTM
+    cur.execute(
+        """UPDATE events_v3 SET merged_into = NULL
+           WHERE merged_into IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
+        (ctm_id,),
+    )
+    unmerged = cur.rowcount
+    if unmerged:
+        print("  Cleared {} merged_into references".format(unmerged))
+
+    # Delete narrative matches, title links, then events
+    cur.execute(
+        """DELETE FROM event_strategic_narratives
+           WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
+        (ctm_id,),
+    )
+    narr_deleted = cur.rowcount
+
+    cur.execute(
+        "DELETE FROM event_v3_titles WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)",
+        (ctm_id,),
+    )
+    links_deleted = cur.rowcount
+
+    cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
+    events_deleted = cur.rowcount
+
+    print(
+        "  Deleted: {} events, {} title links, {} narrative matches".format(
+            events_deleted, links_deleted, narr_deleted
+        )
+    )
+
+    # Write new events
+    written = write_bucketed_topics_to_db(conn, bucketed_topics, ctm_id, min_titles=2)
+    conn.commit()
+    print("  Created: {} new events".format(written))
+    conn.close()
+
+
+# =============================================================================
 # MAIN (CLI)
 # =============================================================================
 
@@ -1264,6 +1414,14 @@ if __name__ == "__main__":
     parser.add_argument("--ctm-id", required=True, help="CTM ID to process")
     parser.add_argument("--dry-run", action="store_true", default=True)
     parser.add_argument("--write", action="store_true", help="Save to database")
+    parser.add_argument(
+        "--recluster",
+        action="store_true",
+        help="Wipe existing events and recluster from scratch",
+    )
 
     args = parser.parse_args()
-    process_ctm(args.ctm_id, dry_run=not args.write)
+    if args.recluster:
+        recluster_ctm(args.ctm_id, dry_run=not args.write)
+    else:
+        process_ctm(args.ctm_id, dry_run=not args.write)

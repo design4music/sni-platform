@@ -13,6 +13,7 @@ Usage:
 """
 
 import argparse
+import os
 import sys
 import time
 import uuid
@@ -80,7 +81,7 @@ def get_ctm_info(conn, ctm_id=None, centroid=None, track=None):
     }
 
 
-CATCHALL_MAX_AGE_DAYS = 3
+CATCHALL_MAX_AGE_DAYS = int(os.environ.get("CATCHALL_MAX_AGE_DAYS", "3"))
 
 
 def load_bucket_data(conn, ctm_id):
@@ -614,12 +615,24 @@ def apply_rescues(conn, assignments, catchall_event_id, catchall_title_ids, buck
                 stats["rescue_skipped"] += 1
                 continue
 
+        # Check if title already linked to anchor (avoid unique violation)
         cur.execute(
-            """UPDATE event_v3_titles
-               SET event_id = %s
-               WHERE title_id = %s AND event_id = %s""",
-            (anchor_id, title_id, catchall_event_id),
+            "SELECT 1 FROM event_v3_titles WHERE event_id = %s AND title_id = %s",
+            (anchor_id, title_id),
         )
+        if cur.fetchone():
+            # Already linked -- just remove from catchall
+            cur.execute(
+                "DELETE FROM event_v3_titles WHERE event_id = %s AND title_id = %s",
+                (catchall_event_id, title_id),
+            )
+        else:
+            cur.execute(
+                """UPDATE event_v3_titles
+                   SET event_id = %s
+                   WHERE title_id = %s AND event_id = %s""",
+                (anchor_id, title_id, catchall_event_id),
+            )
         stats["rescued"] += 1
         updated_anchors.add(anchor_id)
 
