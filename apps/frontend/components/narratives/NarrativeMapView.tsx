@@ -13,11 +13,12 @@ const NarrativeGlobe = dynamic(() => import('./NarrativeGlobe'), { ssr: false })
 interface NarrativeMapViewProps {
   narratives: NarrativeMapEntry[];
   centroidIsoMap: { id: string; iso_codes: string[] }[];
+  centroidLabels?: Record<string, string>;
 }
 
 type Mode = 'outgoing' | 'incoming';
 
-export default function NarrativeMapView({ narratives, centroidIsoMap }: NarrativeMapViewProps) {
+export default function NarrativeMapView({ narratives, centroidIsoMap, centroidLabels: centroidLabelsProp }: NarrativeMapViewProps) {
   const t = useTranslations('narrativeMap');
   const [mode, setMode] = useState<Mode>('outgoing');
   const [selectedCentroidId, setSelectedCentroidId] = useState<string | null>(null);
@@ -42,8 +43,9 @@ export default function NarrativeMapView({ narratives, centroidIsoMap }: Narrati
     return map;
   }, [centroidIsoMap]);
 
-  // Build centroid ID -> label lookup
+  // Build centroid ID -> label lookup (prefer server-translated labels)
   const centroidLabels = useMemo(() => {
+    if (centroidLabelsProp && Object.keys(centroidLabelsProp).length > 0) return centroidLabelsProp;
     const map: Record<string, string> = {};
     for (const n of narratives) {
       if (n.actor_centroid && n.actor_label) {
@@ -51,7 +53,7 @@ export default function NarrativeMapView({ narratives, centroidIsoMap }: Narrati
       }
     }
     return map;
-  }, [narratives]);
+  }, [narratives, centroidLabelsProp]);
 
   // Pre-compute outgoing map: centroidId -> narratives where centroid is actor
   const outgoingMap = useMemo(() => {

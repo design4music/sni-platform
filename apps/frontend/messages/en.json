@@ -926,7 +926,8 @@
     "actorNarratives": "Narratives for this actor",
     "strategicNarratives": "Strategic Narratives",
     "sharedEvents": "shared events",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "mapView": "Map View"
   },
   "narrativeMap": {
     "title": "Narrative Map",

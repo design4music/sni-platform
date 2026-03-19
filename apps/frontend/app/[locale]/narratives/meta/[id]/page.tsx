@@ -7,6 +7,7 @@ import NarrativeCard from '@/components/narratives/NarrativeCard';
 import MentionTimeline from '@/components/signals/MentionTimeline';
 import { getMetaNarrativeById, getAllMetaNarratives, getStrategicNarratives, getNarrativeSparklines, getMetaNarrativeActivity } from '@/lib/queries';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { getCentroidLabel } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,7 @@ export default async function MetaNarrativePage({ params }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('narratives');
+  const tCentroids = await getTranslations('centroids');
 
   const [meta, allMeta, allNarratives, sparklines] = await Promise.all([
     getMetaNarrativeById(id, locale),
@@ -114,6 +116,8 @@ export default async function MetaNarrativePage({ params }: Props) {
             actorLabel={n.actor_label || null}
             eventCount={n.event_count || 0}
             sparkline={sparklines[n.id]}
+            matchedEventsLabel={t('matchedEvents')}
+            tCentroids={tCentroids}
           />
         ))}
       </div>

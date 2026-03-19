@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import MentionTimeline from '@/components/signals/MentionTimeline';
 import CompetingNarrativesPanel from '@/components/narratives/CompetingNarrativesPanel';
 import { getStrategicNarrativeById, getNarrativeWeeklyActivity, getNarrativeEvents } from '@/lib/queries';
+import { getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
@@ -31,11 +32,12 @@ function formatDate(dateStr: string, locale: string = 'en-US'): string {
 }
 
 async function NarrativeTimeline({ narrativeId }: { narrativeId: string }) {
+  const t = await getTranslations('narratives');
   const weekly = await getNarrativeWeeklyActivity(narrativeId);
   if (!weekly || weekly.length === 0) return null;
   return (
     <div className="mb-8">
-      <h2 className="text-lg font-semibold mb-3 text-dashboard-text-muted">Activity Timeline</h2>
+      <h2 className="text-lg font-semibold mb-3 text-dashboard-text-muted">{t('timeline')}</h2>
       <MentionTimeline weekly={weekly} />
     </div>
   );
@@ -54,21 +56,23 @@ async function NarrativeEventsList({ narrativeId, locale }: { narrativeId: strin
           <Link
             key={ev.id}
             href={`/events/${ev.id}`}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border hover:border-blue-500/40 transition"
+            className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border hover:border-blue-500/40 transition"
           >
-            <span className="text-xs text-dashboard-text-muted font-mono shrink-0">
-              {formatDate(ev.date, intlLocale)}
-            </span>
-            <span className="text-sm text-dashboard-text truncate flex-1">
+            <span className="text-sm text-dashboard-text md:truncate md:flex-1">
               {ev.title}
             </span>
-            <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
-              ev.confidence >= 0.8
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-slate-500/20 text-slate-400'
-            }`}>
-              {Math.round(ev.confidence * 100)}%
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-dashboard-text-muted font-mono shrink-0">
+                {formatDate(ev.date, intlLocale)}
+              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                ev.confidence >= 0.8
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'bg-slate-500/20 text-slate-400'
+              }`}>
+                {Math.round(ev.confidence * 100)}%
+              </span>
+            </div>
           </Link>
         ))}
       </div>
@@ -80,22 +84,23 @@ export default async function NarrativeDetailPage({ params }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('narratives');
+  const tCentroids = await getTranslations('centroids');
 
   const narrative = await getStrategicNarrativeById(id, locale);
   if (!narrative) return notFound();
 
   const breadcrumb = (
-    <div className="text-sm text-dashboard-text-muted">
-      <Link href="/narratives" className="text-blue-400 hover:text-blue-300">
+    <div className="text-sm text-dashboard-text-muted flex flex-wrap items-baseline gap-y-0.5 overflow-hidden">
+      <Link href="/narratives" className="text-blue-400 hover:text-blue-300 shrink-0">
         {t('title')}
       </Link>
-      <span className="mx-2">/</span>
+      <span className="mx-1 md:mx-2 shrink-0">/</span>
       {narrative.meta_name && (
         <>
           <Link href={`/narratives/meta/${narrative.meta_narrative_id}`} className="text-blue-400 hover:text-blue-300">
             {narrative.meta_name}
           </Link>
-          <span className="mx-2">/</span>
+          <span className="mx-1 md:mx-2 shrink-0">/</span>
         </>
       )}
       <span>{narrative.name}</span>
@@ -129,7 +134,7 @@ export default async function NarrativeDetailPage({ params }: Props) {
             href={`/c/${narrative.actor_centroid}`}
             className="text-base font-medium text-blue-400 hover:text-blue-300 transition"
           >
-            {narrative.actor_label}
+            {getCentroidLabel(narrative.actor_centroid!, narrative.actor_label!, tCentroids)}
           </Link>
         </div>
       )}
@@ -140,7 +145,7 @@ export default async function NarrativeDetailPage({ params }: Props) {
           <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">
             {t('events')}
           </h3>
-          <p className="text-2xl font-bold text-dashboard-text" title="Matched events (not individual articles)">{narrative.event_count}</p>
+          <p className="text-2xl font-bold text-dashboard-text" title={t('matchedEvents')}>{narrative.event_count}</p>
         </div>
       )}
 

@@ -28,23 +28,23 @@ export default function NarrativePanel({ countryLabel, narratives, mode, onClose
 
   const renderNarrative = (n: NarrativeMapEntry) => (
     <div key={n.id} className="py-3 border-b border-dashboard-border last:border-b-0">
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/narratives/${n.id}`}
-          className="font-medium text-sm text-dashboard-text hover:text-blue-400 transition line-clamp-2"
-        >
-          {n.name}
-        </Link>
-        <span className="shrink-0 text-xs bg-dashboard-surface-raised px-2 py-0.5 rounded text-dashboard-text-muted">
+      <Link
+        href={`/narratives/${n.id}`}
+        className="font-medium text-sm text-dashboard-text hover:text-blue-400 transition block"
+      >
+        {n.name}
+      </Link>
+      {n.claim && (
+        <p className="text-xs text-dashboard-text-muted mt-1">{n.claim}</p>
+      )}
+      <div className="flex items-center gap-2 mt-1.5">
+        <span className="text-xs bg-dashboard-surface-raised px-2 py-0.5 rounded text-dashboard-text-muted">
           {n.event_count} {t('events')}
         </span>
+        <span className="text-xs text-dashboard-text-muted opacity-60">
+          {n.meta_name}
+        </span>
       </div>
-      {n.claim && (
-        <p className="text-xs text-dashboard-text-muted mt-1 line-clamp-2">{n.claim}</p>
-      )}
-      <span className="text-xs text-dashboard-text-muted opacity-60 mt-1 inline-block">
-        {n.meta_name}
-      </span>
     </div>
   );
 

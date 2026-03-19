@@ -26,7 +26,7 @@ export default async function CompetingNarrativesPanel({ narrativeId, locale }: 
             href={`/narratives/${n.id}`}
             className="block px-3 py-2 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border transition"
           >
-            <p className="text-sm font-medium text-dashboard-text truncate">{n.name}</p>
+            <p className="text-sm font-medium text-dashboard-text">{n.name}</p>
             <div className="flex items-center gap-2 mt-1">
               {n.actor_label && (
                 <span className="text-xs text-dashboard-text-muted">{n.actor_label}</span>

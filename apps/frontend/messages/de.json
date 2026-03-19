@@ -926,7 +926,8 @@
     "actorNarratives": "Narrative fuer diesen Akteur",
     "strategicNarratives": "Strategische Narrative",
     "sharedEvents": "gemeinsame Ereignisse",
-    "viewAll": "Alle anzeigen"
+    "viewAll": "Alle anzeigen",
+    "mapView": "Kartenansicht"
   },
   "narrativeMap": {
     "title": "Narrativ-Karte",

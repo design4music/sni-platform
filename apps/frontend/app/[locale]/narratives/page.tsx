@@ -4,6 +4,7 @@ import NarrativeCard from '@/components/narratives/NarrativeCard';
 import NarrativeFilterBar from '@/components/narratives/NarrativeFilterBar';
 import { getAllMetaNarratives, getStrategicNarratives, getNarrativeSparklines } from '@/lib/queries';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,7 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('narratives');
+  const tCentroids = await getTranslations('centroids');
   const sp = await searchParams;
 
   const [metaNarratives, allNarratives, sparklines] = await Promise.all([
@@ -34,11 +36,11 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
     getNarrativeSparklines(),
   ]);
 
-  // Build unique actors list for filter
+  // Build unique actors list for filter (with translated labels)
   const actorMap = new Map<string, string>();
   for (const n of allNarratives) {
     if (n.actor_centroid && n.actor_label) {
-      actorMap.set(n.actor_centroid, n.actor_label);
+      actorMap.set(n.actor_centroid, getCentroidLabel(n.actor_centroid, n.actor_label, tCentroids));
     }
   }
   const actors = Array.from(actorMap.entries())
@@ -78,9 +80,9 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
         </div>
         <Link
           href="/narratives/map"
-          className="shrink-0 px-4 py-2 bg-dashboard-surface-raised border border-dashboard-border rounded-lg text-sm text-dashboard-text hover:border-blue-500 transition"
+          className="shrink-0 px-4 py-2 rounded-lg text-sm text-white bg-emerald-600 hover:bg-emerald-500 transition"
         >
-          Map View
+          {t('mapView')}
         </Link>
       </div>
 
@@ -126,6 +128,8 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
                       actorLabel={n.actor_label || null}
                       eventCount={n.event_count || 0}
                       sparkline={sparklines[n.id]}
+                      matchedEventsLabel={t('matchedEvents')}
+                      tCentroids={tCentroids}
                     />
                   ))}
                 </div>
