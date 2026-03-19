@@ -9,9 +9,13 @@ function getConsent(): string | null {
   return match ? match[1] : null;
 }
 
-function gtag(...args: unknown[]) {
+// Must push the real `arguments` object, not a spread array --
+// gtag.js checks for Arguments, plain arrays are silently ignored.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function gtag(..._args: unknown[]) {
   window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push(args);
+  // eslint-disable-next-line prefer-rest-params
+  window.dataLayer.push(arguments);
 }
 
 function loadGA4() {
