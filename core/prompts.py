@@ -90,18 +90,14 @@ ACTOR TYPES:
 {target_rules}
 
 ## PART 2: SIGNALS
-Extract typed signals from each title:
+Extract typed signals from each title (4 categories):
 - persons: LAST_NAME only, uppercase (TRUMP, POWELL, ZELENSKY)
 - orgs: Organizations/companies/armed groups, uppercase (NATO, FED, NVIDIA, HAMAS, ISIS)
 - places: Sub-national locations, Title case (Crimea, Gaza, Greenland). NO COUNTRIES.
-- commodities: Traded goods/resources, lowercase (oil, gold, semiconductors)
-- policies: Policy types/agreements, lowercase (tariffs, sanctions, JCPOA)
-- systems: Technical systems/platforms, original case (SWIFT, Nord Stream)
-- named_events: Summits/conferences, Title case (G20 Summit, COP28)
+- named_events: Named operations/summits/conferences, Title case (G20 Summit, COP28, Operation Epic Fury)
 
 SIGNAL RULES:
-- ENGLISH ONLY - translate foreign terms (oro->gold, Pekin->Beijing)
-- Canonical forms (CRITICAL): tariff/trade war -> tariffs, chip/semiconductor -> semiconductors, peace deal/negotiations -> peace talks, truce/armistice -> ceasefire, economic sanctions -> sanctions
+- ENGLISH ONLY - translate foreign terms (Pekin->Beijing, Donetsk->Donetsk)
 - NO PUBLISHERS as orgs (WSJ, Reuters, BBC, CNN). Companies/armed groups -> orgs.
 
 ## PART 3: ENTITY COUNTRIES
@@ -113,9 +109,28 @@ ENTITY MAPPINGS: Politicians -> country of office (MACRON->FR, RUBIO->US). Compa
 
 SKIP: Country names themselves (US, China, France) - handled separately.
 
+## PART 4: SECTOR + SUBJECT
+Classify each title into a SECTOR (required) and SUBJECT (optional, use null if no good fit).
+Pick the ONE most relevant sector and subject. These are CONTROLLED VOCABULARIES -- use ONLY these values.
+
+SECTORS and their SUBJECTS:
+- MILITARY: NUCLEAR, NAVAL, AERIAL, MISSILE, GROUND_FORCES, AIR_DEFENSE, DRONE, SPACE
+- INTELLIGENCE: ESPIONAGE, SURVEILLANCE, COVERT_OPERATION
+- SECURITY: TERRORISM, INSURGENCY, ORGANIZED_CRIME, CIVIL_UNREST, BORDER_SECURITY
+- DIPLOMACY: TREATY, ALLIANCE, MEDIATION, RECOGNITION, HUMANITARIAN_CORRIDOR
+- GOVERNANCE: ELECTION, LEGISLATION, JUDICIAL, EXECUTIVE_ACTION, CONSTITUTIONAL, CORRUPTION
+- ECONOMY: TRADE, SANCTIONS, INVESTMENT, DEBT_FINANCE, CURRENCY, LABOR, TAXATION
+- ENERGY_RESOURCES: OIL_GAS, RENEWABLE, MINING, RARE_EARTH, WATER, FOOD_AGRICULTURE
+- TECHNOLOGY: AI, SEMICONDUCTORS, TELECOM, BIOTECH, CYBER, SOCIAL_MEDIA
+- HEALTH_ENVIRONMENT: PANDEMIC, CLIMATE, POLLUTION, NATURAL_DISASTER, PUBLIC_HEALTH
+- SOCIETY: MIGRATION, RELIGION, EDUCATION, MEDIA_PRESS, DEMOGRAPHICS, HUMAN_RIGHTS
+- INFRASTRUCTURE: TRANSPORT, SHIPPING, CONSTRUCTION, SUPPLY_CHAIN, POWER_GRID
+
+Examples: "Macron increases nuclear arsenal" -> MILITARY/NUCLEAR. "Oil prices surge" -> ENERGY_RESOURCES/OIL_GAS. "FBI investigates bar shooting" -> SECURITY/TERRORISM. "EU tariffs on China" -> ECONOMY/TRADE. "Carrier deployed to Mediterranean" -> MILITARY/NAVAL.
+
 ## OUTPUT
 Return JSON array:
-[{{"idx": 1, "actor": "US_EXECUTIVE", "action": "POLICY_CHANGE", "domain": "ECONOMY", "target": "CN", "conf": 0.9, "persons": ["TRUMP"], "orgs": [], "places": [], "commodities": [], "policies": ["tariffs"], "systems": [], "named_events": [], "entity_countries": {{"TRUMP": "US"}}}}]
+[{{"idx": 1, "actor": "US_EXECUTIVE", "action": "POLICY_CHANGE", "domain": "ECONOMY", "target": "CN", "conf": 0.9, "sector": "ECONOMY", "subject": "TRADE", "persons": ["TRUMP"], "orgs": [], "places": [], "named_events": [], "entity_countries": {{"TRUMP": "US"}}}}]
 
 Country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_. IGOs without prefix: UN, NATO, EU. TARGET: ISO codes or canonical names. conf 0.0-1.0. Return ONLY valid JSON. Empty arrays [] for no matches."""
 

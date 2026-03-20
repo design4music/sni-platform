@@ -1165,18 +1165,98 @@ def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> i
 
 
 # =============================================================================
+# LOUVAIN CLUSTERING (TF-IDF + cosine similarity + community detection)
+# =============================================================================
+
+try:
+    import community as community_louvain
+    import networkx as nx
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity as sklearn_cosine
+
+    HAS_LOUVAIN = True
+except ImportError:
+    HAS_LOUVAIN = False
+
+
+def cluster_louvain(
+    titles: list,
+    similarity_threshold: float = 0.35,
+    resolution: float = 0.8,
+    min_titles: int = 2,
+) -> list:
+    """Cluster titles using TF-IDF + cosine similarity + Louvain community detection.
+
+    Returns list of IncrementalTopic-like objects for compatibility with
+    write_bucketed_topics_to_db.
+    """
+    import numpy as np
+
+    if not HAS_LOUVAIN:
+        print("  Louvain not available, falling back to signal-based")
+        return cluster_incrementally(titles, get_weights("default"), [])
+
+    if len(titles) < 2:
+        return []
+
+    texts = [t.get("title_display", "") for t in titles]
+
+    vectorizer = TfidfVectorizer(
+        ngram_range=(1, 2),
+        lowercase=True,
+        sublinear_tf=True,
+        max_features=10000,
+        stop_words="english",
+    )
+    tfidf = vectorizer.fit_transform(texts)
+    sim = sklearn_cosine(tfidf)
+
+    # Build graph
+    adj = (sim > similarity_threshold).astype(int)
+    np.fill_diagonal(adj, 0)
+    G = nx.from_numpy_array(adj)
+    partition = community_louvain.best_partition(
+        G, resolution=resolution, random_state=42
+    )
+
+    # Group by cluster
+    clusters = defaultdict(list)
+    for node_idx, cluster_id in partition.items():
+        clusters[cluster_id].append(node_idx)
+
+    # Convert to IncrementalTopic objects for compatibility
+    topics = []
+    topic_counter = 0
+    for cluster_id, indices in clusters.items():
+        if len(indices) < 1:
+            continue
+        topic_counter += 1
+        seed = titles[indices[0]]
+        topic = IncrementalTopic(seed, topic_counter)
+        for idx in indices[1:]:
+            topic.add_title(titles[idx])
+        topics.append(topic)
+
+    return topics
+
+
+# =============================================================================
 # RECLUSTER FROM SCRATCH
 # =============================================================================
 
 
-def recluster_ctm(ctm_id: str, dry_run: bool = True):
+def recluster_ctm(ctm_id: str, dry_run: bool = True, method: str = "louvain"):
     """Wipe existing events for a CTM and recluster ALL titles from scratch.
 
     This is destructive: all events, title links, narrative matches, and
     summaries for this CTM are deleted before re-clustering.
 
+    Args:
+        method: "louvain" (TF-IDF + Louvain, default) or "signal" (incremental signal-based)
+
     Usage:
         python -m pipeline.phase_4.incremental_clustering --ctm-id <id> --recluster --write
+        python -m pipeline.phase_4.incremental_clustering --ctm-id <id> --recluster --write --method signal
     """
     conn = get_connection()
     ctm_info = get_ctm_info(conn, ctm_id)
@@ -1212,9 +1292,14 @@ def recluster_ctm(ctm_id: str, dry_run: bool = True):
             ", ".join("{}={:.1f}".format(k, v) for k, v in weights.items())
         )
     )
-    print("  Discriminators: {}".format(discriminators))
-    print("  Join threshold: {}".format(JOIN_THRESHOLD))
-    print("  Max topic size: {}".format(MAX_TOPIC_SIZE))
+    use_louvain = method == "louvain" and HAS_LOUVAIN
+    if use_louvain:
+        print("  Method: LOUVAIN (TF-IDF + cosine + community detection)")
+    else:
+        print("  Discriminators: {}".format(discriminators))
+        print("  Join threshold: {}".format(JOIN_THRESHOLD))
+        print("  Max topic size: {}".format(MAX_TOPIC_SIZE))
+        print("  Method: SIGNAL (incremental)")
 
     # Bucket and cluster
     buckets = bucket_titles_by_centroid(all_titles, centroid_id)
@@ -1229,7 +1314,10 @@ def recluster_ctm(ctm_id: str, dry_run: bool = True):
     bucketed_topics = {"domestic": [], "bilateral": {}, "other_international": []}
 
     for event_type, bucket_key, bucket_titles in _iterate_buckets(buckets):
-        topics = cluster_incrementally(bucket_titles, weights, discriminators)
+        if use_louvain:
+            topics = cluster_louvain(bucket_titles)
+        else:
+            topics = cluster_incrementally(bucket_titles, weights, discriminators)
         emerged = [t for t in topics if len(t.titles) >= 2]
         label = event_type if not bucket_key else "{} {}".format(event_type, bucket_key)
         print(
@@ -1421,9 +1509,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Wipe existing events and recluster from scratch",
     )
+    parser.add_argument(
+        "--method",
+        choices=["louvain", "signal"],
+        default="louvain",
+        help="Clustering method for recluster (default: louvain)",
+    )
 
     args = parser.parse_args()
     if args.recluster:
-        recluster_ctm(args.ctm_id, dry_run=not args.write)
+        recluster_ctm(args.ctm_id, dry_run=not args.write, method=args.method)
     else:
         process_ctm(args.ctm_id, dry_run=not args.write)

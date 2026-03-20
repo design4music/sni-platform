@@ -230,14 +230,15 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
             )
             domain = "GOVERNANCE"
 
-        # Extract signals (default to empty arrays)
+        # Extract signals (4 active + 3 frozen as empty)
         persons = normalize_signal_list(item.get("persons", []), uppercase=True)
         orgs = normalize_signal_list(item.get("orgs", []), uppercase=True)
         places = normalize_signal_list(item.get("places", []))
-        commodities = normalize_signal_list(item.get("commodities", []), lowercase=True)
-        policies = normalize_signal_list(item.get("policies", []), lowercase=True)
-        systems = normalize_signal_list(item.get("systems", []))
         named_events = normalize_signal_list(item.get("named_events", []))
+        # Frozen signals: still written as empty arrays to preserve DB schema
+        commodities = []
+        policies = []
+        systems = []
 
         # Apply signal alias normalization + cross-category moves
         cats = {
@@ -267,6 +268,27 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
         # Extract entity_countries (entity -> ISO code mapping)
         entity_countries = normalize_entity_countries(item.get("entity_countries", {}))
 
+        # Extract sector + subject (Part 4)
+        sector = item.get("sector")
+        subject = item.get("subject")
+        # Validate sector against controlled vocabulary
+        valid_sectors = {
+            "MILITARY",
+            "INTELLIGENCE",
+            "SECURITY",
+            "DIPLOMACY",
+            "GOVERNANCE",
+            "ECONOMY",
+            "ENERGY_RESOURCES",
+            "TECHNOLOGY",
+            "HEALTH_ENVIRONMENT",
+            "SOCIETY",
+            "INFRASTRUCTURE",
+        }
+        if sector and sector not in valid_sectors:
+            logger.warning("Invalid sector '%s' for %s" % (sector, title_id[:8]))
+            sector = None
+
         results.append(
             {
                 "title_id": title_id,
@@ -276,6 +298,9 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
                 "domain": domain,
                 "target": target,
                 "confidence": min(max(float(confidence), 0.0), 1.0),
+                # Sector + subject
+                "sector": sector,
+                "subject": subject,
                 # Signals
                 "persons": persons,
                 "orgs": orgs,
@@ -498,9 +523,9 @@ def write_to_db(conn, results: list[dict]) -> int:
             title_id, actor, action_class, domain, target,
             label_version, confidence,
             persons, orgs, places, commodities, policies, systems, named_events,
-            entity_countries
+            entity_countries, sector, subject
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         ON CONFLICT (title_id) DO UPDATE SET
             actor = EXCLUDED.actor,
@@ -517,6 +542,8 @@ def write_to_db(conn, results: list[dict]) -> int:
             systems = EXCLUDED.systems,
             named_events = EXCLUDED.named_events,
             entity_countries = EXCLUDED.entity_countries,
+            sector = EXCLUDED.sector,
+            subject = EXCLUDED.subject,
             updated_at = NOW()
     """
 
@@ -544,6 +571,8 @@ def write_to_db(conn, results: list[dict]) -> int:
                     r["systems"],
                     r["named_events"],
                     entity_countries_json,
+                    r.get("sector"),
+                    r.get("subject"),
                 ),
             )
             inserted += 1
