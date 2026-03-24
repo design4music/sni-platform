@@ -276,6 +276,171 @@ def tag_geo(cluster_indices, titles, centroid_id):
     return "bilateral", top_centroid
 
 
+MERGE_STOP_WORDS = {
+    "the",
+    "a",
+    "an",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "and",
+    "or",
+    "with",
+    "as",
+    "by",
+    "is",
+    "are",
+    "its",
+    "after",
+    "from",
+    "new",
+    "says",
+    "has",
+    "have",
+    "will",
+    "been",
+    "over",
+    "amid",
+    "not",
+    "but",
+    "was",
+    "were",
+    "that",
+    "this",
+    "more",
+    "than",
+    "into",
+    "about",
+    "could",
+    "would",
+    "also",
+    "other",
+    "calls",
+    "plans",
+    "announces",
+    "faces",
+    "france",
+    "french",
+    "european",  # centroid-specific noise for France
+}
+
+DICE_MERGE_THRESHOLD = 0.35  # same as production Phase 4.1
+
+
+def _event_title_words(title):
+    """Extract content words from a generated event title."""
+    if not title:
+        return set()
+    words = set()
+    for w in title.lower().split():
+        w = w.strip(".,;:!?\"'()[]")
+        if w and w not in MERGE_STOP_WORDS and len(w) > 2:
+            words.add(w)
+    return words
+
+
+def merge_similar_topics(conn, ctm_ids):
+    """Mechanical post-clustering merge pass.
+
+    Within each sector+subject group, find events whose generated titles
+    have Dice word overlap >= threshold. Merge smaller into larger by
+    moving title links and deleting the smaller event.
+
+    Only merges events that share the same ctm_id (same track).
+    """
+    cur = conn.cursor()
+
+    # Load all non-catchall events with titles for these CTMs.
+    # Use majority sector+subject from underlying titles for grouping.
+    cur.execute(
+        """SELECT e.id, e.title, e.source_batch_count, e.ctm_id,
+                  (SELECT tl2.sector FROM event_v3_titles et2
+                   JOIN title_labels tl2 ON tl2.title_id = et2.title_id
+                   WHERE et2.event_id = e.id AND tl2.sector IS NOT NULL
+                   GROUP BY tl2.sector ORDER BY COUNT(*) DESC LIMIT 1) as sector,
+                  (SELECT tl3.subject FROM event_v3_titles et3
+                   JOIN title_labels tl3 ON tl3.title_id = et3.title_id
+                   WHERE et3.event_id = e.id AND tl3.subject IS NOT NULL
+                   GROUP BY tl3.subject ORDER BY COUNT(*) DESC LIMIT 1) as subject
+           FROM events_v3 e
+           WHERE e.ctm_id = ANY(%s::uuid[])
+             AND e.title IS NOT NULL
+             AND NOT e.is_catchall""",
+        (ctm_ids,),
+    )
+    rows = cur.fetchall()
+
+    # Group by (ctm_id, sector, subject)
+    groups = defaultdict(list)
+    for eid, title, count, ctm_id, sector, subject in rows:
+        groups[(str(ctm_id), sector, subject)].append(
+            {"id": str(eid), "title": title, "count": count or 0}
+        )
+
+    total_merged = 0
+    for (ctm_id, sector, subject), events in groups.items():
+        if len(events) < 2:
+            continue
+
+        # Sort by size descending (largest = anchor)
+        events.sort(key=lambda e: -e["count"])
+        word_sets = [_event_title_words(e["title"]) for e in events]
+
+        # Find merge pairs
+        merged_ids = set()
+        for i in range(len(events)):
+            if events[i]["id"] in merged_ids:
+                continue
+            for j in range(i + 1, len(events)):
+                if events[j]["id"] in merged_ids:
+                    continue
+                wa, wb = word_sets[i], word_sets[j]
+                if not wa or not wb:
+                    continue
+                dice = 2 * len(wa & wb) / (len(wa) + len(wb))
+                if dice >= DICE_MERGE_THRESHOLD:
+                    anchor_id = events[i]["id"]
+                    candidate_id = events[j]["id"]
+                    # Move titles, delete candidate
+                    cur.execute(
+                        "UPDATE event_v3_titles SET event_id = %s "
+                        "WHERE event_id = %s",
+                        (anchor_id, candidate_id),
+                    )
+                    cur.execute(
+                        "DELETE FROM events_v3 WHERE id = %s",
+                        (candidate_id,),
+                    )
+                    cur.execute(
+                        """UPDATE events_v3
+                           SET source_batch_count = (
+                               SELECT COUNT(*) FROM event_v3_titles
+                               WHERE event_id = %s
+                           ), updated_at = NOW()
+                           WHERE id = %s""",
+                        (anchor_id, anchor_id),
+                    )
+                    merged_ids.add(candidate_id)
+                    events[i]["count"] += events[j]["count"]
+                    total_merged += 1
+                    print(
+                        "  MERGE [%d]+[%d] dice=%.2f: %s <- %s"
+                        % (
+                            events[i]["count"],
+                            events[j]["count"],
+                            dice,
+                            events[i]["title"][:50],
+                            events[j]["title"][:50],
+                        )
+                    )
+
+    conn.commit()
+    return total_merged
+
+
 def rebuild(centroid_id, month, write=False, generate_titles=False):
     conn = get_connection()
     cur = conn.cursor()
@@ -472,6 +637,18 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
         for ctm_id, track in ctm_map.items():
             print("  %s..." % track, flush=True)
             asyncio.run(process_events(max_events=300, ctm_id=ctm_id))
+
+        # Mechanical merge pass on generated titles
+        print("\nMechanical merge pass (Dice >= %.2f)..." % DICE_MERGE_THRESHOLD)
+        merged = merge_similar_topics(conn, all_ctm_ids)
+        if merged:
+            print("Merged %d topic pairs" % merged)
+            # Re-generate titles for merged events (source count changed)
+            print("Re-generating titles for merged events...")
+            for ctm_id, track in ctm_map.items():
+                asyncio.run(process_events(max_events=300, ctm_id=ctm_id))
+        else:
+            print("No merge candidates found")
 
     conn.close()
     print("\nDone.")
