@@ -18,6 +18,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 if sys.platform == "win32":
     sys.stdout.reconfigure(errors="replace")
 
+import community as community_louvain
+import networkx as nx
 import psycopg2
 
 from core.config import HIGH_FREQ_ORGS, config
@@ -36,6 +38,22 @@ CTM_PROTAGONIST = {
     "EUROPE-UK": {"STARMER"},
     "MIDEAST-TURKEY": {"ERDOGAN"},
     "ASIA-INDIA": {"MODI"},
+}
+
+# Capital/dominant cities to exclude from clustering identity signals per CTM.
+# These cities appear in too many unrelated domestic stories to be discriminating.
+CTM_HOME_CITIES = {
+    "EUROPE-FRANCE": {"PARIS"},
+    "AMERICAS-USA": {"WASHINGTON", "WASHINGTON DC", "NEW YORK"},
+    "EUROPE-RUSSIA": {"MOSCOW"},
+    "ASIA-CHINA": {"BEIJING"},
+    "EUROPE-UKRAINE": {"KYIV", "KIEV"},
+    "MIDEAST-ISRAEL": {"TEL AVIV", "JERUSALEM"},
+    "MIDEAST-IRAN": {"TEHRAN"},
+    "EUROPE-GERMANY": {"BERLIN"},
+    "EUROPE-UK": {"LONDON"},
+    "MIDEAST-TURKEY": {"ANKARA", "ISTANBUL"},
+    "ASIA-INDIA": {"NEW DELHI", "DELHI"},
 }
 
 # Sector -> track mapping (replaces domain-based Phase 3.3)
@@ -69,20 +87,22 @@ def get_connection():
     )
 
 
-def load_all_titles(conn, ctm_ids):
-    """Load titles from all CTMs at once."""
+def load_all_titles(conn, centroid_id, month):
+    """Load all titles for a centroid+month directly (no title_assignments)."""
     cur = conn.cursor()
     cur.execute(
         """SELECT t.id, t.title_display, t.pubdate_utc, t.centroid_ids,
                   tl.sector, tl.subject, tl.target, tl.domain,
                   tl.persons, tl.orgs, tl.places, tl.named_events,
-                  ta.ctm_id, ta.track
+                  tl.actor, tl.action_class
            FROM titles_v3 t
-           JOIN title_assignments ta ON t.id = ta.title_id
            LEFT JOIN title_labels tl ON t.id = tl.title_id
-           WHERE ta.ctm_id = ANY(%s::uuid[])
+           WHERE %s = ANY(t.centroid_ids)
+             AND t.processing_status = 'assigned'
+             AND t.pubdate_utc >= %s::date
+             AND t.pubdate_utc < %s::date + INTERVAL '1 month'
            ORDER BY t.pubdate_utc""",
-        (ctm_ids,),
+        (centroid_id, month, month),
     )
     return [
         {
@@ -98,71 +118,133 @@ def load_all_titles(conn, ctm_ids):
             "orgs": r[9] or [],
             "places": r[10] or [],
             "named_events": r[11] or [],
-            "ctm_id": str(r[12]),
-            "track": r[13],
+            "actor": r[12] or "",
+            "action_class": r[13] or "",
         }
         for r in cur.fetchall()
     ]
 
 
+def _primary_actor(actor_str):
+    """Return the primary actor from a possibly comma-separated actor field."""
+    if not actor_str:
+        return "UNKNOWN"
+    return actor_str.split(",")[0].strip()
+
+
+def _identity_labels(t, protagonist, home_cities):
+    """Build the set of specific identity labels for a title.
+
+    Prefixed to avoid collision: TGT:, PLC:, PER:, ORG:, EVT:
+    Excludes: home cities, high-freq orgs, NONE target.
+    Does NOT exclude protagonist here -- actor+action_class gate already
+    groups by story type, so protagonist is a valid discriminator within group.
+    """
+    labels = set()
+    tgt = t.get("target") or ""
+    if tgt and tgt != "NONE":
+        for v in tgt.split(","):
+            v = v.strip()
+            if v and v != "NONE":
+                labels.add("TGT:" + v)
+    for p in t.get("places", []):
+        if p.upper() not in home_cities:
+            labels.add("PLC:" + p.upper())
+    for p in t.get("persons", []):
+        labels.add("PER:" + p.upper())
+    for o in t.get("orgs", []):
+        if o.upper() not in HIGH_FREQ_ORGS:
+            labels.add("ORG:" + o.upper())
+    for e in t.get("named_events", []):
+        labels.add("EVT:" + e)
+    return labels
+
+
+def _louvain_split(indices, titles, sector, subject, protagonist, home_cities):
+    """Louvain community detection on identity-label Jaccard similarity.
+
+    Titles with zero identity labels are merged into the largest community
+    within their sector+subject group (they belong to the topic area but
+    can't be further discriminated).
+    """
+    label_sets = {
+        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
+    }
+
+    has_labels = [i for i in indices if label_sets[i]]
+    no_labels = [i for i in indices if not label_sets[i]]
+
+    if not has_labels:
+        return [{"sector": sector, "subject": subject, "indices": indices}]
+
+    G = nx.Graph()
+    G.add_nodes_from(has_labels)
+    for a in range(len(has_labels)):
+        for b in range(a + 1, len(has_labels)):
+            ia, ib = has_labels[a], has_labels[b]
+            la, lb = label_sets[ia], label_sets[ib]
+            shared = la & lb
+            if shared:
+                G.add_edge(ia, ib, weight=len(shared) / len(la | lb))
+
+    partition = community_louvain.best_partition(G, weight="weight")
+    communities = defaultdict(list)
+    for node, cid in partition.items():
+        communities[cid].append(node)
+
+    # Merge zero-label titles into the largest community
+    if no_labels and communities:
+        largest_cid = max(communities, key=lambda c: len(communities[c]))
+        communities[largest_cid].extend(no_labels)
+
+    return [
+        {"sector": sector, "subject": subject, "indices": members}
+        for members in communities.values()
+    ]
+
+
+# Louvain only runs on groups at or above this size.
+# Below threshold: the entire sector+subject group becomes one topic.
+LOUVAIN_SPLIT_THRESHOLD = 50
+
+
 def cluster_topdown(titles, centroid_id):
-    """Top-down clustering: group by sector+subject, split by identity."""
+    """2-level clustering:
+      L1: sector + subject  (domain grouping)
+      L2: Louvain on identity labels  (only for groups >= LOUVAIN_SPLIT_THRESHOLD)
+
+    Small groups stay as a single topic. Louvain only runs on large groups
+    where multiple distinct stories likely coexist.
+    """
     protagonist = CTM_PROTAGONIST.get(centroid_id, set())
+    home_cities = CTM_HOME_CITIES.get(centroid_id, set())
 
-    # Group by sector+subject
-    groups = defaultdict(list)
+    # Level 1: group by (sector, subject)
+    l1_groups = defaultdict(list)
     for i, t in enumerate(titles):
-        key = (t["sector"] or "UNKNOWN", t["subject"])
-        groups[key].append(i)
+        l1_groups[(t["sector"] or "UNKNOWN", t["subject"])].append(i)
 
-    # Split each group by identity signals
     all_clusters = []
-    for (sector, subject), indices in groups.items():
-        if len(indices) <= 3:
+
+    for (sector, subject), l1_idx in l1_groups.items():
+        if len(l1_idx) <= 3:
             all_clusters.append(
-                {"sector": sector, "subject": subject, "indices": indices}
+                {"sector": sector, "subject": subject, "indices": l1_idx}
             )
             continue
 
-        sub_clusters = []
-        for i in indices:
-            t = titles[i]
-            places = set(t["places"])
-            persons = {p.upper() for p in t["persons"] if p.upper() not in protagonist}
-            orgs = {o.upper() for o in t["orgs"] if o.upper() not in HIGH_FREQ_ORGS}
-            named_ev = set(t["named_events"])
-            identity = places | orgs | named_ev | persons
-
-            best_cl, best_n = None, 0
-            for cl in sub_clusters:
-                n = len(identity & cl["identity"])
-                if n > best_n:
-                    best_n = n
-                    best_cl = cl
-
-            if best_cl and best_n > 0:
-                best_cl["indices"].append(i)
-                best_cl["identity"] |= identity
-            elif not identity:
-                sub_clusters.append({"indices": [i], "identity": set(), "orphan": True})
-            else:
-                sub_clusters.append(
-                    {"indices": [i], "identity": identity, "orphan": False}
-                )
-
-        # Merge orphans to largest real cluster
-        real = [c for c in sub_clusters if not c.get("orphan")]
-        orphans = [c for c in sub_clusters if c.get("orphan")]
-        if real and orphans:
-            largest = max(real, key=lambda c: len(c["indices"]))
-            for o in orphans:
-                largest["indices"].extend(o["indices"])
-            sub_clusters = real
-
-        for sc in sub_clusters:
+        if len(l1_idx) < LOUVAIN_SPLIT_THRESHOLD:
+            # Below threshold: keep as one topic
             all_clusters.append(
-                {"sector": sector, "subject": subject, "indices": sc["indices"]}
+                {"sector": sector, "subject": subject, "indices": l1_idx}
             )
+            continue
+
+        # At or above threshold: Louvain split into sub-topics
+        subclusters = _louvain_split(
+            l1_idx, titles, sector, subject, protagonist, home_cities
+        )
+        all_clusters.extend(subclusters)
 
     return all_clusters
 
@@ -174,7 +256,11 @@ def assign_track(cluster, titles):
 
 
 def tag_geo(cluster_indices, titles, centroid_id):
-    """Tag a cluster as domestic or bilateral."""
+    """Tag a cluster as domestic or bilateral.
+
+    Requires the top foreign centroid to appear in >= 10% of titles,
+    otherwise noise (e.g. 2/119) doesn't flip a domestic cluster to bilateral.
+    """
     foreign_counts = Counter()
     for i in cluster_indices:
         for c in titles[i]["centroid_ids"]:
@@ -183,7 +269,11 @@ def tag_geo(cluster_indices, titles, centroid_id):
 
     if not foreign_counts:
         return "domestic", None
-    return "bilateral", foreign_counts.most_common(1)[0][0]
+
+    top_centroid, top_count = foreign_counts.most_common(1)[0]
+    if top_count < len(cluster_indices) * 0.5:
+        return "domestic", None
+    return "bilateral", top_centroid
 
 
 def rebuild(centroid_id, month, write=False, generate_titles=False):
@@ -205,8 +295,8 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
     for ctm_id, track in ctm_map.items():
         print("  %s %s" % (ctm_id[:8], track))
 
-    # Load all titles
-    titles = load_all_titles(conn, list(ctm_map.keys()))
+    # Load all titles for centroid+month (independent of CTM/title_assignments)
+    titles = load_all_titles(conn, centroid_id, month)
     print("\nTotal titles: %d" % len(titles))
 
     # Check sector coverage
@@ -224,6 +314,13 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
         )
         if not write:
             print("Continuing with dry run anyway...")
+
+    # Filter out non-strategic titles
+    before = len(titles)
+    titles = [t for t in titles if t["sector"] != "NON_STRATEGIC"]
+    non_strat = before - len(titles)
+    if non_strat:
+        print("Filtered %d NON_STRATEGIC titles (%d remain)" % (non_strat, len(titles)))
 
     # Normalize signals
     print("\nNormalizing signals...")
@@ -244,11 +341,10 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
     print("\nTopic groups (5+):")
     for key in sorted(groups, key=lambda k: -len(groups[k])):
         if len(groups[key]) >= 5:
-            tracks = Counter(titles[i]["track"] for i in groups[key])
-            track_str = ", ".join("%s=%d" % (t, c) for t, c in tracks.most_common(3))
+            track = SECTOR_TO_TRACK.get(key[0], "geo_politics")
             print(
-                "  %s/%s: %d [%s]"
-                % (key[0], key[1] or "NULL", len(groups[key]), track_str)
+                "  %s/%s: %d -> %s"
+                % (key[0], key[1] or "NULL", len(groups[key]), track)
             )
 
     # Cluster
@@ -269,25 +365,14 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
     for cl in emerged[:15]:
         track = assign_track(cl, titles)
         geo_type, geo_key = tag_geo(cl["indices"], titles, centroid_id)
-        track_votes = Counter(titles[i]["track"] for i in cl["indices"])
-        cross = ""
-        if len(track_votes) > 1:
-            others = [
-                "%s=%d" % (t, c)
-                for t, c in track_votes.most_common()
-                if t != track_votes.most_common(1)[0][0]
-            ]
-            cross = " (+" + ",".join(others) + ")"
-
         sample = titles[cl["indices"][0]]["title_display"][:70]
         print(
-            "  [%d] %s/%s -> %s%s | %s %s"
+            "  [%d] %s/%s -> %s | %s %s"
             % (
                 len(cl["indices"]),
                 cl["sector"],
                 cl["subject"] or "NULL",
                 track,
-                cross,
                 geo_type,
                 geo_key or "",
             )
@@ -331,8 +416,11 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
         track = assign_track(cl, titles)
         ctm_id = track_to_ctm.get(track)
         if not ctm_id:
-            skipped += len(cl["indices"])
-            continue
+            # Fall back to geo_politics if no CTM for this track
+            ctm_id = track_to_ctm.get("geo_politics")
+            if not ctm_id:
+                skipped += len(cl["indices"])
+                continue
 
         geo_type, geo_key = tag_geo(cl["indices"], titles, centroid_id)
         eid = str(uuid.uuid4())

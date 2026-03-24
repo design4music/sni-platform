@@ -467,3 +467,36 @@ decisions:
     consequences:
       - All event/CTM-level UI labels changed from "Narrative Frames" to "Media Framing"
       - i18n keys updated in en.json and de.json across event, track, source, extract namespaces
+
+  - id: D-047
+    date: 2026-03-24
+    type: architectural
+    status: experimental
+    title: Top-down sector-based clustering with expanded label taxonomy
+    rationale:
+      - Iran war spike exposed fragility in bottom-up incremental clustering (mega-events with 2K+ titles)
+      - Root cause was clustering on raw signal overlap with no semantic grouping layer
+      - New approach groups by sector+subject first (semantic gate), then splits by identity signals (Louvain)
+      - Phase 3.1 taxonomy expanded -- subject now required, 6 new subjects added (BILATERAL_RELATIONS, SUMMIT, DEFENSE_POLICY, LAW_ENFORCEMENT, R_AND_D, PROTEST)
+      - NON_STRATEGIC sector filters garbage mechanically (sports, entertainment, celebrity)
+    consequences:
+      - France/March test: 1104 strategic titles -> 80 topics, 3% catchall (was 37% with old approach)
+      - Sector coverage 100%, subject coverage 100% (was 89%)
+      - Topics are broader thematic vectors, not individual events
+      - Mechanical merge pass + targeted LLM merge pass still needed for fragmented topics
+      - Test harness: pipeline/phase_4/rebuild_centroid.py (standalone, does not replace production pipeline)
+      - Branch: feat/sector-clustering
+
+  - id: D-048
+    date: 2026-03-24
+    type: taxonomy
+    status: accepted
+    title: Expand sector/subject controlled vocabulary with 6 new subjects
+    rationale:
+      - 159 strategic titles had NULL subject (14%), mostly in DIPLOMACY (64 NULL) and MILITARY (19 NULL)
+      - Existing subjects missed common patterns -- diplomatic pressure, defense posture, law enforcement, tech R&D, protests
+      - Subject now required in prompt (was optional); LLM instructed to always pick closest match
+    consequences:
+      - New subjects: DIPLOMACY/BILATERAL_RELATIONS, DIPLOMACY/SUMMIT, MILITARY/DEFENSE_POLICY, SECURITY/LAW_ENFORCEMENT, TECHNOLOGY/R_AND_D, SOCIETY/PROTEST
+      - Subject fill rate 89% -> 100% for France/March after re-extraction
+      - BILATERAL_RELATIONS absorbed 51 of 64 DIPLOMACY/NULL titles (biggest gap)
