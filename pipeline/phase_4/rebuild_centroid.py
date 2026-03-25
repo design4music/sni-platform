@@ -332,17 +332,127 @@ def _anchor_split(
     return results
 
 
-def cluster_topdown(titles, centroid_id):
-    """3-level clustering:
-      L1: sector + subject  (domain grouping)
-      L1.5: anchor keyword split  (specific frequent signals pre-split large groups)
-      L2: Louvain on identity labels  (only for groups >= LOUVAIN_SPLIT_THRESHOLD)
+def _primary_target(title, home_iso_codes):
+    """Extract the primary foreign target for a title.
 
-    Small groups stay as a single topic. Large groups get anchor-split first
-    (if specific keywords exist), then Louvain runs on each sub-group.
+    Returns the first non-self, non-NONE target code, or 'DOMESTIC' if
+    no foreign target exists. Multi-targets like 'IL,US' return first value.
+    """
+    tgt = title.get("target") or ""
+    if not tgt or tgt == "NONE":
+        return "DOMESTIC"
+    for v in tgt.split(","):
+        v = v.strip()
+        if v and v != "NONE" and v not in home_iso_codes:
+            return v
+    return "DOMESTIC"
+
+
+# Minimum titles for a target group to become its own cluster axis
+TARGET_SPLIT_MIN = 5
+
+
+def _target_split(indices, titles, sector, subject, home_iso_codes):
+    """Split a sector+subject group by primary target.
+
+    Titles targeting the same foreign country form a sub-group (story axis).
+    Small target groups (< TARGET_SPLIT_MIN) merge into DOMESTIC remainder.
+    """
+    target_groups = defaultdict(list)
+    for i in indices:
+        tgt = _primary_target(titles[i], home_iso_codes)
+        target_groups[tgt].append(i)
+
+    # Only split if there are 2+ meaningful target groups
+    real_groups = {
+        t: idx for t, idx in target_groups.items() if len(idx) >= TARGET_SPLIT_MIN
+    }
+    if len(real_groups) < 2:
+        return None  # no meaningful split
+
+    # Absorb small target groups into DOMESTIC
+    domestic = list(target_groups.get("DOMESTIC", []))
+    for tgt, idx in target_groups.items():
+        if tgt != "DOMESTIC" and tgt not in real_groups:
+            domestic.extend(idx)
+
+    result = []
+    for tgt, idx in real_groups.items():
+        if tgt == "DOMESTIC":
+            continue
+        result.append({"sector": sector, "subject": subject, "indices": idx})
+
+    if domestic:
+        result.append({"sector": sector, "subject": subject, "indices": domestic})
+
+    return result if len(result) >= 2 else None
+
+
+def _process_group(
+    indices, titles, sector, subject, protagonist, home_cities, centroid_id
+):
+    """Process a single group through anchor split -> Louvain pipeline."""
+    # Try anchor keyword split first
+    anchor_groups = _anchor_split(
+        indices, titles, sector, subject, protagonist, home_cities, centroid_id
+    )
+
+    results = []
+    sub_groups = (
+        anchor_groups
+        if anchor_groups
+        else [{"sector": sector, "subject": subject, "indices": indices}]
+    )
+
+    for group in sub_groups:
+        if len(group["indices"]) >= LOUVAIN_SPLIT_THRESHOLD:
+            subclusters = _louvain_split(
+                group["indices"],
+                titles,
+                sector,
+                subject,
+                protagonist,
+                home_cities,
+            )
+            results.extend(subclusters)
+        elif len(group["indices"]) > 3:
+            results.append(group)
+        else:
+            results.append(group)
+
+    return results
+
+
+def cluster_topdown(titles, centroid_id):
+    """4-level clustering:
+      L1: sector + subject  (domain grouping)
+      L1.5: primary target split  (separate story axes by foreign target)
+      L2: anchor keyword split  (specific frequent signals)
+      L3: Louvain on identity labels  (community detection)
+
+    Small groups stay as a single topic. Target split separates e.g.
+    "Israel strikes Iran" from "Russia strikes Ukraine" within MILITARY/AERIAL.
     """
     protagonist = CTM_PROTAGONIST.get(centroid_id, set())
     home_cities = CTM_HOME_CITIES.get(centroid_id, set())
+
+    # Derive home ISO codes for target split
+    _CENTROID_TO_ISO = {
+        "FRANCE": {"FR"},
+        "RUSSIA": {"RU"},
+        "UK": {"GB", "UK"},
+        "GERMANY": {"DE"},
+        "USA": {"US"},
+        "CHINA": {"CN"},
+        "UKRAINE": {"UA"},
+        "ISRAEL": {"IL"},
+        "IRAN": {"IR"},
+        "INDIA": {"IN"},
+        "TURKEY": {"TR"},
+        "BALTIC": {"EE", "LV", "LT"},
+    }
+    country = centroid_id.split("-", 1)[1] if "-" in centroid_id else centroid_id
+    home_iso_codes = _CENTROID_TO_ISO.get(country, set())
 
     # Level 1: group by (sector, subject)
     l1_groups = defaultdict(list)
@@ -365,34 +475,40 @@ def cluster_topdown(titles, centroid_id):
             )
             continue
 
-        # L1.5: try anchor keyword split first
-        anchor_groups = _anchor_split(
-            l1_idx, titles, sector, subject, protagonist, home_cities, centroid_id
-        )
+        # L1.5: split by primary target (story axis)
+        target_groups = _target_split(l1_idx, titles, sector, subject, home_iso_codes)
 
-        if anchor_groups:
-            # Anchor split succeeded -- apply Louvain to each sub-group if large enough
-            for group in anchor_groups:
-                if len(group["indices"]) >= LOUVAIN_SPLIT_THRESHOLD:
-                    subclusters = _louvain_split(
-                        group["indices"],
-                        titles,
-                        sector,
-                        subject,
-                        protagonist,
-                        home_cities,
+        if target_groups:
+            for tg in target_groups:
+                if len(tg["indices"]) >= LOUVAIN_SPLIT_THRESHOLD:
+                    all_clusters.extend(
+                        _process_group(
+                            tg["indices"],
+                            titles,
+                            sector,
+                            subject,
+                            protagonist,
+                            home_cities,
+                            centroid_id,
+                        )
                     )
-                    all_clusters.extend(subclusters)
-                elif len(group["indices"]) > 3:
-                    all_clusters.append(group)
+                elif len(tg["indices"]) > 3:
+                    all_clusters.append(tg)
                 else:
-                    all_clusters.append(group)
+                    all_clusters.append(tg)
         else:
-            # No anchors -- Louvain on the whole group
-            subclusters = _louvain_split(
-                l1_idx, titles, sector, subject, protagonist, home_cities
+            # No target split -- process the whole group
+            all_clusters.extend(
+                _process_group(
+                    l1_idx,
+                    titles,
+                    sector,
+                    subject,
+                    protagonist,
+                    home_cities,
+                    centroid_id,
+                )
             )
-            all_clusters.extend(subclusters)
 
     return all_clusters
 
