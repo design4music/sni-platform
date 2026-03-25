@@ -327,7 +327,7 @@ MERGE_STOP_WORDS = {
     "european",  # centroid-specific noise for France
 }
 
-DICE_MERGE_THRESHOLD = 0.35  # same as production Phase 4.1
+DICE_MERGE_THRESHOLD = 0.40  # slightly above Phase 4.1's 0.35 to reduce false positives
 
 
 def _event_title_words(title):
@@ -373,10 +373,12 @@ def merge_similar_topics(conn, ctm_ids):
     )
     rows = cur.fetchall()
 
-    # Group by (ctm_id, sector, subject)
+    # Group by (ctm_id, sector) -- merge across subjects within same sector.
+    # Subjects can disagree for the same story (e.g., MEDIATION vs SUMMIT
+    # for "Zelensky visits Macron").
     groups = defaultdict(list)
     for eid, title, count, ctm_id, sector, subject in rows:
-        groups[(str(ctm_id), sector, subject)].append(
+        groups[(str(ctm_id), sector)].append(
             {"id": str(eid), "title": title, "count": count or 0}
         )
 
