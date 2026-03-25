@@ -85,51 +85,57 @@ function titleWords(text: string): Set<string> {
   return words;
 }
 
-/** Select titles most relevant to the topic's generated title.
- *  Scores each source headline by word overlap with the event title,
- *  picks the top CORE_TITLES_LIMIT. This ensures coherence: titles about
- *  the same story score highest, regardless of language or publisher.
+/** Select the most representative titles from a cluster.
+ *
+ *  Each headline is scored by how many content words it shares with ALL
+ *  other headlines in the cluster (centrality score). The most "central"
+ *  headlines best represent the cluster's core story.
+ *
+ *  Works before LLM title generation -- uses only source headlines.
+ *  Multilingual titles score well because names/places are shared across
+ *  languages (e.g., "Bushehr", "Macron", "Iran" appear in any language).
  */
-function selectCoreTitles(allTitles: Title[], eventTitle?: string): Title[] {
+function selectCoreTitles(allTitles: Title[]): Title[] {
   if (allTitles.length <= CORE_TITLES_LIMIT) return allTitles;
 
-  if (!eventTitle) {
-    // No generated title yet -- fall back to recency
-    return [...allTitles]
-      .sort((a, b) => new Date(b.pubdate_utc).getTime() - new Date(a.pubdate_utc).getTime())
-      .slice(0, CORE_TITLES_LIMIT);
+  // Build word sets for each title
+  const wordSets = allTitles.map(t => titleWords(t.title_display));
+
+  // Build corpus word frequency (how many titles contain each word)
+  const corpusFreq = new Map<string, number>();
+  for (const ws of wordSets) {
+    for (const w of ws) {
+      corpusFreq.set(w, (corpusFreq.get(w) || 0) + 1);
+    }
   }
 
-  const eventWords = titleWords(eventTitle);
-
-  // Score each title by word overlap with event title
-  const scored = allTitles.map(title => {
-    const words = titleWords(title.title_display);
-    let overlap = 0;
-    for (const w of words) {
-      if (eventWords.has(w)) overlap++;
+  // Score each title: sum of corpus frequency for its words.
+  // Words that appear in many titles score higher (they're the core topic).
+  // Normalize by title word count to avoid favoring long headlines.
+  const scored = allTitles.map((title, i) => {
+    const ws = wordSets[i];
+    if (ws.size === 0) return { title, score: 0 };
+    let score = 0;
+    for (const w of ws) {
+      score += corpusFreq.get(w) || 0;
     }
-    return { title, score: overlap };
+    return { title, score: score / ws.size };
   });
 
-  // Sort by score desc, then date desc for ties
-  scored.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return new Date(b.title.pubdate_utc).getTime() - new Date(a.title.pubdate_utc).getTime();
-  });
+  scored.sort((a, b) => b.score - a.score);
 
   return scored.slice(0, CORE_TITLES_LIMIT).map(s => s.title);
 }
 
 /** Resolve titles per event using a pre-built lookup map.
- *  Selects top 10 most relevant titles (scored by similarity to event title).
+ *  Selects top 10 most central titles (highest word overlap with cluster).
  */
 function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
   for (const event of events) {
     const allTitles = (event.source_title_ids || [])
       .map(id => titleMap.get(id))
       .filter((t): t is Title => t !== undefined);
-    event.resolvedTitles = selectCoreTitles(allTitles, event.title);
+    event.resolvedTitles = selectCoreTitles(allTitles);
   }
 }
 
