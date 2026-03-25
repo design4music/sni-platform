@@ -66,6 +66,10 @@ export interface Event {
   is_catchall?: boolean;
   has_narratives?: boolean;
   resolvedTitles?: Title[];
+  // Bilateral badge (populated by track page for display)
+  bucketLabel?: string;
+  bucketIsoCodes?: string[];
+  bucketLink?: string;
 }
 
 export interface Title {

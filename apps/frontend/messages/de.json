@@ -173,6 +173,8 @@
     "topics": "Themen",
     "otherDomestic": "Weitere Inlandsberichterstattung",
     "otherInternational": "Weitere internationale Berichterstattung",
+    "topicsTitle": "Inlands- und internationale Themen",
+    "loadMore": "{count} weitere laden",
     "notFound": "Nicht gefunden",
     "metaDescription": "{track}-Entwicklungen in {label}. Themenzusammenfassungen, narrative Perspektiven und Quellenanalyse aus mehrsprachiger Medienberichterstattung.",
     "noNarratives": "Fuer dieses Thema wurde noch keine mediale Rahmung extrahiert.",

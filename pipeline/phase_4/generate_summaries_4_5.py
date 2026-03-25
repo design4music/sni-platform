@@ -108,49 +108,26 @@ def get_events_for_ctm(conn, ctm_id: str) -> list:
         return events
 
 
-MAX_DOMESTIC_EVENTS = 8  # Cap domestic events in CTM digest
-MAX_INTERNATIONAL_EVENTS = 12  # Cap international events in CTM digest
+MAX_EVENTS = 20  # Cap total events in CTM digest
 
 
 def format_events_for_digest(events: list) -> str:
-    """Format event summaries into domestic/international blocks for CTM digest.
+    """Format event summaries for CTM digest.
 
-    Splits non-catchall events by event_type and returns labeled blocks.
-    When only one category has content, returns it without section headers.
-    Events are pre-sorted by source_batch_count DESC, so capping per category
-    keeps the most significant events while ensuring both perspectives are represented.
+    All non-catchall events in a single list sorted by source count (pre-sorted).
+    No domestic/international split -- unified view of most important developments.
     """
-    domestic = []
-    international = []
-
+    lines = []
     for event in events:
         if event.get("is_catchall"):
             continue
-
+        if len(lines) >= MAX_EVENTS:
+            break
         count = event.get("count", 0)
         summary = event.get("summary", "")
-        line = "[%d sources] %s" % (count, summary)
+        lines.append("[%d sources] %s" % (count, summary))
 
-        if event.get("event_type") == "domestic":
-            if len(domestic) < MAX_DOMESTIC_EVENTS:
-                domestic.append(line)
-        else:
-            if len(international) < MAX_INTERNATIONAL_EVENTS:
-                international.append(line)
-
-    # Single category: no headers needed
-    if domestic and not international:
-        return "\n\n".join(domestic)
-    if international and not domestic:
-        return "\n\n".join(international)
-
-    # Both categories: labeled blocks
-    parts = []
-    if domestic:
-        parts.append("=== DOMESTIC AFFAIRS ===\n" + "\n\n".join(domestic))
-    if international:
-        parts.append("=== INTERNATIONAL RELATIONS ===\n" + "\n\n".join(international))
-    return "\n\n".join(parts)
+    return "\n\n".join(lines)
 
 
 async def generate_summary(

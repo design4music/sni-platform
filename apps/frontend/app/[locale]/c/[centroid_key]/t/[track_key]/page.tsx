@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import OtherCoverage from '@/components/OtherCoverage';
-import CountryAccordion from '@/components/CountryAccordion';
 import TableOfContents, { TocSection } from '@/components/TableOfContents';
 import MobileTocButton from '@/components/MobileTocButton';
 import MonthNav from '@/components/MonthNav';
@@ -41,10 +40,7 @@ export async function generateMetadata({ params }: TrackPageProps): Promise<Meta
   };
 }
 
-// Display limits: top N topics shown, rest collapse into "Other Coverage"
-const DOMESTIC_TOP_N = 20;
-const INTL_TOP_N = 5;
-const INITIAL_DISPLAY = 5;  // Show first 5, then "load more"
+const TOPICS_PAGE_SIZE = 10;
 
 interface TrackPageProps {
   params: Promise<{ locale: string; centroid_key: string; track_key: string }>;
@@ -144,48 +140,26 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
   const homeIsoCodes = new Set(centroid.iso_codes || []);
 
-  const isBilateralToSelf = (e: Event) =>
-    e.event_type === 'bilateral' && e.bucket_key && homeIsoCodes.has(e.bucket_key);
+  // Unified list: non-catchall sorted by source count, catchalls to OtherCoverage
+  const { top: mainEvents, rest: otherEvents } = splitTopN(allEvents, allEvents.length);
 
-  const domesticEvents = allEvents.filter(
-    e => !e.event_type || e.event_type === 'domestic' || isBilateralToSelf(e)
-  );
-  const { top: domesticMainEvents, rest: domesticOther } = splitTopN(domesticEvents, DOMESTIC_TOP_N);
-
-  const internationalEvents = allEvents.filter(
-    e => (e.event_type === 'bilateral' && !isBilateralToSelf(e)) || e.event_type === 'other_international'
-  );
-
-  // Group bilateral events by bucket_key
-  const bilateralGroups: Record<string, Event[]> = {};
-  const otherInternational: Event[] = [];
-
-  internationalEvents.forEach(event => {
-    if (event.event_type === 'bilateral' && event.bucket_key) {
-      if (!bilateralGroups[event.bucket_key]) {
-        bilateralGroups[event.bucket_key] = [];
-      }
-      bilateralGroups[event.bucket_key].push(event);
-    } else {
-      otherInternational.push(event);
-    }
-  });
-
-  const isSystemicBucket = (key: string) => key.startsWith('SYS-');
-
-  const sortedBilateralEntries = Object.entries(bilateralGroups).sort(
-    ([keyA, a], [keyB, b]) => {
-      const aIsSys = isSystemicBucket(keyA);
-      const bIsSys = isSystemicBucket(keyB);
-      if (aIsSys !== bIsSys) return aIsSys ? 1 : -1;
-      return countTitles(b) - countTitles(a);
-    }
-  );
-
-  // Fetch centroid records for bucket keys (needed for multi-country groups like NORDIC)
-  const bucketKeys = Object.keys(bilateralGroups);
-  const bucketCentroids = await getCentroidsByIds(bucketKeys);
+  // Resolve bilateral badge data for country badges
+  const bilateralBucketKeys = [...new Set(
+    mainEvents
+      .filter(e => e.event_type === 'bilateral' && e.bucket_key && !homeIsoCodes.has(e.bucket_key))
+      .map(e => e.bucket_key!)
+  )];
+  const bucketCentroids = bilateralBucketKeys.length > 0 ? await getCentroidsByIds(bilateralBucketKeys) : [];
   const bucketCentroidMap = new Map(bucketCentroids.map(c => [c.id, c]));
+
+  for (const event of mainEvents) {
+    if (event.event_type === 'bilateral' && event.bucket_key && !homeIsoCodes.has(event.bucket_key)) {
+      const bc = bucketCentroidMap.get(event.bucket_key);
+      event.bucketLabel = getCentroidLabel(event.bucket_key, bc?.label || getCountryName(event.bucket_key), tCentroids);
+      event.bucketIsoCodes = bc?.iso_codes || [getIsoFromBucketKey(event.bucket_key)];
+      event.bucketLink = bc ? `/c/${event.bucket_key}/t/${track}?month=${currentMonth}` : undefined;
+    }
+  }
 
   // Build TOC sections (always include narratives since section always renders)
   const tocSections: TocSection[] = [];
@@ -194,12 +168,8 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     tocSections.push({ id: 'section-summary', label: t('summary') });
   }
 
-  if (domesticEvents.length > 0) {
-    tocSections.push({ id: 'section-domestic', label: t('domestic') });
-  }
-
-  if (internationalEvents.length > 0) {
-    tocSections.push({ id: 'section-international', label: t('international') });
+  if (mainEvents.length > 0) {
+    tocSections.push({ id: 'section-topics', label: t('topicsTitle') });
   }
 
 
@@ -375,87 +345,29 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
         )
       ) : (
         <>
-          {/* Domestic section */}
-          {domesticEvents.length > 0 && (
-            <div id="section-domestic" className="mb-10">
-              <h2 className="text-2xl font-bold mb-2">{t('domestic')}</h2>
+          {/* Unified topics section */}
+          {mainEvents.length > 0 && (
+            <div id="section-topics" className="mb-10">
+              <h2 className="text-2xl font-bold mb-2">{t('topicsTitle')}</h2>
               <p className="text-sm text-dashboard-text-muted mb-4">
-                {t('sectionStats', { topics: domesticMainEvents.length, sources: countTitles(domesticEvents) })}
+                {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
               </p>
 
-              {domesticMainEvents.length > 0 ? (
-                <>
-                  <EventList
-                    events={domesticMainEvents}
-                    initialLimit={INITIAL_DISPLAY}
-                    keyPrefix="domestic"
-                  />
-                  {domesticOther.length > 0 && (
-                    <OtherCoverage
-                      label={t('otherDomestic')}
-                      events={domesticOther}
-                    />
-                  )}
-                </>
-              ) : domesticOther.length > 0 ? (
+              <EventList
+                events={mainEvents}
+                initialLimit={TOPICS_PAGE_SIZE}
+                pageSize={TOPICS_PAGE_SIZE}
+                keyPrefix="topics"
+              />
+
+              {otherEvents.length > 0 && (
                 <OtherCoverage
-                  label={t('otherDomestic')}
-                  events={domesticOther}
-                  flat
+                  label={t('otherStrategicTopics')}
+                  events={otherEvents}
                 />
-              ) : null}
+              )}
             </div>
           )}
-
-          {/* International section */}
-          {internationalEvents.length > 0 && (
-            <div id="section-international" className="mb-10">
-              <h2 className="text-2xl font-bold mb-2">{t('international')}</h2>
-              <p className="text-sm text-dashboard-text-muted mb-6">
-                {t('sectionStats', { topics: internationalEvents.filter(e => !e.is_catchall).length, sources: countTitles(internationalEvents) })}
-              </p>
-
-              {/* Bilateral groups by country */}
-              {sortedBilateralEntries.map(([bucketKey, events], index) => {
-                const { top: mainEvents, rest: otherEvents } = splitTopN(events, INTL_TOP_N);
-                const bucketCentroid = bucketCentroidMap.get(bucketKey);
-                const countryLabel = getCentroidLabel(bucketKey, bucketCentroid?.label || getCountryName(bucketKey), tCentroids);
-                const isoCodes = bucketCentroid?.iso_codes || [getIsoFromBucketKey(bucketKey)];
-
-                return (
-                  <CountryAccordion
-                    key={bucketKey}
-                    bucketKey={bucketKey}
-                    countryName={countryLabel}
-                    isoCodes={isoCodes}
-                    mainEvents={mainEvents}
-                    otherEvents={otherEvents}
-                    totalSourceCount={countTitles(events)}
-                    defaultOpen={index === 0}
-                    centroidLink={bucketCentroid ? `/c/${bucketKey}/t/${track}?month=${currentMonth}` : undefined}
-                  />
-                );
-              })}
-
-              {/* Other International */}
-              {otherInternational.length > 0 && (() => {
-                const { top: mainEvents, rest: otherEvents } = splitTopN(otherInternational, INTL_TOP_N);
-
-                return (
-                  <CountryAccordion
-                    bucketKey="other"
-                    countryName={t('otherInternational')}
-                    isoCodes={[]}
-                    mainEvents={mainEvents}
-                    otherEvents={otherEvents}
-                    totalSourceCount={countTitles(otherInternational)}
-                    defaultOpen={sortedBilateralEntries.length === 0}
-                  />
-                );
-              })()}
-            </div>
-          )}
-
         </>
       )}
 

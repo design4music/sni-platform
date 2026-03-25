@@ -173,6 +173,8 @@
     "topics": "topics",
     "otherDomestic": "Other Domestic Coverage",
     "otherInternational": "Other International",
+    "topicsTitle": "Domestic and International Topics",
+    "loadMore": "Load {count} more",
     "notFound": "Not Found",
     "metaDescription": "{track} developments in {label}. Topic summaries, media framing, and source analysis from multilingual coverage.",
     "noNarratives": "No media framing extracted yet for this topic.",

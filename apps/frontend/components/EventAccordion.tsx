@@ -19,6 +19,9 @@ interface EventAccordionProps {
     event_id?: string;
     has_narratives?: boolean;
     resolvedTitles?: Title[];
+    bucketLabel?: string;
+    bucketIsoCodes?: string[];
+    bucketLink?: string;
   };
   index: number;
   compact?: boolean;
@@ -35,6 +38,28 @@ function TagPill({ tag }: { tag: string }) {
 function formatDate(dateStr: string, locale: string): string {
   const date = new Date(dateStr + 'T00:00:00');
   return date.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric' });
+}
+
+function CountryBadge({ label, isoCodes, link, locale }: { label: string; isoCodes?: string[]; link?: string; locale: string }) {
+  const flags = (isoCodes || []).filter(c => c.length === 2).map(code => (
+    <img
+      key={code}
+      src={`https://flagcdn.com/16x12/${code.toLowerCase()}.png`}
+      alt={code}
+      className="inline-block mr-1"
+      width={16}
+      height={12}
+    />
+  ));
+  const content = (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+      {flags}{label}
+    </span>
+  );
+  if (link) {
+    return <Link href={`/${locale}${link}`} className="hover:opacity-80 transition-opacity">{content}</Link>;
+  }
+  return content;
 }
 
 function DateRange({ date, last_active, locale }: { date: string; last_active?: string; locale: string }) {
@@ -95,12 +120,15 @@ export default function EventAccordion({ event, index, compact = false }: EventA
                 {event.summary}
               </p>
             )}
-            {/* Tags */}
-            {event.tags && event.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {event.tags.slice(0, 5).map((tag, i) => (
+            {/* Tags + country badge */}
+            {((event.tags && event.tags.length > 0) || event.bucketLabel) && (
+              <div className="flex flex-wrap gap-1 mt-2 items-center">
+                {event.tags?.slice(0, 5).map((tag, i) => (
                   <TagPill key={i} tag={tag} />
                 ))}
+                {event.bucketLabel && (
+                  <CountryBadge label={event.bucketLabel} isoCodes={event.bucketIsoCodes} link={event.bucketLink} locale={locale} />
+                )}
               </div>
             )}
           </div>
@@ -161,12 +189,15 @@ export default function EventAccordion({ event, index, compact = false }: EventA
         ) : (
           <p className="text-dashboard-text">{event.summary}</p>
         )}
-        {/* Tags */}
-        {event.tags && event.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {event.tags.map((tag, i) => (
+        {/* Tags + country badge */}
+        {((event.tags && event.tags.length > 0) || event.bucketLabel) && (
+          <div className="flex flex-wrap gap-1.5 mt-3 items-center">
+            {event.tags?.map((tag, i) => (
               <TagPill key={i} tag={tag} />
             ))}
+            {event.bucketLabel && (
+              <CountryBadge label={event.bucketLabel} isoCodes={event.bucketIsoCodes} link={event.bucketLink} locale={locale} />
+            )}
           </div>
         )}
         {/* Date + sources row */}
