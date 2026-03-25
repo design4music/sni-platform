@@ -69,7 +69,7 @@ function splitTopN(events: Event[], topN: number) {
   return { top, rest };
 }
 
-const CORE_TITLES_LIMIT = 5;
+const CORE_TITLES_LIMIT = 10;
 
 /** Select the most representative titles for display.
  *  Prioritizes: language diversity (1 per language), publisher diversity,

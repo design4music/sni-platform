@@ -384,7 +384,7 @@ def _primary_target(title, home_iso_codes):
 
 
 # Minimum titles for a target group to become its own cluster axis
-TARGET_SPLIT_MIN = 5
+TARGET_SPLIT_MIN = 3
 
 
 def _target_split(indices, titles, sector, subject, home_iso_codes):
