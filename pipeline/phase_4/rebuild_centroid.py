@@ -207,14 +207,139 @@ def _louvain_split(indices, titles, sector, subject, protagonist, home_cities):
 # Below threshold: the entire sector+subject group becomes one topic.
 LOUVAIN_SPLIT_THRESHOLD = 50
 
+# Anchor keyword thresholds
+ANCHOR_MIN_COUNT = 8  # signal must appear in >= 8 titles to be an anchor
+ANCHOR_MAX_RATIO = 0.40  # signal must appear in < 40% of group (otherwise too generic)
+
+
+def _find_anchor_keywords(indices, titles, protagonist, home_cities, centroid_id):
+    """Find specific, frequent signals that can pre-split a large group.
+
+    An anchor keyword is a signal (person, org, place, named_event, target)
+    that appears in >= ANCHOR_MIN_COUNT titles but < ANCHOR_MAX_RATIO of the
+    group. These are specific enough to identify a distinct sub-story.
+
+    Excludes: protagonist persons, home cities, and the centroid's own
+    country as a target (TGT:RU for Russia, TGT:FR for France, etc.)
+
+    Returns dict: {anchor_label: [title_indices]}
+    """
+    label_sets = {
+        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
+    }
+
+    # Build set of self-target labels to exclude (e.g., TGT:RU for EUROPE-RUSSIA)
+    # The centroid country part maps to common target codes
+    _CENTROID_TO_TGT = {
+        "FRANCE": {"TGT:FR"},
+        "RUSSIA": {"TGT:RU"},
+        "UK": {"TGT:GB", "TGT:UK"},
+        "GERMANY": {"TGT:DE"},
+        "USA": {"TGT:US"},
+        "CHINA": {"TGT:CN"},
+        "UKRAINE": {"TGT:UA"},
+        "ISRAEL": {"TGT:IL"},
+        "IRAN": {"TGT:IR"},
+        "INDIA": {"TGT:IN"},
+        "TURKEY": {"TGT:TR"},
+    }
+    country = centroid_id.split("-", 1)[1] if "-" in centroid_id else centroid_id
+    self_targets = _CENTROID_TO_TGT.get(country, set())
+
+    # Count label frequency across the group
+    label_counts = Counter()
+    for i in indices:
+        for lbl in label_sets[i]:
+            # Exclude protagonist and self-targets
+            if lbl.startswith("PER:") and lbl[4:] in protagonist:
+                continue
+            if lbl in self_targets:
+                continue
+            label_counts[lbl] += 1
+
+    group_size = len(indices)
+    anchors = {}
+    for label, count in label_counts.most_common():
+        if count < ANCHOR_MIN_COUNT:
+            break
+        if count >= group_size * ANCHOR_MAX_RATIO:
+            continue  # too generic (e.g., PER:PUTIN in Russia)
+        # This label is specific enough to be an anchor
+        members = [i for i in indices if label in label_sets[i]]
+        anchors[label] = members
+
+    return anchors
+
+
+def _anchor_split(
+    indices, titles, sector, subject, protagonist, home_cities, centroid_id
+):
+    """Pre-split a large group by anchor keywords before Louvain.
+
+    1. Find anchor keywords (specific, frequent signals)
+    2. Assign each title to its best-matching anchor (most shared anchors)
+    3. Titles matching no anchor go to a "remainder" group
+    4. Each anchor group and the remainder get Louvain or stay as-is
+    """
+    anchors = _find_anchor_keywords(
+        indices, titles, protagonist, home_cities, centroid_id
+    )
+
+    if not anchors:
+        # No anchor keywords found -- fall through to Louvain
+        return None
+
+    label_sets = {
+        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
+    }
+
+    # Assign each title to its best anchor (most shared anchor labels)
+    anchor_labels = set(anchors.keys())
+    assigned = {}  # title_index -> anchor_label
+    for i in indices:
+        title_anchors = label_sets[i] & anchor_labels
+        if not title_anchors:
+            continue
+        # Pick the anchor that has the most titles (prefer larger groups)
+        best = max(title_anchors, key=lambda a: len(anchors[a]))
+        assigned[i] = best
+
+    # Group by assigned anchor
+    anchor_groups = defaultdict(list)
+    remainder = []
+    for i in indices:
+        if i in assigned:
+            anchor_groups[assigned[i]].append(i)
+        else:
+            remainder.append(i)
+
+    # Only use anchor split if it actually creates meaningful groups
+    real_groups = [g for g in anchor_groups.values() if len(g) >= ANCHOR_MIN_COUNT]
+    if len(real_groups) < 2:
+        return None  # anchor split didn't help
+
+    results = []
+    for anchor_label, members in anchor_groups.items():
+        if len(members) < ANCHOR_MIN_COUNT:
+            remainder.extend(members)
+            continue
+        results.append({"sector": sector, "subject": subject, "indices": members})
+
+    # Remainder becomes its own group (may get Louvain-split later)
+    if remainder:
+        results.append({"sector": sector, "subject": subject, "indices": remainder})
+
+    return results
+
 
 def cluster_topdown(titles, centroid_id):
-    """2-level clustering:
+    """3-level clustering:
       L1: sector + subject  (domain grouping)
+      L1.5: anchor keyword split  (specific frequent signals pre-split large groups)
       L2: Louvain on identity labels  (only for groups >= LOUVAIN_SPLIT_THRESHOLD)
 
-    Small groups stay as a single topic. Louvain only runs on large groups
-    where multiple distinct stories likely coexist.
+    Small groups stay as a single topic. Large groups get anchor-split first
+    (if specific keywords exist), then Louvain runs on each sub-group.
     """
     protagonist = CTM_PROTAGONIST.get(centroid_id, set())
     home_cities = CTM_HOME_CITIES.get(centroid_id, set())
@@ -240,11 +365,34 @@ def cluster_topdown(titles, centroid_id):
             )
             continue
 
-        # At or above threshold: Louvain split into sub-topics
-        subclusters = _louvain_split(
-            l1_idx, titles, sector, subject, protagonist, home_cities
+        # L1.5: try anchor keyword split first
+        anchor_groups = _anchor_split(
+            l1_idx, titles, sector, subject, protagonist, home_cities, centroid_id
         )
-        all_clusters.extend(subclusters)
+
+        if anchor_groups:
+            # Anchor split succeeded -- apply Louvain to each sub-group if large enough
+            for group in anchor_groups:
+                if len(group["indices"]) >= LOUVAIN_SPLIT_THRESHOLD:
+                    subclusters = _louvain_split(
+                        group["indices"],
+                        titles,
+                        sector,
+                        subject,
+                        protagonist,
+                        home_cities,
+                    )
+                    all_clusters.extend(subclusters)
+                elif len(group["indices"]) > 3:
+                    all_clusters.append(group)
+                else:
+                    all_clusters.append(group)
+        else:
+            # No anchors -- Louvain on the whole group
+            subclusters = _louvain_split(
+                l1_idx, titles, sector, subject, protagonist, home_cities
+            )
+            all_clusters.extend(subclusters)
 
     return all_clusters
 
