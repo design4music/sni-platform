@@ -270,17 +270,19 @@ export async function getTitlesByCTM(ctmId: string): Promise<Title[]> {
 }
 
 export async function getTracksByCentroid(centroidId: string, month?: string): Promise<string[]> {
-  const cacheKey = month ? `tracks:centroid:${centroidId}:${month}` : `tracks:centroid:${centroidId}`;
+  // Normalize month to first-of-month date format (2026-03 -> 2026-03-01)
+  const monthDate = month ? (month.length === 7 ? month + '-01' : month) : undefined;
+  const cacheKey = monthDate ? `tracks:centroid:${centroidId}:${monthDate}` : `tracks:centroid:${centroidId}`;
   return cached(cacheKey, 3600, async () => {
     const results = await query<{ track: string }>(
-      month
+      monthDate
         ? `SELECT DISTINCT track FROM ctm
-           WHERE centroid_id = $1 AND month = $2
+           WHERE centroid_id = $1 AND month = $2::date
            ORDER BY track`
         : `SELECT DISTINCT track FROM ctm
            WHERE centroid_id = $1 AND month = (SELECT MAX(month) FROM ctm WHERE centroid_id = $1)
            ORDER BY track`,
-      month ? [centroidId, month] : [centroidId]
+      monthDate ? [centroidId, monthDate] : [centroidId]
     );
     return results.map(r => r.track);
   });
