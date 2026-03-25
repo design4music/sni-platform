@@ -332,19 +332,39 @@ def _anchor_split(
     return results
 
 
-def _primary_target(title, home_iso_codes):
-    """Extract the primary foreign target for a title.
+def _actor_country(actor_str):
+    """Extract country code from a prefixed actor like UA_ARMED_FORCES -> UA."""
+    if not actor_str or "_" not in actor_str:
+        return None
+    prefix = actor_str.split("_")[0]
+    if len(prefix) == 2 and prefix.isalpha():
+        return prefix
+    return None
 
-    Returns the first non-self, non-NONE target code, or 'DOMESTIC' if
-    no foreign target exists. Multi-targets like 'IL,US' return first value.
+
+def _primary_target(title, home_iso_codes):
+    """Extract the primary foreign story axis for a title.
+
+    Strategy:
+    1. If target is a foreign country -> use that (e.g., target=IR -> axis IR)
+    2. If target is self/NONE but actor is foreign -> use actor's country
+       (e.g., UA_ARMED_FORCES -> RU becomes axis UA, because it's
+       "Ukraine strikes Russia", a Ukraine story)
+    3. Otherwise -> DOMESTIC
     """
     tgt = title.get("target") or ""
-    if not tgt or tgt == "NONE":
-        return "DOMESTIC"
-    for v in tgt.split(","):
-        v = v.strip()
-        if v and v != "NONE" and v not in home_iso_codes:
-            return v
+    if tgt and tgt != "NONE":
+        for v in tgt.split(","):
+            v = v.strip()
+            if v and v != "NONE" and v not in home_iso_codes:
+                return v
+
+    # Target is self or NONE -- check if actor is foreign
+    actor = title.get("actor") or ""
+    actor_country = _actor_country(actor)
+    if actor_country and actor_country not in home_iso_codes:
+        return actor_country
+
     return "DOMESTIC"
 
 
