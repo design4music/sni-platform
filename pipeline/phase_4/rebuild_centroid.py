@@ -705,6 +705,20 @@ def compute_coherence(cluster, titles, protagonist, home_cities):
         if c >= threshold and corpus_freq[f] / n < 0.8
     ]
 
+    # Entity concentration check for borderline clusters (core_features 3-4).
+    # If the cluster barely passes on vocabulary alone, require at least one
+    # identity label (PER/ORG/PLC/EVT) in >= 30% of top titles.
+    # Strong clusters (5+ core features) pass regardless -- they have enough
+    # shared vocabulary to be coherent even without a named entity anchor.
+    if len(core_features) <= 4:
+        entity_prefixes = ("PER:", "ORG:", "PLC:", "EVT:")
+        has_anchor_entity = any(
+            f.startswith(entity_prefixes) and c >= max(2, int(len(core) * 0.3))
+            for f, c in core_feature_freq.items()
+        )
+        if not has_anchor_entity:
+            return core, 0, scores  # borderline + no entity anchor = incoherent
+
     return core, len(core_features), scores
 
 
