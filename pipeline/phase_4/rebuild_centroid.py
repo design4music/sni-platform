@@ -343,27 +343,42 @@ def _actor_country(actor_str):
 
 
 def _primary_target(title, home_iso_codes):
-    """Extract the primary foreign story axis for a title.
+    """Extract the directional story axis for a title.
 
-    Strategy:
-    1. If target is a foreign country -> use that (e.g., target=IR -> axis IR)
-    2. If target is self/NONE but actor is foreign -> use actor's country
-       (e.g., UA_ARMED_FORCES -> RU becomes axis UA, because it's
-       "Ukraine strikes Russia", a Ukraine story)
-    3. Otherwise -> DOMESTIC
+    Encodes WHO does WHAT to WHOM as a directional axis:
+    - RU_ARMED_FORCES -> UA = ">UA" (home actor targets Ukraine)
+    - UA_ARMED_FORCES -> RU = "<UA" (foreign actor targets home)
+    - CORPORATION -> IR = ">IR" (home actor targets Iran)
+    - IR_ARMED_FORCES -> IL = ">IR" (foreign-on-foreign, use actor)
+
+    The > and < prefixes ensure "Russia strikes Ukraine" and "Ukraine
+    strikes Russia" end up in different groups even though both involve UA.
     """
     tgt = title.get("target") or ""
+    actor = title.get("actor") or ""
+    actor_country = _actor_country(actor)
+
+    # Find first foreign target
+    foreign_target = None
     if tgt and tgt != "NONE":
         for v in tgt.split(","):
             v = v.strip()
             if v and v != "NONE" and v not in home_iso_codes:
-                return v
+                foreign_target = v
+                break
 
-    # Target is self or NONE -- check if actor is foreign
-    actor = title.get("actor") or ""
-    actor_country = _actor_country(actor)
+    actor_is_home = not actor_country or actor_country in home_iso_codes
+
+    if foreign_target:
+        if actor_is_home:
+            return ">" + foreign_target  # home attacks foreign
+        else:
+            # Foreign actor attacks foreign target -- group by actor
+            return ">" + (actor_country or foreign_target)
+
+    # No foreign target -- check if foreign actor targets home
     if actor_country and actor_country not in home_iso_codes:
-        return actor_country
+        return "<" + actor_country  # foreign attacks home
 
     return "DOMESTIC"
 
