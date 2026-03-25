@@ -549,6 +549,184 @@ def cluster_topdown(titles, centroid_id):
     return all_clusters
 
 
+COHERENCE_STOP_WORDS = {
+    "the",
+    "a",
+    "an",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "and",
+    "or",
+    "with",
+    "as",
+    "by",
+    "is",
+    "are",
+    "its",
+    "after",
+    "from",
+    "new",
+    "says",
+    "has",
+    "have",
+    "will",
+    "been",
+    "over",
+    "amid",
+    "not",
+    "but",
+    "was",
+    "were",
+    "that",
+    "this",
+    "more",
+    "than",
+    "into",
+    "about",
+    "could",
+    "would",
+    "also",
+    "other",
+    "les",
+    "la",
+    "le",
+    "de",
+    "des",
+    "du",
+    "en",
+    "un",
+    "une",
+    "et",
+    "est",
+    "que",
+    "qui",
+    "par",
+    "pour",
+    "sur",
+    "au",
+    "das",
+    "die",
+    "der",
+    "und",
+    "von",
+    "den",
+    "dem",
+    "ist",
+    "mit",
+    "ein",
+}
+
+# Minimum core features shared by >= 40% of top 10 to consider cluster coherent
+COHERENCE_MIN_CORE = 3
+COHERENCE_TOP_N = 10
+COHERENCE_FEATURE_RATIO = 0.4  # feature must appear in >= 40% of top titles
+
+
+def _title_features(title, labels):
+    """Build combined feature set: raw content words + normalized labels."""
+    features = set()
+    # Raw words from headline
+    for w in title.get("title_display", "").lower().split():
+        w = w.strip(".,;:!?\"'()[]")
+        if w and w not in COHERENCE_STOP_WORDS and len(w) > 2:
+            features.add("W:" + w)
+    # Normalized labels (already prefixed: PER:, ORG:, PLC:, TGT:, EVT:)
+    features.update(labels)
+    return features
+
+
+def compute_coherence(cluster, titles, protagonist, home_cities):
+    """Score cluster coherence and select core titles.
+
+    Returns (core_indices, coherence_score, all_scores).
+    - core_indices: top N title indices by centrality score
+    - coherence_score: number of core features (shared by >= 40% of top N)
+    - all_scores: centrality score per title index (for stats)
+    """
+    indices = cluster["indices"]
+    if len(indices) <= COHERENCE_TOP_N:
+        return indices, 99, {}  # small clusters are coherent by definition
+
+    # Build feature sets: words + labels
+    label_sets = {
+        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
+    }
+    feature_sets = {i: _title_features(titles[i], label_sets[i]) for i in indices}
+
+    # Count corpus frequency of each feature
+    corpus_freq = Counter()
+    for i in indices:
+        for f in feature_sets[i]:
+            corpus_freq[f] += 1
+
+    # Score each title: sum of corpus freq for its features, normalized by size
+    scores = {}
+    for i in indices:
+        fs = feature_sets[i]
+        if not fs:
+            scores[i] = 0
+            continue
+        scores[i] = sum(corpus_freq[f] for f in fs) / len(fs)
+
+    # Select top N by centrality
+    ranked = sorted(indices, key=lambda i: -scores[i])
+    core = ranked[:COHERENCE_TOP_N]
+
+    # Count core features: features shared by >= 40% of top N titles
+    core_feature_freq = Counter()
+    for i in core:
+        for f in feature_sets[i]:
+            core_feature_freq[f] += 1
+
+    threshold = max(2, int(len(core) * COHERENCE_FEATURE_RATIO))
+    core_features = [f for f, c in core_feature_freq.items() if c >= threshold]
+
+    return core, len(core_features), scores
+
+
+def filter_incoherent_clusters(clusters, titles, protagonist, home_cities):
+    """Apply coherence gate: dissolve clusters with no coherent core.
+
+    Returns (coherent_clusters, dissolved_indices, stats).
+    """
+    coherent = []
+    dissolved = []
+    stats = {"coherent": 0, "dissolved": 0, "dissolved_titles": 0}
+
+    for cl in clusters:
+        if len(cl["indices"]) <= 3:
+            # Tiny clusters: keep as-is (they become catchall anyway)
+            coherent.append(cl)
+            continue
+
+        core, score, _ = compute_coherence(cl, titles, protagonist, home_cities)
+
+        if score >= COHERENCE_MIN_CORE:
+            coherent.append(cl)
+            stats["coherent"] += 1
+        else:
+            dissolved.extend(cl["indices"])
+            stats["dissolved"] += 1
+            stats["dissolved_titles"] += len(cl["indices"])
+
+    # Dissolved titles become individual catchall entries
+    for i in dissolved:
+        t = titles[i]
+        coherent.append(
+            {
+                "sector": t.get("sector") or "UNKNOWN",
+                "subject": t.get("subject"),
+                "indices": [i],
+            }
+        )
+
+    return coherent, stats
+
+
 def assign_track(cluster, titles):
     """Assign a cluster to its best-fit track based on sector."""
     # Use sector of the cluster (not domain)
@@ -817,6 +995,19 @@ def rebuild(centroid_id, month, write=False, generate_titles=False):
     # Cluster
     print("\nClustering...")
     all_clusters = cluster_topdown(titles, centroid_id)
+
+    # Coherence gate: dissolve incoherent clusters
+    protagonist = CTM_PROTAGONIST.get(centroid_id, set())
+    home_cities_set = CTM_HOME_CITIES.get(centroid_id, set())
+    all_clusters, coh_stats = filter_incoherent_clusters(
+        all_clusters, titles, protagonist, home_cities_set
+    )
+    if coh_stats["dissolved"] > 0:
+        print(
+            "Coherence gate: %d clusters dissolved (%d titles -> catchall)"
+            % (coh_stats["dissolved"], coh_stats["dissolved_titles"])
+        )
+
     emerged = sorted(
         [c for c in all_clusters if len(c["indices"]) >= 2],
         key=lambda c: -len(c["indices"]),
