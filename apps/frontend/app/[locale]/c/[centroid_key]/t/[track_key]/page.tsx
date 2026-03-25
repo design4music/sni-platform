@@ -71,67 +71,65 @@ function splitTopN(events: Event[], topN: number) {
 
 const CORE_TITLES_LIMIT = 10;
 
-/** Select the most representative titles for display.
- *  Prioritizes: language diversity (1 per language), publisher diversity,
- *  English first. Returns up to CORE_TITLES_LIMIT titles.
+const TITLE_STOP_WORDS = new Set([
+  'the','a','an','in','on','at','to','for','of','and','or','with','as','by',
+  'is','are','its','it','was','were','from','has','have','will','says','said',
+  'after','over','amid','not','but','that','this','more','than','also','new',
+]);
+
+function titleWords(text: string): Set<string> {
+  const words = new Set<string>();
+  for (const w of text.toLowerCase().replace(/[.,;:!?"'()[\]]/g, '').split(/\s+/)) {
+    if (w.length > 2 && !TITLE_STOP_WORDS.has(w)) words.add(w);
+  }
+  return words;
+}
+
+/** Select titles most relevant to the topic's generated title.
+ *  Scores each source headline by word overlap with the event title,
+ *  picks the top CORE_TITLES_LIMIT. This ensures coherence: titles about
+ *  the same story score highest, regardless of language or publisher.
  */
-function selectCoreTitles(allTitles: Title[]): Title[] {
+function selectCoreTitles(allTitles: Title[], eventTitle?: string): Title[] {
   if (allTitles.length <= CORE_TITLES_LIMIT) return allTitles;
 
-  const selected: Title[] = [];
-  const seenLanguages = new Set<string>();
-  const seenPublishers = new Set<string>();
+  if (!eventTitle) {
+    // No generated title yet -- fall back to recency
+    return [...allTitles]
+      .sort((a, b) => new Date(b.pubdate_utc).getTime() - new Date(a.pubdate_utc).getTime())
+      .slice(0, CORE_TITLES_LIMIT);
+  }
 
-  // Sort: English first, then by date desc
-  const sorted = [...allTitles].sort((a, b) => {
-    const aEn = a.detected_language === 'en' ? 0 : 1;
-    const bEn = b.detected_language === 'en' ? 0 : 1;
-    if (aEn !== bEn) return aEn - bEn;
-    return new Date(b.pubdate_utc).getTime() - new Date(a.pubdate_utc).getTime();
+  const eventWords = titleWords(eventTitle);
+
+  // Score each title by word overlap with event title
+  const scored = allTitles.map(title => {
+    const words = titleWords(title.title_display);
+    let overlap = 0;
+    for (const w of words) {
+      if (eventWords.has(w)) overlap++;
+    }
+    return { title, score: overlap };
   });
 
-  // Pass 1: one per language (diverse languages)
-  for (const title of sorted) {
-    if (selected.length >= CORE_TITLES_LIMIT) break;
-    const lang = title.detected_language || 'unknown';
-    if (!seenLanguages.has(lang)) {
-      seenLanguages.add(lang);
-      seenPublishers.add(title.publisher_name || '');
-      selected.push(title);
-    }
-  }
+  // Sort by score desc, then date desc for ties
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return new Date(b.title.pubdate_utc).getTime() - new Date(a.title.pubdate_utc).getTime();
+  });
 
-  // Pass 2: fill remaining with diverse publishers
-  for (const title of sorted) {
-    if (selected.length >= CORE_TITLES_LIMIT) break;
-    if (selected.includes(title)) continue;
-    const pub = title.publisher_name || '';
-    if (!seenPublishers.has(pub)) {
-      seenPublishers.add(pub);
-      selected.push(title);
-    }
-  }
-
-  // Pass 3: fill any remaining slots
-  for (const title of sorted) {
-    if (selected.length >= CORE_TITLES_LIMIT) break;
-    if (!selected.includes(title)) {
-      selected.push(title);
-    }
-  }
-
-  return selected;
+  return scored.slice(0, CORE_TITLES_LIMIT).map(s => s.title);
 }
 
 /** Resolve titles per event using a pre-built lookup map.
- *  Selects top 10 most representative titles (core titles) for display.
+ *  Selects top 10 most relevant titles (scored by similarity to event title).
  */
 function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
   for (const event of events) {
     const allTitles = (event.source_title_ids || [])
       .map(id => titleMap.get(id))
       .filter((t): t is Title => t !== undefined);
-    event.resolvedTitles = selectCoreTitles(allTitles);
+    event.resolvedTitles = selectCoreTitles(allTitles, event.title);
   }
 }
 
