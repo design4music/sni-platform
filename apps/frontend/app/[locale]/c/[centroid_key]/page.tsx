@@ -10,7 +10,7 @@ import {
   getCentroidById,
   getAvailableMonthsForCentroid,
   getTrackSummaryByCentroidAndMonth,
-  getConfiguredTracksForCentroid,
+  getTracksByCentroid,
   getCentroidMonthlySummary,
   getTopSignalsForCentroid,
   getStanceForCentroid,
@@ -66,14 +66,16 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     notFound();
   }
 
-  // Fetch available months and configured tracks
+  // Fetch available months
   const availableMonths = await getAvailableMonthsForCentroid(centroid.id);
-  const configuredTracks = await getConfiguredTracksForCentroid(centroid.id);
 
   // Determine current month (use selected or default to latest)
   const currentMonth = selectedMonth && availableMonths.includes(selectedMonth)
     ? selectedMonth
     : availableMonths[0] || null;
+
+  // Get tracks that exist for the current month (month-aware: Jan=6, March=4)
+  const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, centroid summary, and top signals for the current month
   const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData] = await Promise.all([
