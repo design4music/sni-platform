@@ -128,7 +128,9 @@ SECTORS and their SUBJECTS:
 
 NON_STRATEGIC = no geopolitical or strategic value. Use it for: sports results/leagues/transfers/tournaments, concerts/celebrity news, recipes/lifestyle, routine local crime, weather. Sports leak through via conflict language ("battle", "attack") -- still NON_STRATEGIC. When in doubt between SOCIETY and NON_STRATEGIC: if it has no policy/government/international dimension, use NON_STRATEGIC.
 
-Examples: "Macron increases nuclear arsenal" -> MILITARY/NUCLEAR. "Oil prices surge" -> ENERGY_RESOURCES/OIL_GAS. "FBI investigates bar shooting" -> SECURITY/TERRORISM. "EU tariffs on China" -> ECONOMY/TRADE. "Carrier deployed to Mediterranean" -> MILITARY/NAVAL. "Lyon beats Marseille in Ligue 1" -> NON_STRATEGIC/SPORTS. "Beyonce concert sells out Paris" -> NON_STRATEGIC/ENTERTAINMENT.
+CLASSIFICATION TRAPS: Fact-checking articles about AI-generated fakes/deepfakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY). The subject is media integrity, not AI technology. Opinion columns and book reviews about a leader -> SOCIETY/MEDIA_PRESS (not the leader's sector).
+
+Examples: "Macron increases nuclear arsenal" -> MILITARY/NUCLEAR. "Oil prices surge" -> ENERGY_RESOURCES/OIL_GAS. "FBI investigates bar shooting" -> SECURITY/TERRORISM. "EU tariffs on China" -> ECONOMY/TRADE. "Carrier deployed to Mediterranean" -> MILITARY/NAVAL. "Lyon beats Marseille in Ligue 1" -> NON_STRATEGIC/SPORTS. "AI-generated video falsely shows Iranian missiles" -> SOCIETY/MEDIA_PRESS.
 
 ## OUTPUT
 Return JSON array:

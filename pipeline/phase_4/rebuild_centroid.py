@@ -663,27 +663,47 @@ def compute_coherence(cluster, titles, protagonist, home_cities):
         for f in feature_sets[i]:
             corpus_freq[f] += 1
 
-    # Score each title: sum of corpus freq for its features, normalized by size
+    n = len(indices)
+
+    # Feature weight: downweight features that appear in too many titles.
+    # A feature in 80%+ of titles is near-ubiquitous (like "russia" for Russia)
+    # and gets half weight. Features in 40-80% get full weight (discriminating).
+    # Features in < 5% are noise (too rare to indicate coherence).
+    def feature_weight(feat):
+        ratio = corpus_freq[feat] / n
+        if ratio >= 0.8:
+            return 0.5  # ubiquitous: still counts but less
+        if ratio < 0.05:
+            return 0.5  # very rare: less reliable
+        return 1.0
+
+    # Score each title: weighted sum of corpus freq, normalized by size
     scores = {}
     for i in indices:
         fs = feature_sets[i]
         if not fs:
             scores[i] = 0
             continue
-        scores[i] = sum(corpus_freq[f] for f in fs) / len(fs)
+        scores[i] = sum(corpus_freq[f] * feature_weight(f) for f in fs) / len(fs)
 
     # Select top N by centrality
     ranked = sorted(indices, key=lambda i: -scores[i])
     core = ranked[:COHERENCE_TOP_N]
 
-    # Count core features: features shared by >= 40% of top N titles
+    # Count core features: features shared by >= 40% of top N titles.
+    # Ubiquitous features (in 80%+ of ALL cluster titles) don't count as
+    # evidence of coherence -- they appear in every cluster for this centroid.
     core_feature_freq = Counter()
     for i in core:
         for f in feature_sets[i]:
             core_feature_freq[f] += 1
 
     threshold = max(2, int(len(core) * COHERENCE_FEATURE_RATIO))
-    core_features = [f for f, c in core_feature_freq.items() if c >= threshold]
+    core_features = [
+        f
+        for f, c in core_feature_freq.items()
+        if c >= threshold and corpus_freq[f] / n < 0.8
+    ]
 
     return core, len(core_features), scores
 
