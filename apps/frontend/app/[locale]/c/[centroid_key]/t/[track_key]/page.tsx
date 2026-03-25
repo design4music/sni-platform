@@ -183,7 +183,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const [titles, timeline, otherTracks] = await Promise.all([
     getTitlesByCTM(ctm.id),
     getMonthTimeline(centroid.id, track),
-    getTracksByCentroid(centroid.id),
+    getTracksByCentroid(centroid.id, month),
   ]);
 
   const months = timeline.map(t => t.month);

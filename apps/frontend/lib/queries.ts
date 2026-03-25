@@ -259,22 +259,28 @@ export async function getMonthTimeline(
 export async function getTitlesByCTM(ctmId: string): Promise<Title[]> {
   return cached(`titles:ctm:${ctmId}`, 3600, () =>
     query<Title>(
-      `SELECT t.* FROM titles_v3 t
-       JOIN title_assignments ta ON t.id = ta.title_id
-       WHERE ta.ctm_id = $1
+      `SELECT DISTINCT t.* FROM titles_v3 t
+       JOIN event_v3_titles evt ON t.id = evt.title_id
+       JOIN events_v3 e ON evt.event_id = e.id
+       WHERE e.ctm_id = $1
        ORDER BY t.pubdate_utc DESC`,
       [ctmId]
     )
   );
 }
 
-export async function getTracksByCentroid(centroidId: string): Promise<string[]> {
-  return cached(`tracks:centroid:${centroidId}`, 3600, async () => {
+export async function getTracksByCentroid(centroidId: string, month?: string): Promise<string[]> {
+  const cacheKey = month ? `tracks:centroid:${centroidId}:${month}` : `tracks:centroid:${centroidId}`;
+  return cached(cacheKey, 3600, async () => {
     const results = await query<{ track: string }>(
-      `SELECT DISTINCT track FROM ctm
-       WHERE centroid_id = $1
-       ORDER BY track`,
-      [centroidId]
+      month
+        ? `SELECT DISTINCT track FROM ctm
+           WHERE centroid_id = $1 AND month = $2
+           ORDER BY track`
+        : `SELECT DISTINCT track FROM ctm
+           WHERE centroid_id = $1 AND month = (SELECT MAX(month) FROM ctm WHERE centroid_id = $1)
+           ORDER BY track`,
+      month ? [centroidId, month] : [centroidId]
     );
     return results.map(r => r.track);
   });
