@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import OtherCoverage from '@/components/OtherCoverage';
-import TableOfContents, { TocSection } from '@/components/TableOfContents';
 import MobileTocButton from '@/components/MobileTocButton';
 import MonthNav from '@/components/MonthNav';
 import {
@@ -70,12 +69,69 @@ function splitTopN(events: Event[], topN: number) {
   return { top, rest };
 }
 
-/** Resolve titles per event using a pre-built lookup map */
+const CORE_TITLES_LIMIT = 10;
+
+/** Select the most representative titles for display.
+ *  Prioritizes: language diversity (1 per language), publisher diversity,
+ *  English first. Returns up to CORE_TITLES_LIMIT titles.
+ */
+function selectCoreTitles(allTitles: Title[]): Title[] {
+  if (allTitles.length <= CORE_TITLES_LIMIT) return allTitles;
+
+  const selected: Title[] = [];
+  const seenLanguages = new Set<string>();
+  const seenPublishers = new Set<string>();
+
+  // Sort: English first, then by date desc
+  const sorted = [...allTitles].sort((a, b) => {
+    const aEn = a.detected_language === 'en' ? 0 : 1;
+    const bEn = b.detected_language === 'en' ? 0 : 1;
+    if (aEn !== bEn) return aEn - bEn;
+    return new Date(b.pubdate_utc).getTime() - new Date(a.pubdate_utc).getTime();
+  });
+
+  // Pass 1: one per language (diverse languages)
+  for (const title of sorted) {
+    if (selected.length >= CORE_TITLES_LIMIT) break;
+    const lang = title.detected_language || 'unknown';
+    if (!seenLanguages.has(lang)) {
+      seenLanguages.add(lang);
+      seenPublishers.add(title.publisher_name || '');
+      selected.push(title);
+    }
+  }
+
+  // Pass 2: fill remaining with diverse publishers
+  for (const title of sorted) {
+    if (selected.length >= CORE_TITLES_LIMIT) break;
+    if (selected.includes(title)) continue;
+    const pub = title.publisher_name || '';
+    if (!seenPublishers.has(pub)) {
+      seenPublishers.add(pub);
+      selected.push(title);
+    }
+  }
+
+  // Pass 3: fill any remaining slots
+  for (const title of sorted) {
+    if (selected.length >= CORE_TITLES_LIMIT) break;
+    if (!selected.includes(title)) {
+      selected.push(title);
+    }
+  }
+
+  return selected;
+}
+
+/** Resolve titles per event using a pre-built lookup map.
+ *  Selects top 10 most representative titles (core titles) for display.
+ */
 function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
   for (const event of events) {
-    event.resolvedTitles = (event.source_title_ids || [])
+    const allTitles = (event.source_title_ids || [])
       .map(id => titleMap.get(id))
       .filter((t): t is Title => t !== undefined);
+    event.resolvedTitles = selectCoreTitles(allTitles);
   }
 }
 
@@ -161,16 +217,11 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     }
   }
 
-  // Build TOC sections (always include narratives since section always renders)
-  const tocSections: TocSection[] = [];
-
-  if (ctm.summary_text) {
-    tocSections.push({ id: 'section-summary', label: t('summary') });
-  }
-
-  if (mainEvents.length > 0) {
-    tocSections.push({ id: 'section-topics', label: t('topicsTitle') });
-  }
+  // TOC sections for mobile button
+  const tocSections = [
+    ...(ctm.summary_text ? [{ id: 'section-summary', label: t('summary') }] : []),
+    ...(mainEvents.length > 0 ? [{ id: 'section-topics', label: t('topicsTitle') }] : []),
+  ];
 
 
 
@@ -226,13 +277,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               );
             })}
           </nav>
-        </div>
-      )}
-
-      {/* Table of Contents (Desktop only) */}
-      {tocSections.length > 0 && (
-        <div className="hidden lg:block">
-          <TableOfContents sections={tocSections} />
         </div>
       )}
 
