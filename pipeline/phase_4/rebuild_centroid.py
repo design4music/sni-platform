@@ -56,7 +56,8 @@ CTM_HOME_CITIES = {
     "ASIA-INDIA": {"NEW DELHI", "DELHI"},
 }
 
-# Sector -> track mapping (replaces domain-based Phase 3.3)
+# Sector -> track mapping (4-track model, March 2026+)
+# Politics, Security, Economy (incl. energy/tech/infrastructure), Society (incl. health)
 SECTOR_TO_TRACK = {
     "MILITARY": "geo_security",
     "INTELLIGENCE": "geo_security",
@@ -64,11 +65,11 @@ SECTOR_TO_TRACK = {
     "DIPLOMACY": "geo_politics",
     "GOVERNANCE": "geo_politics",
     "ECONOMY": "geo_economy",
-    "ENERGY_RESOURCES": "geo_energy",
+    "ENERGY_RESOURCES": "geo_economy",
     "TECHNOLOGY": "geo_economy",
-    "HEALTH_ENVIRONMENT": "geo_humanitarian",
-    "SOCIETY": "geo_humanitarian",
     "INFRASTRUCTURE": "geo_economy",
+    "HEALTH_ENVIRONMENT": "geo_society",
+    "SOCIETY": "geo_society",
     "UNKNOWN": "geo_politics",
 }
 
