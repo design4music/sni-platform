@@ -1,8 +1,8 @@
 # Sector-Based Clustering Experiment
 
 **Branch**: `feat/sector-clustering`
-**Last Updated**: 2026-03-25
-**Status**: Validated on 5 centroids. Frontend redesigned. Ready for track consolidation (6->4) then pipeline integration.
+**Last Updated**: 2026-03-26
+**Status**: Temporal hard mode + mechanical merge + incremental mode built and tested. Ready for content review, then LLM title generation + pipeline integration.
 
 ---
 
@@ -71,10 +71,31 @@ within their group.
 
 ### Post-Clustering
 
+- **Temporal hard split** (2026-03-26): clusters spanning > 5 days are split at natural
+  temporal gaps (>= 3 days between consecutive titles). Falls back to fixed 5-day windows
+  if no natural gaps. Produces event-level topics (median 3-day spread) instead of
+  month-spanning thematic buckets.
+- **Coherence gate**: dissolves incoherent clusters (core feature count < 3) to catchall
+- **Mechanical cluster merge**: same sector + date overlap within 3 days + >= 3 shared
+  identity labels (Jaccard >= 0.20). Excludes protagonist persons and ubiquitous targets
+  (>25% of sector clusters). Catches same-entity duplicates from Louvain fragmentation.
 - **Track assignment**: mechanical SECTOR_TO_TRACK mapping per cluster
 - **Geo tagging**: bilateral if top foreign centroid in >= 50% of cluster titles
 - **Mechanical title merge**: Dice word overlap >= 0.40 on generated titles within same
   sector (catches "Zelensky visits Paris" split across MEDIATION vs SUMMIT subjects)
+
+### Incremental Mode (2026-03-26)
+
+`incremental_update()` in `rebuild_centroid.py` -- for daemon use:
+1. Loads only unlinked titles (not yet in any event for this centroid+month)
+2. Clusters with full pipeline (sector+subject -> temporal hard -> coherence -> merge)
+3. Matches each new cluster against existing events by sector + date + label overlap
+4. Matched titles join existing events (preserving event IDs). Unmatched create new events.
+5. Old events untouched -- stable IDs for bookmarks, narrative links, sagas.
+
+Handles volume spectrum: Melanesia (6 titles/month) to USA (10K+). Temporal windows
+ensure clusters from different weeks don't interfere. Active window (~5 days) is the
+only zone of potential reshuffling.
 
 ---
 
@@ -129,19 +150,37 @@ within their group.
    unrelated headlines. A cluster about Bushehr nuclear plant showed Finland nuclear,
    Ukraine nuclear, EU deterrence headlines because each was from a different language.
 
+7. **Soft temporal mode**: edge weight decay (0.07/day) on Louvain graph barely moved
+   results. Label-based Jaccard dominates; temporal decay can't overcome structural
+   graph cuts. Hard temporal split is far more effective.
+
+8. **Mechanical merge over-merging via protagonist**: PER:MACRON appears in every French
+   cluster; combined with any one shared target it triggered false merges. Fixed by
+   excluding protagonist persons + ubiquitous targets (>25% of sector clusters) from
+   merge label matching.
+
+9. **Mechanical merge cannot catch paraphrased duplicates**: Macron nuclear speech split
+   into TGT:EU vs TGT:GB communities by Louvain. Without PER:MACRON, zero shared labels.
+   Needs LLM merge pass.
+
 ---
 
-## Test Results (2026-03-25)
+## Test Results (2026-03-26, temporal=hard + mechanical merge)
 
-5 centroids tested with full clustering (no LLM title generation yet):
+| Centroid | Strategic | Topics | Catchall | Merges | Median spread |
+|----------|-----------|--------|----------|--------|---------------|
+| France | 1,104 | 132 | 14% | 17 | 3 days |
+| Russia | 2,645 | 300 | 22% | 28 | 3 days |
 
-| Centroid | Strategic | NON_STRATEGIC | Topics | Catchall |
-|----------|-----------|---------------|--------|----------|
-| France | 1,104 | 263 (19%) | 98 | 2% |
-| UK | 1,663 | 409 (20%) | 124 | 3% |
-| Germany | 1,556 | 214 (12%) | 116 | 1% |
-| Russia | 2,645 | 156 (6%) | 201 | 2% |
-| Baltic | 455 | 79 (15%) | 54 | 1% |
+Previous results (no temporal, no merge):
+
+| Centroid | Strategic | Topics | Catchall |
+|----------|-----------|--------|----------|
+| France | 1,104 | 84 | 23% |
+| Russia | 2,645 | 164 | 34% |
+
+Temporal hard mode roughly doubles topic count (event-level vs thematic-bucket), drops
+catchall significantly, and produces median 3-day temporal spread (was 10-12 days).
 
 ---
 
@@ -168,38 +207,46 @@ within their group.
 1. **Signal normalization bugs**: AIR FRANCE -> FRANCE, Coupe de France -> Tour de France.
    Causes false signal matches. Not blocking but should fix before production.
 
-2. **geo_information track gets 0 events**: no sector maps to it. Will be resolved by
-   track consolidation (6 -> 4 tracks).
-
-3. **Multi-country centroids** (Baltic): sector+subject grouping too coarse when 3 countries
+2. **Multi-country centroids** (Baltic): sector+subject grouping too coarse when 3 countries
    share a centroid. Each country's local stories mix. Potential fix: sub-group by country
    within the centroid before clustering.
 
-4. **LLM merge pass not yet implemented** (Step B): mechanical merge catches obvious
-   duplicates (Dice >= 0.40) but misses paraphrased variants. Planned: targeted LLM merge
-   for top topics per sector+subject, reusing Phase 4.1 dedup format.
+3. **LLM merge pass not yet implemented**: mechanical merge (label-based) catches same-entity
+   duplicates but misses paraphrased variants (e.g., nuclear speech with TGT:EU vs TGT:GB).
+   Planned: targeted LLM merge for top topics per sector.
 
-5. **Core title selection not yet wired to LLM generation**: currently display-only. The
+4. **Core title selection not yet wired to LLM generation**: currently display-only. The
    pipeline still sends all titles to the LLM. Planned: use the same centrality selection
    to feed only the top 10 titles to the LLM for title+description generation.
+
+5. **geo_society track is a catch-all for soft content**: MEDIA_PRESS, EDUCATION, etc. mix
+   with strategic content like HUMAN_RIGHTS, MIGRATION, PROTEST. Needs taxonomy review.
+
+6. **CTM_PROTAGONIST and CTM_HOME_CITIES are hardcoded dicts**: should move to DB or
+   derive from centroid profiles.
 
 ---
 
 ## Next Steps
 
-1. **Track consolidation 6 -> 4**: Politics, Security, Economy (merge Energy), Society
-   (merge Humanitarian + Information). Jan/Feb keeps 6 tracks; March+ uses 4.
+1. **Content review**: review France and Russia clusters on frontend with temporal hard mode.
 
 2. **LLM title+description generation from core 10 titles**: wire centrality selection
    into `generate_event_summaries_4_5a.py`.
 
-3. **LLM merge pass**: targeted dedup for top topics per sector, reusing Phase 4.1 format.
+3. **LLM merge pass**: targeted dedup for paraphrased-variant duplicates (e.g., nuclear
+   speech TGT:EU vs TGT:GB). Mechanical merge handles same-entity duplicates already.
 
-4. **Pipeline integration**: replace `incremental_clustering.py` with sector-based approach
-   in the daemon. Design incremental mode (new titles only, not full rebuild).
+4. **Pipeline integration**: wire `incremental_update()` into daemon Phase 4 slot. Replace
+   `incremental_clustering.py`. Use `rebuild()` with `--temporal hard` for full month
+   rebuilds, `--incremental` for daily daemon runs.
 
-5. **Full March rebuild**: re-extract all labels with new taxonomy, recluster all centroids,
-   regenerate all LLM prose.
+5. **Full March rebuild**: re-extract labels with expanded taxonomy, recluster all centroids
+   with temporal hard + merge, regenerate LLM prose. Cascade: delete narratives, analyses,
+   re-run saga chaining, re-run narrative matching (4.2f/g/h).
+
+6. **geo_society cleanup**: review MEDIA_PRESS / EDUCATION content, consider expanding
+   NON_STRATEGIC or remapping strategic subjects to other tracks.
 
 ---
 
