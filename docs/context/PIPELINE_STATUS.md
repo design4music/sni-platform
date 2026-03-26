@@ -285,15 +285,16 @@ centroid/event/trending/epic integration. Aligned/opposing clusters manually cur
 narratives. Event-level extraction renamed from "narrative frames" to "media framing" (D-046).
 
 **Sector Clustering Experiment** (branch `feat/sector-clustering`): 4-level hierarchical
-clustering validated on 5 centroids (France, UK, Germany, Russia, Baltic). Pipeline:
-L1 sector+subject -> L1.5 directional target split -> L2 anchor keywords -> L3 Louvain.
-Expanded taxonomy (6 new subjects, subject now required, NON_STRATEGIC sector filters garbage).
-Results: 1-3% catchall across all centroids, no mega-events. Frontend redesigned: unified topic
-list (no domestic/international split), country badges, incremental pagination, centrality-based
-core title selection. CTM summary prompt unified (no section headers). Next: track consolidation
-6->4, LLM title generation from core titles, LLM merge pass, pipeline integration.
-See `docs/context/SECTOR_CLUSTERING_EXPERIMENT.md` for full status and
-`docs/context/CLUSTERING_PIPELINE_COMPARISON.md` for old-vs-new comparison.
+clustering + temporal hard split + mechanical merge. Pipeline: L1 sector+subject -> L1.5
+directional target split -> L2 anchor keywords -> L3 Louvain -> temporal split at natural
+gaps (3d) or fixed 5-day windows -> coherence gate -> mechanical merge (sector + date +
+label overlap). Results: France 132 topics/14% catchall, Russia 300 topics/22% catchall,
+median 3-day temporal spread. Incremental mode built (`--incremental`): clusters only
+unlinked titles, matches against existing events, preserves event IDs. Frontend redesigned:
+unified topic list, country badges, incremental pagination, centrality-based core title
+selection. Track consolidation done (6->4). Next: LLM title generation from core titles,
+LLM merge for paraphrased duplicates, daemon integration, full March rebuild.
+See `docs/context/SECTOR_CLUSTERING_EXPERIMENT.md` for full status.
 
 **Auth**: Social login (Google verified, LinkedIn live). Facebook dropped (D-043).
 NextAuth v5 with JWT strategy.
