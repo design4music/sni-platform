@@ -269,7 +269,9 @@ _EVENT_SUMMARY_IDENTIFY = (
 # -- Tier 1: TITLE-ONLY (1-4 sources) --
 EVENT_SUMMARY_PROMPT_TITLE_ONLY = """Generate a short, plain-language news title (5-12 words) from these headlines.
 
-Return JSON: {"title": "Short descriptive title", "summary": ""}
+Return JSON: {"title": "Short descriptive title", "summary": "", "coherent": true}
+
+Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 Rules:
 - Describe the core story, not just a person or entity
@@ -282,7 +284,8 @@ EVENT_SUMMARY_PROMPT_MINI = (
     """You explain news topics in plain, conversational language.
 
 TASK: Generate a title and short summary from a cluster of headlines.
-OUTPUT: Return JSON: {"title": "Short descriptive title (5-12 words)", "summary": "2-3 sentence factual summary"}
+OUTPUT: Return JSON: {"title": "...", "summary": "2-3 sentence factual summary", "coherent": true}
+Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
 """
@@ -299,7 +302,8 @@ EVENT_SUMMARY_PROMPT_MEDIUM = (
     + """
 
 TASK: Generate a title and summary for a news topic cluster.
-OUTPUT: Return JSON: {"title": "Short descriptive title (5-12 words)", "summary": "Conversational explanation (1-2 paragraphs)"}
+OUTPUT: Return JSON: {"title": "...", "summary": "Conversational explanation (1-2 paragraphs)", "coherent": true}
+Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
 """
@@ -325,7 +329,8 @@ EVENT_SUMMARY_PROMPT_MAXI = (
     + """
 
 TASK: Generate a title and summary for a large news topic cluster.
-OUTPUT: Return JSON: {"title": "Short descriptive title (5-12 words)", "summary": "Conversational explanation (2-3 paragraphs)"}
+OUTPUT: Return JSON: {"title": "...", "summary": "Conversational explanation (2-3 paragraphs)", "coherent": true}
+Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
 """

@@ -576,76 +576,34 @@ def cluster_topdown(titles, centroid_id, temporal_mode="off"):
     return all_clusters
 
 
-COHERENCE_STOP_WORDS = {
-    "the",
-    "a",
-    "an",
-    "in",
-    "on",
-    "at",
-    "to",
-    "for",
-    "of",
-    "and",
-    "or",
-    "with",
-    "as",
-    "by",
-    "is",
-    "are",
-    "its",
-    "after",
-    "from",
-    "new",
-    "says",
-    "has",
-    "have",
-    "will",
-    "been",
-    "over",
-    "amid",
-    "not",
-    "but",
-    "was",
-    "were",
-    "that",
-    "this",
-    "more",
-    "than",
-    "into",
-    "about",
-    "could",
-    "would",
-    "also",
-    "other",
-    "les",
-    "la",
-    "le",
-    "de",
-    "des",
-    "du",
-    "en",
-    "un",
-    "une",
-    "et",
-    "est",
-    "que",
-    "qui",
-    "par",
-    "pour",
-    "sur",
-    "au",
-    "das",
-    "die",
-    "der",
-    "und",
-    "von",
-    "den",
-    "dem",
-    "ist",
-    "mit",
-    "ein",
-}
+def _tokenize(text):
+    """Tokenize headline into content words (no hardcoded stop words)."""
+    words = set()
+    for w in text.lower().split():
+        w = w.strip(".,;:!?\"'()[]{}|-")
+        if w and len(w) > 2:
+            words.add(w)
+    return words
+
+
+def _corpus_content_words(titles, indices, min_doc_ratio=0.02, max_doc_ratio=0.6):
+    """Extract discriminating content words from a title corpus.
+
+    Filters by document frequency: words appearing in <2% or >60% of titles
+    are excluded (too rare = noise, too common = stop-word equivalent).
+    No hardcoded vocabulary -- works across any language.
+    """
+    all_words = [_tokenize(titles[i].get("title_display", "")) for i in indices]
+    doc_freq = Counter()
+    for ws in all_words:
+        for w in ws:
+            doc_freq[w] += 1
+    n = len(indices)
+    min_count = max(2, int(n * min_doc_ratio))
+    max_count = int(n * max_doc_ratio)
+    valid = {w for w, c in doc_freq.items() if min_count <= c <= max_count}
+    return valid, doc_freq, all_words
+
 
 # Minimum core features shared by >= 40% of top 10 to consider cluster coherent
 COHERENCE_MIN_CORE = 3
@@ -653,15 +611,17 @@ COHERENCE_TOP_N = 10
 COHERENCE_FEATURE_RATIO = 0.4  # feature must appear in >= 40% of top titles
 
 
-def _title_features(title, labels):
-    """Build combined feature set: raw content words + normalized labels."""
+def _title_features(title, labels, valid_words=None):
+    """Build combined feature set: raw content words + normalized labels.
+
+    If valid_words is provided, only include words in that set (corpus-filtered).
+    Otherwise include all words > 2 chars (for small clusters where corpus stats
+    aren't meaningful).
+    """
     features = set()
-    # Raw words from headline
-    for w in title.get("title_display", "").lower().split():
-        w = w.strip(".,;:!?\"'()[]")
-        if w and w not in COHERENCE_STOP_WORDS and len(w) > 2:
+    for w in _tokenize(title.get("title_display", "")):
+        if valid_words is None or w in valid_words:
             features.add("W:" + w)
-    # Normalized labels (already prefixed: PER:, ORG:, PLC:, TGT:, EVT:)
     features.update(labels)
     return features
 
@@ -678,11 +638,14 @@ def compute_coherence(cluster, titles, protagonist, home_cities):
     if len(indices) <= COHERENCE_TOP_N:
         return indices, 99, {}  # small clusters are coherent by definition
 
-    # Build feature sets: words + labels
+    # Build feature sets: corpus-filtered words + labels
+    valid_words, _, _ = _corpus_content_words(titles, indices)
     label_sets = {
         i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
     }
-    feature_sets = {i: _title_features(titles[i], label_sets[i]) for i in indices}
+    feature_sets = {
+        i: _title_features(titles[i], label_sets[i], valid_words) for i in indices
+    }
 
     # Count corpus frequency of each feature
     corpus_freq = Counter()
@@ -1089,57 +1052,6 @@ def tag_geo(cluster_indices, titles, centroid_id):
     return "bilateral", top_centroid
 
 
-MERGE_STOP_WORDS = {
-    "the",
-    "a",
-    "an",
-    "in",
-    "on",
-    "at",
-    "to",
-    "for",
-    "of",
-    "and",
-    "or",
-    "with",
-    "as",
-    "by",
-    "is",
-    "are",
-    "its",
-    "after",
-    "from",
-    "new",
-    "says",
-    "has",
-    "have",
-    "will",
-    "been",
-    "over",
-    "amid",
-    "not",
-    "but",
-    "was",
-    "were",
-    "that",
-    "this",
-    "more",
-    "than",
-    "into",
-    "about",
-    "could",
-    "would",
-    "also",
-    "other",
-    "calls",
-    "plans",
-    "announces",
-    "faces",
-    "france",
-    "french",
-    "european",  # centroid-specific noise for France
-}
-
 DICE_MERGE_THRESHOLD = 0.40  # slightly above Phase 4.1's 0.35 to reduce false positives
 
 
@@ -1147,12 +1059,7 @@ def _event_title_words(title):
     """Extract content words from a generated event title."""
     if not title:
         return set()
-    words = set()
-    for w in title.lower().split():
-        w = w.strip(".,;:!?\"'()[]")
-        if w and w not in MERGE_STOP_WORDS and len(w) > 2:
-            words.add(w)
-    return words
+    return _tokenize(title)
 
 
 def merge_similar_topics(conn, ctm_ids):

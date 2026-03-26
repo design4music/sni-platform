@@ -37,6 +37,56 @@ from core.prompts import (
 )
 
 MIN_SUMMARY_SOURCES = 5  # Below this: title only, no summary
+CORE_TITLE_COUNT = 10  # Max titles to send to LLM (centrality-selected)
+
+
+def select_core_titles(titles, max_core=CORE_TITLE_COUNT):
+    """Select the most representative titles by corpus centrality.
+
+    Uses corpus document frequency to filter words -- no hardcoded stop word
+    lists. Words appearing in >60% of titles are too common (language-agnostic
+    stop words). Words in <2% are noise. The rest are discriminating content
+    words used for scoring.
+
+    Returns indices into the titles list, ordered by score descending.
+    """
+    if len(titles) <= max_core:
+        return list(range(len(titles)))
+
+    n = len(titles)
+
+    # Tokenize all titles
+    word_sets = []
+    for t in titles:
+        words = set()
+        for w in t.lower().split():
+            w = w.strip(".,;:!?\"'()[]{}|-")
+            if w and len(w) > 2:
+                words.add(w)
+        word_sets.append(words)
+
+    # Document frequency
+    doc_freq = Counter()
+    for ws in word_sets:
+        for w in ws:
+            doc_freq[w] += 1
+
+    # Filter: keep words in 2%-60% of titles (discriminating content)
+    min_count = max(2, int(n * 0.02))
+    max_count = int(n * 0.6)
+    valid = {w for w, c in doc_freq.items() if min_count <= c <= max_count}
+
+    # Score: sum of doc_freq for valid words, normalized by word count
+    scores = []
+    for ws in word_sets:
+        content = ws & valid
+        if not content:
+            scores.append(0)
+            continue
+        scores.append(sum(doc_freq[w] for w in content) / len(content))
+
+    ranked = sorted(range(len(titles)), key=lambda i: -scores[i])
+    return ranked[:max_core]
 
 
 async def translate_titles_de_batch(
@@ -563,7 +613,7 @@ async def generate_event_data(
     backbone_signals: dict,
     title_signals: dict,
     num_titles: int,
-    max_titles: int = 100,
+    max_titles: int = CORE_TITLE_COUNT,
     centroid_countries: set = None,
     title_countries: list = None,
     title_only: bool = False,
@@ -575,7 +625,7 @@ async def generate_event_data(
         backbone_signals: Dict with persons, orgs, etc. from clustering
         title_signals: Dict mapping title_id to signals for outlier detection
         num_titles: Total number of titles (for context)
-        max_titles: Maximum titles to send to LLM (default 200)
+        max_titles: Maximum titles to send to LLM (centrality-selected, default 10)
         centroid_countries: Set of ISO codes for this centroid (e.g. {"RU"})
         title_countries: List of feed country_code per title (parallel to titles)
     """
@@ -587,37 +637,33 @@ async def generate_event_data(
     # Use core titles for summary, but note if outliers exist
     titles_to_use = core_titles if core_titles else titles
 
+    # Select most representative titles by corpus centrality
+    core_indices = select_core_titles(titles_to_use, max_core=max_titles)
+    titles_selected = [titles_to_use[i] for i in core_indices]
+
     # Domestic perspective: label headlines [D] domestic / [F] foreign
     perspective_note = ""
     if centroid_countries and title_countries:
-        # Build country lookup for titles_to_use
+        # Build country lookup for all titles
         title_to_country = {}
         for t, cc in zip(titles, title_countries or []):
             title_to_country[t] = cc
 
-        # Split into domestic and foreign pools
+        # Split selected titles into domestic and foreign
         domestic_pool = []
         foreign_pool = []
-        for t in titles_to_use:
+        for t in titles_selected:
             cc = title_to_country.get(t)
             if cc and cc in centroid_countries:
                 domestic_pool.append(t)
             else:
                 foreign_pool.append(t)
 
-        # Oversample domestic: guarantee 30-40% of slots for domestic titles
+        # Ensure at least some domestic representation if available
         if domestic_pool and foreign_pool:
-            domestic_target = max(
-                len(domestic_pool),
-                int(max_titles * 0.35),
-            )
-            domestic_target = min(domestic_target, len(domestic_pool), max_titles)
-            foreign_target = max_titles - domestic_target
-            titles_sample = (
-                domestic_pool[:domestic_target] + foreign_pool[:foreign_target]
-            )
+            titles_sample = domestic_pool + foreign_pool
         else:
-            titles_sample = titles_to_use[:max_titles]
+            titles_sample = titles_selected
 
         domestic_lines = []
         foreign_lines = []
@@ -654,11 +700,13 @@ async def generate_event_data(
                     "override the domestic perspective."
                 )
     else:
-        titles_sample = titles_to_use[:max_titles]
+        titles_sample = titles_selected
         titles_text = "\n".join("- %s" % t for t in titles_sample)
 
-    if len(titles_to_use) > max_titles:
-        titles_text += "\n... and %d more headlines" % (len(titles_to_use) - max_titles)
+    if len(titles_to_use) > len(titles_sample):
+        titles_text += "\n... and %d more headlines" % (
+            len(titles_to_use) - len(titles_sample)
+        )
 
     # Note outliers filtered
     outlier_note = ""
@@ -770,6 +818,21 @@ async def process_event(
 
             title = result["title"]
             summary = result["summary"] if not title_only else None
+
+            # LLM coherence check: demote incoherent clusters to catchall
+            if not result.get("coherent", True):
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE events_v3 SET is_catchall = TRUE, "
+                        "title = %s, summary = NULL, updated_at = NOW() "
+                        "WHERE id = %s",
+                        (title, event["id"]),
+                    )
+                conn.commit()
+                print(
+                    "  [%3d] INCOHERENT -> catchall: %s" % (event["count"], title[:50])
+                )
+                return title
 
             # Derive tags from backbone signals (the actual clustering anchors)
             tags = signals_to_tags(backbone, min_freq=2)
