@@ -182,6 +182,7 @@
     "sectionStats": "{topics} Themen | {sources} Quellen",
     "andMore": "... und {count} weitere",
     "unclustered": "Nicht gruppiert",
+    "noMajorTopics": "In diesem Monat sind keine grossen Themen aufgetaucht. Einzelne Schlagzeilen sind unten aufgefuehrt.",
     "latest": "Aktuell",
     "noCoverageThisMonth": "Keine Berichterstattung in diesem Monat",
     "noDataAvailable": "Keine Daten verfuegbar",

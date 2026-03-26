@@ -182,6 +182,7 @@
     "sectionStats": "{topics} topics | {sources} sources",
     "andMore": "... and {count} more",
     "unclustered": "Unclustered",
+    "noMajorTopics": "No major topics emerged this month. Individual headlines are listed below.",
     "latest": "Latest",
     "noCoverageThisMonth": "No coverage this month",
     "noDataAvailable": "No data available",

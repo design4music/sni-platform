@@ -2,7 +2,7 @@
 
 **Branch**: `feat/sector-clustering`
 **Last Updated**: 2026-03-26
-**Status**: Temporal hard mode + mechanical merge + incremental mode built and tested. Ready for content review, then LLM title generation + pipeline integration.
+**Status**: Content review done (France + Russia security). LLM candidate-pair merge implemented and tested. Ready for code cleanup, full rebuild, and go-live.
 
 ---
 
@@ -79,6 +79,11 @@ within their group.
 - **Mechanical cluster merge**: same sector + date overlap within 3 days + >= 3 shared
   identity labels (Jaccard >= 0.20). Excludes protagonist persons and ubiquitous targets
   (>25% of sector clusters). Catches same-entity duplicates from Louvain fragmentation.
+- **LLM candidate-pair merge** (2026-03-26): pre-computes merge candidate pairs via signal
+  Jaccard (>= 0.20 on non-TGT labels) + anchor requirements (shared PLC/EVT for cross-sector,
+  shared PER for same-subject). Sends only candidate pairs to LLM for yes/no. No batching
+  needed. Includes union-find-free pair application to prevent transitive over-merging.
+  France: 5-6 candidates/track. Russia: 6-33 candidates/track. All parse successfully.
 - **Track assignment**: mechanical SECTOR_TO_TRACK mapping per cluster
 - **Geo tagging**: bilateral if top foreign centroid in >= 50% of cluster titles
 - **Mechanical title merge**: Dice word overlap >= 0.40 on generated titles within same
@@ -165,14 +170,26 @@ only zone of potential reshuffling.
 
 ---
 
-## Test Results (2026-03-26, temporal=hard + mechanical merge)
+## Test Results
+
+### Latest (2026-03-26, temporal=hard + coherence all + candidate-pair LLM merge)
+
+| Centroid | Strategic | Emerged | Catchall | Mech merges | LLM merges | Median spread |
+|----------|-----------|---------|----------|-------------|------------|---------------|
+| France (security) | 1,104 | 20 | 39% | 16 | 6 | 3 days |
+| Russia (security) | 2,645 | 66 | 43% | 17 | 1 | 3 days |
+
+Note: catchall % higher because coherence gate now checks ALL clusters (no bypass for
+small ones). Mixed/incoherent 5-10 title clusters dissolved correctly.
+
+### Previous: temporal=hard + mechanical merge only (no LLM, with small-cluster bypass)
 
 | Centroid | Strategic | Topics | Catchall | Merges | Median spread |
 |----------|-----------|--------|----------|--------|---------------|
 | France | 1,104 | 132 | 14% | 17 | 3 days |
 | Russia | 2,645 | 300 | 22% | 28 | 3 days |
 
-Previous results (no temporal, no merge):
+### Baseline: no temporal, no merge
 
 | Centroid | Strategic | Topics | Catchall |
 |----------|-----------|--------|----------|
@@ -181,6 +198,8 @@ Previous results (no temporal, no merge):
 
 Temporal hard mode roughly doubles topic count (event-level vs thematic-bucket), drops
 catchall significantly, and produces median 3-day temporal spread (was 10-12 days).
+LLM merge catches cross-subject duplicates (e.g., Iraq soldier killed: TERRORISM + DRONE
++ GROUND_FORCES merged into one topic).
 
 ---
 
@@ -205,15 +224,17 @@ catchall significantly, and produces median 3-day temporal spread (was 10-12 day
 ## Known Issues (open)
 
 1. **Signal normalization bugs**: AIR FRANCE -> FRANCE, Coupe de France -> Tour de France.
-   Causes false signal matches. Not blocking but should fix before production.
+   Cosine similarity threshold (0.6) too loose. Fix: raise threshold or add DB whitelist.
 
 2. **Multi-country centroids** (Baltic): sector+subject grouping too coarse when 3 countries
    share a centroid. Each country's local stories mix. Potential fix: sub-group by country
-   within the centroid before clustering.
+   within the centroid before clustering. **Lower priority -- defer to post-launch.**
 
-3. **LLM merge pass not yet implemented**: mechanical merge (label-based) catches same-entity
-   duplicates but misses paraphrased variants (e.g., nuclear speech with TGT:EU vs TGT:GB).
-   Planned: targeted LLM merge for top topics per sector.
+3. ~~**LLM merge pass not yet implemented**~~ **DONE (2026-03-26)**: candidate-pair LLM merge
+   implemented. Pre-computes merge candidates via signal Jaccard + place/event anchors,
+   sends only candidates to LLM for yes/no confirmation. Tiered anchor requirements:
+   cross-sector needs 2+ shared places, same-sector needs 1+ place, same-subject accepts
+   shared persons. No batching needed -- scales to 67+ clusters.
 
 4. **Core title selection not yet wired to LLM generation**: currently display-only. The
    pipeline still sends all titles to the LLM. Planned: use the same centrality selection
@@ -227,26 +248,63 @@ catchall significantly, and produces median 3-day temporal spread (was 10-12 day
 
 ---
 
-## Next Steps
+## Go-Live Plan (2026-03-26)
 
-1. **Content review**: review France and Russia clusters on frontend with temporal hard mode.
+### Phase A: Code Cleanup
 
-2. **LLM title+description generation from core 10 titles**: wire centrality selection
-   into `generate_event_summaries_4_5a.py`.
+The experimental branch moved fast over two days. Before merging, clean up for production:
 
-3. **LLM merge pass**: targeted dedup for paraphrased-variant duplicates (e.g., nuclear
-   speech TGT:EU vs TGT:GB). Mechanical merge handles same-entity duplicates already.
+1. **Remove dead LLM merge code**: `llm_merge_topics()` (old approach, post-DB, ~100 lines)
+   and its prompt `LLM_MERGE_PROMPT` are superseded by `_llm_merge_clusters()` (candidate-pair,
+   pre-DB). Also remove the `--llm-merge` CLI flag that calls the old function.
+2. **Remove `merge_similar_topics()`**: Dice-based post-write title merge (Phase 4.2 step).
+   Superseded by pre-DB candidate-pair merge. The Dice merge operates on LLM-generated titles
+   which we no longer depend on for merging.
+3. **Clean test files**: remove `test_*.py` experiment scripts from `pipeline/phase_4/`
+   (test_hybrid_clustering, test_louvain_clustering, test_faceted_cluster, etc. -- 7 files).
+4. **Standardize LLM params**: temperature, max_tokens, timeout -- single values or config.
+5. **Move hardcoded dicts to DB/config**: CTM_PROTAGONIST, CTM_HOME_CITIES. Either store in
+   `centroids` table profile_json or a separate config file. SECTOR_TO_TRACK can stay in code
+   (it's a stable mapping, not per-centroid data).
+6. **Remove unused import**: `uuid`.
+7. **Coherence gate change audit**: the bypass for small clusters (<=10 titles) was removed.
+   All clusters now go through coherence check. Verify this doesn't over-dissolve legitimate
+   small clusters on other centroids (USA, China, Baltic). Run dry-run on 3-4 centroids.
+8. **Signal normalization**: raise cosine threshold in `normalize_signals.py` from 0.6 to
+   ~0.75, or add a DB rejection list for known false matches.
 
-4. **Pipeline integration**: wire `incremental_update()` into daemon Phase 4 slot. Replace
-   `incremental_clustering.py`. Use `rebuild()` with `--temporal hard` for full month
-   rebuilds, `--incremental` for daily daemon runs.
+### Phase B: Full March Rebuild
 
-5. **Full March rebuild**: re-extract labels with expanded taxonomy, recluster all centroids
-   with temporal hard + merge, regenerate LLM prose. Cascade: delete narratives, analyses,
-   re-run saga chaining, re-run narrative matching (4.2f/g/h).
+1. **Sync Render -> local**: pull latest production data via Docker pg_dump/pg_restore.
+2. **Rebuild all centroids locally**: `--temporal hard --write` for each centroid.
+   Order: France, Russia (verified), then USA, China, key others.
+   Spot-check each on frontend before proceeding.
+3. **Generate titles**: Phase 4.5a for all new events (wire core title selection first).
+4. **Generate CTM digests**: Phase 4.5b for all affected CTMs.
+5. **Materialize views**: Phase 4.2 (mv_centroid_signals, mv_signal_graph, etc.).
+6. **Cascade downstream**: re-run narrative matching (4.2f/g/h), saga chaining if needed.
 
-6. **geo_society cleanup**: review MEDIA_PRESS / EDUCATION content, consider expanding
-   NON_STRATEGIC or remapping strategic subjects to other tracks.
+### Phase C: Deploy
+
+1. **Sync local -> Render**: Docker pg_dump + pg_restore to Render DB.
+2. **Wire daemon integration**: replace `incremental_clustering.py` import in
+   `pipeline_daemon.py` with `rebuild_centroid.incremental_update()`. The rebuild function
+   becomes the monthly full-rebuild, incremental_update handles the 30-minute daemon cycle.
+3. **Merge branch**: `feat/sector-clustering` -> `main`.
+4. **Deploy**: push to main, trigger Render deploy.
+5. **Verify**: spot-check France, Russia, USA on production frontend.
+6. **Monitor**: watch daemon logs for first few cycles, check catchall ratios,
+   verify LLM merge calls succeed on production API.
+
+### Open Questions
+
+- **Should old `incremental_clustering.py` be kept as fallback?** Or delete entirely?
+- **Narrative matching compatibility**: do narrative matchers expect the old event structure?
+  If events are now more granular (event-level vs thematic), matchers may need threshold tuning.
+- **Monthly rollover**: the rebuild is per-month. When a new month starts, do we rebuild
+  the previous month once more (finalize) and start fresh? Or carry forward?
+- **USA scale test**: USA has 10K+ titles/month. Need to verify clustering + LLM merge
+  handles this volume (candidate count, LLM call size, runtime).
 
 ---
 

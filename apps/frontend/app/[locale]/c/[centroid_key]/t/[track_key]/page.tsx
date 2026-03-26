@@ -394,28 +394,34 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       ) : (
         <>
           {/* Unified topics section */}
-          {mainEvents.length > 0 && (
-            <div id="section-topics" className="mb-10">
-              <h2 className="text-2xl font-bold mb-2">{t('topicsTitle')}</h2>
-              <p className="text-sm text-dashboard-text-muted mb-4">
-                {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
-              </p>
+          <div id="section-topics" className="mb-10">
+            {mainEvents.length > 0 ? (
+              <>
+                <h2 className="text-2xl font-bold mb-2">{t('topicsTitle')}</h2>
+                <p className="text-sm text-dashboard-text-muted mb-4">
+                  {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
+                </p>
 
-              <EventList
-                events={mainEvents}
-                initialLimit={TOPICS_PAGE_SIZE}
-                pageSize={TOPICS_PAGE_SIZE}
-                keyPrefix="topics"
-              />
-
-              {otherEvents.length > 0 && (
-                <OtherCoverage
-                  label={t('otherStrategicTopics')}
-                  events={otherEvents}
+                <EventList
+                  events={mainEvents}
+                  initialLimit={TOPICS_PAGE_SIZE}
+                  pageSize={TOPICS_PAGE_SIZE}
+                  keyPrefix="topics"
                 />
-              )}
-            </div>
-          )}
+              </>
+            ) : otherEvents.length > 0 ? (
+              <p className="text-sm text-dashboard-text-muted mb-4">
+                {t('noMajorTopics')}
+              </p>
+            ) : null}
+
+            {otherEvents.length > 0 && (
+              <OtherCoverage
+                label={t('otherStrategicTopics')}
+                events={otherEvents}
+              />
+            )}
+          </div>
         </>
       )}
 

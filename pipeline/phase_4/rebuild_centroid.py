@@ -14,6 +14,8 @@ import uuid
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import httpx
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 if sys.platform == "win32":
     sys.stdout.reconfigure(errors="replace")
@@ -23,38 +25,41 @@ import networkx as nx
 import psycopg2
 
 from core.config import HIGH_FREQ_ORGS, config
-from pipeline.phase_4.normalize_signals import normalize_title_signals
 
-# CTM protagonist exclusion
-CTM_PROTAGONIST = {
-    "EUROPE-FRANCE": {"MACRON"},
-    "AMERICAS-USA": {"TRUMP"},
-    "EUROPE-RUSSIA": {"PUTIN"},
-    "ASIA-CHINA": {"XI"},
-    "EUROPE-UKRAINE": {"ZELENSKY"},
-    "MIDEAST-ISRAEL": {"NETANYAHU"},
-    "MIDEAST-IRAN": {"KHAMENEI"},
-    "EUROPE-GERMANY": {"MERZ"},
-    "EUROPE-UK": {"STARMER"},
-    "MIDEAST-TURKEY": {"ERDOGAN"},
-    "ASIA-INDIA": {"MODI"},
-}
+UBIQUITOUS_RATIO = 0.10  # labels in >10% of titles are ubiquitous for this centroid
 
-# Capital/dominant cities to exclude from clustering identity signals per CTM.
-# These cities appear in too many unrelated domestic stories to be discriminating.
-CTM_HOME_CITIES = {
-    "EUROPE-FRANCE": {"PARIS"},
-    "AMERICAS-USA": {"WASHINGTON", "WASHINGTON DC", "NEW YORK"},
-    "EUROPE-RUSSIA": {"MOSCOW"},
-    "ASIA-CHINA": {"BEIJING"},
-    "EUROPE-UKRAINE": {"KYIV", "KIEV"},
-    "MIDEAST-ISRAEL": {"TEL AVIV", "JERUSALEM"},
-    "MIDEAST-IRAN": {"TEHRAN"},
-    "EUROPE-GERMANY": {"BERLIN"},
-    "EUROPE-UK": {"LONDON"},
-    "MIDEAST-TURKEY": {"ANKARA", "ISTANBUL"},
-    "ASIA-INDIA": {"NEW DELHI", "DELHI"},
-}
+
+def compute_ubiquitous_labels(titles, ratio=UBIQUITOUS_RATIO):
+    """Find labels that appear in too many titles to be discriminating.
+
+    Returns a set of label strings (e.g. {"PER:MACRON", "PLC:PARIS"}).
+    Dynamic replacement for hardcoded protagonist/home_cities dicts.
+    """
+    n = len(titles)
+    if n < 20:
+        return set()
+    counts = Counter()
+    for t in titles:
+        for p in t.get("persons", []):
+            counts["PER:" + p.upper()] += 1
+        for p in t.get("places", []):
+            counts["PLC:" + p.upper()] += 1
+        for o in t.get("orgs", []):
+            counts["ORG:" + o.upper()] += 1
+    threshold = n * ratio
+    result = {lbl for lbl, c in counts.items() if c >= threshold}
+    if result:
+        print(
+            "Ubiquitous labels (>%d%%): %s"
+            % (
+                int(ratio * 100),
+                ", ".join(
+                    "%s(%d%%)" % (lbl, counts[lbl] * 100 // n) for lbl in sorted(result)
+                ),
+            )
+        )
+    return result
+
 
 # Sector -> track mapping (4-track model, March 2026+)
 # Politics, Security, Economy (incl. energy/tech/infrastructure), Society (incl. health)
@@ -72,6 +77,12 @@ SECTOR_TO_TRACK = {
     "SOCIETY": "geo_society",
     "UNKNOWN": "geo_politics",
 }
+
+# Subjects filtered before clustering (low strategic value, noise-heavy)
+FILTERED_SUBJECTS = {"MEDIA_PRESS", "DEMOGRAPHICS"}
+
+# Minimum cluster size for geo_society track (higher bar than other tracks)
+SOCIETY_MIN_CLUSTER = 10
 
 
 def is_geo(c):
@@ -133,13 +144,11 @@ def _primary_actor(actor_str):
     return actor_str.split(",")[0].strip()
 
 
-def _identity_labels(t, protagonist, home_cities):
+def _identity_labels(t, ubiquitous):
     """Build the set of specific identity labels for a title.
 
     Prefixed to avoid collision: TGT:, PLC:, PER:, ORG:, EVT:
-    Excludes: home cities, high-freq orgs, NONE target.
-    Does NOT exclude protagonist here -- actor+action_class gate already
-    groups by story type, so protagonist is a valid discriminator within group.
+    Excludes: ubiquitous labels (dynamically computed), high-freq orgs, NONE target.
     """
     labels = set()
     tgt = t.get("target") or ""
@@ -149,10 +158,13 @@ def _identity_labels(t, protagonist, home_cities):
             if v and v != "NONE":
                 labels.add("TGT:" + v)
     for p in t.get("places", []):
-        if p.upper() not in home_cities:
-            labels.add("PLC:" + p.upper())
+        lbl = "PLC:" + p.upper()
+        if lbl not in ubiquitous:
+            labels.add(lbl)
     for p in t.get("persons", []):
-        labels.add("PER:" + p.upper())
+        lbl = "PER:" + p.upper()
+        if lbl not in ubiquitous:
+            labels.add(lbl)
     for o in t.get("orgs", []):
         if o.upper() not in HIGH_FREQ_ORGS:
             labels.add("ORG:" + o.upper())
@@ -161,18 +173,14 @@ def _identity_labels(t, protagonist, home_cities):
     return labels
 
 
-def _louvain_split(
-    indices, titles, sector, subject, protagonist, home_cities, temporal_mode="off"
-):
+def _louvain_split(indices, titles, sector, subject, ubiquitous, temporal_mode="off"):
     """Louvain community detection on identity-label Jaccard similarity.
 
     Titles with zero identity labels are merged into the largest community
     within their sector+subject group (they belong to the topic area but
     can't be further discriminated).
     """
-    label_sets = {
-        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
-    }
+    label_sets = {i: _identity_labels(titles[i], ubiquitous) for i in indices}
 
     has_labels = [i for i in indices if label_sets[i]]
     no_labels = [i for i in indices if not label_sets[i]]
@@ -230,21 +238,19 @@ TEMPORAL_GAP_DAYS = 3  # hard mode: natural gap threshold for split points
 TEMPORAL_DECAY_RATE = 0.07  # soft mode: edge weight decay per day beyond 2-day grace
 
 
-def _find_anchor_keywords(indices, titles, protagonist, home_cities, centroid_id):
+def _find_anchor_keywords(indices, titles, ubiquitous, centroid_id):
     """Find specific, frequent signals that can pre-split a large group.
 
     An anchor keyword is a signal (person, org, place, named_event, target)
     that appears in >= ANCHOR_MIN_COUNT titles but < ANCHOR_MAX_RATIO of the
     group. These are specific enough to identify a distinct sub-story.
 
-    Excludes: protagonist persons, home cities, and the centroid's own
-    country as a target (TGT:RU for Russia, TGT:FR for France, etc.)
+    Excludes: ubiquitous labels (already filtered in _identity_labels) and
+    the centroid's own country as a target (TGT:RU for Russia, TGT:FR for France, etc.)
 
     Returns dict: {anchor_label: [title_indices]}
     """
-    label_sets = {
-        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
-    }
+    label_sets = {i: _identity_labels(titles[i], ubiquitous) for i in indices}
 
     # Build set of self-target labels to exclude (e.g., TGT:RU for EUROPE-RUSSIA)
     # The centroid country part maps to common target codes
@@ -268,9 +274,7 @@ def _find_anchor_keywords(indices, titles, protagonist, home_cities, centroid_id
     label_counts = Counter()
     for i in indices:
         for lbl in label_sets[i]:
-            # Exclude protagonist and self-targets
-            if lbl.startswith("PER:") and lbl[4:] in protagonist:
-                continue
+            # Exclude self-targets (ubiquitous labels already filtered)
             if lbl in self_targets:
                 continue
             label_counts[lbl] += 1
@@ -289,9 +293,7 @@ def _find_anchor_keywords(indices, titles, protagonist, home_cities, centroid_id
     return anchors
 
 
-def _anchor_split(
-    indices, titles, sector, subject, protagonist, home_cities, centroid_id
-):
+def _anchor_split(indices, titles, sector, subject, ubiquitous, centroid_id):
     """Pre-split a large group by anchor keywords before Louvain.
 
     1. Find anchor keywords (specific, frequent signals)
@@ -299,17 +301,13 @@ def _anchor_split(
     3. Titles matching no anchor go to a "remainder" group
     4. Each anchor group and the remainder get Louvain or stay as-is
     """
-    anchors = _find_anchor_keywords(
-        indices, titles, protagonist, home_cities, centroid_id
-    )
+    anchors = _find_anchor_keywords(indices, titles, ubiquitous, centroid_id)
 
     if not anchors:
         # No anchor keywords found -- fall through to Louvain
         return None
 
-    label_sets = {
-        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
-    }
+    label_sets = {i: _identity_labels(titles[i], ubiquitous) for i in indices}
 
     # Assign each title to its best anchor (most shared anchor labels)
     anchor_labels = set(anchors.keys())
@@ -446,15 +444,14 @@ def _process_group(
     titles,
     sector,
     subject,
-    protagonist,
-    home_cities,
+    ubiquitous,
     centroid_id,
     temporal_mode="off",
 ):
     """Process a single group through anchor split -> Louvain pipeline."""
     # Try anchor keyword split first
     anchor_groups = _anchor_split(
-        indices, titles, sector, subject, protagonist, home_cities, centroid_id
+        indices, titles, sector, subject, ubiquitous, centroid_id
     )
 
     results = []
@@ -471,8 +468,7 @@ def _process_group(
                 titles,
                 sector,
                 subject,
-                protagonist,
-                home_cities,
+                ubiquitous,
                 temporal_mode,
             )
             results.extend(subclusters)
@@ -484,7 +480,7 @@ def _process_group(
     return results
 
 
-def cluster_topdown(titles, centroid_id, temporal_mode="off"):
+def cluster_topdown(titles, centroid_id, temporal_mode="off", ubiquitous=None):
     """4-level clustering:
       L1: sector + subject  (domain grouping)
       L1.5: primary target split  (separate story axes by foreign target)
@@ -494,8 +490,8 @@ def cluster_topdown(titles, centroid_id, temporal_mode="off"):
     Small groups stay as a single topic. Target split separates e.g.
     "Israel strikes Iran" from "Russia strikes Ukraine" within MILITARY/AERIAL.
     """
-    protagonist = CTM_PROTAGONIST.get(centroid_id, set())
-    home_cities = CTM_HOME_CITIES.get(centroid_id, set())
+    if ubiquitous is None:
+        ubiquitous = compute_ubiquitous_labels(titles)
 
     # Derive home ISO codes for target split
     _CENTROID_TO_ISO = {
@@ -548,8 +544,7 @@ def cluster_topdown(titles, centroid_id, temporal_mode="off"):
                             titles,
                             sector,
                             subject,
-                            protagonist,
-                            home_cities,
+                            ubiquitous,
                             centroid_id,
                             temporal_mode,
                         )
@@ -566,8 +561,7 @@ def cluster_topdown(titles, centroid_id, temporal_mode="off"):
                     titles,
                     sector,
                     subject,
-                    protagonist,
-                    home_cities,
+                    ubiquitous,
                     centroid_id,
                     temporal_mode,
                 )
@@ -626,7 +620,7 @@ def _title_features(title, labels, valid_words=None):
     return features
 
 
-def compute_coherence(cluster, titles, protagonist, home_cities):
+def compute_coherence(cluster, titles, ubiquitous):
     """Score cluster coherence and select core titles.
 
     Returns (core_indices, coherence_score, all_scores).
@@ -635,14 +629,11 @@ def compute_coherence(cluster, titles, protagonist, home_cities):
     - all_scores: centrality score per title index (for stats)
     """
     indices = cluster["indices"]
-    if len(indices) <= COHERENCE_TOP_N:
-        return indices, 99, {}  # small clusters are coherent by definition
+    # All clusters go through coherence check regardless of size
 
     # Build feature sets: corpus-filtered words + labels
     valid_words, _, _ = _corpus_content_words(titles, indices)
-    label_sets = {
-        i: _identity_labels(titles[i], protagonist, home_cities) for i in indices
-    }
+    label_sets = {i: _identity_labels(titles[i], ubiquitous) for i in indices}
     feature_sets = {
         i: _title_features(titles[i], label_sets[i], valid_words) for i in indices
     }
@@ -712,7 +703,7 @@ def compute_coherence(cluster, titles, protagonist, home_cities):
     return core, len(core_features), scores
 
 
-def filter_incoherent_clusters(clusters, titles, protagonist, home_cities):
+def filter_incoherent_clusters(clusters, titles, ubiquitous):
     """Apply coherence gate: dissolve clusters with no coherent core.
 
     Returns (coherent_clusters, dissolved_indices, stats).
@@ -727,7 +718,7 @@ def filter_incoherent_clusters(clusters, titles, protagonist, home_cities):
             coherent.append(cl)
             continue
 
-        core, score, _ = compute_coherence(cl, titles, protagonist, home_cities)
+        core, score, _ = compute_coherence(cl, titles, ubiquitous)
 
         if score >= COHERENCE_MIN_CORE:
             coherent.append(cl)
@@ -872,17 +863,17 @@ def _print_temporal_stats(clusters, titles):
 CLUSTER_MERGE_JACCARD = 0.20  # shared / union of identity labels
 CLUSTER_MERGE_DATE_DAYS = 3  # date ranges must overlap within this tolerance
 CLUSTER_MERGE_MIN_SHARED = (
-    3  # at least N shared identity labels (excl. protagonist + ubiquitous targets)
+    3  # at least N shared identity labels (excl. ubiquitous labels + targets)
 )
 
 
-def _merge_matching_clusters(clusters, titles, protagonist, home_cities):
+def _merge_matching_clusters(clusters, titles, ubiquitous):
     """Merge clusters that represent the same event.
 
     Two clusters match if:
     - Same sector (subject may differ -- NUCLEAR vs DEFENSE_POLICY for same speech)
     - Date ranges overlap within CLUSTER_MERGE_DATE_DAYS tolerance
-    - >= CLUSTER_MERGE_MIN_SHARED identity labels in common (excluding protagonist)
+    - >= CLUSTER_MERGE_MIN_SHARED identity labels in common (excl. ubiquitous)
     - Identity label Jaccard >= CLUSTER_MERGE_JACCARD
     """
     mergeable = [c for c in clusters if len(c["indices"]) >= 2]
@@ -891,19 +882,15 @@ def _merge_matching_clusters(clusters, titles, protagonist, home_cities):
     if len(mergeable) < 2:
         return clusters, {"merges": 0, "details": []}
 
-    # Protagonist labels to exclude from merge matching (too ubiquitous)
-    protagonist_labels = {("PER:" + p) for p in protagonist}
-
     # Compute profile per cluster: sector, date range, identity labels
     profiles = []
     for cl in mergeable:
         labels = set()
         dates = []
         for i in cl["indices"]:
-            labels.update(_identity_labels(titles[i], protagonist, home_cities))
+            labels.update(_identity_labels(titles[i], ubiquitous))
             if titles[i].get("pubdate_utc"):
                 dates.append(titles[i]["pubdate_utc"])
-        labels -= protagonist_labels
         profiles.append(
             {
                 "sector": cl["sector"],
@@ -1025,6 +1012,330 @@ def _merge_matching_clusters(clusters, titles, protagonist, home_cities):
     return result, {"merges": merge_count, "details": details}
 
 
+# ---------------------------------------------------------------------------
+# LLM-assisted topic merge (post mechanical merge, pre DB write)
+# ---------------------------------------------------------------------------
+
+LLM_CANDIDATE_MERGE_PROMPT = """\
+You receive candidate pairs of topic clusters that MAY describe the same story.
+Each pair shows two clusters with their sector/subject, signals, date range, and a sample headline.
+
+For each pair, decide: MERGE (same story) or SKIP (different stories).
+
+Rules:
+- MERGE if they describe the same event, announcement, or policy (even across different subjects)
+- Different locations = different stories (Hormuz vs Mediterranean, Iraq vs Congo)
+- Different actors/targets = likely different stories unless clearly the same incident
+- DO NOT merge topics that merely share a theme or sector
+- DO NOT merge if the only link is the country name or its leader
+
+Return JSON: {"merge": [1, 2, 5], "skip": [3, 4]}
+- Numbers = pair IDs that should merge / should not merge
+ONLY return the JSON."""
+
+
+def _build_cluster_profile(cluster, titles, ubiquitous):
+    """Build a compact signal profile for a cluster (for LLM merge input)."""
+    labels = Counter()
+    dates = []
+    for i in cluster["indices"]:
+        t = titles[i]
+        for p in t.get("persons", []):
+            lbl = "PER:" + p.upper()
+            if lbl not in ubiquitous:
+                labels[lbl] += 1
+        for o in t.get("orgs", []):
+            if o.upper() not in HIGH_FREQ_ORGS:
+                labels["ORG:" + o.upper()] += 1
+        for pl in t.get("places", []):
+            lbl = "PLC:" + pl.upper()
+            if lbl not in ubiquitous:
+                labels[lbl] += 1
+        for ne in t.get("named_events", []):
+            labels["EVT:" + ne] += 1
+        tgt = t.get("target") or ""
+        if tgt and tgt != "NONE":
+            for v in tgt.split(","):
+                v = v.strip()
+                if v and v != "NONE":
+                    labels["TGT:" + v] += 1
+        if t.get("pubdate_utc"):
+            dates.append(t["pubdate_utc"])
+
+    # Top signals by frequency (most distinctive)
+    top = [lbl for lbl, _ in labels.most_common(6)]
+
+    # Pick a representative headline (shortest English-looking title from cluster)
+    sample = ""
+    for i in cluster["indices"]:
+        t = titles[i].get("title_display") or ""
+        if t and all(ord(c) < 256 for c in t[:20]):
+            if not sample or len(t) < len(sample):
+                sample = t
+    if not sample:
+        sample = titles[cluster["indices"][0]].get("title_display", "")
+    sample = sample[:90]
+
+    return {
+        "sector": cluster["sector"],
+        "subject": cluster.get("subject") or "?",
+        "n": len(cluster["indices"]),
+        "signals": top,
+        "labels": labels,
+        "sample": sample,
+        "min_date": min(dates) if dates else None,
+        "max_date": max(dates) if dates else None,
+    }
+
+
+def _find_merge_candidates(profiles, track_clusters):
+    """Find candidate pairs for LLM merge using signal overlap.
+
+    Returns list of (idx_a, idx_b, shared_signals) tuples.
+    """
+    candidates = []
+    for i in range(len(profiles)):
+        for j in range(i + 1, len(profiles)):
+            pi, pj = profiles[i], profiles[j]
+
+            # Date overlap check: skip if no temporal overlap (7-day buffer)
+            if pi["min_date"] and pj["min_date"] and pi["max_date"] and pj["max_date"]:
+                from datetime import timedelta
+
+                buffer = timedelta(days=7)
+                if pi["max_date"] + buffer < pj["min_date"]:
+                    continue
+                if pj["max_date"] + buffer < pi["min_date"]:
+                    continue
+
+            # Signal overlap: Jaccard on label keys (ignoring counts)
+            keys_i = set(pi["labels"].keys())
+            keys_j = set(pj["labels"].keys())
+            shared = keys_i & keys_j
+            union = keys_i | keys_j
+            if not union or len(shared) < 2:
+                continue
+            # Require strong Jaccard on non-target labels AND a location/event anchor
+            # TGT labels are too generic (country codes overlap across unrelated stories)
+            nontgt_i = {k for k in keys_i if not k.startswith("TGT:")}
+            nontgt_j = {k for k in keys_j if not k.startswith("TGT:")}
+            nontgt_shared = nontgt_i & nontgt_j
+            nontgt_union = nontgt_i | nontgt_j
+            if not nontgt_union or not nontgt_shared:
+                continue
+            nontgt_jaccard = len(nontgt_shared) / len(nontgt_union)
+
+            place_event_shared = [
+                s for s in nontgt_shared if s.startswith(("PLC:", "EVT:"))
+            ]
+            person_shared = [s for s in nontgt_shared if s.startswith("PER:")]
+            same_sector = pi["sector"] == pj["sector"]
+            same_subject = (
+                same_sector and pi["subject"] == pj["subject"] and pi["subject"] != "?"
+            )
+
+            # Cross-sector: require 2+ shared places/events (strong location anchor)
+            # Same sector different subject: require 1+ shared place/event
+            # Same subject: shared person is enough
+            if same_subject:
+                has_anchor = place_event_shared or len(person_shared) >= 1
+            elif same_sector:
+                has_anchor = len(place_event_shared) >= 1
+            else:
+                has_anchor = len(place_event_shared) >= 2
+
+            if nontgt_jaccard >= 0.20 and has_anchor:
+                candidates.append((i, j, sorted(nontgt_shared)[:5]))
+
+    return candidates
+
+
+def _format_candidate_pair(pair_id, pi, pj, shared):
+    """Format a candidate pair for LLM input."""
+
+    def fmt(p):
+        sig_str = ", ".join(p["signals"]) if p["signals"] else "none"
+        date_str = ""
+        if p["min_date"] and p["max_date"]:
+            d0 = (
+                p["min_date"].strftime("%b %d")
+                if hasattr(p["min_date"], "strftime")
+                else str(p["min_date"])[:10]
+            )
+            d1 = (
+                p["max_date"].strftime("%b %d")
+                if hasattr(p["max_date"], "strftime")
+                else str(p["max_date"])[:10]
+            )
+            date_str = " %s-%s" % (d0, d1)
+        return '[%d titles] %s/%s | %s%s\n   "%s"' % (
+            p["n"],
+            p["sector"],
+            p["subject"],
+            sig_str,
+            date_str,
+            p["sample"],
+        )
+
+    shared_str = ", ".join(shared) if shared else "none"
+    return "Pair %d (shared: %s):\n  A: %s\n  B: %s" % (
+        pair_id,
+        shared_str,
+        fmt(pi),
+        fmt(pj),
+    )
+
+
+async def _llm_merge_clusters(clusters, titles, ubiquitous):
+    """LLM-assisted merge via candidate pairs.
+
+    1. Build signal profiles for all emerged clusters per track
+    2. Pre-compute candidate pairs (shared signals / date overlap)
+    3. Send only candidates to LLM for yes/no confirmation
+    4. Apply confirmed merges in memory
+    """
+    from core.llm_utils import extract_json
+
+    emerged = [c for c in clusters if len(c["indices"]) >= 2]
+    singles = [c for c in clusters if len(c["indices"]) < 2]
+
+    if len(emerged) < 2:
+        return clusters, {"llm_merges": 0, "details": []}
+
+    by_track = defaultdict(list)
+    for c in emerged:
+        track = SECTOR_TO_TRACK.get(c["sector"], "geo_politics")
+        by_track[track].append(c)
+
+    all_merged = []
+    total_merges = 0
+    details = []
+
+    for track, track_clusters in by_track.items():
+        if len(track_clusters) < 2:
+            all_merged.extend(track_clusters)
+            continue
+
+        # Build profiles
+        profiles = [
+            _build_cluster_profile(c, titles, ubiquitous) for c in track_clusters
+        ]
+
+        # Find candidate pairs
+        candidates = _find_merge_candidates(profiles, track_clusters)
+        if not candidates:
+            print("  LLM merge for %s: no candidates" % track)
+            all_merged.extend(track_clusters)
+            continue
+
+        print(
+            "  LLM merge for %s (%d clusters, %d candidates)..."
+            % (track, len(track_clusters), len(candidates))
+        )
+
+        # Format candidate pairs for LLM
+        lines = []
+        for pair_id, (i, j, shared) in enumerate(candidates, 1):
+            lines.append(
+                _format_candidate_pair(pair_id, profiles[i], profiles[j], shared)
+            )
+
+        pairs_text = "\n\n".join(lines)
+
+        headers = {
+            "Authorization": "Bearer %s" % config.deepseek_api_key,
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": config.llm_model,
+            "messages": [
+                {"role": "system", "content": LLM_CANDIDATE_MERGE_PROMPT},
+                {"role": "user", "content": pairs_text},
+            ],
+            "temperature": 0.1,
+            "max_tokens": 500,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                    "%s/chat/completions" % config.deepseek_api_url,
+                    headers=headers,
+                    json=payload,
+                )
+                if resp.status_code != 200:
+                    print("    LLM error: HTTP %d" % resp.status_code)
+                    all_merged.extend(track_clusters)
+                    continue
+
+            raw = resp.json()["choices"][0]["message"]["content"]
+            result = extract_json(raw)
+        except Exception as e:
+            print("    LLM error: %s" % e)
+            all_merged.extend(track_clusters)
+            continue
+
+        if not result or "merge" not in result:
+            print("    LLM: could not parse response")
+            all_merged.extend(track_clusters)
+            continue
+
+        # Apply confirmed pairs directly (no transitive chaining)
+        # Each cluster can only be absorbed once; larger cluster wins as anchor
+        absorbed = set()  # clusters already consumed
+        groups = defaultdict(list)  # anchor_idx -> [absorbed indices]
+
+        for pair_id in sorted(result["merge"]):
+            if 0 < pair_id <= len(candidates):
+                ci, cj, _ = candidates[pair_id - 1]
+                if ci in absorbed or cj in absorbed:
+                    continue
+                # Larger = anchor
+                if len(track_clusters[ci]["indices"]) >= len(
+                    track_clusters[cj]["indices"]
+                ):
+                    anchor, other = ci, cj
+                else:
+                    anchor, other = cj, ci
+                if anchor not in absorbed:
+                    groups[anchor].append(other)
+                    absorbed.add(other)
+
+        merged_indices = set()
+        for anchor_idx, absorbed_list in groups.items():
+            anchor = track_clusters[anchor_idx]
+            merged_titles = []
+            for idx in absorbed_list:
+                other = track_clusters[idx]
+                anchor["indices"].extend(other["indices"])
+                merged_indices.add(idx)
+                total_merges += 1
+                merged_titles.append(
+                    "[%d] %s/%s"
+                    % (
+                        len(other["indices"]),
+                        other["sector"],
+                        other.get("subject", "?"),
+                    )
+                )
+
+            detail = "    [%d] %s/%s <- %s" % (
+                len(anchor["indices"]),
+                anchor["sector"],
+                anchor.get("subject", "?"),
+                " + ".join(merged_titles),
+            )
+            details.append(detail)
+            print(detail)
+
+        for i, c in enumerate(track_clusters):
+            if i not in merged_indices:
+                all_merged.append(c)
+
+    all_merged.extend(singles)
+    return all_merged, {"llm_merges": total_merges, "details": details}
+
+
 def assign_track(cluster, titles):
     """Assign a cluster to its best-fit track based on sector."""
     # Use sector of the cluster (not domain)
@@ -1052,119 +1363,13 @@ def tag_geo(cluster_indices, titles, centroid_id):
     return "bilateral", top_centroid
 
 
-DICE_MERGE_THRESHOLD = 0.40  # slightly above Phase 4.1's 0.35 to reduce false positives
-
-
-def _event_title_words(title):
-    """Extract content words from a generated event title."""
-    if not title:
-        return set()
-    return _tokenize(title)
-
-
-def merge_similar_topics(conn, ctm_ids):
-    """Mechanical post-clustering merge pass.
-
-    Within each sector+subject group, find events whose generated titles
-    have Dice word overlap >= threshold. Merge smaller into larger by
-    moving title links and deleting the smaller event.
-
-    Only merges events that share the same ctm_id (same track).
-    """
-    cur = conn.cursor()
-
-    # Load all non-catchall events with titles for these CTMs.
-    # Use majority sector+subject from underlying titles for grouping.
-    cur.execute(
-        """SELECT e.id, e.title, e.source_batch_count, e.ctm_id,
-                  (SELECT tl2.sector FROM event_v3_titles et2
-                   JOIN title_labels tl2 ON tl2.title_id = et2.title_id
-                   WHERE et2.event_id = e.id AND tl2.sector IS NOT NULL
-                   GROUP BY tl2.sector ORDER BY COUNT(*) DESC LIMIT 1) as sector,
-                  (SELECT tl3.subject FROM event_v3_titles et3
-                   JOIN title_labels tl3 ON tl3.title_id = et3.title_id
-                   WHERE et3.event_id = e.id AND tl3.subject IS NOT NULL
-                   GROUP BY tl3.subject ORDER BY COUNT(*) DESC LIMIT 1) as subject
-           FROM events_v3 e
-           WHERE e.ctm_id = ANY(%s::uuid[])
-             AND e.title IS NOT NULL
-             AND NOT e.is_catchall""",
-        (ctm_ids,),
-    )
-    rows = cur.fetchall()
-
-    # Group by (ctm_id, sector) -- merge across subjects within same sector.
-    # Subjects can disagree for the same story (e.g., MEDIATION vs SUMMIT
-    # for "Zelensky visits Macron").
-    groups = defaultdict(list)
-    for eid, title, count, ctm_id, sector, subject in rows:
-        groups[(str(ctm_id), sector)].append(
-            {"id": str(eid), "title": title, "count": count or 0}
-        )
-
-    total_merged = 0
-    for (ctm_id, sector, subject), events in groups.items():
-        if len(events) < 2:
-            continue
-
-        # Sort by size descending (largest = anchor)
-        events.sort(key=lambda e: -e["count"])
-        word_sets = [_event_title_words(e["title"]) for e in events]
-
-        # Find merge pairs
-        merged_ids = set()
-        for i in range(len(events)):
-            if events[i]["id"] in merged_ids:
-                continue
-            for j in range(i + 1, len(events)):
-                if events[j]["id"] in merged_ids:
-                    continue
-                wa, wb = word_sets[i], word_sets[j]
-                if not wa or not wb:
-                    continue
-                dice = 2 * len(wa & wb) / (len(wa) + len(wb))
-                if dice >= DICE_MERGE_THRESHOLD:
-                    anchor_id = events[i]["id"]
-                    candidate_id = events[j]["id"]
-                    # Move titles, delete candidate
-                    cur.execute(
-                        "UPDATE event_v3_titles SET event_id = %s "
-                        "WHERE event_id = %s",
-                        (anchor_id, candidate_id),
-                    )
-                    cur.execute(
-                        "DELETE FROM events_v3 WHERE id = %s",
-                        (candidate_id,),
-                    )
-                    cur.execute(
-                        """UPDATE events_v3
-                           SET source_batch_count = (
-                               SELECT COUNT(*) FROM event_v3_titles
-                               WHERE event_id = %s
-                           ), updated_at = NOW()
-                           WHERE id = %s""",
-                        (anchor_id, anchor_id),
-                    )
-                    merged_ids.add(candidate_id)
-                    events[i]["count"] += events[j]["count"]
-                    total_merged += 1
-                    print(
-                        "  MERGE [%d]+[%d] dice=%.2f: %s <- %s"
-                        % (
-                            events[i]["count"],
-                            events[j]["count"],
-                            dice,
-                            events[i]["title"][:50],
-                            events[j]["title"][:50],
-                        )
-                    )
-
-    conn.commit()
-    return total_merged
-
-
 def rebuild(
-    centroid_id, month, write=False, generate_titles=False, temporal_mode="off"
+    centroid_id,
+    month,
+    write=False,
+    generate_titles=False,
+    temporal_mode="off",
+    only_track=None,
 ):
     conn = get_connection()
     cur = conn.cursor()
@@ -1204,22 +1409,18 @@ def rebuild(
         if not write:
             print("Continuing with dry run anyway...")
 
-    # Filter out non-strategic titles
+    # Filter out non-strategic titles + low-value subjects
     before = len(titles)
-    titles = [t for t in titles if t["sector"] != "NON_STRATEGIC"]
-    non_strat = before - len(titles)
-    if non_strat:
-        print("Filtered %d NON_STRATEGIC titles (%d remain)" % (non_strat, len(titles)))
+    titles = [
+        t
+        for t in titles
+        if t["sector"] != "NON_STRATEGIC" and t["subject"] not in FILTERED_SUBJECTS
+    ]
+    filtered = before - len(titles)
+    if filtered:
+        print("Filtered %d non-strategic titles (%d remain)" % (filtered, len(titles)))
 
-    # Normalize signals
-    print("\nNormalizing signals...")
-    aliases = normalize_title_signals(
-        titles, conn, ["places", "persons", "orgs", "named_events"]
-    )
-    for sig, am in aliases.items():
-        new_only = {k: v for k, v in am.items() if k != v}
-        if new_only:
-            print("  %s: %s" % (sig, dict(list(new_only.items())[:5])))
+    # Signal normalization now happens at Phase 3.1 extraction time
 
     # Topic groups
     groups = defaultdict(list)
@@ -1236,9 +1437,12 @@ def rebuild(
                 % (key[0], key[1] or "NULL", len(groups[key]), track)
             )
 
+    # Compute ubiquitous labels once
+    ubiquitous = compute_ubiquitous_labels(titles)
+
     # Cluster
     print("\nClustering (temporal=%s)..." % temporal_mode)
-    all_clusters = cluster_topdown(titles, centroid_id, temporal_mode)
+    all_clusters = cluster_topdown(titles, centroid_id, temporal_mode, ubiquitous)
 
     # Hard temporal mode: split temporally diffuse clusters before coherence
     if temporal_mode == "hard":
@@ -1250,10 +1454,8 @@ def rebuild(
             )
 
     # Coherence gate: dissolve incoherent clusters
-    protagonist = CTM_PROTAGONIST.get(centroid_id, set())
-    home_cities_set = CTM_HOME_CITIES.get(centroid_id, set())
     all_clusters, coh_stats = filter_incoherent_clusters(
-        all_clusters, titles, protagonist, home_cities_set
+        all_clusters, titles, ubiquitous
     )
     if coh_stats["dissolved"] > 0:
         print(
@@ -1263,12 +1465,35 @@ def rebuild(
 
     # Merge matching clusters (same sector + date overlap + shared labels)
     all_clusters, merge_stats = _merge_matching_clusters(
-        all_clusters, titles, protagonist, home_cities_set
+        all_clusters, titles, ubiquitous
     )
     if merge_stats["merges"]:
-        print("Cluster merge: %d pairs merged" % merge_stats["merges"])
+        print("Mechanical merge: %d pairs merged" % merge_stats["merges"])
         for line in merge_stats["details"]:
             print(line)
+
+    # LLM-assisted merge (catches cross-subject duplicates mechanical merge misses)
+    print("\nLLM topic merge...")
+    all_clusters, llm_stats = asyncio.run(
+        _llm_merge_clusters(all_clusters, titles, ubiquitous)
+    )
+    if llm_stats["llm_merges"]:
+        print("LLM merge: %d additional merges" % llm_stats["llm_merges"])
+    else:
+        print("LLM merge: no additional merges")
+
+    # Apply higher threshold for geo_society (need significant clusters, not noise)
+    society_dissolved = 0
+    for c in all_clusters:
+        track = SECTOR_TO_TRACK.get(c["sector"], "geo_politics")
+        if track == "geo_society" and len(c["indices"]) < SOCIETY_MIN_CLUSTER:
+            society_dissolved += len(c["indices"])
+            c["indices"] = c["indices"][:1]  # reduce to single-title -> catchall
+    if society_dissolved:
+        print(
+            "Society threshold (%d): dissolved %d titles"
+            % (SOCIETY_MIN_CLUSTER, society_dissolved)
+        )
 
     emerged = sorted(
         [c for c in all_clusters if len(c["indices"]) >= 2],
@@ -1310,8 +1535,17 @@ def rebuild(
     # Write to DB
     print("\nWriting to DB...")
 
-    # Clean ALL events for all CTMs of this centroid+month
-    all_ctm_ids = list(ctm_map.keys())
+    # Clean events for target CTMs
+    if only_track:
+        target_ctm = track_to_ctm.get(only_track)
+        if not target_ctm:
+            print("ERROR: no CTM found for track '%s'" % only_track)
+            conn.close()
+            return
+        all_ctm_ids = [target_ctm]
+        print("  Writing only track: %s (CTM %s)" % (only_track, target_ctm[:8]))
+    else:
+        all_ctm_ids = list(ctm_map.keys())
     for ctm_id in all_ctm_ids:
         cur.execute(
             "DELETE FROM event_strategic_narratives WHERE event_id IN "
@@ -1337,6 +1571,8 @@ def rebuild(
     skipped = 0
     for cl in all_clusters:
         track = assign_track(cl, titles)
+        if only_track and track != only_track:
+            continue
         ctm_id = track_to_ctm.get(track)
         if not ctm_id:
             # Fall back to geo_politics if no CTM for this track
@@ -1396,18 +1632,6 @@ def rebuild(
             print("  %s..." % track, flush=True)
             asyncio.run(process_events(max_events=300, ctm_id=ctm_id))
 
-        # Mechanical merge pass on generated titles
-        print("\nMechanical merge pass (Dice >= %.2f)..." % DICE_MERGE_THRESHOLD)
-        merged = merge_similar_topics(conn, all_ctm_ids)
-        if merged:
-            print("Merged %d topic pairs" % merged)
-            # Re-generate titles for merged events (source count changed)
-            print("Re-generating titles for merged events...")
-            for ctm_id, track in ctm_map.items():
-                asyncio.run(process_events(max_events=300, ctm_id=ctm_id))
-        else:
-            print("No merge candidates found")
-
     conn.close()
     print("\nDone.")
 
@@ -1456,7 +1680,7 @@ def load_unlinked_titles(conn, centroid_id, month):
     ]
 
 
-def load_existing_event_profiles(conn, centroid_id, month, protagonist, home_cities):
+def load_existing_event_profiles(conn, centroid_id, month, ubiquitous):
     """Load identity profiles for existing non-catchall events."""
     cur = conn.cursor()
     cur.execute(
@@ -1481,7 +1705,6 @@ def load_existing_event_profiles(conn, centroid_id, month, protagonist, home_cit
         (ctm_ids,),
     )
 
-    protagonist_labels = {("PER:" + p) for p in protagonist}
     events = defaultdict(lambda: {"labels": set(), "dates": [], "sectors": Counter()})
     for row in cur.fetchall():
         eid = str(row[0])
@@ -1496,7 +1719,7 @@ def load_existing_event_profiles(conn, centroid_id, month, protagonist, home_cit
         }
         if row[7]:
             ev["sectors"][row[7]] += 1
-        ev["labels"].update(_identity_labels(t_dict, protagonist, home_cities))
+        ev["labels"].update(_identity_labels(t_dict, ubiquitous))
         if row[8]:
             ev["dates"].append(row[8])
 
@@ -1508,7 +1731,7 @@ def load_existing_event_profiles(conn, centroid_id, month, protagonist, home_cit
                 "event_id": eid,
                 "ctm_id": ev["ctm_id"],
                 "sector": sector,
-                "labels": ev["labels"] - protagonist_labels,
+                "labels": ev["labels"],
                 "min_date": min(ev["dates"]) if ev["dates"] else None,
                 "max_date": max(ev["dates"]) if ev["dates"] else None,
             }
@@ -1516,16 +1739,14 @@ def load_existing_event_profiles(conn, centroid_id, month, protagonist, home_cit
     return result
 
 
-def find_best_match(cluster, titles, existing, protagonist, home_cities):
+def find_best_match(cluster, titles, existing, ubiquitous):
     """Find the best existing event match for a new cluster."""
-    protagonist_labels = {("PER:" + p) for p in protagonist}
     labels = set()
     dates = []
     for i in cluster["indices"]:
-        labels.update(_identity_labels(titles[i], protagonist, home_cities))
+        labels.update(_identity_labels(titles[i], ubiquitous))
         if titles[i].get("pubdate_utc"):
             dates.append(titles[i]["pubdate_utc"])
-    labels -= protagonist_labels
 
     min_date = min(dates) if dates else None
     max_date = max(dates) if dates else None
@@ -1576,32 +1797,30 @@ def incremental_update(centroid_id, month, write=False):
         return
 
     before = len(titles)
-    titles = [t for t in titles if t["sector"] and t["sector"] != "NON_STRATEGIC"]
+    titles = [
+        t
+        for t in titles
+        if t["sector"]
+        and t["sector"] != "NON_STRATEGIC"
+        and t["subject"] not in FILTERED_SUBJECTS
+    ]
     filtered = before - len(titles)
     if filtered:
-        print(
-            "Filtered %d (NON_STRATEGIC + no sector): %d remain"
-            % (filtered, len(titles))
-        )
+        print("Filtered %d non-strategic titles: %d remain" % (filtered, len(titles)))
 
     if not titles:
         print("No strategic titles to cluster.")
         conn.close()
         return
 
-    normalize_title_signals(titles, conn, ["places", "persons", "orgs", "named_events"])
+    ubiquitous = compute_ubiquitous_labels(titles)
 
-    protagonist = CTM_PROTAGONIST.get(centroid_id, set())
-    home_cities_set = CTM_HOME_CITIES.get(centroid_id, set())
-
-    clusters = cluster_topdown(titles, centroid_id, temporal_mode="hard")
+    clusters = cluster_topdown(
+        titles, centroid_id, temporal_mode="hard", ubiquitous=ubiquitous
+    )
     clusters, _ = _temporal_split_clusters(clusters, titles)
-    clusters, _ = filter_incoherent_clusters(
-        clusters, titles, protagonist, home_cities_set
-    )
-    clusters, _ = _merge_matching_clusters(
-        clusters, titles, protagonist, home_cities_set
-    )
+    clusters, _ = filter_incoherent_clusters(clusters, titles, ubiquitous)
+    clusters, _ = _merge_matching_clusters(clusters, titles, ubiquitous)
 
     emerged = [c for c in clusters if len(c["indices"]) >= 2]
     catchall = [c for c in clusters if len(c["indices"]) < 2]
@@ -1614,9 +1833,7 @@ def incremental_update(centroid_id, month, write=False):
         )
     )
 
-    existing = load_existing_event_profiles(
-        conn, centroid_id, month, protagonist, home_cities_set
-    )
+    existing = load_existing_event_profiles(conn, centroid_id, month, ubiquitous)
     print("Existing events to match against: %d" % len(existing))
 
     matched_count = 0
@@ -1624,7 +1841,7 @@ def incremental_update(centroid_id, month, write=False):
 
     for cl in clusters:
         n = len(cl["indices"])
-        match = find_best_match(cl, titles, existing, protagonist, home_cities_set)
+        match = find_best_match(cl, titles, existing, ubiquitous)
         track = assign_track(cl, titles)
         ctm_id = track_to_ctm.get(track) or track_to_ctm.get("geo_politics")
 
@@ -1714,6 +1931,10 @@ def main():
         action="store_true",
         help="Incremental mode: cluster only unlinked titles, match against existing events",
     )
+    parser.add_argument(
+        "--track",
+        help="Only write clusters for this track (e.g. geo_security). Others left untouched.",
+    )
     args = parser.parse_args()
 
     if args.incremental:
@@ -1725,6 +1946,7 @@ def main():
             write=args.write,
             generate_titles=args.titles,
             temporal_mode=args.temporal,
+            only_track=args.track,
         )
 
 

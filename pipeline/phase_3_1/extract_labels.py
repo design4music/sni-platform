@@ -38,7 +38,7 @@ from core.ontology import (
 )
 from core.prompts import LABEL_SIGNAL_EXTRACTION_PROMPT
 from core.publisher_filter import clean_title_display, load_title_cleaning_patterns
-from core.signal_aliases import normalize_signals
+from core.signal_normalization import normalize_batch_signals
 
 # =============================================================================
 # PROMPT BUILDING
@@ -241,30 +241,8 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
         policies = []
         systems = []
 
-        # Apply signal alias normalization + cross-category moves
-        cats = {
-            "persons": persons,
-            "orgs": orgs,
-            "places": places,
-            "commodities": commodities,
-            "policies": policies,
-            "systems": systems,
-            "named_events": named_events,
-        }
-        all_moves = {}
-        for cat in cats:
-            cats[cat], moves = normalize_signals(cat, cats[cat])
-            for tgt, vals in moves.items():
-                all_moves.setdefault(tgt, []).extend(vals)
-        for tgt, vals in all_moves.items():
-            seen = {v.lower() for v in cats.get(tgt, [])}
-            for v in vals:
-                if v.lower() not in seen:
-                    seen.add(v.lower())
-                    cats.setdefault(tgt, []).append(v)
-        persons, orgs, places = cats["persons"], cats["orgs"], cats["places"]
-        commodities, policies = cats["commodities"], cats["policies"]
-        systems, named_events = cats["systems"], cats["named_events"]
+        # Note: batch-level word-containment normalization for places/persons
+        # happens in normalize_batch_signals() after all items are parsed
 
         # Extract entity_countries (entity -> ISO code mapping)
         entity_countries = normalize_entity_countries(item.get("entity_countries", {}))
@@ -770,6 +748,7 @@ def process_titles(
             logger.info("Batch {}/{}: {} titles".format(batch_num, total, len(batch)))
             result = process_batch_worker(batch_info)
             if result["results"]:
+                normalize_batch_signals(result["results"], conn)
                 written = write_to_db(conn, result["results"])
                 total_written += written
                 logger.info("  Wrote {} labels+signals".format(written))
@@ -788,6 +767,7 @@ def process_titles(
                 batch_num = futures[future]
                 result = future.result()
                 if result["results"]:
+                    normalize_batch_signals(result["results"], conn)
                     written = write_to_db(conn, result["results"])
                     total_written += written
                     logger.info(
