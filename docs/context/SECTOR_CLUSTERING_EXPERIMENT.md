@@ -2,7 +2,7 @@
 
 **Branch**: `feat/sector-clustering`
 **Last Updated**: 2026-03-26
-**Status**: Content review done (France + Russia security). LLM candidate-pair merge implemented and tested. Ready for code cleanup, full rebuild, and go-live.
+**Status**: Phase A (code cleanup) complete. Signal normalization refactored (word-containment replaces cosine similarity). Ready for Phase B (full March rebuild).
 
 ---
 
@@ -223,8 +223,9 @@ LLM merge catches cross-subject duplicates (e.g., Iraq soldier killed: TERRORISM
 
 ## Known Issues (open)
 
-1. **Signal normalization bugs**: AIR FRANCE -> FRANCE, Coupe de France -> Tour de France.
-   Cosine similarity threshold (0.6) too loose. Fix: raise threshold or add DB whitelist.
+1. ~~**Signal normalization bugs**~~ **FIXED (2026-03-26)**: replaced cosine similarity with
+   word-containment. Orgs no longer normalized (prevents AIR FRANCE -> FRANCE). Places/persons
+   use strict word-subset logic instead of fuzzy char n-gram matching.
 
 2. **Multi-country centroids** (Baltic): sector+subject grouping too coarse when 3 countries
    share a centroid. Each country's local stories mix. Potential fix: sub-group by country
@@ -250,28 +251,18 @@ LLM merge catches cross-subject duplicates (e.g., Iraq soldier killed: TERRORISM
 
 ## Go-Live Plan (2026-03-26)
 
-### Phase A: Code Cleanup
+### Phase A: Code Cleanup (DONE -- 2026-03-26)
 
-The experimental branch moved fast over two days. Before merging, clean up for production:
-
-1. **Remove dead LLM merge code**: `llm_merge_topics()` (old approach, post-DB, ~100 lines)
-   and its prompt `LLM_MERGE_PROMPT` are superseded by `_llm_merge_clusters()` (candidate-pair,
-   pre-DB). Also remove the `--llm-merge` CLI flag that calls the old function.
-2. **Remove `merge_similar_topics()`**: Dice-based post-write title merge (Phase 4.2 step).
-   Superseded by pre-DB candidate-pair merge. The Dice merge operates on LLM-generated titles
-   which we no longer depend on for merging.
-3. **Clean test files**: remove `test_*.py` experiment scripts from `pipeline/phase_4/`
-   (test_hybrid_clustering, test_louvain_clustering, test_faceted_cluster, etc. -- 7 files).
-4. **Standardize LLM params**: temperature, max_tokens, timeout -- single values or config.
-5. **Move hardcoded dicts to DB/config**: CTM_PROTAGONIST, CTM_HOME_CITIES. Either store in
-   `centroids` table profile_json or a separate config file. SECTOR_TO_TRACK can stay in code
-   (it's a stable mapping, not per-centroid data).
-6. **Remove unused import**: `uuid`.
-7. **Coherence gate change audit**: the bypass for small clusters (<=10 titles) was removed.
-   All clusters now go through coherence check. Verify this doesn't over-dissolve legitimate
-   small clusters on other centroids (USA, China, Baltic). Run dry-run on 3-4 centroids.
-8. **Signal normalization**: raise cosine threshold in `normalize_signals.py` from 0.6 to
-   ~0.75, or add a DB rejection list for known false matches.
+1. Dynamic ubiquitous labels (replaced hardcoded CTM_PROTAGONIST/CTM_HOME_CITIES dicts)
+2. Dead code removal (~250 lines: old LLM merge, Dice merge, unused imports)
+3. NON_STRATEGIC expansion (MEDIA_PRESS, DEMOGRAPHICS filtered; society min 10)
+4. Test file cleanup (9 experiment scripts removed)
+5. Frontend empty-state message for society tracks
+6. **Signal normalization refactor**: replaced cosine similarity (Phase 4) with word-containment
+   (Phase 3.1). Places/persons: shorter form subsumes longer ("Strait of Hormuz" -> "Hormuz").
+   Orgs/named_events: no normalization. Deleted `core/signal_aliases.py` (hardcoded dicts),
+   `pipeline/phase_4/normalize_signals.py` (ML similarity), `scripts/apply_signal_aliases.py`.
+   New: `core/signal_normalization.py` -- mechanical word-containment + signal_aliases DB persistence.
 
 ### Phase B: Full March Rebuild
 
@@ -313,7 +304,8 @@ The experimental branch moved fast over two days. Before merging, clean up for p
 | File | Role |
 |------|------|
 | `pipeline/phase_4/rebuild_centroid.py` | Test harness: cluster + write + merge + title gen |
-| `pipeline/phase_3_1/extract_labels.py` | Label extraction (sector/subject added) |
+| `pipeline/phase_3_1/extract_labels.py` | Label extraction (sector/subject added, word-containment normalization) |
+| `core/signal_normalization.py` | Post-extraction signal normalization (word-containment + alias DB) |
 | `core/prompts.py` | Extraction prompt (expanded taxonomy), CTM summary (unified) |
 | `pipeline/phase_4/generate_event_summaries_4_5a.py` | Event title/summary generation |
 | `pipeline/phase_4/generate_summaries_4_5.py` | CTM digest generation (unified, no dom/intl split) |
