@@ -149,6 +149,9 @@ def _identity_labels(t, ubiquitous):
 
     Prefixed to avoid collision: TGT:, PLC:, PER:, ORG:, EVT:
     Excludes: ubiquitous labels (dynamically computed), high-freq orgs, NONE target.
+
+    Only entity-level signals here (who/where). Structural labels (actor, action_class)
+    are used separately in pass-2 catchall rescue, not in Louvain clustering.
     """
     labels = set()
     tgt = t.get("target") or ""
@@ -233,8 +236,8 @@ ANCHOR_MIN_COUNT = 8  # signal must appear in >= 8 titles to be an anchor
 ANCHOR_MAX_RATIO = 0.40  # signal must appear in < 40% of group (otherwise too generic)
 
 # Temporal proximity settings
-TEMPORAL_WINDOW_DAYS = 5  # hard mode: split clusters spanning > this many days
-TEMPORAL_GAP_DAYS = 3  # hard mode: natural gap threshold for split points
+TEMPORAL_WINDOW_DAYS = 3  # hard mode: split clusters spanning > this many days
+TEMPORAL_GAP_DAYS = 1  # hard mode: natural gap threshold for split points
 TEMPORAL_DECAY_RATE = 0.07  # soft mode: edge weight decay per day beyond 2-day grace
 
 
@@ -740,6 +743,113 @@ def filter_incoherent_clusters(clusters, titles, ubiquitous):
         )
 
     return coherent, stats
+
+
+def _rescue_catchall(emerged, catchall, titles):
+    """Pass 2: assign catchall titles to emerged clusters using structural labels.
+
+    For each catchall title, find the best emerged cluster match based on:
+    - Same sector + subject (required)
+    - Shared actor, action_class, target (scored)
+    - Temporal proximity (within 3 days of cluster date range)
+
+    Modifies emerged and catchall in-place. Returns count of rescued titles.
+    """
+    if not emerged or not catchall:
+        return 0
+
+    # Build profiles for emerged clusters
+    profiles = []
+    for cl in emerged:
+        actors = Counter()
+        actions = Counter()
+        targets = Counter()
+        dates = []
+        for i in cl["indices"]:
+            t = titles[i]
+            a = t.get("actor") or ""
+            if a and a != "UNKNOWN":
+                actors[a] += 1
+            ac = t.get("action_class") or ""
+            if ac:
+                actions[ac] += 1
+            tgt = t.get("target") or ""
+            if tgt and tgt != "NONE":
+                for v in tgt.split(","):
+                    v = v.strip()
+                    if v and v != "NONE":
+                        targets[v] += 1
+            if t.get("pubdate_utc"):
+                dates.append(t["pubdate_utc"])
+        profiles.append(
+            {
+                "sector": cl["sector"],
+                "subject": cl["subject"],
+                "actors": set(actors),
+                "actions": set(actions),
+                "targets": set(targets),
+                "min_date": min(dates) if dates else None,
+                "max_date": max(dates) if dates else None,
+            }
+        )
+
+    rescued = 0
+    for ca in catchall:
+        if not ca["indices"]:
+            continue
+        i = ca["indices"][0]
+        t = titles[i]
+        t_sector = t.get("sector")
+        t_subject = t.get("subject")
+        t_actor = t.get("actor") or ""
+        t_action = t.get("action_class") or ""
+        t_target_raw = t.get("target") or ""
+        t_targets = set()
+        if t_target_raw and t_target_raw != "NONE":
+            t_targets = {
+                v.strip()
+                for v in t_target_raw.split(",")
+                if v.strip() and v.strip() != "NONE"
+            }
+        t_date = t.get("pubdate_utc")
+
+        best_idx = -1
+        best_score = 0
+
+        for pi, prof in enumerate(profiles):
+            # Must match sector + subject
+            if prof["sector"] != t_sector or prof["subject"] != t_subject:
+                continue
+
+            # Temporal check: within 3 days of cluster range
+            if t_date and prof["min_date"] and prof["max_date"]:
+                from datetime import timedelta
+
+                if t_date < prof["min_date"] - timedelta(days=3):
+                    continue
+                if t_date > prof["max_date"] + timedelta(days=3):
+                    continue
+
+            # Score shared structural labels
+            score = 1  # base: same sector+subject
+            if t_actor and t_actor in prof["actors"]:
+                score += 1
+            if t_action and t_action in prof["actions"]:
+                score += 1
+            if t_targets & prof["targets"]:
+                score += 1
+
+            if score > best_score:
+                best_score = score
+                best_idx = pi
+
+        # Require at least 2 matches beyond sector+subject (actor/action/target)
+        if best_score >= 3 and best_idx >= 0:
+            emerged[best_idx]["indices"].append(i)
+            ca["indices"] = []  # empty it
+            rescued += 1
+
+    return rescued
 
 
 def _temporal_split_clusters(clusters, titles, max_spread=TEMPORAL_WINDOW_DAYS):
@@ -1501,9 +1611,23 @@ def rebuild(
     )
     catchall = [c for c in all_clusters if len(c["indices"]) < 2]
     print(
-        "Results: %d emerged, %d catchall (%d%%)"
+        "Pass 1: %d emerged, %d catchall (%d%%)"
         % (len(emerged), len(catchall), len(catchall) * 100 // len(titles))
     )
+
+    # Pass 2: rescue catchall titles into emerged clusters using structural labels
+    rescued = _rescue_catchall(emerged, catchall, titles)
+    if rescued:
+        # Recount after rescue
+        catchall = [c for c in catchall if c["indices"]]  # remove emptied
+        print(
+            "Pass 2: rescued %d titles -> %d catchall (%d%%)"
+            % (
+                rescued,
+                len(catchall),
+                len(catchall) * 100 // len(titles),
+            )
+        )
 
     # Temporal spread stats
     _print_temporal_stats(emerged, titles)

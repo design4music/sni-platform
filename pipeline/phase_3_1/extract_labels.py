@@ -37,7 +37,6 @@ from core.ontology import (
     validate_domain,
 )
 from core.prompts import LABEL_SIGNAL_EXTRACTION_PROMPT
-from core.publisher_filter import clean_title_display, load_title_cleaning_patterns
 from core.signal_normalization import normalize_batch_signals
 
 # =============================================================================
@@ -417,24 +416,6 @@ def load_titles_needing_extraction(
         )
         rows = cur.fetchall()
         titles = [{"id": str(r[0]), "title_display": r[1]} for r in rows]
-
-        patterns = load_title_cleaning_patterns(conn)
-        updates = []
-        for t in titles:
-            original = t["title_display"] or ""
-            cleaned = clean_title_display(original, patterns)
-            if cleaned != original:
-                t["title_display"] = cleaned
-                updates.append((cleaned, t["id"]))
-        if updates:
-            from psycopg2.extras import execute_batch
-
-            execute_batch(
-                cur,
-                "UPDATE titles_v3 SET title_display = %s WHERE id = %s::uuid",
-                updates,
-            )
-            conn.commit()
         return titles
 
     # Build filter conditions
@@ -505,28 +486,6 @@ def load_titles_needing_extraction(
     rows = cur.fetchall()
 
     titles = [{"id": str(r[0]), "title_display": r[1]} for r in rows]
-
-    # Clean publisher artifacts from title_display on the fly
-    patterns = load_title_cleaning_patterns(conn)
-    updates = []
-    for t in titles:
-        original = t["title_display"] or ""
-        cleaned = clean_title_display(original, patterns)
-        if cleaned != original:
-            t["title_display"] = cleaned
-            updates.append((cleaned, t["id"]))
-
-    if updates:
-        from psycopg2.extras import execute_batch
-
-        execute_batch(
-            cur,
-            "UPDATE titles_v3 SET title_display = %s WHERE id = %s::uuid",
-            updates,
-        )
-        conn.commit()
-        logger.debug("Cleaned title_display for %d titles", len(updates))
-
     return titles
 
 
