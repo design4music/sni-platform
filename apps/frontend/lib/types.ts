@@ -65,6 +65,7 @@ export interface Event {
   importance_score?: number;
   is_catchall?: boolean;
   has_narratives?: boolean;
+  topic_core?: string;
   resolvedTitles?: Title[];
   // Bilateral badge (populated by track page for display)
   bucketLabel?: string;

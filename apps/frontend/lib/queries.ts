@@ -139,9 +139,10 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     importance_score: number | null;
     is_catchall: boolean;
     has_narratives: boolean;
+    topic_core: string | null;
   }>(
     `SELECT id, date, last_active, title, summary, tags, event_type, bucket_key,
-      source_batch_count, importance_score, is_catchall, has_narratives, source_title_ids
+      source_batch_count, importance_score, is_catchall, has_narratives, source_title_ids, topic_core
     FROM (
       -- Native events for this CTM
       SELECT
@@ -149,7 +150,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
         COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
         ${locCol('e', 'summary', locale)} as summary,
         e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.importance_score,
-        e.is_catchall,
+        e.is_catchall, e.topic_core,
         EXISTS(SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
         COALESCE((SELECT array_agg(evt.title_id ORDER BY evt.title_id) FROM event_v3_titles evt WHERE evt.event_id = e.id), '{}') as source_title_ids
       FROM events_v3 e
@@ -163,7 +164,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
         COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
         ${locCol('e', 'summary', locale)} as summary,
         e.tags, ab.event_type, ab.bucket_key, e.source_batch_count, e.importance_score,
-        e.is_catchall,
+        e.is_catchall, e.topic_core,
         EXISTS(SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
         COALESCE((SELECT array_agg(evt.title_id ORDER BY evt.title_id) FROM event_v3_titles evt WHERE evt.event_id = e.id), '{}') as source_title_ids
       FROM events_v3 ab
@@ -189,6 +190,7 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     importance_score: r.importance_score || undefined,
     is_catchall: r.is_catchall,
     has_narratives: r.has_narratives,
+    topic_core: r.topic_core || undefined,
   }));
   });
 }

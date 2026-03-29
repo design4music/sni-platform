@@ -147,6 +147,7 @@ print("L1 groups: %d" % len(l1_groups))
 # --- L2: anchor signal split + L3: temporal split ---
 ANCHOR_MIN = 3
 TIME_GAP_DAYS = 1
+MAX_GROUP = 50  # groups larger than this get recursive sub-splitting
 
 
 def temporal_split(group_indices):
@@ -163,16 +164,17 @@ def temporal_split(group_indices):
     return events
 
 
-all_events = []
-total_assigned = 0
-total_remainder = 0
+def find_anchor_groups(indices, exclude_anchors=None):
+    """Split indices by best anchor signal. Returns (anchor_groups, remainder).
 
-for (sector, subject), indices in l1_groups.items():
-    # Count anchor frequency within group
+    exclude_anchors: signals already used as anchors at higher levels (don't reuse).
+    """
+    exclude = exclude_anchors or set()
+
     group_freq = Counter()
     title_anchor_map = {}
     for i in indices:
-        a = get_anchors(i)
+        a = get_anchors(i) - exclude
         title_anchor_map[i] = a
         for s in a:
             group_freq[s] += 1
@@ -182,7 +184,6 @@ for (sector, subject), indices in l1_groups.items():
         s for s, c in group_freq.items() if c >= ANCHOR_MIN and c < group_size * 0.50
     }
 
-    # Assign each title to best anchor
     anchor_groups = defaultdict(list)
     remainder = []
     for i in indices:
@@ -193,65 +194,437 @@ for (sector, subject), indices in l1_groups.items():
         else:
             remainder.append(i)
 
-    # Temporal split within each anchor group
+    return dict(anchor_groups), remainder
+
+
+def find_text_groups(indices):
+    """Fallback: split by title text content words."""
+    word_freq = Counter()
+    title_words_map = {}
+    for i in indices:
+        words = title_content_words(titles[i]["title_display"])
+        title_words_map[i] = words
+        for w in words:
+            word_freq[w] += 1
+
+    group_size = len(indices)
+    # Filter: ubiquitous within THIS group (>20%) + too short (<4 chars)
+    local_ubiquitous = {w for w, c in word_freq.items() if c > group_size * 0.20}
+    text_anchors = {
+        w
+        for w, c in word_freq.items()
+        if c >= ANCHOR_MIN
+        and c < group_size * 0.50
+        and w not in local_ubiquitous
+        and len(w) >= 4
+    }
+    text_groups = defaultdict(list)
+    remainder = []
+    for i in indices:
+        tw = title_words_map[i] & text_anchors
+        if tw:
+            best = max(tw, key=lambda w: word_freq[w])
+            text_groups[best].append(i)
+        else:
+            remainder.append(i)
+
+    return {("TXT:" + k): v for k, v in text_groups.items()}, remainder
+
+
+def cluster_group(indices, sector, subject, exclude_anchors=None, depth=0):
+    """Recursively cluster a group of indices. Returns (events, remainder)."""
+    events = []
+    all_remainder = []
+
+    # L2: anchor signal split
+    anchor_groups, remainder = find_anchor_groups(indices, exclude_anchors)
+
     for anchor, members in anchor_groups.items():
-        for event_indices in temporal_split(members):
-            if len(event_indices) >= 2:
-                all_events.append(
+        # L3: temporal split
+        for chunk in temporal_split(members):
+            if len(chunk) < 2:
+                remainder.extend(chunk)
+            elif len(chunk) > MAX_GROUP and depth < 2:
+                # Recursive split: too large, try again with secondary signals
+                sub_events, sub_remainder = cluster_group(
+                    chunk,
+                    sector,
+                    subject,
+                    exclude_anchors=(exclude_anchors or set()) | {anchor},
+                    depth=depth + 1,
+                )
+                events.extend(sub_events)
+                # Sub-remainder becomes a single event (the "general" bucket)
+                if len(sub_remainder) >= 2:
+                    events.append(
+                        {
+                            "sector": sector,
+                            "subject": subject,
+                            "anchor": anchor + " (general)",
+                            "indices": sub_remainder,
+                        }
+                    )
+                else:
+                    all_remainder.extend(sub_remainder)
+            else:
+                events.append(
                     {
                         "sector": sector,
                         "subject": subject,
                         "anchor": anchor,
-                        "indices": event_indices,
+                        "indices": chunk,
                     }
                 )
-                total_assigned += len(event_indices)
-            else:
-                remainder.extend(event_indices)
 
     # Fallback: title text anchors for remainder
     if remainder:
-        word_freq = Counter()
-        title_words_map = {}
-        for i in remainder:
-            words = title_content_words(titles[i]["title_display"])
-            title_words_map[i] = words
-            for w in words:
-                word_freq[w] += 1
-
-        text_anchors = {
-            w
-            for w, c in word_freq.items()
-            if c >= ANCHOR_MIN and c < len(remainder) * 0.50
-        }
-        text_groups = defaultdict(list)
-        final_remainder = []
-        for i in remainder:
-            tw = title_words_map[i] & text_anchors
-            if tw:
-                best = max(tw, key=lambda w: word_freq[w])
-                text_groups[best].append(i)
-            else:
-                final_remainder.append(i)
-
-        for anchor_word, members in text_groups.items():
-            for event_indices in temporal_split(members):
-                if len(event_indices) >= 2:
-                    all_events.append(
+        text_groups, final_remainder = find_text_groups(remainder)
+        for anchor, members in text_groups.items():
+            for chunk in temporal_split(members):
+                if len(chunk) >= 2:
+                    events.append(
                         {
                             "sector": sector,
                             "subject": subject,
-                            "anchor": "TXT:" + anchor_word,
-                            "indices": event_indices,
+                            "anchor": anchor,
+                            "indices": chunk,
                         }
                     )
-                    total_assigned += len(event_indices)
                 else:
-                    final_remainder.extend(event_indices)
-
-        total_remainder += len(final_remainder)
+                    final_remainder.extend(chunk)
+        all_remainder.extend(final_remainder)
     else:
-        pass  # no remainder
+        all_remainder.extend(remainder)
+
+    return events, all_remainder
+
+
+all_events = []
+total_assigned = 0
+total_remainder = 0
+
+for (sector, subject), indices in l1_groups.items():
+    events, remainder = cluster_group(indices, sector, subject)
+    for ev in events:
+        total_assigned += len(ev["indices"])
+    all_events.extend(events)
+    total_remainder += len(remainder)
+
+# === MECHANICAL MERGE ===
+# Merge events that share: same subject + specific non-ubiquitous signal + date overlap
+
+
+def build_event_profile(ev):
+    """Build signal profile for merge matching."""
+    persons = Counter()
+    orgs = Counter()
+    places = Counter()
+    named_events = Counter()
+    targets = Counter()
+    dates = []
+    for i in ev["indices"]:
+        t = titles[i]
+        for p in t.get("persons", []):
+            persons[p.upper()] += 1
+        for o in t.get("orgs", []):
+            orgs[o.upper()] += 1
+        for p in t.get("places", []):
+            places[p.upper()] += 1
+        for e in t.get("named_events", []):
+            named_events[e] += 1
+        tgt = t.get("target") or ""
+        if tgt and tgt != "NONE":
+            for v in tgt.split(","):
+                v = v.strip()
+                if v and v != "NONE":
+                    targets[v] += 1
+        if t.get("pubdate_utc"):
+            dates.append(t["pubdate_utc"])
+    return {
+        "persons": set(persons),
+        "orgs": set(orgs),
+        "places": set(places),
+        "named_events": set(named_events),
+        "targets": set(targets),
+        "min_date": min(dates) if dates else None,
+        "max_date": max(dates) if dates else None,
+    }
+
+
+def merge_events(events):
+    """Merge events sharing same subject + specific signals + date overlap."""
+
+    # Compute ubiquitous signals within emerged events only
+    sig_freq = Counter()
+    total_events = len(events)
+    profiles = []
+    for ev in events:
+        p = build_event_profile(ev)
+        profiles.append(p)
+        for s in p["persons"]:
+            sig_freq["PER:" + s] += 1
+        for s in p["places"]:
+            sig_freq["PLC:" + s] += 1
+        for s in p["named_events"]:
+            sig_freq["EVT:" + s] += 1
+        for s in p["targets"]:
+            sig_freq["TGT:" + s] += 1
+
+    # Ubiquitous: appears in >10% of emerged events
+    merge_ubiquitous = {s for s, c in sig_freq.items() if c > total_events * 0.10}
+    if merge_ubiquitous:
+        ub_display = [s for s in sorted(merge_ubiquitous) if not s.startswith("TGT:")]
+        if ub_display:
+            print("Merge ubiquitous (>10%%): %s" % ", ".join(ub_display[:10]))
+
+    # Find merge candidates
+    merged_into = {}  # event index -> merged target index
+    merge_count = 0
+
+    for i in range(len(events)):
+        if i in merged_into:
+            continue
+        for j in range(i + 1, len(events)):
+            if j in merged_into:
+                continue
+
+            # Same subject required
+            if events[i]["subject"] != events[j]["subject"]:
+                continue
+
+            pi, pj = profiles[i], profiles[j]
+
+            # Date overlap: within 1 day
+            if pi["min_date"] and pj["min_date"] and pi["max_date"] and pj["max_date"]:
+                gap = max(
+                    (pj["min_date"] - pi["max_date"]).days,
+                    (pi["min_date"] - pj["max_date"]).days,
+                )
+                if gap > 1:
+                    continue
+            else:
+                continue  # skip if no dates
+
+            # Shared SPECIFIC signals (exclude ubiquitous)
+            shared_specific = set()
+            for p in pi["places"] & pj["places"]:
+                if ("PLC:" + p) not in merge_ubiquitous:
+                    shared_specific.add("PLC:" + p)
+            for p in pi["persons"] & pj["persons"]:
+                if ("PER:" + p) not in merge_ubiquitous:
+                    shared_specific.add("PER:" + p)
+            for e in pi["named_events"] & pj["named_events"]:
+                if ("EVT:" + e) not in merge_ubiquitous:
+                    shared_specific.add("EVT:" + e)
+
+            if len(shared_specific) < 2:
+                continue
+
+            # Merge j into i (no profile rebuild — prevents cascading)
+            events[i]["indices"].extend(events[j]["indices"])
+            events[j]["indices"] = []  # mark as empty
+            merged_into[j] = i
+            merge_count += 1
+
+    # Remove empty events
+    events = [ev for ev in events if ev["indices"]]
+    return events, merge_count
+
+
+print("\n--- Mechanical merge ---")
+before_count = len(all_events)
+all_events, merge_count = merge_events(all_events)
+print(
+    "Merged: %d pairs (%d events -> %d events)"
+    % (merge_count, before_count, len(all_events))
+)
+
+# === LLM MERGE PASS ===
+# Find candidates with 1 shared specific signal (mechanical requires 2+)
+# Send to LLM for yes/no confirmation
+
+LLM_MERGE = "--llm-merge" in sys.argv
+
+
+def find_llm_candidates(events):
+    """Find event pairs with 1 shared specific signal — LLM candidates.
+
+    Filters:
+    - Same subject required
+    - Date overlap within 1 day
+    - Shared PLC or PER (not EVT alone) — places and persons are stronger identity
+    - Min source count: 8 for high-volume tracks (>500 emerged), 5 otherwise
+    """
+    profiles = [build_event_profile(ev) for ev in events]
+
+    # Dynamic min sources: high-volume tracks need stricter filter
+    emerged_count = sum(1 for ev in events if len(ev["indices"]) >= 2)
+    min_sources = 8 if emerged_count > 500 else 5
+    print(
+        "  LLM candidate filter: min_sources=%d (emerged=%d)"
+        % (min_sources, emerged_count)
+    )
+
+    # Ubiquitous within emerged events
+    sig_freq = Counter()
+    for p in profiles:
+        for s in p["persons"]:
+            sig_freq["PER:" + s] += 1
+        for s in p["places"]:
+            sig_freq["PLC:" + s] += 1
+    ub = {s for s, c in sig_freq.items() if c > len(events) * 0.10}
+
+    candidates = []
+    for i in range(len(events)):
+        if len(events[i]["indices"]) < min_sources:
+            continue
+        for j in range(i + 1, len(events)):
+            if len(events[j]["indices"]) < min_sources:
+                continue
+            if events[i]["subject"] != events[j]["subject"]:
+                continue
+
+            pi, pj = profiles[i], profiles[j]
+            if not (
+                pi["min_date"] and pj["min_date"] and pi["max_date"] and pj["max_date"]
+            ):
+                continue
+            gap = max(
+                (pj["min_date"] - pi["max_date"]).days,
+                (pi["min_date"] - pj["max_date"]).days,
+            )
+            if gap > 1:
+                continue
+
+            # Require shared PLC or PER (stronger identity than EVT)
+            shared = set()
+            for p in pi["places"] & pj["places"]:
+                if ("PLC:" + p) not in ub:
+                    shared.add("PLC:" + p)
+            for p in pi["persons"] & pj["persons"]:
+                if ("PER:" + p) not in ub:
+                    shared.add("PER:" + p)
+
+            if len(shared) == 1:
+                candidates.append((i, j, shared))
+
+    return candidates
+
+
+def llm_merge_review(events, candidates):
+    """Send candidates to LLM for yes/no merge decision."""
+    import httpx
+
+    from core.config import config
+
+    SYSTEM = (
+        "You compare two groups of news headlines. "
+        "Decide if they describe the SAME specific news event or story. "
+        "Different aspects of the same situation (e.g. reactions to the same event) count as the same story. "
+        "Different events involving the same person/place do NOT count as the same story. "
+        "Reply with ONLY: YES or NO"
+    )
+
+    merged = 0
+    merge_log = []
+    merged_set = set()
+
+    for idx, (i, j, shared) in enumerate(candidates):
+        if i in merged_set or j in merged_set:
+            continue
+
+        a_titles = [titles[k]["title_display"][:100] for k in events[i]["indices"][:5]]
+        b_titles = [titles[k]["title_display"][:100] for k in events[j]["indices"][:5]]
+
+        user_msg = "Group A (%d sources):\n%s\n\nGroup B (%d sources):\n%s" % (
+            len(events[i]["indices"]),
+            "\n".join("- " + t for t in a_titles),
+            len(events[j]["indices"]),
+            "\n".join("- " + t for t in b_titles),
+        )
+
+        try:
+            resp = httpx.post(
+                config.deepseek_api_url + "/chat/completions",
+                headers={"Authorization": "Bearer " + config.deepseek_api_key},
+                json={
+                    "model": config.llm_model,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "temperature": 0.0,
+                    "max_tokens": 10,
+                },
+                timeout=30,
+            )
+            answer = resp.json()["choices"][0]["message"]["content"].strip().upper()
+        except Exception as e:
+            print("  LLM error: %s" % e)
+            answer = "ERROR"
+
+        decision = "YES" if answer.startswith("YES") else "NO"
+        a_sample = a_titles[0][:60]
+        b_sample = b_titles[0][:60]
+
+        if decision == "YES":
+            events[i]["indices"].extend(events[j]["indices"])
+            events[j]["indices"] = []
+            merged_set.add(j)
+            merged += 1
+            merge_log.append(
+                "  MERGE [%d+%d] %s"
+                % (
+                    len(events[i]["indices"]) - len(events[j]["indices"]),
+                    len(events[j]["indices"]) if j not in merged_set else 0,
+                    shared,
+                )
+            )
+            print(
+                "  [%d/%d] YES %s | %s + %s"
+                % (idx + 1, len(candidates), shared, a_sample, b_sample)
+            )
+        else:
+            print(
+                "  [%d/%d] NO  %s | %s + %s"
+                % (idx + 1, len(candidates), shared, a_sample, b_sample)
+            )
+
+    events = [ev for ev in events if ev["indices"]]
+    return events, merged
+
+
+print("\n--- LLM merge candidates ---")
+llm_candidates = find_llm_candidates(all_events)
+print(
+    "Candidates (1 shared specific, same subject, date overlap): %d"
+    % len(llm_candidates)
+)
+
+if LLM_MERGE and llm_candidates:
+    print("\nRunning LLM review...")
+    all_events, llm_merged = llm_merge_review(all_events, llm_candidates)
+    print("LLM merged: %d pairs" % llm_merged)
+elif llm_candidates:
+    # Dry run: show candidates without calling LLM
+    print("\nDry run (use --llm-merge to call LLM):")
+    for idx, (i, j, shared) in enumerate(llm_candidates[:20]):
+        a = titles[all_events[i]["indices"][0]]["title_display"][:70]
+        b = titles[all_events[j]["indices"][0]]["title_display"][:70]
+        print(
+            "  [%d+%d] %s | %s/%s"
+            % (
+                len(all_events[i]["indices"]),
+                len(all_events[j]["indices"]),
+                shared,
+                all_events[i]["subject"],
+                all_events[j]["subject"],
+            )
+        )
+        print("    A: %s" % a)
+        print("    B: %s" % b)
+    if len(llm_candidates) > 20:
+        print("  ... and %d more" % (len(llm_candidates) - 20))
 
 all_events.sort(key=lambda e: -len(e["indices"]))
 
@@ -353,7 +726,12 @@ print("\nCleaned existing events.")
 all_clusters = []
 for ev in all_events:
     all_clusters.append(
-        {"sector": ev["sector"], "subject": ev["subject"], "indices": ev["indices"]}
+        {
+            "sector": ev["sector"],
+            "subject": ev["subject"],
+            "indices": ev["indices"],
+            "anchor": ev.get("anchor"),
+        }
     )
 # Add catchall singles
 for (sector, subject), indices in l1_groups.items():
@@ -387,11 +765,14 @@ for cl in all_clusters:
     fs = min(dates) if dates else None
     is_ca = len(cl["indices"]) < 2
 
+    # Store anchor as topic_core for story grouping in UI
+    anchor = cl.get("anchor", "")
+
     cur.execute(
         "INSERT INTO events_v3 (id,ctm_id,source_batch_count,date,first_seen,"
-        "last_active,event_type,bucket_key,is_catchall,created_at,updated_at) "
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())",
-        (eid, ctm_id, len(tids), d, fs, d, geo_type, geo_key, is_ca),
+        "last_active,event_type,bucket_key,is_catchall,topic_core,created_at,updated_at) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),NOW())",
+        (eid, ctm_id, len(tids), d, fs, d, geo_type, geo_key, is_ca, anchor or None),
     )
     for tid in tids:
         cur.execute(

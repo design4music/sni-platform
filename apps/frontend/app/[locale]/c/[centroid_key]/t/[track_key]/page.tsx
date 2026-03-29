@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import OtherCoverage from '@/components/OtherCoverage';
+import StoryGroupList from '@/components/StoryGroupList';
+import type { StoryGroup } from '@/components/StoryGroupList';
 import MobileTocButton from '@/components/MobileTocButton';
 import MonthNav from '@/components/MonthNav';
 import {
@@ -57,6 +59,67 @@ function countTitles(events: Event[]) {
   return events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
 }
 
+
+const STORY_GROUP_MIN_EVENTS = 50; // only group when there are many events
+
+/** Build story groups from topic_core anchors.
+ *  Groups events by their anchor signal (PER:, PLC:, ORG:, TGT:, EVT:).
+ *  Text-fallback anchors (TXT:) go to ungrouped.
+ */
+function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: Event[] } {
+  const groupMap = new Map<string, Event[]>();
+  const ungrouped: Event[] = [];
+
+  for (const ev of events) {
+    const anchor = ev.topic_core;
+    if (!anchor || anchor.startsWith('TXT:')) {
+      ungrouped.push(ev);
+      continue;
+    }
+    // Clean up anchor label: "PLC:HORMUZ (general)" -> "HORMUZ"
+    const cleanAnchor = anchor.replace(/ \(general\)$/, '');
+    if (!groupMap.has(cleanAnchor)) groupMap.set(cleanAnchor, []);
+    groupMap.get(cleanAnchor)!.push(ev);
+  }
+
+  // Convert to StoryGroup array, sorted by total sources
+  const groups: StoryGroup[] = [];
+  for (const [anchor, evts] of groupMap) {
+    if (evts.length < 2) {
+      ungrouped.push(...evts);
+      continue;
+    }
+    // Format label: "PER:NETANYAHU" -> "Netanyahu", "PLC:HORMUZ" -> "Hormuz", "TGT:IR" -> "Iran"
+    const anchorType = anchor.match(/^(PER|PLC|ORG|TGT|EVT):/)?.[1] || '';
+    const raw = anchor.replace(/^(PER|PLC|ORG|TGT|EVT):/, '');
+    const label = raw.length <= 3
+      ? raw  // Keep short codes like IR, EU, CN as-is
+      : raw.charAt(0) + raw.slice(1).toLowerCase();  // Title case
+    const totalSources = evts.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
+    evts.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+
+    // Collect other anchors from events in this group as secondary signals
+    const subAnchors = new Map<string, number>();
+    for (const e of evts) {
+      const ea = e.topic_core?.replace(/ \(general\)$/, '');
+      if (ea && ea !== anchor && !ea.startsWith('TXT:')) {
+        const cleanSub = ea.replace(/^(PER|PLC|ORG|TGT|EVT):/, '');
+        const subLabel = cleanSub.length <= 3 ? cleanSub : cleanSub.charAt(0) + cleanSub.slice(1).toLowerCase();
+        subAnchors.set(subLabel, (subAnchors.get(subLabel) || 0) + (e.source_title_ids?.length || 0));
+      }
+    }
+    const topSignals = [...subAnchors.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([s]) => s);
+
+    groups.push({ label, anchor, anchorType, events: evts, totalSources, topSignals });
+  }
+  groups.sort((a, b) => b.totalSources - a.totalSources);
+  ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+
+  return { groups, ungrouped };
+}
 
 /** Split events into top-N topics and "other" (small topics + catchalls). */
 function splitTopN(events: Event[], topN: number) {
@@ -402,12 +465,22 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
                 </p>
 
-                <EventList
-                  events={mainEvents}
-                  initialLimit={TOPICS_PAGE_SIZE}
-                  pageSize={TOPICS_PAGE_SIZE}
-                  keyPrefix="topics"
-                />
+                {mainEvents.length >= STORY_GROUP_MIN_EVENTS ? (() => {
+                  const { groups, ungrouped: ungroupedEvents } = buildStoryGroups(mainEvents);
+                  return (
+                    <StoryGroupList
+                      groups={groups}
+                      ungrouped={ungroupedEvents}
+                    />
+                  );
+                })() : (
+                  <EventList
+                    events={mainEvents}
+                    initialLimit={TOPICS_PAGE_SIZE}
+                    pageSize={TOPICS_PAGE_SIZE}
+                    keyPrefix="topics"
+                  />
+                )}
               </>
             ) : otherEvents.length > 0 ? (
               <p className="text-sm text-dashboard-text-muted mb-4">
