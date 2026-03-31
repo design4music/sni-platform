@@ -71,6 +71,7 @@ export interface Event {
   bucketLabel?: string;
   bucketIsoCodes?: string[];
   bucketLink?: string;
+  bucketDomestic?: boolean;
 }
 
 export interface Title {

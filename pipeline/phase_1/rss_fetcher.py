@@ -415,7 +415,7 @@ class RSSFetcher:
                             created_at, updated_at
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, 'pending', NOW(), NOW())
-                        ON CONFLICT (title_display) DO NOTHING
+                        ON CONFLICT (title_display, publisher_name) DO NOTHING
                         RETURNING id
                     """,
                         (

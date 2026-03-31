@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
-import OtherCoverage from '@/components/OtherCoverage';
 import StoryGroupList from '@/components/StoryGroupList';
 import type { StoryGroup } from '@/components/StoryGroupList';
 import MobileTocButton from '@/components/MobileTocButton';
@@ -281,6 +280,11 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
       event.bucketLabel = getCentroidLabel(event.bucket_key, bc?.label || getCountryName(event.bucket_key), tCentroids);
       event.bucketIsoCodes = bc?.iso_codes || [getIsoFromBucketKey(event.bucket_key)];
       event.bucketLink = bc ? `/c/${event.bucket_key}/t/${track}?month=${currentMonth}` : undefined;
+    } else if (event.event_type === 'domestic' || !event.bucket_key) {
+      // Domestic events get the home centroid badge, disabled
+      event.bucketLabel = getCentroidLabel(centroid.id, centroid.label, tCentroids);
+      event.bucketIsoCodes = centroid.iso_codes || [];
+      event.bucketDomestic = true;
     }
   }
 
@@ -465,7 +469,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
                 </p>
 
-                {mainEvents.length >= STORY_GROUP_MIN_EVENTS ? (() => {
+                {mainEvents.length >= STORY_GROUP_MIN_EVENTS && mainEvents.some(e => e.topic_core) ? (() => {
                   const { groups, ungrouped: ungroupedEvents } = buildStoryGroups(mainEvents);
                   return (
                     <StoryGroupList
@@ -489,10 +493,9 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
             ) : null}
 
             {otherEvents.length > 0 && (
-              <OtherCoverage
-                label={t('otherStrategicTopics')}
-                events={otherEvents}
-              />
+              <p className="text-sm text-dashboard-text-muted mt-4 py-2 border-t border-dashboard-border/50">
+                + {otherEvents.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0)} additional sources tracked
+              </p>
             )}
           </div>
         </>
