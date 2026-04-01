@@ -21,9 +21,10 @@ This repository contains the World Brief strategic intelligence system.
 
 ## Quick Orientation
 
-- Pipeline: ingestion -> matching -> classification -> clustering -> summaries (automated daemon)
+- Pipeline: ingestion -> matching -> classification -> layered clustering -> event families -> summaries
+- Data layers: titles (raw) -> clusters (signal units) -> event families (narrative topics) -> friction nodes (planned)
 - Extraction + Analysis: narrative extraction + RAI analysis (on-demand, auth-gated)
-- Frontend: navigation (centroids, CTMs, events, epics, outlets) + auth + extraction triggers
+- Frontend: navigation (centroids, CTMs, event families, events) + filters (week, tags, countries) + auth
 - Database: single source of truth
 
 No component should be modified without understanding the above.

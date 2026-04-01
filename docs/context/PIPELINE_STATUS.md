@@ -1,13 +1,23 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Reference
 
-**Last Updated**: 2026-03-18
-**Status**: Production - Full pipeline operational (4-slot architecture)
+**Last Updated**: 2026-04-01
+**Status**: March rebuild in progress on `feat/sector-clustering`. Production paused.
 **Live URL**: https://www.worldbrief.info
-**Branch**: `main`
+**Branch**: `feat/sector-clustering` (experimental, pending merge to `main`)
 
 > This is a lean reference. For detailed phase descriptions, see `20_ProjectModel.md`.
 > For daemon design rationale, see `DAEMON_4SLOT_PLAN.md`.
-> For importance scoring, see `importance_scoring.md`.
+> For clustering architecture, see `NARRATIVE_TOPICS_PLAN.md`.
+> For future vision, see `FRICTION_NODES_VISION.md`.
+
+### Major Changes (March-April 2026)
+
+- **Clustering**: Louvain replaced by layered approach (D-049, D-050). Mechanical Layer 1 + LLM Layer 2.
+- **Event families**: New Layer 2 entity assembles clusters into user-facing stories (D-051).
+- **Signal normalization**: Word-containment replaces cosine similarity (D-049).
+- **Phase 3.3**: To be replaced by mechanical sector filter (SECTOR_TO_TRACK mapping).
+- **Frontend**: Story groups with filters (week, tags, countries, min sources, sort).
+- **Future**: Friction nodes as cross-centroid conflict detection (D-052).
 
 ---
 
@@ -22,40 +32,44 @@ architecture with LLM-based classification (DeepSeek). DE localization via next-
 
 ## Pipeline Flow
 
+### 4-Layer Data Architecture
+```
+Layer 0: titles_v3          -- raw headlines (120K+/month)
+Layer 1: events_v3          -- signal clusters (mechanical + LLM, 1000-3000 per mega CTM)
+Layer 2: event_families     -- narrative topics (LLM-assembled, 30-100 per CTM)
+Layer 3: friction_nodes     -- cross-centroid conflict zones (planned, 5-10 global)
+```
+
+### Processing Pipeline
 ```
 RSS Feeds (Google News)
     |
-[Phase 1] Ingestion --> titles_v3 (status='pending')                    \
-    |                                                                     \
-[Phase 2] Centroid Matching --> titles_v3 (centroid_ids, 'assigned')      |
-    |                                                                     |
-[Phase 3.1] Label + Signal Extraction --> title_labels                   | DAEMON
-    |         + Importance Scoring --> title_labels.importance_score       | (automated)
-    |                                                                     |
-[Phase 3.2] Entity Centroid Backfill --> entity_countries -> centroids    |
-    |                                                                     |
-[Phase 3.3] Intel Gating + Track Assignment --> title_assignments + ctm  |
-    |                                                                     |
-[Phase 4] Incremental Topic Clustering --> events_v3 + event_v3_titles   |
-    |         + Event Importance Scoring --> events_v3.importance_score    |
-    |                                                                     |
-[Phase 4.1] Topic Consolidation (anchor-candidate dedup + rescue)        |
-    |                                                                     |
-[Phase 4.3] Cross-Bucket Event Merging (LLM) --> events_v3.merged_into  |
-    |                                                                     |
-[Phase 4.2a] Materialize Centroid Signals --> mv_centroid_signals        |
-    |                                                                     |
-[Phase 4.2b] Materialize Signal Graph --> mv_signal_graph                |
-    |                                                                     |
-[Phase 4.2f] Narrative Matching (mechanical) --> event_strategic_narratives |
-    |                                                                     |
-[Phase 4.2g] Narrative Matching (LLM, ideological) --> "                 |
-    |                                                                     |
-[Phase 4.2h] Narrative Review (LLM, operational) --> prune false pos.    |
-    |                                                                     |
-[Phase 4.5a] Event Summary Generation --> events_v3.title, summary, tags |
-    |                                                                    /
-[Phase 4.5b] CTM Digest Generation --> ctm.summary_text                /
+[Phase 1] Ingestion --> titles_v3 (status='pending')
+    |
+[Phase 2] Centroid Matching --> titles_v3 (centroid_ids, 'assigned')
+    |
+[Phase 3.1] Label + Signal Extraction --> title_labels
+    |         (sector, subject, actor, target, signals, entity_countries)
+    |         + Word-containment signal normalization
+    |         + Importance Scoring
+    |
+[Phase 3.2] Entity Centroid Backfill --> entity_countries -> centroids
+    |
+[Phase 3.3] Track Assignment --> SECTOR_TO_TRACK mechanical mapping (replaces LLM gating)
+    |
+[Phase 4 Layer 1] Layered Clustering --> events_v3 + event_v3_titles
+    |   Strong signal clusters (mechanical): PLC:HORMUZ, PER:KHAMENEI, ORG:ICE
+    |   LLM clustering of remainder: bilateral pools + domestic pools
+    |
+[Phase 4 Layer 2] Event Family Assembly (LLM) --> event_families
+    |   One LLM call per CTM: all clusters -> 30-60 narrative topics
+    |   Each family: title, summary, domain label
+    |
+[Phase 4.2a-f] Materialized Views + Narrative Matching
+    |
+[Phase 4.5a] Event Summary Generation --> events_v3.title, summary
+    |
+[Phase 4.5b] CTM Digest Generation --> ctm.summary_text
     |
     |--- [On-demand] User clicks "Extract & Analyse" ------\
     |                                                       | ON-DEMAND

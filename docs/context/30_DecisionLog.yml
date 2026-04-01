@@ -500,3 +500,60 @@ decisions:
       - New subjects: DIPLOMACY/BILATERAL_RELATIONS, DIPLOMACY/SUMMIT, MILITARY/DEFENSE_POLICY, SECURITY/LAW_ENFORCEMENT, TECHNOLOGY/R_AND_D, SOCIETY/PROTEST
       - Subject fill rate 89% -> 100% for France/March after re-extraction
       - BILATERAL_RELATIONS absorbed 51 of 64 DIPLOMACY/NULL titles (biggest gap)
+
+  - id: D-049
+    date: 2026-03-28
+    type: architectural
+    status: accepted
+    title: Faceted clustering replaces Louvain community detection
+    rationale:
+      - Louvain produced false merges at scale (Iraq+Congo via shared PER:MACRON)
+      - Faceted approach uses hard partitions on anchor signals -- titles with different anchors never merge
+      - Word-containment signal normalization replaces cosine similarity for places/persons
+    consequences:
+      - core/signal_normalization.py replaces core/signal_aliases.py
+      - prototype_faceted.py is the reference implementation
+      - Dynamic ubiquitous filtering (no hardcoded stop words)
+
+  - id: D-050
+    date: 2026-03-31
+    type: architectural
+    status: accepted
+    title: Layered clustering -- mechanical Layer 1 + LLM Layer 2
+    rationale:
+      - Mechanical clustering (faceted) produces clean signal units but too many fragments
+      - LLM reads headlines and groups into stories -- catches what signals miss
+      - Layer 1 (mechanical) handles 47% of titles for free; Layer 2 (LLM) handles remainder at ~$1/CTM-month
+    consequences:
+      - prototype_layered.py is the reference implementation
+      - Layer 1 clusters = events_v3 (building blocks, not user-facing)
+      - Phase 3.3 (LLM intel gating + track assignment) can be replaced by mechanical sector filter
+
+  - id: D-051
+    date: 2026-04-01
+    type: architectural
+    status: accepted
+    title: Event families as Layer 2 narrative topics
+    rationale:
+      - Clusters are building blocks, not the product
+      - Event families = user-facing stories assembled by LLM from clusters
+      - One LLM call per CTM batches all clusters, returns 30-60 narrative topics
+      - Each family gets structured summary, domain label, timeline
+    consequences:
+      - New table event_families (title, summary, domain, cluster_count, source_count, dates)
+      - events_v3.family_id links clusters to families
+      - Frontend shows families (Layer 2), not individual clusters (Layer 1)
+
+  - id: D-052
+    date: 2026-04-01
+    type: vision
+    status: planned
+    title: Friction nodes -- auto-detected geopolitical conflict zones
+    rationale:
+      - Global news orbits handful of active friction points (Iran war, US-Russia, US-China)
+      - Friction node = cross-centroid correlation of strategic narratives on shared timeline
+      - Detected from narrative co-occurrence across 5+ centroids
+    consequences:
+      - Replaces current Signals and Epics as high-level picture
+      - Persistent across months (friction node has chapters per month)
+      - See docs/context/FRICTION_NODES_VISION.md
