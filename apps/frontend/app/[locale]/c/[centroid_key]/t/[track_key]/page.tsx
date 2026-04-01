@@ -61,11 +61,54 @@ function countTitles(events: Event[]) {
 
 const STORY_GROUP_MIN_EVENTS = 50; // only group when there are many events
 
-/** Build story groups from topic_core anchors.
- *  Groups events by their anchor signal (PER:, PLC:, ORG:, TGT:, EVT:).
- *  Text-fallback anchors (TXT:) go to ungrouped.
+/** Build story groups from event families (Layer 2) or topic_core anchors (fallback).
+ *  Prefers family_id grouping when available. Falls back to signal anchors.
  */
 function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: Event[] } {
+  // Check if events have family data
+  const hasFamilies = events.some(e => e.family_id);
+
+  if (hasFamilies) {
+    // Group by family_id — Layer 2 narrative topics
+    const familyMap = new Map<string, { title: string; domain: string; summary: string; events: Event[] }>();
+    const ungrouped: Event[] = [];
+
+    for (const ev of events) {
+      if (ev.family_id && ev.family_title) {
+        if (!familyMap.has(ev.family_id)) {
+          familyMap.set(ev.family_id, {
+            title: ev.family_title,
+            domain: ev.family_domain || '',
+            summary: ev.family_summary || '',
+            events: [],
+          });
+        }
+        familyMap.get(ev.family_id)!.events.push(ev);
+      } else {
+        ungrouped.push(ev);
+      }
+    }
+
+    const groups: StoryGroup[] = [];
+    for (const [fid, fam] of familyMap) {
+      if (fam.events.length < 1) continue;
+      const totalSources = fam.events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
+      fam.events.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+      groups.push({
+        label: fam.domain || fam.title,
+        anchor: fid,
+        anchorType: 'family',
+        events: fam.events,
+        totalSources,
+        topSignals: fam.domain ? [fam.title] : undefined,
+      });
+    }
+    groups.sort((a, b) => b.totalSources - a.totalSources);
+    ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+    return { groups, ungrouped };
+  }
+
+  // Fallback: group by topic_core anchors (signal-based)
   const groupMap = new Map<string, Event[]>();
   const ungrouped: Event[] = [];
 
@@ -75,48 +118,26 @@ function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: E
       ungrouped.push(ev);
       continue;
     }
-    // Clean up anchor label: "PLC:HORMUZ (general)" -> "HORMUZ"
     const cleanAnchor = anchor.replace(/ \(general\)$/, '');
     if (!groupMap.has(cleanAnchor)) groupMap.set(cleanAnchor, []);
     groupMap.get(cleanAnchor)!.push(ev);
   }
 
-  // Convert to StoryGroup array, sorted by total sources
   const groups: StoryGroup[] = [];
   for (const [anchor, evts] of groupMap) {
     if (evts.length < 2) {
       ungrouped.push(...evts);
       continue;
     }
-    // Format label: "PER:NETANYAHU" -> "Netanyahu", "PLC:HORMUZ" -> "Hormuz", "TGT:IR" -> "Iran"
     const anchorType = anchor.match(/^(PER|PLC|ORG|TGT|EVT):/)?.[1] || '';
     const raw = anchor.replace(/^(PER|PLC|ORG|TGT|EVT):/, '');
-    const label = raw.length <= 3
-      ? raw  // Keep short codes like IR, EU, CN as-is
-      : raw.charAt(0) + raw.slice(1).toLowerCase();  // Title case
+    const label = raw.length <= 3 ? raw : raw.charAt(0) + raw.slice(1).toLowerCase();
     const totalSources = evts.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
     evts.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-
-    // Collect other anchors from events in this group as secondary signals
-    const subAnchors = new Map<string, number>();
-    for (const e of evts) {
-      const ea = e.topic_core?.replace(/ \(general\)$/, '');
-      if (ea && ea !== anchor && !ea.startsWith('TXT:')) {
-        const cleanSub = ea.replace(/^(PER|PLC|ORG|TGT|EVT):/, '');
-        const subLabel = cleanSub.length <= 3 ? cleanSub : cleanSub.charAt(0) + cleanSub.slice(1).toLowerCase();
-        subAnchors.set(subLabel, (subAnchors.get(subLabel) || 0) + (e.source_title_ids?.length || 0));
-      }
-    }
-    const topSignals = [...subAnchors.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map(([s]) => s);
-
-    groups.push({ label, anchor, anchorType, events: evts, totalSources, topSignals });
+    groups.push({ label, anchor, anchorType, events: evts, totalSources });
   }
   groups.sort((a, b) => b.totalSources - a.totalSources);
   ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-
   return { groups, ungrouped };
 }
 
@@ -469,7 +490,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
                 </p>
 
-                {mainEvents.length >= STORY_GROUP_MIN_EVENTS && mainEvents.some(e => e.topic_core) ? (() => {
+                {mainEvents.length >= STORY_GROUP_MIN_EVENTS && (mainEvents.some(e => e.family_id) || mainEvents.some(e => e.topic_core)) ? (() => {
                   const { groups, ungrouped: ungroupedEvents } = buildStoryGroups(mainEvents);
                   return (
                     <StoryGroupList

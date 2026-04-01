@@ -214,7 +214,7 @@ export default function StoryGroupList({
               className="w-full flex items-center justify-between px-4 py-3 bg-dashboard-surface hover:bg-dashboard-surface-hover transition-colors text-left">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm font-semibold text-dashboard-text">{group.label}</span>
-                {group.topSignals && group.topSignals.length > 0 && (
+                {group.topSignals && group.topSignals.length > 0 && group.anchorType !== 'family' && (
                   <span className="text-xs text-dashboard-text-muted">+ {group.topSignals.join(', ')}</span>
                 )}
                 <span className="text-xs text-dashboard-text-muted px-2 py-0.5 rounded-full bg-dashboard-border/50">
@@ -227,6 +227,12 @@ export default function StoryGroupList({
               </svg>
             </button>
             <div className="px-4 pb-3 space-y-1">
+              {/* Family description as section header inside accordion */}
+              {group.topSignals && group.topSignals[0] && group.anchorType === 'family' && (
+                <p className="text-sm text-dashboard-text py-2 border-b border-dashboard-border/30 mb-2">
+                  {group.topSignals[0]}
+                </p>
+              )}
               {visibleEvents.map((event, i) => {
                 const isBig = (event.source_title_ids?.length || 0) >= 10;
                 return <EventAccordion key={`${group.anchor}-${i}`} event={event} index={i} twoLiner={!isBig} onTagFilter={handleTagFilter} />;
