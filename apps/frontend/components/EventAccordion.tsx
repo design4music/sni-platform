@@ -49,7 +49,10 @@ function formatDate(dateStr: string, locale: string): string {
 
 function CountryBadge({ label, isoCodes, link, locale, disabled }: { label: string; isoCodes?: string[]; link?: string; locale: string; disabled?: boolean }) {
   const codes = (isoCodes || []).filter(c => c.length === 2);
-  const flags = codes.map(code => (
+  // Limit flags and codes for regional centroids (3 max + count)
+  const showCodes = codes.slice(0, 3);
+  const extraCount = codes.length - showCodes.length;
+  const flags = showCodes.map(code => (
     <img
       key={code}
       src={`https://flagcdn.com/16x12/${code.toLowerCase()}.png`}
@@ -59,8 +62,9 @@ function CountryBadge({ label, isoCodes, link, locale, disabled }: { label: stri
       height={12}
     />
   ));
-  // Show ISO codes instead of full label
-  const shortLabel = codes.length > 0 ? codes.join('/') : label;
+  const shortLabel = codes.length <= 3
+    ? (codes.length > 0 ? codes.join('/') : label)
+    : showCodes.join('/') + '+' + extraCount;
   const content = (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${
       disabled
@@ -111,13 +115,13 @@ export default function EventAccordion({ event, index, compact = false, twoLiner
   if (twoLiner) {
     return (
       <div className={`py-1.5 text-sm ${isImportant ? 'border-l-2 border-yellow-500/60 pl-2' : ''}`}>
-        <div className="flex items-start gap-2">
+        <div className="sm:flex sm:items-start sm:gap-2">
           {event.bucketLabel && (
-            <span className="flex-shrink-0 mt-0.5">
+            <div className="mb-0.5 sm:mb-0 sm:flex-shrink-0 sm:mt-0.5">
               <CountryBadge label={event.bucketLabel} isoCodes={event.bucketIsoCodes} link={event.bucketLink} locale={locale} disabled={event.bucketDomestic} />
-            </span>
+            </div>
           )}
-          <span className="flex-1">
+          <div className="sm:flex-1">
             {event.event_id ? (
               <Link href={`/events/${event.event_id}`} className="text-dashboard-text hover:text-blue-400 transition-colors">
                 {event.title || event.summary}
@@ -125,7 +129,7 @@ export default function EventAccordion({ event, index, compact = false, twoLiner
             ) : (
               <span className="text-dashboard-text">{event.title || event.summary}</span>
             )}
-          </span>
+          </div>
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-xs text-dashboard-text-muted">
           <DateRange date={event.date} last_active={event.last_active} locale={locale} />
@@ -212,14 +216,14 @@ export default function EventAccordion({ event, index, compact = false, twoLiner
   return (
     <div className={`border-l-4 pl-4 py-2 ${isImportant ? 'border-yellow-500/60 shadow-[0_0_12px_rgba(234,179,8,0.12)]' : 'border-blue-500'}`}>
       <div>
-        {/* Title line with country badge */}
-        <div className="flex items-start gap-2 mb-1">
+        {/* Title line with country badge — badge on own line on mobile */}
+        <div className="sm:flex sm:items-start sm:gap-2 mb-1">
           {event.bucketLabel && (
-            <span className="flex-shrink-0 mt-1">
+            <div className="mb-0.5 sm:mb-0 sm:flex-shrink-0 sm:mt-1">
               <CountryBadge label={event.bucketLabel} isoCodes={event.bucketIsoCodes} link={event.bucketLink} locale={locale} disabled={event.bucketDomestic} />
-            </span>
+            </div>
           )}
-          <div className="flex-1">
+          <div className="sm:flex-1">
             {event.title ? (
               event.event_id ? (
                 <Link href={`/events/${event.event_id}`} className="text-lg font-semibold text-dashboard-text hover:text-blue-400 transition-colors block">

@@ -40,6 +40,7 @@ export default function StoryGroupList({
   const [minSources, setMinSources] = useState(0);
   const [sortBy, setSortBy] = useState<'sources' | 'date'>('sources');
   const [activeWeek, setActiveWeek] = useState<string | null>(null);
+  const [showFilterOverlay, setShowFilterOverlay] = useState(false);
 
   const toggleGroup = (anchor: string) => {
     setExpandedGroups(prev => {
@@ -136,45 +137,33 @@ export default function StoryGroupList({
   return (
     <div className="space-y-4">
       {showFilters && (
-        <div className="space-y-3 mb-2">
-          {weekOptions.length > 1 && (
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <span className="text-xs text-dashboard-text-muted">Week:</span>
-              <button onClick={() => setActiveWeek(null)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeWeek === null ? 'bg-purple-600/20 border-purple-500/40 text-purple-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>All</button>
-              {weekOptions.map(w => (
-                <button key={w.week} onClick={() => setActiveWeek(activeWeek === w.week ? null : w.week)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeWeek === w.week ? 'bg-purple-600/20 border-purple-500/40 text-purple-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>
-                  {w.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-xs text-dashboard-text-muted">Tags:</span>
-            <button onClick={() => handleFilter(null)}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeFilter === null ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>All</button>
-            {groups.map(g => (
-              <button key={g.anchor} onClick={() => handleFilter(g.anchor)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeFilter === g.anchor ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>
-                {g.label} ({g.events.length})
+        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-dashboard-text">Filter topics</h3>
+            {activeFilter && (
+              <button onClick={() => handleFilter(null)} className="text-xs text-blue-400 hover:text-blue-300">
+                Clear filter
               </button>
-            ))}
+            )}
           </div>
-          {countryFilters.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <span className="text-xs text-dashboard-text-muted">Countries:</span>
-              {countryFilters.map(([key, info]) => (
-                <button key={key} onClick={() => handleFilter(key)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeFilter === key ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>
-                  {info.label} ({info.events})
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center gap-6 text-xs text-dashboard-text-muted">
-            <div className="flex items-center gap-2">
-              <span>Min sources:</span>
+
+          {/* Inline filters: week, min sources, sort */}
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-dashboard-text-muted">
+            {weekOptions.length > 1 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span>Week:</span>
+                <button onClick={() => setActiveWeek(null)}
+                  className={`px-2 py-0.5 rounded border transition ${activeWeek === null ? 'bg-purple-600/20 border-purple-500/40 text-purple-400' : 'border-dashboard-border hover:text-dashboard-text'}`}>All</button>
+                {weekOptions.map(w => (
+                  <button key={w.week} onClick={() => setActiveWeek(activeWeek === w.week ? null : w.week)}
+                    className={`px-2 py-0.5 rounded border transition ${activeWeek === w.week ? 'bg-purple-600/20 border-purple-500/40 text-purple-400' : 'border-dashboard-border hover:text-dashboard-text'}`}>
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span>Min:</span>
               {[0, 5, 10, 20].map(t => (
                 <button key={t} onClick={() => setMinSources(t)}
                   className={`px-2 py-0.5 rounded border transition ${minSources === t ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'border-dashboard-border hover:text-dashboard-text'}`}>
@@ -182,7 +171,7 @@ export default function StoryGroupList({
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span>Sort:</span>
               {(['sources', 'date'] as const).map(s => (
                 <button key={s} onClick={() => setSortBy(s)}
@@ -191,8 +180,65 @@ export default function StoryGroupList({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Tags & Countries button */}
+          <div className="mt-3 flex items-center gap-2">
+            <button onClick={() => setShowFilterOverlay(!showFilterOverlay)}
+              className={`px-3 py-1.5 rounded text-xs font-medium border transition ${
+                activeFilter ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'
+              }`}>
+              {activeFilter ? `Filtered: ${groups.find(g => g.anchor === activeFilter)?.label || countryFilters.find(([k]) => k === activeFilter)?.[1]?.label || 'active'}` : 'Filter by tags & countries'}
+            </button>
             {activeFilter && (
-              <button onClick={() => handleFilter(null)} className="text-blue-400 hover:text-blue-300">Clear filter</button>
+              <span className="text-xs text-dashboard-text-muted">
+                ({filteredGroups.reduce((s, g) => s + g.events.length, 0) + filteredUngrouped.length} matching)
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tags & Countries overlay */}
+      {showFilterOverlay && showFilters && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center pt-20 px-4" onClick={() => setShowFilterOverlay(false)}>
+          <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-6 max-w-lg w-full max-h-[70vh] overflow-y-auto shadow-xl"
+               onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-dashboard-text">Filter by tags & countries</h3>
+              <button onClick={() => setShowFilterOverlay(false)} className="text-dashboard-text-muted hover:text-dashboard-text text-xl leading-none">&times;</button>
+            </div>
+
+            {/* Tags section */}
+            <div className="mb-6">
+              <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">Tags ({groups.length})</h4>
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => { handleFilter(null); setShowFilterOverlay(false); }}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeFilter === null ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>
+                  All
+                </button>
+                {groups.map(g => (
+                  <button key={g.anchor} onClick={() => { handleFilter(g.anchor); setShowFilterOverlay(false); }}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeFilter === g.anchor ? 'bg-blue-600/20 border-blue-500/40 text-blue-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>
+                    {g.label} ({g.events.length})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Countries section */}
+            {countryFilters.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">Countries ({countryFilters.length})</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {countryFilters.map(([key, info]) => (
+                    <button key={key} onClick={() => { handleFilter(key); setShowFilterOverlay(false); }}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium border transition ${activeFilter === key ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400' : 'border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'}`}>
+                      {info.label} ({info.events})
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>
