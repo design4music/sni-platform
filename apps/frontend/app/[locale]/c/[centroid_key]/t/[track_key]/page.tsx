@@ -490,7 +490,9 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                   {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
                 </p>
 
-                {mainEvents.length >= STORY_GROUP_MIN_EVENTS && (mainEvents.some(e => e.family_id) || mainEvents.some(e => e.topic_core)) ? (() => {
+                {mainEvents.length >= STORY_GROUP_MIN_EVENTS && (
+                  mainEvents.filter(e => e.family_id || e.topic_core).length > mainEvents.length * 0.7
+                ) ? (() => {
                   const { groups, ungrouped: ungroupedEvents } = buildStoryGroups(mainEvents);
                   return (
                     <StoryGroupList
