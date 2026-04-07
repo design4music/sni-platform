@@ -152,7 +152,16 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       -- Native events for this CTM
       SELECT
         e.id, e.date::text as date, e.last_active::text as last_active,
-        COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+        COALESCE(
+          ${locale === 'de' ? 'e.title_de, ' : ''}
+          e.title,
+          e.topic_core,
+          (SELECT t2.title_display FROM event_v3_titles evt2
+           JOIN titles_v3 t2 ON t2.id = evt2.title_id
+           WHERE evt2.event_id = e.id
+           AND (t2.detected_language = 'en' OR t2.detected_language IS NULL)
+           ORDER BY t2.pubdate_utc DESC LIMIT 1)
+        ) as title,
         ${locCol('e', 'summary', locale)} as summary,
         e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.importance_score,
         e.is_catchall, e.topic_core,
@@ -171,7 +180,16 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
       -- Anchor events that absorbed an event from this CTM
       SELECT
         e.id, e.date::text as date, e.last_active::text as last_active,
-        COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
+        COALESCE(
+          ${locale === 'de' ? 'e.title_de, ' : ''}
+          e.title,
+          e.topic_core,
+          (SELECT t2.title_display FROM event_v3_titles evt2
+           JOIN titles_v3 t2 ON t2.id = evt2.title_id
+           WHERE evt2.event_id = e.id
+           AND (t2.detected_language = 'en' OR t2.detected_language IS NULL)
+           ORDER BY t2.pubdate_utc DESC LIMIT 1)
+        ) as title,
         ${locCol('e', 'summary', locale)} as summary,
         e.tags, ab.event_type, ab.bucket_key, e.source_batch_count, e.importance_score,
         e.is_catchall, e.topic_core,
