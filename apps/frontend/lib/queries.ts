@@ -155,11 +155,14 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
         COALESCE(
           ${locale === 'de' ? 'e.title_de, ' : ''}
           e.title,
-          e.topic_core,
           (SELECT t2.title_display FROM event_v3_titles evt2
            JOIN titles_v3 t2 ON t2.id = evt2.title_id
            WHERE evt2.event_id = e.id
            AND (t2.detected_language = 'en' OR t2.detected_language IS NULL)
+           ORDER BY t2.pubdate_utc DESC LIMIT 1),
+          (SELECT t2.title_display FROM event_v3_titles evt2
+           JOIN titles_v3 t2 ON t2.id = evt2.title_id
+           WHERE evt2.event_id = e.id
            ORDER BY t2.pubdate_utc DESC LIMIT 1)
         ) as title,
         ${locCol('e', 'summary', locale)} as summary,
@@ -183,11 +186,14 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
         COALESCE(
           ${locale === 'de' ? 'e.title_de, ' : ''}
           e.title,
-          e.topic_core,
           (SELECT t2.title_display FROM event_v3_titles evt2
            JOIN titles_v3 t2 ON t2.id = evt2.title_id
            WHERE evt2.event_id = e.id
            AND (t2.detected_language = 'en' OR t2.detected_language IS NULL)
+           ORDER BY t2.pubdate_utc DESC LIMIT 1),
+          (SELECT t2.title_display FROM event_v3_titles evt2
+           JOIN titles_v3 t2 ON t2.id = evt2.title_id
+           WHERE evt2.event_id = e.id
            ORDER BY t2.pubdate_utc DESC LIMIT 1)
         ) as title,
         ${locCol('e', 'summary', locale)} as summary,
