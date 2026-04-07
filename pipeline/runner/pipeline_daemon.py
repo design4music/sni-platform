@@ -895,12 +895,13 @@ class PipelineDaemon:
                         self.timeout_classification,
                     )
 
-                # Phase 3.3: Intel Gating + Track Assignment
+                # Phase 3.3: Track Assignment (mechanical)
                 if stats["titles_need_track"] > 0:
                     await self.run_with_timeout(
-                        "Phase 3.3: Intel Gating + Track Assignment",
-                        self.run_phase_with_retry(
-                            "Phase 3.3: Intel Gating + Track Assignment",
+                        "Phase 3.3: Track Assignment",
+                        asyncio.to_thread(
+                            self.run_phase_with_retry,
+                            "Phase 3.3: Track Assignment",
                             phase33_process,
                             max_titles=self.classification_batch_size,
                         ),
