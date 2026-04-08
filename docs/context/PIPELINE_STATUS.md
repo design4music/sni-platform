@@ -1,23 +1,48 @@
 # WorldBrief (SNI) v3 Pipeline - Technical Reference
 
-**Last Updated**: 2026-04-01
-**Status**: March rebuild in progress on `feat/sector-clustering`. Production paused.
+**Last Updated**: 2026-04-08
+**Status**: Production live. Daemon running on `main`. March frozen with layered clustering.
 **Live URL**: https://www.worldbrief.info
-**Branch**: `feat/sector-clustering` (experimental, pending merge to `main`)
+**Branch**: `main` (feat/sector-clustering merged 2026-04-02)
 
-> This is a lean reference. For detailed phase descriptions, see `20_ProjectModel.md`.
-> For daemon design rationale, see `DAEMON_4SLOT_PLAN.md`.
-> For clustering architecture, see `NARRATIVE_TOPICS_PLAN.md`.
-> For future vision, see `FRICTION_NODES_VISION.md`.
+> Lean reference. Detailed docs linked below.
 
-### Major Changes (March-April 2026)
+### What's Live
 
-- **Clustering**: Louvain replaced by layered approach (D-049, D-050). Mechanical Layer 1 + LLM Layer 2.
-- **Event families**: New Layer 2 entity assembles clusters into user-facing stories (D-051).
-- **Signal normalization**: Word-containment replaces cosine similarity (D-049).
-- **Phase 3.3**: To be replaced by mechanical sector filter (SECTOR_TO_TRACK mapping).
-- **Frontend**: Story groups with filters (week, tags, countries, min sources, sort).
-- **Future**: Friction nodes as cross-centroid conflict detection (D-052).
+- **4 tracks everywhere**: geo_security, geo_politics, geo_economy, geo_society (Jan-Apr)
+- **March**: layered clustering (Layer 1 + Layer 2), 691 event families, LLM titles/summaries
+- **April**: daemon ingesting + old clustering. Mechanical Phase 3.3 (no LLM track assignment)
+- **Jan/Feb**: old clustering, new labels extracted (sector/subject/signals ready)
+- **Frontend**: family-grouped view for March, flat list for Jan/Feb/Apr, filters, mobile responsive
+
+### Current Work (April 2026)
+
+**Perfecting Layer 2 (event family assembly)**:
+- "Spine" concept for family definition — validated on 3 tiers
+- See: `EVENT_FAMILY_ASSEMBLY.md` (prompt design, results, tiers)
+- Next: finalize prompt, run on all March CTMs, evaluate quality
+
+**Planned**:
+1. Friction node detection + UI — `FRICTION_NODES_VISION.md`
+2. Epic system rebuild on event families — `NEXT_STEPS_PLAN.md`
+3. Daemon integration of new clustering — `PIPELINE_DEEP_ANALYSIS.md`
+4. Family synthesis (rich narrative pages) — `NARRATIVE_TOPICS_PLAN.md`
+
+### Architecture: 4-Layer Data Model
+
+```
+Layer 0: titles_v3          — raw headlines
+Layer 1: events_v3          — signal clusters (mechanical + LLM)
+Layer 2: event_families     — narrative story threads (LLM spine-based assembly)
+Layer 3: friction_nodes     — cross-centroid conflict zones (planned)
+```
+
+### Key Decisions (D-049 to D-052)
+
+- D-049: Faceted clustering replaces Louvain
+- D-050: Layered clustering (mechanical L1 + LLM L2)
+- D-051: Event families as Layer 2 narrative topics
+- D-052: Friction nodes vision (cross-centroid detection)
 
 ---
 
