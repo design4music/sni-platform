@@ -557,3 +557,20 @@ decisions:
       - Replaces current Signals and Epics as high-level picture
       - Persistent across months (friction node has chapters per month)
       - See docs/context/FRICTION_NODES_VISION.md
+
+  - id: D-053
+    date: 2026-04-10
+    type: architectural
+    status: accepted
+    title: Mechanical spine-based family assembly replaces LLM family assembly
+    rationale:
+      - LLM family assembly (D-051) validated on 3 tiers but mechanical approach proved superior
+      - Spine detection from title_labels (place > person > org > subject, track-aware) produces deterministic, reproducible families
+      - Tested on full March corpus (USA Security, France Security, Baltic States)
+      - Zero LLM cost for family assembly step; LLM reserved for title/summary polish only
+      - Script build_families_mechanical.py validated; needs extraction into pipeline module
+    consequences:
+      - D-051 superseded -- LLM family assembly archived (EVENT_FAMILY_ASSEMBLY.md -> archive/)
+      - Pipeline becomes: Phase 4 (clustering) -> 4.1 (family assembly, mechanical) -> 4.2 (within-family merge) -> 4.5a (titles/summaries) -> 4.5b (CTM digests)
+      - event_families table gains spine_type, spine_value columns
+      - Family assembly must support incremental operation (daily new titles)

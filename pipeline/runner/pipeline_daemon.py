@@ -4,7 +4,7 @@ SNI v3 Pipeline Daemon -- 4-Slot Architecture
 Scheduling slots (phases run sequentially within each slot):
 - Slot 1 INGESTION   (12h):  Phase 1 (RSS) + Phase 2 (centroid matching)
 - Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
-- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1 + 4.3 + 4.4 + 4.2a-f (incl. narrative matching)
+- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1 + 4.1b (family assembly) + 4.3 + 4.4 + 4.2a-f (incl. narrative matching)
 - Slot 4 ENRICHMENT  (6h):   Phase 4.5a + 4.5b + 4.2g (LLM narrative discovery) + 4.2h (LLM review)
 - Daily purge: Remove rejected titles + reset api_error_count
 
@@ -35,6 +35,7 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
     backfill_entity_centroids as phase32_backfill,
 )
 from pipeline.phase_3_3.assign_tracks_mechanical import process_batch as phase33_process
+from pipeline.phase_4.assemble_families import process_ctm as phase41b_assemble_families
 from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_event_summaries,
@@ -577,6 +578,43 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
+    def run_family_assembly(self, max_ctms: int = 25):
+        """Phase 4.1b: Mechanical family assembly (spine-based).
+
+        Runs on all unfrozen CTMs that have clusters. The module has its own
+        incremental guard (skips if cluster count unchanged and all assigned).
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT id, centroid_id, track, title_count
+                       FROM ctm
+                       WHERE title_count >= 3 AND is_frozen = false
+                         AND EXISTS (SELECT 1 FROM events_v3 e
+                                     WHERE e.ctm_id = ctm.id
+                                       AND NOT e.is_catchall
+                                       AND e.merged_into IS NULL)
+                       ORDER BY title_count DESC
+                       LIMIT %s""",
+                    (max_ctms,),
+                )
+                ctms = cur.fetchall()
+
+            if not ctms:
+                print("No CTMs need family assembly")
+                return
+
+            print("Family assembly: %d CTMs..." % len(ctms))
+            for ctm_id, centroid_id, track, title_count in ctms:
+                try:
+                    phase41b_assemble_families(ctm_id=ctm_id)
+                except Exception as e:
+                    print("  Family assembly failed for %s: %s" % (ctm_id[:8], e))
+
+        finally:
+            self.return_connection(conn)
+
     def run_event_merge(self, max_ctms: int = 10):
         """Phase 4.3: Cross-bucket event merging for high-importance CTMs."""
         conn = self.get_connection()
@@ -937,6 +975,16 @@ class PipelineDaemon:
                     "Phase 4.1: Topic Aggregation",
                     self.run_topic_aggregation,
                     max_ctms=self.aggregation_max_ctms,
+                ),
+                self.timeout_clustering,
+            )
+            # Phase 4.1b: Family Assembly (mechanical, spine-based)
+            await self.run_with_timeout(
+                "Phase 4.1b: Family Assembly",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.1b: Family Assembly",
+                    self.run_family_assembly,
                 ),
                 self.timeout_clustering,
             )
