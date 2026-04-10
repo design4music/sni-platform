@@ -938,6 +938,63 @@ export async function getCentroidTimeline(
   return rows;
 }
 
+// --- Event Family queries ---
+
+export interface FamilyDetail {
+  id: string;
+  title: string;
+  summary: string | null;
+  domain: string | null;
+  cluster_count: number;
+  source_count: number;
+  first_seen: string | null;
+  last_active: string | null;
+  centroid_id: string;
+  centroid_label: string;
+  track: string;
+  month: string;
+}
+
+export interface FamilyEvent {
+  id: string;
+  title: string;
+  date: string | null;
+  source_batch_count: number;
+  event_type: string;
+  bucket_key: string | null;
+  summary: string | null;
+}
+
+export async function getFamilyById(familyId: string, locale?: string): Promise<FamilyDetail | null> {
+  const results = await query<FamilyDetail>(
+    `SELECT f.id, ${locCol('f', 'title', locale)} as title,
+            ${locCol('f', 'summary', locale)} as summary,
+            f.domain, f.cluster_count, f.source_count,
+            f.first_seen::text, f.last_active::text,
+            c.centroid_id, cv.label as centroid_label, c.track,
+            TO_CHAR(c.month, 'YYYY-MM') as month
+     FROM event_families f
+     JOIN ctm c ON c.id = f.ctm_id
+     JOIN centroids_v3 cv ON cv.id = c.centroid_id
+     WHERE f.id = $1`,
+    [familyId]
+  );
+  return results[0] || null;
+}
+
+export async function getFamilyEvents(familyId: string, locale?: string): Promise<FamilyEvent[]> {
+  return query<FamilyEvent>(
+    `SELECT e.id,
+            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title) as title,
+            e.date::text, e.source_batch_count, e.event_type, e.bucket_key,
+            ${locCol('e', 'summary', locale)} as summary
+     FROM events_v3 e
+     WHERE e.family_id = $1 AND e.merged_into IS NULL
+     ORDER BY e.source_batch_count DESC`,
+    [familyId]
+  );
+}
+
 export async function getEventById(eventId: string, locale?: string): Promise<EventDetail | null> {
   return cached(`event:${eventId}:${locale || 'en'}`, 3600, async () => {
   const results = await query<EventDetail>(

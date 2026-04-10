@@ -13,9 +13,20 @@ export interface StoryGroup {
   topSignals?: string[];
 }
 
+export interface CountrySection {
+  countryKey: string;
+  countryLabel: string;
+  countryIsoCodes: string[];
+  families: StoryGroup[];
+  standalones: Event[];
+  totalSources: number;
+  totalTopics: number;
+}
+
 interface Props {
   groups: StoryGroup[];
   ungrouped: Event[];
+  countrySections?: CountrySection[];
   initialGroupsShown?: number;
   initialEventsPerGroup?: number;
 }
@@ -28,9 +39,12 @@ function eventMatchesFilter(event: Event, filter: string): boolean {
   return false;
 }
 
+const MIN_DISPLAY_SOURCES = 5;
+
 export default function StoryGroupList({
   groups,
   ungrouped,
+  countrySections,
   initialGroupsShown = 15,
   initialEventsPerGroup = 5,
 }: Props) {
@@ -134,6 +148,141 @@ export default function StoryGroupList({
   const totalTopics = groups.reduce((s, g) => s + g.events.length, 0) + ungrouped.length;
   const showFilters = totalTopics >= 50;
 
+  // Country sections mode (new mechanical families)
+  if (countrySections && countrySections.length > 0) {
+    // Filter out country sections with no visible topics (all below MIN_DISPLAY_SOURCES)
+    const substantialSections = countrySections.filter(s => {
+      const famVisible = s.families.some(f => f.events.some(e => (e.source_title_ids?.length || 0) >= MIN_DISPLAY_SOURCES));
+      const soloVisible = s.standalones.some(e => (e.source_title_ids?.length || 0) >= MIN_DISPLAY_SOURCES);
+      return famVisible || soloVisible;
+    });
+    const sectionsShown = activeFilter ? substantialSections.length : groupsShown;
+    const visibleSections = substantialSections.slice(0, sectionsShown);
+    const hasMoreSections = !activeFilter && substantialSections.length > sectionsShown;
+
+    // Collect all hidden small topics for summary
+    const hiddenCount = countrySections.reduce((sum, s) => {
+      const famHidden = s.families.reduce((fs, f) =>
+        fs + f.events.filter(e => (e.source_title_ids?.length || 0) < MIN_DISPLAY_SOURCES).length, 0);
+      const soloHidden = s.standalones.filter(e => (e.source_title_ids?.length || 0) < MIN_DISPLAY_SOURCES).length;
+      return sum + famHidden + soloHidden;
+    }, 0);
+
+    return (
+      <div className="space-y-3">
+        {visibleSections.map(section => {
+          const isExpanded = expandedGroups.has(section.countryKey);
+          const isoCode = section.countryIsoCodes[0]?.toLowerCase();
+          return (
+            <div key={section.countryKey} className="border border-dashboard-border rounded-lg overflow-hidden">
+              <button onClick={() => toggleGroup(section.countryKey)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-dashboard-surface hover:bg-dashboard-surface-hover transition-colors text-left">
+                <div className="flex items-center gap-2.5">
+                  {isoCode && (
+                    <img src={`https://flagcdn.com/20x15/${isoCode}.png`}
+                      alt="" className="flex-shrink-0" width={20} height={15} />
+                  )}
+                  <span className="text-base font-semibold text-dashboard-text">{section.countryLabel}</span>
+                  <span className="text-xs text-dashboard-text-muted px-2 py-0.5 rounded-full bg-dashboard-border/50">
+                    {section.totalTopics} topics | {section.totalSources} sources
+                  </span>
+                </div>
+                <svg className={`w-4 h-4 text-dashboard-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isExpanded && (
+                <div className="px-4 pb-3 space-y-3">
+                  {/* Families within this country */}
+                  {section.families.map(fam => {
+                    const famEvents = fam.events.filter(e => (e.source_title_ids?.length || 0) >= MIN_DISPLAY_SOURCES);
+                    if (famEvents.length === 0) return null;
+                    const famSrc = famEvents.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0);
+                    const isFamExpanded = expandedGroups.has(fam.anchor);
+                    const visibleFamEvents = isFamExpanded ? famEvents : famEvents.slice(0, initialEventsPerGroup);
+                    const hasMoreFam = famEvents.length > initialEventsPerGroup;
+                    return (
+                      <div key={fam.anchor} className="border-l-2 border-blue-500/30 pl-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <a href={`/families/${fam.anchor}`}
+                            className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition-colors">
+                            {fam.label}
+                          </a>
+                          <span className="text-xs text-dashboard-text-muted">{famEvents.length} topics | {famSrc} src</span>
+                          {famEvents.length > initialEventsPerGroup && (
+                            <button onClick={() => toggleGroup(fam.anchor)}
+                              className="text-xs text-blue-400 hover:text-blue-300">
+                              {expandedGroups.has(fam.anchor) ? 'less' : 'more'}
+                            </button>
+                          )}
+                        </div>
+                        {fam.topSignals && fam.topSignals[0] && (
+                          <p className="text-xs text-dashboard-text-muted mb-1 leading-relaxed">{fam.topSignals[0]}</p>
+                        )}
+                        {visibleFamEvents.map((event, i) => {
+                          const srcCount = event.source_title_ids?.length || 0;
+                          const dateStr = event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                          const href = event.event_id ? `/events/${event.event_id}` : '#';
+                          return (
+                            <a key={`${fam.anchor}-${i}`} href={href}
+                              className="flex items-start gap-2 py-1 px-1 rounded hover:bg-dashboard-surface-hover transition-colors group">
+                              <span className="text-sm text-dashboard-text group-hover:text-blue-400 flex-1 line-clamp-1">{event.title}</span>
+                              <span className="text-xs text-dashboard-text-muted whitespace-nowrap flex-shrink-0">
+                                {dateStr && <span className="mr-2">{dateStr}</span>}
+                                {srcCount} src
+                              </span>
+                            </a>
+                          );
+                        })}
+                        {!isFamExpanded && hasMoreFam && (
+                          <button onClick={() => toggleGroup(fam.anchor)} className="text-xs text-blue-400 hover:text-blue-300 py-0.5 ml-1">
+                            + {famEvents.length - initialEventsPerGroup} more
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Standalone topics within this country */}
+                  {section.standalones.filter(e => (e.source_title_ids?.length || 0) >= MIN_DISPLAY_SOURCES).map((event, i) => {
+                    const srcCount = event.source_title_ids?.length || 0;
+                    const dateStr = event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                    const href = event.event_id ? `/events/${event.event_id}` : '#';
+                    return (
+                      <a key={`solo-${section.countryKey}-${i}`} href={href}
+                        className="flex items-start gap-2 py-1.5 px-1 rounded hover:bg-dashboard-surface-hover transition-colors group">
+                        <span className="text-sm text-dashboard-text group-hover:text-blue-400 flex-1 line-clamp-1">{event.title}</span>
+                        <span className="text-xs text-dashboard-text-muted whitespace-nowrap flex-shrink-0">
+                          {dateStr && <span className="mr-2">{dateStr}</span>}
+                          {srcCount} src
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {hasMoreSections && (
+          <button onClick={() => setGroupsShown(prev => prev + 10)}
+            className="w-full py-3 text-sm text-blue-400 hover:text-blue-300 border border-dashboard-border rounded-lg">
+            Show more countries ({substantialSections.length - sectionsShown} remaining)
+          </button>
+        )}
+
+        {hiddenCount > 0 && (
+          <p className="text-xs text-dashboard-text-muted py-2">
+            + {hiddenCount} smaller topics (under {MIN_DISPLAY_SOURCES} sources) not shown
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Legacy flat-groups mode (fallback)
   return (
     <div className="space-y-4">
       {showFilters && (
@@ -273,20 +422,55 @@ export default function StoryGroupList({
               </svg>
             </button>
             <div className="px-4 pb-3 space-y-1">
-              {/* Family description as section header inside accordion */}
+              {/* Family summary paragraph */}
               {group.topSignals && group.topSignals[0] && group.anchorType === 'family' && (
-                <p className="text-sm text-dashboard-text py-2 border-b border-dashboard-border/30 mb-2">
+                <p className="text-sm text-dashboard-text-muted py-2 border-b border-dashboard-border/30 mb-2 leading-relaxed">
                   {group.topSignals[0]}
                 </p>
               )}
-              {visibleEvents.map((event, i) => {
-                const isBig = (event.source_title_ids?.length || 0) >= 10;
-                return <EventAccordion key={`${group.anchor}-${i}`} event={event} index={i} twoLiner={!isBig} onTagFilter={handleTagFilter} />;
-              })}
-              {!isExpanded && hasMoreEvents && (
-                <button onClick={() => toggleGroup(group.anchor)} className="text-sm text-blue-400 hover:text-blue-300 py-1">
-                  + {allEvents.length - initialEventsPerGroup} more topics
-                </button>
+              {/* Compact topic list for families, full accordion for signal groups */}
+              {group.anchorType === 'family' ? (
+                <>
+                  {visibleEvents.map((event, i) => {
+                    const srcCount = event.source_title_ids?.length || 0;
+                    const dateStr = event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                    const isoCodes = event.bucket_key ? [event.bucket_key] : [];
+                    const href = event.event_id ? `/events/${event.event_id}` : '#';
+                    return (
+                      <a key={`fam-topic-${i}`} href={href}
+                        className="flex items-start gap-2 py-1.5 px-1 pl-2 rounded hover:bg-dashboard-surface-hover transition-colors group">
+                        {isoCodes[0] ? (
+                          <img src={`https://flagcdn.com/16x12/${isoCodes[0].toLowerCase()}.png`}
+                            alt="" className="mt-1 flex-shrink-0" width={16} height={12} />
+                        ) : (
+                          <span className="inline-block flex-shrink-0" style={{ width: 16 }} />
+                        )}
+                        <span className="text-sm text-dashboard-text group-hover:text-blue-400 flex-1 line-clamp-1">{event.title}</span>
+                        <span className="text-xs text-dashboard-text-muted whitespace-nowrap flex-shrink-0">
+                          {dateStr && <span className="mr-2">{dateStr}</span>}
+                          {srcCount} src
+                        </span>
+                      </a>
+                    );
+                  })}
+                  {!isExpanded && hasMoreEvents && (
+                    <button onClick={() => toggleGroup(group.anchor)} className="text-sm text-blue-400 hover:text-blue-300 py-1">
+                      + {allEvents.length - initialEventsPerGroup} more topics
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {visibleEvents.map((event, i) => {
+                    const isBig = (event.source_title_ids?.length || 0) >= 10;
+                    return <EventAccordion key={`${group.anchor}-${i}`} event={event} index={i} twoLiner={!isBig} onTagFilter={handleTagFilter} />;
+                  })}
+                  {!isExpanded && hasMoreEvents && (
+                    <button onClick={() => toggleGroup(group.anchor)} className="text-sm text-blue-400 hover:text-blue-300 py-1">
+                      + {allEvents.length - initialEventsPerGroup} more topics
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -300,25 +484,35 @@ export default function StoryGroupList({
         </button>
       )}
 
-      {filteredUngrouped.length > 0 && (
+      {/* Standalone topics (display-worthy but not in a family) */}
+      {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) >= 6).length > 0 && (
+        <div className="space-y-1 mt-2">
+          {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) >= 6).map((event, i) => (
+            <EventAccordion key={`standalone-${i}`} event={event} index={i} twoLiner onTagFilter={handleTagFilter} />
+          ))}
+        </div>
+      )}
+
+      {/* Micro-clusters: collapsed summary */}
+      {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) < 6).length > 0 && (
         <div className="mt-4 border border-dashboard-border rounded-lg overflow-hidden">
-          <button onClick={() => toggleGroup('__ungrouped__')}
+          <button onClick={() => toggleGroup('__micro__')}
             className="w-full flex items-center justify-between px-4 py-3 bg-dashboard-surface hover:bg-dashboard-surface-hover transition-colors text-left">
             <span className="text-sm text-dashboard-text-muted">
-              {activeFilter ? 'Matching' : 'Other'} Topics ({filteredUngrouped.length})
+              + {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) < 6).reduce((s, e) => s + (e.source_title_ids?.length || 0), 0)} additional sources in {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) < 6).length} smaller topics
             </span>
-            <svg className={`w-4 h-4 text-dashboard-text-muted transition-transform ${expandedGroups.has('__ungrouped__') ? 'rotate-180' : ''}`}
+            <svg className={`w-4 h-4 text-dashboard-text-muted transition-transform ${expandedGroups.has('__micro__') ? 'rotate-180' : ''}`}
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          {expandedGroups.has('__ungrouped__') && (
+          {expandedGroups.has('__micro__') && (
             <div className="px-4 pb-3 space-y-1">
-              {filteredUngrouped.slice(0, 30).map((event, i) => (
-                <EventAccordion key={`ungrouped-${i}`} event={event} index={i} twoLiner onTagFilter={handleTagFilter} />
+              {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) < 6).slice(0, 30).map((event, i) => (
+                <EventAccordion key={`micro-${i}`} event={event} index={i} twoLiner onTagFilter={handleTagFilter} />
               ))}
-              {filteredUngrouped.length > 30 && (
-                <p className="text-xs text-dashboard-text-muted py-1">+ {filteredUngrouped.length - 30} more</p>
+              {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) < 6).length > 30 && (
+                <p className="text-xs text-dashboard-text-muted py-1">+ {filteredUngrouped.filter(e => (e.source_title_ids?.length || 0) < 6).length - 30} more</p>
               )}
             </div>
           )}

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import StoryGroupList from '@/components/StoryGroupList';
-import type { StoryGroup } from '@/components/StoryGroupList';
+import type { StoryGroup, CountrySection } from '@/components/StoryGroupList';
 import MobileTocButton from '@/components/MobileTocButton';
 import MonthNav from '@/components/MonthNav';
 import {
@@ -59,7 +59,7 @@ function countTitles(events: Event[]) {
 }
 
 
-const STORY_GROUP_MIN_EVENTS = 50; // only group when there are many events
+const STORY_GROUP_MIN_EVENTS = 10; // use story groups when families exist
 
 /** Build story groups from event families (Layer 2) or topic_core anchors (fallback).
  *  Prefers family_id grouping when available. Falls back to signal anchors.
@@ -69,11 +69,16 @@ function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: E
   const hasFamilies = events.some(e => e.family_id);
 
   if (hasFamilies) {
-    // Group by family_id — Layer 2 narrative topics
+    // Determine display threshold based on total event count
+    const displayThreshold = events.length > 500 ? 10 : events.length > 100 ? 6 : 3;
+
+    // Group by family_id -- Layer 2 narrative topics
     const familyMap = new Map<string, { title: string; domain: string; summary: string; events: Event[] }>();
-    const ungrouped: Event[] = [];
+    const standalone: Event[] = [];   // display-worthy topics without a family
+    const ungrouped: Event[] = [];    // micro-clusters (below threshold)
 
     for (const ev of events) {
+      const srcCount = ev.source_title_ids?.length || 0;
       if (ev.family_id && ev.family_title) {
         if (!familyMap.has(ev.family_id)) {
           familyMap.set(ev.family_id, {
@@ -84,6 +89,8 @@ function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: E
           });
         }
         familyMap.get(ev.family_id)!.events.push(ev);
+      } else if (srcCount >= displayThreshold && !ev.is_catchall) {
+        standalone.push(ev);
       } else {
         ungrouped.push(ev);
       }
@@ -95,17 +102,19 @@ function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: E
       const totalSources = fam.events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
       fam.events.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
       groups.push({
-        label: fam.domain || fam.title,
+        label: fam.title,
         anchor: fid,
         anchorType: 'family',
         events: fam.events,
         totalSources,
-        topSignals: fam.domain ? [fam.title] : undefined,
+        topSignals: fam.summary ? [fam.summary] : undefined,
       });
     }
     groups.sort((a, b) => b.totalSources - a.totalSources);
+    // Standalone topics go into ungrouped but sorted to top (they're display-worthy)
+    standalone.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
     ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-    return { groups, ungrouped };
+    return { groups, ungrouped: [...standalone, ...ungrouped] };
   }
 
   // Fallback: group by topic_core anchors (signal-based)
@@ -139,6 +148,125 @@ function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: E
   groups.sort((a, b) => b.totalSources - a.totalSources);
   ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
   return { groups, ungrouped };
+}
+
+/** Build country-grouped sections from events with families.
+ *  Groups events by bucket_key (bilateral) or "Domestic", with families nested inside.
+ */
+function buildCountrySections(events: Event[]): CountrySection[] {
+  // Determine the dominant country for each family
+  const familyCountry = new Map<string, string>();
+  const familyCounts = new Map<string, Map<string, number>>();
+  for (const ev of events) {
+    if (!ev.family_id) continue;
+    const country = ev.event_type === 'domestic' ? 'DOMESTIC' : (ev.bucket_key || 'OTHER');
+    if (!familyCounts.has(ev.family_id)) familyCounts.set(ev.family_id, new Map());
+    const counts = familyCounts.get(ev.family_id)!;
+    counts.set(country, (counts.get(country) || 0) + 1);
+  }
+  for (const [fid, counts] of familyCounts) {
+    // Prefer any bilateral bucket over DOMESTIC -- families spanning both
+    // are bilateral stories with some domestic-angle coverage
+    let best = 'OTHER'; let bestCount = 0;
+    for (const [country, count] of counts) {
+      if (count > bestCount) { best = country; bestCount = count; }
+    }
+    // If majority is DOMESTIC but a bilateral bucket has >=30% of events, prefer it
+    // (families spanning both are often bilateral stories with domestic-angle titles)
+    if (best === 'DOMESTIC') {
+      const total = [...counts.values()].reduce((s, n) => s + n, 0);
+      let bestBilateral = ''; let bestBilateralCount = 0;
+      for (const [country, count] of counts) {
+        if (country !== 'DOMESTIC' && country !== 'OTHER' && count > bestBilateralCount) {
+          bestBilateral = country; bestBilateralCount = count;
+        }
+      }
+      if (bestBilateral && bestBilateralCount >= total * 0.3) best = bestBilateral;
+    }
+    familyCountry.set(fid, best);
+  }
+
+  // Group events into country buckets
+  const countryMap = new Map<string, { families: Map<string, { title: string; summary: string; events: Event[] }>; standalones: Event[] }>();
+
+  const getOrCreate = (key: string) => {
+    if (!countryMap.has(key)) countryMap.set(key, { families: new Map(), standalones: [] });
+    return countryMap.get(key)!;
+  };
+
+  for (const ev of events) {
+    if (ev.is_catchall) continue;
+    const evCountry = ev.event_type === 'domestic' ? 'DOMESTIC' : (ev.bucket_key || 'OTHER');
+
+    if (ev.family_id && ev.family_title) {
+      // Use the family's dominant country, not the individual event's bucket
+      const famCountry = familyCountry.get(ev.family_id) || evCountry;
+      const bucket = getOrCreate(famCountry);
+      if (!bucket.families.has(ev.family_id)) {
+        bucket.families.set(ev.family_id, { title: ev.family_title, summary: ev.family_summary || '', events: [] });
+      }
+      bucket.families.get(ev.family_id)!.events.push(ev);
+    } else {
+      const bucket = getOrCreate(evCountry);
+      bucket.standalones.push(ev);
+    }
+  }
+
+  // Deduplicate: merge country sections that resolve to the same label
+  // (e.g., two "Iran" sections from MIDEAST-IRAN bucket split)
+  const seen = new Map<string, string>(); // countryKey -> first key with this label
+  // This is handled by the familyCountry assignment above -- all events in a
+  // family go to the SAME country bucket regardless of their individual bucket_key.
+
+  // Build sections
+  const sections: CountrySection[] = [];
+  for (const [countryKey, bucket] of countryMap) {
+    const families: StoryGroup[] = [];
+    for (const [fid, fam] of bucket.families) {
+      fam.events.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+      const totalSources = fam.events.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0);
+      families.push({
+        label: fam.title,
+        anchor: fid,
+        anchorType: 'family',
+        events: fam.events,
+        totalSources,
+        topSignals: fam.summary ? [fam.summary] : undefined,
+      });
+    }
+    families.sort((a, b) => b.totalSources - a.totalSources);
+    bucket.standalones.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
+
+    const totalSources = families.reduce((s, f) => s + f.totalSources, 0)
+      + bucket.standalones.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0);
+    const totalTopics = families.reduce((s, f) => s + f.events.length, 0) + bucket.standalones.length;
+
+    // Get display info -- use countryKey directly for reliable labeling
+    // (sample events can have different bucket_keys from mixed families)
+    const sampleBilateral = [...families.flatMap(f => f.events), ...bucket.standalones]
+      .find(e => e.event_type === 'bilateral' && e.bucket_key === countryKey);
+    const sampleDomestic = [...families.flatMap(f => f.events), ...bucket.standalones]
+      .find(e => e.event_type === 'domestic' || !e.bucket_key);
+    const label = countryKey === 'DOMESTIC'
+      ? (sampleDomestic?.bucketLabel || 'Domestic')
+      : (sampleBilateral?.bucketLabel || getCountryName(countryKey));
+    const isoCodes = countryKey === 'DOMESTIC'
+      ? (sampleDomestic?.bucketIsoCodes || [])
+      : (sampleBilateral?.bucketIsoCodes || [getIsoFromBucketKey(countryKey)]);
+
+    sections.push({
+      countryKey,
+      countryLabel: label,
+      countryIsoCodes: isoCodes,
+      families,
+      standalones: bucket.standalones,
+      totalSources,
+      totalTopics,
+    });
+  }
+
+  sections.sort((a, b) => b.totalSources - a.totalSources);
+  return sections;
 }
 
 /** Split events into top-N topics and "other" (small topics + catchalls). */
@@ -491,13 +619,15 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
                 </p>
 
                 {mainEvents.length >= STORY_GROUP_MIN_EVENTS && (
-                  mainEvents.filter(e => e.family_id || e.topic_core).length > mainEvents.length * 0.7
+                  mainEvents.some(e => e.family_id)
                 ) ? (() => {
                   const { groups, ungrouped: ungroupedEvents } = buildStoryGroups(mainEvents);
+                  const sections = buildCountrySections(mainEvents);
                   return (
                     <StoryGroupList
                       groups={groups}
                       ungrouped={ungroupedEvents}
+                      countrySections={sections.length > 1 ? sections : undefined}
                     />
                   );
                 })() : (
