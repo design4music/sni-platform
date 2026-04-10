@@ -4,7 +4,7 @@ SNI v3 Pipeline Daemon -- 4-Slot Architecture
 Scheduling slots (phases run sequentially within each slot):
 - Slot 1 INGESTION   (12h):  Phase 1 (RSS) + Phase 2 (centroid matching)
 - Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
-- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1 + 4.1b (family assembly) + 4.3 + 4.4 + 4.2a-f (incl. narrative matching)
+- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1 (family assembly) + 4.2a-f (incl. narrative matching)
 - Slot 4 ENRICHMENT  (6h):   Phase 4.5a + 4.5b + 4.2g (LLM narrative discovery) + 4.2h (LLM review)
 - Daily purge: Remove rejected titles + reset api_error_count
 
@@ -35,8 +35,7 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
     backfill_entity_centroids as phase32_backfill,
 )
 from pipeline.phase_3_3.assign_tracks_mechanical import process_batch as phase33_process
-from pipeline.phase_4.assemble_families import process_ctm as phase41b_assemble_families
-from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
+from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble_families
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_event_summaries,
 )
@@ -46,13 +45,9 @@ from pipeline.phase_4.generate_summaries_4_5 import (
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
-from pipeline.phase_4.merge_related_events import (
-    find_ctms_needing_merge,
-)
-from pipeline.phase_4.merge_related_events import process_ctm_merge as phase43_merge
-from pipeline.phase_4.merge_sibling_events import (
-    run_sibling_merge as phase44_sibling_merge,
-)
+
+# Unplugged (D-053): 4.1 (LLM topic aggregation), 4.3 (cross-bucket merge),
+# 4.4 (sibling merge) -- replaced by mechanical family assembly
 
 
 class PipelineDaemon:
@@ -85,7 +80,6 @@ class PipelineDaemon:
 
         # Batch sizes
         self.classification_batch_size = 500  # Titles per 3.1 and 3.3 run
-        self.aggregation_max_ctms = 25  # CTMs per 4.1 run
         self.enrichment_max_events = 500  # Events per 4.5a run
         self.enrichment_max_ctms = 200  # CTMs per 4.5b run
 
@@ -508,78 +502,11 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
-    def run_topic_aggregation(self, max_ctms: int = 10):
-        """
-        Run topic aggregation (LLM merge/cleanup) for CTMs with NEW content only.
-
-        INCREMENTAL: Only processes CTMs where title_count increased since last
-        aggregation, or CTMs that were never aggregated.
-
-        Limits to max_ctms per cycle to avoid blocking the pipeline.
-        """
-        conn = self.get_connection()
-        try:
-            with conn.cursor() as cur:
-                # Get CTMs that have NEW content since last aggregation
-                # OR have never been aggregated (last_aggregated_at IS NULL)
-                cur.execute(
-                    """
-                    SELECT id, centroid_id, track, title_count
-                    FROM ctm
-                    WHERE title_count >= 3 AND is_frozen = false
-                      AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = ctm.id)
-                      AND (
-                          last_aggregated_at IS NULL
-                          OR title_count > COALESCE(title_count_at_aggregation, 0)
-                      )
-                    ORDER BY
-                        last_aggregated_at NULLS FIRST,
-                        title_count DESC
-                    LIMIT %s
-                    """,
-                    (max_ctms,),
-                )
-                ctms = cur.fetchall()
-
-            if not ctms:
-                print("No CTMs need aggregation (all up-to-date)")
-                return
-
-            print(
-                "Processing {} CTMs with new content (limit {})...".format(
-                    len(ctms), max_ctms
-                )
-            )
-            for ctm_id, centroid_id, track, title_count in ctms:
-                try:
-                    print(
-                        "  Aggregating {} / {} ({} titles)...".format(
-                            centroid_id, track, title_count
-                        )
-                    )
-                    phase41_aggregate(ctm_id=ctm_id, dry_run=False)
-
-                    # Mark CTM as aggregated with current title count
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            """
-                            UPDATE ctm
-                            SET last_aggregated_at = NOW(),
-                                title_count_at_aggregation = title_count
-                            WHERE id = %s
-                            """,
-                            (ctm_id,),
-                        )
-                    conn.commit()
-
-                except Exception as e:
-                    print("  Aggregation failed for {}: {}".format(ctm_id[:8], e))
-
-        finally:
-            self.return_connection(conn)
+    # Unplugged (D-053): run_topic_aggregation (Phase 4.1 LLM merge)
+    # Replaced by mechanical family assembly
 
     def run_family_assembly(self, max_ctms: int = 25):
-        """Phase 4.1b: Mechanical family assembly (spine-based).
+        """Phase 4.1: Mechanical family assembly (spine-based).
 
         Runs on all unfrozen CTMs that have clusters. The module has its own
         incremental guard (skips if cluster count unchanged and all assigned).
@@ -608,47 +535,16 @@ class PipelineDaemon:
             print("Family assembly: %d CTMs..." % len(ctms))
             for ctm_id, centroid_id, track, title_count in ctms:
                 try:
-                    phase41b_assemble_families(ctm_id=ctm_id)
+                    phase41_assemble_families(ctm_id=ctm_id)
                 except Exception as e:
                     print("  Family assembly failed for %s: %s" % (ctm_id[:8], e))
 
         finally:
             self.return_connection(conn)
 
-    def run_event_merge(self, max_ctms: int = 10):
-        """Phase 4.3: Cross-bucket event merging for high-importance CTMs."""
-        conn = self.get_connection()
-        try:
-            ctms = find_ctms_needing_merge(conn)
-            if not ctms:
-                print("No CTMs need cross-bucket merging")
-                return
-
-            ctms = ctms[:max_ctms]
-            print("Phase 4.3: {} CTMs qualifying for merge".format(len(ctms)))
-            total = 0
-            for ctm in ctms:
-                try:
-                    merged = phase43_merge(conn, ctm["ctm_id"])
-                    total += merged
-                except Exception as e:
-                    print(
-                        "  Merge failed for {} / {}: {}".format(
-                            ctm["centroid_id"], ctm["track"], e
-                        )
-                    )
-            if total:
-                print("Phase 4.3: merged {} events total".format(total))
-        finally:
-            self.return_connection(conn)
-
-    def run_sibling_merge(self, max_months=3):
-        """Phase 4.4: Cross-centroid sibling event merging."""
-        conn = self.get_connection()
-        try:
-            phase44_sibling_merge(conn=conn, max_months=max_months)
-        finally:
-            self.return_connection(conn)
+    # Unplugged (D-053): run_event_merge (Phase 4.3 cross-bucket LLM merge)
+    # Unplugged (D-053): run_sibling_merge (Phase 4.4 cross-centroid sibling merge)
+    # Both replaced by mechanical family assembly. Sibling merge to revisit later.
 
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
@@ -967,46 +863,17 @@ class PipelineDaemon:
                 ),
                 self.timeout_clustering,
             )
-            # Phase 4.1: Topic Aggregation
+            # Phase 4.1: Family Assembly (mechanical, spine-based)
+            # Replaces old 4.1 (LLM topic aggregation), 4.3 (cross-bucket merge),
+            # 4.4 (sibling merge) -- see D-053
             await self.run_with_timeout(
-                "Phase 4.1: Topic Aggregation",
+                "Phase 4.1: Family Assembly",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
-                    "Phase 4.1: Topic Aggregation",
-                    self.run_topic_aggregation,
-                    max_ctms=self.aggregation_max_ctms,
-                ),
-                self.timeout_clustering,
-            )
-            # Phase 4.1b: Family Assembly (mechanical, spine-based)
-            await self.run_with_timeout(
-                "Phase 4.1b: Family Assembly",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.1b: Family Assembly",
+                    "Phase 4.1: Family Assembly",
                     self.run_family_assembly,
                 ),
                 self.timeout_clustering,
-            )
-            # Phase 4.3: Cross-Bucket Event Merging
-            await self.run_with_timeout(
-                "Phase 4.3: Event Merge",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.3: Event Merge",
-                    self.run_event_merge,
-                ),
-                300,
-            )
-            # Phase 4.4: Cross-Centroid Sibling Merge
-            await self.run_with_timeout(
-                "Phase 4.4: Sibling Merge",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.4: Sibling Merge",
-                    self.run_sibling_merge,
-                ),
-                300,
             )
             # Phase 4.2: Materialize pre-computed views (mv_* tables)
             await self.run_with_timeout(
@@ -1196,7 +1063,6 @@ class PipelineDaemon:
         print("  Daily Purge:           %dh" % (self.purge_interval // 3600))
         print("\nBatch Sizes:")
         print("  Classification: %d titles/run" % self.classification_batch_size)
-        print("  Aggregation:    %d CTMs/run" % self.aggregation_max_ctms)
         print("  Event summaries: %d events/run" % self.enrichment_max_events)
         print("  CTM summaries:   %d CTMs/run" % self.enrichment_max_ctms)
         print("\nPress Ctrl+C to shutdown gracefully\n")
