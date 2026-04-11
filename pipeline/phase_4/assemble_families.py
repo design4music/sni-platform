@@ -701,7 +701,13 @@ def write_families(conn, ctm_id, families):
         key = (row[1], row[2])
         existing[key] = row[0]
 
-    # Remove legacy families without spine data
+    # Remove legacy families without spine data (clear FK refs first)
+    cur.execute(
+        "UPDATE events_v3 SET family_id = NULL "
+        "WHERE family_id IN (SELECT id FROM event_families "
+        "  WHERE ctm_id = %s AND spine_type IS NULL)",
+        (ctm_id,),
+    )
     cur.execute(
         "DELETE FROM event_families WHERE ctm_id = %s AND spine_type IS NULL",
         (ctm_id,),
@@ -776,9 +782,14 @@ def write_families(conn, ctm_id, families):
     # Clean up orphaned families (spine no longer exists)
     orphaned = [fid for key, fid in existing.items() if key not in new_spine_keys]
     if orphaned:
+        orphan_ids = [str(fid) for fid in orphaned]
+        cur.execute(
+            "UPDATE events_v3 SET family_id = NULL WHERE family_id = ANY(%s::uuid[])",
+            (orphan_ids,),
+        )
         cur.execute(
             "DELETE FROM event_families WHERE id = ANY(%s::uuid[])",
-            ([str(fid) for fid in orphaned],),
+            (orphan_ids,),
         )
         print("  Removed %d orphaned families" % len(orphaned))
 

@@ -574,3 +574,21 @@ decisions:
       - Pipeline becomes: Phase 4 (clustering) -> 4.1 (family assembly, mechanical) -> 4.2 (within-family merge) -> 4.5a (titles/summaries) -> 4.5b (CTM digests)
       - event_families table gains spine_type, spine_value columns
       - Family assembly must support incremental operation (daily new titles)
+
+  - id: D-054
+    date: 2026-04-11
+    type: architectural
+    status: rejected
+    title: Global clustering (no bucket partitioning) with all label signals
+    rationale:
+      - Hypothesis: removing bucket boundaries and using all title_labels (actor, target, action_class, subject, sector + entity signals) would eliminate cross-bucket duplicates
+      - Prototype tested on 3 CTMs (USA/politics, China/economy, France/politics)
+      - Catchall rate dropped from 35-68% to 1-4% (major improvement in coverage)
+      - But cluster quality degraded significantly -- broad structural labels (target=CN + action_class=INFRASTRUCTURE_DEVELOPMENT) created mega-clusters absorbing unrelated stories
+      - Bucket boundaries provide essential precision by limiting the comparison pool
+      - Without buckets, generic label combinations act as attractors that pull in everything
+    consequences:
+      - Keep bucket-based clustering (Phase 4) as-is
+      - Cross-bucket duplicates to be handled downstream (family assembly or post-clustering merge)
+      - Key insight preserved: Phase 4 should use all title_labels (actor, target, subject, action_class) WITHIN buckets -- currently only uses entity signals (persons, orgs, places etc)
+      - Prototype archived: scripts/prototype_global_clustering.py
