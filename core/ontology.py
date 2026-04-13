@@ -17,10 +17,19 @@ v3.0 changes (2026-04-13, see docs/context/BEATS_TAXONOMY_V3_DRAFT.md):
 - NARROWED definitions: RESOURCE_ALLOCATION (state only), INFRASTRUCTURE_DEVELOPMENT (physical/digital infra),
   POLICY_CHANGE (government only), ECONOMIC_PRESSURE (threats only, vs SANCTION_ENFORCEMENT for enacted),
   INFORMATION_INFLUENCE (organized ops only)
-- Total count: 24 classes (was 23)
+
+v3.0.1 (2026-04-13, same day — after 99-title pilot review):
+- MERGED: LEGAL_RULING + LEGAL_CONTESTATION -> LEGAL_ACTION (T1). The procedural
+  split (suit filing vs court decision) was a source of LLM confusion; Beats
+  treats both as one lane anyway.
+- Prompt rules added to Phase 3.1 NON_STRATEGIC scope: routine govt statistics
+  (CPI/GDP/jobs releases), trade probes go to REGULATORY_ACTION not LEGAL,
+  non-English content classified by meaning not language.
+
+Total count: 24 classes (was 25 in v3.0 draft, 23 in v2.0 original).
 """
 
-ONTOLOGY_VERSION = "ELO_v3.0"
+ONTOLOGY_VERSION = "ELO_v3.0.1"
 
 # =============================================================================
 # ACTION CLASSES - 7-tier hierarchy (higher tier wins in priority)
@@ -28,10 +37,10 @@ ONTOLOGY_VERSION = "ELO_v3.0"
 
 # Tier 1: FORMAL DECISION - Binding institutional outputs
 ACTION_CLASSES_T1 = {
-    "LEGAL_RULING": "Court/tribunal binding decision",
+    "LEGAL_ACTION": "Legal proceedings: lawsuits filed, appeals, injunctions, court rulings, dismissals, verdicts, judgments. One lane covering the full arc of a legal fight.",
     "LEGISLATIVE_DECISION": "Law/resolution passage or rejection",
     "POLICY_CHANGE": "Government executive/regulatory policy adoption",
-    "REGULATORY_ACTION": "Licensing, approval, certification decisions",
+    "REGULATORY_ACTION": "Licensing, approval, certification, trade probes (Section 301/232), anti-dumping investigations",
     "ELECTORAL_EVENT": "Elections, referendums, primaries, vote-driven transitions",
 }
 
@@ -67,7 +76,6 @@ ACTION_CLASSES_T5 = {
 
 # Tier 6: CONTESTATION - Resistance and opposition
 ACTION_CLASSES_T6 = {
-    "LEGAL_CONTESTATION": "Lawsuits, appeals, injunctions filed",
     "INSTITUTIONAL_RESISTANCE": "Vetoes, filibusters, procedural blocks",
     "CIVIL_ACTION": "Demonstrations, strikes, rallies, walkouts, civil disobedience",
 }
@@ -121,6 +129,48 @@ DOMAINS = [
     "TECHNOLOGY",  # Tech policy, cyber, innovation
     "MEDIA",  # Information, press, communications
 ]
+
+
+# =============================================================================
+# INDUSTRIES - Closed vocabulary for economic/industrial entity tagging (ELO v3.0.1)
+# =============================================================================
+# Distinct from DOMAINS (above) and the per-title SECTOR/SUBJECT fields used
+# for track routing. INDUSTRIES[] is a multi-value tag on title_labels that
+# captures which industries a title is materially about. Populated by the LLM
+# only when the content is materially about a specific industry's activity.
+
+INDUSTRIES = {
+    "AEROSPACE": "Aircraft, satellites, space launch, military aerospace",
+    "AI": "AI labs, frontier models, training infra, GPU datacenters when AI-specific",
+    "AUTOMOTIVE": "Car manufacturers, ICE/ICEV/EV vehicles excluding battery tech",
+    "BIOTECH": "Biotechnology firms, gene therapy, medical devices",
+    "DEFENSE": "Arms manufacturers, defense contractors, weapons systems",
+    "ENERGY": "Oil, gas, nuclear, electricity broadly",
+    "FINANCE": "Banks, funds, markets, insurance, crypto, payments",
+    "FOOD_AGRI": "Food, agriculture, agri commodities, fertilizers",
+    "GREEN_TECH": "EV batteries, solar, wind, hydrogen, grid storage",
+    "IT_SOFTWARE": "Software companies, cloud, SaaS, platforms (excluding AI and media)",
+    "MEDIA": "News media, social platforms, streaming (strategic stories only - ownership, regulation, influence, censorship)",
+    "MINING": "Metals, rare earths, minerals extraction",
+    "PHARMA": "Drugs, medical devices, healthcare systems",
+    "RETAIL": "Consumer retail, e-commerce commerce (not ads)",
+    "SEMICONDUCTORS": "Chips, foundries, EDA tools, memory",
+    "SHIPPING": "Maritime, logistics, ports, freight, aviation freight",
+    "TELECOMS": "Carriers, 5G, undersea cables, satellites, broadband",
+    "OTHER": "Does not fit any of the above industries",
+}
+
+
+def get_industries_for_prompt() -> str:
+    """Format industries for LLM prompt."""
+    lines = []
+    for ind, desc in INDUSTRIES.items():
+        lines.append("  - {}: {}".format(ind, desc))
+    return "\n".join(lines)
+
+
+def validate_industry(industry: str) -> bool:
+    return industry in INDUSTRIES
 
 
 # =============================================================================
@@ -187,6 +237,14 @@ PRIORITY RULES:
 10. T7 INCIDENTS = last resort. Known actor -> MILITARY/LAW_ENFORCEMENT. Unknown actor or accident -> SECURITY_INCIDENT. Natural cause -> NATURAL_EVENT. SECURITY_INCIDENT is NOT a fallback for commentary/profiles/obituaries (those -> sector=NON_STRATEGIC).
 
 11. ACTOR: individuals -> institutions. "Biden signs" -> US_EXECUTIVE. "Powell speaks" -> US_CENTRAL_BANK. Country prefix for state (US_, RU_, CN_, FR_, DE_). IGOs bare (UN, NATO, EU). Corporations by name or CORPORATION.
+
+12. LEGAL_ACTION covers the whole legal arc: suits filed, appeals, injunctions, rulings, dismissals, verdicts, judgments. One lane. "Judge dismisses X" -> LEGAL_ACTION. "24 states sue Y" -> LEGAL_ACTION. Both are the same fight.
+
+13. TRADE PROBES (Section 301, Section 232, anti-dumping investigations, CFIUS reviews, forced-labor probes) -> REGULATORY_ACTION, NOT LEGAL_ACTION. These are administrative/regulatory instruments, not lawsuits.
+
+14. ROUTINE GOVERNMENT STATISTICS (CPI, GDP, jobs/employment reports, trade balances, forex reserves, factory activity, credit numbers) -> sector=NON_STRATEGIC unless the release is described as a shock: "fastest in X years", "worst since 2008", "collapses", "record". No named actor "said" a statistic; do not label as STATEMENT.
+
+15. NON-ENGLISH HEADLINES: classify by the content's meaning, not the language. A Japanese or Arabic headline about a legitimate commercial event is COMMERCIAL_TRANSACTION with sector=ECONOMY, not NON_STRATEGIC. Language is never a reason to mark NON_STRATEGIC.
 """
 
 
@@ -396,8 +454,8 @@ ACTION_CLASS_POLARITY = {
     "SECURITY_INCIDENT": "CONFLICTUAL",
     "ECONOMIC_PRESSURE": "CONFLICTUAL",
     "CIVIL_ACTION": "CONFLICTUAL",
-    # Neutral (12)
-    "LEGAL_RULING": "NEUTRAL",
+    # Neutral (11)
+    "LEGAL_ACTION": "NEUTRAL",
     "LEGISLATIVE_DECISION": "NEUTRAL",
     "POLICY_CHANGE": "NEUTRAL",
     "REGULATORY_ACTION": "NEUTRAL",
@@ -406,7 +464,6 @@ ACTION_CLASS_POLARITY = {
     "PRESSURE": "NEUTRAL",
     "STATEMENT": "NEUTRAL",
     "INFORMATION_INFLUENCE": "NEUTRAL",
-    "LEGAL_CONTESTATION": "NEUTRAL",
     "INSTITUTIONAL_RESISTANCE": "NEUTRAL",
     "NATURAL_EVENT": "NEUTRAL",
     "MARKET_SHOCK": "NEUTRAL",
