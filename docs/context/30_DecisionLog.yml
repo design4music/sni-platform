@@ -592,3 +592,29 @@ decisions:
       - Cross-bucket duplicates to be handled downstream (family assembly or post-clustering merge)
       - Key insight preserved: Phase 4 should use all title_labels (actor, target, subject, action_class) WITHIN buckets -- currently only uses entity signals (persons, orgs, places etc)
       - Prototype archived: scripts/prototype_global_clustering.py
+
+  - id: D-055
+    date: 2026-04-12
+    type: architectural
+    status: accepted
+    title: Beats - temporal event extraction replaces clustering as the primary user-facing event surface
+    rationale:
+      - Clustering and family assembly produce themes (similarity bags smeared across time), not events (dated story-beats)
+      - The user-facing product is a dated narrative, not a thematic grouping
+      - Diagnostic on USA/security/March found the real event granularity at (actor, action_class, target) x date x top-entity -- one level below the cluster layer
+      - Ground-truth structural labels from Phase 3.1 carry the signal; clustering discards it
+      - Prototype (scripts/prototype_whale_extraction.py) validated on three CTMs of different shape, volume, and domain:
+        - USA/geo_security/March (7700 titles, mega-conflict) -> 143 events in 6 theaters reading as a daily brief
+        - ASIA-CHINA/geo_economy/March (1200 titles, abstract domain with sparse labels) -> 13 events caught the month's real stories (NPC Two Sessions, Apple App Store, Paris trade talks, MOFCOM pushback)
+        - EUROPE-BALTIC/geo_security/March (142 titles, small CTM) -> 4 clean events including a new discovery (Lithuania Ukraine-drone crash)
+      - Algorithm is fully mechanical, no LLM in the extraction loop
+      - Degrades gracefully on small CTMs (Mode B flat list below 15 events) and scales on mega-conflicts (Mode A theater grouping)
+    consequences:
+      - Beats becomes a new Phase 4.6 module consuming title_labels directly
+      - Clustering (Phase 4) and family assembly (Phase 4.1) survive as structural infrastructure and secondary lens but no longer drive the user-facing event surface
+      - New table beats_events to store (ctm_id, beat, date, entity, headline, theater, spike_ratio, sources) -- schema TBD
+      - Frontend needs Beats view with Mode A (theater timelines) and Mode B (flat list) rendering
+      - Taxonomy revision required: sparse entity labels in economic/abstract domains are the biggest quality limiter (sectors[], products[], technologies[] fields needed; action_class refinements)
+      - Ubiquity filter from D-049 adopted at event-naming layer (12% of CTM titles)
+      - Theater classification is per-centroid config (THEATER_RULES in code for now; candidate for centroid-level DB field later)
+      - Full direction documented in docs/context/BEATS_DIRECTION.md

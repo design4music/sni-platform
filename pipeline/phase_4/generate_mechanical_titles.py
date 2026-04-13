@@ -112,20 +112,24 @@ ACTOR_READABLE = {
 
 ACTION_PHRASES = {
     "MILITARY_OPERATION": "military action",
-    "DIPLOMATIC_PRESSURE": "diplomatic pressure",
-    "POLITICAL_PRESSURE": "political pressure",
+    "PRESSURE": "pressure",
     "LAW_ENFORCEMENT_OPERATION": "law enforcement",
     "SECURITY_INCIDENT": "security incident",
+    "NATURAL_EVENT": "natural event",
+    "MARKET_SHOCK": "market shock",
     "RESOURCE_ALLOCATION": "resource allocation",
     "POLICY_CHANGE": "policy change",
-    "INFORMATION_INFLUENCE": "public statements",
+    "ELECTORAL_EVENT": "election",
+    "STATEMENT": "statement",
+    "INFORMATION_INFLUENCE": "influence operation",
     "INFRASTRUCTURE_DEVELOPMENT": "development",
     "STRATEGIC_REALIGNMENT": "strategic shift",
-    "ALLIANCE_COORDINATION": "alliance coordination",
+    "ALLIANCE_COORDINATION": "coordination",
     "ECONOMIC_PRESSURE": "economic pressure",
-    "MEDIATION": "mediation",
+    "COMMERCIAL_TRANSACTION": "commercial deal",
     "CAPABILITY_TRANSFER": "capability transfer",
     "REGULATORY_ACTION": "regulatory action",
+    "CIVIL_ACTION": "civil action",
 }
 
 SUBJECT_Q = {

@@ -1,5 +1,5 @@
 """
-Event Label Ontology (ELO) v2.0
+Event Label Ontology (ELO) v3.0
 
 Defines the complete ontology for structured event labeling:
 - ACTION_CLASSES: 7-tier action hierarchy (T1-T7)
@@ -8,9 +8,19 @@ Defines the complete ontology for structured event labeling:
 - PRIORITY_RULES: Text block for LLM prompt guidance
 
 Label format: PRIMARY_ACTOR -> ACTION_CLASS -> DOMAIN (-> OPTIONAL_TARGET)
+
+v3.0 changes (2026-04-13, see docs/context/BEATS_TAXONOMY_V3_DRAFT.md):
+- ADDED: ELECTORAL_EVENT (T1), COMMERCIAL_TRANSACTION (T3), STATEMENT (T5), NATURAL_EVENT (T7)
+- MERGED: POLITICAL_PRESSURE + DIPLOMATIC_PRESSURE -> PRESSURE (T5)
+- RENAMED: COLLECTIVE_PROTEST -> CIVIL_ACTION (T6), ECONOMIC_DISRUPTION -> MARKET_SHOCK (T7)
+- DROPPED: SOCIAL_INCIDENT (scope absorbed by CIVIL_ACTION/NATURAL_EVENT/SECURITY_INCIDENT)
+- NARROWED definitions: RESOURCE_ALLOCATION (state only), INFRASTRUCTURE_DEVELOPMENT (physical/digital infra),
+  POLICY_CHANGE (government only), ECONOMIC_PRESSURE (threats only, vs SANCTION_ENFORCEMENT for enacted),
+  INFORMATION_INFLUENCE (organized ops only)
+- Total count: 24 classes (was 23)
 """
 
-ONTOLOGY_VERSION = "ELO_v2.0"
+ONTOLOGY_VERSION = "ELO_v3.0"
 
 # =============================================================================
 # ACTION CLASSES - 7-tier hierarchy (higher tier wins in priority)
@@ -20,51 +30,53 @@ ONTOLOGY_VERSION = "ELO_v2.0"
 ACTION_CLASSES_T1 = {
     "LEGAL_RULING": "Court/tribunal binding decision",
     "LEGISLATIVE_DECISION": "Law/resolution passage or rejection",
-    "POLICY_CHANGE": "Executive/regulatory policy adoption",
+    "POLICY_CHANGE": "Government executive/regulatory policy adoption",
     "REGULATORY_ACTION": "Licensing, approval, certification decisions",
+    "ELECTORAL_EVENT": "Elections, referendums, primaries, vote-driven transitions",
 }
 
 # Tier 2: COERCIVE ENFORCEMENT - Use of force or coercive power
 ACTION_CLASSES_T2 = {
     "MILITARY_OPERATION": "Armed force deployment, strikes, exercises",
     "LAW_ENFORCEMENT_OPERATION": "Arrests, raids, border enforcement",
-    "SANCTION_ENFORCEMENT": "Asset seizure, trade restriction implementation",
+    "SANCTION_ENFORCEMENT": "Enacted sanctions: seizures, imposed tariffs, trade restrictions",
 }
 
 # Tier 3: RESOURCE & CAPABILITY - Material commitments
 ACTION_CLASSES_T3 = {
-    "RESOURCE_ALLOCATION": "Budget, funding, aid disbursement",
-    "INFRASTRUCTURE_DEVELOPMENT": "Construction, deployment of physical systems",
-    "CAPABILITY_TRANSFER": "Arms sales, tech transfer, training provision",
+    "RESOURCE_ALLOCATION": "State budgets, aid, sovereign funding",
+    "INFRASTRUCTURE_DEVELOPMENT": "Physical/digital infra: ports, rail, grids, data centers, pipelines, cables",
+    "CAPABILITY_TRANSFER": "Arms sales, tech transfer, training between governments",
+    "COMMERCIAL_TRANSACTION": "Corporate deals: M&A, IPOs, fundraising, contracts, product launches, market exits, restructurings",
 }
 
 # Tier 4: COORDINATION - Multi-party alignment
 ACTION_CLASSES_T4 = {
-    "ALLIANCE_COORDINATION": "Joint statements, collective decisions",
+    "ALLIANCE_COORDINATION": "Bilateral meetings, calls, summits, joint statements (2 parties)",
     "STRATEGIC_REALIGNMENT": "Partnership shifts, bloc formation/exit",
-    "MULTILATERAL_ACTION": "UN/IGO resolutions, treaty negotiations",
+    "MULTILATERAL_ACTION": "UN/IGO resolutions, treaty negotiations (3+ parties or IGO)",
 }
 
 # Tier 5: PRESSURE & INFLUENCE - Non-binding pressure
 ACTION_CLASSES_T5 = {
-    "POLITICAL_PRESSURE": "Demands, ultimatums, diplomatic notes",
-    "ECONOMIC_PRESSURE": "Tariff threats, investment warnings",
-    "DIPLOMATIC_PRESSURE": "Ambassador recalls, recognition changes",
-    "INFORMATION_INFLUENCE": "Propaganda campaigns, disinformation ops",
+    "PRESSURE": "Verbal coercion: demands, ultimatums, condemnations, recalls, notes",
+    "ECONOMIC_PRESSURE": "Financial threats: tariff warnings, sanction threats, funding freeze threats",
+    "STATEMENT": "Non-coercive statements by named figures/institutions: speeches, interviews, forecasts, op-eds, 'X says Y'",
+    "INFORMATION_INFLUENCE": "Organized propaganda, disinformation ops, state media campaigns",
 }
 
 # Tier 6: CONTESTATION - Resistance and opposition
 ACTION_CLASSES_T6 = {
     "LEGAL_CONTESTATION": "Lawsuits, appeals, injunctions filed",
     "INSTITUTIONAL_RESISTANCE": "Vetoes, filibusters, procedural blocks",
-    "COLLECTIVE_PROTEST": "Demonstrations, strikes, civil disobedience",
+    "CIVIL_ACTION": "Demonstrations, strikes, rallies, walkouts, civil disobedience",
 }
 
 # Tier 7: INCIDENTS - Last resort (no clear institutional actor)
 ACTION_CLASSES_T7 = {
     "SECURITY_INCIDENT": "Attacks, accidents, breaches without clear actor",
-    "SOCIAL_INCIDENT": "Riots, disasters, mass events",
-    "ECONOMIC_DISRUPTION": "Market crashes, supply shocks, defaults",
+    "NATURAL_EVENT": "Floods, quakes, fires, storms, epidemics, famines, tsunamis",
+    "MARKET_SHOCK": "Macro-driven asset/commodity/currency moves (>=2 sigma), directionless",
 }
 
 # Combined set of all action classes
@@ -145,42 +157,36 @@ CONTROLLED_ACTORS = {
 # =============================================================================
 
 PRIORITY_RULES = """
-PRIORITY RULES FOR LABEL SELECTION:
+PRIORITY RULES:
 
-1. TIER PRIORITY: Lower tier number wins (T1 > T2 > T3 > T4 > T5 > T6 > T7)
-   - If a title describes both a court ruling (T1) and protests (T6), use LEGAL_RULING
-   - If military operation (T2) with diplomatic pressure (T5), use MILITARY_OPERATION
+1. TIER: lower tier wins (T1>T2>T3>T4>T5>T6>T7). Court ruling beats protest; military op beats pressure.
 
-2. FORMAL > INFORMAL: Binding decisions beat non-binding statements
-   - Passed legislation > proposed legislation
-   - Signed treaty > treaty negotiations
-   - Court ruling > legal filing
+2. ENACTED > THREATENED. "Imposes tariff"->SANCTION_ENFORCEMENT. "Threatens tariff"->ECONOMIC_PRESSURE. "Signs bill"->LEGISLATIVE_DECISION. "Proposes bill"->STATEMENT or LEGISLATIVE_DECISION if passage imminent.
 
-3. CONCRETE > ABSTRACT: Specific actions beat general developments
-   - "Approves $50B aid package" > "Discusses aid options"
-   - "Arrests 10 suspects" > "Investigates crime ring"
+3. CONCRETE > ABSTRACT. "Arrests 10"->LAW_ENFORCEMENT_OPERATION. "Investigates group"->STATEMENT. "Deploys troops"->MILITARY_OPERATION. "Considers deployment"->STATEMENT.
 
-4. CAPABILITY CHANGE > INTENT: Material change beats stated intention
-   - "Deploys troops" > "Threatens deployment"
-   - "Signs contract" > "Considers purchase"
+4. ASPIRATIONAL LANGUAGE -> STATEMENT. Keywords: vows, pledges, says, hopes, sets sight, plans, aims, warns, urges, eyes, seeks -- unless tied to an enacted decision. Named figure OR institution attribution required.
 
-5. CONTESTATION ONLY IF MAIN STORY: Use T6 only if resistance IS the event
-   - Protest as main event -> COLLECTIVE_PROTEST
-   - Protest mentioned alongside policy -> use the policy action class
+5. ELECTIONS -> ELECTORAL_EVENT ALWAYS. Votes, runoffs, primaries, mayoral/parliamentary/presidential elections, results, transitions by vote. NEVER use CIVIL_ACTION or LEGISLATIVE_DECISION for elections.
 
-6. INCIDENT AS LAST RESORT: Use T7 only when no clear institutional actor
-   - Known actor attack -> MILITARY_OPERATION or LAW_ENFORCEMENT_OPERATION
-   - Unknown actor/accident -> SECURITY_INCIDENT
+6. BILATERAL vs MULTILATERAL. "X speaks to Y", "X meets Y", "X holds talks with Y" -> ALLIANCE_COORDINATION (2 parties). MULTILATERAL_ACTION only for 3+ parties or IGO (UN/NATO/WTO/G7). Meetings/calls are NEVER PRESSURE unless content is coercive.
 
-7. ACTOR ABSTRACTION: Individuals -> Institutions
-   - "Biden signs" -> US_EXECUTIVE
-   - "Putin orders" -> RU_EXECUTIVE
-   - "Fed Chair announces" -> US_CENTRAL_BANK
+7. CORPORATE vs STATE.
+   - State + budget/aid -> RESOURCE_ALLOCATION
+   - Corporate deals, M&A, IPOs, product launches, restructurings, hiring changes -> COMMERCIAL_TRANSACTION
+   - Corporation + POLICY_CHANGE is an error; use COMMERCIAL_TRANSACTION
+   - Corporation + INFRASTRUCTURE_DEVELOPMENT valid ONLY for physical/digital infra (data centers, mines, factories, pipelines, cables)
 
-ACTOR FORMAT: Use country prefix for state actors
-   - US_EXECUTIVE, RU_ARMED_FORCES, CN_LEGISLATURE, EU_REGULATORY_AGENCY
-   - For IGOs: UN, NATO, EU, AU, ASEAN (no country prefix)
-   - For corporations: Use company name or CORPORATION if generic
+8. MARKET_SHOCK (directionless, macro-driven only).
+   - Gold/oil/wheat/currency surging or crashing on war, sanctions, Fed, supply shock -> MARKET_SHOCK
+   - Routine company-specific stock moves -> sector=NON_STRATEGIC
+   - Pair with commodities[] (gold/oil/CNY/USD) where relevant
+
+9. CIVIL_ACTION: only organized collective civil action (demonstrations, strikes, walkouts, civil disobedience, rallies). NOT elections, NOT polls, NOT mayoral wins.
+
+10. T7 INCIDENTS = last resort. Known actor -> MILITARY/LAW_ENFORCEMENT. Unknown actor or accident -> SECURITY_INCIDENT. Natural cause -> NATURAL_EVENT. SECURITY_INCIDENT is NOT a fallback for commentary/profiles/obituaries (those -> sector=NON_STRATEGIC).
+
+11. ACTOR: individuals -> institutions. "Biden signs" -> US_EXECUTIVE. "Powell speaks" -> US_CENTRAL_BANK. Country prefix for state (US_, RU_, CN_, FR_, DE_). IGOs bare (UN, NATO, EU). Corporations by name or CORPORATION.
 """
 
 
@@ -376,32 +382,34 @@ def get_action_class_tier(action_class: str) -> int:
 # =============================================================================
 
 ACTION_CLASS_POLARITY = {
-    # Cooperative (5)
+    # Cooperative (6)
     "ALLIANCE_COORDINATION": "COOPERATIVE",
     "MULTILATERAL_ACTION": "COOPERATIVE",
     "INFRASTRUCTURE_DEVELOPMENT": "COOPERATIVE",
     "RESOURCE_ALLOCATION": "COOPERATIVE",
     "CAPABILITY_TRANSFER": "COOPERATIVE",
-    # Conflictual (7)
+    "COMMERCIAL_TRANSACTION": "COOPERATIVE",
+    # Conflictual (6)
     "MILITARY_OPERATION": "CONFLICTUAL",
     "LAW_ENFORCEMENT_OPERATION": "CONFLICTUAL",
     "SANCTION_ENFORCEMENT": "CONFLICTUAL",
     "SECURITY_INCIDENT": "CONFLICTUAL",
     "ECONOMIC_PRESSURE": "CONFLICTUAL",
-    "ECONOMIC_DISRUPTION": "CONFLICTUAL",
-    "COLLECTIVE_PROTEST": "CONFLICTUAL",
-    # Neutral (11)
+    "CIVIL_ACTION": "CONFLICTUAL",
+    # Neutral (12)
     "LEGAL_RULING": "NEUTRAL",
     "LEGISLATIVE_DECISION": "NEUTRAL",
     "POLICY_CHANGE": "NEUTRAL",
     "REGULATORY_ACTION": "NEUTRAL",
+    "ELECTORAL_EVENT": "NEUTRAL",
     "STRATEGIC_REALIGNMENT": "NEUTRAL",
-    "POLITICAL_PRESSURE": "NEUTRAL",
-    "DIPLOMATIC_PRESSURE": "NEUTRAL",
+    "PRESSURE": "NEUTRAL",
+    "STATEMENT": "NEUTRAL",
     "INFORMATION_INFLUENCE": "NEUTRAL",
     "LEGAL_CONTESTATION": "NEUTRAL",
     "INSTITUTIONAL_RESISTANCE": "NEUTRAL",
-    "SOCIAL_INCIDENT": "NEUTRAL",
+    "NATURAL_EVENT": "NEUTRAL",
+    "MARKET_SHOCK": "NEUTRAL",
 }
 
 # Ensure every action class has a polarity

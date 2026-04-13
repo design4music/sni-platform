@@ -5,8 +5,10 @@ All active prompts in one place for easy maintenance and optimization.
 Version: 4.0 (deduplicated prose rules + shared event summary preamble)
 
 Prompts by Phase:
-- Phase 3: Intel Gating + Track Assignment
-- Phase 3.5: Label + Signal Extraction
+- Phase 3.1: Label + Signal Extraction
+  (Phase 3.3 Intel Gating + LLM Track Assignment removed in ELO v3.0 --
+   exclusion now happens at Phase 3.1 via sector=NON_STRATEGIC; track
+   assignment is mechanical sector->track lookup.)
 - Phase 4.1: Topic Consolidation (Anchor-Candidate Dedup)
 - Phase 4.3: Cross-Bucket Event Merging
 - Phase 4.5: CTM Summary Generation
@@ -31,45 +33,7 @@ TROLLING: Treat officials' comments on adversaries' disputes as rhetorical explo
 
 PROSE_WRITING_RULES = PROSE_RULES  # legacy alias
 
-# --- PHASE 3: INTEL GATING ---
-
-INTEL_GATING_PROMPT = """You are an intelligence analyst reviewing {num_titles} news titles for {centroid_label}.
-
-TASK: Identify which titles contain strategic intelligence value. Be INCLUSIVE - when in doubt, mark as strategic.
-
-STRATEGIC (ACCEPT): Government policy/legislation/regulations, international relations/diplomacy/summits, military/defense/security/terrorism, economic policy/trade/sanctions/tariffs, energy markets/supply disruptions, elections/protests/coups/transitions, court rulings with policy implications, strategic resources (water/minerals/food), technology with geopolitical impact (semiconductors/AI/cyber), major industrial policy/labor disputes.
-
-NON-STRATEGIC (REJECT):
-- SPORTS: reject all athletics, leagues, tournaments, player transfers, match results, standings, coaching. Sports leaks through via international events (Olympics, World Cup) and conflict language ("battle", "attack", "defense"). Still reject - no strategic value.
-- Entertainment/celebrity, health/wellness tips, recipes, lifestyle
-- Local crime without systemic implications, human interest stories
-- Real estate ads, local business openings
-- Weather forecasts (unless major disaster)
-
-Titles:
-{titles_text}
-
-Return ONLY valid JSON: {{"strategic": [1,3,5], "reject": [2,4,6]}}
-
-When uncertain, prefer STRATEGIC - we want comprehensive coverage."""
-
-# --- PHASE 3: TRACK ASSIGNMENT ---
-
-TRACK_ASSIGNMENT_PROMPT = """You are classifying {num_titles} strategic news titles for {centroid_label}.
-
-Choose the ONE best track for each title based on its dominant theme.
-
-Tracks:
-{tracks_list}
-
-Context: {centroid_label} | {month}
-
-Titles:
-{titles_text}
-
-Return ONLY valid JSON: {{"1": "track_name", "2": "track_name"}}"""
-
-# --- PHASE 3.5: LABEL + SIGNAL EXTRACTION ---
+# --- PHASE 3.1: LABEL + SIGNAL EXTRACTION ---
 
 LABEL_SIGNAL_EXTRACTION_PROMPT = """You are an expert news analyst. Extract structured event labels AND typed signals from news titles.
 
@@ -126,11 +90,17 @@ SECTORS and their SUBJECTS:
 - INFRASTRUCTURE: TRANSPORT, SHIPPING, CONSTRUCTION, SUPPLY_CHAIN, POWER_GRID
 - NON_STRATEGIC: SPORTS, ENTERTAINMENT, CELEBRITY, LIFESTYLE, LOCAL_CRIME, WEATHER
 
-NON_STRATEGIC = no geopolitical or strategic value. Use it for: sports results/leagues/transfers/tournaments, concerts/celebrity news, recipes/lifestyle, routine local crime, weather. Sports leak through via conflict language ("battle", "attack") -- still NON_STRATEGIC. When in doubt between SOCIETY and NON_STRATEGIC: if it has no policy/government/international dimension, use NON_STRATEGIC.
+NON_STRATEGIC = the title is not a concrete strategic event. Use it when the title is one of these:
+(a) TOPIC out of scope: sports/leagues/tournaments/coaching (even when framed with conflict words "battle/attack/defense"), entertainment/celebrity/concerts, lifestyle/recipes/wellness, tourism/travel guides, e-commerce promos/sales, routine local crime, local business openings, weather forecasts (disasters -> SOCIETY).
+(b) CONTENT-TYPE out of scope: editorials/opinion/commentary (marked "Editorial", "Opinion", "| Editorial", "GT Voice", "The X view on Y"), analysis/feature pieces ("The X story", "Why X matters", "Lessons from Y"), profiles of persons, previews/listicles/explainers ("What to watch", "5 takeaways", "Explainer:"), anonymous analyst commentary ("analysts say", "sources warn"), obituaries, routine aggregate statistics ("X rose Y%" without shock framing), speculative headlines ("X could", "Y might", "is said to"), trend pieces without a specific event.
 
-CLASSIFICATION TRAPS: Fact-checking articles about AI-generated fakes/deepfakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY). The subject is media integrity, not AI technology. Opinion columns and book reviews about a leader -> SOCIETY/MEDIA_PRESS (not the leader's sector).
+KEEP (do NOT mark NON_STRATEGIC) when a named figure or institution is attributed: "Trump says...", "Fed projects...", "Bernstein warns rupee...", "Reuters/Ipsos poll shows..." -- these have a named source and belong to the STATEMENT action class, not NON_STRATEGIC. A named statement is a signal even without a concrete action.
 
-Examples: "Macron increases nuclear arsenal" -> MILITARY/NUCLEAR. "Oil prices surge" -> ENERGY_RESOURCES/OIL_GAS. "FBI investigates bar shooting" -> SECURITY/TERRORISM. "EU tariffs on China" -> ECONOMY/TRADE. "Carrier deployed to Mediterranean" -> MILITARY/NAVAL. "Lyon beats Marseille in Ligue 1" -> NON_STRATEGIC/SPORTS. "AI-generated video falsely shows Iranian missiles" -> SOCIETY/MEDIA_PRESS.
+KEEP when the statistic describes a shock-level move: "fastest pace in 3 years", "record", "worst since 2008", "collapses", "surges to record" -> action_class = MARKET_SHOCK, not NON_STRATEGIC.
+
+CLASSIFICATION TRAPS: Fact-checking articles about AI-generated fakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY). Book reviews about a leader -> NON_STRATEGIC (not the leader's sector).
+
+Examples: "Macron increases nuclear arsenal" -> MILITARY/NUCLEAR. "Oil prices surge on Hormuz closure" -> ENERGY_RESOURCES/OIL_GAS (action=MARKET_SHOCK). "FBI investigates bar shooting" -> SECURITY/TERRORISM. "EU tariffs on China" -> ECONOMY/TRADE. "Lyon beats Marseille in Ligue 1" -> NON_STRATEGIC/SPORTS. "The Guardian view on France | Editorial" -> NON_STRATEGIC. "Trump says Iran war could last weeks" -> GOVERNANCE/EXECUTIVE_ACTION (action=STATEMENT). "Bernstein warns rupee could breach 98/USD" -> ECONOMY/CURRENCY (action=STATEMENT). "French elect mayors in key cities" -> GOVERNANCE/ELECTION (action=ELECTORAL_EVENT).
 
 ## OUTPUT
 Return JSON array:

@@ -261,6 +261,7 @@ TRACK_DISCRIMINATORS = {
 
 # Action class -> severity score (0.0 to 1.0)
 # T2 (coercive) and T7 (incidents) are highest severity
+# ELO v3.0 (2026-04-13)
 ACTION_CLASS_SEVERITY = {
     # T2: Coercive operations
     "MILITARY_OPERATION": 1.0,
@@ -268,8 +269,8 @@ ACTION_CLASS_SEVERITY = {
     "SANCTION_ENFORCEMENT": 0.6,
     # T7: Incidents
     "SECURITY_INCIDENT": 0.9,
-    "SOCIAL_INCIDENT": 0.7,
-    "ECONOMIC_DISRUPTION": 0.6,
+    "NATURAL_EVENT": 0.7,
+    "MARKET_SHOCK": 0.6,
     # T4: Strategic shifts
     "STRATEGIC_REALIGNMENT": 0.5,
     "ALLIANCE_COORDINATION": 0.3,
@@ -279,19 +280,21 @@ ACTION_CLASS_SEVERITY = {
     "LEGISLATIVE_DECISION": 0.2,
     "POLICY_CHANGE": 0.3,
     "REGULATORY_ACTION": 0.2,
+    "ELECTORAL_EVENT": 0.3,
     # T3: Resource/capability
     "RESOURCE_ALLOCATION": 0.15,
     "INFRASTRUCTURE_DEVELOPMENT": 0.1,
     "CAPABILITY_TRANSFER": 0.2,
+    "COMMERCIAL_TRANSACTION": 0.15,
     # T5: Pressure
-    "POLITICAL_PRESSURE": 0.2,
+    "PRESSURE": 0.2,
     "ECONOMIC_PRESSURE": 0.3,
-    "DIPLOMATIC_PRESSURE": 0.2,
+    "STATEMENT": 0.05,
     "INFORMATION_INFLUENCE": 0.15,
     # T6: Resistance
     "LEGAL_CONTESTATION": 0.2,
     "INSTITUTIONAL_RESISTANCE": 0.2,
-    "COLLECTIVE_PROTEST": 0.4,
+    "CIVIL_ACTION": 0.4,
 }
 
 # Actor patterns indicating head-of-state level (used with action escalation)
@@ -313,66 +316,11 @@ ESCALATION_ACTION_CLASSES = {
 # Circuit breaker: max API errors before excluding a title from queue
 MAX_API_ERRORS = 3
 
-# (action_class, domain) combos with <2% block rate (n>=10)
-# Titles matching these skip LLM gating and go straight to track assignment
-GATE_WHITELIST = frozenset(
-    {
-        ("ALLIANCE_COORDINATION", "ECONOMY"),
-        ("ALLIANCE_COORDINATION", "FOREIGN_POLICY"),
-        ("ALLIANCE_COORDINATION", "GOVERNANCE"),
-        ("ALLIANCE_COORDINATION", "SECURITY"),
-        ("ALLIANCE_COORDINATION", "TECHNOLOGY"),
-        ("CAPABILITY_TRANSFER", "ECONOMY"),
-        ("CAPABILITY_TRANSFER", "SECURITY"),
-        ("CAPABILITY_TRANSFER", "TECHNOLOGY"),
-        ("COLLECTIVE_PROTEST", "GOVERNANCE"),
-        ("COLLECTIVE_PROTEST", "SOCIETY"),
-        ("DIPLOMATIC_PRESSURE", "FOREIGN_POLICY"),
-        ("DIPLOMATIC_PRESSURE", "GOVERNANCE"),
-        ("DIPLOMATIC_PRESSURE", "SECURITY"),
-        ("ECONOMIC_DISRUPTION", "ECONOMY"),
-        ("ECONOMIC_PRESSURE", "ECONOMY"),
-        ("ECONOMIC_PRESSURE", "FOREIGN_POLICY"),
-        ("INFORMATION_INFLUENCE", "GOVERNANCE"),
-        ("INFORMATION_INFLUENCE", "MEDIA"),
-        ("INFORMATION_INFLUENCE", "SECURITY"),
-        ("INFRASTRUCTURE_DEVELOPMENT", "ECONOMY"),
-        ("INFRASTRUCTURE_DEVELOPMENT", "TECHNOLOGY"),
-        ("INSTITUTIONAL_RESISTANCE", "GOVERNANCE"),
-        ("LEGAL_CONTESTATION", "GOVERNANCE"),
-        ("LEGAL_RULING", "GOVERNANCE"),
-        ("LEGAL_RULING", "SOCIETY"),
-        ("LEGISLATIVE_DECISION", "ECONOMY"),
-        ("LEGISLATIVE_DECISION", "GOVERNANCE"),
-        ("LEGISLATIVE_DECISION", "SECURITY"),
-        ("LEGISLATIVE_DECISION", "SOCIETY"),
-        ("MILITARY_OPERATION", "SECURITY"),
-        ("MULTILATERAL_ACTION", "ECONOMY"),
-        ("MULTILATERAL_ACTION", "FOREIGN_POLICY"),
-        ("MULTILATERAL_ACTION", "GOVERNANCE"),
-        ("MULTILATERAL_ACTION", "SECURITY"),
-        ("POLICY_CHANGE", "ECONOMY"),
-        ("POLICY_CHANGE", "FOREIGN_POLICY"),
-        ("POLICY_CHANGE", "GOVERNANCE"),
-        ("POLICY_CHANGE", "SECURITY"),
-        ("POLICY_CHANGE", "SOCIETY"),
-        ("POLICY_CHANGE", "TECHNOLOGY"),
-        ("POLITICAL_PRESSURE", "FOREIGN_POLICY"),
-        ("POLITICAL_PRESSURE", "GOVERNANCE"),
-        ("REGULATORY_ACTION", "ECONOMY"),
-        ("REGULATORY_ACTION", "TECHNOLOGY"),
-        ("RESOURCE_ALLOCATION", "ECONOMY"),
-        ("RESOURCE_ALLOCATION", "SECURITY"),
-        ("SANCTION_ENFORCEMENT", "ECONOMY"),
-        ("SANCTION_ENFORCEMENT", "FOREIGN_POLICY"),
-        ("SECURITY_INCIDENT", "SECURITY"),
-        ("SECURITY_INCIDENT", "SOCIETY"),
-        ("SOCIAL_INCIDENT", "SOCIETY"),
-        ("STRATEGIC_REALIGNMENT", "FOREIGN_POLICY"),
-        ("STRATEGIC_REALIGNMENT", "GOVERNANCE"),
-        ("STRATEGIC_REALIGNMENT", "SECURITY"),
-    }
-)
+# GATE_WHITELIST removed in ELO v3.0 (2026-04-13).
+# It existed to let high-confidence (action, domain) pairs skip the LLM intel
+# gate at Phase 3.3. With Phase 3.3 LLM gating removed (mechanical assignment
+# via assign_tracks_mechanical + sector=NON_STRATEGIC rejection at Phase 3.1),
+# there is no gate to skip.
 
 
 def get_track_weights(track: str) -> dict:
