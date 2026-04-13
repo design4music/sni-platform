@@ -200,45 +200,40 @@ export default function StoryGroupList({
                     if (famEvents.length === 0) return null;
                     const famSrc = famEvents.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0);
                     const isFamExpanded = expandedGroups.has(fam.anchor);
-                    const visibleFamEvents = isFamExpanded ? famEvents : famEvents.slice(0, initialEventsPerGroup);
-                    const hasMoreFam = famEvents.length > initialEventsPerGroup;
                     return (
-                      <div key={fam.anchor} className="border-l-2 border-blue-500/30 pl-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <a href={`/families/${fam.anchor}`}
-                            className="text-sm font-medium text-dashboard-text hover:text-blue-400 transition-colors">
-                            {fam.label}
-                          </a>
-                          <span className="text-xs text-dashboard-text-muted">{famEvents.length} topics | {famSrc} src</span>
-                          {famEvents.length > initialEventsPerGroup && (
-                            <button onClick={() => toggleGroup(fam.anchor)}
-                              className="text-xs text-blue-400 hover:text-blue-300">
-                              {expandedGroups.has(fam.anchor) ? 'less' : 'more'}
-                            </button>
-                          )}
-                        </div>
+                      <div key={fam.anchor} className="border-l-2 border-blue-500/40 pl-4 py-2">
+                        <a href={`/families/${fam.anchor}`}
+                          className="block text-lg font-semibold text-dashboard-text hover:text-blue-400 transition-colors leading-snug">
+                          {fam.label}
+                        </a>
                         {fam.topSignals && fam.topSignals[0] && (
-                          <p className="text-xs text-dashboard-text-muted mb-1 leading-relaxed">{fam.topSignals[0]}</p>
+                          <p className="text-sm text-dashboard-text mt-1.5 leading-relaxed">{fam.topSignals[0]}</p>
                         )}
-                        {visibleFamEvents.map((event, i) => {
-                          const srcCount = event.source_title_ids?.length || 0;
-                          const dateStr = event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-                          const href = event.event_id ? `/events/${event.event_id}` : '#';
-                          return (
-                            <a key={`${fam.anchor}-${i}`} href={href}
-                              className="flex items-start gap-2 py-1 px-1 rounded hover:bg-dashboard-surface-hover transition-colors group">
-                              <span className="text-sm text-dashboard-text group-hover:text-blue-400 flex-1 line-clamp-1">{event.title}</span>
-                              <span className="text-xs text-dashboard-text-muted whitespace-nowrap flex-shrink-0">
-                                {dateStr && <span className="mr-2">{dateStr}</span>}
-                                {srcCount} src
-                              </span>
-                            </a>
-                          );
-                        })}
-                        {!isFamExpanded && hasMoreFam && (
-                          <button onClick={() => toggleGroup(fam.anchor)} className="text-xs text-blue-400 hover:text-blue-300 py-0.5 ml-1">
-                            + {famEvents.length - initialEventsPerGroup} more
+                        <div className="flex items-center gap-3 mt-2">
+                          <button onClick={() => toggleGroup(fam.anchor)}
+                            className="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                            {isFamExpanded ? 'Hide topics' : `View ${famEvents.length} ${famEvents.length === 1 ? 'topic' : 'topics'}`}
                           </button>
+                          <span className="text-xs text-dashboard-text-muted">{famSrc} sources</span>
+                        </div>
+                        {isFamExpanded && (
+                          <div className="mt-2 space-y-0.5">
+                            {famEvents.map((event, i) => {
+                              const srcCount = event.source_title_ids?.length || 0;
+                              const dateStr = event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                              const href = event.event_id ? `/events/${event.event_id}` : '#';
+                              return (
+                                <a key={`${fam.anchor}-${i}`} href={href}
+                                  className="flex items-start gap-2 py-1 px-1 rounded hover:bg-dashboard-surface-hover transition-colors group">
+                                  <span className="text-xs text-dashboard-text-muted group-hover:text-blue-400 flex-1 line-clamp-1">{event.title}</span>
+                                  <span className="text-xs text-dashboard-text-muted whitespace-nowrap flex-shrink-0">
+                                    {dateStr && <span className="mr-2">{dateStr}</span>}
+                                    {srcCount} src
+                                  </span>
+                                </a>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
                     );

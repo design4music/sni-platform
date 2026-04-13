@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import EventList from '@/components/EventList';
 import StoryGroupList from '@/components/StoryGroupList';
 import type { StoryGroup, CountrySection } from '@/components/StoryGroupList';
+import IranWarSwimlane from '@/components/IranWarSwimlane';
 import MobileTocButton from '@/components/MobileTocButton';
 import MonthNav from '@/components/MonthNav';
 import {
@@ -506,6 +507,11 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   return (
     <DashboardLayout
       sidebar={sidebar}
+      topFullWidthContent={
+        centroid.id === 'AMERICAS-USA' && track === 'geo_security' && currentMonth === '2026-03'
+          ? <IranWarSwimlane events={mainEvents} month={currentMonth} />
+          : undefined
+      }
       centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
       centroidId={centroid.id}
       otherTracks={otherTracks}
