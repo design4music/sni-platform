@@ -140,24 +140,24 @@ DOMAINS = [
 # only when the content is materially about a specific industry's activity.
 
 INDUSTRIES = {
-    "AEROSPACE": "Aircraft, satellites, space launch, military aerospace",
-    "AI": "AI labs, frontier models, training infra, GPU datacenters when AI-specific",
-    "AUTOMOTIVE": "Car manufacturers, ICE/ICEV/EV vehicles excluding battery tech",
-    "BIOTECH": "Biotechnology firms, gene therapy, medical devices",
-    "DEFENSE": "Arms manufacturers, defense contractors, weapons systems",
-    "ENERGY": "Oil, gas, nuclear, electricity broadly",
-    "FINANCE": "Banks, funds, markets, insurance, crypto, payments",
-    "FOOD_AGRI": "Food, agriculture, agri commodities, fertilizers",
+    "AEROSPACE": "aircraft, satellites, space launch",
+    "AI": "AI labs, frontier models, AI-specific compute",
+    "AUTOMOTIVE": "carmakers, vehicles (battery tech -> GREEN_TECH)",
+    "BIOTECH": "biotech firms, gene therapy",
+    "DEFENSE": "arms makers, defense contractors, weapons systems",
+    "ENERGY": "oil, gas, nuclear, electricity",
+    "FINANCE": "banks, funds, markets, insurance, crypto, payments",
+    "FOOD_AGRI": "food, agriculture, fertilizers",
     "GREEN_TECH": "EV batteries, solar, wind, hydrogen, grid storage",
-    "IT_SOFTWARE": "Software companies, cloud, SaaS, platforms (excluding AI and media)",
-    "MEDIA": "News media, social platforms, streaming (strategic stories only - ownership, regulation, influence, censorship)",
-    "MINING": "Metals, rare earths, minerals extraction",
-    "PHARMA": "Drugs, medical devices, healthcare systems",
-    "RETAIL": "Consumer retail, e-commerce commerce (not ads)",
-    "SEMICONDUCTORS": "Chips, foundries, EDA tools, memory",
-    "SHIPPING": "Maritime, logistics, ports, freight, aviation freight",
-    "TELECOMS": "Carriers, 5G, undersea cables, satellites, broadband",
-    "OTHER": "Does not fit any of the above industries",
+    "IT_SOFTWARE": "software, cloud, SaaS, platforms (not AI, not media)",
+    "MEDIA": "strategic media stories only: ownership, regulation, influence, censorship",
+    "MINING": "metals, rare earths, minerals",
+    "PHARMA": "drugs, medical devices, healthcare",
+    "RETAIL": "consumer retail, e-commerce",
+    "SEMICONDUCTORS": "chips, foundries, EDA, memory",
+    "SHIPPING": "maritime, logistics, ports, freight",
+    "TELECOMS": "carriers, 5G, undersea cables, satellites",
+    "OTHER": "fits no other industry",
 }
 
 
@@ -209,42 +209,39 @@ CONTROLLED_ACTORS = {
 PRIORITY_RULES = """
 PRIORITY RULES:
 
-1. TIER: lower tier wins (T1>T2>T3>T4>T5>T6>T7). Court ruling beats protest; military op beats pressure.
+1. TIER: lower tier wins (T1>T2>T3>T4>T5>T6>T7).
 
-2. ENACTED > THREATENED. "Imposes tariff"->SANCTION_ENFORCEMENT. "Threatens tariff"->ECONOMIC_PRESSURE. "Signs bill"->LEGISLATIVE_DECISION. "Proposes bill"->STATEMENT or LEGISLATIVE_DECISION if passage imminent.
+2. ENACTED > THREATENED. "Imposes tariff"->SANCTION_ENFORCEMENT; "Threatens tariff"->ECONOMIC_PRESSURE. "Signs bill"->LEGISLATIVE_DECISION; "Proposes bill"->STATEMENT.
 
-3. CONCRETE > ABSTRACT. "Arrests 10"->LAW_ENFORCEMENT_OPERATION. "Investigates group"->STATEMENT. "Deploys troops"->MILITARY_OPERATION. "Considers deployment"->STATEMENT.
+3. CONCRETE > INTENT. "Deploys troops"->MILITARY_OPERATION; "Considers deployment"->STATEMENT. "Arrests 10"->LAW_ENFORCEMENT_OPERATION; "Investigates"->STATEMENT.
 
-4. ASPIRATIONAL LANGUAGE -> STATEMENT. Keywords: vows, pledges, says, hopes, sets sight, plans, aims, warns, urges, eyes, seeks -- unless tied to an enacted decision. Named figure OR institution attribution required.
+4. ASPIRATIONAL (vows/pledges/says/hopes/sets sight/plans/aims/warns/urges/eyes/seeks) -> STATEMENT, unless tied to an enacted decision. Requires named figure or institution.
 
-5. ELECTIONS -> ELECTORAL_EVENT ALWAYS. Votes, runoffs, primaries, mayoral/parliamentary/presidential elections, results, transitions by vote. NEVER use CIVIL_ACTION or LEGISLATIVE_DECISION for elections.
+5. ELECTIONS ALWAYS -> ELECTORAL_EVENT. Votes/runoffs/primaries/mayoral/parliamentary/presidential, results, transitions by vote. Never CIVIL_ACTION or LEGISLATIVE_DECISION.
 
-6. BILATERAL vs MULTILATERAL. "X speaks to Y", "X meets Y", "X holds talks with Y" -> ALLIANCE_COORDINATION (2 parties). MULTILATERAL_ACTION only for 3+ parties or IGO (UN/NATO/WTO/G7). Meetings/calls are NEVER PRESSURE unless content is coercive.
+6. BILATERAL meetings/calls/talks -> ALLIANCE_COORDINATION (2 parties). MULTILATERAL_ACTION only for 3+ parties or IGO (UN/NATO/WTO/G7). Meetings are NEVER PRESSURE unless content is coercive.
 
-7. CORPORATE vs STATE.
-   - State + budget/aid -> RESOURCE_ALLOCATION
-   - Corporate deals, M&A, IPOs, product launches, restructurings, hiring changes -> COMMERCIAL_TRANSACTION
-   - Corporation + POLICY_CHANGE is an error; use COMMERCIAL_TRANSACTION
-   - Corporation + INFRASTRUCTURE_DEVELOPMENT valid ONLY for physical/digital infra (data centers, mines, factories, pipelines, cables)
+7. CORPORATE vs STATE:
+   - State budget/aid -> RESOURCE_ALLOCATION
+   - Corporate deals/M&A/IPO/product launch/restructure/hiring -> COMMERCIAL_TRANSACTION
+   - Corp + POLICY_CHANGE is wrong, use COMMERCIAL_TRANSACTION
+   - Corp + INFRASTRUCTURE_DEVELOPMENT only for physical/digital infra (data centers, mines, factories, pipelines, cables)
 
-8. MARKET_SHOCK (directionless, macro-driven only).
-   - Gold/oil/wheat/currency surging or crashing on war, sanctions, Fed, supply shock -> MARKET_SHOCK
-   - Routine company-specific stock moves -> sector=NON_STRATEGIC
-   - Pair with commodities[] (gold/oil/CNY/USD) where relevant
+8. MARKET_SHOCK = macro-driven only, directionless. Gold/oil/wheat/currency surging or crashing on war, sanctions, Fed, supply shock. Routine company stock moves -> NON_STRATEGIC. Pair with commodities[].
 
-9. CIVIL_ACTION: only organized collective civil action (demonstrations, strikes, walkouts, civil disobedience, rallies). NOT elections, NOT polls, NOT mayoral wins.
+9. CIVIL_ACTION = real organized action (demonstrations, strikes, walkouts, rallies, civil disobedience). NOT elections, NOT polls, NOT mayoral wins.
 
-10. T7 INCIDENTS = last resort. Known actor -> MILITARY/LAW_ENFORCEMENT. Unknown actor or accident -> SECURITY_INCIDENT. Natural cause -> NATURAL_EVENT. SECURITY_INCIDENT is NOT a fallback for commentary/profiles/obituaries (those -> sector=NON_STRATEGIC).
+10. T7 = last resort. Known actor -> MILITARY/LAW_ENFORCEMENT. Unknown/accident -> SECURITY_INCIDENT. Natural cause -> NATURAL_EVENT. SECURITY_INCIDENT is NOT a fallback for editorials/profiles/obits.
 
-11. ACTOR: individuals -> institutions. "Biden signs" -> US_EXECUTIVE. "Powell speaks" -> US_CENTRAL_BANK. Country prefix for state (US_, RU_, CN_, FR_, DE_). IGOs bare (UN, NATO, EU). Corporations by name or CORPORATION.
+11. LEGAL_ACTION = full legal arc: suits, appeals, injunctions, rulings, dismissals, verdicts. One lane. "Judge dismisses X" and "24 states sue Y" are both LEGAL_ACTION.
 
-12. LEGAL_ACTION covers the whole legal arc: suits filed, appeals, injunctions, rulings, dismissals, verdicts, judgments. One lane. "Judge dismisses X" -> LEGAL_ACTION. "24 states sue Y" -> LEGAL_ACTION. Both are the same fight.
+12. TRADE PROBES (Section 301/232, anti-dumping, CFIUS, forced-labor) -> REGULATORY_ACTION (administrative), NOT LEGAL_ACTION.
 
-13. TRADE PROBES (Section 301, Section 232, anti-dumping investigations, CFIUS reviews, forced-labor probes) -> REGULATORY_ACTION, NOT LEGAL_ACTION. These are administrative/regulatory instruments, not lawsuits.
+13. ROUTINE STATS (CPI/GDP/jobs/forex/credit/factory) -> sector=NON_STRATEGIC. Statistics are not STATEMENTs - nobody "said" a number. Only keep as MARKET_SHOCK when described as shock-level ("fastest in X years", "record", "collapses", "unexpected").
 
-14. ROUTINE GOVERNMENT STATISTICS (CPI, GDP, jobs/employment reports, trade balances, forex reserves, factory activity, credit numbers) -> sector=NON_STRATEGIC unless the release is described as a shock: "fastest in X years", "worst since 2008", "collapses", "record". No named actor "said" a statistic; do not label as STATEMENT.
+14. NON-ENGLISH HEADLINES: classify by meaning, not language. Never NON_STRATEGIC just because non-English.
 
-15. NON-ENGLISH HEADLINES: classify by the content's meaning, not the language. A Japanese or Arabic headline about a legitimate commercial event is COMMERCIAL_TRANSACTION with sector=ECONOMY, not NON_STRATEGIC. Language is never a reason to mark NON_STRATEGIC.
+15. ACTOR: individuals -> institutions ("Biden signs"->US_EXECUTIVE, "Powell speaks"->US_CENTRAL_BANK). Country prefix for state (US_, RU_, CN_, FR_, DE_). IGOs bare (UN, NATO, EU). Corps by name or CORPORATION.
 """
 
 

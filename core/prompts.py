@@ -35,16 +35,15 @@ PROSE_WRITING_RULES = PROSE_RULES  # legacy alias
 
 # --- PHASE 3.1: LABEL + SIGNAL EXTRACTION ---
 
-LABEL_SIGNAL_EXTRACTION_PROMPT = """You are an expert news analyst. Extract structured event labels AND typed signals from news titles.
+LABEL_SIGNAL_EXTRACTION_PROMPT = """Extract structured event labels and typed signals from news titles.
 
-## PART 1: EVENT LABEL
-Format: ACTOR -> ACTION_CLASS -> DOMAIN -> TARGET (TARGET is REQUIRED; use "NONE" for non-directed events)
+## EVENT LABEL
+Format: ACTOR -> ACTION_CLASS -> DOMAIN -> TARGET (TARGET required; "NONE" if non-directed).
 
-ACTION CLASSES (7-tier hierarchy - lower tier = higher priority):
+ACTION CLASSES (7 tiers, lower = higher priority):
 {action_classes}
 
-DOMAINS:
-{domains}
+DOMAINS: {domains}
 
 ACTOR TYPES:
 {actors}
@@ -53,41 +52,24 @@ ACTOR TYPES:
 
 {target_rules}
 
-## PART 2: SIGNALS
-Extract typed signals from each title:
-- persons: LAST_NAME only, uppercase (TRUMP, POWELL, ZELENSKY)
-- orgs: Organizations/companies/armed groups, uppercase (NATO, FED, NVIDIA, HAMAS, ISIS)
-- places: Sub-national locations, Title case (Crimea, Gaza, Greenland). NO COUNTRIES.
-- named_events: Named operations/summits/conferences, Title case (G20 Summit, COP28, Operation Epic Fury)
-- industries: Multi-value, closed vocab. Populate ONLY when the title is materially about a specific industry's activity. Max 3 values. See INDUSTRIES list below.
+## SIGNALS
+- persons: LAST_NAME uppercase (TRUMP, POWELL)
+- orgs: organizations/companies/armed groups, uppercase (NATO, NVIDIA, HAMAS). NO publishers (WSJ, Reuters, BBC, CNN, Politico).
+- places: sub-national, Title case (Crimea, Gaza, Hormuz). NO countries.
+- named_events: named operations/summits, Title case (G20 Summit, COP28).
+- industries: closed vocab below, multi-value (max 3), populate only when materially relevant. Empty [] if no industry. Don't guess.
+- ENGLISH ONLY: translate foreign terms.
 
-SIGNAL RULES:
-- ENGLISH ONLY - translate foreign terms (Pekin->Beijing, Donetsk->Donetsk)
-- NO PUBLISHERS as orgs (WSJ, Reuters, BBC, CNN). Companies/armed groups -> orgs.
-
-## PART 2B: INDUSTRIES (closed vocabulary)
+INDUSTRIES (closed vocab):
 {industries}
 
-Industry rules:
-- Multi-value: a title about "Apple cuts App Store fees in China" -> [IT_SOFTWARE]. A title about "NVIDIA data center chips for AI" -> [SEMICONDUCTORS, AI]. A title about "BYD 5-minute EV charging" -> [AUTOMOTIVE, GREEN_TECH].
-- Use OTHER when none fit. Use empty list [] when no industry is materially discussed (e.g. routine policy with no sector angle).
-- Do not guess: if uncertain, leave empty. Better to miss an industry than tag a wrong one.
-- AI vs IT_SOFTWARE: use AI for AI labs, frontier models, AI-specific infrastructure. Use IT_SOFTWARE for cloud, SaaS, traditional software. A story can have both.
-- MEDIA industry is for strategic stories only (ownership, regulation, influence, censorship, platform transactions). Entertainment content is excluded at sector=NON_STRATEGIC.
+## ENTITY COUNTRIES
+Map entities -> ISO codes: {{"ENTITY_NAME": "ISO_CODE"}}.
+- Adjectives: French->FR, Ukrainian->UA, German->DE, British->GB.
+- Politicians -> country of office (MACRON->FR). Companies -> HQ (TSMC->TW). Sub-national places -> parent (Crimea->UA, Gaza->PS). IGOs/groups -> code (NATO->NATO, HAMAS->PS).
+- Skip country names themselves.
 
-## PART 3: ENTITY COUNTRIES
-Map entities to PRIMARY country using ISO 2-letter codes: {{"ENTITY_NAME": "ISO_CODE", ...}}
-
-COUNTRY ADJECTIVES: ANY adjective -> ISO code (French->FR, Ukrainian->UA, German->DE, British->GB). Declined forms in any language -> normalize.
-
-ENTITY MAPPINGS: Politicians -> country of office (MACRON->FR, RUBIO->US). Companies -> HQ (TSMC->TW, BOEING->US). Sub-national places -> parent (Crimea->UA, Greenland->DK). Systems -> owner (Nord Stream->RU). IGOs -> org code (NATO->NATO). Armed groups -> special codes (HAMAS->PS, ISIS->ISIS).
-
-SKIP: Country names themselves (US, China, France) - handled separately.
-
-## PART 4: SECTOR + SUBJECT
-Classify each title into a SECTOR (required) and SUBJECT (required). These are CONTROLLED VOCABULARIES -- use ONLY these values. Always pick the closest match -- never return null for subject.
-
-SECTORS and their SUBJECTS:
+## SECTOR + SUBJECT (controlled vocab, both required)
 - MILITARY: NUCLEAR, NAVAL, AERIAL, MISSILE, GROUND_FORCES, AIR_DEFENSE, DRONE, SPACE, DEFENSE_POLICY
 - INTELLIGENCE: ESPIONAGE, SURVEILLANCE, COVERT_OPERATION
 - SECURITY: TERRORISM, INSURGENCY, ORGANIZED_CRIME, CIVIL_UNREST, BORDER_SECURITY, LAW_ENFORCEMENT
@@ -101,29 +83,40 @@ SECTORS and their SUBJECTS:
 - INFRASTRUCTURE: TRANSPORT, SHIPPING, CONSTRUCTION, SUPPLY_CHAIN, POWER_GRID
 - NON_STRATEGIC: SPORTS, ENTERTAINMENT, CELEBRITY, LIFESTYLE, LOCAL_CRIME, WEATHER
 
-NON_STRATEGIC = the title is not a concrete strategic event. Use it when the title is one of these:
-(a) TOPIC out of scope: sports/leagues/tournaments/coaching (even when framed with conflict words "battle/attack/defense"), entertainment/celebrity/concerts, lifestyle/recipes/wellness, tourism/travel guides, e-commerce promos/sales, routine local crime, local business openings, weather forecasts (disasters -> SOCIETY/NATURAL_DISASTER).
-(b) CONTENT-TYPE out of scope: editorials/opinion/commentary ("Editorial", "Opinion", "| Editorial", "GT Voice", "The X view on Y"), analysis/feature pieces ("The X story", "Why X matters", "Lessons from Y"), profiles of persons, previews/listicles/explainers ("What to watch", "5 takeaways", "Explainer:"), anonymous analyst commentary ("analysts say", "sources warn"), obituaries, speculative headlines ("X could", "Y might", "is said to"), trend pieces without a specific event.
-(c) ROUTINE GOVERNMENT STATISTICS: CPI, GDP, jobs/employment reports, trade balances, forex reserves, factory activity, credit numbers. A statistic is NOT a statement - nobody "said" a number. Only keep (as MARKET_SHOCK) when described as shock-level: "fastest in X years", "worst since 2008", "collapses", "record", "unexpected downturn".
+### NON_STRATEGIC scope (3 cases):
+(a) TOPIC out of scope: sports, entertainment/celebrity, lifestyle/recipes, tourism, e-commerce promos, local crime, weather forecasts (disasters -> SOCIETY/NATURAL_DISASTER).
+(b) CONTENT-TYPE out of scope: editorials, opinion columns, analysis/features ("Why X matters"), profiles, previews/listicles/explainers, anonymous analyst takes, obituaries, speculation, trend pieces without a specific event.
+(c) ROUTINE STATS: CPI/GDP/jobs/forex/credit/factory data. Only MARKET_SHOCK if shock-level ("fastest in X years", "worst since", "record", "collapses").
 
-LANGUAGE IS NEVER A REASON FOR NON_STRATEGIC. A Japanese/Arabic/German/Russian headline about a legitimate commercial event, policy, election, or military action is classified by meaning, NOT language. Do not mark non-English content NON_STRATEGIC just because you are unsure.
+LANGUAGE never a reason for NON_STRATEGIC. Classify foreign-language content by meaning.
 
-KEEP (do NOT mark NON_STRATEGIC) when a named figure or institution is attributed: "Trump says...", "Fed projects...", "Bernstein warns rupee...", "Reuters/Ipsos poll shows..." -- these have a named source and belong to STATEMENT action class. A named statement is a signal even without a concrete action.
+KEEP titles with named figure/institution attribution -> STATEMENT (Trump says, Fed projects, Bernstein warns).
 
-CLASSIFICATION TRAPS:
-- Fact-checking about AI-generated fakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY).
-- Book reviews about a leader -> NON_STRATEGIC (not the leader's sector).
-- Court dismissals, summary judgments, verdicts -> action_class=LEGAL_ACTION (NOT a separate class). The full legal arc (suit filing to ruling) is one class.
-- Trade probes (Section 301, Section 232, anti-dumping, forced-labor probes, CFIUS reviews) -> action_class=REGULATORY_ACTION, sector=ECONOMY. These are administrative, NOT LEGAL_ACTION.
-- Routine government statistics -> sector=NON_STRATEGIC unless shock-level.
+### Classification traps:
+- Fact-checks of AI fakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY).
+- Book reviews of leaders -> NON_STRATEGIC.
+- Court rulings/dismissals/verdicts AND lawsuits AND injunctions -> action=LEGAL_ACTION (one class).
+- Trade probes (Section 301/232, anti-dumping, CFIUS) -> action=REGULATORY_ACTION (admin, not legal).
 
-Examples: "Macron increases nuclear arsenal" -> action=MILITARY_OPERATION, sector=MILITARY/NUCLEAR. "Oil tops $100 as war rages" -> action=MARKET_SHOCK, sector=ENERGY_RESOURCES/OIL_GAS. "US consumer prices increase as expected" -> sector=NON_STRATEGIC (routine stat). "U.S. loses 92,000 jobs in unexpected downturn" -> action=MARKET_SHOCK (shock-level framing). "Judge dismisses lawsuit by X" -> action=LEGAL_ACTION. "24 US states sue Trump over tariffs" -> action=LEGAL_ACTION. "US launches 301 probes into EU" -> action=REGULATORY_ACTION. "EU tariffs on China" -> sector=ECONOMY/TRADE. "Lyon beats Marseille in Ligue 1" -> NON_STRATEGIC/SPORTS. "The Guardian view on France | Editorial" -> NON_STRATEGIC. "Trump says Iran war could last weeks" -> action=STATEMENT, sector=GOVERNANCE/EXECUTIVE_ACTION. "Bernstein warns rupee could breach 98/USD" -> action=STATEMENT, sector=ECONOMY/CURRENCY. "French elect mayors in key cities" -> action=ELECTORAL_EVENT, sector=GOVERNANCE/ELECTION. "日産、SUV「ムラーノ」を米国から逆輸入" -> action=COMMERCIAL_TRANSACTION, sector=ECONOMY (non-English but clearly commercial).
+### Examples:
+- "Macron increases nuclear arsenal" -> MILITARY_OPERATION, MILITARY/NUCLEAR
+- "Oil tops $100 as war rages" -> MARKET_SHOCK, ENERGY_RESOURCES/OIL_GAS
+- "U.S. loses 92,000 jobs in unexpected downturn" -> MARKET_SHOCK
+- "US consumer prices increase as expected" -> NON_STRATEGIC (routine stat)
+- "Judge dismisses lawsuit by X" -> LEGAL_ACTION
+- "24 US states sue Trump" -> LEGAL_ACTION
+- "US launches 301 probes into EU" -> REGULATORY_ACTION
+- "Trump says Iran war could last weeks" -> STATEMENT, GOVERNANCE/EXECUTIVE_ACTION
+- "Bernstein warns rupee could breach 98/USD" -> STATEMENT, ECONOMY/CURRENCY
+- "French elect mayors in key cities" -> ELECTORAL_EVENT, GOVERNANCE/ELECTION
+- "The Guardian view on France | Editorial" -> NON_STRATEGIC
+- "日産、SUV「ムラーノ」を米国から逆輸入" -> COMMERCIAL_TRANSACTION, ECONOMY (non-English commercial)
 
 ## OUTPUT
-Return JSON array:
-[{{"idx": 1, "actor": "US_EXECUTIVE", "action": "POLICY_CHANGE", "domain": "ECONOMY", "target": "CN", "conf": 0.9, "sector": "ECONOMY", "subject": "TRADE", "persons": ["TRUMP"], "orgs": [], "places": [], "named_events": [], "industries": ["SEMICONDUCTORS"], "entity_countries": {{"TRUMP": "US"}}}}]
+JSON array, no prose:
+[{{"idx":1,"actor":"US_EXECUTIVE","action":"POLICY_CHANGE","domain":"ECONOMY","target":"CN","conf":0.9,"sector":"ECONOMY","subject":"TRADE","persons":["TRUMP"],"orgs":[],"places":[],"named_events":[],"industries":["SEMICONDUCTORS"],"entity_countries":{{"TRUMP":"US"}}}}]
 
-Country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_. IGOs without prefix: UN, NATO, EU. TARGET: ISO codes or canonical names. conf 0.0-1.0. Return ONLY valid JSON. Empty arrays [] for no matches."""
+Country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_. IGOs bare: UN, NATO, EU. TARGET: ISO codes or canonical names. conf 0.0-1.0. ONLY valid JSON. Empty arrays for no matches."""
 
 # --- PHASE 4.1: ANCHOR-CANDIDATE TOPIC CONSOLIDATION ---
 
