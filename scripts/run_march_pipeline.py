@@ -26,8 +26,6 @@ if sys.platform == "win32":
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import config
 from pipeline.phase_4.assemble_families import process_ctm as assemble_families
-from pipeline.phase_4.generate_mechanical_titles import process_ctm as gen_titles
-from pipeline.phase_4.merge_similar_clusters import process_ctm as dice_merge
 
 MONTH = "2026-03-01"
 
@@ -76,21 +74,12 @@ def main():
         )
 
         try:
-            # Phase 4.1a: Mechanical titles
-            titles = gen_titles(ctm_id=ctm_id_str)
-            total_titles += titles
-
-            # Phase 4.1: Family assembly
+            # Phase 4.1: Family assembly (D-056)
             if args.dry_run:
                 families = assemble_families(ctm_id=ctm_id_str, dry_run=True)
             else:
                 families = assemble_families(ctm_id=ctm_id_str, force=True)
             total_families += families
-
-            # Phase 4.1b: Dice merge
-            if not args.dry_run:
-                merges = dice_merge(ctm_id=ctm_id_str)
-                total_merges += merges
 
         except Exception as e:
             print("  ERROR: %s" % e)

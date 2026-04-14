@@ -55,7 +55,7 @@ ACTOR TYPES:
 ## SIGNALS
 - persons: LAST_NAME uppercase (TRUMP, POWELL)
 - orgs: organizations/companies/armed groups, uppercase (NATO, NVIDIA, HAMAS). NO publishers (WSJ, Reuters, BBC, CNN, Politico).
-- places: sub-national, Title case (Crimea, Gaza, Hormuz). NO countries.
+- places: sub-national locations, Title case, SHORTEST DISTINCTIVE NAME. Use the geographic locator, never the facility descriptor: "Minab" not "Minab Girls School", "Auvere" not "Auvere Power Plant", "Kharg" not "Kharg Island Oil Terminal", "Ramstein" not "Ramstein Air Base", "Natanz" not "Natanz Nuclear Facility", "Karachi" not "US Embassy Karachi". Cities/regions/districts/towns (Crimea, Gaza, Hormuz). NO countries.
 - named_events: named operations/summits, Title case (G20 Summit, COP28).
 - industries: closed vocab below, multi-value (max 3), populate only when materially relevant. Empty [] if no industry. Don't guess.
 - ENGLISH ONLY: translate foreign terms.

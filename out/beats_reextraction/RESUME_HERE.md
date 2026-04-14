@@ -7,7 +7,11 @@
 
 ## TL;DR
 
-We just finished an overnight reprocess of 4 CTMs under a new label taxonomy (ELO v3.0.1). All 4 look correct. **Tomorrow morning's job is to review them in the local frontend, push 4 commits to main, deploy migrations to Render, and reprocess April 1-13 data.** Render daemon is stopped (or supposed to be) to prevent v2 content generation while we deploy.
+We finished an overnight reprocess of 4 CTMs under ELO v3.0.1. Local frontend review on 2026-04-14 morning revealed two structural clustering issues (mega-catchalls hiding important stories like the Iranian girls' school strike; cross-bucket fragmentation of the Mar 25 Estonia drone story).
+
+**REPRIORITIZED 2026-04-14 (D-056): Live deployment is PAUSED.** Clustering redesign with time-windowed `(beat × day × entity)` model now ships in the same cycle as v3.0.1 to avoid re-processing April data twice. See `docs/context/CLUSTERING_REDESIGN.md` for the design.
+
+Render daemon is stopped (assume so) to prevent v2 content generation. The 4 commits on `feat/mechanical-families` are pushed to GitHub but NOT merged to main yet. Local DB has 4 reprocessed CTMs we'll re-cluster after the redesign.
 
 ## Where we are in the deployment plan
 
@@ -20,11 +24,15 @@ We just finished an overnight reprocess of 4 CTMs under a new label taxonomy (EL
 [DONE]    Migrate strategic_narratives + narrative_taxonomy_v2.yaml to new vocab
 [DONE]    Compress prompt 4460 -> 3387 tokens (-24%)
 [DONE]    Re-extract + recluster Baltic / France / China / USA (all March 2026)
-[NEXT]    Local frontend review of 4 reprocessed CTMs
-[NEXT]    Push 4 commits to main
-[NEXT]    Apply Render migrations (out/beats_reextraction/render_migrations.sql)
-[NEXT]    Reprocess April 1-13 data on Render
-[NEXT]    Re-enable Render daemon
+[DONE]    Local frontend review of 4 reprocessed CTMs
+[DONE]    Capture mega-catchall + cross-bucket findings, write D-056 + CLUSTERING_REDESIGN.md
+[DONE]    Step 1: Phase 3.1 places broadened to sub-national short-form (Minab not Minab Girls School)
+[DONE]    Step 2: Phase 4 rewrite - beat-triple cluster key + stage-2 day-level merge (LOCK-7)
+[DONE]    Step 3: Phase 4.1 rewrite - family chain by dominant_entity with tiered anchor (LOCK-4 revised, LOCK-8)
+[DONE]    Step 4: deleted merge_similar_clusters (4.1b) and generate_mechanical_titles (4.1a)
+[DONE]    Step 5: re-run local CTMs, validated Khamenei/Kharg/Iraq/Oslo/Baghdad/Russia-Iran cases (D-057)
+[NEXT]    Commit work on feat/mechanical-families
+[NEXT]    Push to main, Render migrations, reprocess April, re-enable daemon
 ```
 
 ## The 4 commits (on branch `feat/mechanical-families`)

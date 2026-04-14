@@ -9,7 +9,6 @@ Usage:
   python out/beats_reextraction/rerun_ctm_full_pipeline.py EUROPE-BALTIC geo_security 2026-03
 """
 
-import asyncio
 import sys
 import time
 from pathlib import Path
@@ -22,14 +21,7 @@ from core.config import get_config
 from pipeline.phase_3_1.extract_labels import process_titles as phase31_extract
 from pipeline.phase_3_3.assign_tracks_mechanical import SECTOR_TO_TRACK
 from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble
-from pipeline.phase_4.generate_event_summaries_4_5a import (
-    process_events as phase45a_event_summaries,
-)
-from pipeline.phase_4.generate_mechanical_titles import (
-    process_ctm as phase41a_mechanical_titles,
-)
 from pipeline.phase_4.incremental_clustering import recluster_ctm
-from pipeline.phase_4.merge_similar_clusters import process_ctm as phase41b_dice_merge
 
 
 def assign_tracks_for_title_ids(title_ids):
@@ -272,39 +264,21 @@ def main():
     print(f"  ctm.title_count after re-routing: {new_count} (was {title_count_before})")
 
     # 8. Phase 4 — recluster from scratch
-    header("STEP 6/9: Phase 4 — recluster (destructive)")
+    header("STEP 6/8: Phase 4 — recluster (D-056 day-beat)")
     t = time.time()
-    recluster_ctm(ctm_id, dry_run=False, method="signal")
+    recluster_ctm(ctm_id, dry_run=False)
     print(f"  ({time.time()-t:.0f}s)")
 
-    # 9. Phase 4.1a — mechanical titles
-    header("STEP 7/9: Phase 4.1a — mechanical titles")
-    t = time.time()
-    phase41a_mechanical_titles(ctm_id=ctm_id, force=True)
-    print(f"  ({time.time()-t:.0f}s)")
-
-    # 10. Phase 4.1 — family assembly
-    header("STEP 8/9: Phase 4.1 — family assembly")
+    # 7. Phase 4.1 — family assembly (D-056 adjacent-day chain)
+    header("STEP 7/8: Phase 4.1 — family assembly")
     t = time.time()
     phase41_assemble(ctm_id=ctm_id, dry_run=False, force=True)
     print(f"  ({time.time()-t:.0f}s)")
 
-    # 11. Phase 4.1b — dice merge (best-effort, may be no-op for small CTMs)
-    header("STEP 8b/9: Phase 4.1b — dice merge")
-    t = time.time()
-    try:
-        phase41b_dice_merge(ctm_id=ctm_id, dry_run=False)
-    except Exception as e:
-        print(f"  Dice merge skipped/failed: {e}")
-    print(f"  ({time.time()-t:.0f}s)")
-
-    # 12. Phase 4.5a — LLM event summaries
-    header("STEP 9/9: Phase 4.5a — LLM event summaries")
-    t = time.time()
-    asyncio.run(
-        phase45a_event_summaries(ctm_id=ctm_id, force_regenerate=True, concurrency=4)
+    # Phase 4.5a (LLM event summaries) intentionally skipped during D-056 validation
+    print(
+        "\n  (Phase 4.5a skipped — running mechanical only for clustering validation)"
     )
-    print(f"  ({time.time()-t:.0f}s)")
 
     # 13. Final stats
     header("FINAL STATS")

@@ -618,3 +618,46 @@ decisions:
       - Ubiquity filter from D-049 adopted at event-naming layer (12% of CTM titles)
       - Theater classification is per-centroid config (THEATER_RULES in code for now; candidate for centroid-level DB field later)
       - Full direction documented in docs/context/BEATS_DIRECTION.md
+
+  - id: D-056
+    date: 2026-04-14
+    type: architectural
+    status: accepted
+    title: Time-windowed clustering replaces signal-only Phase 4. Day = atomic clustering unit.
+    rationale:
+      - Local frontend review of v3.0.1 reprocessed CTMs revealed two structural clustering issues
+        (1) mega-catchalls: single events_v3 row containing 1638 titles for "Trump says US is winning war with Iran" in MIDEAST-IRAN bucket, hiding individual stories like the Iranian girls school strike (8 titles, 165 dead) inside generic Iran-war chatter
+        (2) cross-bucket fragmentation: Mar 25 Estonia-Auvere drone power-plant strike fragmented into 3-4 clusters across UKRAINE/BALTIC/RUSSIA bilateral buckets because each title attributed the drone differently
+      - Both root in the same gap, Phase 4 incremental clustering treats all titles in a CTM month as one bag and clusters by signal overlap with no awareness of publication date. Time is the missing axis.
+      - Beats prototype showed that the natural unit of an event is (actor, action, target) x date x top-entity. The clustering layer should use the same model.
+      - Patches considered and rejected per D-056-companion rule (architectural solutions, not patches), no Phase 4.1c rescue, no per-action threshold dictionaries, no date-aware Phase 4.1b extension.
+      - User-proposed model is mechanically simple, day = atomic clustering unit (24h window, no tunable). Multi-day stories chain through families.
+    consequences:
+      - Phase 4 incremental_clustering rewritten to enforce, two titles share a cluster only if they share (actor, action_class, target) AND are within a 24h time window (same calendar date) AND share at least one entity (place/person/org/named_event/industry) OR a substring n-gram in title text
+      - Phase 4.1b merge_similar_clusters (Dice merge) becomes redundant and is removed, cross-bucket merging is no longer needed because same-day same-beat same-entity clusters across different bilateral buckets will join naturally
+      - Phase 4.1 family assembly retains its rollup role but with a simpler mechanical definition, families chain adjacent-day clusters with same (actor, action, target, entity) tuple. The fuzzy spine-search of D-053 is replaced.
+      - Phase 4.1a mechanical title generation likely removable once Phase 4.5a always runs after clustering
+      - Mega-catchalls disappear, a 1638-title bucket becomes ~50-100 day-bounded clusters
+      - Pipeline shrinks net (4.1b removed, possibly 4.1a removed)
+      - Live deployment of v3.0.1 to Render is PAUSED until clustering redesign lands. Reason, otherwise April data would be re-processed twice (first under v3.0.1 with old clustering, then again after clustering redesign). One coherent re-extraction cycle is preferred.
+      - Place extraction tweak from Phase 3.1 prompt (broaden to include named facilities, schools, hospitals, military bases, oil terminals) ships in the same cycle as the clustering redesign.
+      - Design documented in docs/context/CLUSTERING_REDESIGN.md
+
+  - id: D-057
+    date: 2026-04-14
+    type: architectural
+    status: accepted
+    title: Clustering redesign iteration 2 - day-level cross-beat merge + tiered family anchor
+    rationale:
+      - Pure beat-triple clustering (D-056 as originally written) is correct within a beat but fragments single events across angles. One physical event gets labeled under multiple beat triples by the LLM (tanker crash = SECURITY_INCIDENT + STATEMENT + MILITARY_OPERATION simultaneously). Observed on Iraq KC-135 crash (17 fragments), Khamenei Mar 1 (11 fragments), Oslo embassy (5 fragments), Baghdad embassy (6 fragments), Michigan synagogue (9 fragments), Russia-Iran intelligence (7 fragments).
+      - Neither subject nor sector is consistent enough to serve as an alternative cluster key - LLM labels them inconsistently across angles of one event (Iraq crash splits 29 MILITARY / 28 SECURITY, Khamenei splits across 8 sectors).
+      - Simple entity-overlap merge was tried and overmerged - a single multi-place title (Michigan+Virginia bridge) chained unrelated clusters into one blob via transitivity.
+      - Family chaining with beat triple in the key also fragmented multi-day arcs because the dominant beat shifts day to day (Kharg had 15 clusters across Mar 13-26 but only 1 in a family).
+    consequences:
+      - LOCK-2 revised, bucket_key rule tightened. Bilateral requires top foreign centroid >= 50% of ALL cluster titles (not 50% of titles-with-foreign). Prevents Phase 2 topical cross-tagging from hijacking the bucket (Michigan synagogue -> MIDEAST-ISRAEL was the case that surfaced this).
+      - LOCK-4 revised, family chain key is dominant_entity only (beat dropped). A family captures the multi-day story arc on one anchor even as the beat evolves.
+      - LOCK-7 added, stage-2 day-level merge across beat triples. Two same-day clusters merge if (same dominant place/named_event) OR (both lack dominant place AND any title pair has token-Dice >= 0.5). Strong-signal rule plus Dice fallback.
+      - LOCK-8 added, family anchor uses tiered preference (places > named_events > persons > orgs > industries) with >= 50% coverage gate. Khamenei 223-src cluster becomes standalone instead of absorbed into DEFENSE catchall family.
+      - USA/geo_security/2026-03 final shape, 1981 clusters, 129 families. Khamenei Mar 1 standalone (223 src). Kharg/Iraq/Kuwait/Hormuz/Riyadh/Oslo/ICE all as coherent place-based families or big standalones.
+      - Phase 4.5a LLM summaries intentionally skipped during validation (pure mechanical clustering is the unit of work for this decision).
+      - Design and rationale extensively documented in docs/context/CLUSTERING_REDESIGN.md (LOCK-2 revised, LOCK-4 revised, LOCK-7 added, LOCK-8 added).

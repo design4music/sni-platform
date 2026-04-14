@@ -27,6 +27,8 @@ MONTH = "2026-03-01"
 CENTROID = sys.argv[1] if len(sys.argv) > 1 else "AMERICAS-USA"
 TRACK = sys.argv[2] if len(sys.argv) > 2 else "geo_security"
 DRY_RUN = "--dry-run" in sys.argv
+DB_URL = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--db=")), None)
+DB_URL = DB_URL or "postgresql://postgres:postgres@localhost:5432/sni_v2"
 
 STOP_WORDS = frozenset(
     "the a an in of on for to and is are was were with from at by as its it be "
@@ -71,7 +73,7 @@ def word_overlap(small_words, big_words):
 
 
 # ---------------------------------------------------------------
-conn = psycopg2.connect("postgresql://postgres:postgres@localhost:5432/sni_v2")
+conn = psycopg2.connect(DB_URL)
 cur = conn.cursor()
 
 cur.execute(

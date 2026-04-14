@@ -39,19 +39,17 @@ from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble_f
 from pipeline.phase_4.generate_event_summaries_4_5a import (
     process_events as phase45a_event_summaries,
 )
-from pipeline.phase_4.generate_mechanical_titles import (
-    process_ctm as phase41a_gen_titles,
-)
 from pipeline.phase_4.generate_summaries_4_5 import (
     process_ctm_batch as phase45_summaries,
 )
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
-from pipeline.phase_4.merge_similar_clusters import process_ctm as phase41b_dice_merge
 
 # Unplugged (D-053): 4.1 (LLM topic aggregation), 4.3 (cross-bucket merge),
 # 4.4 (sibling merge) -- replaced by mechanical family assembly
+# Unplugged (D-056): 4.1a (mechanical titles -- 4.5a always runs)
+#                    4.1b (Dice merge -- day-beat clustering needs no merge)
 
 
 class PipelineDaemon:
@@ -546,77 +544,8 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
-    def run_mechanical_titles(self, max_ctms: int = 25):
-        """Phase 4.1a: Generate mechanical titles for clusters without titles."""
-        conn = self.get_connection()
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT id, centroid_id, track, title_count
-                       FROM ctm
-                       WHERE title_count >= 3 AND is_frozen = false
-                         AND EXISTS (SELECT 1 FROM events_v3 e
-                                     WHERE e.ctm_id = ctm.id
-                                       AND NOT e.is_catchall
-                                       AND e.merged_into IS NULL
-                                       AND (e.title IS NULL OR e.title = ''))
-                       ORDER BY title_count DESC
-                       LIMIT %s""",
-                    (max_ctms,),
-                )
-                ctms = cur.fetchall()
-
-            if not ctms:
-                print("No CTMs need mechanical titles")
-                return
-
-            print("Mechanical titles: %d CTMs..." % len(ctms))
-            for ctm_id, centroid_id, track, title_count in ctms:
-                try:
-                    phase41a_gen_titles(ctm_id=ctm_id)
-                except Exception as e:
-                    print("  Title gen failed for %s: %s" % (ctm_id[:8], e))
-
-        finally:
-            self.return_connection(conn)
-
-    def run_dice_merge(self, max_ctms: int = 25):
-        """Phase 4.1b: Dice merge of similar clusters."""
-        conn = self.get_connection()
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT id, centroid_id, track, title_count
-                       FROM ctm
-                       WHERE title_count >= 3 AND is_frozen = false
-                         AND EXISTS (SELECT 1 FROM events_v3 e
-                                     WHERE e.ctm_id = ctm.id
-                                       AND NOT e.is_catchall
-                                       AND e.merged_into IS NULL)
-                       ORDER BY title_count DESC
-                       LIMIT %s""",
-                    (max_ctms,),
-                )
-                ctms = cur.fetchall()
-
-            if not ctms:
-                print("No CTMs need Dice merge")
-                return
-
-            print("Dice merge: %d CTMs..." % len(ctms))
-            total = 0
-            for ctm_id, centroid_id, track, title_count in ctms:
-                try:
-                    merged = phase41b_dice_merge(ctm_id=ctm_id)
-                    total += merged
-                except Exception as e:
-                    print("  Dice merge failed for %s: %s" % (ctm_id[:8], e))
-            if total:
-                print("Dice merge: %d total merges" % total)
-
-        finally:
-            self.return_connection(conn)
-
+    # Unplugged (D-056): run_mechanical_titles (4.1a) -- 4.5a always provides titles
+    # Unplugged (D-056): run_dice_merge (4.1b) -- day-beat clustering needs no merge
     # Unplugged (D-053): run_event_merge (Phase 4.3 cross-bucket LLM merge)
     # Unplugged (D-053): run_sibling_merge (Phase 4.4 cross-centroid sibling merge)
     # Both replaced by mechanical family assembly. Sibling merge to revisit later.
@@ -938,33 +867,13 @@ class PipelineDaemon:
                 ),
                 self.timeout_clustering,
             )
-            # Phase 4.1a: Mechanical title generation (for clusters without titles)
-            await self.run_with_timeout(
-                "Phase 4.1a: Mechanical Titles",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.1a: Mechanical Titles",
-                    self.run_mechanical_titles,
-                ),
-                self.timeout_clustering,
-            )
-            # Phase 4.1: Family Assembly (mechanical, spine-based, D-053)
+            # Phase 4.1: Family Assembly (D-056 adjacent-day chain)
             await self.run_with_timeout(
                 "Phase 4.1: Family Assembly",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
                     "Phase 4.1: Family Assembly",
                     self.run_family_assembly,
-                ),
-                self.timeout_clustering,
-            )
-            # Phase 4.1b: Dice merge (within-family + cross-family + cross-bucket)
-            await self.run_with_timeout(
-                "Phase 4.1b: Dice Merge",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.1b: Dice Merge",
-                    self.run_dice_merge,
                 ),
                 self.timeout_clustering,
             )
