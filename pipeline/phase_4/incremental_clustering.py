@@ -496,14 +496,23 @@ def _dominant_place(titles: list) -> str:
     return counter.most_common(1)[0][0]
 
 
+def _dominant_target(titles: list) -> str:
+    """Most-frequent target across a cluster's titles. NONE if absent."""
+    counter = Counter()
+    for t in titles:
+        counter[t.get("target") or "NONE"] += 1
+    return counter.most_common(1)[0][0] if counter else "NONE"
+
+
 def _merge_day_clusters(day_clusters: list) -> list:
     """Union-find merge of day-local clusters across beat triples.
 
     Two clusters on the same day merge when EITHER:
-      1. They have the SAME dominant place/named_event (strong-signal rule:
-         one day + one geographic anchor = one cluster). "Dominant" means
-         most-frequent, so a single multi-place title cannot bridge two
-         clusters that are otherwise about different theaters.
+      1. They have the SAME (dominant place/named_event, dominant target).
+         Both dimensions must match: place anchors the theater, target
+         anchors the counterparty. Paris-elections (target NONE) stays
+         separate from Paris-US-China-talks (target CN) even though both
+         have dominant_place=Paris.
       2. Both clusters have NO dominant place AND any title pair across
          them has token-Dice >= TEXT_DICE_THRESHOLD. This fallback only
          fires for entity-empty fragments (e.g., Russia-Iran intelligence
@@ -513,7 +522,14 @@ def _merge_day_clusters(day_clusters: list) -> list:
     if n < 2:
         return day_clusters
 
-    dominants = [_dominant_place(c["titles"]) for c in day_clusters]
+    dominants = [
+        (
+            (_dominant_place(c["titles"]), _dominant_target(c["titles"]))
+            if _dominant_place(c["titles"])
+            else None
+        )
+        for c in day_clusters
+    ]
 
     parent = list(range(n))
 

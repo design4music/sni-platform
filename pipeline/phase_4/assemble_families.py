@@ -130,6 +130,7 @@ def load_clusters(cur, ctm_id):
         if not c:
             continue
         c["beats"][(r[1], r[2], r[3])] += 1
+        c.setdefault("targets", Counter())[r[3] or "NONE"] += 1
         for sig_type, vals in zip(ENTITY_FIELDS, (r[4], r[5], r[6], r[7], r[8])):
             for v in vals or []:
                 tok = _entity_token(sig_type, v)
@@ -157,6 +158,8 @@ def load_clusters(cur, ctm_id):
             if count >= threshold:
                 dominant = token
                 break
+        targets = c.get("targets") or Counter()
+        target = targets.most_common(1)[0][0] if targets else "NONE"
         out.append(
             {
                 "id": c["id"],
@@ -164,25 +167,27 @@ def load_clusters(cur, ctm_id):
                 "source_count": c["source_count"],
                 "beat": beat,
                 "dominant_entity": dominant,
+                "target": target,
             }
         )
     return out
 
 
 def chain_families(clusters):
-    """Group clusters by dominant_entity, then chain by adjacent dates.
+    """Group clusters by (dominant_entity, target), then chain by adjacent dates.
 
-    Beat triple is deliberately NOT part of the family chain key. A narrative
-    arc evolves: strike -> statement -> retaliation -> commentary. Each day's
-    cluster gets a different dominant beat, but the anchor entity is stable.
-    Clustering stays beat-strict (prevents same-day story mixing); family
-    chaining is entity-based (captures multi-day arcs on one anchor).
+    Entity-only chaining collapsed narrative hubs like Paris (elections +
+    US-China talks + Macron-Russia + court rulings) into one blob. Adding
+    `target` separates stories that share a location but are aimed at
+    different counterparties: (Paris, CN) for trade talks, (Paris, RU) for
+    Macron diplomacy, (Paris, NONE) for elections and courts. Target is more
+    stable across days within one arc than action_class or actor.
     """
     groups = defaultdict(list)
     for c in clusters:
         if not c["dominant_entity"] or not c["date"]:
             continue
-        groups[c["dominant_entity"]].append(c)
+        groups[(c["dominant_entity"], c.get("target") or "NONE")].append(c)
 
     families = []
     for key, members in groups.items():
@@ -201,12 +206,14 @@ def chain_families(clusters):
     return families
 
 
-def _make_family(dominant_entity, chain):
+def _make_family(key, chain):
+    dominant_entity, target = key
     beat_counter = Counter(c["beat"] for c in chain if c["beat"] != (None, None, None))
     beat = beat_counter.most_common(1)[0][0] if beat_counter else (None, None, None)
     return {
         "beat": beat,
         "dominant_entity": dominant_entity,
+        "target": target,
         "clusters": chain,
         "cluster_count": len(chain),
         "source_count": sum(c["source_count"] for c in chain),
