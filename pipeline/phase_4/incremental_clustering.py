@@ -554,11 +554,18 @@ def _merge_day_clusters(day_clusters: list) -> list:
             union(idx_list[0], idx_list[k])
 
     # Rule 2: Dice fallback, ONLY between clusters that both lack a dominant
-    # place (otherwise the strong signal already decided — or the clusters
-    # are genuinely different theaters and Dice shouldn't override that).
+    # place AND share the same dominant target. Without the target gate, Dice
+    # at 0.5 blended "US kills Khamenei" (target=IR) with "Iran retaliates"
+    # (target=US) on the same day because both share many surface tokens
+    # ("khamenei", "iran", "us", "strike"). Target is the cleanest
+    # discriminator when place is absent.
     cluster_title_tokens = [
         [_tokenize_title(t.get("title_display") or "") for t in c["titles"]]
         for c in day_clusters
+    ]
+    empty_targets = [
+        _dominant_target(day_clusters[i]["titles"]) if not dominants[i] else None
+        for i in range(n)
     ]
     empty_idx = [i for i in range(n) if not dominants[i]]
     for a_pos in range(len(empty_idx)):
@@ -570,30 +577,7 @@ def _merge_day_clusters(day_clusters: list) -> list:
             j = empty_idx[b_pos]
             if find(i) == find(j):
                 continue
-            tj = cluster_title_tokens[j]
-            if not tj:
-                continue
-            matched = False
-            for a in ti:
-                if matched:
-                    break
-                if not a:
-                    continue
-                for b in tj:
-                    if not b:
-                        continue
-                    if _dice(a, b) >= TEXT_DICE_THRESHOLD:
-                        union(i, j)
-                        matched = True
-                        break
-
-    # Rule 2: title-pair Dice fallback for still-separate clusters
-    for i in range(n):
-        ti = cluster_title_tokens[i]
-        if not ti:
-            continue
-        for j in range(i + 1, n):
-            if find(i) == find(j):
+            if empty_targets[i] != empty_targets[j]:
                 continue
             tj = cluster_title_tokens[j]
             if not tj:
@@ -731,19 +715,39 @@ def write_clusters_to_db(conn, clusters: list, ctm_id: str) -> int:
         summary_parts.append("[" + anchor_str + "]")
         summary = " ".join(summary_parts)
 
+        # Mechanical fallback title: pick the earliest title_display that has
+        # a reasonable length. Phase 4.5a can overwrite this with an LLM title
+        # later, but until then the cluster is human-readable and searchable.
+        mechanical_title = None
+        sorted_titles = sorted(
+            c["titles"],
+            key=lambda t: (
+                t.get("pubdate_utc") or 0,
+                -(len(t.get("title_display") or "")),
+            ),
+        )
+        for t in sorted_titles:
+            td = t.get("title_display")
+            if td and len(td) >= 20:
+                mechanical_title = td
+                break
+        if not mechanical_title and sorted_titles:
+            mechanical_title = sorted_titles[0].get("title_display")
+
         try:
             cur.execute(
                 """
                 INSERT INTO events_v3 (
-                    id, ctm_id, date, first_seen, summary, event_type, bucket_key,
+                    id, ctm_id, date, first_seen, title, summary, event_type, bucket_key,
                     source_batch_count, is_catchall, last_active
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     event_id,
                     ctm_id,
                     c["date"],
                     c["first_date"],
+                    mechanical_title,
                     summary,
                     c["event_type"],
                     c["bucket_key"],
