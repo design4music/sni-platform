@@ -36,20 +36,16 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
 )
 from pipeline.phase_3_3.assign_tracks_mechanical import process_batch as phase33_process
 from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble_families
-from pipeline.phase_4.generate_event_summaries_4_5a import (
-    process_events as phase45a_event_summaries,
-)
-from pipeline.phase_4.generate_summaries_4_5 import (
-    process_ctm_batch as phase45_summaries,
-)
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
 
 # Unplugged (D-053): 4.1 (LLM topic aggregation), 4.3 (cross-bucket merge),
 # 4.4 (sibling merge) -- replaced by mechanical family assembly
-# Unplugged (D-056): 4.1a (mechanical titles -- 4.5a always runs)
+# Unplugged (D-056): 4.1a (mechanical titles -- now in write_clusters_to_db fallback)
 #                    4.1b (Dice merge -- day-beat clustering needs no merge)
+# Unplugged (D-058): 4.5a (event LLM summaries) + 4.5b (CTM LLM digests) --
+#                    pending calendar-day frontend + new daily-prose phase.
 
 
 class PipelineDaemon:
@@ -598,38 +594,8 @@ class PipelineDaemon:
 
         review_operational()
 
-    async def run_event_summaries(self, max_events: int = 100):
-        """Generate summaries for events that need them"""
-        conn = self.get_connection()
-        try:
-            with conn.cursor() as cur:
-                # Count events needing summaries (have "Topic:" or no title)
-                cur.execute(
-                    """
-                    SELECT COUNT(*)
-                    FROM events_v3 e
-                    JOIN ctm c ON c.id = e.ctm_id
-                    WHERE c.is_frozen = false
-                      AND (e.title IS NULL OR e.summary LIKE 'Topic:%%')
-                    """
-                )
-                needs_summary = cur.fetchone()[0]
-
-            if needs_summary == 0:
-                print("No events need summaries")
-                return
-
-            print(
-                "Generating summaries for up to {} events ({} need summaries)...".format(
-                    max_events, needs_summary
-                )
-            )
-            await phase45a_event_summaries(
-                max_events=max_events, force_regenerate=False
-            )
-
-        finally:
-            self.return_connection(conn)
+    # run_event_summaries (Phase 4.5a) removed - unplugged D-058.
+    # Mechanical cluster titles come from write_clusters_to_db fallback.
 
     def _run_social(self):
         """Run social posting (Slot 5)."""
@@ -939,30 +905,13 @@ class PipelineDaemon:
             )
             print("\nSlot 3 CLUSTERING: next in %ds" % remaining)
 
-        # --- SLOT 4: ENRICHMENT (Phase 4.5a + Phase 4.5b) ---
+        # --- SLOT 4: ENRICHMENT ---
+        # Phase 4.5a (event summaries) and Phase 4.5b (CTM summaries) are
+        # DISABLED pending the day-centric frontend redesign. Cluster titles
+        # come from the mechanical fallback in incremental_clustering.
+        # write_clusters_to_db. A new daily-prose phase will replace both
+        # 4.5a and 4.5b once the calendar view ships.
         if self.should_run_slot("enrichment"):
-            # Phase 4.5a: Event Summaries
-            await self.run_with_timeout(
-                "Phase 4.5a: Event Summaries",
-                self.run_phase_with_retry(
-                    "Phase 4.5a: Event Summaries",
-                    self.run_event_summaries,
-                    max_events=self.enrichment_max_events,
-                ),
-                self.timeout_enrichment,
-            )
-            # Phase 4.5b: CTM Summary Generation
-            if stats["ctms_need_summary"] > 0:
-                await self.run_with_timeout(
-                    "Phase 4.5b: CTM Summary Generation",
-                    self.run_phase_with_retry(
-                        "Phase 4.5b: CTM Summary Generation",
-                        phase45_summaries,
-                        max_ctms=self.enrichment_max_ctms,
-                    ),
-                    self.timeout_enrichment,
-                )
-                self.monitor_summary_word_counts()
             # Phase 4.2g: LLM narrative discovery (ideological tier, new events only)
             await self.run_with_timeout(
                 "Phase 4.2g: LLM Narrative Discovery",
