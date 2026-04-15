@@ -50,6 +50,67 @@ export interface CTM {
   is_frozen: boolean;
 }
 
+// Calendar-day frontend redesign (docs/FRONTEND_CALENDAR_REDESIGN.md, Workstream A)
+export interface CalendarClusterSource {
+  id: string;
+  title_display: string;
+  url: string | null;
+  publisher_name: string | null;
+  detected_language: string | null;
+}
+
+export interface CalendarClusterCard {
+  id: string;
+  title: string | null;
+  source_count: number;
+  first_date: string; // YYYY-MM-DD
+  last_date: string; // YYYY-MM-DD
+  event_type: 'bilateral' | 'other_international' | 'domestic' | null;
+  bucket_key: string | null;
+  has_event_page: boolean; // source_count >= K (5)
+  is_substrate: boolean;
+  has_narratives: boolean;
+  // Populated for small clusters (source_count < 5) that won't have their own
+  // event page, so users can still click through to original publications.
+  sources?: CalendarClusterSource[];
+}
+
+export interface CalendarDayView {
+  date: string; // YYYY-MM-DD
+  total_sources: number;
+  cluster_count: number;
+  daily_brief: string | null; // null until Phase 4.5-day lands
+  clusters: CalendarClusterCard[];
+}
+
+// Per-day segment for the stacked activity chart: top clusters' share of day sources.
+// Segments are ordered largest-first; "other" (rank > 5) is collapsed into one trailing
+// segment so the chart stays readable.
+export interface CalendarStackSegment {
+  cluster_id: string | null; // null for the "other" bucket
+  title: string | null;
+  source_count: number;
+}
+
+export interface CalendarStripeEntry {
+  date: string; // YYYY-MM-DD, every day of the month
+  total_sources: number;
+  segments: CalendarStackSegment[]; // top 5 + "other"; empty for empty days
+}
+
+export interface CalendarAnalysisScope {
+  total_sources: number;         // total title_assignments for this CTM
+  outlet_count: number;          // distinct feeds for this CTM
+  active_days: number;           // days with >= 1 promoted event
+}
+
+export interface CalendarMonthView {
+  ctm: CTM;
+  days: CalendarDayView[]; // only days with >= 1 promoted cluster
+  activity_stripe: CalendarStripeEntry[]; // every day of month incl. empty
+  scope: CalendarAnalysisScope;
+}
+
 export interface Event {
   date: string;
   last_active?: string;
