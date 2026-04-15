@@ -256,6 +256,29 @@ TRACK_DISCRIMINATORS = {
 
 
 # =============================================================================
+# PHASE 4.5-DAY: DAY-CENTRIC PROSE GENERATION (2026-04-15)
+# =============================================================================
+
+# Per-day cluster promotion + prose generation
+TOP_CLUSTERS_PER_DAY = (
+    20  # hard cap: only top-N clusters per day get LLM treatment + frontend visibility
+)
+LLM_CLUSTER_TITLE_MIN_SOURCES = (
+    5  # >= this: always LLM title. Below: mechanical English fallback if available
+)
+LLM_CLUSTER_DESCRIPTION_MIN_SOURCES = (
+    5  # >= this: generate LLM description. Below: no description
+)
+
+# Daily brief generation
+DAILY_BRIEF_MIN_CLUSTERS = 5  # generate brief only if day has > N promoted clusters
+DAILY_BRIEF_TARGET_WORDS = (150, 250)  # EN + DE target length
+
+# DE batch translation for mechanical-EN cluster titles
+DE_TITLE_BATCH_SIZE = 20
+
+
+# =============================================================================
 # IMPORTANCE SCORING CONSTANTS
 # =============================================================================
 

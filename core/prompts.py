@@ -199,8 +199,7 @@ Only groups of 2+. If none needed: {{"groups": []}}. IDs must be valid. Each eve
 # --- PHASE 4.5: CTM SUMMARY GENERATION ---
 
 CTM_SUMMARY_SYSTEM_PROMPT = (
-    """You are a strategic intelligence analyst writing monthly summary reports.
-Generate a 150-250 word narrative digest from the provided event summaries.
+    """Generate a 150-250 word monthly narrative digest from the provided event summaries.
 
 Event summaries are ordered by significance (source count). Higher count = more important.
 
@@ -215,6 +214,9 @@ Requirements:
 
 Do NOT: list bullet points, include source counts, use sensational language, add info not present, speculate.
 
+OUTPUT: {"summary_en": "...", "summary_de": "..."}
+- summary_de: natural German, same facts and tone, 150-250 words.
+
 """
     + PROSE_RULES
     + """
@@ -228,7 +230,7 @@ CTM_SUMMARY_USER_PROMPT = """{context}
 
 {events_text}
 
-Generate a 150-250 word monthly digest:"""
+Generate JSON:"""
 
 # --- PHASE 4.5A: EVENT SUMMARY GENERATION ---
 
@@ -246,10 +248,10 @@ _EVENT_SUMMARY_IDENTIFY = (
     '(e.g. "Powell, the Federal Reserve chair..." or "Dimon, who runs JPMorgan...").'
 )
 
-# -- Tier 1: TITLE-ONLY (1-4 sources) --
+# -- Tier 1: TITLE-ONLY (1-4 sources, used only when no English source exists) --
 EVENT_SUMMARY_PROMPT_TITLE_ONLY = """Generate a short, plain-language news title (5-12 words) from these headlines.
 
-Return JSON: {"title": "Short descriptive title", "summary": "", "coherent": true}
+Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "", "summary_de": "", "coherent": true}
 
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
@@ -257,14 +259,15 @@ Rules:
 - Describe the core story, not just a person or entity
 - No jargon or abbreviations on first mention
 - Do NOT add roles/titles unless they appear in the headlines
-- Do NOT invent information"""
+- Do NOT invent information
+- title_de: natural German, not literal word-for-word"""
 
 # -- Tier 2: MINI (5-10 sources) --
 EVENT_SUMMARY_PROMPT_MINI = (
     """You explain news topics in plain, conversational language.
 
 TASK: Generate a title and short summary from a cluster of headlines.
-OUTPUT: Return JSON: {"title": "...", "summary": "2-3 sentence factual summary", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "2-3 sentence factual summary", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
@@ -273,7 +276,8 @@ RULES:
     + """
 - Summary: state what happened in 2-3 sentences. Stick to facts from the headlines.
 - Briefly identify unfamiliar people from headline context.
-- If headlines cover unrelated stories, summarize only the dominant topic."""
+- If headlines cover unrelated stories, summarize only the dominant topic.
+- title_de + summary_de: natural German, same facts, same tone, same length."""
 )
 
 # -- Tier 3: MEDIUM (11-50 sources) --
@@ -282,7 +286,7 @@ EVENT_SUMMARY_PROMPT_MEDIUM = (
     + """
 
 TASK: Generate a title and summary for a news topic cluster.
-OUTPUT: Return JSON: {"title": "...", "summary": "Conversational explanation (1-2 paragraphs)", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "Conversational explanation (1-2 paragraphs)", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
@@ -298,6 +302,7 @@ RULES:
 - Include key facts, numbers, and outcomes from headlines.
 - Do NOT force unrelated headlines into false coherence.
 - No phrases like "amid growing concerns" or "sparking debate".
+- title_de + summary_de: natural German, same facts, same tone, same length.
 
 """
     + PROSE_RULES
@@ -309,7 +314,7 @@ EVENT_SUMMARY_PROMPT_MAXI = (
     + """
 
 TASK: Generate a title and summary for a large news topic cluster.
-OUTPUT: Return JSON: {"title": "...", "summary": "Conversational explanation (2-3 paragraphs)", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "Conversational explanation (2-3 paragraphs)", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
@@ -326,6 +331,7 @@ RULES:
 - Include key facts, numbers, and outcomes from headlines.
 - If headlines cover unrelated stories, summarize only the dominant topic.
 - No phrases like "amid growing concerns" or "sparking debate".
+- title_de + summary_de: natural German, same facts, same tone, same length.
 
 """
     + PROSE_RULES
@@ -614,3 +620,55 @@ the same story), respond ONLY with this JSON object:
 
 Only proceed with frame extraction if the headlines genuinely cover the same overarching \
 event or story from different editorial stances."""
+
+
+# --- PHASE 4.5-DAY: DAILY BRIEF ---
+
+DAILY_BRIEF_SYSTEM_PROMPT = (
+    """Write a 150-250 word daily news brief from today's top stories.
+
+STRUCTURE:
+- 1-5 thematic blocks (paragraphs or bullets), grouped by content similarity
+- Lead with most-covered theme
+- Weight by source count
+- No headers, no meta-framing
+- Synthesize, don't list stories
+
+YESTERDAY DEDUP:
+- Yesterday's story titles provided for identity dedup only
+- Match only when unambiguous: same incident, actors, location, action. When in doubt, treat as new.
+- On match: still include in today's brief, append "(ongoing coverage)" to that sentence
+- No "as reported", "continuing", "aftermath", no causality between days
+
+"""
+    + PROSE_RULES
+    + """
+
+OUTPUT: {"brief_en": "...", "brief_de": "...", "coherent": true}
+- brief_de: natural German, same facts, 150-250 words
+- coherent: false if today's stories are entirely incoherent as a set"""
+)
+
+DAILY_BRIEF_USER_PROMPT = """Date: {date}
+
+TODAY ({today_count} stories):
+{today_stories_text}
+{yesterday_block}
+
+Generate brief:"""
+
+
+# --- DE TITLE BATCH TRANSLATION (for small English-source clusters) ---
+
+DE_TITLE_BATCH_SYSTEM_PROMPT = """Translate each numbered English news headline to German.
+
+Rules:
+- Natural German, not literal word-for-word
+- Preserve proper nouns (names, places, organizations) in their German-conventional form
+- Neutral tone, no editorializing
+- Keep length roughly equivalent to the original
+
+Output one translation per line with the SAME numbering as the input.
+No JSON, no commentary, no blank lines. Numbered translations only."""
+
+DE_TITLE_BATCH_USER_PROMPT = """{titles_text}"""

@@ -20,8 +20,9 @@ import psycopg2
 from core.config import get_config
 from pipeline.phase_3_1.extract_labels import process_titles as phase31_extract
 from pipeline.phase_3_3.assign_tracks_mechanical import SECTOR_TO_TRACK
-from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble
+from pipeline.phase_4.generate_daily_brief_4_5d import process_ctm as phase45d_brief
 from pipeline.phase_4.incremental_clustering import recluster_ctm
+from pipeline.phase_4.promote_and_describe_4_5a import process_ctm as phase45a_promote
 
 
 def assign_tracks_for_title_ids(title_ids):
@@ -269,16 +270,22 @@ def main():
     recluster_ctm(ctm_id, dry_run=False)
     print(f"  ({time.time()-t:.0f}s)")
 
-    # 7. Phase 4.1 — family assembly (D-056 adjacent-day chain)
-    header("STEP 7/8: Phase 4.1 — family assembly")
-    t = time.time()
-    phase41_assemble(ctm_id=ctm_id, dry_run=False, force=True)
-    print(f"  ({time.time()-t:.0f}s)")
+    # Phase 4.1 (family assembly) is deprecated as of 2026-04-15.
+    # Families are no longer rendered in the day-centric frontend.
 
-    # Phase 4.5a (LLM event summaries) intentionally skipped during D-056 validation
-    print(
-        "\n  (Phase 4.5a skipped — running mechanical only for clustering validation)"
-    )
+    # Phase 4.5a — promote top-N clusters/day + LLM title/description (EN+DE)
+    import asyncio
+
+    header("STEP 7/9: Phase 4.5a — promote + describe (EN+DE)")
+    t = time.time()
+    stats_45a = asyncio.run(phase45a_promote(str(ctm_id)))
+    print(f"  {stats_45a}  ({time.time()-t:.0f}s)")
+
+    # Phase 4.5-day — daily thematic brief (EN+DE) with 1-day cross-month lookback
+    header("STEP 8/9: Phase 4.5-day — daily brief")
+    t = time.time()
+    stats_45d = asyncio.run(phase45d_brief(str(ctm_id)))
+    print(f"  {stats_45d}  ({time.time()-t:.0f}s)")
 
     # 13. Final stats
     header("FINAL STATS")
@@ -288,8 +295,13 @@ def main():
     print(f"  ctm.title_count: {cur.fetchone()[0]}")
     cur.execute("SELECT COUNT(*) FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
     print(f"  events_v3:       {cur.fetchone()[0]}")
-    cur.execute("SELECT COUNT(*) FROM event_families WHERE ctm_id = %s", (ctm_id,))
-    print(f"  event_families:  {cur.fetchone()[0]}")
+    cur.execute(
+        "SELECT COUNT(*) FROM events_v3 WHERE ctm_id = %s AND is_promoted = true",
+        (ctm_id,),
+    )
+    print(f"  promoted:        {cur.fetchone()[0]}")
+    cur.execute("SELECT COUNT(*) FROM daily_briefs WHERE ctm_id = %s", (ctm_id,))
+    print(f"  daily_briefs:    {cur.fetchone()[0]}")
     cur.execute(
         "SELECT COUNT(*) FROM title_labels WHERE title_id = ANY(%s::uuid[]) AND sector = 'NON_STRATEGIC'",
         (title_ids,),
