@@ -2238,6 +2238,7 @@ export async function getCalendarMonthView(
         title_display: string;
         url_gnews: string | null;
         publisher_name: string | null;
+        publisher_domain: string | null;
         detected_language: string | null;
       }>(
         `SELECT et.event_id::text AS event_id,
@@ -2245,9 +2246,11 @@ export async function getCalendarMonthView(
                 t.title_display,
                 t.url_gnews,
                 t.publisher_name,
+                f.source_domain   AS publisher_domain,
                 t.detected_language
            FROM event_v3_titles et
-           JOIN titles_v3 t ON t.id = et.title_id
+           JOIN titles_v3 t  ON t.id = et.title_id
+           LEFT JOIN feeds f ON f.id = t.feed_id
           WHERE et.event_id = ANY($1::uuid[])
           ORDER BY t.pubdate_utc ASC`,
         [smallClusterIds]
@@ -2264,6 +2267,7 @@ export async function getCalendarMonthView(
           title_display: row.title_display,
           url: row.url_gnews,
           publisher_name: row.publisher_name,
+          publisher_domain: row.publisher_domain,
           detected_language: row.detected_language,
         });
       }

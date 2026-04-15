@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useEffect, useRef, useCallback, useState } from 'react';
+import { useMemo, useEffect, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import ExternalLink from './ExternalLink';
-import { PublisherFavicon } from './ExpandableTitles';
 import type {
   CalendarMonthView,
   CalendarDayView,
@@ -50,12 +49,6 @@ function formatDayHeading(dateStr: string): string {
 
 function dayNumber(dateStr: string): number {
   return parseInt(dateStr.split('-')[2], 10);
-}
-
-function pickDefaultDay(view: CalendarMonthView, explicit: string | null): string | null {
-  if (explicit && view.days.some(d => d.date === explicit)) return explicit;
-  if (view.days.length === 0) return null;
-  return view.days.reduce((best, d) => (d.total_sources > best.total_sources ? d : best)).date;
 }
 
 // Client-shared state via URL: ?day=YYYY-MM-DD
@@ -119,23 +112,22 @@ export function CalendarHero({
   const jumpToDay = (date: string) => {
     if (!dayByDate.has(date)) return;
     setCurrentDay(date);
-    // Let the router update settle, then scroll
-    setTimeout(() => {
-      const el = document.getElementById(`day-${date}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 80);
+    // No scroll — the day panel is in a fixed position below the chart.
   };
 
   const baseUrl = `/c/${centroidKey}/t/${trackKey}/calendar`;
 
   return (
-    <section className="border border-dashboard-border bg-dashboard-surface rounded-xl overflow-hidden">
+    <section>
       {/* Header row: breadcrumb + month nav */}
-      <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-5">
+      <div className="flex items-start justify-between gap-4 mb-5">
         <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted">
+          <Link
+            href={`/c/${centroidKey}`}
+            className="text-[11px] uppercase tracking-wider text-dashboard-text-muted hover:text-dashboard-text transition"
+          >
             {centroidLabel}
-          </div>
+          </Link>
           <h1 className="text-2xl lg:text-3xl font-semibold text-dashboard-text mt-1">
             {trackLabel}
             <span className="text-dashboard-text-muted font-normal">
@@ -167,7 +159,7 @@ export function CalendarHero({
       </div>
 
       {/* Stacked activity chart */}
-      <div className="px-6 pb-6">
+      <div>
         <div
           className="flex items-end gap-[3px] h-44"
           role="group"
@@ -202,41 +194,24 @@ export function CalendarHero({
 }
 
 // ---------------------------------------------------------------------------
-// CalendarDayStream — vertical day list in the main content column
+// CalendarDayPanel — single fixed-position content surface that swaps contents
+// when the URL `?day=` changes. The chart above is the only day picker.
+// Fade animation on day change; no vertical day list.
 // ---------------------------------------------------------------------------
 
-interface DayStreamProps {
+interface DayPanelProps {
   view: CalendarMonthView;
   defaultDay: string | null;
 }
 
-export function CalendarDayStream({ view, defaultDay }: DayStreamProps) {
+export function CalendarDayPanel({ view, defaultDay }: DayPanelProps) {
   const [currentDay, setCurrentDay] = useDayParam(defaultDay);
-  const dayRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [showAllByDay, setShowAllByDay] = useState<Record<string, boolean>>({});
+  const [showAll, setShowAll] = useState(false);
 
-  // Align a day card to the top of the viewport with a fixed header offset.
-  // scroll-mt-28 on the card handles the gap; scrollIntoView does the work.
-  const scrollToDay = useCallback((date: string) => {
-    const el = dayRefs.current[date];
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, []);
-
-  // Smooth-scroll to initial day on mount
+  // Reset "show all" toggle when the day changes
   useEffect(() => {
-    if (!currentDay) return;
-    scrollToDay(currentDay);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Also scroll when the URL-driven currentDay changes (e.g. chart click)
-  const lastScrolledRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!currentDay || currentDay === lastScrolledRef.current) return;
-    lastScrolledRef.current = currentDay;
-    // Defer to let the expand render
-    setTimeout(() => scrollToDay(currentDay), 30);
-  }, [currentDay, scrollToDay]);
+    setShowAll(false);
+  }, [currentDay]);
 
   if (view.days.length === 0) {
     return (
@@ -246,84 +221,106 @@ export function CalendarDayStream({ view, defaultDay }: DayStreamProps) {
     );
   }
 
+  const dayIndex = view.days.findIndex(d => d.date === currentDay);
+  const day = dayIndex >= 0 ? view.days[dayIndex] : null;
+  const prevDay = dayIndex > 0 ? view.days[dayIndex - 1] : null;
+  const nextDay = dayIndex >= 0 && dayIndex < view.days.length - 1 ? view.days[dayIndex + 1] : null;
+
+  if (!day) {
+    return (
+      <div className="text-center py-16 text-dashboard-text-muted border border-dashed border-dashboard-border rounded-lg">
+        Select a day on the chart above.
+      </div>
+    );
+  }
+
+  const shownClusters = showAll
+    ? day.clusters
+    : day.clusters.slice(0, INITIAL_EVENTS_SHOWN);
+  const hiddenCount = day.clusters.length - shownClusters.length;
+
+  // Swipe handlers: left = next day, right = prev day
+  let touchStartX: number | null = null;
+  let touchStartY: number | null = null;
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    touchStartX = null;
+    touchStartY = null;
+    // Horizontal swipe must exceed 50px and dominate vertical movement
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0 && nextDay) setCurrentDay(nextDay.date);
+    else if (dx > 0 && prevDay) setCurrentDay(prevDay.date);
+  };
+
   return (
-    <div className="space-y-2">
-      {view.days.map(day => {
-        const isExpanded = day.date === currentDay;
-        const showAll = !!showAllByDay[day.date];
-        const shownClusters = showAll
-          ? day.clusters
-          : day.clusters.slice(0, INITIAL_EVENTS_SHOWN);
-        const hiddenCount = day.clusters.length - shownClusters.length;
-        return (
-          <div
-            key={day.date}
-            id={`day-${day.date}`}
-            ref={el => {
-              dayRefs.current[day.date] = el;
-            }}
-            className={`scroll-mt-28 rounded-lg border transition-colors ${
-              isExpanded
-                ? 'border-blue-500/50 bg-dashboard-surface'
-                : 'border-dashboard-border bg-dashboard-surface/60 hover:bg-dashboard-surface'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                if (isExpanded) {
-                  setCurrentDay('');
-                } else {
-                  setCurrentDay(day.date);
-                  // Ensure the expanded card snaps to top
-                  setTimeout(() => scrollToDay(day.date), 30);
-                }
-              }}
-              className="w-full flex items-center gap-3 px-5 py-4 text-left"
-            >
-              <span className="text-dashboard-text-muted text-sm w-4">
-                {isExpanded ? '▾' : '▸'}
-              </span>
-              <span className="font-semibold text-dashboard-text">
-                {formatDayHeading(day.date)}
-              </span>
-            </button>
+    // `key` forces remount on day change so the fade-in animation replays.
+    <div
+      key={day.date}
+      className="animate-day-fade touch-pan-y"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Day nav: prev/next arrows flanking the current day heading.
+          Also a visual affordance that the panel can be swiped on mobile. */}
+      <div className="flex items-center justify-between gap-2 mb-5">
+        <button
+          type="button"
+          onClick={() => prevDay && setCurrentDay(prevDay.date)}
+          disabled={!prevDay}
+          className="flex items-center gap-1 px-2 py-1 text-sm text-dashboard-text-muted hover:text-dashboard-text disabled:opacity-30 disabled:cursor-default transition whitespace-nowrap"
+          aria-label={prevDay ? `Previous day: ${formatDayHeading(prevDay.date)}` : 'No earlier day'}
+        >
+          ‹<span className="hidden sm:inline">{prevDay ? ` ${formatDayHeading(prevDay.date)}` : ''}</span>
+        </button>
+        <h2 className="text-2xl font-semibold text-dashboard-text text-center min-w-0 truncate">
+          {formatDayHeading(day.date)}
+        </h2>
+        <button
+          type="button"
+          onClick={() => nextDay && setCurrentDay(nextDay.date)}
+          disabled={!nextDay}
+          className="flex items-center gap-1 px-2 py-1 text-sm text-dashboard-text-muted hover:text-dashboard-text disabled:opacity-30 disabled:cursor-default transition whitespace-nowrap"
+          aria-label={nextDay ? `Next day: ${formatDayHeading(nextDay.date)}` : 'No later day'}
+        >
+          <span className="hidden sm:inline">{nextDay ? `${formatDayHeading(nextDay.date)} ` : ''}</span>›
+        </button>
+      </div>
+      <div className="sm:hidden text-center text-[10px] text-dashboard-text-muted -mt-3 mb-4">
+        Swipe left or right for more days
+      </div>
 
-            {isExpanded && (
-              <div className="px-5 pb-5 pt-1 space-y-4">
-                {day.daily_brief && (
-                  <article className="p-4 rounded-md border border-dashboard-border bg-dashboard-bg/70">
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-2">
-                      Daily brief
-                    </div>
-                    <div className="text-[15px] leading-relaxed text-dashboard-text whitespace-pre-wrap">
-                      {day.daily_brief}
-                    </div>
-                  </article>
-                )}
-
-                <div className="space-y-2">
-                  {shownClusters.map(cluster => (
-                    <ClusterCardRow key={cluster.id} cluster={cluster} />
-                  ))}
-                </div>
-
-                {hiddenCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowAllByDay(s => ({ ...s, [day.date]: true }))
-                    }
-                    className="w-full py-2 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashed border-dashboard-border rounded-lg hover:bg-dashboard-border/20 transition"
-                  >
-                    Show all {day.clusters.length} topics
-                  </button>
-                )}
-              </div>
-            )}
+      {day.daily_brief && (
+        <article className="mb-5 p-4 rounded-md border border-dashboard-border bg-dashboard-bg/70">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-2">
+            Daily brief
           </div>
-        );
-      })}
+          <div className="text-[15px] leading-relaxed text-dashboard-text whitespace-pre-wrap">
+            {day.daily_brief}
+          </div>
+        </article>
+      )}
+
+      <div className="space-y-2">
+        {shownClusters.map(cluster => (
+          <ClusterCardRow key={cluster.id} cluster={cluster} />
+        ))}
+      </div>
+
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="mt-3 w-full py-2 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashed border-dashboard-border rounded-lg hover:bg-dashboard-border/20 transition"
+        >
+          Show all {day.clusters.length} topics
+        </button>
+      )}
     </div>
   );
 }
@@ -445,12 +442,40 @@ function ClusterCardRow({ cluster }: { cluster: CalendarClusterCard }) {
   );
 }
 
+function PublisherIcon({
+  domain,
+  publisher,
+}: {
+  domain: string | null;
+  publisher: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (domain && !failed) {
+    return (
+      <img
+        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+        alt=""
+        width={16}
+        height={16}
+        className="w-4 h-4 rounded-sm flex-shrink-0"
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  // Fallback: initial-letter square
+  return (
+    <span className="w-4 h-4 rounded-sm bg-dashboard-border flex items-center justify-center text-[9px] text-dashboard-text-muted flex-shrink-0">
+      {publisher.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 function SourceRow({ source }: { source: CalendarClusterSource }) {
   const publisher = source.publisher_name || 'Unknown';
   const body = (
     <span className="flex items-start gap-2 text-[13px] leading-snug">
-      <span className="shrink-0 mt-[1px]">
-        <PublisherFavicon publisher={publisher} />
+      <span className="shrink-0 mt-[3px]">
+        <PublisherIcon domain={source.publisher_domain} publisher={publisher} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="text-dashboard-text-muted text-[11px] block">{publisher}</span>
@@ -482,7 +507,7 @@ export function CalendarScopeCard({
   trackLabel: string;
 }) {
   return (
-    <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-5">
+    <div>
       <h3 className="text-sm font-semibold uppercase tracking-wider text-dashboard-text-muted mb-3">
         About this analysis
       </h3>
@@ -523,26 +548,6 @@ export function CalendarScopeCard({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Back-compat default export: used to be the whole thing. Now it just renders
-// hero + day stream together (for callers that render inside max-w-3xl main).
-// ---------------------------------------------------------------------------
-
-interface LegacyProps extends HeroProps {
-  initialDay?: string;
-}
-
-export default function CalendarView(props: LegacyProps) {
-  const defaultDay = pickDefaultDay(props.view, props.initialDay || null);
-  return (
-    <>
-      <CalendarHero {...props} defaultDay={defaultDay} />
-      <div className="mt-8">
-        <CalendarDayStream view={props.view} defaultDay={defaultDay} />
-      </div>
-    </>
-  );
-}
-
-// Exported utility for the page to compute default day server-side
-export { pickDefaultDay };
+// Default export is the hero (named export retained for symmetry). The page
+// renders CalendarHero in topFullWidthContent and CalendarDayPanel as children.
+export default CalendarHero;

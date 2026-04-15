@@ -4,7 +4,7 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import {
   CalendarHero,
-  CalendarDayStream,
+  CalendarDayPanel,
   CalendarScopeCard,
 } from '@/components/CalendarView';
 import type { CalendarMonthView } from '@/lib/types';
@@ -151,7 +151,7 @@ export default async function CalendarPage({ params, searchParams }: CalendarPag
       currentMonth={activeMonth}
       availableMonths={months}
     >
-      <CalendarDayStream view={view} defaultDay={defaultDay} />
+      <CalendarDayPanel view={view} defaultDay={defaultDay} />
     </DashboardLayout>
   );
 }

@@ -56,6 +56,7 @@ export interface CalendarClusterSource {
   title_display: string;
   url: string | null;
   publisher_name: string | null;
+  publisher_domain: string | null; // feeds.source_domain — used for favicon
   detected_language: string | null;
 }
 
