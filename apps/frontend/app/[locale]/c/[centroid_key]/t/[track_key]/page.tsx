@@ -8,6 +8,7 @@ import IranWarSwimlane from '@/components/IranWarSwimlane';
 import MobileTocButton from '@/components/MobileTocButton';
 import MonthNav from '@/components/MonthNav';
 import {
+  ctmHasPromotedData,
   getCentroidById,
   getCentroidsByIds,
   getCTM,
@@ -15,7 +16,7 @@ import {
   getTitlesByCTM,
   getTracksByCentroid,
 } from '@/lib/queries';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getTrackLabel, getCentroidLabel, getCountryName, getIsoFromBucketKey, Track, Event, Title } from '@/lib/types';
 import { getTrackIcon } from '@/components/TrackCard';
@@ -381,6 +382,14 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   let ctm = await getCTM(centroid.id, track, month, locale);
   if (!ctm) {
     notFound();
+  }
+
+  // Phase 1 of calendar rollout: if this CTM has day-centric data (promoted
+  // events from phase 4.5a), redirect to the calendar view. Months without
+  // promoted data fall through and render the legacy topic list below.
+  if (await ctmHasPromotedData(ctm.id)) {
+    const monthParam = month ? `?month=${month}` : '';
+    redirect(`/${locale}/c/${centroid_key}/t/${track_key}/calendar${monthParam}`);
   }
 
   // Lazy-translate CTM summary for DE users
