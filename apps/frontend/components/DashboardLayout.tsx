@@ -9,6 +9,7 @@ interface DashboardLayoutProps {
   breadcrumb?: ReactNode;
   sidebar?: ReactNode;
   fullWidthContent?: ReactNode;
+  topFullWidthContent?: ReactNode;
   // For mobile navigation - pass track context
   centroidLabel?: string;
   centroidId?: string;
@@ -25,6 +26,7 @@ export default function DashboardLayout({
   breadcrumb,
   sidebar,
   fullWidthContent,
+  topFullWidthContent,
   centroidLabel,
   centroidId,
   otherTracks,
@@ -57,6 +59,10 @@ export default function DashboardLayout({
         )}
         {title && (
           <h1 className="text-4xl font-bold mb-8">{title}</h1>
+        )}
+
+        {topFullWidthContent && (
+          <div className="mb-8">{topFullWidthContent}</div>
         )}
 
         <div className={sidebar ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : ""}>

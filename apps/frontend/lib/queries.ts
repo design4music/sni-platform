@@ -1,6 +1,10 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarStackSegment, CalendarAnalysisScope } from './types';
+
+// Locked thresholds for the calendar-day frontend.
+// See docs/FRONTEND_CALENDAR_REDESIGN.md.
+const CALENDAR_EVENT_PAGE_MIN_SOURCES = 5; // K
 
 export type Locale = 'en' | 'de';
 
@@ -936,6 +940,63 @@ export async function getCentroidTimeline(
     params
   );
   return rows;
+}
+
+// --- Event Family queries ---
+
+export interface FamilyDetail {
+  id: string;
+  title: string;
+  summary: string | null;
+  domain: string | null;
+  cluster_count: number;
+  source_count: number;
+  first_seen: string | null;
+  last_active: string | null;
+  centroid_id: string;
+  centroid_label: string;
+  track: string;
+  month: string;
+}
+
+export interface FamilyEvent {
+  id: string;
+  title: string;
+  date: string | null;
+  source_batch_count: number;
+  event_type: string;
+  bucket_key: string | null;
+  summary: string | null;
+}
+
+export async function getFamilyById(familyId: string, locale?: string): Promise<FamilyDetail | null> {
+  const results = await query<FamilyDetail>(
+    `SELECT f.id, ${locCol('f', 'title', locale)} as title,
+            ${locCol('f', 'summary', locale)} as summary,
+            f.domain, f.cluster_count, f.source_count,
+            f.first_seen::text, f.last_active::text,
+            c.centroid_id, cv.label as centroid_label, c.track,
+            TO_CHAR(c.month, 'YYYY-MM') as month
+     FROM event_families f
+     JOIN ctm c ON c.id = f.ctm_id
+     JOIN centroids_v3 cv ON cv.id = c.centroid_id
+     WHERE f.id = $1`,
+    [familyId]
+  );
+  return results[0] || null;
+}
+
+export async function getFamilyEvents(familyId: string, locale?: string): Promise<FamilyEvent[]> {
+  return query<FamilyEvent>(
+    `SELECT e.id,
+            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title) as title,
+            e.date::text, e.source_batch_count, e.event_type, e.bucket_key,
+            ${locCol('e', 'summary', locale)} as summary
+     FROM events_v3 e
+     WHERE e.family_id = $1 AND e.merged_into IS NULL
+     ORDER BY e.source_batch_count DESC`,
+    [familyId]
+  );
 }
 
 export async function getEventById(eventId: string, locale?: string): Promise<EventDetail | null> {
@@ -2054,4 +2115,242 @@ export async function getCentroidIsoMap(): Promise<{ id: string; iso_codes: stri
       `SELECT id, iso_codes FROM centroids_v3 WHERE is_active = true AND iso_codes IS NOT NULL`
     )
   );
+}
+
+// ============================================================================
+// CALENDAR-DAY FRONTEND (Workstream A)
+// See docs/FRONTEND_CALENDAR_REDESIGN.md
+// ============================================================================
+
+interface CalendarClusterRow {
+  id: string;
+  first_date: string;
+  last_date: string;
+  title: string | null;
+  source_batch_count: number;
+  event_type: string | null;
+  bucket_key: string | null;
+  is_substrate: boolean;
+  has_narratives: boolean;
+}
+
+/**
+ * Load a full calendar-day view for a CTM-month in a single call.
+ *
+ * Returns:
+ * - the CTM metadata
+ * - days[] grouped by events_v3.date (only days with >= 1 promoted cluster)
+ * - activity_stripe[] covering every day of the month, with top-5 stack segments
+ * - scope stats (total sources analyzed, outlet count, active days)
+ *
+ * Only is_promoted events are returned (top 20/day, set by phase 4.5a).
+ * daily_brief is pulled from the daily_briefs table (phase 4.5-day).
+ */
+
+const STACK_TOP_N = 5; // chart shows top-5 clusters per day, rest collapsed to "other"
+
+export async function getCalendarMonthView(
+  centroidId: string,
+  track: string,
+  month: string, // YYYY-MM
+  locale?: string
+): Promise<CalendarMonthView | null> {
+  return cached(`calendar:${centroidId}:${track}:${month}:${locale || 'en'}`, 900, async () => {
+    // 1. Resolve CTM
+    const ctm = await getCTM(centroidId, track, month, locale);
+    if (!ctm) return null;
+
+    // 2. Fetch promoted clusters only (top 20/day, set by phase 4.5a)
+    const clusterRows = await query<CalendarClusterRow>(
+      `SELECT
+         e.id::text AS id,
+         e.date::text AS first_date,
+         COALESCE(e.last_active::text, e.date::text) AS last_date,
+         COALESCE(
+           ${locale === 'de' ? 'e.title_de, ' : ''}
+           e.title,
+           (SELECT t2.title_display FROM event_v3_titles evt2
+            JOIN titles_v3 t2 ON t2.id = evt2.title_id
+            WHERE evt2.event_id = e.id
+            ORDER BY t2.pubdate_utc ASC LIMIT 1)
+         ) AS title,
+         e.source_batch_count,
+         e.event_type,
+         e.bucket_key,
+         false AS is_substrate,
+         EXISTS(
+           SELECT 1 FROM narratives n
+           WHERE n.entity_type = 'event' AND n.entity_id = e.id
+         ) AS has_narratives
+       FROM events_v3 e
+       WHERE e.ctm_id = $1
+         AND e.is_promoted = true
+         AND e.is_catchall = false
+         AND e.merged_into IS NULL
+       ORDER BY e.date ASC, e.source_batch_count DESC`,
+      [ctm.id]
+    );
+
+    // 3. Group by date; cluster order within day preserved (source_count DESC)
+    const daysMap = new Map<string, CalendarDayView>();
+    for (const row of clusterRows) {
+      const dateKey = row.first_date;
+      let day = daysMap.get(dateKey);
+      if (!day) {
+        day = {
+          date: dateKey,
+          total_sources: 0,
+          cluster_count: 0,
+          daily_brief: null,
+          clusters: [],
+        };
+        daysMap.set(dateKey, day);
+      }
+      const card: CalendarClusterCard = {
+        id: row.id,
+        title: row.title,
+        source_count: row.source_batch_count,
+        first_date: row.first_date,
+        last_date: row.last_date,
+        event_type: row.event_type as CalendarClusterCard['event_type'],
+        bucket_key: row.bucket_key,
+        has_event_page: row.source_batch_count >= CALENDAR_EVENT_PAGE_MIN_SOURCES,
+        is_substrate: row.is_substrate,
+        has_narratives: row.has_narratives,
+      };
+      day.clusters.push(card);
+      day.total_sources += row.source_batch_count;
+      day.cluster_count += 1;
+    }
+
+    // 3b. Load source titles for SMALL clusters (source_count < 5 = no event page).
+    //     Users still need to click through to the original articles.
+    const smallClusterIds: string[] = [];
+    for (const day of daysMap.values()) {
+      for (const c of day.clusters) {
+        if (!c.has_event_page) smallClusterIds.push(c.id);
+      }
+    }
+    if (smallClusterIds.length > 0) {
+      const sourceRows = await query<{
+        event_id: string;
+        id: string;
+        title_display: string;
+        url_gnews: string | null;
+        publisher_name: string | null;
+        publisher_domain: string | null;
+        detected_language: string | null;
+      }>(
+        `SELECT et.event_id::text AS event_id,
+                t.id::text        AS id,
+                t.title_display,
+                t.url_gnews,
+                t.publisher_name,
+                f.source_domain   AS publisher_domain,
+                t.detected_language
+           FROM event_v3_titles et
+           JOIN titles_v3 t  ON t.id = et.title_id
+           LEFT JOIN feeds f ON f.id = t.feed_id
+          WHERE et.event_id = ANY($1::uuid[])
+          ORDER BY t.pubdate_utc ASC`,
+        [smallClusterIds]
+      );
+      const sourcesByEvent = new Map<string, CalendarClusterSource[]>();
+      for (const row of sourceRows) {
+        let list = sourcesByEvent.get(row.event_id);
+        if (!list) {
+          list = [];
+          sourcesByEvent.set(row.event_id, list);
+        }
+        list.push({
+          id: row.id,
+          title_display: row.title_display,
+          url: row.url_gnews,
+          publisher_name: row.publisher_name,
+          publisher_domain: row.publisher_domain,
+          detected_language: row.detected_language,
+        });
+      }
+      for (const day of daysMap.values()) {
+        for (const c of day.clusters) {
+          if (!c.has_event_page) {
+            c.sources = sourcesByEvent.get(c.id) || [];
+          }
+        }
+      }
+    }
+
+    // 4. Attach daily briefs
+    const briefRows = await query<{ date: string; brief_en: string; brief_de: string | null }>(
+      `SELECT date::text AS date, brief_en, brief_de
+         FROM daily_briefs WHERE ctm_id = $1`,
+      [ctm.id]
+    );
+    for (const br of briefRows) {
+      const day = daysMap.get(br.date);
+      if (day) {
+        day.daily_brief = (locale === 'de' && br.brief_de) ? br.brief_de : br.brief_en;
+      }
+    }
+
+    const days: CalendarDayView[] = Array.from(daysMap.values());
+
+    // 5. Activity stripe: every day of the month with top-5 stack segments
+    const [year, mm] = month.split('-').map(Number);
+    const daysInMonth = new Date(year, mm, 0).getDate();
+    const stripe: CalendarStripeEntry[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(mm).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayEntry = daysMap.get(dateStr);
+      const segments: CalendarStackSegment[] = [];
+      if (dayEntry) {
+        const top = dayEntry.clusters.slice(0, STACK_TOP_N);
+        const rest = dayEntry.clusters.slice(STACK_TOP_N);
+        for (const c of top) {
+          segments.push({
+            cluster_id: c.id,
+            title: c.title,
+            source_count: c.source_count,
+          });
+        }
+        if (rest.length > 0) {
+          const otherSum = rest.reduce((s, c) => s + c.source_count, 0);
+          segments.push({
+            cluster_id: null,
+            title: `${rest.length} more`,
+            source_count: otherSum,
+          });
+        }
+      }
+      stripe.push({
+        date: dateStr,
+        total_sources: dayEntry ? dayEntry.total_sources : 0,
+        segments,
+      });
+    }
+
+    // 6. Analysis scope stats (total sources + distinct outlets for the CTM)
+    const scopeRows = await query<{ total_sources: number; outlet_count: number }>(
+      `SELECT
+         COUNT(DISTINCT ta.title_id)::int AS total_sources,
+         COUNT(DISTINCT t.feed_id)::int   AS outlet_count
+       FROM title_assignments ta
+       JOIN titles_v3 t ON t.id = ta.title_id
+       WHERE ta.ctm_id = $1`,
+      [ctm.id]
+    );
+    const scopeRow = scopeRows[0] || { total_sources: 0, outlet_count: 0 };
+    const scope: CalendarAnalysisScope = {
+      total_sources: scopeRow.total_sources,
+      outlet_count: scopeRow.outlet_count,
+      active_days: days.length,
+    };
+
+    return {
+      ctm,
+      days,
+      activity_stripe: stripe,
+      scope,
+    };
+  });
 }

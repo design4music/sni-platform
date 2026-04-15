@@ -27,11 +27,13 @@ from loguru import logger
 
 from core.config import MAX_API_ERRORS, config
 from core.ontology import (
+    INDUSTRIES,
     ONTOLOGY_VERSION,
     PRIORITY_RULES,
     get_action_classes_for_prompt,
     get_actors_for_prompt,
     get_domains_for_prompt,
+    get_industries_for_prompt,
     get_target_rules_for_prompt,
     validate_action_class,
     validate_domain,
@@ -52,6 +54,7 @@ def build_system_prompt() -> str:
         actors=get_actors_for_prompt(),
         priority_rules=PRIORITY_RULES,
         target_rules=get_target_rules_for_prompt(),
+        industries=get_industries_for_prompt(),
     )
 
 
@@ -207,30 +210,37 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
 
         # Extract and validate label fields
         actor = normalize_actor(item.get("actor", "UNKNOWN"))
-        action_class = item.get("action", "SECURITY_INCIDENT")
+        action_class = item.get("action", "STATEMENT")
         domain = item.get("domain", "GOVERNANCE")
         target = item.get("target")
         confidence = item.get("conf", 1.0)
 
-        # Validate action_class
-        if not validate_action_class(action_class):
+        # ELO v3.0.1: when the LLM returns action="NONE" it is signalling that
+        # the title is not an actionable event. Peek at sector to decide fallback.
+        # If sector is NON_STRATEGIC, the row will be dropped by Phase 3.3
+        # mechanical track assignment regardless of action; pick STATEMENT as a
+        # neutral placeholder. If sector looks strategic, warn and pick STATEMENT.
+        if action_class in ("NONE", None, ""):
+            action_class = "STATEMENT"
+        elif not validate_action_class(action_class):
             logger.warning(
-                "Invalid action_class '{}' for title {}, using SECURITY_INCIDENT".format(
+                "Invalid action_class '{}' for title {}, using STATEMENT".format(
                     action_class, title_id[:8]
                 )
             )
-            action_class = "SECURITY_INCIDENT"
+            action_class = "STATEMENT"
 
-        # Validate domain
-        if not validate_domain(domain):
-            logger.warning(
-                "Invalid domain '{}' for title {}, using GOVERNANCE".format(
-                    domain, title_id[:8]
+        # Validate domain (accept NONE as GOVERNANCE when sector=NON_STRATEGIC)
+        if domain in ("NONE", None, "") or not validate_domain(domain):
+            if domain not in ("NONE", None, ""):
+                logger.warning(
+                    "Invalid domain '{}' for title {}, using GOVERNANCE".format(
+                        domain, title_id[:8]
+                    )
                 )
-            )
             domain = "GOVERNANCE"
 
-        # Extract signals (4 active + 3 frozen as empty)
+        # Extract signals (4 active + 3 frozen as empty + industries)
         persons = normalize_signal_list(item.get("persons", []), uppercase=True)
         orgs = normalize_signal_list(item.get("orgs", []), uppercase=True)
         places = normalize_signal_list(item.get("places", []))
@@ -239,6 +249,13 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
         commodities = []
         policies = []
         systems = []
+        # Industries: closed vocab, multi-value, drop unknowns
+        raw_industries = item.get("industries") or []
+        industries = [
+            i.upper().strip()
+            for i in raw_industries
+            if isinstance(i, str) and i.upper().strip() in INDUSTRIES
+        ][:3]
 
         # Note: batch-level word-containment normalization for places/persons
         # happens in normalize_batch_signals() after all items are parsed
@@ -288,6 +305,8 @@ def parse_llm_response(response: str, titles_batch: list[dict]) -> list[dict]:
                 "policies": policies,
                 "systems": systems,
                 "named_events": named_events,
+                # ELO v3.0.1 industries tag
+                "industries": industries,
                 # Entity country associations
                 "entity_countries": entity_countries,
             }
@@ -498,15 +517,16 @@ def write_to_db(conn, results: list[dict]) -> int:
 
     cur = conn.cursor()
 
-    # Upsert with all fields including signals and entity_countries
+    # Upsert with all fields including signals, industries and entity_countries
     insert_sql = """
         INSERT INTO title_labels (
             title_id, actor, action_class, domain, target,
             label_version, confidence,
             persons, orgs, places, commodities, policies, systems, named_events,
+            industries,
             entity_countries, sector, subject
         ) VALUES (
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
         )
         ON CONFLICT (title_id) DO UPDATE SET
             actor = EXCLUDED.actor,
@@ -522,6 +542,7 @@ def write_to_db(conn, results: list[dict]) -> int:
             policies = EXCLUDED.policies,
             systems = EXCLUDED.systems,
             named_events = EXCLUDED.named_events,
+            industries = EXCLUDED.industries,
             entity_countries = EXCLUDED.entity_countries,
             sector = EXCLUDED.sector,
             subject = EXCLUDED.subject,
@@ -551,6 +572,7 @@ def write_to_db(conn, results: list[dict]) -> int:
                     r["policies"],
                     r["systems"],
                     r["named_events"],
+                    r.get("industries") or [],
                     entity_countries_json,
                     r.get("sector"),
                     r.get("subject"),

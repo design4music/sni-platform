@@ -10,7 +10,7 @@ interface PublisherGroup {
   titles: Title[];
 }
 
-function PublisherFavicon({ publisher }: { publisher: string }) {
+export function PublisherFavicon({ publisher }: { publisher: string }) {
   // Map known publisher names to domains for favicons
   const domainMap: Record<string, string> = {
     'Reuters': 'reuters.com',

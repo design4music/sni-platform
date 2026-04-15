@@ -1,19 +1,18 @@
 """
-Phase 4: Incremental Topic Clustering
+Phase 4: D-056 Day-Beat Clustering
 
-Clusters titles as they arrive chronologically, simulating natural news flow.
-Topics emerge from early titles and grow with co-occurring signals.
+Clusters titles by (date, actor, action_class, target) day-beat with
+single-link entity overlap. Day = atomic clustering unit. No bucket partition;
+bucket assigned post-clustering.
 
-Key concepts:
-- Anchor signals: Core identity from first N titles (locked after threshold)
-- Co-occurring signals: Later additions that appear with anchors
-- Topic emergence: Track when topic became significant (>threshold titles)
+See docs/context/CLUSTERING_REDESIGN.md.
 
 Usage:
-    python pipeline/phase_4/incremental_clustering.py --ctm-id <ctm_id>
+    python -m pipeline.phase_4.incremental_clustering --ctm-id <id> [--write]
 """
 
 import argparse
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -22,47 +21,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import psycopg2
 
-from core.config import (
-    HIGH_FREQ_ORGS,
-    HIGH_FREQ_PERSONS,
-    SIGNAL_TYPES,
-    config,
-    get_track_discriminators,
-    get_track_weights,
-)
+from core.config import HIGH_FREQ_ORGS, HIGH_FREQ_PERSONS, config
 from core.publisher_filter import filter_publisher_signals, load_publisher_patterns
-
-# =============================================================================
-# CONFIGURATION
-# =============================================================================
-
-# After this many titles, anchor signals are locked
-ANCHOR_LOCK_THRESHOLD = 5
-
-# Minimum titles for topic to be considered "emerged"
-EMERGENCE_THRESHOLD = 3
-
-# Similarity threshold for joining existing topic
-JOIN_THRESHOLD = 0.25
-
-# Max titles before a topic is "full" and stops accepting new titles.
-# Prevents mega-clusters during dominant news events (wars, crises).
-# New titles that would match a full topic start a fresh topic instead.
-MAX_TOPIC_SIZE = 200
-
-
-def get_weights(track: str) -> dict:
-    return get_track_weights(track)
-
-
-def get_discriminators(track: str) -> list:
-    # get_track_discriminators returns dict, but this clustering uses list of keys
-    return list(get_track_discriminators(track).keys())
-
-
-# =============================================================================
-# DATABASE
-# =============================================================================
 
 
 def get_connection():
@@ -75,15 +35,24 @@ def get_connection():
     )
 
 
+# =============================================================================
+# DATABASE
+# =============================================================================
+
+
 def load_titles_chronological(conn, ctm_id: str) -> list:
-    """Load titles in chronological order (oldest first)."""
+    """Load titles in chronological order (oldest first).
+
+    D-056: also fetches actor/action_class/target (beat triple) and industries.
+    """
     cur = conn.cursor()
     cur.execute(
         """
         SELECT
             t.id, t.title_display, t.pubdate_utc, t.centroid_ids,
             tl.persons, tl.orgs, tl.places, tl.commodities,
-            tl.policies, tl.systems, tl.named_events
+            tl.policies, tl.systems, tl.named_events,
+            tl.actor, tl.action_class, tl.target, tl.industries
         FROM titles_v3 t
         JOIN title_assignments ta ON t.id = ta.title_id
         LEFT JOIN title_labels tl ON t.id = tl.title_id
@@ -108,6 +77,10 @@ def load_titles_chronological(conn, ctm_id: str) -> list:
                 "policies": r[8] or [],
                 "systems": r[9] or [],
                 "named_events": r[10] or [],
+                "actor": r[11],
+                "action_class": r[12],
+                "target": r[13],
+                "industries": r[14] or [],
             }
         )
     return titles
@@ -125,7 +98,8 @@ def load_new_titles_only(conn, ctm_id: str) -> list:
         SELECT
             t.id, t.title_display, t.pubdate_utc, t.centroid_ids,
             tl.persons, tl.orgs, tl.places, tl.commodities,
-            tl.policies, tl.systems, tl.named_events
+            tl.policies, tl.systems, tl.named_events,
+            tl.actor, tl.action_class, tl.target, tl.industries
         FROM titles_v3 t
         JOIN title_assignments ta ON t.id = ta.title_id
         LEFT JOIN title_labels tl ON t.id = tl.title_id
@@ -155,418 +129,18 @@ def load_new_titles_only(conn, ctm_id: str) -> list:
                 "policies": r[8] or [],
                 "systems": r[9] or [],
                 "named_events": r[10] or [],
+                "actor": r[11],
+                "action_class": r[12],
+                "target": r[13],
+                "industries": r[14] or [],
             }
         )
     return titles
 
 
-def load_existing_topics(conn, ctm_id: str) -> tuple:
-    """Load non-catchall events for a CTM and reconstruct IncrementalTopic objects.
-
-    Returns:
-        (existing_topics, catchall_ids)
-        - existing_topics: dict of (event_type, bucket_key) -> [IncrementalTopic, ...]
-          Each topic has .event_id set for linking back.
-        - catchall_ids: dict of (event_type, bucket_key) -> event_id
-    """
-    cur = conn.cursor()
-
-    # Load all events for this CTM
-    cur.execute(
-        """
-        SELECT id, event_type, bucket_key, is_catchall, importance_score
-        FROM events_v3
-        WHERE ctm_id = %s
-        """,
-        (ctm_id,),
-    )
-    events = cur.fetchall()
-
-    existing_topics = defaultdict(list)
-    catchall_ids = {}
-    topic_counter = 0
-
-    for event_id, event_type, bucket_key, is_catchall, imp_score in events:
-        key = (event_type, bucket_key)
-
-        if is_catchall:
-            catchall_ids[key] = str(event_id)
-            continue
-
-        # Load titles for this event with labels, ordered by pubdate_utc ASC
-        cur.execute(
-            """
-            SELECT t.id, t.title_display, t.pubdate_utc, t.centroid_ids,
-                   tl.persons, tl.orgs, tl.places, tl.commodities,
-                   tl.policies, tl.systems, tl.named_events
-            FROM event_v3_titles evt
-            JOIN titles_v3 t ON t.id = evt.title_id
-            LEFT JOIN title_labels tl ON tl.title_id = t.id
-            WHERE evt.event_id = %s
-            ORDER BY t.pubdate_utc ASC
-            """,
-            (event_id,),
-        )
-        title_rows = cur.fetchall()
-        if not title_rows:
-            continue
-
-        # Reconstruct IncrementalTopic from first title, then add rest
-        titles_data = []
-        for r in title_rows:
-            titles_data.append(
-                {
-                    "id": str(r[0]),
-                    "title_display": r[1],
-                    "pubdate_utc": r[2],
-                    "centroid_ids": r[3] or [],
-                    "persons": r[4] or [],
-                    "orgs": r[5] or [],
-                    "places": r[6] or [],
-                    "commodities": r[7] or [],
-                    "policies": r[8] or [],
-                    "systems": r[9] or [],
-                    "named_events": r[10] or [],
-                }
-            )
-
-        topic_counter += 1
-        topic = IncrementalTopic(titles_data[0], topic_counter)
-        for t in titles_data[1:]:
-            topic.add_title(t)
-        topic.event_id = str(event_id)
-        topic.importance_score = imp_score or 0.0
-
-        existing_topics[key].append(topic)
-
-    return dict(existing_topics), catchall_ids
-
-
-def match_new_titles_to_existing(
-    new_titles: list,
-    existing_topics: list,
-    weights: dict,
-    discriminators: list,
-    join_threshold: float = JOIN_THRESHOLD,
-) -> tuple:
-    """Match new titles against existing topics (read-only, no mutation).
-
-    Returns:
-        (matched, unmatched)
-        - matched: dict of event_id -> [title, ...]
-        - unmatched: list of titles that didn't match any existing topic
-    """
-    matched = defaultdict(list)
-    unmatched = []
-
-    for title in new_titles:
-        best_topic = None
-        best_score = join_threshold
-
-        for topic in existing_topics:
-            # Skip full topics -- prevents mega-clusters
-            if len(topic.titles) >= MAX_TOPIC_SIZE:
-                continue
-            score = topic.match_score(title, weights, discriminators)
-            if score > best_score:
-                best_score = score
-                best_topic = topic
-
-        if best_topic:
-            matched[best_topic.event_id].append(title)
-            # Track growth so cap applies within this batch too
-            best_topic.titles.append(title)
-        else:
-            unmatched.append(title)
-
-    return dict(matched), unmatched
-
-
-def _score_and_update_event(cur, event_id):
-    """Compute and store importance score for an event."""
-    from core.importance import score_event
-
-    cur.execute(
-        """SELECT tl.importance_score, t.publisher_name, t.detected_language,
-                  t.pubdate_utc, ta.track
-           FROM event_v3_titles evt
-           JOIN titles_v3 t ON t.id = evt.title_id
-           LEFT JOIN title_labels tl ON tl.title_id = t.id
-           LEFT JOIN title_assignments ta ON ta.title_id = t.id
-           WHERE evt.event_id = %s""",
-        (event_id,),
-    )
-    rows = [
-        {
-            "importance_score": r[0],
-            "publisher_name": r[1],
-            "detected_language": r[2],
-            "pubdate_utc": r[3],
-            "track": r[4],
-        }
-        for r in cur.fetchall()
-    ]
-    if not rows:
-        return
-
-    import json
-
-    score, components = score_event(rows)
-    cur.execute(
-        """UPDATE events_v3
-           SET importance_score = %s, importance_components = %s
-           WHERE id = %s""",
-        (score, json.dumps(components), event_id),
-    )
-
-
-def write_incremental_results(
-    conn, ctm_id: str, bucket_results: dict, catchall_ids: dict, min_titles: int = 2
-) -> int:
-    """Write incremental clustering results to database.
-
-    Args:
-        bucket_results: dict of bucket_key -> (matched, new_topics, unmatched_leftovers,
-                                               event_type, bucket_key)
-        catchall_ids: dict of (event_type, bucket_key) -> existing catchall event_id
-
-    Returns: total events written/updated
-    """
-    import uuid
-
-    cur = conn.cursor()
-    written = 0
-
-    for bkey, (
-        matched,
-        new_topics,
-        leftover,
-        event_type,
-        bucket_key,
-    ) in bucket_results.items():
-        # A. Link matched titles to existing events
-        for event_id, titles in matched.items():
-            for title in titles:
-                cur.execute(
-                    """
-                    INSERT INTO event_v3_titles (event_id, title_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING
-                    """,
-                    (event_id, title["id"]),
-                )
-
-            # Update event metadata
-            if titles:
-                last_date = max(
-                    (t["pubdate_utc"] for t in titles if t["pubdate_utc"]),
-                    default=None,
-                )
-                cur.execute(
-                    """
-                    UPDATE events_v3
-                    SET source_batch_count = (
-                            SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
-                        ),
-                        last_active = GREATEST(COALESCE(last_active, date), %s),
-                        updated_at = NOW()
-                    WHERE id = %s
-                    """,
-                    (event_id, last_date.date() if last_date else None, event_id),
-                )
-                _score_and_update_event(cur, event_id)
-
-        # B. Create new events from clustered unmatched titles
-        for topic in new_topics:
-            if len(topic.titles) < min_titles:
-                # Sub-threshold: route to leftover for catchall
-                leftover.extend(topic.titles)
-                continue
-
-            event_id = str(uuid.uuid4())
-            dates = [t["pubdate_utc"] for t in topic.titles if t["pubdate_utc"]]
-            first_date = min(dates).date() if dates else None
-            last_date = max(dates).date() if dates else None
-
-            cur.execute(
-                """
-                INSERT INTO events_v3 (
-                    id, ctm_id, date, first_seen, event_type, bucket_key,
-                    source_batch_count, is_catchall, last_active
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    event_id,
-                    ctm_id,
-                    first_date,
-                    first_date,
-                    event_type,
-                    bucket_key,
-                    len(topic.titles),
-                    False,
-                    last_date,
-                ),
-            )
-
-            for t in topic.titles:
-                cur.execute(
-                    """
-                    INSERT INTO event_v3_titles (event_id, title_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING
-                    """,
-                    (event_id, t["id"]),
-                )
-
-            _score_and_update_event(cur, event_id)
-            written += 1
-
-        # C. Route sub-threshold leftovers to catchall
-        if leftover:
-            ca_key = (event_type, bucket_key)
-            ca_event_id = catchall_ids.get(ca_key)
-
-            if not ca_event_id:
-                # Create new catchall
-                ca_event_id = str(uuid.uuid4())
-                dates = [t["pubdate_utc"] for t in leftover if t["pubdate_utc"]]
-                first_date = min(dates).date() if dates else None
-                last_date = max(dates).date() if dates else None
-
-                cur.execute(
-                    """
-                    INSERT INTO events_v3 (
-                        id, ctm_id, date, first_seen, summary, event_type, bucket_key,
-                        source_batch_count, is_catchall, last_active
-                    ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        ca_event_id,
-                        ctm_id,
-                        first_date,
-                        "Other coverage",
-                        event_type,
-                        bucket_key,
-                        len(leftover),
-                        True,
-                        last_date,
-                    ),
-                )
-                catchall_ids[ca_key] = ca_event_id
-                written += 1
-
-            for t in leftover:
-                cur.execute(
-                    """
-                    INSERT INTO event_v3_titles (event_id, title_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING
-                    """,
-                    (ca_event_id, t["id"]),
-                )
-
-            # Update catchall metadata
-            last_date = max(
-                (t["pubdate_utc"] for t in leftover if t["pubdate_utc"]),
-                default=None,
-            )
-            cur.execute(
-                """
-                UPDATE events_v3
-                SET source_batch_count = (
-                        SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
-                    ),
-                    last_active = GREATEST(COALESCE(last_active, date), %s),
-                    updated_at = NOW()
-                WHERE id = %s
-                """,
-                (ca_event_id, last_date.date() if last_date else None, ca_event_id),
-            )
-
-    conn.commit()
-    return written
-
-
-def load_centroid_iso_codes(conn, centroid_id: str) -> set:
-    """Load iso_codes for a centroid."""
-    cur = conn.cursor()
-    cur.execute("SELECT iso_codes FROM centroids_v3 WHERE id = %s", (centroid_id,))
-    row = cur.fetchone()
-    if row and row[0]:
-        return set(row[0])
-    return set()
-
-
-# =============================================================================
-# GEOGRAPHIC BUCKETING (using centroid_ids)
-# =============================================================================
-
-MIN_BILATERAL_TITLES = 1  # Every foreign GEO centroid gets its own bilateral bucket
-
-
 def is_geo_centroid(centroid_id: str) -> bool:
-    """Check if centroid is geographic (not systemic)."""
-    # GEO centroids have format like AMERICAS-USA, EUROPE-DE
-    # SYS centroids have format like SYS-TECH, SYS-ENERGY
+    """GEO centroids look like AMERICAS-USA; SYS centroids start with SYS-."""
     return not centroid_id.startswith("SYS-")
-
-
-def bucket_titles_by_centroid(titles: list, home_centroid_id: str) -> dict:
-    """
-    Bucket titles by geography using centroid_ids.
-
-    - Domestic: centroid_ids has ONLY the home centroid (or home + SYS)
-    - Bilateral: centroid_ids has exactly one foreign GEO centroid
-    - Other International: multiple foreign GEO centroids or small bilateral buckets
-
-    GEO centroids take priority over SYS centroids for bucketing.
-    """
-    domestic = []
-    bilateral_raw = defaultdict(list)
-    multilateral = []
-
-    for title in titles:
-        centroid_ids = title.get("centroid_ids", [])
-        foreign_all = [c for c in centroid_ids if c != home_centroid_id]
-        foreign_geo = [c for c in foreign_all if is_geo_centroid(c)]
-
-        if not foreign_geo:
-            # No foreign GEO centroid -> domestic (even if has SYS centroids)
-            domestic.append(title)
-        elif len(foreign_geo) == 1:
-            # Single foreign GEO centroid -> bilateral
-            bilateral_raw[foreign_geo[0]].append(title)
-        else:
-            # Multiple foreign GEO centroids -> defer to pass 2
-            multilateral.append(title)
-
-    # Pass 2: Assign multilateral to biggest foreign GEO bucket
-    bucket_sizes = {k: len(v) for k, v in bilateral_raw.items()}
-    for title in multilateral:
-        centroid_ids = title.get("centroid_ids", [])
-        foreign_geo = [
-            c for c in centroid_ids if c != home_centroid_id and is_geo_centroid(c)
-        ]
-        if foreign_geo:
-            # Assign to biggest bucket among this title's foreign GEOs
-            best = max(foreign_geo, key=lambda c: bucket_sizes.get(c, 0))
-            bilateral_raw[best].append(title)
-            bucket_sizes[best] = bucket_sizes.get(best, 0) + 1
-
-    # Pass 3: Move small bilateral buckets to other_international
-    bilateral = {}
-    other_international = []
-    for centroid_id, ctitles in bilateral_raw.items():
-        if len(ctitles) >= MIN_BILATERAL_TITLES:
-            bilateral[centroid_id] = ctitles
-        else:
-            other_international.extend(ctitles)
-
-    return {
-        "domestic": domestic,
-        "bilateral": bilateral,
-        "other_international": other_international,
-    }
 
 
 def get_ctm_info(conn, ctm_id: str) -> dict:
@@ -587,321 +161,523 @@ def get_ctm_info(conn, ctm_id: str) -> dict:
 
 
 # =============================================================================
-# INCREMENTAL TOPIC
+# D-056 TIME-WINDOWED CLUSTERING (day = atomic unit)
 # =============================================================================
+#
+# Replaces signal-only IncrementalTopic clustering. Two titles share a cluster
+# if and only if they share (actor, action_class, target) AND publication date
+# AND at least one entity (with n-gram fallback for entity-empty titles).
+#
+# Bucketing happens AFTER clustering, not before. Caller passes ALL titles for
+# the CTM with no bucket partition.
+#
+# See docs/context/CLUSTERING_REDESIGN.md and DecisionLog D-056.
+
+NGRAM_STOPWORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "with",
+        "by",
+        "from",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "and",
+        "or",
+        "but",
+        "not",
+        "be",
+        "been",
+        "has",
+        "have",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "can",
+        "this",
+        "that",
+        "these",
+        "those",
+        "it",
+        "its",
+        "after",
+        "before",
+        "over",
+        "into",
+    }
+)
 
 
-# HIGH_FREQ_PERSONS imported from core.config
+def _extract_discriminating_entities(title: dict) -> set:
+    """All entity tokens minus high-frequency persons/orgs (TRUMP, NATO, ...)."""
+    entities = set()
+    for sig_type in ("persons", "orgs", "places", "named_events", "industries"):
+        for v in title.get(sig_type) or []:
+            normalized = v.upper() if sig_type == "persons" else v
+            if sig_type == "persons" and normalized in HIGH_FREQ_PERSONS:
+                continue
+            if sig_type == "orgs" and normalized in HIGH_FREQ_ORGS:
+                continue
+            entities.add("{}:{}".format(sig_type, normalized))
+    return entities
 
 
-class IncrementalTopic:
-    """A topic that grows incrementally as titles arrive."""
-
-    def __init__(self, seed_title: dict, topic_id: int):
-        self.id = topic_id
-        self.titles = [seed_title]
-        self.created_date = (
-            seed_title["pubdate_utc"].date() if seed_title["pubdate_utc"] else None
-        )
-        self.emerged_date = None  # Set when titles >= EMERGENCE_THRESHOLD
-
-        # Anchor signals - locked after ANCHOR_LOCK_THRESHOLD titles
-        self.anchor_signals = set()  # e.g., {"orgs:FED", "persons:POWELL"}
-        self.anchors_locked = False
-
-        # All signals with counts
-        self.signal_counts = Counter()
-
-        # Daily title counts for growth tracking
-        self.daily_counts = Counter()  # {date: count}
-
-        # Initialize from seed
-        self._add_signals(seed_title)
-
-    def _extract_tokens(self, title: dict, for_matching: bool = False) -> set:
-        """Extract signal tokens from title.
-
-        If for_matching=True, excludes high-freq persons for similarity calc.
-        """
-        tokens = set()
-        for sig_type in SIGNAL_TYPES:
-            for val in title.get(sig_type, []):
-                normalized = val.upper() if sig_type == "persons" else val
-                token = "{}:{}".format(sig_type, normalized)
-
-                # Skip high-freq signals for matching (they don't discriminate)
-                if for_matching:
-                    if sig_type == "persons" and normalized in HIGH_FREQ_PERSONS:
-                        continue
-                    if sig_type == "orgs" and normalized in HIGH_FREQ_ORGS:
-                        continue
-
-                tokens.add(token)
-        return tokens
-
-    def _add_signals(self, title: dict):
-        """Update signal counts from title."""
-        tokens = self._extract_tokens(title, for_matching=False)
-        for token in tokens:
-            self.signal_counts[token] += 1
-
-        # Track daily count
-        if title["pubdate_utc"]:
-            day = title["pubdate_utc"].date()
-            self.daily_counts[day] += 1
-
-        # Update anchors if not locked (exclude high-freq persons from anchors)
-        if not self.anchors_locked:
-            threshold = max(1, len(self.titles) // 2)
-            self.anchor_signals = set()
-            for token, count in self.signal_counts.items():
-                if count >= threshold:
-                    # Exclude high-freq signals from anchors
-                    sig_type, val = token.split(":", 1)
-                    if sig_type == "persons" and val in HIGH_FREQ_PERSONS:
-                        continue
-                    if sig_type == "orgs" and val in HIGH_FREQ_ORGS:
-                        continue
-                    self.anchor_signals.add(token)
-
-            # Lock anchors after threshold
-            if len(self.titles) >= ANCHOR_LOCK_THRESHOLD:
-                self.anchors_locked = True
-
-        # Check emergence
-        if self.emerged_date is None and len(self.titles) >= EMERGENCE_THRESHOLD:
-            self.emerged_date = (
-                title["pubdate_utc"].date() if title["pubdate_utc"] else None
-            )
-
-    def add_title(self, title: dict):
-        """Add a title to this topic."""
-        self.titles.append(title)
-        self._add_signals(title)
-
-    def match_score(self, title: dict, weights: dict, discriminators: list) -> float:
-        """
-        Calculate match score for a title against this topic.
-
-        Returns 0.0 if discriminator conflict, otherwise weighted overlap score.
-        High-frequency persons (TRUMP etc) are excluded from matching.
-        """
-        title_tokens = self._extract_tokens(title, for_matching=True)
-        if not title_tokens:
-            return 0.0
-
-        # Check discriminator conflicts
-        if self.anchors_locked and discriminators:
-            for sig_type in discriminators:
-                # Get anchor signals of this type
-                anchor_sigs = {
-                    t for t in self.anchor_signals if t.startswith(sig_type + ":")
-                }
-                title_sigs = {t for t in title_tokens if t.startswith(sig_type + ":")}
-
-                # If topic has anchor of this type and title has different value, reject
-                if anchor_sigs and title_sigs and not (anchor_sigs & title_sigs):
-                    return 0.0  # Hard reject - different org/commodity
-
-        # Large topics require higher specificity: titles must share a
-        # places/named_events/commodities signal, not just generic orgs.
-        # This prevents war-coverage black holes where every headline about
-        # the same conflict matches on shared orgs (IRGC, IDF, NATO).
-        if self.anchors_locked and len(self.titles) >= 30:
-            specific_types = {"places", "named_events", "commodities", "policies"}
-            has_specific_overlap = False
-            for token in title_tokens:
-                sig_type = token.split(":")[0]
-                if sig_type in specific_types and token in self.anchor_signals:
-                    has_specific_overlap = True
-                    break
-            if not has_specific_overlap:
-                # Also check co-occurring signals (top frequent non-anchors)
-                frequent = {
-                    t
-                    for t, c in self.signal_counts.items()
-                    if c >= len(self.titles) // 4 and t.split(":")[0] in specific_types
-                }
-                if frequent and not (title_tokens & frequent):
-                    return 0.0
-
-        # Calculate weighted overlap with anchors (if locked) or all signals
-        compare_set = (
-            self.anchor_signals
-            if self.anchors_locked
-            else set(self.signal_counts.keys())
-        )
-
-        if not compare_set:
-            return 0.0
-
-        overlap = title_tokens & compare_set
-
-        if not overlap:
-            return 0.0
-
-        # Weighted score
-        score = 0.0
-        for token in overlap:
-            sig_type = token.split(":")[0]
-            weight = weights.get(sig_type, 1.0)
-            # Boost if signal is in anchors
-            anchor_boost = 1.5 if token in self.anchor_signals else 1.0
-            score += weight * anchor_boost
-
-        # Normalize by topic anchor count
-        max_score = sum(weights.get(t.split(":")[0], 1.0) * 1.5 for t in compare_set)
-        return score / max_score if max_score > 0 else 0.0
-
-    def get_anchor_summary(self) -> str:
-        """Get summary from anchor signals."""
-        # Sort by count, take top 4
-        anchor_list = [(t, self.signal_counts[t]) for t in self.anchor_signals]
-        anchor_list.sort(key=lambda x: -x[1])
-        parts = [t.split(":")[1] for t, _ in anchor_list[:4]]
-        return ", ".join(parts) if parts else "misc"
-
-    def get_cooccurring_signals(self) -> list:
-        """Get signals that co-occur with anchors but aren't anchors themselves."""
-        cooccur = []
-        for token, count in self.signal_counts.most_common(20):
-            if token not in self.anchor_signals:
-                cooccur.append((token, count))
-        return cooccur[:10]
+def _compute_ngrams(titles: list) -> set:
+    """3-word lowercase n-grams from title text, stopwords stripped."""
+    grams = set()
+    for t in titles:
+        text = (t.get("title_display") or "").lower()
+        text = re.sub(r"[^\w\s]", " ", text)
+        words = [w for w in text.split() if w not in NGRAM_STOPWORDS and len(w) > 1]
+        for i in range(len(words) - 2):
+            grams.add(" ".join(words[i : i + 3]))
+    return grams
 
 
-# =============================================================================
-# INCREMENTAL CLUSTERING
-# =============================================================================
+def _can_merge(a: dict, b: dict) -> bool:
+    """Two cluster-dicts can merge if they share at least one entity, OR
+    (when at least one side has no entities) at least one n-gram."""
+    if a["entities"] and b["entities"]:
+        return bool(a["entities"] & b["entities"])
+    # N-gram fallback: one or both sides have no discriminating entities
+    if a.get("ngrams") is None:
+        a["ngrams"] = _compute_ngrams(a["titles"])
+    if b.get("ngrams") is None:
+        b["ngrams"] = _compute_ngrams(b["titles"])
+    if a["ngrams"] and b["ngrams"]:
+        return bool(a["ngrams"] & b["ngrams"])
+    return False
 
 
-def cluster_incrementally(
-    titles: list,
-    weights: dict,
-    discriminators: list,
-    join_threshold: float = JOIN_THRESHOLD,
-) -> list:
+def _single_link_by_entity(titles: list) -> list:
+    """Greedy single-link clustering on entity overlap.
+
+    Each title starts as its own cluster. Clusters merge if they share at least
+    one entity. Iterates until no more merges happen.
     """
-    Cluster titles incrementally in chronological order.
+    clusters = []
+    for t in titles:
+        clusters.append(
+            {
+                "titles": [t],
+                "entities": _extract_discriminating_entities(t),
+                "ngrams": None,
+            }
+        )
 
-    Titles should already be filtered to a single bucket before calling this.
+    changed = True
+    while changed:
+        changed = False
+        i = 0
+        while i < len(clusters):
+            j = i + 1
+            while j < len(clusters):
+                if _can_merge(clusters[i], clusters[j]):
+                    clusters[i]["titles"].extend(clusters[j]["titles"])
+                    clusters[i]["entities"] |= clusters[j]["entities"]
+                    if clusters[j].get("ngrams"):
+                        if clusters[i].get("ngrams") is None:
+                            clusters[i]["ngrams"] = set()
+                        clusters[i]["ngrams"] |= clusters[j]["ngrams"]
+                    clusters.pop(j)
+                    changed = True
+                else:
+                    j += 1
+            i += 1
+    return clusters
 
-    Returns: list of IncrementalTopic objects
+
+def _pick_dominant_entity(titles: list) -> str:
+    """Most-frequent discriminating entity across the cluster's titles.
+
+    This IS the cluster's spine - derived from data, no separate assignment.
+    Returns a string like "places:Hormuz" or None if no discriminating entity.
+    """
+    counter = Counter()
+    for t in titles:
+        for sig_type in ("persons", "orgs", "places", "named_events", "industries"):
+            for v in t.get(sig_type) or []:
+                normalized = v.upper() if sig_type == "persons" else v
+                if sig_type == "persons" and normalized in HIGH_FREQ_PERSONS:
+                    continue
+                if sig_type == "orgs" and normalized in HIGH_FREQ_ORGS:
+                    continue
+                counter["{}:{}".format(sig_type, normalized)] += 1
+    if not counter:
+        return None
+    return counter.most_common(1)[0][0]
+
+
+def _pick_bucket_key(titles: list, home_centroid_id: str) -> tuple:
+    """Bucket assignment (D-056 LOCK-2, corrected).
+
+    Phase 2 always tags the home centroid on every title assigned to a CTM, so
+    the original "any title has home centroid -> domestic" rule fired on
+    everything. Use foreign GEO centroids as the discriminator instead.
+
+    Returns (event_type, bucket_key):
+    - No title has any foreign GEO centroid -> ("domestic", None)
+    - Most cluster titles share one foreign GEO centroid -> ("bilateral", <centroid>)
+    - Multiple foreign GEOs spread thin -> ("other_international", None)
+    """
+    foreign_counter = Counter()
+    titles_with_foreign = 0
+    for t in titles:
+        foreign = [
+            c
+            for c in (t.get("centroid_ids") or [])
+            if c != home_centroid_id and is_geo_centroid(c)
+        ]
+        if foreign:
+            titles_with_foreign += 1
+            for c in foreign:
+                foreign_counter[c] += 1
+
+    if not foreign_counter:
+        return ("domestic", None)
+
+    top_centroid, top_count = foreign_counter.most_common(1)[0]
+    # Bilateral only if top foreign centroid appears in >= half of ALL cluster
+    # titles, not half of titles-with-foreign-centroids. Phase 2 cross-tags
+    # stories topically (e.g., Michigan synagogue -> MIDEAST-ISRAEL), so a
+    # minority co-tag must not hijack the bucket.
+    total = len(titles)
+    if top_count * 2 >= total:
+        return ("bilateral", top_centroid)
+    return ("domestic", None)
+
+
+# Text-similarity merge: catches cross-beat fragmentation of one event.
+# The LLM labels one story across multiple beat triples (e.g., tanker crash
+# appears as SECURITY_INCIDENT + STATEMENT + MILITARY_OPERATION rescue).
+# Title text is the orthogonal signal that ignores these label splits.
+
+_TEXT_STOPWORDS = frozenset(
+    {
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "that",
+        "this",
+        "are",
+        "was",
+        "were",
+        "has",
+        "have",
+        "had",
+        "but",
+        "not",
+        "its",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "can",
+        "says",
+        "said",
+        "say",
+        "told",
+        "tells",
+        "tell",
+        "report",
+        "reports",
+        "reported",
+        "about",
+        "after",
+        "before",
+        "over",
+        "into",
+        "out",
+        "than",
+        "then",
+        "now",
+        "new",
+        "just",
+        "also",
+        "more",
+        "most",
+        "some",
+        "any",
+        "all",
+        "who",
+        "what",
+        "why",
+        "when",
+        "how",
+        "here",
+        "there",
+        "only",
+        "even",
+        "still",
+        "yet",
+        "ago",
+        "under",
+        "between",
+        "amid",
+        "against",
+        "per",
+        "via",
+        "live",
+        "blog",
+        "latest",
+        "breaking",
+        "news",
+        "update",
+        "updates",
+        "watch",
+        "video",
+        "photos",
+        "image",
+        "images",
+        "exclusive",
+    }
+)
+
+TEXT_DICE_THRESHOLD = 0.5
+
+
+def _tokenize_title(text: str) -> set:
+    if not text:
+        return set()
+    toks = set()
+    for m in re.findall(r"[A-Za-z]{3,}", text):
+        low = m.lower()
+        if low in _TEXT_STOPWORDS:
+            continue
+        up = m.upper()
+        if up in HIGH_FREQ_PERSONS or up in HIGH_FREQ_ORGS:
+            continue
+        toks.add(low)
+    return toks
+
+
+def _dice(a: set, b: set) -> float:
+    if not a or not b:
+        return 0.0
+    return 2.0 * len(a & b) / (len(a) + len(b))
+
+
+def _dominant_place(titles: list) -> str:
+    """Most-frequent place (or named_event) across a cluster's titles.
+    Returns a prefixed token like 'places:Hormuz' or None if no place is
+    extracted on any title. Titles mentioning multiple places each contribute
+    once per place, but the MOST FREQUENT wins — so a single multi-place
+    title cannot make a secondary place dominant.
+    """
+    counter = Counter()
+    for t in titles:
+        for p in t.get("places") or []:
+            counter["places:" + p] += 1
+        for ne in t.get("named_events") or []:
+            counter["named_events:" + ne] += 1
+    if not counter:
+        return None
+    return counter.most_common(1)[0][0]
+
+
+def _dominant_target(titles: list) -> str:
+    """Most-frequent target across a cluster's titles. NONE if absent."""
+    counter = Counter()
+    for t in titles:
+        counter[t.get("target") or "NONE"] += 1
+    return counter.most_common(1)[0][0] if counter else "NONE"
+
+
+def _merge_day_clusters(day_clusters: list) -> list:
+    """Union-find merge of day-local clusters across beat triples.
+
+    Two clusters on the same day merge when EITHER:
+      1. They have the SAME (dominant place/named_event, dominant target).
+         Both dimensions must match: place anchors the theater, target
+         anchors the counterparty. Paris-elections (target NONE) stays
+         separate from Paris-US-China-talks (target CN) even though both
+         have dominant_place=Paris.
+      2. Both clusters have NO dominant place AND any title pair across
+         them has token-Dice >= TEXT_DICE_THRESHOLD. This fallback only
+         fires for entity-empty fragments (e.g., Russia-Iran intelligence
+         reports with empty places).
+    """
+    n = len(day_clusters)
+    if n < 2:
+        return day_clusters
+
+    dominants = [
+        (
+            (_dominant_place(c["titles"]), _dominant_target(c["titles"]))
+            if _dominant_place(c["titles"])
+            else None
+        )
+        for c in day_clusters
+    ]
+
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    # Rule 1: same dominant place/named_event -> merge
+    by_dominant = defaultdict(list)
+    for i, d in enumerate(dominants):
+        if d:
+            by_dominant[d].append(i)
+    for idx_list in by_dominant.values():
+        for k in range(1, len(idx_list)):
+            union(idx_list[0], idx_list[k])
+
+    # Rule 2: Dice fallback, ONLY between clusters that both lack a dominant
+    # place AND share the same dominant target. Without the target gate, Dice
+    # at 0.5 blended "US kills Khamenei" (target=IR) with "Iran retaliates"
+    # (target=US) on the same day because both share many surface tokens
+    # ("khamenei", "iran", "us", "strike"). Target is the cleanest
+    # discriminator when place is absent.
+    cluster_title_tokens = [
+        [_tokenize_title(t.get("title_display") or "") for t in c["titles"]]
+        for c in day_clusters
+    ]
+    empty_targets = [
+        _dominant_target(day_clusters[i]["titles"]) if not dominants[i] else None
+        for i in range(n)
+    ]
+    empty_idx = [i for i in range(n) if not dominants[i]]
+    for a_pos in range(len(empty_idx)):
+        i = empty_idx[a_pos]
+        ti = cluster_title_tokens[i]
+        if not ti:
+            continue
+        for b_pos in range(a_pos + 1, len(empty_idx)):
+            j = empty_idx[b_pos]
+            if find(i) == find(j):
+                continue
+            if empty_targets[i] != empty_targets[j]:
+                continue
+            tj = cluster_title_tokens[j]
+            if not tj:
+                continue
+            matched = False
+            for a in ti:
+                if matched:
+                    break
+                if not a:
+                    continue
+                for b in tj:
+                    if not b:
+                        continue
+                    if _dice(a, b) >= TEXT_DICE_THRESHOLD:
+                        union(i, j)
+                        matched = True
+                        break
+
+    groups = defaultdict(list)
+    for i in range(n):
+        groups[find(i)].append(day_clusters[i])
+
+    out = []
+    for members in groups.values():
+        if len(members) == 1:
+            out.append(members[0])
+            continue
+        merged = {
+            "titles": [],
+            "entities": set(),
+            "ngrams": None,
+        }
+        for c in members:
+            merged["titles"].extend(c["titles"])
+            merged["entities"] |= c.get("entities") or set()
+        out.append(merged)
+    return out
+
+
+def cluster_by_day_beat(titles: list, home_centroid_id: str) -> list:
+    """D-056 clustering: day = atomic unit, no bucket partition.
+
+    Two-stage within each day:
+      1. Group titles by beat triple; within each beat group, single-link
+         merge on entity overlap (strict, tight clusters per beat).
+      2. Across beat groups of the same day, merge clusters when ANY
+         cross-cluster title pair has token-Dice >= TEXT_DICE_THRESHOLD.
+         This captures fragments of one event labeled under different beats
+         (Khamenei, Iraq tanker, Oslo embassy, etc.) without dropping the
+         beat-triple rigor at stage 1.
     """
     if not titles:
         return []
 
-    topics = []
-    topic_counter = 0
+    # Group by (date, beat), first at stage 1
+    day_beat_groups = defaultdict(lambda: defaultdict(list))
+    for t in titles:
+        if not t.get("pubdate_utc"):
+            continue
+        date = t["pubdate_utc"].date()
+        beat = (t.get("actor"), t.get("action_class"), t.get("target"))
+        day_beat_groups[date][beat].append(t)
 
-    for i, title in enumerate(titles):
-        # Find best matching topic
-        best_topic = None
-        best_score = join_threshold
+    all_clusters = []
+    for date, beat_groups in day_beat_groups.items():
+        day_clusters = []
+        # Stage 1: entity-overlap single-link within each beat
+        for beat, group in beat_groups.items():
+            entity_clusters = _single_link_by_entity(group)
+            for c in entity_clusters:
+                c["_beat_hint"] = beat
+                day_clusters.append(c)
 
-        for topic in topics:
-            # Skip full topics -- prevents mega-clusters
-            if len(topic.titles) >= MAX_TOPIC_SIZE:
-                continue
-            score = topic.match_score(title, weights, discriminators)
-            if score > best_score:
-                best_score = score
-                best_topic = topic
+        # Stage 2: dominant-entity + text-Dice merge across beats within the day
+        day_clusters = _merge_day_clusters(day_clusters)
 
-        if best_topic:
-            best_topic.add_title(title)
-        else:
-            # Create new topic
-            topic_counter += 1
-            new_topic = IncrementalTopic(title, topic_counter)
-            topics.append(new_topic)
-
-        # Progress logging
-        if (i + 1) % 500 == 0:
-            emerged = sum(1 for t in topics if t.emerged_date is not None)
-            print(
-                "Processed {}/{} titles, {} topics ({} emerged)".format(
-                    i + 1, len(titles), len(topics), emerged
-                )
+        # Enrich each surviving cluster with metadata
+        for c in day_clusters:
+            event_type, bucket_key = _pick_bucket_key(c["titles"], home_centroid_id)
+            beat_counter = Counter()
+            for t in c["titles"]:
+                beat_counter[
+                    (t.get("actor"), t.get("action_class"), t.get("target"))
+                ] += 1
+            beat = (
+                beat_counter.most_common(1)[0][0]
+                if beat_counter
+                else (None, None, None)
             )
+            c["date"] = date
+            c["beat"] = beat
+            c["dominant_entity"] = _pick_dominant_entity(c["titles"])
+            c["event_type"] = event_type
+            c["bucket_key"] = bucket_key
+            c["source_count"] = len(c["titles"])
+            c["first_date"] = date
+            c["last_date"] = date
+            all_clusters.append(c)
 
-    return topics
-
-
-# =============================================================================
-# ANALYSIS
-# =============================================================================
-
-
-def analyze_topics(topics: list):
-    """Print analysis of incremental clustering results."""
-    print("\n" + "=" * 70)
-    print("INCREMENTAL CLUSTERING RESULTS")
-    print("=" * 70)
-
-    emerged = [t for t in topics if t.emerged_date is not None]
-    sizes = sorted([len(t.titles) for t in topics], reverse=True)
-
-    print("\nTotal topics: {}".format(len(topics)))
-    print("Emerged topics ({}+ titles): {}".format(EMERGENCE_THRESHOLD, len(emerged)))
-    print("\nSize distribution:")
-    print("  Largest: {}".format(sizes[0] if sizes else 0))
-    print("  Top 5: {}".format(sizes[:5]))
-    print("  Single-title topics: {}".format(sum(1 for s in sizes if s == 1)))
-
-    print("\n" + "-" * 70)
-    print("TOP 15 EMERGED TOPICS")
-    print("-" * 70)
-
-    emerged_sorted = sorted(emerged, key=lambda t: -len(t.titles))
-
-    for i, topic in enumerate(emerged_sorted[:15]):
-        anchor_str = topic.get_anchor_summary()
-        cooccur = topic.get_cooccurring_signals()
-        cooccur_str = ", ".join("+{}".format(t.split(":")[1]) for t, c in cooccur[:3])
-
-        locked_str = "[LOCKED]" if topic.anchors_locked else "[forming]"
-
-        print(
-            "\n{}. {} titles - {} {}".format(
-                i + 1, len(topic.titles), anchor_str, locked_str
-            )
-        )
-        if cooccur_str:
-            print("   Co-occurring: {}".format(cooccur_str))
-        print(
-            "   Created: {}, Emerged: {}".format(topic.created_date, topic.emerged_date)
-        )
-
-        # Sample titles (ASCII safe)
-        for title in topic.titles[:2]:
-            display = title["title_display"][:70]
-            safe_display = display.encode("ascii", "replace").decode()
-            print("   - {}".format(safe_display))
-        if len(topic.titles) > 2:
-            print("   ... and {} more".format(len(topic.titles) - 2))
-
-
-def show_topic_timeline(topics: list):
-    """Show when topics emerged day by day."""
-    print("\n" + "-" * 70)
-    print("TOPIC EMERGENCE TIMELINE")
-    print("-" * 70)
-
-    emerged = [t for t in topics if t.emerged_date is not None]
-    by_date = defaultdict(list)
-    for topic in emerged:
-        by_date[topic.emerged_date].append(topic)
-
-    for day in sorted(by_date.keys()):
-        day_topics = sorted(by_date[day], key=lambda t: -len(t.titles))
-        print("\n{}:".format(day))
-        for topic in day_topics[:5]:
-            print(
-                "  - {} ({} titles)".format(
-                    topic.get_anchor_summary(), len(topic.titles)
-                )
-            )
+    return all_clusters
 
 
 # =============================================================================
@@ -909,96 +685,78 @@ def show_topic_timeline(topics: list):
 # =============================================================================
 
 
-def write_bucketed_topics_to_db(
-    conn, bucketed_topics: dict, ctm_id: str, min_titles: int = 2
-) -> int:
-    """Write bucketed topics to events_v3 table.
+def write_clusters_to_db(conn, clusters: list, ctm_id: str) -> int:
+    """D-056: Write day-beat clusters to events_v3.
 
-    Args:
-        bucketed_topics: {
-            "domestic": [topics],
-            "bilateral": {"CENTROID-ID": [topics], ...},
-            "other_international": [topics]
-        }
-        ctm_id: CTM ID
-        min_titles: Minimum titles for a topic to be written
+    No min_titles filter - singletons are kept (frontend filters by per-CTM
+    percentile). No catchall event - singletons are just size-1 events_v3 rows.
 
-    Returns: total written count
+    Returns: count of events written.
     """
     import uuid
 
     cur = conn.cursor()
-
-    # NOTE: DELETE removed -- incremental path is now non-destructive.
-    # Use write_incremental_results() for production writes.
-
     written = 0
-    domestic_count = 0
-    bilateral_count = 0
-    catchall_count = 0
 
-    # Track ungrouped titles per bucket for catchall events
-    ungrouped = {
-        "domestic": [],
-        "bilateral": {},  # centroid_key -> [titles]
-        "other_international": [],
-    }
-
-    def write_topic(topic, event_type, bucket_key=None):
-        """Write a topic if it meets min_titles, otherwise collect for catchall."""
-        nonlocal written, domestic_count, bilateral_count
-
-        if len(topic.titles) < min_titles:
-            # Collect for catchall
-            if event_type == "domestic":
-                ungrouped["domestic"].extend(topic.titles)
-            elif event_type == "bilateral":
-                if bucket_key not in ungrouped["bilateral"]:
-                    ungrouped["bilateral"][bucket_key] = []
-                ungrouped["bilateral"][bucket_key].extend(topic.titles)
-            else:
-                ungrouped["other_international"].extend(topic.titles)
-            return
-
+    for c in clusters:
         event_id = str(uuid.uuid4())
+        # Build summary from dominant entity + beat
+        beat = c.get("beat") or (None, None, None)
+        actor, action, target = beat
+        anchor = c.get("dominant_entity")
+        anchor_str = anchor.split(":", 1)[1] if anchor else "misc"
+        summary_parts = []
+        if actor:
+            summary_parts.append(actor)
+        if action:
+            summary_parts.append(action)
+        if target and target != "NONE":
+            summary_parts.append("-> " + target)
+        summary_parts.append("[" + anchor_str + "]")
+        summary = " ".join(summary_parts)
 
-        # Get dates
-        dates = [t["pubdate_utc"] for t in topic.titles if t["pubdate_utc"]]
-        first_date = min(dates).date() if dates else None
-        last_date = max(dates).date() if dates else None
-
-        # Build summary from anchors
-        anchor_list = sorted(
-            topic.anchor_signals, key=lambda x: -topic.signal_counts.get(x, 0)
+        # Mechanical fallback title: pick the earliest title_display that has
+        # a reasonable length. Phase 4.5a can overwrite this with an LLM title
+        # later, but until then the cluster is human-readable and searchable.
+        mechanical_title = None
+        sorted_titles = sorted(
+            c["titles"],
+            key=lambda t: (
+                t.get("pubdate_utc") or 0,
+                -(len(t.get("title_display") or "")),
+            ),
         )
-        anchor_values = [a.split(":")[1] for a in anchor_list[:4]]
-        summary = (
-            "Topic: {}".format(", ".join(anchor_values)) if anchor_values else "misc"
-        )
+        for t in sorted_titles:
+            td = t.get("title_display")
+            if td and len(td) >= 20:
+                mechanical_title = td
+                break
+        if not mechanical_title and sorted_titles:
+            mechanical_title = sorted_titles[0].get("title_display")
 
         try:
             cur.execute(
                 """
                 INSERT INTO events_v3 (
-                    id, ctm_id, date, first_seen, summary, event_type, bucket_key,
+                    id, ctm_id, date, first_seen, title, summary, event_type, bucket_key,
                     source_batch_count, is_catchall, last_active
-                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     event_id,
                     ctm_id,
-                    first_date,
+                    c["date"],
+                    c["first_date"],
+                    mechanical_title,
                     summary,
-                    event_type,
-                    bucket_key,
-                    len(topic.titles),
+                    c["event_type"],
+                    c["bucket_key"],
+                    c["source_count"],
                     False,
-                    last_date,
+                    c["last_date"],
                 ),
             )
-
-            # Link titles
-            for title in topic.titles:
+            for title in c["titles"]:
                 cur.execute(
                     """
                     INSERT INTO event_v3_titles (event_id, title_id)
@@ -1007,91 +765,11 @@ def write_bucketed_topics_to_db(
                     """,
                     (event_id, title["id"]),
                 )
-
             written += 1
-            if event_type == "domestic":
-                domestic_count += 1
-            else:
-                bilateral_count += 1
-
         except Exception as e:
-            print("Failed to write topic: {}".format(e))
-
-    def write_catchall(titles, event_type, bucket_key=None):
-        """Write a catchall 'Other coverage' event for ungrouped titles."""
-        nonlocal written, catchall_count
-
-        if not titles:
-            return
-
-        event_id = str(uuid.uuid4())
-
-        dates = [t["pubdate_utc"] for t in titles if t.get("pubdate_utc")]
-        first_date = min(dates).date() if dates else None
-        last_date = max(dates).date() if dates else None
-
-        try:
-            cur.execute(
-                """
-                INSERT INTO events_v3 (
-                    id, ctm_id, date, first_seen, summary, event_type, bucket_key,
-                    source_batch_count, is_catchall, last_active
-                ) VALUES (%s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    event_id,
-                    ctm_id,
-                    first_date,
-                    "Other coverage",
-                    event_type,
-                    bucket_key,
-                    len(titles),
-                    True,
-                    last_date,
-                ),
-            )
-
-            for title in titles:
-                cur.execute(
-                    """
-                    INSERT INTO event_v3_titles (event_id, title_id)
-                    VALUES (%s, %s)
-                    ON CONFLICT DO NOTHING
-                    """,
-                    (event_id, title["id"]),
-                )
-
-            written += 1
-            catchall_count += 1
-
-        except Exception as e:
-            print("Failed to write catchall: {}".format(e))
-
-    # Write domestic topics
-    for topic in bucketed_topics.get("domestic", []):
-        write_topic(topic, "domestic", None)
-
-    # Write bilateral topics
-    for centroid_key, topics in bucketed_topics.get("bilateral", {}).items():
-        for topic in topics:
-            write_topic(topic, "bilateral", centroid_key)
-
-    # Write other international topics
-    for topic in bucketed_topics.get("other_international", []):
-        write_topic(topic, "other_international", None)
-
-    # Write catchall events for ungrouped titles
-    write_catchall(ungrouped["domestic"], "domestic", None)
-    for centroid_key, titles in ungrouped["bilateral"].items():
-        write_catchall(titles, "bilateral", centroid_key)
-    write_catchall(ungrouped["other_international"], "other_international", None)
+            print("Failed to write cluster: {}".format(e))
 
     conn.commit()
-    print(
-        "  Domestic: {}, Bilateral: {}, Catchalls: {}".format(
-            domestic_count, bilateral_count, catchall_count
-        )
-    )
     return written
 
 
@@ -1100,144 +778,50 @@ def write_bucketed_topics_to_db(
 # =============================================================================
 
 
-def _iterate_buckets(buckets: dict):
-    """Yield (event_type, bucket_key, titles) for each bucket."""
-    if buckets["domestic"]:
-        yield "domestic", None, sorted(
-            buckets["domestic"], key=lambda t: t["pubdate_utc"]
-        )
-    for foreign_centroid, btitles in buckets["bilateral"].items():
-        yield "bilateral", foreign_centroid, sorted(
-            btitles, key=lambda t: t["pubdate_utc"]
-        )
-    if buckets["other_international"]:
-        yield "other_international", None, sorted(
-            buckets["other_international"], key=lambda t: t["pubdate_utc"]
-        )
+def _wipe_ctm_events(conn, ctm_id: str) -> None:
+    """Delete all events_v3 rows (and downstream links) for a CTM."""
+    cur = conn.cursor()
+    cur.execute(
+        """UPDATE events_v3 SET merged_into = NULL
+           WHERE merged_into IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
+        (ctm_id,),
+    )
+    cur.execute(
+        """DELETE FROM event_strategic_narratives
+           WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
+        (ctm_id,),
+    )
+    cur.execute(
+        "DELETE FROM event_v3_titles WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)",
+        (ctm_id,),
+    )
+    cur.execute("UPDATE events_v3 SET family_id = NULL WHERE ctm_id = %s", (ctm_id,))
+    cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
 
 
 def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> int:
+    """D-056: Daemon entry point.
+
+    If new (unlinked) titles exist for the CTM, wipe and recluster the whole CTM
+    using day-beat clustering. Idempotent: clusters are deterministic given the
+    same title set.
+
+    Returns: number of events written (0 if no new titles).
     """
-    Process a CTM for the pipeline daemon (non-destructive incremental).
-
-    Loads only NEW titles (not yet linked to events), matches them against
-    existing events, and creates new events only for unmatched clusters.
-    Existing events are never deleted or overwritten.
-
-    Returns: number of new events written to database
-    """
-    weights = get_weights(track)
-    discriminators = get_discriminators(track)
-    publisher_patterns = load_publisher_patterns(conn)
-
-    # 1. Load only titles not yet linked to events
     new_titles = load_new_titles_only(conn, ctm_id)
     if not new_titles:
         return 0
 
-    # 2. Filter publisher signals
-    for t in new_titles:
+    all_titles = load_titles_chronological(conn, ctm_id)
+    publisher_patterns = load_publisher_patterns(conn)
+    for t in all_titles:
         t["orgs"] = filter_publisher_signals(t.get("orgs", []), publisher_patterns)
 
-    # 3. Load existing topics (empty on first run = cold path naturally)
-    existing_topics, catchall_ids = load_existing_topics(conn, ctm_id)
-
-    # 4. Bucket new titles by geography
-    buckets = bucket_titles_by_centroid(new_titles, centroid_id)
-
-    # 5. Per bucket: match against existing, cluster unmatched
-    bucket_results = {}
-    for event_type, bucket_key, bucket_titles in _iterate_buckets(buckets):
-        key = (event_type, bucket_key)
-        existing = existing_topics.get(key, [])
-
-        matched, unmatched = match_new_titles_to_existing(
-            bucket_titles, existing, weights, discriminators
-        )
-        new_topics = cluster_incrementally(unmatched, weights, discriminators)
-        bucket_results[key] = (matched, new_topics, [], event_type, bucket_key)
-
-    # 6. Write: link matched, create new events, route to catchalls
-    written = write_incremental_results(
-        conn, ctm_id, bucket_results, catchall_ids, min_titles=2
-    )
+    clusters = cluster_by_day_beat(all_titles, centroid_id)
+    _wipe_ctm_events(conn, ctm_id)
+    written = write_clusters_to_db(conn, clusters, ctm_id)
+    conn.commit()
     return written
-
-
-# =============================================================================
-# LOUVAIN CLUSTERING (TF-IDF + cosine similarity + community detection)
-# =============================================================================
-
-try:
-    import community as community_louvain
-    import networkx as nx
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity as sklearn_cosine
-
-    HAS_LOUVAIN = True
-except ImportError:
-    HAS_LOUVAIN = False
-
-
-def cluster_louvain(
-    titles: list,
-    similarity_threshold: float = 0.35,
-    resolution: float = 0.8,
-    min_titles: int = 2,
-) -> list:
-    """Cluster titles using TF-IDF + cosine similarity + Louvain community detection.
-
-    Returns list of IncrementalTopic-like objects for compatibility with
-    write_bucketed_topics_to_db.
-    """
-    import numpy as np
-
-    if not HAS_LOUVAIN:
-        print("  Louvain not available, falling back to signal-based")
-        return cluster_incrementally(titles, get_weights("default"), [])
-
-    if len(titles) < 2:
-        return []
-
-    texts = [t.get("title_display", "") for t in titles]
-
-    vectorizer = TfidfVectorizer(
-        ngram_range=(1, 2),
-        lowercase=True,
-        sublinear_tf=True,
-        max_features=10000,
-        stop_words="english",
-    )
-    tfidf = vectorizer.fit_transform(texts)
-    sim = sklearn_cosine(tfidf)
-
-    # Build graph
-    adj = (sim > similarity_threshold).astype(int)
-    np.fill_diagonal(adj, 0)
-    G = nx.from_numpy_array(adj)
-    partition = community_louvain.best_partition(
-        G, resolution=resolution, random_state=42
-    )
-
-    # Group by cluster
-    clusters = defaultdict(list)
-    for node_idx, cluster_id in partition.items():
-        clusters[cluster_id].append(node_idx)
-
-    # Convert to IncrementalTopic objects for compatibility
-    topics = []
-    topic_counter = 0
-    for cluster_id, indices in clusters.items():
-        if len(indices) < 1:
-            continue
-        topic_counter += 1
-        seed = titles[indices[0]]
-        topic = IncrementalTopic(seed, topic_counter)
-        for idx in indices[1:]:
-            topic.add_title(titles[idx])
-        topics.append(topic)
-
-    return topics
 
 
 # =============================================================================
@@ -1245,18 +829,17 @@ def cluster_louvain(
 # =============================================================================
 
 
-def recluster_ctm(ctm_id: str, dry_run: bool = True, method: str = "louvain"):
-    """Wipe existing events for a CTM and recluster ALL titles from scratch.
+def recluster_ctm(ctm_id: str, dry_run: bool = True, method: str = "signal"):
+    """D-056: Wipe events for a CTM and recluster ALL titles using day-beat clustering.
 
-    This is destructive: all events, title links, narrative matches, and
-    summaries for this CTM are deleted before re-clustering.
+    Day = atomic clustering unit. No bucket partition. Bucket assigned post-clustering.
+    See docs/context/CLUSTERING_REDESIGN.md.
 
     Args:
-        method: "louvain" (TF-IDF + Louvain, default) or "signal" (incremental signal-based)
+        method: ignored (legacy parameter, only day-beat method exists now)
 
     Usage:
         python -m pipeline.phase_4.incremental_clustering --ctm-id <id> --recluster --write
-        python -m pipeline.phase_4.incremental_clustering --ctm-id <id> --recluster --write --method signal
     """
     conn = get_connection()
     ctm_info = get_ctm_info(conn, ctm_id)
@@ -1267,136 +850,66 @@ def recluster_ctm(ctm_id: str, dry_run: bool = True, method: str = "louvain"):
 
     centroid_id = ctm_info["centroid_id"]
     track = ctm_info["track"]
-    print("RECLUSTER: {} / {} / {}".format(centroid_id, track, ctm_info["month"]))
+    print(
+        "RECLUSTER (D-056): {} / {} / {}".format(centroid_id, track, ctm_info["month"])
+    )
 
-    # Load ALL titles for this CTM
     all_titles = load_titles_chronological(conn, ctm_id)
     print("Total titles: {}".format(len(all_titles)))
-
     if not all_titles:
         print("No titles to cluster.")
         conn.close()
         return
 
-    # Filter publisher signals
+    # Filter publisher signals (still useful since Phase 2 publisher leak persists)
     publisher_patterns = load_publisher_patterns(conn)
     for t in all_titles:
         t["orgs"] = filter_publisher_signals(t.get("orgs", []), publisher_patterns)
 
-    weights = get_weights(track)
-    discriminators = get_discriminators(track)
+    # Cluster: day-beat with no bucket partition
+    clusters = cluster_by_day_beat(all_titles, centroid_id)
 
-    print("\nTrack config:")
+    # Summary stats
+    total_in_clusters = sum(c["source_count"] for c in clusters)
+    by_type = Counter(c["event_type"] for c in clusters)
+    by_size = sorted([c["source_count"] for c in clusters], reverse=True)
+    multi_title = [c for c in clusters if c["source_count"] >= 2]
     print(
-        "  Weights: {}".format(
-            ", ".join("{}={:.1f}".format(k, v) for k, v in weights.items())
+        "\n{} clusters covering {} titles ({} singletons)".format(
+            len(clusters), total_in_clusters, len(clusters) - len(multi_title)
         )
     )
-    use_louvain = method == "louvain" and HAS_LOUVAIN
-    if use_louvain:
-        print("  Method: LOUVAIN (TF-IDF + cosine + community detection)")
-    else:
-        print("  Discriminators: {}".format(discriminators))
-        print("  Join threshold: {}".format(JOIN_THRESHOLD))
-        print("  Max topic size: {}".format(MAX_TOPIC_SIZE))
-        print("  Method: SIGNAL (incremental)")
-
-    # Bucket and cluster
-    buckets = bucket_titles_by_centroid(all_titles, centroid_id)
-    print("\nBuckets:")
-    print("  Domestic: {} titles".format(len(buckets["domestic"])))
-    for c in sorted(buckets["bilateral"], key=lambda x: -len(buckets["bilateral"][x])):
-        print("  Bilateral {}: {} titles".format(c, len(buckets["bilateral"][c])))
     print(
-        "  Other International: {} titles".format(len(buckets["other_international"]))
+        "  by type: domestic={} bilateral={} other_international={}".format(
+            by_type.get("domestic", 0),
+            by_type.get("bilateral", 0),
+            by_type.get("other_international", 0),
+        )
     )
+    print("  size distribution top 10: {}".format(by_size[:10]))
 
-    bucketed_topics = {"domestic": [], "bilateral": {}, "other_international": []}
-
-    for event_type, bucket_key, bucket_titles in _iterate_buckets(buckets):
-        if use_louvain:
-            topics = cluster_louvain(bucket_titles)
-        else:
-            topics = cluster_incrementally(bucket_titles, weights, discriminators)
-        emerged = [t for t in topics if len(t.titles) >= 2]
-        label = event_type if not bucket_key else "{} {}".format(event_type, bucket_key)
+    # Show top clusters by source count
+    clusters_sorted = sorted(clusters, key=lambda c: -c["source_count"])
+    print("\nTop clusters:")
+    for c in clusters_sorted[:15]:
+        anchor = c.get("dominant_entity")
+        anchor_str = anchor.split(":", 1)[1] if anchor else "no-entity"
+        beat = c.get("beat") or (None, None, None)
+        beat_str = "{}>{}>{}".format(beat[0] or "_", beat[1] or "_", beat[2] or "_")
         print(
-            "  {}: {} titles -> {} topics ({} emerged)".format(
-                label, len(bucket_titles), len(topics), len(emerged)
+            "  {:4d}  {}  {}  [{}]".format(
+                c["source_count"], c["date"], beat_str[:50], anchor_str[:30]
             )
         )
-        if event_type == "domestic":
-            bucketed_topics["domestic"] = topics
-        elif event_type == "bilateral":
-            bucketed_topics["bilateral"][bucket_key] = topics
-        else:
-            bucketed_topics["other_international"] = topics
-
-    # Summary
-    all_topics = bucketed_topics["domestic"] + bucketed_topics["other_international"]
-    for bk_topics in bucketed_topics["bilateral"].values():
-        all_topics.extend(bk_topics)
-    emerged_topics = [t for t in all_topics if len(t.titles) >= 2]
-    total_in_topics = sum(len(t.titles) for t in emerged_topics)
-    print(
-        "\nSummary: {} emerged topics covering {} titles ({} catchall)".format(
-            len(emerged_topics),
-            total_in_topics,
-            len(all_titles) - total_in_topics,
-        )
-    )
-
-    # Show top topics
-    emerged_topics.sort(key=lambda t: -len(t.titles))
-    print("\nTop topics:")
-    for t in emerged_topics[:15]:
-        anchor_str = t.get_anchor_summary()
-        print("  {:4d} titles  {}".format(len(t.titles), anchor_str))
 
     if dry_run:
         print("\nDRY RUN -- no database changes. Use --write to apply.")
         conn.close()
         return
 
-    # DESTRUCTIVE: delete existing events and re-create
     print("\nWiping existing events for CTM {}...".format(ctm_id))
-    cur = conn.cursor()
-
-    # Clear merged_into references pointing to events in this CTM
-    cur.execute(
-        """UPDATE events_v3 SET merged_into = NULL
-           WHERE merged_into IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
-        (ctm_id,),
-    )
-    unmerged = cur.rowcount
-    if unmerged:
-        print("  Cleared {} merged_into references".format(unmerged))
-
-    # Delete narrative matches, title links, then events
-    cur.execute(
-        """DELETE FROM event_strategic_narratives
-           WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
-        (ctm_id,),
-    )
-    narr_deleted = cur.rowcount
-
-    cur.execute(
-        "DELETE FROM event_v3_titles WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)",
-        (ctm_id,),
-    )
-    links_deleted = cur.rowcount
-
-    cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
-    events_deleted = cur.rowcount
-
-    print(
-        "  Deleted: {} events, {} title links, {} narrative matches".format(
-            events_deleted, links_deleted, narr_deleted
-        )
-    )
-
-    # Write new events
-    written = write_bucketed_topics_to_db(conn, bucketed_topics, ctm_id, min_titles=2)
+    _wipe_ctm_events(conn, ctm_id)
+    written = write_clusters_to_db(conn, clusters, ctm_id)
     conn.commit()
     print("  Created: {} new events".format(written))
     conn.close()
@@ -1407,117 +920,11 @@ def recluster_ctm(ctm_id: str, dry_run: bool = True, method: str = "louvain"):
 # =============================================================================
 
 
-def process_ctm(ctm_id: str, dry_run: bool = True):
-    """Process CTM with incremental clustering (non-destructive)."""
-    conn = get_connection()
-
-    ctm_info = get_ctm_info(conn, ctm_id)
-    if not ctm_info:
-        print("CTM not found: {}".format(ctm_id))
-        conn.close()
-        return
-
-    centroid_id = ctm_info["centroid_id"]
-    track = ctm_info["track"]
-    print("Processing CTM: {} / {}".format(centroid_id, track))
-    print("Month: {}".format(ctm_info["month"]))
-
-    weights = get_weights(track)
-    discriminators = get_discriminators(track)
-
-    print("\nTrack config:")
-    print(
-        "  Weights: {}".format(
-            ", ".join("{}={:.1f}".format(k, v) for k, v in weights.items())
-        )
-    )
-    print("  Discriminators: {}".format(discriminators))
-    print("  Join threshold: {}".format(JOIN_THRESHOLD))
-
-    # Load only NEW titles not yet linked to events
-    print("\nLoading new titles (not yet linked to events)...")
-    new_titles = load_new_titles_only(conn, ctm_id)
-
-    if not new_titles:
-        print("No new titles to process.")
-        conn.close()
-        return
-
-    print("Found {} new titles".format(len(new_titles)))
-
-    # Filter publisher signals
-    publisher_patterns = load_publisher_patterns(conn)
-    for title in new_titles:
-        title["orgs"] = filter_publisher_signals(
-            title.get("orgs", []), publisher_patterns
-        )
-
-    # Load existing topics
-    existing_topics, catchall_ids = load_existing_topics(conn, ctm_id)
-    existing_count = sum(len(v) for v in existing_topics.values())
-    print("Existing topics: {}".format(existing_count))
-    print("Existing catchalls: {}".format(len(catchall_ids)))
-
-    # Bucket new titles
-    print("\n--- Geographic Bucketing ---")
-    buckets = bucket_titles_by_centroid(new_titles, centroid_id)
-    print("Domestic: {} titles".format(len(buckets["domestic"])))
-    for c in sorted(buckets["bilateral"], key=lambda x: -len(buckets["bilateral"][x])):
-        print("  Bilateral {}: {} titles".format(c, len(buckets["bilateral"][c])))
-    print("Other International: {} titles".format(len(buckets["other_international"])))
-
-    # Per bucket: match + cluster
-    print("\n--- Matching + Clustering ---")
-    bucket_results = {}
-    for event_type, bucket_key, bucket_titles in _iterate_buckets(buckets):
-        key = (event_type, bucket_key)
-        existing = existing_topics.get(key, [])
-
-        matched, unmatched = match_new_titles_to_existing(
-            bucket_titles, existing, weights, discriminators
-        )
-        new_topics = cluster_incrementally(unmatched, weights, discriminators)
-
-        label = event_type if not bucket_key else "{} {}".format(event_type, bucket_key)
-        matched_count = sum(len(v) for v in matched.values())
-        print(
-            "  {}: {} matched, {} unmatched -> {} new topics".format(
-                label, matched_count, len(unmatched), len(new_topics)
-            )
-        )
-        bucket_results[key] = (matched, new_topics, [], event_type, bucket_key)
-
-    if not dry_run:
-        print("\nWriting to database (non-destructive)...")
-        written = write_incremental_results(
-            conn, ctm_id, bucket_results, catchall_ids, min_titles=2
-        )
-        print("Wrote {} new events".format(written))
-    else:
-        print("\n(DRY RUN - use --write to save)")
-
-    conn.close()
-
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Incremental topic clustering")
+    parser = argparse.ArgumentParser(description="D-056 day-beat clustering")
     parser.add_argument("--ctm-id", required=True, help="CTM ID to process")
-    parser.add_argument("--dry-run", action="store_true", default=True)
-    parser.add_argument("--write", action="store_true", help="Save to database")
     parser.add_argument(
-        "--recluster",
-        action="store_true",
-        help="Wipe existing events and recluster from scratch",
+        "--write", action="store_true", help="Apply changes (default: dry run)"
     )
-    parser.add_argument(
-        "--method",
-        choices=["louvain", "signal"],
-        default="louvain",
-        help="Clustering method for recluster (default: louvain)",
-    )
-
     args = parser.parse_args()
-    if args.recluster:
-        recluster_ctm(args.ctm_id, dry_run=not args.write, method=args.method)
-    else:
-        process_ctm(args.ctm_id, dry_run=not args.write)
+    recluster_ctm(args.ctm_id, dry_run=not args.write)

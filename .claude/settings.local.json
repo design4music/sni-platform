@@ -2,78 +2,31 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(ls:*)",
-      "Bash(taskkill:*)",
+      "Bash(*)",
       "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\data/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\docs\\tickets/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\data/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\data/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\core/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\core/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\core/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\clust2/**)",
-      "Bash(psql:*)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\archive\\database_migrations/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\archive\\etl_pipeline\\core/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\db\\migrations/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\gen1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\docs\\tickets/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\clust1/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI/**)",
-      "Read(/C:\\Users\\Maksim\\Documents\\SNI\\apps\\ingest/**)",
       "WebSearch",
-      "Bash(mkdir:*)",
-      "Bash(npx create-next-app:*)",
-      "Bash(npx create-next-app@latest:*)",
-      "Bash(npm run build:*)",
-      "Bash(dir /B /S /A-D)",
-      "Bash(findstr:*)",
-      "Bash(python db/check_tracks.py:*)",
-      "Bash(timeout 30 npm run dev:*)",
-      "Bash(dir)",
-      "Bash(if [ -f .env.local ])",
-      "Bash(then cat .env.local)",
-      "Bash(else echo \".env.local NOT found\")",
-      "Bash(fi)",
-      "Bash(netstat:*)",
-      "Bash(npm run dev)",
-      "Bash(curl:*)",
-      "Bash(npm run check-db:*)",
-      "Bash(node -e:*)",
-      "Bash(node:*)",
-      "Bash(python:*)",
-      "Bash(\"C:/Program Files/PostgreSQL/17/bin/psql.exe\" -U postgres -d sni -c \"\nSELECT actor, COUNT\\(*\\) as cnt\nFROM title_labels\nGROUP BY actor\nORDER BY cnt DESC\nLIMIT 20;\")"
+      "mcp__postgres__*",
+      "mcp__asana__*",
+      "mcp__google-drive__*"
     ],
     "deny": []
-  }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo {\"decision\": \"allow\"}"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "postgres",
+    "asana",
+    "google-drive"
+  ]
 }

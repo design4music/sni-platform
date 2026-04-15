@@ -5,8 +5,10 @@ All active prompts in one place for easy maintenance and optimization.
 Version: 4.0 (deduplicated prose rules + shared event summary preamble)
 
 Prompts by Phase:
-- Phase 3: Intel Gating + Track Assignment
-- Phase 3.5: Label + Signal Extraction
+- Phase 3.1: Label + Signal Extraction
+  (Phase 3.3 Intel Gating + LLM Track Assignment removed in ELO v3.0 --
+   exclusion now happens at Phase 3.1 via sector=NON_STRATEGIC; track
+   assignment is mechanical sector->track lookup.)
 - Phase 4.1: Topic Consolidation (Anchor-Candidate Dedup)
 - Phase 4.3: Cross-Bucket Event Merging
 - Phase 4.5: CTM Summary Generation
@@ -31,56 +33,17 @@ TROLLING: Treat officials' comments on adversaries' disputes as rhetorical explo
 
 PROSE_WRITING_RULES = PROSE_RULES  # legacy alias
 
-# --- PHASE 3: INTEL GATING ---
+# --- PHASE 3.1: LABEL + SIGNAL EXTRACTION ---
 
-INTEL_GATING_PROMPT = """You are an intelligence analyst reviewing {num_titles} news titles for {centroid_label}.
+LABEL_SIGNAL_EXTRACTION_PROMPT = """Extract structured event labels and typed signals from news titles.
 
-TASK: Identify which titles contain strategic intelligence value. Be INCLUSIVE - when in doubt, mark as strategic.
+## EVENT LABEL
+Format: ACTOR -> ACTION_CLASS -> DOMAIN -> TARGET (TARGET required; "NONE" if non-directed).
 
-STRATEGIC (ACCEPT): Government policy/legislation/regulations, international relations/diplomacy/summits, military/defense/security/terrorism, economic policy/trade/sanctions/tariffs, energy markets/supply disruptions, elections/protests/coups/transitions, court rulings with policy implications, strategic resources (water/minerals/food), technology with geopolitical impact (semiconductors/AI/cyber), major industrial policy/labor disputes.
-
-NON-STRATEGIC (REJECT):
-- SPORTS: reject all athletics, leagues, tournaments, player transfers, match results, standings, coaching. Sports leaks through via international events (Olympics, World Cup) and conflict language ("battle", "attack", "defense"). Still reject - no strategic value.
-- Entertainment/celebrity, health/wellness tips, recipes, lifestyle
-- Local crime without systemic implications, human interest stories
-- Real estate ads, local business openings
-- Weather forecasts (unless major disaster)
-
-Titles:
-{titles_text}
-
-Return ONLY valid JSON: {{"strategic": [1,3,5], "reject": [2,4,6]}}
-
-When uncertain, prefer STRATEGIC - we want comprehensive coverage."""
-
-# --- PHASE 3: TRACK ASSIGNMENT ---
-
-TRACK_ASSIGNMENT_PROMPT = """You are classifying {num_titles} strategic news titles for {centroid_label}.
-
-Choose the ONE best track for each title based on its dominant theme.
-
-Tracks:
-{tracks_list}
-
-Context: {centroid_label} | {month}
-
-Titles:
-{titles_text}
-
-Return ONLY valid JSON: {{"1": "track_name", "2": "track_name"}}"""
-
-# --- PHASE 3.5: LABEL + SIGNAL EXTRACTION ---
-
-LABEL_SIGNAL_EXTRACTION_PROMPT = """You are an expert news analyst. Extract structured event labels AND typed signals from news titles.
-
-## PART 1: EVENT LABEL
-Format: ACTOR -> ACTION_CLASS -> DOMAIN -> TARGET (TARGET is REQUIRED; use "NONE" for non-directed events)
-
-ACTION CLASSES (7-tier hierarchy - lower tier = higher priority):
+ACTION CLASSES (7 tiers, lower = higher priority):
 {action_classes}
 
-DOMAINS:
-{domains}
+DOMAINS: {domains}
 
 ACTOR TYPES:
 {actors}
@@ -89,30 +52,24 @@ ACTOR TYPES:
 
 {target_rules}
 
-## PART 2: SIGNALS
-Extract typed signals from each title (4 categories):
-- persons: LAST_NAME only, uppercase (TRUMP, POWELL, ZELENSKY)
-- orgs: Organizations/companies/armed groups, uppercase (NATO, FED, NVIDIA, HAMAS, ISIS)
-- places: Sub-national locations, Title case (Crimea, Gaza, Greenland). NO COUNTRIES.
-- named_events: Named operations/summits/conferences, Title case (G20 Summit, COP28, Operation Epic Fury)
+## SIGNALS
+- persons: LAST_NAME uppercase (TRUMP, POWELL)
+- orgs: organizations/companies/armed groups, uppercase (NATO, NVIDIA, HAMAS). NO publishers (WSJ, Reuters, BBC, CNN, Politico).
+- places: sub-national locations, Title case, SHORTEST DISTINCTIVE NAME. Use the geographic locator, never the facility descriptor: "Minab" not "Minab Girls School", "Auvere" not "Auvere Power Plant", "Kharg" not "Kharg Island Oil Terminal", "Ramstein" not "Ramstein Air Base", "Natanz" not "Natanz Nuclear Facility", "Karachi" not "US Embassy Karachi". Cities/regions/districts/towns (Crimea, Gaza, Hormuz). NO countries.
+- named_events: named operations/summits, Title case (G20 Summit, COP28).
+- industries: closed vocab below, multi-value (max 3), populate only when materially relevant. Empty [] if no industry. Don't guess.
+- ENGLISH ONLY: translate foreign terms.
 
-SIGNAL RULES:
-- ENGLISH ONLY - translate foreign terms (Pekin->Beijing, Donetsk->Donetsk)
-- NO PUBLISHERS as orgs (WSJ, Reuters, BBC, CNN). Companies/armed groups -> orgs.
+INDUSTRIES (closed vocab):
+{industries}
 
-## PART 3: ENTITY COUNTRIES
-Map entities to PRIMARY country using ISO 2-letter codes: {{"ENTITY_NAME": "ISO_CODE", ...}}
+## ENTITY COUNTRIES
+Map entities -> ISO codes: {{"ENTITY_NAME": "ISO_CODE"}}.
+- Adjectives: French->FR, Ukrainian->UA, German->DE, British->GB.
+- Politicians -> country of office (MACRON->FR). Companies -> HQ (TSMC->TW). Sub-national places -> parent (Crimea->UA, Gaza->PS). IGOs/groups -> code (NATO->NATO, HAMAS->PS).
+- Skip country names themselves.
 
-COUNTRY ADJECTIVES: ANY adjective -> ISO code (French->FR, Ukrainian->UA, German->DE, British->GB). Declined forms in any language -> normalize.
-
-ENTITY MAPPINGS: Politicians -> country of office (MACRON->FR, RUBIO->US). Companies -> HQ (TSMC->TW, BOEING->US). Sub-national places -> parent (Crimea->UA, Greenland->DK). Systems -> owner (Nord Stream->RU). IGOs -> org code (NATO->NATO). Armed groups -> special codes (HAMAS->PS, ISIS->ISIS).
-
-SKIP: Country names themselves (US, China, France) - handled separately.
-
-## PART 4: SECTOR + SUBJECT
-Classify each title into a SECTOR (required) and SUBJECT (required). These are CONTROLLED VOCABULARIES -- use ONLY these values. Always pick the closest match -- never return null for subject.
-
-SECTORS and their SUBJECTS:
+## SECTOR + SUBJECT (controlled vocab, both required)
 - MILITARY: NUCLEAR, NAVAL, AERIAL, MISSILE, GROUND_FORCES, AIR_DEFENSE, DRONE, SPACE, DEFENSE_POLICY
 - INTELLIGENCE: ESPIONAGE, SURVEILLANCE, COVERT_OPERATION
 - SECURITY: TERRORISM, INSURGENCY, ORGANIZED_CRIME, CIVIL_UNREST, BORDER_SECURITY, LAW_ENFORCEMENT
@@ -126,17 +83,40 @@ SECTORS and their SUBJECTS:
 - INFRASTRUCTURE: TRANSPORT, SHIPPING, CONSTRUCTION, SUPPLY_CHAIN, POWER_GRID
 - NON_STRATEGIC: SPORTS, ENTERTAINMENT, CELEBRITY, LIFESTYLE, LOCAL_CRIME, WEATHER
 
-NON_STRATEGIC = no geopolitical or strategic value. Use it for: sports results/leagues/transfers/tournaments, concerts/celebrity news, recipes/lifestyle, routine local crime, weather. Sports leak through via conflict language ("battle", "attack") -- still NON_STRATEGIC. When in doubt between SOCIETY and NON_STRATEGIC: if it has no policy/government/international dimension, use NON_STRATEGIC.
+### NON_STRATEGIC scope (3 cases):
+(a) TOPIC out of scope: sports, entertainment/celebrity, lifestyle/recipes, tourism, e-commerce promos, local crime, weather forecasts (disasters -> SOCIETY/NATURAL_DISASTER).
+(b) CONTENT-TYPE out of scope: editorials, opinion columns, analysis/features ("Why X matters"), profiles, previews/listicles/explainers, anonymous analyst takes, obituaries, speculation, trend pieces without a specific event.
+(c) ROUTINE STATS: CPI/GDP/jobs/forex/credit/factory data. Only MARKET_SHOCK if shock-level ("fastest in X years", "worst since", "record", "collapses").
 
-CLASSIFICATION TRAPS: Fact-checking articles about AI-generated fakes/deepfakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY). The subject is media integrity, not AI technology. Opinion columns and book reviews about a leader -> SOCIETY/MEDIA_PRESS (not the leader's sector).
+LANGUAGE never a reason for NON_STRATEGIC. Classify foreign-language content by meaning.
 
-Examples: "Macron increases nuclear arsenal" -> MILITARY/NUCLEAR. "Oil prices surge" -> ENERGY_RESOURCES/OIL_GAS. "FBI investigates bar shooting" -> SECURITY/TERRORISM. "EU tariffs on China" -> ECONOMY/TRADE. "Carrier deployed to Mediterranean" -> MILITARY/NAVAL. "Lyon beats Marseille in Ligue 1" -> NON_STRATEGIC/SPORTS. "AI-generated video falsely shows Iranian missiles" -> SOCIETY/MEDIA_PRESS.
+KEEP titles with named figure/institution attribution -> STATEMENT (Trump says, Fed projects, Bernstein warns).
+
+### Classification traps:
+- Fact-checks of AI fakes/disinformation -> SOCIETY/MEDIA_PRESS (not TECHNOLOGY).
+- Book reviews of leaders -> NON_STRATEGIC.
+- Court rulings/dismissals/verdicts AND lawsuits AND injunctions -> action=LEGAL_ACTION (one class).
+- Trade probes (Section 301/232, anti-dumping, CFIUS) -> action=REGULATORY_ACTION (admin, not legal).
+
+### Examples:
+- "Macron increases nuclear arsenal" -> MILITARY_OPERATION, MILITARY/NUCLEAR
+- "Oil tops $100 as war rages" -> MARKET_SHOCK, ENERGY_RESOURCES/OIL_GAS
+- "U.S. loses 92,000 jobs in unexpected downturn" -> MARKET_SHOCK
+- "US consumer prices increase as expected" -> NON_STRATEGIC (routine stat)
+- "Judge dismisses lawsuit by X" -> LEGAL_ACTION
+- "24 US states sue Trump" -> LEGAL_ACTION
+- "US launches 301 probes into EU" -> REGULATORY_ACTION
+- "Trump says Iran war could last weeks" -> STATEMENT, GOVERNANCE/EXECUTIVE_ACTION
+- "Bernstein warns rupee could breach 98/USD" -> STATEMENT, ECONOMY/CURRENCY
+- "French elect mayors in key cities" -> ELECTORAL_EVENT, GOVERNANCE/ELECTION
+- "The Guardian view on France | Editorial" -> NON_STRATEGIC
+- "日産、SUV「ムラーノ」を米国から逆輸入" -> COMMERCIAL_TRANSACTION, ECONOMY (non-English commercial)
 
 ## OUTPUT
-Return JSON array:
-[{{"idx": 1, "actor": "US_EXECUTIVE", "action": "POLICY_CHANGE", "domain": "ECONOMY", "target": "CN", "conf": 0.9, "sector": "ECONOMY", "subject": "TRADE", "persons": ["TRUMP"], "orgs": [], "places": [], "named_events": [], "entity_countries": {{"TRUMP": "US"}}}}]
+JSON array, no prose:
+[{{"idx":1,"actor":"US_EXECUTIVE","action":"POLICY_CHANGE","domain":"ECONOMY","target":"CN","conf":0.9,"sector":"ECONOMY","subject":"TRADE","persons":["TRUMP"],"orgs":[],"places":[],"named_events":[],"industries":["SEMICONDUCTORS"],"entity_countries":{{"TRUMP":"US"}}}}]
 
-Country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_. IGOs without prefix: UN, NATO, EU. TARGET: ISO codes or canonical names. conf 0.0-1.0. Return ONLY valid JSON. Empty arrays [] for no matches."""
+Country prefixes for state actors: US_, RU_, CN_, UK_, FR_, DE_. IGOs bare: UN, NATO, EU. TARGET: ISO codes or canonical names. conf 0.0-1.0. ONLY valid JSON. Empty arrays for no matches."""
 
 # --- PHASE 4.1: ANCHOR-CANDIDATE TOPIC CONSOLIDATION ---
 
@@ -219,8 +199,7 @@ Only groups of 2+. If none needed: {{"groups": []}}. IDs must be valid. Each eve
 # --- PHASE 4.5: CTM SUMMARY GENERATION ---
 
 CTM_SUMMARY_SYSTEM_PROMPT = (
-    """You are a strategic intelligence analyst writing monthly summary reports.
-Generate a 150-250 word narrative digest from the provided event summaries.
+    """Generate a 150-250 word monthly narrative digest from the provided event summaries.
 
 Event summaries are ordered by significance (source count). Higher count = more important.
 
@@ -235,6 +214,9 @@ Requirements:
 
 Do NOT: list bullet points, include source counts, use sensational language, add info not present, speculate.
 
+OUTPUT: {"summary_en": "...", "summary_de": "..."}
+- summary_de: natural German, same facts and tone, 150-250 words.
+
 """
     + PROSE_RULES
     + """
@@ -248,7 +230,7 @@ CTM_SUMMARY_USER_PROMPT = """{context}
 
 {events_text}
 
-Generate a 150-250 word monthly digest:"""
+Generate JSON:"""
 
 # --- PHASE 4.5A: EVENT SUMMARY GENERATION ---
 
@@ -266,10 +248,10 @@ _EVENT_SUMMARY_IDENTIFY = (
     '(e.g. "Powell, the Federal Reserve chair..." or "Dimon, who runs JPMorgan...").'
 )
 
-# -- Tier 1: TITLE-ONLY (1-4 sources) --
+# -- Tier 1: TITLE-ONLY (1-4 sources, used only when no English source exists) --
 EVENT_SUMMARY_PROMPT_TITLE_ONLY = """Generate a short, plain-language news title (5-12 words) from these headlines.
 
-Return JSON: {"title": "Short descriptive title", "summary": "", "coherent": true}
+Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "", "summary_de": "", "coherent": true}
 
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
@@ -277,14 +259,15 @@ Rules:
 - Describe the core story, not just a person or entity
 - No jargon or abbreviations on first mention
 - Do NOT add roles/titles unless they appear in the headlines
-- Do NOT invent information"""
+- Do NOT invent information
+- title_de: natural German, not literal word-for-word"""
 
 # -- Tier 2: MINI (5-10 sources) --
 EVENT_SUMMARY_PROMPT_MINI = (
     """You explain news topics in plain, conversational language.
 
 TASK: Generate a title and short summary from a cluster of headlines.
-OUTPUT: Return JSON: {"title": "...", "summary": "2-3 sentence factual summary", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "2-3 sentence factual summary", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
@@ -293,7 +276,8 @@ RULES:
     + """
 - Summary: state what happened in 2-3 sentences. Stick to facts from the headlines.
 - Briefly identify unfamiliar people from headline context.
-- If headlines cover unrelated stories, summarize only the dominant topic."""
+- If headlines cover unrelated stories, summarize only the dominant topic.
+- title_de + summary_de: natural German, same facts, same tone, same length."""
 )
 
 # -- Tier 3: MEDIUM (11-50 sources) --
@@ -302,7 +286,7 @@ EVENT_SUMMARY_PROMPT_MEDIUM = (
     + """
 
 TASK: Generate a title and summary for a news topic cluster.
-OUTPUT: Return JSON: {"title": "...", "summary": "Conversational explanation (1-2 paragraphs)", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "Conversational explanation (1-2 paragraphs)", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
@@ -318,6 +302,7 @@ RULES:
 - Include key facts, numbers, and outcomes from headlines.
 - Do NOT force unrelated headlines into false coherence.
 - No phrases like "amid growing concerns" or "sparking debate".
+- title_de + summary_de: natural German, same facts, same tone, same length.
 
 """
     + PROSE_RULES
@@ -329,7 +314,7 @@ EVENT_SUMMARY_PROMPT_MAXI = (
     + """
 
 TASK: Generate a title and summary for a large news topic cluster.
-OUTPUT: Return JSON: {"title": "...", "summary": "Conversational explanation (2-3 paragraphs)", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "Conversational explanation (2-3 paragraphs)", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
@@ -346,6 +331,7 @@ RULES:
 - Include key facts, numbers, and outcomes from headlines.
 - If headlines cover unrelated stories, summarize only the dominant topic.
 - No phrases like "amid growing concerns" or "sparking debate".
+- title_de + summary_de: natural German, same facts, same tone, same length.
 
 """
     + PROSE_RULES
@@ -634,3 +620,55 @@ the same story), respond ONLY with this JSON object:
 
 Only proceed with frame extraction if the headlines genuinely cover the same overarching \
 event or story from different editorial stances."""
+
+
+# --- PHASE 4.5-DAY: DAILY BRIEF ---
+
+DAILY_BRIEF_SYSTEM_PROMPT = (
+    """Write a 150-250 word daily news brief from today's top stories.
+
+STRUCTURE:
+- 1-5 thematic blocks (paragraphs or bullets), grouped by content similarity
+- Lead with most-covered theme
+- Weight by source count
+- No headers, no meta-framing
+- Synthesize, don't list stories
+
+YESTERDAY DEDUP:
+- Yesterday's story titles provided for identity dedup only
+- Match only when unambiguous: same incident, actors, location, action. When in doubt, treat as new.
+- On match: still include in today's brief, append "(ongoing coverage)" to that sentence
+- No "as reported", "continuing", "aftermath", no causality between days
+
+"""
+    + PROSE_RULES
+    + """
+
+OUTPUT: {"brief_en": "...", "brief_de": "...", "coherent": true}
+- brief_de: natural German, same facts, 150-250 words
+- coherent: false if today's stories are entirely incoherent as a set"""
+)
+
+DAILY_BRIEF_USER_PROMPT = """Date: {date}
+
+TODAY ({today_count} stories):
+{today_stories_text}
+{yesterday_block}
+
+Generate brief:"""
+
+
+# --- DE TITLE BATCH TRANSLATION (for small English-source clusters) ---
+
+DE_TITLE_BATCH_SYSTEM_PROMPT = """Translate each numbered English news headline to German.
+
+Rules:
+- Natural German, not literal word-for-word
+- Preserve proper nouns (names, places, organizations) in their German-conventional form
+- Neutral tone, no editorializing
+- Keep length roughly equivalent to the original
+
+Output one translation per line with the SAME numbering as the input.
+No JSON, no commentary, no blank lines. Numbered translations only."""
+
+DE_TITLE_BATCH_USER_PROMPT = """{titles_text}"""

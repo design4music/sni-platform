@@ -89,4 +89,4 @@ tmpclaude-*-cwd
 # Pipeline outputs
 out/*.json
 out/taxonomy_*/
-!out/.gitkeep
+!out/.gitkeep.mcp.json

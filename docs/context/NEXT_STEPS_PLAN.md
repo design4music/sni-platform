@@ -57,18 +57,16 @@
 
 ---
 
-## Phase 1: Foundation (This Week)
+## Phase 1: Foundation ~~(This Week)~~ DONE
 
-### 1.1 Switch to 4 Tracks (All Months)
-- Remap Jan/Feb CTMs: geo_energy → geo_economy, geo_humanitarian → geo_society, geo_information → geo_politics
-- Fix April: wire SECTOR_TO_TRACK mechanical mapping into Phase 3.3 (replace LLM gating)
-- Delete old-track CTMs that have no events
-- **Effort**: 1-2 hours, mostly SQL + one code change
+### 1.1 Switch to 4 Tracks (All Months) -- DONE (2026-04-08)
+- ~~Remap Jan/Feb CTMs: geo_energy → geo_economy, geo_humanitarian → geo_society, geo_information → geo_politics~~
+- ~~Fix April: wire SECTOR_TO_TRACK mechanical mapping into Phase 3.3 (replace LLM gating)~~
+- ~~Delete old-track CTMs that have no events~~
 
-### 1.2 Rebuild Jan/Feb with Layered Clustering
-- Run prototype_layered.py on all Jan/Feb CTMs
-- Build event families for Jan/Feb
-- **Effort**: ~2 hours (LLM calls)
+### 1.2 Rebuild Jan/Feb with Layered Clustering -- NEEDS VERIFICATION
+- ~~Run prototype_layered.py on all Jan/Feb CTMs~~
+- ~~Build event families for Jan/Feb~~
 
 ### 1.3 Run Epic Detection for March
 - Run existing epic detection pipeline on March data

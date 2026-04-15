@@ -4,7 +4,7 @@ SNI v3 Pipeline Daemon -- 4-Slot Architecture
 Scheduling slots (phases run sequentially within each slot):
 - Slot 1 INGESTION   (12h):  Phase 1 (RSS) + Phase 2 (centroid matching)
 - Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
-- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1 + 4.3 + 4.4 + 4.2a-f (incl. narrative matching)
+- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1a (titles) + 4.1 (families) + 4.1b (merge) + 4.2a-f (incl. narrative matching)
 - Slot 4 ENRICHMENT  (6h):   Phase 4.5a + 4.5b + 4.2g (LLM narrative discovery) + 4.2h (LLM review)
 - Daily purge: Remove rejected titles + reset api_error_count
 
@@ -35,23 +35,17 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
     backfill_entity_centroids as phase32_backfill,
 )
 from pipeline.phase_3_3.assign_tracks_mechanical import process_batch as phase33_process
-from pipeline.phase_4.consolidate_topics import process_ctm as phase41_aggregate
-from pipeline.phase_4.generate_event_summaries_4_5a import (
-    process_events as phase45a_event_summaries,
-)
-from pipeline.phase_4.generate_summaries_4_5 import (
-    process_ctm_batch as phase45_summaries,
-)
+from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble_families
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
-from pipeline.phase_4.merge_related_events import (
-    find_ctms_needing_merge,
-)
-from pipeline.phase_4.merge_related_events import process_ctm_merge as phase43_merge
-from pipeline.phase_4.merge_sibling_events import (
-    run_sibling_merge as phase44_sibling_merge,
-)
+
+# Unplugged (D-053): 4.1 (LLM topic aggregation), 4.3 (cross-bucket merge),
+# 4.4 (sibling merge) -- replaced by mechanical family assembly
+# Unplugged (D-056): 4.1a (mechanical titles -- now in write_clusters_to_db fallback)
+#                    4.1b (Dice merge -- day-beat clustering needs no merge)
+# Unplugged (D-058): 4.5a (event LLM summaries) + 4.5b (CTM LLM digests) --
+#                    pending calendar-day frontend + new daily-prose phase.
 
 
 class PipelineDaemon:
@@ -84,7 +78,6 @@ class PipelineDaemon:
 
         # Batch sizes
         self.classification_batch_size = 500  # Titles per 3.1 and 3.3 run
-        self.aggregation_max_ctms = 25  # CTMs per 4.1 run
         self.enrichment_max_events = 500  # Events per 4.5a run
         self.enrichment_max_ctms = 200  # CTMs per 4.5b run
 
@@ -507,110 +500,51 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
-    def run_topic_aggregation(self, max_ctms: int = 10):
-        """
-        Run topic aggregation (LLM merge/cleanup) for CTMs with NEW content only.
+    # Unplugged (D-053): run_topic_aggregation (Phase 4.1 LLM merge)
+    # Replaced by mechanical family assembly
 
-        INCREMENTAL: Only processes CTMs where title_count increased since last
-        aggregation, or CTMs that were never aggregated.
+    def run_family_assembly(self, max_ctms: int = 25):
+        """Phase 4.1: Mechanical family assembly (spine-based).
 
-        Limits to max_ctms per cycle to avoid blocking the pipeline.
+        Runs on all unfrozen CTMs that have clusters. The module has its own
+        incremental guard (skips if cluster count unchanged and all assigned).
         """
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
-                # Get CTMs that have NEW content since last aggregation
-                # OR have never been aggregated (last_aggregated_at IS NULL)
                 cur.execute(
-                    """
-                    SELECT id, centroid_id, track, title_count
-                    FROM ctm
-                    WHERE title_count >= 3 AND is_frozen = false
-                      AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = ctm.id)
-                      AND (
-                          last_aggregated_at IS NULL
-                          OR title_count > COALESCE(title_count_at_aggregation, 0)
-                      )
-                    ORDER BY
-                        last_aggregated_at NULLS FIRST,
-                        title_count DESC
-                    LIMIT %s
-                    """,
+                    """SELECT id, centroid_id, track, title_count
+                       FROM ctm
+                       WHERE title_count >= 3 AND is_frozen = false
+                         AND EXISTS (SELECT 1 FROM events_v3 e
+                                     WHERE e.ctm_id = ctm.id
+                                       AND NOT e.is_catchall
+                                       AND e.merged_into IS NULL)
+                       ORDER BY title_count DESC
+                       LIMIT %s""",
                     (max_ctms,),
                 )
                 ctms = cur.fetchall()
 
             if not ctms:
-                print("No CTMs need aggregation (all up-to-date)")
+                print("No CTMs need family assembly")
                 return
 
-            print(
-                "Processing {} CTMs with new content (limit {})...".format(
-                    len(ctms), max_ctms
-                )
-            )
+            print("Family assembly: %d CTMs..." % len(ctms))
             for ctm_id, centroid_id, track, title_count in ctms:
                 try:
-                    print(
-                        "  Aggregating {} / {} ({} titles)...".format(
-                            centroid_id, track, title_count
-                        )
-                    )
-                    phase41_aggregate(ctm_id=ctm_id, dry_run=False)
-
-                    # Mark CTM as aggregated with current title count
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            """
-                            UPDATE ctm
-                            SET last_aggregated_at = NOW(),
-                                title_count_at_aggregation = title_count
-                            WHERE id = %s
-                            """,
-                            (ctm_id,),
-                        )
-                    conn.commit()
-
+                    phase41_assemble_families(ctm_id=ctm_id)
                 except Exception as e:
-                    print("  Aggregation failed for {}: {}".format(ctm_id[:8], e))
+                    print("  Family assembly failed for %s: %s" % (ctm_id[:8], e))
 
         finally:
             self.return_connection(conn)
 
-    def run_event_merge(self, max_ctms: int = 10):
-        """Phase 4.3: Cross-bucket event merging for high-importance CTMs."""
-        conn = self.get_connection()
-        try:
-            ctms = find_ctms_needing_merge(conn)
-            if not ctms:
-                print("No CTMs need cross-bucket merging")
-                return
-
-            ctms = ctms[:max_ctms]
-            print("Phase 4.3: {} CTMs qualifying for merge".format(len(ctms)))
-            total = 0
-            for ctm in ctms:
-                try:
-                    merged = phase43_merge(conn, ctm["ctm_id"])
-                    total += merged
-                except Exception as e:
-                    print(
-                        "  Merge failed for {} / {}: {}".format(
-                            ctm["centroid_id"], ctm["track"], e
-                        )
-                    )
-            if total:
-                print("Phase 4.3: merged {} events total".format(total))
-        finally:
-            self.return_connection(conn)
-
-    def run_sibling_merge(self, max_months=3):
-        """Phase 4.4: Cross-centroid sibling event merging."""
-        conn = self.get_connection()
-        try:
-            phase44_sibling_merge(conn=conn, max_months=max_months)
-        finally:
-            self.return_connection(conn)
+    # Unplugged (D-056): run_mechanical_titles (4.1a) -- 4.5a always provides titles
+    # Unplugged (D-056): run_dice_merge (4.1b) -- day-beat clustering needs no merge
+    # Unplugged (D-053): run_event_merge (Phase 4.3 cross-bucket LLM merge)
+    # Unplugged (D-053): run_sibling_merge (Phase 4.4 cross-centroid sibling merge)
+    # Both replaced by mechanical family assembly. Sibling merge to revisit later.
 
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
@@ -660,38 +594,8 @@ class PipelineDaemon:
 
         review_operational()
 
-    async def run_event_summaries(self, max_events: int = 100):
-        """Generate summaries for events that need them"""
-        conn = self.get_connection()
-        try:
-            with conn.cursor() as cur:
-                # Count events needing summaries (have "Topic:" or no title)
-                cur.execute(
-                    """
-                    SELECT COUNT(*)
-                    FROM events_v3 e
-                    JOIN ctm c ON c.id = e.ctm_id
-                    WHERE c.is_frozen = false
-                      AND (e.title IS NULL OR e.summary LIKE 'Topic:%%')
-                    """
-                )
-                needs_summary = cur.fetchone()[0]
-
-            if needs_summary == 0:
-                print("No events need summaries")
-                return
-
-            print(
-                "Generating summaries for up to {} events ({} need summaries)...".format(
-                    max_events, needs_summary
-                )
-            )
-            await phase45a_event_summaries(
-                max_events=max_events, force_regenerate=False
-            )
-
-        finally:
-            self.return_connection(conn)
+    # run_event_summaries (Phase 4.5a) removed - unplugged D-058.
+    # Mechanical cluster titles come from write_clusters_to_db fallback.
 
     def _run_social(self):
         """Run social posting (Slot 5)."""
@@ -929,36 +833,15 @@ class PipelineDaemon:
                 ),
                 self.timeout_clustering,
             )
-            # Phase 4.1: Topic Aggregation
+            # Phase 4.1: Family Assembly (D-056 adjacent-day chain)
             await self.run_with_timeout(
-                "Phase 4.1: Topic Aggregation",
+                "Phase 4.1: Family Assembly",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
-                    "Phase 4.1: Topic Aggregation",
-                    self.run_topic_aggregation,
-                    max_ctms=self.aggregation_max_ctms,
+                    "Phase 4.1: Family Assembly",
+                    self.run_family_assembly,
                 ),
                 self.timeout_clustering,
-            )
-            # Phase 4.3: Cross-Bucket Event Merging
-            await self.run_with_timeout(
-                "Phase 4.3: Event Merge",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.3: Event Merge",
-                    self.run_event_merge,
-                ),
-                300,
-            )
-            # Phase 4.4: Cross-Centroid Sibling Merge
-            await self.run_with_timeout(
-                "Phase 4.4: Sibling Merge",
-                asyncio.to_thread(
-                    self.run_phase_with_retry,
-                    "Phase 4.4: Sibling Merge",
-                    self.run_sibling_merge,
-                ),
-                300,
             )
             # Phase 4.2: Materialize pre-computed views (mv_* tables)
             await self.run_with_timeout(
@@ -1022,30 +905,13 @@ class PipelineDaemon:
             )
             print("\nSlot 3 CLUSTERING: next in %ds" % remaining)
 
-        # --- SLOT 4: ENRICHMENT (Phase 4.5a + Phase 4.5b) ---
+        # --- SLOT 4: ENRICHMENT ---
+        # Phase 4.5a (event summaries) and Phase 4.5b (CTM summaries) are
+        # DISABLED pending the day-centric frontend redesign. Cluster titles
+        # come from the mechanical fallback in incremental_clustering.
+        # write_clusters_to_db. A new daily-prose phase will replace both
+        # 4.5a and 4.5b once the calendar view ships.
         if self.should_run_slot("enrichment"):
-            # Phase 4.5a: Event Summaries
-            await self.run_with_timeout(
-                "Phase 4.5a: Event Summaries",
-                self.run_phase_with_retry(
-                    "Phase 4.5a: Event Summaries",
-                    self.run_event_summaries,
-                    max_events=self.enrichment_max_events,
-                ),
-                self.timeout_enrichment,
-            )
-            # Phase 4.5b: CTM Summary Generation
-            if stats["ctms_need_summary"] > 0:
-                await self.run_with_timeout(
-                    "Phase 4.5b: CTM Summary Generation",
-                    self.run_phase_with_retry(
-                        "Phase 4.5b: CTM Summary Generation",
-                        phase45_summaries,
-                        max_ctms=self.enrichment_max_ctms,
-                    ),
-                    self.timeout_enrichment,
-                )
-                self.monitor_summary_word_counts()
             # Phase 4.2g: LLM narrative discovery (ideological tier, new events only)
             await self.run_with_timeout(
                 "Phase 4.2g: LLM Narrative Discovery",
@@ -1148,7 +1014,6 @@ class PipelineDaemon:
         print("  Daily Purge:           %dh" % (self.purge_interval // 3600))
         print("\nBatch Sizes:")
         print("  Classification: %d titles/run" % self.classification_batch_size)
-        print("  Aggregation:    %d CTMs/run" % self.aggregation_max_ctms)
         print("  Event summaries: %d events/run" % self.enrichment_max_events)
         print("  CTM summaries:   %d CTMs/run" % self.enrichment_max_ctms)
         print("\nPress Ctrl+C to shutdown gracefully\n")
