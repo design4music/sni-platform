@@ -30,3 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_daily_briefs_date
     ON daily_briefs (date);
 
 COMMIT;
+
+-- Addendum 2026-04-16: day-level thematic labels (mechanical, computed from title_labels)
+ALTER TABLE daily_briefs ADD COLUMN IF NOT EXISTS themes jsonb;
+COMMENT ON COLUMN daily_briefs.themes IS 'Top sector/subject pairs with normalized weights, computed from promoted cluster title_labels';

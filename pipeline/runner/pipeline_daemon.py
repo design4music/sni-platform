@@ -35,17 +35,15 @@ from pipeline.phase_3_2.backfill_entity_centroids import (
     backfill_entity_centroids as phase32_backfill,
 )
 from pipeline.phase_3_3.assign_tracks_mechanical import process_batch as phase33_process
-from pipeline.phase_4.assemble_families import process_ctm as phase41_assemble_families
+from pipeline.phase_4.generate_daily_brief_4_5d import process_ctm as phase45d_brief
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
+from pipeline.phase_4.merge_same_day_events import process_ctm as phase40b_merge
+from pipeline.phase_4.promote_and_describe_4_5a import process_ctm as phase45a_promote
 
-# Unplugged (D-053): 4.1 (LLM topic aggregation), 4.3 (cross-bucket merge),
-# 4.4 (sibling merge) -- replaced by mechanical family assembly
-# Unplugged (D-056): 4.1a (mechanical titles -- now in write_clusters_to_db fallback)
-#                    4.1b (Dice merge -- day-beat clustering needs no merge)
-# Unplugged (D-058): 4.5a (event LLM summaries) + 4.5b (CTM LLM digests) --
-#                    pending calendar-day frontend + new daily-prose phase.
+# Deprecated: 4.1 families (D-059), 4.1a/4.1b (D-056), 4.3/4.4 (D-053)
+# Replaced: old 4.5a event summaries + 4.5b CTM digests (D-058) -> new 4.5a promote+describe + 4.5d daily brief
 
 
 class PipelineDaemon:
@@ -503,48 +501,139 @@ class PipelineDaemon:
     # Unplugged (D-053): run_topic_aggregation (Phase 4.1 LLM merge)
     # Replaced by mechanical family assembly
 
-    def run_family_assembly(self, max_ctms: int = 25):
-        """Phase 4.1: Mechanical family assembly (spine-based).
+    # Deprecated (D-059): family assembly, mechanical titles, Dice merge, cross-bucket merge, sibling merge
 
-        Runs on all unfrozen CTMs that have clusters. The module has its own
-        incremental guard (skips if cluster count unchanged and all assigned).
+    def run_same_day_merge(self):
+        """Phase 4.0b: Merge fragmented events within same (ctm_id, date).
+
+        Runs on CTMs that were just reclustered (have events but no promoted
+        events yet). Hybrid entity-overlap + title-word Dice. No LLM.
         """
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT id, centroid_id, track, title_count
-                       FROM ctm
-                       WHERE title_count >= 3 AND is_frozen = false
-                         AND EXISTS (SELECT 1 FROM events_v3 e
-                                     WHERE e.ctm_id = ctm.id
-                                       AND NOT e.is_catchall
-                                       AND e.merged_into IS NULL)
-                       ORDER BY title_count DESC
-                       LIMIT %s""",
-                    (max_ctms,),
+                    """SELECT c.id::text, c.centroid_id, c.track
+                       FROM ctm c
+                       WHERE c.is_frozen = false
+                         AND c.title_count >= 3
+                         AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
+                         AND NOT EXISTS (SELECT 1 FROM events_v3 e
+                                        WHERE e.ctm_id = c.id AND e.is_promoted = true)
+                       ORDER BY c.title_count ASC"""
                 )
                 ctms = cur.fetchall()
 
             if not ctms:
-                print("No CTMs need family assembly")
+                print("No CTMs need same-day merge")
                 return
 
-            print("Family assembly: %d CTMs..." % len(ctms))
-            for ctm_id, centroid_id, track, title_count in ctms:
+            print("Phase 4.0b: merging %d CTMs..." % len(ctms))
+            for ctm_id, centroid_id, track in ctms:
                 try:
-                    phase41_assemble_families(ctm_id=ctm_id)
+                    stats = phase40b_merge(ctm_id)
+                    if stats["absorbed"] > 0:
+                        print(
+                            "  %s/%s: %d absorbed into %d groups"
+                            % (
+                                centroid_id,
+                                track,
+                                stats["absorbed"],
+                                stats["merge_groups"],
+                            )
+                        )
                 except Exception as e:
-                    print("  Family assembly failed for %s: %s" % (ctm_id[:8], e))
+                    print("  4.0b failed %s/%s: %s" % (centroid_id, track, e))
 
         finally:
             self.return_connection(conn)
 
-    # Unplugged (D-056): run_mechanical_titles (4.1a) -- 4.5a always provides titles
-    # Unplugged (D-056): run_dice_merge (4.1b) -- day-beat clustering needs no merge
-    # Unplugged (D-053): run_event_merge (Phase 4.3 cross-bucket LLM merge)
-    # Unplugged (D-053): run_sibling_merge (Phase 4.4 cross-centroid sibling merge)
-    # Both replaced by mechanical family assembly. Sibling merge to revisit later.
+    def run_promote_and_describe(self):
+        """Phase 4.5a: Promote top-N clusters per day + LLM title/description.
+
+        Runs on unfrozen CTMs that have events but no promoted events yet
+        (or were reclustered since last promotion).
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT c.id::text, c.centroid_id, c.track
+                       FROM ctm c
+                       WHERE c.is_frozen = false
+                         AND c.title_count >= 3
+                         AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
+                         AND NOT EXISTS (SELECT 1 FROM events_v3 e
+                                        WHERE e.ctm_id = c.id AND e.is_promoted = true)
+                       ORDER BY c.title_count ASC"""
+                )
+                ctms = cur.fetchall()
+
+            if not ctms:
+                print("No CTMs need promotion + LLM prose")
+                return
+
+            print("Phase 4.5a: %d CTMs need promotion..." % len(ctms))
+            import asyncio
+
+            for ctm_id, centroid_id, track in ctms:
+                try:
+                    stats = asyncio.run(phase45a_promote(ctm_id))
+                    print("  %s/%s: %s" % (centroid_id, track, stats))
+                except Exception as e:
+                    print("  4.5a failed %s/%s: %s" % (centroid_id, track, e))
+
+        finally:
+            self.return_connection(conn)
+
+    def run_daily_briefs(self):
+        """Phase 4.5-day: Generate daily thematic briefs for qualifying dates.
+
+        Runs on unfrozen CTMs that have promoted events but missing daily_briefs
+        for dates that qualify (>DAILY_BRIEF_MIN_CLUSTERS promoted on that date).
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT DISTINCT c.id::text, c.centroid_id, c.track
+                       FROM ctm c
+                       WHERE c.is_frozen = false
+                         AND EXISTS (SELECT 1 FROM events_v3 e
+                                    WHERE e.ctm_id = c.id AND e.is_promoted = true)
+                         AND EXISTS (
+                           SELECT 1 FROM (
+                             SELECT e.date, COUNT(*) AS n
+                               FROM events_v3 e
+                              WHERE e.ctm_id = c.id AND e.is_promoted = true
+                              GROUP BY e.date
+                              HAVING COUNT(*) > 5
+                           ) q
+                           WHERE NOT EXISTS (
+                             SELECT 1 FROM daily_briefs db
+                              WHERE db.ctm_id = c.id AND db.date = q.date
+                           )
+                         )
+                       ORDER BY c.centroid_id"""
+                )
+                ctms = cur.fetchall()
+
+            if not ctms:
+                print("No CTMs need daily briefs")
+                return
+
+            print("Phase 4.5-day: %d CTMs need briefs..." % len(ctms))
+            import asyncio
+
+            for ctm_id, centroid_id, track in ctms:
+                try:
+                    stats = asyncio.run(phase45d_brief(ctm_id))
+                    print("  %s/%s: %s" % (centroid_id, track, stats))
+                except Exception as e:
+                    print("  4.5d failed %s/%s: %s" % (centroid_id, track, e))
+
+        finally:
+            self.return_connection(conn)
 
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
@@ -821,9 +910,9 @@ class PipelineDaemon:
             )
             print("\nSlot 2 CLASSIFICATION: next in %ds" % remaining)
 
-        # --- SLOT 3: CLUSTERING (Phase 4 + Phase 4.1) ---
+        # --- SLOT 3: CLUSTERING (Phase 4 + 4.0b merge) ---
         if self.should_run_slot("clustering"):
-            # Phase 4: Event Clustering
+            # Phase 4: Event Clustering (day-beat, D-056)
             await self.run_with_timeout(
                 "Phase 4: Event Clustering",
                 asyncio.to_thread(
@@ -833,15 +922,15 @@ class PipelineDaemon:
                 ),
                 self.timeout_clustering,
             )
-            # Phase 4.1: Family Assembly (D-056 adjacent-day chain)
+            # Phase 4.0b: Same-day entity+Dice merge (mechanical, no LLM)
             await self.run_with_timeout(
-                "Phase 4.1: Family Assembly",
+                "Phase 4.0b: Same-Day Merge",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
-                    "Phase 4.1: Family Assembly",
-                    self.run_family_assembly,
+                    "Phase 4.0b: Same-Day Merge",
+                    self.run_same_day_merge,
                 ),
-                self.timeout_clustering,
+                600,
             )
             # Phase 4.2: Materialize pre-computed views (mv_* tables)
             await self.run_with_timeout(
@@ -906,12 +995,27 @@ class PipelineDaemon:
             print("\nSlot 3 CLUSTERING: next in %ds" % remaining)
 
         # --- SLOT 4: ENRICHMENT ---
-        # Phase 4.5a (event summaries) and Phase 4.5b (CTM summaries) are
-        # DISABLED pending the day-centric frontend redesign. Cluster titles
-        # come from the mechanical fallback in incremental_clustering.
-        # write_clusters_to_db. A new daily-prose phase will replace both
-        # 4.5a and 4.5b once the calendar view ships.
         if self.should_run_slot("enrichment"):
+            # Phase 4.5a: Promote top-N clusters + LLM title/description (EN+DE)
+            await self.run_with_timeout(
+                "Phase 4.5a: Promote & Describe",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.5a: Promote & Describe",
+                    self.run_promote_and_describe,
+                ),
+                3600,
+            )
+            # Phase 4.5-day: Daily thematic briefs (EN+DE)
+            await self.run_with_timeout(
+                "Phase 4.5-day: Daily Briefs",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.5-day: Daily Briefs",
+                    self.run_daily_briefs,
+                ),
+                1800,
+            )
             # Phase 4.2g: LLM narrative discovery (ideological tier, new events only)
             await self.run_with_timeout(
                 "Phase 4.2g: LLM Narrative Discovery",

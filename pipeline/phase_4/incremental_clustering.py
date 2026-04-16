@@ -800,28 +800,279 @@ def _wipe_ctm_events(conn, ctm_id: str) -> None:
 
 
 def process_ctm_for_daemon(conn, ctm_id: str, centroid_id: str, track: str) -> int:
-    """D-056: Daemon entry point.
+    """Incremental daemon entry point.
 
-    If new (unlinked) titles exist for the CTM, wipe and recluster the whole CTM
-    using day-beat clustering. Idempotent: clusters are deterministic given the
-    same title set.
+    Clusters ONLY new (unlinked) titles, then matches resulting mini-clusters
+    to existing events on the same date via entity overlap or title-word Dice.
+    Matched titles are appended to the existing event; unmatched clusters
+    create new events. Existing events are NEVER deleted or modified (their
+    is_promoted, title, summary, daily_briefs are preserved).
 
-    Returns: number of events written (0 if no new titles).
+    Returns: number of new events created (0 if no new titles or all matched).
     """
     new_titles = load_new_titles_only(conn, ctm_id)
     if not new_titles:
         return 0
 
-    all_titles = load_titles_chronological(conn, ctm_id)
     publisher_patterns = load_publisher_patterns(conn)
-    for t in all_titles:
+    for t in new_titles:
         t["orgs"] = filter_publisher_signals(t.get("orgs", []), publisher_patterns)
 
-    clusters = cluster_by_day_beat(all_titles, centroid_id)
-    _wipe_ctm_events(conn, ctm_id)
-    written = write_clusters_to_db(conn, clusters, ctm_id)
+    # Cluster new titles among themselves (same algorithm as cold path)
+    new_clusters = cluster_by_day_beat(new_titles, centroid_id)
+
+    # Load existing events for affected dates so we can match against them
+    affected_dates = {c["date"] for c in new_clusters}
+    existing_events = _load_existing_events(conn, ctm_id, affected_dates)
+
+    cur = conn.cursor()
+    created = 0
+    appended = 0
+
+    for nc in new_clusters:
+        match_id = _find_matching_event(nc, existing_events.get(nc["date"], []))
+        if match_id:
+            # Append titles to existing event
+            for t in nc["titles"]:
+                cur.execute(
+                    "INSERT INTO event_v3_titles (event_id, title_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                    (match_id, t["id"]),
+                )
+            # Update source count
+            cur.execute(
+                """UPDATE events_v3 SET source_batch_count = (
+                       SELECT COUNT(*) FROM event_v3_titles WHERE event_id = %s
+                   ), last_active = GREATEST(last_active, %s)
+                   WHERE id = %s""",
+                (match_id, nc["date"], match_id),
+            )
+            appended += 1
+        else:
+            # Create new event
+            import uuid as _uuid
+
+            event_id = str(_uuid.uuid4())
+            mechanical_title = _pick_mechanical_title(nc["titles"])
+            beat = nc.get("beat") or (None, None, None)
+            actor, action, target = beat
+            anchor = nc.get("dominant_entity")
+            anchor_str = anchor.split(":", 1)[1] if anchor else "misc"
+            parts = []
+            if actor:
+                parts.append(actor)
+            if action:
+                parts.append(action)
+            if target and target != "NONE":
+                parts.append("-> " + target)
+            parts.append("[" + anchor_str + "]")
+            summary = " ".join(parts)
+
+            cur.execute(
+                """INSERT INTO events_v3 (
+                       id, ctm_id, date, first_seen, title, summary,
+                       event_type, bucket_key, source_batch_count,
+                       is_catchall, last_active
+                   ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                (
+                    event_id,
+                    ctm_id,
+                    nc["date"],
+                    nc["first_date"],
+                    mechanical_title,
+                    summary,
+                    nc["event_type"],
+                    nc["bucket_key"],
+                    nc["source_count"],
+                    False,
+                    nc["last_date"],
+                ),
+            )
+            for t in nc["titles"]:
+                cur.execute(
+                    "INSERT INTO event_v3_titles (event_id, title_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                    (event_id, t["id"]),
+                )
+            created += 1
+            # Add to existing_events so subsequent clusters can match against it
+            existing_events.setdefault(nc["date"], []).append(
+                _event_record(event_id, nc)
+            )
+
     conn.commit()
-    return written
+    if appended or created:
+        print(
+            "  %s/%s: %d new titles -> %d appended to existing, %d new events"
+            % (centroid_id, track, len(new_titles), appended, created)
+        )
+    return created
+
+
+def _pick_mechanical_title(titles):
+    """Pick earliest title_display with length >= 20 as fallback title."""
+    sorted_titles = sorted(
+        titles,
+        key=lambda t: (t.get("pubdate_utc") or 0, -(len(t.get("title_display") or ""))),
+    )
+    for t in sorted_titles:
+        td = t.get("title_display")
+        if td and len(td) >= 20:
+            return td
+    return sorted_titles[0].get("title_display") if sorted_titles else None
+
+
+def _load_existing_events(conn, ctm_id, dates):
+    """Load existing events for specific dates with their entity signals."""
+    if not dates:
+        return {}
+    cur = conn.cursor()
+    date_list = list(dates)
+    cur.execute(
+        """SELECT e.id::text, e.date, e.title, e.source_batch_count
+             FROM events_v3 e
+            WHERE e.ctm_id = %s AND e.date = ANY(%s::date[])
+              AND e.merged_into IS NULL""",
+        (ctm_id, date_list),
+    )
+    events = {}
+    id_list = []
+    for eid, date, title, src in cur.fetchall():
+        ev = {"id": eid, "date": date, "title": title, "src": src}
+        events.setdefault(date, []).append(ev)
+        id_list.append(eid)
+
+    if id_list:
+        cur.execute(
+            """SELECT et.event_id::text, tl.persons, tl.orgs, tl.places,
+                      tl.named_events, tl.action_class
+                 FROM event_v3_titles et
+                 JOIN title_labels tl ON tl.title_id = et.title_id
+                WHERE et.event_id = ANY(%s::uuid[])""",
+            (id_list,),
+        )
+        sig_map = {}
+        for eid, persons, orgs, places, named, action in cur.fetchall():
+            if eid not in sig_map:
+                sig_map[eid] = {"entities": set(), "actions": Counter()}
+            s = sig_map[eid]
+            for p in persons or []:
+                s["entities"].add(p)
+            for o in orgs or []:
+                s["entities"].add(o)
+            for pl in places or []:
+                s["entities"].add(pl)
+            for ne in named or []:
+                s["entities"].add(ne)
+            if action:
+                s["actions"][action] += 1
+
+        for date_events in events.values():
+            for ev in date_events:
+                s = sig_map.get(ev["id"], {})
+                ev["entities"] = s.get("entities", set())
+                acts = s.get("actions", Counter())
+                ev["action"] = acts.most_common(1)[0][0] if acts else None
+                ev["title_words"] = set()
+                if ev["title"]:
+                    for w in ev["title"].lower().split():
+                        w = w.strip(".,;:!?\"'()[]{}|-")
+                        if w and len(w) > 1:
+                            ev["title_words"].add(w)
+
+    cur.close()
+    return events
+
+
+def _event_record(event_id, cluster):
+    """Build a lightweight event dict from a cluster for matching."""
+    entities = set()
+    actions = Counter()
+    for t in cluster["titles"]:
+        for sig in ("persons", "orgs", "places", "named_events"):
+            for v in t.get(sig) or []:
+                entities.add(v)
+        if t.get("action_class"):
+            actions[t["action_class"]] += 1
+
+    title_words = set()
+    # Use first title for word matching
+    first_title = cluster["titles"][0].get("title_display") or ""
+    for w in first_title.lower().split():
+        w = w.strip(".,;:!?\"'()[]{}|-")
+        if w and len(w) > 1:
+            title_words.add(w)
+
+    return {
+        "id": event_id,
+        "date": cluster["date"],
+        "title": first_title,
+        "src": cluster["source_count"],
+        "entities": entities,
+        "action": actions.most_common(1)[0][0] if actions else None,
+        "title_words": title_words,
+    }
+
+
+# Same thresholds as merge_same_day_events.py
+_HIGH_FREQ = frozenset(
+    {"TRUMP", "BIDEN", "NATO", "UN", "EU", "PUTIN", "NETANYAHU", "KHAMENEI"}
+)
+_STOP = frozenset(
+    "the a an in on of to for and or is are was were with by at from as that "
+    "this it its be has have had not but after over says said could new us s t "
+    "will during about between into than more out up no may".split()
+)
+
+
+def _find_matching_event(new_cluster, existing_events):
+    """Find best matching existing event for a new mini-cluster.
+
+    Returns event_id if match found, None otherwise.
+    Uses same hybrid logic as merge_same_day_events: entity overlap OR Dice.
+    Prefers the biggest existing event when multiple match.
+    """
+    if not existing_events:
+        return None
+
+    nc_entities = set()
+    nc_actions = Counter()
+    for t in new_cluster["titles"]:
+        for sig in ("persons", "orgs", "places", "named_events"):
+            for v in t.get(sig) or []:
+                nc_entities.add(v)
+        if t.get("action_class"):
+            nc_actions[t["action_class"]] += 1
+    nc_ents = nc_entities - _HIGH_FREQ
+    nc_action = nc_actions.most_common(1)[0][0] if nc_actions else None
+
+    nc_words = set()
+    for t in new_cluster["titles"]:
+        td = t.get("title_display") or ""
+        for w in td.lower().split():
+            w = w.strip(".,;:!?\"'()[]{}|-")
+            if w and len(w) > 1 and w not in _STOP:
+                nc_words.add(w)
+
+    best_id = None
+    best_src = -1
+
+    for ev in existing_events:
+        ev_ents = ev.get("entities", set()) - _HIGH_FREQ
+        shared = nc_ents & ev_ents
+        entity_match = (
+            len(shared) >= 1 and nc_action == ev.get("action") and nc_action is not None
+        )
+
+        ev_words = ev.get("title_words", set()) - _STOP
+        dice = 0
+        if nc_words and ev_words:
+            dice = 2 * len(nc_words & ev_words) / (len(nc_words) + len(ev_words))
+        title_match = dice >= 0.4
+
+        if (entity_match or title_match) and ev["src"] > best_src:
+            best_id = ev["id"]
+            best_src = ev["src"]
+
+    return best_id
 
 
 # =============================================================================

@@ -625,28 +625,28 @@ event or story from different editorial stances."""
 # --- PHASE 4.5-DAY: DAILY BRIEF ---
 
 DAILY_BRIEF_SYSTEM_PROMPT = (
-    """Write a 150-250 word daily news brief from today's top stories.
+    """Write a daily news brief from today's top stories as an array of blocks.
 
 STRUCTURE:
-- 1-5 thematic blocks (paragraphs or bullets), grouped by content similarity
-- Lead with most-covered theme
-- Weight by source count
-- No headers, no meta-framing
-- Synthesize, don't list stories
+- Each block covers ONE theme or story. Never mix unrelated topics in one block.
+- If a dominant story exists (highest source count, clearly biggest): block 1 is a full paragraph (3-5 sentences). Remaining blocks are one-liners.
+- If no dominant story: all blocks are one-liners.
+- 1-5 blocks total. Lead with most-covered theme. Weight by source count.
+- No headers, no meta-framing, no "In other news".
 
 YESTERDAY DEDUP:
-- Yesterday's story titles provided for identity dedup only
+- Yesterday's story titles provided for identity dedup only.
 - Match only when unambiguous: same incident, actors, location, action. When in doubt, treat as new.
-- On match: still include in today's brief, append "(ongoing coverage)" to that sentence
-- No "as reported", "continuing", "aftermath", no causality between days
+- On match: still include, append "(ongoing coverage)" to the block.
+- No "as reported", "continuing", "aftermath", no causality between days.
 
 """
     + PROSE_RULES
     + """
 
-OUTPUT: {"brief_en": "...", "brief_de": "...", "coherent": true}
-- brief_de: natural German, same facts, 150-250 words
-- coherent: false if today's stories are entirely incoherent as a set"""
+OUTPUT: {"blocks": [{"en": "...", "de": "..."}, ...]}
+- Each block: one thematic item, EN + natural German DE.
+- de: same facts, same length, natural German."""
 )
 
 DAILY_BRIEF_USER_PROMPT = """Date: {date}

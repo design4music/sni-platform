@@ -22,6 +22,7 @@ from pipeline.phase_3_1.extract_labels import process_titles as phase31_extract
 from pipeline.phase_3_3.assign_tracks_mechanical import SECTOR_TO_TRACK
 from pipeline.phase_4.generate_daily_brief_4_5d import process_ctm as phase45d_brief
 from pipeline.phase_4.incremental_clustering import recluster_ctm
+from pipeline.phase_4.merge_same_day_events import process_ctm as phase40b_merge
 from pipeline.phase_4.promote_and_describe_4_5a import process_ctm as phase45a_promote
 
 
@@ -270,19 +271,22 @@ def main():
     recluster_ctm(ctm_id, dry_run=False)
     print(f"  ({time.time()-t:.0f}s)")
 
-    # Phase 4.1 (family assembly) is deprecated as of 2026-04-15.
-    # Families are no longer rendered in the day-centric frontend.
+    # Phase 4.0b — same-day entity+Dice merge (mechanical, no LLM)
+    header("STEP 7/10: Phase 4.0b — same-day merge")
+    t = time.time()
+    stats_merge = phase40b_merge(str(ctm_id))
+    print(f"  {stats_merge}  ({time.time()-t:.0f}s)")
 
     # Phase 4.5a — promote top-N clusters/day + LLM title/description (EN+DE)
     import asyncio
 
-    header("STEP 7/9: Phase 4.5a — promote + describe (EN+DE)")
+    header("STEP 8/10: Phase 4.5a — promote + describe (EN+DE)")
     t = time.time()
     stats_45a = asyncio.run(phase45a_promote(str(ctm_id)))
     print(f"  {stats_45a}  ({time.time()-t:.0f}s)")
 
     # Phase 4.5-day — daily thematic brief (EN+DE) with 1-day cross-month lookback
-    header("STEP 8/9: Phase 4.5-day — daily brief")
+    header("STEP 9/10: Phase 4.5-day — daily brief")
     t = time.time()
     stats_45d = asyncio.run(phase45d_brief(str(ctm_id)))
     print(f"  {stats_45d}  ({time.time()-t:.0f}s)")

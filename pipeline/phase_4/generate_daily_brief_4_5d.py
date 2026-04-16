@@ -15,8 +15,10 @@ Pipeline per CTM:
 
 import argparse
 import asyncio
+import json
 import sys
 from collections import defaultdict
+from datetime import date as date_type
 from datetime import timedelta
 from pathlib import Path
 
@@ -164,14 +166,58 @@ async def generate_brief(
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.4,
-        "max_tokens": 1200,
+        "max_tokens": 1500,
     }
     result = await call_llm(payload)
+
+    # Parse blocks array → join with double newline for storage
+    blocks = result.get("blocks") or []
+    en_parts = []
+    de_parts = []
+    for block in blocks:
+        en = fix_role_hallucinations((block.get("en") or "").strip())
+        de = (block.get("de") or "").strip()
+        if en:
+            en_parts.append(en)
+        if de:
+            de_parts.append(de)
+
+    # Fallback: if LLM returned old single-string format
+    if not en_parts and result.get("brief_en"):
+        en_parts = [fix_role_hallucinations(result["brief_en"].strip())]
+        de_parts = [(result.get("brief_de") or "").strip()]
+
     return {
-        "brief_en": fix_role_hallucinations((result.get("brief_en") or "").strip()),
-        "brief_de": (result.get("brief_de") or "").strip(),
-        "coherent": bool(result.get("coherent", True)),
+        "brief_en": "\n\n".join(en_parts),
+        "brief_de": "\n\n".join(de_parts) or None,
     }
+
+
+def compute_themes(conn, ctm_id: str, date) -> list:
+    """Mechanical theme aggregation from title_labels of promoted clusters."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT tl.sector, tl.subject, COUNT(*) AS weight
+              FROM events_v3 e
+              JOIN event_v3_titles et ON et.event_id = e.id
+              JOIN title_labels tl ON tl.title_id = et.title_id
+             WHERE e.ctm_id = %s AND e.date = %s AND e.is_promoted = true
+               AND tl.sector IS NOT NULL AND tl.sector != 'NON_STRATEGIC'
+             GROUP BY tl.sector, tl.subject
+             ORDER BY weight DESC
+             LIMIT 4
+            """,
+            (ctm_id, date),
+        )
+        rows = cur.fetchall()
+    if not rows:
+        return []
+    total = sum(r[2] for r in rows)
+    return [
+        {"sector": r[0], "subject": r[1], "weight": round(r[2] / total, 2)}
+        for r in rows
+    ]
 
 
 async def process_ctm(ctm_id: str) -> dict:
@@ -180,10 +226,14 @@ async def process_ctm(ctm_id: str) -> dict:
         meta = load_ctm_meta(conn, ctm_id)
         by_date = load_today_events_by_date(conn, ctm_id)
 
+        # Day-closure gate: only generate briefs for days that are "closed"
+        # (all timezones past midnight = date < today - 1 day UTC).
+        # Briefs already written are skipped by the UPSERT's ON CONFLICT.
+        yesterday = date_type.today() - timedelta(days=1)
         qualifying = [
             (d, evs)
             for d, evs in by_date.items()
-            if len(evs) > DAILY_BRIEF_MIN_CLUSTERS
+            if len(evs) > DAILY_BRIEF_MIN_CLUSTERS and d <= yesterday
         ]
         qualifying.sort(key=lambda x: x[0])
         print(
@@ -211,18 +261,20 @@ async def process_ctm(ctm_id: str) -> dict:
                 except Exception as e:
                     print("  brief fail %s: %s" % (date, e))
                     return
+                themes = compute_themes(conn, ctm_id, date)
                 with conn.cursor() as cur:
                     cur.execute(
                         """
                         INSERT INTO daily_briefs
                             (ctm_id, date, brief_en, brief_de,
-                             promoted_cluster_count, coherent, generated_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                             promoted_cluster_count, coherent, themes, generated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                         ON CONFLICT (ctm_id, date) DO UPDATE
                            SET brief_en = EXCLUDED.brief_en,
                                brief_de = EXCLUDED.brief_de,
                                promoted_cluster_count = EXCLUDED.promoted_cluster_count,
                                coherent = EXCLUDED.coherent,
+                               themes = EXCLUDED.themes,
                                generated_at = NOW()
                         """,
                         (
@@ -231,7 +283,8 @@ async def process_ctm(ctm_id: str) -> dict:
                             result["brief_en"],
                             result["brief_de"] or None,
                             len(today_evs),
-                            result["coherent"],
+                            True,
+                            json.dumps(themes) if themes else None,
                         ),
                     )
                 conn.commit()
