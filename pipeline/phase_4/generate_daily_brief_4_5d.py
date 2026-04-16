@@ -18,7 +18,6 @@ import asyncio
 import json
 import sys
 from collections import defaultdict
-from datetime import date as date_type
 from datetime import timedelta
 from pathlib import Path
 
@@ -31,7 +30,7 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from core.config import DAILY_BRIEF_MIN_CLUSTERS, config
+from core.config import DAILY_BRIEF_MIN_CLUSTERS, DAY_CLOSURE_UTC_HOUR, config
 from core.llm_utils import async_check_rate_limit, extract_json, fix_role_hallucinations
 from core.prompts import DAILY_BRIEF_SYSTEM_PROMPT, DAILY_BRIEF_USER_PROMPT
 
@@ -226,14 +225,19 @@ async def process_ctm(ctm_id: str) -> dict:
         meta = load_ctm_meta(conn, ctm_id)
         by_date = load_today_events_by_date(conn, ctm_id)
 
-        # Day-closure gate: only generate briefs for days that are "closed"
-        # (all timezones past midnight = date < today - 1 day UTC).
-        # Briefs already written are skipped by the UPSERT's ON CONFLICT.
-        yesterday = date_type.today() - timedelta(days=1)
+        # Day-closure gate: a day is "closed" when UTC clock passes
+        # DAY_CLOSURE_UTC_HOUR (default 08:00) the following day. This covers
+        # all practical timezones (US West Coast = UTC-8).
+        from datetime import datetime, timezone
+
+        now_utc = datetime.now(timezone.utc)
+        # A day D is closed if now >= D+1 at DAY_CLOSURE_UTC_HOUR UTC
+        # Equivalently: D <= today - 1 day, BUT only after the hour threshold
+        cutoff = (now_utc - timedelta(hours=DAY_CLOSURE_UTC_HOUR)).date()
         qualifying = [
             (d, evs)
             for d, evs in by_date.items()
-            if len(evs) > DAILY_BRIEF_MIN_CLUSTERS and d <= yesterday
+            if len(evs) > DAILY_BRIEF_MIN_CLUSTERS and d < cutoff
         ]
         qualifying.sort(key=lambda x: x[0])
         print(

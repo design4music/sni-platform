@@ -2171,7 +2171,8 @@ export async function getCalendarMonthView(
     const ctm = await getCTM(centroidId, track, month, locale);
     if (!ctm) return null;
 
-    // 2. Fetch promoted clusters only (top 20/day, set by phase 4.5a)
+    // 2. Fetch promoted events (top 20/day). Promotion is instant (Slot 3),
+    //    so new days are visible immediately after clustering.
     const clusterRows = await query<CalendarClusterRow>(
       `SELECT
          e.id::text AS id,

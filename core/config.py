@@ -277,6 +277,11 @@ DAILY_BRIEF_TARGET_WORDS = (150, 250)  # EN + DE target length
 # DE batch translation for mechanical-EN cluster titles
 DE_TITLE_BATCH_SIZE = 20
 
+# Day closure: hours after UTC midnight to wait before considering a day "closed"
+# for daily brief generation. 8 = covers US West Coast (UTC-8). A day's brief
+# is generated after UTC 08:00 the following day (10:00 CEST).
+DAY_CLOSURE_UTC_HOUR = 8
+
 
 # =============================================================================
 # IMPORTANCE SCORING CONSTANTS

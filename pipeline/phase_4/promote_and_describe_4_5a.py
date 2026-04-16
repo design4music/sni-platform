@@ -70,14 +70,16 @@ def get_conn():
 
 
 def promote_top_clusters(conn, ctm_id: str) -> int:
-    """Mark top-N events per (ctm_id, date) as is_promoted. Returns promoted count."""
+    """One-way promotion: mark top-N unpromoted events per (ctm_id, date).
+
+    Already-promoted events stay promoted (never demoted). Only NEW events
+    that rank in the top-N for their day get promoted. This is safe to call
+    after every incremental clustering cycle — existing LLM prose and
+    daily briefs are never invalidated.
+
+    Returns: total promoted count (existing + newly promoted).
+    """
     with conn.cursor() as cur:
-        cur.execute(
-            """
-            UPDATE events_v3 SET is_promoted = false WHERE ctm_id = %s
-            """,
-            (ctm_id,),
-        )
         cur.execute(
             """
             WITH ranked AS (
@@ -88,21 +90,27 @@ def promote_top_clusters(conn, ctm_id: str) -> int:
                        ) AS rnk
                   FROM events_v3
                  WHERE ctm_id = %s
+                   AND merged_into IS NULL
             )
             UPDATE events_v3 e
                SET is_promoted = true
               FROM ranked r
-             WHERE e.id = r.id AND r.rnk <= %s
+             WHERE e.id = r.id
+               AND r.rnk <= %s
+               AND e.is_promoted = false
             """,
             (ctm_id, TOP_CLUSTERS_PER_DAY),
         )
+        newly = cur.rowcount
         cur.execute(
             "SELECT COUNT(*) FROM events_v3 WHERE ctm_id = %s AND is_promoted = true",
             (ctm_id,),
         )
-        promoted = cur.fetchone()[0]
+        total = cur.fetchone()[0]
     conn.commit()
-    return promoted
+    if newly > 0:
+        print("  promoted %d new (total %d)" % (newly, total))
+    return total
 
 
 # ---------------------------------------------------------------------------
@@ -415,14 +423,51 @@ async def batch_translate_titles_de(titles: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-async def process_ctm(ctm_id: str) -> dict:
+def promote_ctm(ctm_id: str) -> int:
+    """Mechanical promotion only: rank + set is_promoted. No LLM. Instant.
+
+    Safe to call from Slot 3 after clustering + merge. Idempotent.
+    """
     conn = get_conn()
     try:
-        promoted_count = promote_top_clusters(conn, ctm_id)
+        return promote_top_clusters(conn, ctm_id)
+    finally:
+        conn.close()
+
+
+async def describe_promoted_events(ctm_id: str) -> dict:
+    """LLM prose for promoted events that LACK titles/descriptions.
+
+    Only processes events where title_de IS NULL (never LLM'd before)
+    or source_count crossed the 5-source threshold since last run.
+    Called from Slot 4 enrichment.
+    """
+    conn = get_conn()
+    try:
         events = load_promoted_events(conn, ctm_id)
-        print(
-            "  promoted=%d, loading prose for %d events" % (promoted_count, len(events))
-        )
+        # Filter to events that need LLM work
+        events = [
+            ev
+            for ev in events
+            if not any(t["lang"] == "de" and t["text"] for t in ev.get("titles", []))
+            # Proxy: if title_de is set in DB, this event was already LLM'd
+        ]
+        # Re-check from DB which promoted events lack title_de
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT id::text FROM events_v3
+                   WHERE ctm_id = %s AND is_promoted = true AND title_de IS NULL""",
+                (ctm_id,),
+            )
+            needs_prose = {r[0] for r in cur.fetchall()}
+        events = [
+            ev for ev in load_promoted_events(conn, ctm_id) if ev["id"] in needs_prose
+        ]
+
+        if not events:
+            return {"needs_prose": 0, "written": 0}
+
+        print("  %d promoted events need LLM prose" % len(events))
 
         # classify
         llm_full, llm_title, mech = [], [], []
@@ -505,7 +550,7 @@ async def process_ctm(ctm_id: str) -> dict:
                 written += 1
         conn.commit()
         return {
-            "promoted": promoted_count,
+            "needs_prose": len(needs_prose),
             "llm_full": len(llm_full),
             "llm_title": len(llm_title),
             "mechanical_en": len(mech),
@@ -515,12 +560,29 @@ async def process_ctm(ctm_id: str) -> dict:
         conn.close()
 
 
+async def process_ctm(ctm_id: str) -> dict:
+    """Combined promote + describe for batch/rerun scripts."""
+    promoted = promote_ctm(ctm_id)
+    stats = await describe_promoted_events(ctm_id)
+    stats["promoted"] = promoted
+    return stats
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ctm-id", required=True, help="CTM UUID to process")
+    parser.add_argument(
+        "--promote-only",
+        action="store_true",
+        help="Only promote (mechanical), skip LLM prose",
+    )
     args = parser.parse_args()
-    stats = asyncio.run(process_ctm(args.ctm_id))
-    print("DONE", stats)
+    if args.promote_only:
+        n = promote_ctm(args.ctm_id)
+        print("DONE promoted=%d" % n)
+    else:
+        stats = asyncio.run(process_ctm(args.ctm_id))
+        print("DONE", stats)
 
 
 if __name__ == "__main__":

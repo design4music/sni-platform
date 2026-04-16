@@ -40,7 +40,12 @@ from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
 from pipeline.phase_4.merge_same_day_events import process_ctm as phase40b_merge
-from pipeline.phase_4.promote_and_describe_4_5a import process_ctm as phase45a_promote
+from pipeline.phase_4.promote_and_describe_4_5a import (
+    describe_promoted_events as phase45a_describe,
+)
+from pipeline.phase_4.promote_and_describe_4_5a import (
+    promote_ctm as phase45a_promote_only,
+)
 
 # Deprecated: 4.1 families (D-059), 4.1a/4.1b (D-056), 4.3/4.4 (D-053)
 # Replaced: old 4.5a event summaries + 4.5b CTM digests (D-058) -> new 4.5a promote+describe + 4.5d daily brief
@@ -548,11 +553,11 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
-    def run_promote_and_describe(self):
-        """Phase 4.5a: Promote top-N clusters per day + LLM title/description.
+    def run_promote(self):
+        """Phase 4.5a-promote: Mechanical promotion (Slot 3, instant).
 
-        Runs on unfrozen CTMs that have events but no promoted events yet
-        (or were reclustered since last promotion).
+        Runs on all unfrozen CTMs with events. One-way: newly qualifying
+        events get is_promoted=true, never demotes existing.
         """
         conn = self.get_connection()
         try:
@@ -562,26 +567,60 @@ class PipelineDaemon:
                        FROM ctm c
                        WHERE c.is_frozen = false
                          AND c.title_count >= 3
-                         AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
-                         AND NOT EXISTS (SELECT 1 FROM events_v3 e
-                                        WHERE e.ctm_id = c.id AND e.is_promoted = true)
+                         AND EXISTS (SELECT 1 FROM events_v3 e
+                                    WHERE e.ctm_id = c.id AND e.is_promoted = false)
                        ORDER BY c.title_count ASC"""
                 )
                 ctms = cur.fetchall()
 
             if not ctms:
-                print("No CTMs need promotion + LLM prose")
+                print("No CTMs need promotion")
                 return
 
-            print("Phase 4.5a: %d CTMs need promotion..." % len(ctms))
+            print("Phase 4.5a-promote: %d CTMs..." % len(ctms))
+            for ctm_id, centroid_id, track in ctms:
+                try:
+                    phase45a_promote_only(ctm_id)
+                except Exception as e:
+                    print("  promote failed %s/%s: %s" % (centroid_id, track, e))
+
+        finally:
+            self.return_connection(conn)
+
+    def run_describe_promoted(self):
+        """Phase 4.5a-describe: LLM prose for promoted events lacking titles (Slot 4).
+
+        Only processes events where title_de IS NULL (never LLM'd).
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT DISTINCT c.id::text, c.centroid_id, c.track
+                       FROM ctm c
+                       WHERE c.is_frozen = false
+                         AND EXISTS (SELECT 1 FROM events_v3 e
+                                    WHERE e.ctm_id = c.id
+                                      AND e.is_promoted = true
+                                      AND e.title_de IS NULL)
+                       ORDER BY c.title_count ASC"""
+                )
+                ctms = cur.fetchall()
+
+            if not ctms:
+                print("No promoted events need LLM prose")
+                return
+
+            print("Phase 4.5a-describe: %d CTMs need prose..." % len(ctms))
             import asyncio
 
             for ctm_id, centroid_id, track in ctms:
                 try:
-                    stats = asyncio.run(phase45a_promote(ctm_id))
-                    print("  %s/%s: %s" % (centroid_id, track, stats))
+                    stats = asyncio.run(phase45a_describe(ctm_id))
+                    if stats["written"] > 0:
+                        print("  %s/%s: %s" % (centroid_id, track, stats))
                 except Exception as e:
-                    print("  4.5a failed %s/%s: %s" % (centroid_id, track, e))
+                    print("  4.5a-describe failed %s/%s: %s" % (centroid_id, track, e))
 
         finally:
             self.return_connection(conn)
@@ -932,6 +971,16 @@ class PipelineDaemon:
                 ),
                 600,
             )
+            # Phase 4.5a-promote: instant mechanical ranking (no LLM)
+            await self.run_with_timeout(
+                "Phase 4.5a: Promote",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.5a: Promote",
+                    self.run_promote,
+                ),
+                300,
+            )
             # Phase 4.2: Materialize pre-computed views (mv_* tables)
             await self.run_with_timeout(
                 "Phase 4.2a: Centroid Top Signals",
@@ -996,13 +1045,13 @@ class PipelineDaemon:
 
         # --- SLOT 4: ENRICHMENT ---
         if self.should_run_slot("enrichment"):
-            # Phase 4.5a: Promote top-N clusters + LLM title/description (EN+DE)
+            # Phase 4.5a-describe: LLM prose for promoted events missing titles (EN+DE)
             await self.run_with_timeout(
-                "Phase 4.5a: Promote & Describe",
+                "Phase 4.5a: Describe Promoted",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
-                    "Phase 4.5a: Promote & Describe",
-                    self.run_promote_and_describe,
+                    "Phase 4.5a: Describe Promoted",
+                    self.run_describe_promoted,
                 ),
                 3600,
             )
