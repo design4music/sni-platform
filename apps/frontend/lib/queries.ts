@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarStackSegment, CalendarAnalysisScope } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope } from './types';
 
 // Locked thresholds for the calendar-day frontend.
 // See docs/FRONTEND_CALENDAR_REDESIGN.md.
@@ -2158,8 +2158,6 @@ interface CalendarClusterRow {
  * daily_brief is pulled from the daily_briefs table (phase 4.5-day).
  */
 
-const STACK_TOP_N = 5; // chart shows top-5 clusters per day, rest collapsed to "other"
-
 export async function getCalendarMonthView(
   centroidId: string,
   track: string,
@@ -2292,8 +2290,13 @@ export async function getCalendarMonthView(
       }
     }
 
-    // 4. Attach daily briefs
-    const briefRows = await query<{ date: string; brief_en: string; brief_de: string | null }>(
+    // 4a. Brief text (prose) — only exists for days that crossed the promotion
+    //     threshold and got an LLM-generated daily brief.
+    const briefRows = await query<{
+      date: string;
+      brief_en: string;
+      brief_de: string | null;
+    }>(
       `SELECT date::text AS date, brief_en, brief_de
          FROM daily_briefs WHERE ctm_id = $1`,
       [ctm.id]
@@ -2305,39 +2308,57 @@ export async function getCalendarMonthView(
       }
     }
 
+    // 4b. Day themes — mechanical aggregation of title_labels (sector, subject)
+    //     over promoted events per date. Mirrors compute_themes() in the brief
+    //     generator; produced for every covered day, not only brief-qualified ones.
+    const themeRows = await query<{
+      date: string;
+      sector: string;
+      subject: string;
+      weight: number;
+    }>(
+      `WITH day_labels AS (
+         SELECT e.date::text AS date, tl.sector, tl.subject, COUNT(*) AS cnt
+           FROM events_v3 e
+           JOIN event_v3_titles evt ON evt.event_id = e.id
+           JOIN title_labels tl ON tl.title_id = evt.title_id
+          WHERE e.ctm_id = $1 AND e.is_promoted = true
+            AND tl.sector IS NOT NULL AND tl.sector <> 'NON_STRATEGIC'
+          GROUP BY e.date, tl.sector, tl.subject
+       ),
+       totals AS (
+         SELECT date, SUM(cnt) AS day_total FROM day_labels GROUP BY date
+       )
+       SELECT dl.date, dl.sector, dl.subject,
+              (dl.cnt::float / t.day_total)::float AS weight
+         FROM day_labels dl
+         JOIN totals t ON t.date = dl.date
+        ORDER BY dl.date, dl.cnt DESC, dl.sector, dl.subject`,
+      [ctm.id]
+    );
+    const themesByDate = new Map<string, CalendarThemeSegment[]>();
+    for (const r of themeRows) {
+      let list = themesByDate.get(r.date);
+      if (!list) {
+        list = [];
+        themesByDate.set(r.date, list);
+      }
+      list.push({ sector: r.sector, subject: r.subject, weight: Number(r.weight) });
+    }
+
     const days: CalendarDayView[] = Array.from(daysMap.values());
 
-    // 5. Activity stripe: every day of the month with top-5 stack segments
+    // 5. Activity stripe: every day of the month with theme segments from daily_briefs
     const [year, mm] = month.split('-').map(Number);
     const daysInMonth = new Date(year, mm, 0).getDate();
     const stripe: CalendarStripeEntry[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${year}-${String(mm).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayEntry = daysMap.get(dateStr);
-      const segments: CalendarStackSegment[] = [];
-      if (dayEntry) {
-        const top = dayEntry.clusters.slice(0, STACK_TOP_N);
-        const rest = dayEntry.clusters.slice(STACK_TOP_N);
-        for (const c of top) {
-          segments.push({
-            cluster_id: c.id,
-            title: c.title,
-            source_count: c.source_count,
-          });
-        }
-        if (rest.length > 0) {
-          const otherSum = rest.reduce((s, c) => s + c.source_count, 0);
-          segments.push({
-            cluster_id: null,
-            title: `${rest.length} more`,
-            source_count: otherSum,
-          });
-        }
-      }
       stripe.push({
         date: dateStr,
         total_sources: dayEntry ? dayEntry.total_sources : 0,
-        segments,
+        themes: themesByDate.get(dateStr) || [],
       });
     }
 

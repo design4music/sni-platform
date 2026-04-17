@@ -15,15 +15,65 @@ import type {
 
 const INITIAL_EVENTS_SHOWN = 3; // top-N events shown per day before "Show all"
 
-// Tailwind palette for stack segments: top cluster strongest, decaying, "other" muted
-const SEGMENT_COLORS = [
-  'bg-blue-500',
-  'bg-blue-500/75',
-  'bg-blue-500/55',
-  'bg-blue-500/40',
-  'bg-blue-500/25',
-];
-const OTHER_COLOR = 'bg-slate-500/40';
+// One base color per track; tints assigned to sectors by their month-level
+// aggregate share (top sector = brightest tint, #2 = next, etc.). This gives
+// each sector a stable color across all days so the eye can follow it.
+const TRACK_TINTS: Record<string, string[]> = {
+  geo_security: ['bg-red-400',     'bg-red-500',     'bg-red-600',     'bg-red-700',     'bg-red-800'],
+  geo_politics: ['bg-sky-400',     'bg-sky-500',     'bg-sky-600',     'bg-sky-700',     'bg-sky-800'],
+  geo_economy:  ['bg-amber-400',   'bg-amber-500',   'bg-amber-600',   'bg-amber-700',   'bg-amber-800'],
+  geo_society:  ['bg-emerald-400', 'bg-emerald-500', 'bg-emerald-600', 'bg-emerald-700', 'bg-emerald-800'],
+};
+const DEFAULT_TINTS = ['bg-zinc-400', 'bg-zinc-500', 'bg-zinc-600', 'bg-zinc-700', 'bg-zinc-800'];
+
+function trackTints(trackKey: string): string[] {
+  return TRACK_TINTS[trackKey] || DEFAULT_TINTS;
+}
+
+// Ghost fallback for covered days where title_labels gave no usable themes
+// (rare — non-strategic only). Use the track's darkest tint so the column
+// still reads as "this track", just muted.
+function ghostTint(trackKey: string): string {
+  const tints = trackTints(trackKey);
+  return tints[tints.length - 1];
+}
+
+interface SectorRanking {
+  sector: string;
+  share: number;
+  tint: string;
+}
+
+// Aggregate sector share over the whole month and assign each sector a tint
+// by its rank. Sectors beyond the tint list fall back to the darkest tint.
+function buildSectorRanking(
+  stripe: CalendarStripeEntry[],
+  trackKey: string
+): SectorRanking[] {
+  const bySector = new Map<string, number>();
+  let total = 0;
+  for (const day of stripe) {
+    if (!day.themes.length || !day.total_sources) continue;
+    for (const t of day.themes) {
+      const contribution = t.weight * day.total_sources;
+      bySector.set(t.sector, (bySector.get(t.sector) || 0) + contribution);
+      total += contribution;
+    }
+  }
+  if (total === 0) return [];
+  const tints = trackTints(trackKey);
+  return Array.from(bySector.entries())
+    .map(([sector, w]) => ({ sector, share: w / total }))
+    .sort((a, b) => b.share - a.share)
+    .map((entry, idx) => ({
+      ...entry,
+      tint: tints[Math.min(idx, tints.length - 1)],
+    }));
+}
+
+function formatSector(sector: string): string {
+  return sector.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -109,6 +159,16 @@ export function CalendarHero({
   const logRatio = (n: number) =>
     n <= 0 ? 0 : Math.log10(n + 1) / Math.log10(maxStripeCount + 1);
 
+  const sectorRanking = useMemo(
+    () => buildSectorRanking(view.activity_stripe, trackKey),
+    [view.activity_stripe, trackKey]
+  );
+  const sectorTints = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of sectorRanking) m.set(r.sector, r.tint);
+    return m;
+  }, [sectorRanking]);
+
   const jumpToDay = (date: string) => {
     if (!dayByDate.has(date)) return;
     setCurrentDay(date);
@@ -172,6 +232,8 @@ export function CalendarHero({
               ratio={logRatio(entry.total_sources)}
               hasDay={dayByDate.has(entry.date)}
               isExpanded={entry.date === currentDay}
+              sectorTints={sectorTints}
+              trackKey={trackKey}
               onClick={() => jumpToDay(entry.date)}
             />
           ))}
@@ -188,6 +250,7 @@ export function CalendarHero({
             );
           })}
         </div>
+        <SectorLegend ranking={sectorRanking} />
       </div>
     </section>
   );
@@ -334,12 +397,16 @@ function StackedBar({
   ratio,
   hasDay,
   isExpanded,
+  sectorTints,
+  trackKey,
   onClick,
 }: {
   entry: CalendarStripeEntry;
   ratio: number;
   hasDay: boolean;
   isExpanded: boolean;
+  sectorTints: Map<string, string>;
+  trackKey: string;
   onClick: () => void;
 }) {
   if (!hasDay) {
@@ -355,8 +422,14 @@ function StackedBar({
 
   const heightPct = Math.max(4, Math.round(ratio * 100));
   const total = entry.total_sources;
-  const topTitle = entry.segments[0]?.title || '';
-  const tooltip = `${entry.date} · ${total} sources${topTitle ? `\nTop: ${topTitle}` : ''}`;
+  const hasThemes = entry.themes.length > 0;
+
+  const themesLine = hasThemes
+    ? entry.themes
+        .map(t => `${formatSector(t.sector)} (${formatSector(t.subject)}) ${Math.round(t.weight * 100)}%`)
+        .join(' · ')
+    : 'No theme breakdown';
+  const tooltip = `${entry.date} · ${total} sources\n${themesLine}`;
 
   return (
     <button
@@ -367,27 +440,48 @@ function StackedBar({
       aria-label={tooltip}
     >
       <div
-        className={`w-full flex flex-col-reverse rounded-sm overflow-hidden transition-all ${
-          isExpanded ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-dashboard-surface' : ''
-        }`}
+        className={`relative w-full flex flex-col-reverse rounded-t-full overflow-hidden transition-all
+          after:absolute after:inset-0 after:pointer-events-none
+          after:bg-gradient-to-b after:from-white/15 after:via-transparent after:to-black/20
+          ${isExpanded ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-dashboard-surface' : ''}`}
         style={{ height: `${heightPct}%` }}
       >
-        {entry.segments.map((seg, idx) => {
-          const segRatio = seg.source_count / Math.max(1, total);
-          const isOther = seg.cluster_id === null;
-          const colorClass = isOther
-            ? OTHER_COLOR
-            : SEGMENT_COLORS[Math.min(idx, SEGMENT_COLORS.length - 1)];
-          return (
+        {hasThemes ? (
+          entry.themes.map((seg, idx) => (
             <div
               key={`${entry.date}-${idx}`}
-              className={`${colorClass} group-hover:brightness-110 transition`}
-              style={{ height: `${Math.max(2, segRatio * 100)}%` }}
+              className={`${sectorTints.get(seg.sector) || DEFAULT_TINTS[DEFAULT_TINTS.length - 1]} group-hover:brightness-125 transition`}
+              style={{ height: `${seg.weight * 100}%` }}
             />
-          );
-        })}
+          ))
+        ) : (
+          <div className={`${ghostTint(trackKey)} h-full w-full group-hover:brightness-125 transition`} />
+        )}
       </div>
     </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SectorLegend — compact legend under the activity chart
+//
+// Aggregates theme weight × source count across the whole month, surfaces the
+// top sectors so users can decode the bar colors. Each line: swatch + sector
+// name + month-level share percentage.
+// ---------------------------------------------------------------------------
+
+function SectorLegend({ ranking }: { ranking: SectorRanking[] }) {
+  if (ranking.length === 0) return null;
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-dashboard-text-muted">
+      {ranking.map(({ sector, share, tint }) => (
+        <div key={sector} className="flex items-center gap-1.5">
+          <span className={`${tint} inline-block w-2.5 h-2.5 rounded-sm`} />
+          <span className="text-dashboard-text">{formatSector(sector)}</span>
+          <span className="tabular-nums">{Math.round(share * 100)}%</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -84,19 +84,19 @@ export interface CalendarDayView {
   clusters: CalendarClusterCard[];
 }
 
-// Per-day segment for the stacked activity chart: top clusters' share of day sources.
-// Segments are ordered largest-first; "other" (rank > 5) is collapsed into one trailing
-// segment so the chart stays readable.
-export interface CalendarStackSegment {
-  cluster_id: string | null; // null for the "other" bucket
-  title: string | null;
-  source_count: number;
+// Per-day theme segment for the stacked activity chart.
+// Comes from daily_briefs.themes (sector + subject + weight). Weights sum to ~1.
+// Empty for days without a brief (< 5 promoted clusters).
+export interface CalendarThemeSegment {
+  sector: string;  // e.g. "SECURITY"
+  subject: string; // e.g. "LAW_ENFORCEMENT"
+  weight: number;  // 0..1
 }
 
 export interface CalendarStripeEntry {
   date: string; // YYYY-MM-DD, every day of the month
   total_sources: number;
-  segments: CalendarStackSegment[]; // top 5 + "other"; empty for empty days
+  themes: CalendarThemeSegment[]; // from daily_briefs.themes; empty for days without a brief
 }
 
 export interface CalendarAnalysisScope {
