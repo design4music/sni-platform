@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope, CentroidMonthView, CentroidStripeEntry, CentroidTrackSummary } from './types';
 
 // Locked thresholds for the calendar-day frontend.
 // See docs/FRONTEND_CALENDAR_REDESIGN.md.
@@ -2384,6 +2384,246 @@ export async function getCalendarMonthView(
       days,
       activity_stripe: stripe,
       scope,
+    };
+  });
+}
+
+// Returns true if the centroid+month has any promoted events across any track.
+// Used to gate the new centroid hero view vs the legacy cards.
+export async function centroidHasPromotedForMonth(
+  centroidId: string,
+  month: string // YYYY-MM or YYYY-MM-DD
+): Promise<boolean> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  const rows = await query<{ ok: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM events_v3 e
+       JOIN ctm c ON c.id = e.ctm_id
+       WHERE c.centroid_id = $1 AND c.month = $2
+         AND e.is_promoted = true AND e.merged_into IS NULL
+     ) AS ok`,
+    [centroidId, monthStart]
+  );
+  return !!rows[0]?.ok;
+}
+
+// Stopwords + tokenizer + Dice — ported from pipeline/phase_4/merge_same_day_events.py
+// Used for display-layer de-dup of cross-day fragments in track card top events.
+const CARD_STOP_WORDS = new Set(
+  ('the a an and or of to in on at for with by from as is was are be has have had not but '
+    + 'this it its be has have had not but after over says said could new us s t '
+    + 'will during about between into than more out up no may').split(/\s+/)
+);
+
+// Ultra-common entities that appear in too many titles to be distinctive.
+// Removing them lets truly distinctive names (Pope, Leo, Vance, Hormuz...)
+// drive the similarity score.
+const CARD_UBIQUITOUS = new Set(
+  ('trump biden vance us usa american america iran iranian china chinese russia '
+    + 'russian putin netanyahu khamenei xi nato eu un').split(/\s+/)
+);
+
+function titleWords(text: string | null | undefined): Set<string> {
+  const words = new Set<string>();
+  if (!text) return words;
+  const tokens = text.toLowerCase().match(/[a-z0-9]+/g) || [];
+  for (const w of tokens) {
+    if (w.length > 1 && !CARD_STOP_WORDS.has(w) && !CARD_UBIQUITOUS.has(w)) {
+      words.add(w);
+    }
+  }
+  return words;
+}
+
+function dice(a: Set<string>, b: Set<string>): number {
+  if (!a.size || !b.size) return 0;
+  let inter = 0;
+  for (const w of a) if (b.has(w)) inter++;
+  return (2 * inter) / (a.size + b.size);
+}
+
+// Cross-track monthly view for the centroid page hero.
+// Returns per-day stacked activity (colored by track) + per-track summaries
+// with top-5 promoted events.
+export async function getCentroidMonthView(
+  centroidId: string,
+  month: string, // YYYY-MM or YYYY-MM-DD
+  locale?: string
+): Promise<CentroidMonthView | null> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`centroid_cal:${centroidId}:${monthStart}:${locale || 'en'}`, 900, async () => {
+    // 1. Per-day, per-track source totals — drives the activity stripe
+    const stripeRows = await query<{
+      date: string;
+      track: string;
+      src: number;
+    }>(
+      `SELECT e.date::text AS date, c.track, SUM(e.source_batch_count)::int AS src
+         FROM events_v3 e
+         JOIN ctm c ON c.id = e.ctm_id
+        WHERE c.centroid_id = $1 AND c.month = $2
+          AND e.is_promoted = true AND e.merged_into IS NULL
+        GROUP BY e.date, c.track`,
+      [centroidId, monthStart]
+    );
+
+    // 2. Top-5 promoted events per track (for the track cards)
+    const topRows = await query<{
+      track: string;
+      event_id: string;
+      date: string;
+      title: string | null;
+      source_batch_count: number;
+    }>(
+      `WITH ranked AS (
+         SELECT c.track,
+                e.id::text AS event_id,
+                e.date::text AS date,
+                COALESCE(
+                  ${locale === 'de' ? 'e.title_de, ' : ''}
+                  e.title,
+                  (SELECT t2.title_display FROM event_v3_titles evt2
+                   JOIN titles_v3 t2 ON t2.id = evt2.title_id
+                   WHERE evt2.event_id = e.id
+                   ORDER BY t2.pubdate_utc ASC LIMIT 1)
+                ) AS title,
+                e.source_batch_count,
+                ROW_NUMBER() OVER (
+                  PARTITION BY c.track
+                  ORDER BY e.source_batch_count DESC, e.date DESC, e.id
+                ) AS rnk
+           FROM events_v3 e
+           JOIN ctm c ON c.id = e.ctm_id
+          WHERE c.centroid_id = $1 AND c.month = $2
+            AND e.is_promoted = true AND e.merged_into IS NULL
+            AND e.is_catchall = false
+       )
+       SELECT track, event_id, date, title, source_batch_count
+         FROM ranked WHERE rnk <= 10
+        ORDER BY track, rnk`,
+      [centroidId, monthStart]
+    );
+
+    // 3. Per-track CTM metadata (title_count, summary_text)
+    const ctmRows = await query<{
+      track: string;
+      title_count: number;
+      summary_text: string | null;
+      summary_text_de: string | null;
+      last_active: string | null;
+    }>(
+      `SELECT c.track,
+              c.title_count::int AS title_count,
+              c.summary_text,
+              c.summary_text_de,
+              (SELECT MAX(e.date)::text FROM events_v3 e WHERE e.ctm_id = c.id) AS last_active
+         FROM ctm c
+        WHERE c.centroid_id = $1 AND c.month = $2`,
+      [centroidId, monthStart]
+    );
+
+    // 4. Prev / next month with coverage
+    const navRows = await query<{ month: string; is_prev: boolean }>(
+      `(SELECT month::text AS month, true AS is_prev
+          FROM ctm WHERE centroid_id = $1 AND month < $2
+          ORDER BY month DESC LIMIT 1)
+       UNION ALL
+       (SELECT month::text AS month, false AS is_prev
+          FROM ctm WHERE centroid_id = $1 AND month > $2
+          ORDER BY month ASC LIMIT 1)`,
+      [centroidId, monthStart]
+    );
+    const prevMonth =
+      navRows.find(r => r.is_prev)?.month.slice(0, 7) || null;
+    const nextMonth =
+      navRows.find(r => !r.is_prev)?.month.slice(0, 7) || null;
+
+    // 5. Build activity stripe: every day of month, track weights sum to 1
+    const byDate = new Map<string, Map<string, number>>();
+    const totalByDate = new Map<string, number>();
+    for (const r of stripeRows) {
+      let m = byDate.get(r.date);
+      if (!m) {
+        m = new Map();
+        byDate.set(r.date, m);
+      }
+      m.set(r.track, (m.get(r.track) || 0) + r.src);
+      totalByDate.set(r.date, (totalByDate.get(r.date) || 0) + r.src);
+    }
+    const [yearStr, mmStr] = monthStart.split('-');
+    const year = parseInt(yearStr);
+    const mm = parseInt(mmStr);
+    const daysInMonth = new Date(year, mm, 0).getDate();
+    const activity_stripe: CentroidStripeEntry[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(mm).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const trackMap = byDate.get(dateStr);
+      const total = totalByDate.get(dateStr) || 0;
+      const tracks: CentroidStripeEntry['tracks'] = [];
+      if (trackMap && total > 0) {
+        for (const [tr, src] of trackMap.entries()) {
+          tracks.push({ track: tr, weight: src / total });
+        }
+        tracks.sort((a, b) => b.weight - a.weight);
+      }
+      activity_stripe.push({ date: dateStr, total_sources: total, tracks });
+    }
+
+    // 6. Build track summaries with title-Dice de-dup for cross-day fragments.
+    //    Same story often promoted as separate events on consecutive days
+    //    (e.g. Trump+Pope criticism on Apr 13/14/15). We collapse fragments
+    //    with title Dice >= 0.4 into the biggest representative, display-only.
+    const CARD_DICE_THRESHOLD = 0.3;
+    const CARD_TOP_N = 5;
+    const topByTrack = new Map<string, CentroidTrackSummary['top_events']>();
+    const candidatesByTrack = new Map<
+      string,
+      Array<{ event: CentroidTrackSummary['top_events'][number]; words: Set<string> }>
+    >();
+    for (const r of topRows) {
+      let list = candidatesByTrack.get(r.track);
+      if (!list) {
+        list = [];
+        candidatesByTrack.set(r.track, list);
+      }
+      list.push({
+        event: {
+          id: r.event_id,
+          title: r.title || '',
+          date: r.date,
+          source_count: r.source_batch_count,
+          has_event_page: r.source_batch_count >= CALENDAR_EVENT_PAGE_MIN_SOURCES,
+        },
+        words: titleWords(r.title),
+      });
+    }
+    for (const [track, candidates] of candidatesByTrack.entries()) {
+      // Candidates come in source_count DESC order (SQL ORDER BY), so the
+      // first kept representative is always the biggest of its cluster.
+      const kept: Array<{ event: CentroidTrackSummary['top_events'][number]; words: Set<string> }> = [];
+      for (const c of candidates) {
+        const isDup = kept.some(k => dice(k.words, c.words) >= CARD_DICE_THRESHOLD);
+        if (!isDup) kept.push(c);
+        if (kept.length >= CARD_TOP_N) break;
+      }
+      topByTrack.set(track, kept.map(k => k.event));
+    }
+    const tracks: CentroidTrackSummary[] = ctmRows.map(c => ({
+      track: c.track,
+      title_count: c.title_count,
+      summary_text:
+        locale === 'de' && c.summary_text_de ? c.summary_text_de : c.summary_text,
+      last_active: c.last_active,
+      top_events: topByTrack.get(c.track) || [],
+    }));
+
+    return {
+      centroid_id: centroidId,
+      month: monthStart,
+      activity_stripe,
+      tracks,
+      prev_month: prevMonth,
+      next_month: nextMonth,
     };
   });
 }

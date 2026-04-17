@@ -112,6 +112,37 @@ export interface CalendarMonthView {
   scope: CalendarAnalysisScope;
 }
 
+// Per-day track share for the centroid-level activity chart.
+// Weights sum to ~1 when any track had coverage that day.
+export interface CentroidStripeEntry {
+  date: string; // YYYY-MM-DD, every day of the month
+  total_sources: number;
+  tracks: Array<{ track: string; weight: number }>;
+}
+
+export interface CentroidTrackSummary {
+  track: string;
+  title_count: number;
+  summary_text: string | null;
+  last_active: string | null;
+  top_events: Array<{
+    id: string;
+    title: string;
+    date: string;
+    source_count: number;
+    has_event_page: boolean;
+  }>;
+}
+
+export interface CentroidMonthView {
+  centroid_id: string;
+  month: string; // YYYY-MM-DD
+  activity_stripe: CentroidStripeEntry[];
+  tracks: CentroidTrackSummary[];
+  prev_month: string | null;
+  next_month: string | null;
+}
+
 export interface Event {
   date: string;
   last_active?: string;

@@ -15,7 +15,10 @@ import {
   getTopSignalsForCentroid,
   getStanceForCentroid,
   getCentroidDeviations,
+  centroidHasPromotedForMonth,
+  getCentroidMonthView,
 } from '@/lib/queries';
+import CentroidHero from '@/components/CentroidHero';
 import { getOutletLogoUrl } from '@/lib/logos';
 import DeviationCard from '@/components/DeviationCard';
 import StanceSidebar from './StanceSidebar';
@@ -77,14 +80,20 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   // Get tracks that exist for the current month (month-aware: Jan=6, March=4)
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
-  // Fetch track data, centroid summary, and top signals for the current month
-  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData] = await Promise.all([
+  // Fetch track data, centroid summary, top signals, and new-view gate in parallel
+  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData, hasPromoted] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     getStanceForCentroid(centroid.id),
     getCentroidDeviations(centroid.id),
+    currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
   ]);
+
+  // New hero view data: only loaded when the month has promoted events.
+  const centroidMonthView = hasPromoted && currentMonth
+    ? await getCentroidMonthView(centroid.id, currentMonth, locale)
+    : null;
 
   // Build maps of track -> titleCount and track -> lastActive for the current month
   const trackDataMap = new Map(monthTrackData.map(t => [t.track, t.titleCount]));
@@ -105,7 +114,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
 
   const sidebar = (
     <div className={isFrozen ? "lg:sticky lg:top-24 space-y-6" : "space-y-6"}>
-      {availableMonths.length > 0 && currentMonth && (
+      {availableMonths.length > 0 && currentMonth && !centroidMonthView && (
         <MonthNav
           months={availableMonths}
           currentMonth={currentMonth}
@@ -202,6 +211,44 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     ? (REGIONS as Record<string, string>)[centroid.primary_theater] || centroid.primary_theater
     : null;
 
+  // Enhanced top zone: hero calendar + 2x2 track cards, both spanning full width.
+  // Only rendered when we have promoted events for this month.
+  const enhancedTop = centroidMonthView ? (
+    <div className="space-y-8">
+      <CentroidHero
+        view={centroidMonthView}
+        centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+        centroidKey={centroid.id}
+        activeMonth={currentMonth || ''}
+      />
+      {configuredTracks.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {configuredTracks.map(track => {
+            const titleCount = trackDataMap.get(track) || 0;
+            const hasDataThisMonth = titleCount > 0;
+            const hasHistoricalData = tracksWithHistoricalData.has(track);
+            const heroTrack = centroidMonthView.tracks.find(t => t.track === track);
+            return (
+              <TrackCard
+                key={track}
+                centroidId={centroid.id}
+                track={track}
+                latestMonth={currentMonth || undefined}
+                titleCount={titleCount}
+                disabled={!hasDataThisMonth}
+                hasHistoricalData={hasHistoricalData}
+                lastActive={trackLastActiveMap.get(track) || undefined}
+                topEvents={heroTrack?.top_events}
+                summaryText={heroTrack?.summary_text}
+                calendarHref={`/c/${centroid.id}/t/${track}/calendar?month=${currentMonth}`}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  ) : undefined;
+
   return (
     <DashboardLayout
       title={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
@@ -214,6 +261,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
         </Link>
       ) : undefined}
       sidebar={sidebar}
+      topFullWidthContent={enhancedTop}
       fullWidthContent={
         centroid.profile_json ? (
           <GeoBriefSection
@@ -234,16 +282,19 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
           </div>
         )}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">
-            {t('strategicTracks')}{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth, locale)}`}
-          </h2>
-          {!centroidSummary && (
-            <p className="text-dashboard-text-muted mb-6">
-              {t('trackDescription', { label: getCentroidLabel(centroid.id, centroid.label, tCentroids) })}
-            </p>
-          )}
-        </div>
+        {/* Legacy header only when enhanced hero is NOT active */}
+        {!centroidMonthView && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">
+              {t('strategicTracks')}{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth, locale)}`}
+            </h2>
+            {!centroidSummary && (
+              <p className="text-dashboard-text-muted mb-6">
+                {t('trackDescription', { label: getCentroidLabel(centroid.id, centroid.label, tCentroids) })}
+              </p>
+            )}
+          </div>
+        )}
 
         {centroidSummary && (
           <div className="mb-8">
@@ -275,7 +326,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           </div>
         )}
 
-        {!isFrozen && (
+        {!centroidMonthView && !isFrozen && (
           configuredTracks.length === 0 ? (
             <div className="text-center py-12 bg-dashboard-surface border border-dashboard-border rounded-lg">
               <p className="text-dashboard-text-muted">{t('noTracks')}</p>
@@ -286,7 +337,6 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                 const titleCount = trackDataMap.get(track) || 0;
                 const hasDataThisMonth = titleCount > 0;
                 const hasHistoricalData = tracksWithHistoricalData.has(track);
-
                 return (
                   <TrackCard
                     key={track}

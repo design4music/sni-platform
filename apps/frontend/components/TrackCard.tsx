@@ -2,6 +2,14 @@ import Link from 'next/link';
 import { Track, getTrackLabel } from '@/lib/types';
 import { getTranslations } from 'next-intl/server';
 
+interface TopEvent {
+  id: string;
+  title: string;
+  date: string;
+  source_count: number;
+  has_event_page: boolean;
+}
+
 interface TrackCardProps {
   centroidId: string;
   track: Track;
@@ -10,6 +18,10 @@ interface TrackCardProps {
   disabled?: boolean;
   hasHistoricalData?: boolean;
   lastActive?: string;
+  // New (optional): top events + calendar deep-link for the enhanced hero layout
+  topEvents?: TopEvent[];
+  summaryText?: string | null;
+  calendarHref?: string;
 }
 
 export function getTrackIcon(track: string) {
@@ -102,17 +114,23 @@ export default async function TrackCard({
   titleCount,
   disabled,
   hasHistoricalData,
-  lastActive
+  lastActive,
+  topEvents,
+  summaryText,
+  calendarHref,
 }: TrackCardProps) {
   const tTracks = await getTranslations('tracks');
   const tTrack = await getTranslations('track');
-  const href = latestMonth
-    ? `/c/${centroidId}/t/${track}?month=${latestMonth}`
-    : `/c/${centroidId}/t/${track}`;
+  const href =
+    calendarHref ||
+    (latestMonth
+      ? `/c/${centroidId}/t/${track}?month=${latestMonth}`
+      : `/c/${centroidId}/t/${track}`);
 
   const articleCount = titleCount || 0;
   const hasArticles = articleCount > 0;
   const trackLabel = getTrackLabel(track, tTracks).replace(/^Geo\s+/i, '');
+  const enriched = (topEvents && topEvents.length > 0) || !!summaryText;
 
   // If disabled, render a non-interactive div instead of Link
   if (disabled) {
@@ -145,6 +163,74 @@ export default async function TrackCard({
     );
   }
 
+  // Enriched card: header + summary + top events list (non-clickable wrapper so
+  // inner event links work independently)
+  if (enriched) {
+    return (
+      <div className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg">
+        <Link
+          href={href}
+          className="flex items-center gap-3 mb-3 group"
+        >
+          <div className="text-blue-400">{getTrackIcon(track)}</div>
+          <h3 className="text-lg font-semibold flex-1 group-hover:text-blue-400 transition">
+            {trackLabel}
+          </h3>
+          <span
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium bg-green-500/10 border-green-500/30 text-green-400"
+            title={tTrack('totalArticles', { count: articleCount.toLocaleString() })}
+          >
+            <span className="tabular-nums">{articleCount.toLocaleString()}</span>
+            {lastActive && (Date.now() - new Date(lastActive + 'T00:00:00').getTime()) < 172800000 && (
+              <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" title={tTrack('activeLast48h')} />
+            )}
+          </span>
+        </Link>
+
+        {summaryText && (
+          <p className="text-sm text-dashboard-text-muted leading-relaxed mb-4 line-clamp-4">
+            {summaryText}
+          </p>
+        )}
+
+        {topEvents && topEvents.length > 0 && (
+          <ul className="space-y-1.5 mb-3">
+            {topEvents.map(ev => (
+              <li key={ev.id}>
+                {ev.has_event_page ? (
+                  <Link
+                    href={`/events/${ev.id}`}
+                    className="flex items-start gap-2 text-sm text-dashboard-text hover:text-blue-400 transition"
+                  >
+                    <span className="text-dashboard-text-muted tabular-nums text-[11px] pt-0.5 shrink-0 w-6 text-right">
+                      {ev.source_count}
+                    </span>
+                    <span className="flex-1 min-w-0 truncate">{ev.title || '(untitled)'}</span>
+                  </Link>
+                ) : (
+                  <div className="flex items-start gap-2 text-sm text-dashboard-text-muted">
+                    <span className="tabular-nums text-[11px] pt-0.5 shrink-0 w-6 text-right">
+                      {ev.source_count}
+                    </span>
+                    <span className="flex-1 min-w-0 truncate">{ev.title || '(untitled)'}</span>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <Link
+          href={href}
+          className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition"
+        >
+          View full calendar →
+        </Link>
+      </div>
+    );
+  }
+
+  // Legacy compact card
   return (
     <Link
       href={href}
