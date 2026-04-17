@@ -596,7 +596,7 @@ class PipelineDaemon:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT DISTINCT c.id::text, c.centroid_id, c.track
+                    """SELECT c.id::text, c.centroid_id, c.track
                        FROM ctm c
                        WHERE c.is_frozen = false
                          AND EXISTS (SELECT 1 FROM events_v3 e
