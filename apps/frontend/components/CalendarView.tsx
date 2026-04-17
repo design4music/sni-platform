@@ -195,6 +195,23 @@ export function CalendarHero({
               {formatMonthLong(activeMonth)}
             </span>
           </h1>
+          {view.theme_chips && view.theme_chips.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {view.theme_chips.map((chip, i) => (
+                <span
+                  key={`${chip.sector}-${chip.subject}-${i}`}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]
+                             bg-dashboard-border/40 border border-dashboard-border text-dashboard-text-muted"
+                >
+                  <span className="text-dashboard-text">
+                    {formatSector(chip.sector)}
+                    <span className="text-dashboard-text-muted"> · {formatSector(chip.subject)}</span>
+                  </span>
+                  <span className="tabular-nums">{Math.round(chip.weight * 100)}%</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {prevMonth ? (

@@ -84,6 +84,14 @@ export interface CalendarDayView {
   clusters: CalendarClusterCard[];
 }
 
+// Month-level dominant theme pill shown on CTM + TrackCard headers.
+// Aggregated from title_labels across all promoted events in the CTM.
+export interface CtmThemeChip {
+  sector: string;
+  subject: string;
+  weight: number; // 0..1, share of all promoted-event labels this CTM/month
+}
+
 // Per-day theme segment for the stacked activity chart.
 // Comes from daily_briefs.themes (sector + subject + weight). Weights sum to ~1.
 // Empty for days without a brief (< 5 promoted clusters).
@@ -110,6 +118,7 @@ export interface CalendarMonthView {
   days: CalendarDayView[]; // only days with >= 1 promoted cluster
   activity_stripe: CalendarStripeEntry[]; // every day of month incl. empty
   scope: CalendarAnalysisScope;
+  theme_chips: CtmThemeChip[]; // top 3 dominant themes this CTM/month
 }
 
 // Per-day track share for the centroid-level activity chart.
@@ -125,6 +134,7 @@ export interface CentroidTrackSummary {
   title_count: number;
   summary_text: string | null;
   last_active: string | null;
+  theme_chips: CtmThemeChip[]; // top 3 dominant themes for this track this month
   top_events: Array<{
     id: string;
     title: string;

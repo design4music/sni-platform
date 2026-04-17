@@ -17,6 +17,7 @@ import {
   getCentroidDeviations,
   centroidHasPromotedForMonth,
   getCentroidMonthView,
+  getActiveNarrativesForCentroid,
 } from '@/lib/queries';
 import CentroidHero from '@/components/CentroidHero';
 import { getOutletLogoUrl } from '@/lib/logos';
@@ -81,13 +82,14 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, centroid summary, top signals, and new-view gate in parallel
-  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData, hasPromoted] = await Promise.all([
+  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData, hasPromoted, activeNarratives] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     getStanceForCentroid(centroid.id),
     getCentroidDeviations(centroid.id),
     currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
+    currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
   ]);
 
   // New hero view data: only loaded when the month has promoted events.
@@ -163,27 +165,40 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           </nav>
         </div>
       )}
-      {topSignals.length > 0 && (
+      {activeNarratives.length > 0 && (
         <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
           <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-            {t('topSignals')}
+            Active Narratives
           </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {topSignals.map(s => {
-              const typeLabel = s.signal_type.replace(/s$/, '').replace(/_/g, ' ');
+          <ul className="space-y-2">
+            {activeNarratives.map(n => {
+              const foreign = n.actor_centroid && n.actor_centroid !== centroid.id;
+              const actorLabel = foreign
+                ? getCentroidLabel(n.actor_centroid!, n.actor_centroid!, tCentroids)
+                : null;
               return (
-                <Link
-                  key={`${s.signal_type}-${s.value}`}
-                  href={`/signals/${s.signal_type}/${encodeURIComponent(s.value)}`}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition text-[11px]"
-                >
-                  <span className="text-blue-400/70">{typeLabel}:</span>
-                  <span className="text-dashboard-text truncate max-w-[100px]">{s.value}</span>
-                  <span className="text-dashboard-text-muted tabular-nums">{s.event_count}</span>
-                </Link>
+                <li key={n.id}>
+                  <Link
+                    href={`/narratives/${n.id}`}
+                    className="flex items-start gap-2 text-sm text-dashboard-text hover:text-blue-400 transition group"
+                  >
+                    <span className="text-dashboard-text-muted tabular-nums text-[11px] pt-0.5 shrink-0 w-6 text-right">
+                      {n.event_count}
+                    </span>
+                    <span className="flex-1 min-w-0 leading-snug">
+                      {n.name}
+                      {actorLabel && (
+                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0 rounded-sm text-[10px]
+                                         bg-amber-500/10 border border-amber-500/30 text-amber-400 align-middle">
+                          from {actorLabel}
+                        </span>
+                      )}
+                    </span>
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       )}
       {deviationData && deviationData.deviations && deviationData.deviations.length > 0 && (
@@ -239,6 +254,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                 hasHistoricalData={hasHistoricalData}
                 lastActive={trackLastActiveMap.get(track) || undefined}
                 topEvents={heroTrack?.top_events}
+                themeChips={heroTrack?.theme_chips}
                 summaryText={heroTrack?.summary_text}
                 calendarHref={`/c/${centroid.id}/t/${track}/calendar?month=${currentMonth}`}
               />

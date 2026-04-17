@@ -10,6 +10,12 @@ interface TopEvent {
   has_event_page: boolean;
 }
 
+interface ThemeChip {
+  sector: string;
+  subject: string;
+  weight: number;
+}
+
 interface TrackCardProps {
   centroidId: string;
   track: Track;
@@ -20,8 +26,13 @@ interface TrackCardProps {
   lastActive?: string;
   // New (optional): top events + calendar deep-link for the enhanced hero layout
   topEvents?: TopEvent[];
+  themeChips?: ThemeChip[];
   summaryText?: string | null;
   calendarHref?: string;
+}
+
+function formatThemeLabel(s: string): string {
+  return s.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
 export function getTrackIcon(track: string) {
@@ -116,6 +127,7 @@ export default async function TrackCard({
   hasHistoricalData,
   lastActive,
   topEvents,
+  themeChips,
   summaryText,
   calendarHref,
 }: TrackCardProps) {
@@ -130,7 +142,7 @@ export default async function TrackCard({
   const articleCount = titleCount || 0;
   const hasArticles = articleCount > 0;
   const trackLabel = getTrackLabel(track, tTracks).replace(/^Geo\s+/i, '');
-  const enriched = (topEvents && topEvents.length > 0) || !!summaryText;
+  const enriched = (topEvents && topEvents.length > 0) || !!summaryText || (themeChips && themeChips.length > 0);
 
   // If disabled, render a non-interactive div instead of Link
   if (disabled) {
@@ -186,6 +198,24 @@ export default async function TrackCard({
             )}
           </span>
         </Link>
+
+        {themeChips && themeChips.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {themeChips.map((chip, i) => (
+              <span
+                key={`${chip.sector}-${chip.subject}-${i}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px]
+                           bg-dashboard-border/40 border border-dashboard-border text-dashboard-text-muted"
+              >
+                <span className="text-dashboard-text">
+                  {formatThemeLabel(chip.sector)}
+                  <span className="text-dashboard-text-muted"> · {formatThemeLabel(chip.subject)}</span>
+                </span>
+                <span className="tabular-nums">{Math.round(chip.weight * 100)}%</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         {summaryText && (
           <p className="text-sm text-dashboard-text-muted leading-relaxed mb-4 line-clamp-4">

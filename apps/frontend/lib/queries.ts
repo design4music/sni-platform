@@ -1,6 +1,6 @@
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope, CentroidMonthView, CentroidStripeEntry, CentroidTrackSummary } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope, CentroidMonthView, CentroidStripeEntry, CentroidTrackSummary, CtmThemeChip } from './types';
 
 // Locked thresholds for the calendar-day frontend.
 // See docs/FRONTEND_CALENDAR_REDESIGN.md.
@@ -2379,13 +2379,61 @@ export async function getCalendarMonthView(
       active_days: days.length,
     };
 
+    const theme_chips = await getCtmThemeChips(ctm.id, 3);
+
     return {
       ctm,
       days,
       activity_stripe: stripe,
       scope,
+      theme_chips,
     };
   });
+}
+
+// Top strategic narratives active in a centroid+month (by event count).
+// Surfaces the 260-narrative curated layer into the centroid sidebar.
+export async function getActiveNarrativesForCentroid(
+  centroidId: string,
+  month: string,
+  locale?: string,
+  limit = 5
+): Promise<Array<{ id: string; name: string; actor_centroid: string | null; meta_narrative_id: string | null; event_count: number }>> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(
+    `centroid_narratives:${centroidId}:${monthStart}:${locale || 'en'}`,
+    900,
+    async () => {
+      const rows = await query<{
+        id: string;
+        name: string;
+        name_de: string | null;
+        actor_centroid: string | null;
+        meta_narrative_id: string | null;
+        event_count: number;
+      }>(
+        `SELECT sn.id, sn.name, sn.name_de, sn.actor_centroid, sn.meta_narrative_id,
+                COUNT(DISTINCT e.id)::int AS event_count
+           FROM event_strategic_narratives esn
+           JOIN events_v3 e ON e.id = esn.event_id
+           JOIN ctm c ON c.id = e.ctm_id
+           JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+          WHERE c.centroid_id = $1 AND c.month = $2
+            AND e.merged_into IS NULL
+          GROUP BY sn.id, sn.name, sn.name_de, sn.actor_centroid, sn.meta_narrative_id
+          ORDER BY event_count DESC, sn.name
+          LIMIT $3`,
+        [centroidId, monthStart, limit]
+      );
+      return rows.map(r => ({
+        id: r.id,
+        name: locale === 'de' && r.name_de ? r.name_de : r.name,
+        actor_centroid: r.actor_centroid,
+        meta_narrative_id: r.meta_narrative_id,
+        event_count: r.event_count,
+      }));
+    }
+  );
 }
 
 // Returns true if the centroid+month has any promoted events across any track.
@@ -2405,6 +2453,32 @@ export async function centroidHasPromotedForMonth(
     [centroidId, monthStart]
   );
   return !!rows[0]?.ok;
+}
+
+// Top-N dominant themes for a CTM (across all promoted events). Used for the
+// header chips on CTM calendar + centroid track cards.
+async function getCtmThemeChips(ctmId: string, limit = 3): Promise<CtmThemeChip[]> {
+  const rows = await query<{ sector: string; subject: string; weight: number }>(
+    `WITH labels AS (
+       SELECT tl.sector, tl.subject, COUNT(*) AS cnt
+         FROM events_v3 e
+         JOIN event_v3_titles evt ON evt.event_id = e.id
+         JOIN title_labels tl ON tl.title_id = evt.title_id
+        WHERE e.ctm_id = $1 AND e.is_promoted = true
+          AND tl.sector IS NOT NULL AND tl.sector <> 'NON_STRATEGIC'
+        GROUP BY tl.sector, tl.subject
+     )
+     SELECT sector, subject, (cnt::float / SUM(cnt) OVER ())::float AS weight
+       FROM labels
+      ORDER BY cnt DESC, sector, subject
+      LIMIT $2`,
+    [ctmId, limit]
+  );
+  return rows.map(r => ({
+    sector: r.sector,
+    subject: r.subject,
+    weight: Number(r.weight),
+  }));
 }
 
 // Stopwords + tokenizer + Dice — ported from pipeline/phase_4/merge_same_day_events.py
@@ -2608,12 +2682,27 @@ export async function getCentroidMonthView(
       }
       topByTrack.set(track, kept.map(k => k.event));
     }
-    const tracks: CentroidTrackSummary[] = ctmRows.map(c => ({
+    // Fetch theme chips per-track in parallel
+    const ctmIdByTrack = new Map<string, string>();
+    const ctmIdRows = await query<{ id: string; track: string }>(
+      `SELECT id::text, track FROM ctm WHERE centroid_id = $1 AND month = $2`,
+      [centroidId, monthStart]
+    );
+    for (const r of ctmIdRows) ctmIdByTrack.set(r.track, r.id);
+    const chipResults = await Promise.all(
+      ctmRows.map(c => {
+        const id = ctmIdByTrack.get(c.track);
+        return id ? getCtmThemeChips(id, 3) : Promise.resolve([]);
+      })
+    );
+
+    const tracks: CentroidTrackSummary[] = ctmRows.map((c, idx) => ({
       track: c.track,
       title_count: c.title_count,
       summary_text:
         locale === 'de' && c.summary_text_de ? c.summary_text_de : c.summary_text,
       last_active: c.last_active,
+      theme_chips: chipResults[idx],
       top_events: topByTrack.get(c.track) || [],
     }));
 
