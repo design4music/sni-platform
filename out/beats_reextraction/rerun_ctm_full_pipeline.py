@@ -222,6 +222,17 @@ def main():
     print(f"  Deleted {cur.rowcount} narrative matches")
     # Break FK: events_v3.family_id -> event_families.id
     cur.execute("UPDATE events_v3 SET family_id = NULL WHERE ctm_id = %s", (ctm_id,))
+    # Break self-FK: events in OTHER CTMs may have merged_into pointing at this
+    # CTM's events (cross-CTM merges from the old v2 state). Null those first.
+    cur.execute(
+        """UPDATE events_v3 SET merged_into = NULL
+            WHERE merged_into IN (SELECT id FROM events_v3 WHERE ctm_id = %s)""",
+        (ctm_id,),
+    )
+    cur.execute(
+        "UPDATE events_v3 SET merged_into = NULL WHERE ctm_id = %s",
+        (ctm_id,),
+    )
     cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
     print(f"  Deleted {cur.rowcount} events_v3")
     cur.execute("DELETE FROM event_families WHERE ctm_id = %s", (ctm_id,))
