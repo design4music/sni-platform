@@ -27,10 +27,12 @@ Sorted by dependency + suggested phasing. None of these is the single
    month, and what changed vs last month" that a non-analyst user can
    scan in 20 seconds. Existing ticket. Needs a prompt-design session
    before coding.
-2. **Code + doc cleanup.** Families code still around after D-059
-   deprecation — remove once Jan/Feb/Mar are verified clean on Render
-   (done). Archive deprecated docs (done 2026-04-20 in this folder).
-   Consolidate one-shot scripts in `scripts/` vs `out/beats_reextraction/`.
+2. **Code + doc cleanup.** ✅ Families removed (D-064, 2026-04-20):
+   event_families table, events_v3.family_id column, 11 orphan scripts,
+   2 pipeline modules, /families/[id] route. Plan retained at
+   [`EVENT_FAMILIES_REMOVAL.md`](EVENT_FAMILIES_REMOVAL.md). Archive of
+   deprecated docs also done in this folder. Still open: consolidate
+   one-shot scripts in `scripts/` vs `out/beats_reextraction/`.
 3. **Centroid sidebar stats → DB.** Persist stance scores and
    unusual-activity monthly so they don't recompute on every request and
    stop showing "same value across months". New table

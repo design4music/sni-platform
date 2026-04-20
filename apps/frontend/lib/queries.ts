@@ -144,14 +144,9 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     is_catchall: boolean;
     has_narratives: boolean;
     topic_core: string | null;
-    family_id: string | null;
-    family_title: string | null;
-    family_domain: string | null;
-    family_summary: string | null;
   }>(
     `SELECT id, date, last_active, title, summary, tags, event_type, bucket_key,
-      source_batch_count, importance_score, is_catchall, has_narratives, source_title_ids, topic_core,
-      family_id, family_title, family_domain, family_summary
+      source_batch_count, importance_score, is_catchall, has_narratives, source_title_ids, topic_core
     FROM (
       -- Native events for this CTM
       SELECT
@@ -172,14 +167,9 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
         ${locCol('e', 'summary', locale)} as summary,
         e.tags, e.event_type, e.bucket_key, e.source_batch_count, e.importance_score,
         e.is_catchall, e.topic_core,
-        e.family_id::text as family_id,
-        ef.title as family_title,
-        ef.domain as family_domain,
-        ${locale === 'de' ? 'COALESCE(ef.summary_de, ef.summary)' : 'ef.summary'} as family_summary,
         EXISTS(SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
         COALESCE((SELECT array_agg(evt.title_id ORDER BY evt.title_id) FROM event_v3_titles evt WHERE evt.event_id = e.id), '{}') as source_title_ids
       FROM events_v3 e
-      LEFT JOIN event_families ef ON ef.id = e.family_id
       WHERE e.ctm_id = $1 AND e.source_batch_count > 0 AND e.merged_into IS NULL
 
       UNION ALL
@@ -203,15 +193,10 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
         ${locCol('e', 'summary', locale)} as summary,
         e.tags, ab.event_type, ab.bucket_key, e.source_batch_count, e.importance_score,
         e.is_catchall, e.topic_core,
-        e.family_id::text as family_id,
-        ef.title as family_title,
-        ef.domain as family_domain,
-        ${locale === 'de' ? 'COALESCE(ef.summary_de, ef.summary)' : 'ef.summary'} as family_summary,
         EXISTS(SELECT 1 FROM narratives n WHERE n.entity_type = 'event' AND n.entity_id = e.id) as has_narratives,
         COALESCE((SELECT array_agg(evt.title_id ORDER BY evt.title_id) FROM event_v3_titles evt WHERE evt.event_id = e.id), '{}') as source_title_ids
       FROM events_v3 ab
       JOIN events_v3 e ON e.id = ab.merged_into
-      LEFT JOIN event_families ef ON ef.id = e.family_id
       WHERE ab.ctm_id = $1 AND ab.merged_into IS NOT NULL
         AND e.ctm_id <> $1 AND e.merged_into IS NULL AND e.source_batch_count > 0
     ) combined
@@ -234,10 +219,6 @@ async function getEventsFromV3(ctmId: string, locale?: string): Promise<Event[]>
     is_catchall: r.is_catchall,
     has_narratives: r.has_narratives,
     topic_core: r.topic_core || undefined,
-    family_id: r.family_id || undefined,
-    family_title: r.family_title || undefined,
-    family_domain: r.family_domain || undefined,
-    family_summary: r.family_summary || undefined,
   }));
   });
 }
@@ -940,63 +921,6 @@ export async function getCentroidTimeline(
     params
   );
   return rows;
-}
-
-// --- Event Family queries ---
-
-export interface FamilyDetail {
-  id: string;
-  title: string;
-  summary: string | null;
-  domain: string | null;
-  cluster_count: number;
-  source_count: number;
-  first_seen: string | null;
-  last_active: string | null;
-  centroid_id: string;
-  centroid_label: string;
-  track: string;
-  month: string;
-}
-
-export interface FamilyEvent {
-  id: string;
-  title: string;
-  date: string | null;
-  source_batch_count: number;
-  event_type: string;
-  bucket_key: string | null;
-  summary: string | null;
-}
-
-export async function getFamilyById(familyId: string, locale?: string): Promise<FamilyDetail | null> {
-  const results = await query<FamilyDetail>(
-    `SELECT f.id, ${locCol('f', 'title', locale)} as title,
-            ${locCol('f', 'summary', locale)} as summary,
-            f.domain, f.cluster_count, f.source_count,
-            f.first_seen::text, f.last_active::text,
-            c.centroid_id, cv.label as centroid_label, c.track,
-            TO_CHAR(c.month, 'YYYY-MM') as month
-     FROM event_families f
-     JOIN ctm c ON c.id = f.ctm_id
-     JOIN centroids_v3 cv ON cv.id = c.centroid_id
-     WHERE f.id = $1`,
-    [familyId]
-  );
-  return results[0] || null;
-}
-
-export async function getFamilyEvents(familyId: string, locale?: string): Promise<FamilyEvent[]> {
-  return query<FamilyEvent>(
-    `SELECT e.id,
-            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title) as title,
-            e.date::text, e.source_batch_count, e.event_type, e.bucket_key,
-            ${locCol('e', 'summary', locale)} as summary
-     FROM events_v3 e
-     WHERE e.family_id = $1 AND e.merged_into IS NULL
-     ORDER BY e.source_batch_count DESC`,
-    [familyId]
-  );
 }
 
 export async function getEventById(eventId: string, locale?: string): Promise<EventDetail | null> {

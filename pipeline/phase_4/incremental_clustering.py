@@ -795,7 +795,6 @@ def _wipe_ctm_events(conn, ctm_id: str) -> None:
         "DELETE FROM event_v3_titles WHERE event_id IN (SELECT id FROM events_v3 WHERE ctm_id = %s)",
         (ctm_id,),
     )
-    cur.execute("UPDATE events_v3 SET family_id = NULL WHERE ctm_id = %s", (ctm_id,))
     cur.execute("DELETE FROM events_v3 WHERE ctm_id = %s", (ctm_id,))
 
 

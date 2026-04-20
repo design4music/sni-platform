@@ -169,10 +169,6 @@ export interface Event {
   is_catchall?: boolean;
   has_narratives?: boolean;
   topic_core?: string;
-  family_id?: string;
-  family_title?: string;
-  family_domain?: string;
-  family_summary?: string;
   resolvedTitles?: Title[];
   // Bilateral badge (populated by track page for display)
   bucketLabel?: string;

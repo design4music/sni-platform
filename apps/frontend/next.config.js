@@ -18,6 +18,18 @@ const nextConfig = {
         destination: '/de/c/:centroid/t/:track',
         permanent: true,
       },
+      // Event families (D-051/D-053/D-059) removed. Graceful fallback for
+      // any stray backlinks.
+      {
+        source: '/families/:id',
+        destination: '/trending',
+        permanent: true,
+      },
+      {
+        source: '/de/families/:id',
+        destination: '/de/trending',
+        permanent: true,
+      },
     ];
   },
   async headers() {

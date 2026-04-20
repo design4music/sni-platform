@@ -744,3 +744,29 @@ decisions:
       - Stale docs moved to docs/context/archive/. Top-level limited to 11 living documents.
       - New SESSION_START.md is the cold-start entry point, referenced from 00_README.md.
       - PIPELINE_STATUS.md rewritten as a current-state snapshot rather than a mixed status/design doc.
+
+  - id: D-064
+    date: 2026-04-20
+    type: architectural
+    status: accepted
+    title: Event Families removed — schema + code purged
+    rationale:
+      - D-059 deprecated event families when all months moved to day-centric
+        beats. Schema and scripts were kept "until all months rebuilt"; that
+        condition is now met (Jan-Apr all on pipeline v4.0).
+      - The live frontend no longer reads family_id (track page rewritten to
+        the calendar view in the prior session). The daemon no longer writes
+        family_id. Remaining code was pure dead weight.
+    consequences:
+      - Migration 20260420_drop_event_families.sql drops the event_families
+        table, the events_v3.family_id column, and three stale indexes.
+      - pipeline/phase_4/assemble_families.py + generate_family_summaries.py
+        deleted. The defensive family_id NULL-out in
+        incremental_clustering.py removed (would error once column is dropped).
+      - 11 orphan scripts deleted (family assembly experiments, two clustering
+        prototypes, and one old migration verifier).
+      - /families/[family_id] frontend route removed; 301 redirect to
+        /trending added for stray backlinks.
+      - Live-script docstrings (push_month_to_render, reprocess_month_local)
+        updated — no longer advertise event_families in their delete lists.
+      - Removal plan + inventory retained at docs/context/EVENT_FAMILIES_REMOVAL.md.
