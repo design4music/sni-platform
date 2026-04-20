@@ -2425,6 +2425,99 @@ export async function getActiveNarrativesForCentroid(
   );
 }
 
+// Centroid period summary ("state of play" brief). See pipeline/phase_5 for generator.
+// month: YYYY-MM for a specific historical month; omit for rolling_30d latest.
+export interface CentroidSummaryPayload {
+  state: string;
+  supporting_events: string[];
+}
+export interface CentroidSummary {
+  centroid_id: string;
+  period_kind: 'monthly' | 'rolling_30d';
+  period_end: string;
+  tier: number;
+  overall: string | null;
+  economy: CentroidSummaryPayload | null;
+  politics: CentroidSummaryPayload | null;
+  security: CentroidSummaryPayload | null;
+  society: CentroidSummaryPayload | null;
+  generated_at: string;
+}
+
+export async function getCentroidSummary(
+  centroidId: string,
+  month: string | null, // YYYY-MM, or null for rolling_30d
+  locale?: string
+): Promise<CentroidSummary | null> {
+  const isDe = locale === 'de';
+  const cacheKey = `centroid_summary:${centroidId}:${month || 'rolling'}:${isDe ? 'de' : 'en'}`;
+  return cached(cacheKey, 900, async () => {
+    // Pick locale-specific column via COALESCE (prefer DE if requested, fall back to EN).
+    const overallCol = isDe
+      ? 'COALESCE(overall_de, overall_en)'
+      : 'COALESCE(overall_en, overall_de)';
+    const stateKey = isDe ? 'state_de' : 'state_en';
+    const stateFallback = isDe ? 'state_en' : 'state_de';
+
+    // Extract `state` from JSONB preferring the locale version but falling back.
+    const trackExpr = (col: string) => `
+      CASE WHEN ${col} IS NULL THEN NULL ELSE jsonb_build_object(
+        'state', COALESCE(${col} ->> '${stateKey}', ${col} ->> '${stateFallback}'),
+        'supporting_events', COALESCE(${col} -> 'supporting_events', '[]'::jsonb)
+      ) END`;
+
+    let rows: Array<{
+      centroid_id: string;
+      period_kind: 'monthly' | 'rolling_30d';
+      period_end: string;
+      tier: number;
+      overall: string | null;
+      economy: CentroidSummaryPayload | null;
+      politics: CentroidSummaryPayload | null;
+      security: CentroidSummaryPayload | null;
+      society: CentroidSummaryPayload | null;
+      generated_at: string;
+    }>;
+
+    if (month) {
+      // Specific month: look for exact monthly row matching month-end
+      const [yy, mm] = month.split('-').map(Number);
+      const monthEnd = new Date(Date.UTC(yy, mm, 0)).toISOString().slice(0, 10);
+      rows = await query(
+        `SELECT centroid_id, period_kind, period_end::text, tier,
+                ${overallCol} AS overall,
+                ${trackExpr('economy')}  AS economy,
+                ${trackExpr('politics')} AS politics,
+                ${trackExpr('security')} AS security,
+                ${trackExpr('society')}  AS society,
+                generated_at::text
+           FROM centroid_summaries
+          WHERE centroid_id = $1
+            AND period_kind = 'monthly'
+            AND period_end = $2::date
+          LIMIT 1`,
+        [centroidId, monthEnd]
+      );
+    } else {
+      // Latest rolling_30d
+      rows = await query(
+        `SELECT centroid_id, period_kind, period_end::text, tier,
+                ${overallCol} AS overall,
+                ${trackExpr('economy')}  AS economy,
+                ${trackExpr('politics')} AS politics,
+                ${trackExpr('security')} AS security,
+                ${trackExpr('society')}  AS society,
+                generated_at::text
+           FROM centroid_summaries
+          WHERE centroid_id = $1 AND period_kind = 'rolling_30d'
+          ORDER BY period_end DESC LIMIT 1`,
+        [centroidId]
+      );
+    }
+    return rows[0] || null;
+  });
+}
+
 // Returns true if the centroid+month has any promoted events across any track.
 // Used to gate the new centroid hero view vs the legacy cards.
 export async function centroidHasPromotedForMonth(

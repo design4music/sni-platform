@@ -218,7 +218,7 @@ export default async function TrackCard({
         )}
 
         {summaryText && (
-          <p className="text-sm text-dashboard-text-muted leading-relaxed mb-4 line-clamp-4">
+          <p className="text-sm text-dashboard-text-muted leading-relaxed mb-4">
             {summaryText}
           </p>
         )}

@@ -1,3 +1,4 @@
+// In-memory cache store (per server process).
 const store = new Map<string, { value: unknown; expires: number }>();
 
 export async function cached<T>(

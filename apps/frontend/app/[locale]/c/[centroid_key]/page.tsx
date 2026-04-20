@@ -18,6 +18,7 @@ import {
   centroidHasPromotedForMonth,
   getCentroidMonthView,
   getActiveNarrativesForCentroid,
+  getCentroidSummary,
 } from '@/lib/queries';
 import CentroidHero from '@/components/CentroidHero';
 import { getOutletLogoUrl } from '@/lib/logos';
@@ -156,7 +157,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, centroid summary, top signals, and new-view gate in parallel
-  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData, hasPromoted, activeNarratives] = await Promise.all([
+  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
@@ -164,6 +165,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     getCentroidDeviations(centroid.id),
     currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
     currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
+    getCentroidSummary(centroid.id, currentMonth, locale),
   ]);
 
   // New hero view data: only loaded when the month has promoted events.
@@ -300,10 +302,35 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     ? (REGIONS as Record<string, string>)[centroid.primary_theater] || centroid.primary_theater
     : null;
 
-  // Enhanced top zone: hero calendar + 2x2 track cards, both spanning full width.
+  // Map summary track payloads by track key for lookup below.
+  const summaryByTrack: Record<string, string | null> = {
+    geo_economy: periodSummary?.economy?.state || null,
+    geo_politics: periodSummary?.politics?.state || null,
+    geo_security: periodSummary?.security?.state || null,
+    geo_society: periodSummary?.society?.state || null,
+  };
+
+  // Enhanced top zone: briefing + hero calendar + 2x2 track cards, all spanning full width.
   // Only rendered when we have promoted events for this month.
   const enhancedTop = centroidMonthView ? (
     <div className="space-y-8">
+      {/* Tier 0 "Country briefing" — one paragraph setting the period's dominant tension */}
+      {periodSummary && periodSummary.overall && (
+        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-5">
+          <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
+            {locale === 'de' ? 'Überblick' : 'Overview'}
+            {periodSummary.tier === 3 && (
+              <span className="ml-2 text-amber-400/70">
+                {locale === 'de' ? '(wenig Berichterstattung)' : '(limited coverage)'}
+              </span>
+            )}
+          </div>
+          <p className="text-[15px] leading-relaxed text-dashboard-text">
+            {periodSummary.overall}
+          </p>
+        </div>
+      )}
+
       <CentroidHero
         view={centroidMonthView}
         centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
@@ -317,6 +344,10 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             const hasDataThisMonth = titleCount > 0;
             const hasHistoricalData = tracksWithHistoricalData.has(track);
             const heroTrack = centroidMonthView.tracks.find(t => t.track === track);
+            // Prefer the fresh centroid_summaries.state text; fall back to legacy
+            // ctm.summary_text (piped through heroTrack.summary_text) until all
+            // centroids have been re-generated for the current month.
+            const trackState = summaryByTrack[track] || heroTrack?.summary_text || null;
             return (
               <TrackCard
                 key={track}
@@ -329,7 +360,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                 lastActive={trackLastActiveMap.get(track) || undefined}
                 topEvents={heroTrack?.top_events}
                 themeChips={heroTrack?.theme_chips}
-                summaryText={heroTrack?.summary_text}
+                summaryText={trackState}
                 calendarHref={`/c/${centroid.id}/t/${track}?month=${currentMonth}`}
               />
             );
