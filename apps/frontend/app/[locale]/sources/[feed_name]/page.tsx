@@ -34,8 +34,7 @@ export async function generateMetadata({ params }: OutletPageProps): Promise<Met
 function TrackBar({ distribution, tTracks }: { distribution: Record<string, number>; tTracks: (key: string) => string }) {
   const mainTracks: Record<string, number> = {};
   const trackMapping: Record<string, string> = {
-    geo_politics: 'politics', geo_security: 'security', geo_economy: 'economy',
-    geo_information: 'information', geo_humanitarian: 'humanitarian', geo_energy: 'energy',
+    geo_politics: 'politics', geo_security: 'security', geo_economy: 'economy', geo_society: 'society',
   };
   for (const [track, share] of Object.entries(distribution)) {
     const main = trackMapping[track] || track;
@@ -43,8 +42,7 @@ function TrackBar({ distribution, tTracks }: { distribution: Record<string, numb
   }
 
   const COLORS: Record<string, string> = {
-    politics: 'bg-purple-500/70', security: 'bg-red-500/70', economy: 'bg-green-500/70',
-    information: 'bg-blue-500/70', humanitarian: 'bg-yellow-500/70', energy: 'bg-orange-500/70',
+    politics: 'bg-purple-500/70', security: 'bg-red-500/70', economy: 'bg-green-500/70', society: 'bg-yellow-500/70',
   };
 
   const entries = Object.entries(mainTracks).filter(([, s]) => s >= 0.01).sort((a, b) => b[1] - a[1]);

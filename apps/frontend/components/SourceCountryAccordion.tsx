@@ -46,13 +46,11 @@ function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
 }
 
 const TRACK_MAPPING: Record<string, string> = {
-  geo_politics: 'politics', geo_security: 'security', geo_economy: 'economy',
-  geo_information: 'information', geo_humanitarian: 'humanitarian', geo_energy: 'energy',
+  geo_politics: 'politics', geo_security: 'security', geo_economy: 'economy', geo_society: 'society',
 };
 
 const TRACK_COLORS: Record<string, string> = {
-  politics: 'bg-purple-400', security: 'bg-red-400', economy: 'bg-green-400',
-  information: 'bg-blue-400', humanitarian: 'bg-yellow-400', energy: 'bg-orange-400',
+  politics: 'bg-purple-400', security: 'bg-red-400', economy: 'bg-green-400', society: 'bg-yellow-400',
 };
 
 function TrackDot({ track }: { track: string }) {

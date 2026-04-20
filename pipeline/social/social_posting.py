@@ -360,9 +360,7 @@ _TRACK_DISPLAY = {
     "geo_security": "Security",
     "geo_politics": "Politics",
     "geo_economy": "Economy",
-    "geo_information": "Information",
-    "geo_energy": "Energy",
-    "energy_conflict": "Energy Conflict",
+    "geo_society": "Society",
 }
 
 

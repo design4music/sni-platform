@@ -72,18 +72,23 @@ CENTROID_TO_PREFIX = {
     "NATO": "NATO",
 }
 
-# Map narrative domains to geo_* track names
+# Map narrative domains to the four live ctm.track values
+# (geo_security, geo_politics, geo_economy, geo_society). Earlier versions
+# pointed at geo_energy / geo_humanitarian / geo_information — those tracks
+# are dead in the data, so any narrative whose domains landed there got
+# zero matches. Consolidating preserves matching while staying inside the
+# real track vocabulary.
 DOMAIN_TO_TRACK = {
     "SECURITY": "geo_security",
     "FOREIGN_POLICY": "geo_politics",
-    "ECONOMY": "geo_economy",
-    "ENERGY": "geo_energy",
-    "HUMANITARIAN": "geo_humanitarian",
-    "INFORMATION": "geo_information",
     "GOVERNANCE": "geo_politics",
+    "INFORMATION": "geo_politics",  # was geo_information (dead)
+    "MEDIA": "geo_politics",  # was geo_information (dead)
+    "ECONOMY": "geo_economy",
     "TECHNOLOGY": "geo_economy",
-    "MEDIA": "geo_information",
-    "SOCIETY": "geo_politics",
+    "ENERGY": "geo_economy",  # was geo_energy (dead)
+    "HUMANITARIAN": "geo_society",  # was geo_humanitarian (dead)
+    "SOCIETY": "geo_society",  # was geo_politics (legacy pre-geo_society)
 }
 
 # Map actor-label prefixes back to centroid IDs (reverse of CENTROID_TO_PREFIX)
