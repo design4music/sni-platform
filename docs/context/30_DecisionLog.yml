@@ -770,3 +770,53 @@ decisions:
       - Live-script docstrings (push_month_to_render, reprocess_month_local)
         updated — no longer advertise event_families in their delete lists.
       - Removal plan + inventory retained at docs/context/EVENT_FAMILIES_REMOVAL.md.
+
+  - id: D-065
+    date: 2026-04-20
+    type: architectural
+    status: accepted
+    title: Centroid period summaries — new centroid_summaries table replaces legacy centroid_monthly_summaries
+    rationale:
+      - The old centroid_monthly_summaries table stored a single
+        markdown paragraph per centroid/month derived from per-CTM
+        summary_text. It lacked per-track structure, had no DE, no
+        rolling window, and its LLM prompt was wordy + echo-prone
+        (DeepSeek hallucinated stale role titles like "former
+        president"; the event-ID feed format leaked bracketed IDs
+        into prose).
+      - The new centroid_summaries table stores tier-0 overall
+        (EN+DE) + per-track JSONB ({state_en, state_de,
+        supporting_events}). Supports two period_kinds — rolling_30d
+        (daemon) and monthly (freeze). Three tiers: FULL (LLM full),
+        LIGHT (overall only), CANNED (static, no LLM).
+      - Ambient context passed to the prompt (top persons/orgs/
+        countries/places, filtered for ubiquity) gives the LLM
+        actors beyond the head of government; role-label rules ban
+        anything not verbatim in event titles.
+      - Event input format changed from "[id] N src | date | title"
+        to "N src | date | title | id=xxxxxxxx" — removes the
+        visual cue that was teaching the model to bracket IDs.
+    consequences:
+      - New pipeline/phase_5/generate_centroid_summary.py with
+        bilingual single-shot generation. scripts/
+        backfill_centroid_summaries.py filled Jan–Apr 2026
+        (298 monthly rows, ~80/13/6% tier split).
+      - Freeze (pipeline/freeze/freeze_month.py) Step 3 now calls
+        the new module with period_kind='monthly' for every
+        centroid active in the month; legacy helpers (including
+        CENTROID_SUMMARY_SYSTEM_PROMPT) deleted.
+      - Daemon gains Phase 5.5-rolling in Slot 4: refreshes
+        rolling_30d rows for centroids with promoted events in the
+        last 30 days, staleness-gated (24h default), budget-capped
+        (100/run default).
+      - Frontend centroid page replaces the "monthlyOverview" block
+        with a tier-0 "Overview" briefing; TrackCards render the
+        per-track state paragraph from the new table. Legacy
+        ctm.summary_text fallback removed from centroid page (still
+        used by /c/*/t/* calendar page and narratives/social/RAI
+        consumers — retirement deferred to a follow-up ticket).
+      - Migration 20260420_drop_centroid_monthly_summaries.sql
+        drops the legacy table; applied local + Render.
+      - Docs updated (PIPELINE_V4_ARCHITECTURE.md gets Phase 5.5
+        entry; PIPELINE_STATUS.md reflects new enrichment slot +
+        data architecture layer).

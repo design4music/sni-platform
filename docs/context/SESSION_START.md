@@ -1,6 +1,6 @@
 # Session Start
 
-**Last refreshed**: 2026-04-20
+**Last refreshed**: 2026-04-20 (afternoon — centroid summaries shipped)
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -21,12 +21,15 @@ Sorted by dependency + suggested phasing. None of these is the single
 
 ### Phase 1 — foundation (highest compounding return)
 
-1. **CTM summaries — design + build.** Closes the single biggest
-   perceived-quality gap on centroid pages. Feature is about
-   distillation: the "what IS the state of play in Germany's economy this
-   month, and what changed vs last month" that a non-analyst user can
-   scan in 20 seconds. Existing ticket. Needs a prompt-design session
-   before coding.
+1. **Centroid period summaries.** ✅ Done (D-065, 2026-04-20). New
+   `centroid_summaries` table: tier-0 overall + per-track JSONB,
+   bilingual, two period_kinds (rolling_30d via daemon Slot 4, monthly
+   via freeze). Replaces legacy `centroid_monthly_summaries`. Frontend
+   centroid page renders an "Overview" briefing above the hero and
+   per-track state in TrackCards. Generator at
+   `pipeline/phase_5/generate_centroid_summary.py`. Follow-up: migrate
+   downstream consumers (narratives extraction, social posting, RAI)
+   off `ctm.summary_text` so those legacy columns can be retired.
 2. **Code + doc cleanup.** ✅ Families removed (D-064, 2026-04-20):
    event_families table, events_v3.family_id column, 11 orphan scripts,
    2 pipeline modules, /families/[id] route. Plan retained at
@@ -88,18 +91,24 @@ Recent diagnostic queries established:
 
 ## Active tickets (Asana, RAI/SNI project)
 
-- **CTM digests: restore + modernize period-level summaries**
-  ([1214109791690038](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214109791690038))
 - **Narrative matching: investigate why Mar/Apr show 0 matches**
   ([1214106015283570](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214106015283570))
 - **Daemon: persist last_run across restarts**
   ([1214103726997112](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214103726997112))
 - **Phase 3.3: rewrite as bulk SQL** — CLOSED in `8c90ce8`
   ([1214111347970773](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214111347970773))
+- **CTM digests: restore + modernize period-level summaries** — centroid
+  page surface CLOSED by D-065 (`centroid_summaries`); remaining scope is
+  retiring `ctm.summary_text` columns via downstream-consumer migration
+  (narratives / social / RAI)
+  ([1214109791690038](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214109791690038))
 
 ## Recent key commits
 
 ```
+6e56598  docs(pipeline): Phase 5.5 Centroid Summaries + legacy retirement
+01b14a3  refactor(centroid): retire centroid_monthly_summaries, wire freeze + daemon
+fcd2ed4  feat(centroid): period summaries + tier-0 briefing on centroid pages
 485b747  fix(rerun): null inbound merged_into before DELETE
 8c90ce8  perf(phase-3.3): bulk SQL rewrite (~450x)
 cfb6ba5  feat(frontend): theme chips + narratives sidebar
