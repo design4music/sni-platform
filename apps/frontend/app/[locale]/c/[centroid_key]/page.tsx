@@ -59,9 +59,19 @@ export async function generateMetadata({ params, searchParams }: CentroidPagePro
     ? requestedMonth
     : availableMonths[0] || null;
 
-  // Try to build a rich description from month view (shares cache with page render).
-  let description: string;
+  // Description preference order:
+  //   1. Editorial overview from centroid_summaries.overall (D-065) — these
+  //      are LLM-curated period briefings, far richer than a stats dump.
+  //   2. Mechanical fallback from getCentroidMonthView (counts + themes).
+  //   3. Static i18n template (no active month).
+  let description: string | undefined;
   if (activeMonth) {
+    const summary = await getCentroidSummary(centroid.id, activeMonth, locale);
+    const overall = summary?.overall?.trim();
+    if (overall) description = truncateDescription(overall);
+  }
+
+  if (!description && activeMonth) {
     const view = await getCentroidMonthView(centroid.id, activeMonth, locale);
     const monthLabel = formatMonthLabelSeo(activeMonth, locale);
 
@@ -83,10 +93,6 @@ export async function generateMetadata({ params, searchParams }: CentroidPagePro
         .slice(0, 3)
         .map(([sector]) => humanizeEnum(sector));
 
-      // EN: "Germany in April 2026: 1,234 sources covering politics, economy,
-      // security. Top themes: diplomacy, military, trade. Multilingual news
-      // briefing." — lead with country+month (primary search intent), end
-      // with value prop.
       if (locale === 'de') {
         const parts: string[] = [
           `${centroidLabel} im ${monthLabel}: ${formatCount(totalSources, 'de')} Quellen zu ${joinList(trackNames, 'de')}.`,
@@ -102,10 +108,10 @@ export async function generateMetadata({ params, searchParams }: CentroidPagePro
         parts.push('Multilingual news briefing.');
         description = truncateDescription(parts.join(' '));
       }
-    } else {
-      description = t('metaDescription', { label: centroidLabel });
     }
-  } else {
+  }
+
+  if (!description) {
     description = t('metaDescription', { label: centroidLabel });
   }
 

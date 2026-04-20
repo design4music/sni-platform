@@ -12,9 +12,23 @@ import { getTrackIcon } from '@/components/TrackCard';
 import {
   getCalendarMonthView,
   getCentroidById,
+  getCentroidSummary,
   getCTMMonths,
   getTracksByCentroid,
 } from '@/lib/queries';
+import type { CentroidSummary } from '@/lib/queries';
+
+// Map a CTM track key to the centroid_summaries column for that track.
+// Returns null for tracks not covered by D-065 (humanitarian/information/energy).
+function trackToSummaryKey(track: string): keyof Pick<CentroidSummary, 'economy' | 'politics' | 'security' | 'society'> | null {
+  switch (track) {
+    case 'geo_economy': return 'economy';
+    case 'geo_politics': return 'politics';
+    case 'geo_security': return 'security';
+    case 'geo_society': return 'society';
+    default: return null;
+  }
+}
 import { getTrackLabel, getCentroidLabel, Track } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
@@ -75,29 +89,43 @@ export async function generateMetadata({ params, searchParams }: TrackPageProps)
     ? `${centroidLabel} ${trackLower}: ${monthLabel} Nachrichten`
     : `${centroidLabel} ${trackLower}: ${monthLabel} news`;
 
-  const view = await getCalendarMonthView(centroid_key, track_key, activeMonth, locale);
-  let description: string;
-  if (view) {
-    const activeDays = view.days.length;
-    const clusterCount = view.days.reduce((s, d) => s + d.cluster_count, 0);
-    const themes = (view.theme_chips || []).slice(0, 3).map(c => humanizeEnum(c.sector));
-    if (locale === 'de') {
-      const parts = [
-        `Tagesgenaue ${trackLower}-Nachrichten für ${centroidLabel}, ${monthLabel}: ${formatCount(clusterCount, 'de')} Events an ${activeDays} Tagen, ${formatCount(view.scope.total_sources, 'de')} Quellen.`,
-      ];
-      if (themes.length) parts.push(`Schwerpunkte: ${joinList(themes, 'de')}.`);
-      description = truncateDescription(parts.join(' '));
+  // Description preference order:
+  //   1. Editorial per-track state from centroid_summaries (D-065) — only
+  //      exists for the four canonical tracks (economy/politics/security/society).
+  //   2. Mechanical fallback from getCalendarMonthView (counts + themes).
+  let description: string | undefined;
+  const summaryKey = trackToSummaryKey(track_key);
+  if (summaryKey) {
+    const summary = await getCentroidSummary(centroid.id, activeMonth, locale);
+    const trackPayload = summary?.[summaryKey];
+    const state = trackPayload?.state?.trim();
+    if (state) description = truncateDescription(state);
+  }
+
+  if (!description) {
+    const view = await getCalendarMonthView(centroid_key, track_key, activeMonth, locale);
+    if (view) {
+      const activeDays = view.days.length;
+      const clusterCount = view.days.reduce((s, d) => s + d.cluster_count, 0);
+      const themes = (view.theme_chips || []).slice(0, 3).map(c => humanizeEnum(c.sector));
+      if (locale === 'de') {
+        const parts = [
+          `Tagesgenaue ${trackLower}-Nachrichten für ${centroidLabel}, ${monthLabel}: ${formatCount(clusterCount, 'de')} Events an ${activeDays} Tagen, ${formatCount(view.scope.total_sources, 'de')} Quellen.`,
+        ];
+        if (themes.length) parts.push(`Schwerpunkte: ${joinList(themes, 'de')}.`);
+        description = truncateDescription(parts.join(' '));
+      } else {
+        const parts = [
+          `Day-by-day ${trackLower} news for ${centroidLabel}, ${monthLabel}. ${formatCount(clusterCount)} events across ${activeDays} days, ${formatCount(view.scope.total_sources)} sources.`,
+        ];
+        if (themes.length) parts.push(`Themes: ${joinList(themes)}.`);
+        description = truncateDescription(parts.join(' '));
+      }
     } else {
-      const parts = [
-        `Day-by-day ${trackLower} news for ${centroidLabel}, ${monthLabel}. ${formatCount(clusterCount)} events across ${activeDays} days, ${formatCount(view.scope.total_sources)} sources.`,
-      ];
-      if (themes.length) parts.push(`Themes: ${joinList(themes)}.`);
-      description = truncateDescription(parts.join(' '));
+      description = locale === 'de'
+        ? `${centroidLabel} ${trackLower}-Nachrichten für ${monthLabel}.`
+        : `${centroidLabel} ${trackLower} news for ${monthLabel}.`;
     }
-  } else {
-    description = locale === 'de'
-      ? `${centroidLabel} ${trackLower}-Nachrichten für ${monthLabel}.`
-      : `${centroidLabel} ${trackLower} news for ${monthLabel}.`;
   }
 
   return buildPageMetadata({
