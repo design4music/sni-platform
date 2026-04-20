@@ -83,6 +83,9 @@ class PipelineDaemon:
         self.classification_batch_size = 500  # Titles per 3.1 and 3.3 run
         self.enrichment_max_events = 500  # Events per 4.5a run
         self.enrichment_max_ctms = 200  # CTMs per 4.5b run
+        # Phase 5.5-rolling: centroid_summaries refresh budget per Slot 4 run
+        self.centroid_summary_stale_hours = 24
+        self.centroid_summary_max_per_run = 100
 
         # Retry configuration
         self.max_retries = 3
@@ -674,6 +677,76 @@ class PipelineDaemon:
         finally:
             self.return_connection(conn)
 
+    def run_centroid_rolling_summaries(self):
+        """Phase 5.5-rolling: refresh rolling_30d centroid_summaries for stale centroids.
+
+        Picks centroids with promoted events in the last 30 days whose existing
+        rolling_30d summary is missing or older than self.centroid_summary_stale_hours.
+        Budget-capped by self.centroid_summary_max_per_run.
+        """
+        from datetime import date
+
+        from pipeline.phase_5.generate_centroid_summary import (
+            generate_centroid_summary,
+        )
+
+        stale_hours = getattr(self, "centroid_summary_stale_hours", 24)
+        max_per_run = getattr(self, "centroid_summary_max_per_run", 100)
+
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT DISTINCT cent.id, COALESCE(cent.label, cent.id)
+                         FROM centroids_v3 cent
+                         JOIN ctm c ON c.centroid_id = cent.id
+                         JOIN events_v3 e ON e.ctm_id = c.id
+                         LEFT JOIN centroid_summaries cs
+                                ON cs.centroid_id = cent.id
+                               AND cs.period_kind = 'rolling_30d'
+                        WHERE e.is_promoted = true
+                          AND e.merged_into IS NULL
+                          AND e.date >= CURRENT_DATE - INTERVAL '30 days'
+                          AND (cs.generated_at IS NULL
+                               OR cs.generated_at < NOW() - (%s || ' hours')::interval)
+                        ORDER BY cent.id
+                        LIMIT %s""",
+                    (str(stale_hours), max_per_run),
+                )
+                centroids = cur.fetchall()
+        finally:
+            self.return_connection(conn)
+
+        if not centroids:
+            print("No centroids need rolling_30d refresh")
+            return
+
+        print("Phase 5.5-rolling: %d centroids need refresh..." % len(centroids))
+        import asyncio
+
+        period_end = date.today()
+        ok = fail = 0
+        tier_counts = {1: 0, 2: 0, 3: 0}
+        for centroid_id, label in centroids:
+            try:
+                result = asyncio.run(
+                    generate_centroid_summary(
+                        centroid_id=centroid_id,
+                        period_end=period_end,
+                        period_kind="rolling_30d",
+                        country_label=label,
+                    )
+                )
+                tier_counts[result["tier"]] = tier_counts.get(result["tier"], 0) + 1
+                ok += 1
+            except Exception as e:
+                fail += 1
+                print("  5.5-rolling failed %s: %s" % (centroid_id, e))
+        print(
+            "Phase 5.5-rolling: %d ok, %d fail (tiers 1=%d 2=%d 3=%d)"
+            % (ok, fail, tier_counts[1], tier_counts[2], tier_counts[3])
+        )
+
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
         from pipeline.phase_4.materialize_centroid_signals import materialize
@@ -1084,6 +1157,16 @@ class PipelineDaemon:
                     self.run_narrative_llm_review,
                 ),
                 600,
+            )
+            # Phase 5.5-rolling: centroid rolling-30d summaries (EN+DE)
+            await self.run_with_timeout(
+                "Phase 5.5-rolling: Centroid Summaries",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 5.5-rolling: Centroid Summaries",
+                    self.run_centroid_rolling_summaries,
+                ),
+                3600,
             )
             self.last_run["enrichment"] = time.time()
         else:

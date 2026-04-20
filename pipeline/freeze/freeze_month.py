@@ -4,7 +4,7 @@ CTM Monthly Freeze Script
 Freezes all CTMs for a given month:
 1. Generates LLM summaries for large CTMs (>=30 titles) without summaries
 2. Assigns canned text for small CTMs (<30 titles) without summaries
-3. Generates centroid-level cross-track summaries
+3. Generates monthly centroid_summaries snapshots (tier 0 + per-track)
 4. Purges rejected titles to tombstone table (prevents re-ingestion)
 5. Sets is_frozen=true for all CTMs of the target month
 
@@ -23,7 +23,7 @@ Cron setup (runs 1st of each month at 00:05 UTC):
 import argparse
 import asyncio
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -33,7 +33,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import psycopg2
 
 from core.config import config
-from core.prompts import CENTROID_SUMMARY_SYSTEM_PROMPT
 
 # Threshold for "large" CTMs that get LLM summaries
 LARGE_CTM_THRESHOLD = 30
@@ -264,132 +263,51 @@ def freeze_month(conn, month: str, dry_run: bool) -> int:
     return frozen
 
 
-def get_centroids_needing_summary(conn, month: str) -> list:
-    """Get centroids that have CTMs for this month but no centroid summary."""
+def month_end_date(month: str) -> date:
+    """Convert 'YYYY-MM' to the last day of that month."""
+    y, m = month.split("-")
+    y, m = int(y), int(m)
+    if m == 12:
+        return date(y + 1, 1, 1) - timedelta(days=1)
+    return date(y, m + 1, 1) - timedelta(days=1)
+
+
+def get_centroids_for_month(conn, month: str) -> list:
+    """Centroids with any promoted events this month (the set that needs a monthly summary)."""
     cur = conn.cursor()
     cur.execute(
         """
         SELECT DISTINCT c.centroid_id, cent.label
-        FROM ctm c
-        JOIN centroids_v3 cent ON c.centroid_id = cent.id
-        WHERE TO_CHAR(c.month, 'YYYY-MM') = %s
-          AND c.title_count > 0
-          AND NOT EXISTS (
-              SELECT 1 FROM centroid_monthly_summaries cms
-              WHERE cms.centroid_id = c.centroid_id
-                AND TO_CHAR(cms.month, 'YYYY-MM') = %s
-          )
-        ORDER BY cent.label
+          FROM ctm c
+          JOIN centroids_v3 cent ON c.centroid_id = cent.id
+         WHERE TO_CHAR(c.month, 'YYYY-MM') = %s
+           AND c.title_count > 0
+         ORDER BY cent.label
         """,
-        (month, month),
+        (month,),
     )
     return cur.fetchall()
-
-
-def get_centroid_track_summaries(conn, centroid_id: str, month: str) -> list:
-    """Get all track summaries for a centroid in a given month."""
-    cur = conn.cursor()
-    cur.execute(
-        """
-        SELECT c.track, c.summary_text, c.title_count,
-               (SELECT COUNT(*) FROM events_v3 e WHERE e.ctm_id = c.id) as event_count
-        FROM ctm c
-        WHERE c.centroid_id = %s
-          AND TO_CHAR(c.month, 'YYYY-MM') = %s
-          AND c.title_count > 0
-          AND c.summary_text IS NOT NULL
-        ORDER BY c.title_count DESC
-        """,
-        (centroid_id, month),
-    )
-    return cur.fetchall()
-
-
-# CENTROID_SUMMARY_SYSTEM_PROMPT imported from core.prompts
-
-
-async def generate_centroid_summary(
-    centroid_id: str, centroid_label: str, month: str, track_summaries: list
-) -> str:
-    """Generate a cross-track summary for a centroid using LLM."""
-    # Build track labels for the structure instruction
-    track_labels = []
-    for track, summary, title_count, event_count in track_summaries:
-        label = track.replace("geo_", "").replace("_", " ").title()
-        track_labels.append(label)
-
-    # Build input from track summaries
-    lines = [
-        "Generate a cross-track overview (200-300 words) for {} in {}.".format(
-            centroid_label, month
-        ),
-        "",
-        "STRUCTURE: Write one short paragraph (2-4 sentences) per track,",
-        "each under a ### heading. Use these headings in this order:",
-        "",
-    ]
-    for label in track_labels:
-        lines.append("  ### {}".format(label))
-    lines.append("")
-    lines.append(
-        "Each paragraph should highlight the 1-2 most significant"
-        " developments from that track. If the same event appears in"
-        " multiple tracks, note it -- but do NOT invent causal links."
-    )
-    lines.append("")
-    lines.append("TRACK SUMMARIES:")
-    lines.append("")
-
-    for track, summary, title_count, event_count in track_summaries:
-        track_label = track.replace("geo_", "").replace("_", " ").title()
-        lines.append(
-            "--- {} ({} articles, {} topics) ---".format(
-                track_label, title_count, event_count
-            )
-        )
-        lines.append(summary if summary else "No summary available.")
-        lines.append("")
-
-    prompt = "\n".join(lines)
-
-    headers = {
-        "Authorization": "Bearer {}".format(config.deepseek_api_key),
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "model": config.llm_model,
-        "messages": [
-            {"role": "system", "content": CENTROID_SUMMARY_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0.3,
-        "max_tokens": 600,
-    }
-
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            "{}/chat/completions".format(config.deepseek_api_url),
-            headers=headers,
-            json=payload,
-        )
-
-        if response.status_code != 200:
-            raise Exception("LLM API error: {}".format(response.status_code))
-
-        data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
 
 
 async def generate_centroid_summaries(conn, month: str, dry_run: bool) -> int:
-    """Generate cross-track summaries for all centroids in the month."""
-    centroids = get_centroids_needing_summary(conn, month)
+    """Generate centroid_summaries rows (period_kind='monthly') for every centroid
+    active in the target month. Delegates to pipeline.phase_5.generate_centroid_summary.
+    """
+    from pipeline.phase_5.generate_centroid_summary import (
+        generate_centroid_summary as generate_period_summary,
+    )
 
+    centroids = get_centroids_for_month(conn, month)
     if not centroids:
-        print("  No centroids need summary")
+        print("  No centroids active in %s" % month)
         return 0
 
-    print("  Generating summaries for {} centroids...".format(len(centroids)))
+    period_end = month_end_date(month)
+    print(
+        "  Generating monthly centroid_summaries for {} centroids (period_end={})...".format(
+            len(centroids), period_end
+        )
+    )
 
     if dry_run:
         for centroid_id, label in centroids[:5]:
@@ -399,49 +317,28 @@ async def generate_centroid_summaries(conn, month: str, dry_run: bool) -> int:
         return len(centroids)
 
     generated = 0
+    tier_counts = {1: 0, 2: 0, 3: 0}
     for centroid_id, label in centroids:
         try:
-            track_summaries = get_centroid_track_summaries(conn, centroid_id, month)
-
-            if not track_summaries:
-                print("    Skipping {} (no track summaries)".format(label))
-                continue
-
-            summary = await generate_centroid_summary(
-                centroid_id, label, month, track_summaries
+            result = await generate_period_summary(
+                centroid_id=centroid_id,
+                period_end=period_end,
+                period_kind="monthly",
+                country_label=label,
             )
-
-            # Calculate totals
-            total_events = sum(ts[3] for ts in track_summaries)
-
-            # Insert into database
-            cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO centroid_monthly_summaries
-                    (centroid_id, month, summary_text, track_count, total_events)
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (centroid_id, month) DO UPDATE
-                SET summary_text = EXCLUDED.summary_text,
-                    track_count = EXCLUDED.track_count,
-                    total_events = EXCLUDED.total_events
-                """,
-                (
-                    centroid_id,
-                    month + "-01",
-                    summary,
-                    len(track_summaries),
-                    total_events,
-                ),
-            )
-            conn.commit()
-
-            print("    OK: {} ({} tracks)".format(label, len(track_summaries)))
+            tier_counts[result["tier"]] = tier_counts.get(result["tier"], 0) + 1
             generated += 1
-
+            print(
+                "    OK: {} (tier={}, events={})".format(
+                    label, result["tier"], result["source_event_count"]
+                )
+            )
         except Exception as e:
             print("    X Error for {}: {}".format(label, e))
 
+    print(
+        "  Tiers: 1={} 2={} 3={}".format(tier_counts[1], tier_counts[2], tier_counts[3])
+    )
     return generated
 
 

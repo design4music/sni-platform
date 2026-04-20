@@ -518,21 +518,6 @@ Each frame MUST state hero/villain. Frames must be opposing editorial stances, n
 Return JSON array: [{{"label": "max 5 words", "description": "1-sentence editorial stance", "moral_frame": "Hero: X, Villain: Y", "title_indices": [1, 4, 7]}}]
 Return ONLY the JSON array."""
 
-# --- FREEZE: CENTROID MONTHLY SUMMARY ---
-
-CENTROID_SUMMARY_SYSTEM_PROMPT = (
-    """You are a strategic intelligence analyst writing monthly cross-track overviews.
-
-Rules:
-* Use ONLY facts from the provided track summaries
-* Maintain analytic, neutral tone
-* Do NOT speculate or editorialize
-* Do NOT list bullet points -- write short prose paragraphs
-
-"""
-    + PROSE_RULES
-)
-
 # --- FREEZE: SIGNAL RANKINGS CONTEXT ---
 
 SIGNAL_CONTEXT_SYSTEM_PROMPT = (

@@ -151,8 +151,6 @@
     "notFound": "Land nicht gefunden",
     "metaDescription": "{label} Nachrichtenbriefing: strategische Bereiche, Themenzusammenfassungen und mehrsprachige Quellenanalyse internationaler Medien.",
     "trackDescription": "Dies ist eine monatliche strategische Momentaufnahme der Entwicklungen zu {label}, geordnet nach Bereich. Jede Karte stellt einen eigenen analytischen Bereich dar und fasst zusammen, wie sich Ereignisse und Narrative im Laufe des Monats in dieser Sphaere entwickelt haben. Zusammen bilden sie eine Querschnittsansicht der strategischen Aktivitaet des Landes fuer den gewaehlten Zeitraum.",
-    "monthlyOverview": "Monatsuebersicht",
-    "summaryStats": "Basierend auf {events} Themen in {tracks} Bereichen",
     "unusualActivity": "Ungewoehnliche Aktivitaet",
     "comparedToBaseline": "Woche vom {week}, im Vergleich zum 12-Wochen-Durchschnitt",
     "deviationEventSpike": "{count} Themen diese Woche ({mult} des ueblichen {avg})",

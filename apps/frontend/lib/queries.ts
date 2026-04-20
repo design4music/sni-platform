@@ -620,24 +620,6 @@ export async function getTrackSummaryByCentroidAndMonth(
 }
 
 /**
- * Get centroid-level cross-track summary for a given month
- */
-export async function getCentroidMonthlySummary(
-  centroidId: string,
-  month: string
-): Promise<{ summary_text: string; track_count: number; total_events: number } | null> {
-  return cached(`centroidSummary:${centroidId}:${month}`, 3600, async () => {
-    const results = await query<{ summary_text: string; track_count: number; total_events: number }>(
-      `SELECT summary_text, track_count, total_events
-       FROM centroid_monthly_summaries
-       WHERE centroid_id = $1 AND month = ($2 || '-01')::date`,
-      [centroidId, month]
-    );
-    return results[0] || null;
-  });
-}
-
-/**
  * Get all configured tracks for a centroid from track_configs
  */
 export async function getConfiguredTracksForCentroid(centroidId: string): Promise<string[]> {
@@ -2584,18 +2566,14 @@ export async function getCentroidMonthView(
       [centroidId, monthStart]
     );
 
-    // 3. Per-track CTM metadata (title_count, summary_text)
+    // 3. Per-track CTM metadata (title_count, last_active)
     const ctmRows = await query<{
       track: string;
       title_count: number;
-      summary_text: string | null;
-      summary_text_de: string | null;
       last_active: string | null;
     }>(
       `SELECT c.track,
               c.title_count::int AS title_count,
-              c.summary_text,
-              c.summary_text_de,
               (SELECT MAX(e.date)::text FROM events_v3 e WHERE e.ctm_id = c.id) AS last_active
          FROM ctm c
         WHERE c.centroid_id = $1 AND c.month = $2`,
@@ -2705,8 +2683,6 @@ export async function getCentroidMonthView(
     const tracks: CentroidTrackSummary[] = ctmRows.map((c, idx) => ({
       track: c.track,
       title_count: c.title_count,
-      summary_text:
-        locale === 'de' && c.summary_text_de ? c.summary_text_de : c.summary_text,
       last_active: c.last_active,
       theme_chips: chipResults[idx],
       top_events: topByTrack.get(c.track) || [],

@@ -37,7 +37,6 @@ TABLES = [
     ("events_v3", "id", ["title", "summary"]),
     ("ctm", "id", ["summary_text"]),
     ("epics", "id", ["summary", "timeline"]),
-    ("centroid_monthly_summaries", "id", ["summary_text"]),
 ]
 
 # JSONB columns that need special handling

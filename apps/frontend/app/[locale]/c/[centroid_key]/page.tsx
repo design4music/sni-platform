@@ -11,7 +11,6 @@ import {
   getAvailableMonthsForCentroid,
   getTrackSummaryByCentroidAndMonth,
   getTracksByCentroid,
-  getCentroidMonthlySummary,
   getTopSignalsForCentroid,
   getStanceForCentroid,
   getCentroidDeviations,
@@ -156,10 +155,9 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   // Get tracks that exist for the current month (month-aware: Jan=6, March=4)
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
-  // Fetch track data, centroid summary, top signals, and new-view gate in parallel
-  const [monthTrackData, centroidSummary, topSignals, stanceScores, deviationData, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
+  // Fetch track data, top signals, and new-view gate in parallel
+  const [monthTrackData, topSignals, stanceScores, deviationData, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
-    currentMonth ? getCentroidMonthlySummary(centroid.id, currentMonth) : Promise.resolve(null),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     getStanceForCentroid(centroid.id),
     getCentroidDeviations(centroid.id),
@@ -188,10 +186,12 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
       : []
   );
 
-  const isFrozen = !!centroidSummary;
+  // Legacy sidebar layout (sticky + track nav) shown when the enhanced
+  // CentroidHero view is not available for this month (pre-v4 months).
+  const legacyLayout = !centroidMonthView;
 
   const sidebar = (
-    <div className={isFrozen ? "lg:sticky lg:top-24 space-y-6" : "space-y-6"}>
+    <div className={legacyLayout ? "lg:sticky lg:top-24 space-y-6" : "space-y-6"}>
       {availableMonths.length > 0 && currentMonth && !centroidMonthView && (
         <MonthNav
           months={availableMonths}
@@ -199,7 +199,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           baseUrl={`/c/${centroid.id}`}
         />
       )}
-      {isFrozen && configuredTracks.length > 0 && (
+      {legacyLayout && configuredTracks.length > 0 && (
         <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
           <h3 className="text-xl font-bold mb-1 text-dashboard-text">
             {getCentroidLabel(centroid.id, centroid.label, tCentroids)}
@@ -344,10 +344,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             const hasDataThisMonth = titleCount > 0;
             const hasHistoricalData = tracksWithHistoricalData.has(track);
             const heroTrack = centroidMonthView.tracks.find(t => t.track === track);
-            // Prefer the fresh centroid_summaries.state text; fall back to legacy
-            // ctm.summary_text (piped through heroTrack.summary_text) until all
-            // centroids have been re-generated for the current month.
-            const trackState = summaryByTrack[track] || heroTrack?.summary_text || null;
+            const trackState = summaryByTrack[track] || null;
             return (
               <TrackCard
                 key={track}
@@ -419,45 +416,13 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             <h2 className="text-2xl font-bold mb-4">
               {t('strategicTracks')}{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth, locale)}`}
             </h2>
-            {!centroidSummary && (
-              <p className="text-dashboard-text-muted mb-6">
-                {t('trackDescription', { label: getCentroidLabel(centroid.id, centroid.label, tCentroids) })}
-              </p>
-            )}
-          </div>
-        )}
-
-        {centroidSummary && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold mb-3">{t('monthlyOverview')}</h2>
-            <div className="text-lg leading-relaxed space-y-4">
-              {centroidSummary.summary_text.split('\n\n').flatMap((paragraph, idx) => {
-                const trimmed = paragraph.trim();
-                if (!trimmed) return [];
-                if (trimmed.startsWith('### ')) {
-                  const newlinePos = trimmed.indexOf('\n');
-                  const heading = newlinePos === -1 ? trimmed.slice(4) : trimmed.slice(4, newlinePos);
-                  const body = newlinePos === -1 ? null : trimmed.slice(newlinePos + 1).trim();
-                  const elements = [
-                    <h3 key={`h-${idx}`} className="text-base font-semibold uppercase tracking-wide text-dashboard-text-muted mt-6 first:mt-0">
-                      {heading}
-                    </h3>
-                  ];
-                  if (body) {
-                    elements.push(<p key={`p-${idx}`}>{body}</p>);
-                  }
-                  return elements;
-                }
-                return [<p key={idx}>{trimmed}</p>];
-              })}
-            </div>
-            <p className="text-sm text-dashboard-text-muted mt-3">
-              {t('summaryStats', { events: centroidSummary.total_events, tracks: centroidSummary.track_count })}
+            <p className="text-dashboard-text-muted mb-6">
+              {t('trackDescription', { label: getCentroidLabel(centroid.id, centroid.label, tCentroids) })}
             </p>
           </div>
         )}
 
-        {!centroidMonthView && !isFrozen && (
+        {!centroidMonthView && (
           configuredTracks.length === 0 ? (
             <div className="text-center py-12 bg-dashboard-surface border border-dashboard-border rounded-lg">
               <p className="text-dashboard-text-muted">{t('noTracks')}</p>

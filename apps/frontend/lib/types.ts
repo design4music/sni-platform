@@ -132,7 +132,6 @@ export interface CentroidStripeEntry {
 export interface CentroidTrackSummary {
   track: string;
   title_count: number;
-  summary_text: string | null;
   last_active: string | null;
   theme_chips: CtmThemeChip[]; // top 3 dominant themes for this track this month
   top_events: Array<{
