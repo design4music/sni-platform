@@ -1,7 +1,7 @@
 # WorldBrief Pipeline v4.0 Architecture
 
-**Date**: 2026-04-16
-**Status**: Active. Daemon wired on `feat/mechanical-families`, not yet deployed to Render.
+**Date**: 2026-04-20 (last revised)
+**Status**: Active on `main`, deployed to Render (worker + web).
 
 ## Phase naming (v4.0)
 
@@ -33,10 +33,12 @@ PHASE 5 — ENRICHMENT (LLM)
   5.2  Daily Briefs (EN+DE) + Themes
   5.3  Narrative Discovery (LLM, ideological)
   5.4  Narrative Review (LLM, operational)
+  5.5  Centroid Summaries — rolling 30d + monthly snapshot (EN+DE)
 
 MAINTENANCE
   Purge: daily cleanup of rejected titles
-  Freeze: monthly close (CTM digest, signal rankings)
+  Freeze: monthly close (canned small-CTM text, monthly centroid_summaries,
+          publisher stance, tombstone purge, is_frozen=true)
 ```
 
 ## Slot mapping
@@ -46,7 +48,7 @@ MAINTENANCE
 | **INGESTION** | 12h (target: 6h) | 1.1 + 1.2 | No | RSS feeds refresh every few hours. 12h captures 2 full news cycles. |
 | **LABELING** | 15m | 2.1 + 2.2 + 2.3 | 2.1 only | 2.1 is the LLM bottleneck (500 titles/batch). 15m drains the queue incrementally. 2.2 and 2.3 are instant. |
 | **CLUSTERING** | 30m | 3.1 + 3.2 + 3.3 + 4.* | No | Runs only when `title_count > title_count_at_clustering`. All mechanical. |
-| **ENRICHMENT** | 3h | 5.1 + 5.2 + 5.3 + 5.4 | Yes | LLM prose is expensive. Daily briefs only for closed days (T-1). |
+| **ENRICHMENT** | 3h | 5.1 + 5.2 + 5.3 + 5.4 + 5.5 | Yes | LLM prose is expensive. Daily briefs only for closed days (T-1). 5.5 budget-capped per run with staleness gate. |
 | **PURGE** | 24h | maintenance | No | Tombstone rejected titles older than 24h. |
 
 ## Phase details
@@ -159,6 +161,16 @@ MAINTENANCE
 - **Cost**: **DeepSeek API**
 - **File**: `pipeline/phase_4/review_narratives_llm.py`
 
+### Phase 5.5 — Centroid Summaries (rolling 30d)
+- **Input**: Promoted events for last 30 days per centroid + ambient label context (top persons/orgs/countries/places)
+- **Output**: `centroid_summaries` row with `period_kind='rolling_30d'` — tier-0 overall paragraph + per-track JSONB (`{state_en, state_de, supporting_events}`), bilingual.
+- **Trigger**: Timer (3h), refreshes rows with `generated_at` older than `centroid_summary_stale_hours` (default 24h) or missing
+- **Budget**: `centroid_summary_max_per_run` (default 100 centroids)
+- **Tier gates**: 1 (FULL: >=20 events + >=3 strong tracks), 2 (LIGHT: >=5 events), 3 (CANNED: no LLM)
+- **Cost**: **DeepSeek API** (1 call per tier 1/2 centroid, bilingual single-shot)
+- **File**: `pipeline/phase_5/generate_centroid_summary.py` (daemon: `run_centroid_rolling_summaries`)
+- **Monthly snapshot**: the same module is invoked by `pipeline/freeze/freeze_month.py` with `period_kind='monthly'` to produce immutable month-end rows.
+
 ## Dependencies
 
 ```
@@ -169,7 +181,7 @@ MAINTENANCE
 3.1 Clustering → 3.2 Merge → 3.3 Promote → events_v3 (is_promoted)
                                                 ↓              ↓
 4.* Materialization                    5.1 Event Prose    5.2 Daily Briefs
-                                       5.3/5.4 Narratives
+                                       5.3/5.4 Narratives 5.5 Centroid Summaries
 ```
 
 ## Code-to-phase mapping
@@ -189,6 +201,7 @@ MAINTENANCE
 | 5.2 | `pipeline/phase_4/generate_daily_brief_4_5d.py` | Phase 4.5-day |
 | 5.3 | `pipeline/phase_4/match_narratives_llm.py` | Phase 4.2g |
 | 5.4 | `pipeline/phase_4/review_narratives_llm.py` | Phase 4.2h |
+| 5.5 | `pipeline/phase_5/generate_centroid_summary.py` | (new) |
 
 ## Interval optimization notes
 
@@ -210,3 +223,4 @@ MAINTENANCE
 | Dice merge (old 4.1b) | Replaced by 3.2 same-day merge | Removed (D-056) |
 | Cross-bucket LLM merge (old 4.3) | Replaced by 3.2 | Removed (D-053) |
 | Sibling merge (old 4.4) | Not needed with current design | Removed (D-053) |
+| Freeze centroid monthly summary (legacy) | `centroid_monthly_summaries` table; superseded by `centroid_summaries` (5.5 monthly snapshot) | Removed 2026-04-20 |

@@ -35,10 +35,12 @@ Running. Four-slot architecture from
 - **INGESTION** (12h): RSS + centroid matching
 - **LABELING** (15m): Phase 3.1 (LLM) + 3.2 backfill + 3.3 track assignment
 - **CLUSTERING** (30m): 3.1 day-beat + 3.2 same-day merge + 3.3 promotion + 4.* materialization
-- **ENRICHMENT** (3h): 5.1 event prose (LLM EN+DE) + 5.2 daily briefs (LLM) + 5.3/5.4 narrative matching (LLM)
+- **ENRICHMENT** (3h): 5.1 event prose (LLM EN+DE) + 5.2 daily briefs (LLM) + 5.3/5.4 narrative matching (LLM) + 5.5 centroid summaries rolling-30d (LLM EN+DE, staleness-gated, budget-capped)
 
 Recent worker-side optimizations:
 
+- `01b14a3` Retired legacy `centroid_monthly_summaries` → new `centroid_summaries` (rolling-30d + monthly snapshot, tier-0 overall + per-track JSONB, bilingual). `freeze_month.py` Step 3 wired to new module; daemon Slot 4 gains Phase 5.5-rolling.
+- `fcd2ed4` Centroid period summaries feature — schema, generator, backfill, frontend Overview block above hero.
 - `8c90ce8` Phase 3.3 rewritten as bulk SQL (~450× faster on backfill,
   ~30× under live load). Same function signature, drop-in.
 - `44942a4` Fixed `SELECT DISTINCT ... ORDER BY` bug in the describe-
@@ -53,9 +55,11 @@ Next.js on Render, auto-deploys from main:
 - **Calendar hero** on CTM track pages (`/c/*/t/*/calendar`) — stacked
   activity chart, day popover, sector-themed tints (rank-assigned per
   track), dominant-theme chips, daily-brief prose per day.
-- **Centroid page hero** (`/c/*`) — cross-track calendar, 2×2 enriched
-  TrackCards with theme chips + summary + top-5 events, month nav,
-  click-any-day popover with per-track breakdown.
+- **Centroid page hero** (`/c/*`) — tier-0 "Overview" briefing from
+  `centroid_summaries` (bilingual), cross-track calendar, 2×2 enriched
+  TrackCards with theme chips + per-track `state` paragraph from the
+  same summary + top-5 events, month nav, click-any-day popover with
+  per-track breakdown.
 - **Active Narratives** sidebar on centroid pages (replaces Top Signals).
   Foreign-framed narratives flagged with "from {Actor}".
 - **Legacy fallback** for months without promoted data (Jan/Feb used to
@@ -70,7 +74,9 @@ Next.js on Render, auto-deploys from main:
 Layer 0  titles_v3            raw headlines (v3.0.1 labels via title_labels)
 Layer 1  events_v3            day-centric clusters (promoted ≤ top-20/day per CTM)
 Layer 2  daily_briefs         per-day thematic briefs + sector/subject themes
-Layer 3  narratives           260 curated strategic narratives
+Layer 3  centroid_summaries   period-level state-of-play per centroid
+                              (rolling_30d + monthly snapshots, EN+DE)
+Layer 4  narratives           260 curated strategic narratives
                               linked via event_strategic_narratives
 ```
 
@@ -112,10 +118,12 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 
 ## Known gaps / open tickets
 
-1. **CTM digests stale** — `ctm.summary_text` is legacy v2 prose, not
-   regenerated post-D-058. Ticket: restore + modernize period-level
-   summaries for track cards. Needs design (period framing, refresh
-   cadence, in-progress-month handling).
+1. **CTM digests (`ctm.summary_text`) still legacy** — period-level
+   state-of-play on centroid pages now comes from `centroid_summaries`
+   (5.5). The per-CTM `summary_text` remains only for the calendar
+   track page and downstream consumers (narratives extraction, social
+   posting, RAI analysis). Ticket: migrate those consumers to
+   `centroid_summaries` state fields, then retire the columns.
 2. **Narrative matching hasn't run on Mar/Apr** — daemon Slot 3
    includes Phase 4.2f/g/h but 0 matches written for current months.
    Ticket: investigate matcher filters or data-shape mismatch.
