@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import NarrativeCard from '@/components/narratives/NarrativeCard';
 import MentionTimeline from '@/components/signals/MentionTimeline';
 import { getMetaNarrativeById, getAllMetaNarratives, getStrategicNarratives, getNarrativeSparklines, getMetaNarrativeActivity } from '@/lib/queries';
+import { buildAlternates } from '@/lib/seo';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
 
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: meta.name,
     description: meta.description,
-    alternates: { canonical: `/narratives/meta/${id}` },
+    alternates: buildAlternates(`/narratives/meta/${id}`),
   };
 }
 

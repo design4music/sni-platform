@@ -182,7 +182,7 @@ export default function CentroidHero({
             {trackRanking.map(({ track, share }) => (
               <Link
                 key={track}
-                href={`/c/${centroidKey}/t/${track}/calendar?month=${activeMonth}`}
+                href={`/c/${centroidKey}/t/${track}?month=${activeMonth}`}
                 className="flex items-center gap-1.5 hover:text-dashboard-text transition"
               >
                 <span className={`${trackColor(track)} inline-block w-2.5 h-2.5 rounded-sm`} />
@@ -303,7 +303,7 @@ function DayPopover({
         {entry.tracks.map(t => (
           <li key={t.track}>
             <Link
-              href={`/c/${centroidKey}/t/${t.track}/calendar?month=${activeMonth}&day=${entry.date}`}
+              href={`/c/${centroidKey}/t/${t.track}?month=${activeMonth}&day=${entry.date}`}
               className="flex items-center gap-2 group"
             >
               <span className={`${trackColor(t.track)} inline-block w-2.5 h-2.5 rounded-sm shrink-0`} />

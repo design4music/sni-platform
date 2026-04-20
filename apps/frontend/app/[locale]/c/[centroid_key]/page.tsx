@@ -29,26 +29,100 @@ import Link from 'next/link';
 import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 import type { CentroidStanceScore } from '@/lib/queries';
+import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
 
-export const dynamic = 'force-dynamic';
+// Canonical URL (no month param) is cacheable; month variants re-render
+// dynamically because they read searchParams. Matches D-037 policy.
+export const revalidate = 1800;
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;
   searchParams: Promise<{ month?: string }>;
 }
 
-export async function generateMetadata({ params }: CentroidPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: CentroidPageProps): Promise<Metadata> {
   const { centroid_key } = await params;
+  const { month: requestedMonth } = await searchParams;
+  const locale = (await getLocale()) as SeoLocale;
   const t = await getTranslations('centroid');
   const tCentroidsMeta = await getTranslations('centroids');
-  const centroid = await getCentroidById(centroid_key);
+  const tTracks = await getTranslations('tracks');
+
+  const centroid = await getCentroidById(centroid_key, locale);
   if (!centroid) return { title: t('notFound') };
   const centroidLabel = getCentroidLabel(centroid.id, centroid.label, tCentroidsMeta);
-  return {
-    title: centroidLabel,
-    description: t('metaDescription', { label: centroidLabel }),
-    alternates: { canonical: `/c/${centroid_key}` },
-  };
+
+  // Pick active month: requested (if valid) or latest available.
+  const availableMonths = await getAvailableMonthsForCentroid(centroid.id);
+  const activeMonth = requestedMonth && availableMonths.includes(requestedMonth)
+    ? requestedMonth
+    : availableMonths[0] || null;
+
+  // Try to build a rich description from month view (shares cache with page render).
+  let description: string;
+  if (activeMonth) {
+    const view = await getCentroidMonthView(centroid.id, activeMonth, locale);
+    const monthLabel = formatMonthLabelSeo(activeMonth, locale);
+
+    if (view && view.tracks.length > 0) {
+      const totalSources = view.activity_stripe.reduce((s, d) => s + d.total_sources, 0);
+      const trackNames = view.tracks
+        .filter(t => t.title_count > 0)
+        .slice(0, 3)
+        .map(t => getTrackLabel(t.track as Track, tTracks).toLowerCase());
+      const themeCounts = new Map<string, number>();
+      for (const tr of view.tracks) {
+        for (const chip of tr.theme_chips || []) {
+          const key = chip.sector;
+          themeCounts.set(key, (themeCounts.get(key) || 0) + chip.weight);
+        }
+      }
+      const topThemes = [...themeCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([sector]) => humanizeEnum(sector));
+
+      // EN: "Germany in April 2026: 1,234 sources covering politics, economy,
+      // security. Top themes: diplomacy, military, trade. Multilingual news
+      // briefing." — lead with country+month (primary search intent), end
+      // with value prop.
+      if (locale === 'de') {
+        const parts: string[] = [
+          `${centroidLabel} im ${monthLabel}: ${formatCount(totalSources, 'de')} Quellen zu ${joinList(trackNames, 'de')}.`,
+        ];
+        if (topThemes.length) parts.push(`Schwerpunkte: ${joinList(topThemes, 'de')}.`);
+        parts.push('Mehrsprachiges Nachrichten-Briefing.');
+        description = truncateDescription(parts.join(' '));
+      } else {
+        const parts: string[] = [
+          `${centroidLabel} in ${monthLabel}: ${formatCount(totalSources)} sources covering ${joinList(trackNames)}.`,
+        ];
+        if (topThemes.length) parts.push(`Top themes: ${joinList(topThemes)}.`);
+        parts.push('Multilingual news briefing.');
+        description = truncateDescription(parts.join(' '));
+      }
+    } else {
+      description = t('metaDescription', { label: centroidLabel });
+    }
+  } else {
+    description = t('metaDescription', { label: centroidLabel });
+  }
+
+  // EN: "Germany news: April 2026 briefing" — country first for keyword match,
+  // month as freshness signal.
+  const title = activeMonth
+    ? (locale === 'de'
+        ? `${centroidLabel} Nachrichten: ${formatMonthLabelSeo(activeMonth, 'de')} Briefing`
+        : `${centroidLabel} news: ${formatMonthLabelSeo(activeMonth, 'en')} briefing`)
+    : (locale === 'de' ? `${centroidLabel} — Nachrichten-Briefing` : `${centroidLabel} news briefing`);
+
+  return buildPageMetadata({
+    title,
+    description,
+    path: `/c/${centroid_key}`,
+    locale,
+  });
 }
 
 function formatMonthLabel(monthStr: string, loc?: string): string {
@@ -256,7 +330,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                 topEvents={heroTrack?.top_events}
                 themeChips={heroTrack?.theme_chips}
                 summaryText={heroTrack?.summary_text}
-                calendarHref={`/c/${centroid.id}/t/${track}/calendar?month=${currentMonth}`}
+                calendarHref={`/c/${centroid.id}/t/${track}?month=${currentMonth}`}
               />
             );
           })}
@@ -264,6 +338,15 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
       )}
     </div>
   ) : undefined;
+
+  const crumbs: Array<{ name: string; path: string }> = [];
+  if (theaterLabel) {
+    crumbs.push({ name: theaterLabel, path: `/region/${centroid.primary_theater}` });
+  }
+  crumbs.push({
+    name: getCentroidLabel(centroid.id, centroid.label, tCentroids),
+    path: `/c/${centroid.id}`,
+  });
 
   return (
     <DashboardLayout
@@ -291,6 +374,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
         ) : undefined
       }
     >
+      <JsonLd data={breadcrumbList(crumbs)} />
       <div className="space-y-8">
         {/* Show mini-map standalone if no Background Brief exists */}
         {!centroid.profile_json && centroid.iso_codes && centroid.iso_codes.length > 0 && (

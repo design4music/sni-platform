@@ -4,6 +4,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { Feed, PublisherStats } from '@/lib/types';
 import { COUNTRY_TO_REGION, getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
+import { buildAlternates } from '@/lib/seo';
 import SourceSuggestionForm from '@/components/SourceSuggestionForm';
 import SourceCountryAccordion from '@/components/SourceCountryAccordion';
 import { getTranslations } from 'next-intl/server';
@@ -16,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('metaDescription'),
-    alternates: { canonical: '/sources' },
+    alternates: buildAlternates('/sources'),
   };
 }
 

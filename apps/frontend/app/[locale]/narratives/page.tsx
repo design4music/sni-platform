@@ -3,6 +3,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import NarrativeCard from '@/components/narratives/NarrativeCard';
 import NarrativeFilterBar from '@/components/narratives/NarrativeFilterBar';
 import { getAllMetaNarratives, getStrategicNarratives, getNarrativeSparklines } from '@/lib/queries';
+import { buildAlternates } from '@/lib/seo';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
@@ -14,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('metaDescription'),
-    alternates: { canonical: '/narratives' },
+    alternates: buildAlternates('/narratives'),
   };
 }
 

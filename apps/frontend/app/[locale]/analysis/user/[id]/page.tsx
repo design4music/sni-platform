@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Analysis - WorldBrief`,
     description: 'RAI analysis of user-submitted text',
+    robots: { index: false, follow: false },
   };
 }
 

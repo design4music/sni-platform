@@ -175,7 +175,7 @@ export function CalendarHero({
     // No scroll — the day panel is in a fixed position below the chart.
   };
 
-  const baseUrl = `/c/${centroidKey}/t/${trackKey}/calendar`;
+  const baseUrl = `/c/${centroidKey}/t/${trackKey}`;
 
   return (
     <section>

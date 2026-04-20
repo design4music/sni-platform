@@ -11,13 +11,14 @@ import { getCentroidsByClass, getAllActiveFeeds, getLatestEpics } from '@/lib/qu
 import { REGIONS, getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
 import { getTranslations, setRequestLocale, getLocale } from 'next-intl/server';
+import { buildAlternates } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'WorldBrief - Understand the world. Briefly.',
   description: 'AI-powered global news intelligence. Multilingual coverage from 180+ sources, organized by country, theme, and narrative frame. Updated daily.',
-  alternates: { canonical: '/' },
+  alternates: buildAlternates('/'),
 };
 
 /* Deferred async server component for cross-country epics */

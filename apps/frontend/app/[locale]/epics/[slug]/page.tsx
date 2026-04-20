@@ -4,6 +4,8 @@ import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import EpicCountries, { CountryGroup } from '@/components/EpicCountries';
 import { getEpicBySlug, getEpicEvents, getEpicMonths, getTopSignalsForEpic, getNarrativesForEpic } from '@/lib/queries';
+import { buildPageMetadata, articleJsonLd, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
 import { EpicEvent, EpicNarrative, SignalType, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -17,11 +19,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const epic = await getEpicBySlug(slug, locale);
   if (!epic) return { title: t('storyNotFound') };
   const title = epic.title || epic.anchor_tags?.join(', ') || t('crossCountryStory');
-  return {
+  const description = epic.summary
+    ? epic.summary.slice(0, 160)
+    : t('detailMetaDescription', { title });
+  return buildPageMetadata({
     title,
-    description: t('detailMetaDescription', { title }),
-    alternates: { canonical: `/epics/${slug}` },
-  };
+    description,
+    path: `/epics/${slug}`,
+    locale: locale as SeoLocale,
+    ogType: 'article',
+    publishedTime: `${epic.month}-01T00:00:00Z`,
+  });
 }
 
 interface Props {
@@ -257,8 +265,24 @@ export default async function EpicDetailPage({ params }: Props) {
     </div>
   );
 
+  const epicTitle = epic.title || epic.anchor_tags.join(', ');
+  const epicJsonLd = [
+    articleJsonLd({
+      headline: epicTitle,
+      description: (epic.summary || t('detailMetaDescription', { title: epicTitle })).slice(0, 300),
+      path: `/epics/${slug}`,
+      locale: locale as SeoLocale,
+      datePublished: `${epic.month}-01T00:00:00Z`,
+    }),
+    breadcrumbList([
+      { name: 'Epics', path: '/epics' },
+      { name: epicTitle, path: `/epics/${slug}` },
+    ]),
+  ];
+
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
+      <JsonLd data={epicJsonLd} />
       {locale === 'de' && <TranslationNotice message={tCommon('translatedNotice')} />}
       {/* Header */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
+import { buildAlternates } from '@/lib/seo';
 import { getTranslations } from 'next-intl/server';
 export const revalidate = 86400;
 
@@ -8,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: '/faq' },
+    alternates: buildAlternates('/faq'),
   };
 }
 

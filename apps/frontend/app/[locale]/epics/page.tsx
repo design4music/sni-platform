@@ -4,6 +4,7 @@ import MonthNav from '@/components/MonthNav';
 import EpicCard from '@/components/EpicCard';
 import SignalSlider from '@/components/SignalSlider';
 import { getEpicMonths, getEpicsByMonth, getTopSignalsByMonth } from '@/lib/queries';
+import { buildAlternates } from '@/lib/seo';
 import { SignalType } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 
@@ -14,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('metaDescription'),
-    alternates: { canonical: '/epics' },
+    alternates: buildAlternates('/epics'),
   };
 }
 

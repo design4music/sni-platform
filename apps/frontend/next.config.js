@@ -4,6 +4,22 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  async redirects() {
+    return [
+      // Legacy /calendar route was folded into the track URL itself.
+      // 301 preserves SEO equity from existing backlinks + prior sitemap.
+      {
+        source: '/c/:centroid/t/:track/calendar',
+        destination: '/c/:centroid/t/:track',
+        permanent: true,
+      },
+      {
+        source: '/de/c/:centroid/t/:track/calendar',
+        destination: '/de/c/:centroid/t/:track',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

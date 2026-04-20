@@ -61,7 +61,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = ctx?.event_title
     ? `Analysis: ${ctx.event_title.slice(0, 60)}`
     : 'Comparative Analysis';
-  return { title, description: 'Comparative media framing analysis across editorial clusters' };
+  // Comparative analyses duplicate content from the underlying event/centroid
+  // page; keep the canonical source in the index and exclude this surface.
+  return {
+    title,
+    description: 'Comparative media framing analysis across editorial clusters',
+    robots: { index: false, follow: true },
+  };
 }
 
 async function StrategicNarrativesSidebar({ entityType, entityId }: { entityType: string; entityId: string }) {

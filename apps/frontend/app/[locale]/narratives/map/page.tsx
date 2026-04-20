@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import NarrativeMapView from '@/components/narratives/NarrativeMapView';
 import { getNarrativeMapData, getCentroidIsoMap } from '@/lib/queries';
+import { buildAlternates } from '@/lib/seo';
 import { getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('metaDescription'),
-    alternates: { canonical: '/narratives/map' },
+    alternates: buildAlternates('/narratives/map'),
   };
 }
 

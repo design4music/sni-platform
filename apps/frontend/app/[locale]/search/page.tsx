@@ -16,6 +16,9 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   const t = await getTranslations('search');
   return {
     title: q ? t('titleWithQuery', { query: q }) : t('title'),
+    // Search result pages are user-generated paths with infinite variants;
+    // keep them out of the index (Google guidelines for internal search).
+    robots: { index: false, follow: true },
   };
 }
 

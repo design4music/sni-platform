@@ -3,8 +3,9 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { getOutletProfile, getOutletNarrativeFrames, getPublisherStats, getPublisherStance } from '@/lib/queries';
 import { getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
+import { buildPageMetadata, type Locale as SeoLocale } from '@/lib/seo';
 import { getTrackLabel, getCentroidLabel, Track, PublisherStats, StanceScore } from '@/lib/types';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, getLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import OutletMapSection from './OutletMapSection';
@@ -18,12 +19,16 @@ interface OutletPageProps {
 
 export async function generateMetadata({ params }: OutletPageProps): Promise<Metadata> {
   const { feed_name } = await params;
+  const locale = (await getLocale()) as SeoLocale;
   const name = decodeURIComponent(feed_name);
-  return {
-    title: `${name} - Media Profile`,
-    description: `Coverage analysis for ${name}: topics, regions, and narrative frames.`,
-    alternates: { canonical: `/sources/${feed_name}` },
-  };
+  return buildPageMetadata({
+    title: locale === 'de' ? `${name} — Medienprofil` : `${name} — Media Profile`,
+    description: locale === 'de'
+      ? `Berichterstattungsanalyse für ${name}: Themen, Regionen und Medien-Frames.`
+      : `Coverage analysis for ${name}: topics, regions, and narrative frames.`,
+    path: `/sources/${feed_name}`,
+    locale,
+  });
 }
 
 function TrackBar({ distribution, tTracks }: { distribution: Record<string, number>; tTracks: (key: string) => string }) {

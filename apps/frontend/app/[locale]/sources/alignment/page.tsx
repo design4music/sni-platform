@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import { getStanceMatrix } from '@/lib/queries';
+import { buildAlternates } from '@/lib/seo';
 import { getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
 import { getOutletLogoUrl } from '@/lib/logos';
@@ -13,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'Media Alignment',
     description: 'How major publishers cover different countries and regions.',
-    alternates: { canonical: '/sources/alignment' },
+    alternates: buildAlternates('/sources/alignment'),
   };
 }
 

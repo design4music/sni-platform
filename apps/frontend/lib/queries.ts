@@ -2122,17 +2122,6 @@ export async function getCentroidIsoMap(): Promise<{ id: string; iso_codes: stri
 // See docs/FRONTEND_CALENDAR_REDESIGN.md
 // ============================================================================
 
-/** True if this CTM has any promoted events (phase 4.5a output). Used by the
- *  legacy track page to redirect to the calendar view when available. */
-export async function ctmHasPromotedData(ctmId: string): Promise<boolean> {
-  const rows = await query<{ n: number }>(
-    `SELECT 1 AS n FROM events_v3
-      WHERE ctm_id = $1 AND is_promoted = true LIMIT 1`,
-    [ctmId]
-  );
-  return rows.length > 0;
-}
-
 interface CalendarClusterRow {
   id: string;
   first_date: string;

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
+import { buildAlternates } from '@/lib/seo';
 import { getTranslations } from 'next-intl/server';
 export const revalidate = 86400;
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: '/about' },
+    alternates: buildAlternates('/about'),
   };
 }
 

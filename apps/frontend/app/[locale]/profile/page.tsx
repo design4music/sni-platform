@@ -11,7 +11,10 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('profile');
-  return { title: t('title') };
+  return {
+    title: t('title'),
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function ProfilePage() {

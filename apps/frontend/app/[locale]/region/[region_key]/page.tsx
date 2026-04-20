@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import CentroidCard from '@/components/CentroidCard';
 import { getCentroidsByTheater } from '@/lib/queries';
+import { buildPageMetadata, type Locale as SeoLocale } from '@/lib/seo';
 import { REGIONS, RegionKey } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import { getTranslations, getLocale } from 'next-intl/server';
@@ -14,15 +15,17 @@ interface RegionPageProps {
 
 export async function generateMetadata({ params }: RegionPageProps): Promise<Metadata> {
   const t = await getTranslations('regions');
+  const locale = (await getLocale()) as SeoLocale;
   const { region_key } = await params;
   const regionKey = region_key.toUpperCase() as RegionKey;
   const label = REGIONS[regionKey];
   if (!label) return { title: t('notFound') };
-  return {
+  return buildPageMetadata({
     title: label,
     description: t('metaDescription', { label }),
-    alternates: { canonical: `/region/${region_key.toLowerCase()}` },
-  };
+    path: `/region/${region_key.toLowerCase()}`,
+    locale,
+  });
 }
 
 export default async function RegionPage({ params }: RegionPageProps) {

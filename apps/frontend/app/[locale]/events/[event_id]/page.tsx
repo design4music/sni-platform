@@ -17,20 +17,45 @@ import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
 import TranslationNotice from '@/components/TranslationNotice';
+import { buildPageMetadata, truncateDescription, formatCount, newsArticleJsonLd, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, event_id } = await params;
+  const { event_id } = await params;
+  const locale = (await getLocale()) as SeoLocale;
   const t = await getTranslations('event');
   const event = await getEventById(event_id, locale);
   if (!event) return { title: t('notFound') };
   const title = event.title || t('eventDetail');
-  return {
+
+  // Compose description: summary + dateline (date, source count). Dateline adds
+  // a stable signal even when summary is short or shared across related events.
+  const dateline = (() => {
+    if (!event.date) return '';
+    const d = new Date(event.date + 'T00:00:00');
+    const dateStr = d.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const n = event.source_batch_count || 0;
+    if (locale === 'de') {
+      return ` (${dateStr}, ${formatCount(n, 'de')} Quelle${n === 1 ? '' : 'n'})`;
+    }
+    return ` (${dateStr}, ${formatCount(n)} source${n === 1 ? '' : 's'})`;
+  })();
+
+  const summary = (event.summary || '').trim();
+  const description = summary
+    ? truncateDescription(summary + dateline)
+    : truncateDescription(t('metaDescription', { title }) + dateline);
+
+  return buildPageMetadata({
     title,
-    description: event.summary ? `${event.summary.slice(0, 155)}...` : t('metaDescription', { title }),
-    alternates: { canonical: `/events/${event_id}` },
-  };
+    description,
+    path: `/events/${event_id}`,
+    locale,
+    ogType: 'article',
+    publishedTime: event.date ? `${event.date}T00:00:00Z` : undefined,
+  });
 }
 
 interface Props {
@@ -288,8 +313,28 @@ export default async function EventDetailPage({ params }: Props) {
     </Suspense>
   );
 
+  const centroidName = getCentroidLabel(event.centroid_id, event.centroid_label, tCentroids);
+  const jsonLdBlocks: Record<string, unknown>[] = [
+    newsArticleJsonLd({
+      headline: event.title || t('eventDetail'),
+      description: (event.summary || '').slice(0, 300),
+      datePublished: event.date ? `${event.date}T00:00:00Z` : new Date().toISOString(),
+      dateModified: event.last_active ? `${event.last_active}T00:00:00Z` : undefined,
+      path: `/events/${event_id}`,
+      locale: locale as SeoLocale,
+      articleSection: trackLabel,
+      keywords: Array.isArray(event.tags) ? event.tags.slice(0, 10) : undefined,
+    }),
+    breadcrumbList([
+      { name: centroidName, path: `/c/${event.centroid_id}` },
+      { name: trackLabel, path: `/c/${event.centroid_id}/t/${event.track}?month=${event.month}` },
+      { name: event.title || t('eventDetail'), path: `/events/${event_id}` },
+    ]),
+  ];
+
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
+      <JsonLd data={jsonLdBlocks} />
       {locale === 'de' && <TranslationNotice message={tCommon('translatedNotice')} />}
       {/* Perspective badge */}
       <div className="mb-4">

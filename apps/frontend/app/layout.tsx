@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import SessionWrapper from '@/components/SessionWrapper';
 import Analytics from '@/components/Analytics';
+import JsonLd from '@/components/JsonLd';
+import { websiteJsonLd } from '@/lib/seo';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -42,23 +44,7 @@ export default async function RootLayout({
   return (
     <html lang={lang}>
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'WorldBrief',
-              url: SITE_URL,
-              description: 'AI-powered global news intelligence. Multilingual coverage from 180+ sources organized by country, theme, and narrative frame.',
-              publisher: {
-                '@type': 'Organization',
-                name: 'WorldBrief',
-                url: SITE_URL,
-              },
-            }),
-          }}
-        />
+        <JsonLd data={websiteJsonLd()} />
       </head>
       <body className={inter.className}>
         <SessionWrapper>{children}</SessionWrapper>

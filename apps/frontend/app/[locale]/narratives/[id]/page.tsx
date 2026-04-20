@@ -6,6 +6,8 @@ import DashboardLayout from '@/components/DashboardLayout';
 import MentionTimeline from '@/components/signals/MentionTimeline';
 import CompetingNarrativesPanel from '@/components/narratives/CompetingNarrativesPanel';
 import { getStrategicNarrativeById, getNarrativeWeeklyActivity, getNarrativeEvents } from '@/lib/queries';
+import { buildPageMetadata, articleJsonLd, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
 import { getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 
@@ -19,11 +21,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, locale } = await params;
   const narrative = await getStrategicNarrativeById(id, locale);
   if (!narrative) return { title: 'Not Found' };
-  return {
+  return buildPageMetadata({
     title: narrative.name,
     description: narrative.claim || narrative.name,
-    alternates: { canonical: `/narratives/${id}` },
-  };
+    path: `/narratives/${id}`,
+    locale: locale as SeoLocale,
+    ogType: 'article',
+  });
 }
 
 function formatDate(dateStr: string, locale: string = 'en-US'): string {
@@ -160,8 +164,22 @@ export default async function NarrativeDetailPage({ params }: Props) {
     </div>
   );
 
+  const narrativeJsonLd = [
+    articleJsonLd({
+      headline: narrative.name,
+      description: narrative.claim || narrative.name,
+      path: `/narratives/${narrative.id}`,
+      locale: locale as SeoLocale,
+    }),
+    breadcrumbList([
+      { name: 'Narratives', path: '/narratives' },
+      { name: narrative.name, path: `/narratives/${narrative.id}` },
+    ]),
+  ];
+
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
+      <JsonLd data={narrativeJsonLd} />
       {/* Header */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">
         <h1 className="text-3xl md:text-4xl font-bold mb-4">{narrative.name}</h1>

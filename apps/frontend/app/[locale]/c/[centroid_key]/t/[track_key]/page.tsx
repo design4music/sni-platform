@@ -1,485 +1,162 @@
-import { Suspense } from 'react';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-import EventList from '@/components/EventList';
-import StoryGroupList from '@/components/StoryGroupList';
-import type { StoryGroup, CountrySection } from '@/components/StoryGroupList';
-import IranWarSwimlane from '@/components/IranWarSwimlane';
-import MobileTocButton from '@/components/MobileTocButton';
-import MonthNav from '@/components/MonthNav';
 import {
-  ctmHasPromotedData,
+  CalendarHero,
+  CalendarDayPanel,
+  CalendarScopeCard,
+} from '@/components/CalendarView';
+import type { CalendarMonthView } from '@/lib/types';
+import { getTrackIcon } from '@/components/TrackCard';
+import {
+  getCalendarMonthView,
   getCentroidById,
-  getCentroidsByIds,
-  getCTM,
-  getMonthTimeline,
-  getTitlesByCTM,
+  getCTMMonths,
   getTracksByCentroid,
 } from '@/lib/queries';
-import { notFound, redirect } from 'next/navigation';
-import Link from 'next/link';
-import { getTrackLabel, getCentroidLabel, getCountryName, getIsoFromBucketKey, Track, Event, Title } from '@/lib/types';
-import { getTrackIcon } from '@/components/TrackCard';
+import { getTrackLabel, getCentroidLabel, Track } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
-import { ensureDE } from '@/lib/lazy-translate';
-import TranslationNotice from '@/components/TranslationNotice';
+import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
+import JsonLd from '@/components/JsonLd';
 
-export const dynamic = 'force-dynamic';
+// Canonical URL (no month param) is cacheable; month variants re-render
+// dynamically because they read searchParams. Matches D-037 policy.
+export const revalidate = 1800;
 
-export async function generateMetadata({ params }: TrackPageProps): Promise<Metadata> {
-  const { centroid_key, track_key } = await params;
-  const t = await getTranslations('track');
-  const tCentroidsMeta = await getTranslations('centroids');
-  const tTracksMeta = await getTranslations('tracks');
-  const centroid = await getCentroidById(centroid_key);
-  if (!centroid) return { title: t('notFound') };
-  const trackLabel = getTrackLabel(track_key as Track, tTracksMeta);
-  const centroidLabel = getCentroidLabel(centroid.id, centroid.label, tCentroidsMeta);
-  return {
-    title: `${centroidLabel}: ${trackLabel}`,
-    description: t('metaDescription', { track: trackLabel, label: centroidLabel }),
-    alternates: { canonical: `/c/${centroid_key}/t/${track_key}` },
-  };
+// Picks the most active day when one isn't explicitly requested.
+function pickDefaultDay(view: CalendarMonthView, explicit: string | null): string | null {
+  if (explicit && view.days.some(d => d.date === explicit)) return explicit;
+  if (view.days.length === 0) return null;
+  return view.days.reduce((best, d) => (d.total_sources > best.total_sources ? d : best)).date;
 }
-
-const TOPICS_PAGE_SIZE = 10;
 
 interface TrackPageProps {
   params: Promise<{ locale: string; centroid_key: string; track_key: string }>;
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ month?: string; day?: string }>;
 }
 
-function formatMonthLabel(monthStr: string, loc?: string): string {
-  const [year, month] = monthStr.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  return date.toLocaleDateString(loc === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
-}
+export async function generateMetadata({ params, searchParams }: TrackPageProps): Promise<Metadata> {
+  const { centroid_key, track_key } = await params;
+  const { month: requestedMonth } = await searchParams;
+  const locale = (await getLocale()) as SeoLocale;
+  const tTracks = await getTranslations('tracks');
+  const tCentroids = await getTranslations('centroids');
+  const t = await getTranslations('track');
 
-// Helper functions for event processing
-function countTitles(events: Event[]) {
-  return events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
-}
+  const centroid = await getCentroidById(centroid_key, locale);
+  if (!centroid) return { title: t('notFound') };
+  const trackLabel = getTrackLabel(track_key as Track, tTracks);
+  const centroidLabel = getCentroidLabel(centroid.id, centroid.label, tCentroids);
+  const trackLower = trackLabel.toLowerCase();
 
+  const months = await getCTMMonths(centroid_key, track_key);
+  const activeMonth = requestedMonth && months.includes(requestedMonth)
+    ? requestedMonth
+    : months[0] || null;
 
-const STORY_GROUP_MIN_EVENTS = 10; // use story groups when families exist
-
-/** Build story groups from event families (Layer 2) or topic_core anchors (fallback).
- *  Prefers family_id grouping when available. Falls back to signal anchors.
- */
-function buildStoryGroups(events: Event[]): { groups: StoryGroup[]; ungrouped: Event[] } {
-  // Check if events have family data
-  const hasFamilies = events.some(e => e.family_id);
-
-  if (hasFamilies) {
-    // Determine display threshold based on total event count
-    const displayThreshold = events.length > 500 ? 10 : events.length > 100 ? 6 : 3;
-
-    // Group by family_id -- Layer 2 narrative topics
-    const familyMap = new Map<string, { title: string; domain: string; summary: string; events: Event[] }>();
-    const standalone: Event[] = [];   // display-worthy topics without a family
-    const ungrouped: Event[] = [];    // micro-clusters (below threshold)
-
-    for (const ev of events) {
-      const srcCount = ev.source_title_ids?.length || 0;
-      if (ev.family_id && ev.family_title) {
-        if (!familyMap.has(ev.family_id)) {
-          familyMap.set(ev.family_id, {
-            title: ev.family_title,
-            domain: ev.family_domain || '',
-            summary: ev.family_summary || '',
-            events: [],
-          });
-        }
-        familyMap.get(ev.family_id)!.events.push(ev);
-      } else if (srcCount >= displayThreshold && !ev.is_catchall) {
-        standalone.push(ev);
-      } else {
-        ungrouped.push(ev);
-      }
-    }
-
-    const groups: StoryGroup[] = [];
-    for (const [fid, fam] of familyMap) {
-      if (fam.events.length < 1) continue;
-      const totalSources = fam.events.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
-      fam.events.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-      groups.push({
-        label: fam.title,
-        anchor: fid,
-        anchorType: 'family',
-        events: fam.events,
-        totalSources,
-        topSignals: fam.summary ? [fam.summary] : undefined,
-      });
-    }
-    groups.sort((a, b) => b.totalSources - a.totalSources);
-    // Standalone topics go into ungrouped but sorted to top (they're display-worthy)
-    standalone.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-    ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-    return { groups, ungrouped: [...standalone, ...ungrouped] };
-  }
-
-  // Fallback: group by topic_core anchors (signal-based)
-  const groupMap = new Map<string, Event[]>();
-  const ungrouped: Event[] = [];
-
-  for (const ev of events) {
-    const anchor = ev.topic_core;
-    if (!anchor || anchor.startsWith('TXT:')) {
-      ungrouped.push(ev);
-      continue;
-    }
-    const cleanAnchor = anchor.replace(/ \(general\)$/, '');
-    if (!groupMap.has(cleanAnchor)) groupMap.set(cleanAnchor, []);
-    groupMap.get(cleanAnchor)!.push(ev);
-  }
-
-  const groups: StoryGroup[] = [];
-  for (const [anchor, evts] of groupMap) {
-    if (evts.length < 2) {
-      ungrouped.push(...evts);
-      continue;
-    }
-    const anchorType = anchor.match(/^(PER|PLC|ORG|TGT|EVT):/)?.[1] || '';
-    const raw = anchor.replace(/^(PER|PLC|ORG|TGT|EVT):/, '');
-    const label = raw.length <= 3 ? raw : raw.charAt(0) + raw.slice(1).toLowerCase();
-    const totalSources = evts.reduce((sum, e) => sum + (e.source_title_ids?.length || 0), 0);
-    evts.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-    groups.push({ label, anchor, anchorType, events: evts, totalSources });
-  }
-  groups.sort((a, b) => b.totalSources - a.totalSources);
-  ungrouped.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-  return { groups, ungrouped };
-}
-
-/** Build country-grouped sections from events with families.
- *  Groups events by bucket_key (bilateral) or "Domestic", with families nested inside.
- */
-function buildCountrySections(events: Event[]): CountrySection[] {
-  // Determine the dominant country for each family
-  const familyCountry = new Map<string, string>();
-  const familyCounts = new Map<string, Map<string, number>>();
-  for (const ev of events) {
-    if (!ev.family_id) continue;
-    const country = ev.event_type === 'domestic' ? 'DOMESTIC' : (ev.bucket_key || 'OTHER');
-    if (!familyCounts.has(ev.family_id)) familyCounts.set(ev.family_id, new Map());
-    const counts = familyCounts.get(ev.family_id)!;
-    counts.set(country, (counts.get(country) || 0) + 1);
-  }
-  for (const [fid, counts] of familyCounts) {
-    // Prefer any bilateral bucket over DOMESTIC -- families spanning both
-    // are bilateral stories with some domestic-angle coverage
-    let best = 'OTHER'; let bestCount = 0;
-    for (const [country, count] of counts) {
-      if (count > bestCount) { best = country; bestCount = count; }
-    }
-    // If majority is DOMESTIC but a bilateral bucket has >=30% of events, prefer it
-    // (families spanning both are often bilateral stories with domestic-angle titles)
-    if (best === 'DOMESTIC') {
-      const total = [...counts.values()].reduce((s, n) => s + n, 0);
-      let bestBilateral = ''; let bestBilateralCount = 0;
-      for (const [country, count] of counts) {
-        if (country !== 'DOMESTIC' && country !== 'OTHER' && count > bestBilateralCount) {
-          bestBilateral = country; bestBilateralCount = count;
-        }
-      }
-      if (bestBilateral && bestBilateralCount >= total * 0.3) best = bestBilateral;
-    }
-    familyCountry.set(fid, best);
-  }
-
-  // Group events into country buckets
-  const countryMap = new Map<string, { families: Map<string, { title: string; summary: string; events: Event[] }>; standalones: Event[] }>();
-
-  const getOrCreate = (key: string) => {
-    if (!countryMap.has(key)) countryMap.set(key, { families: new Map(), standalones: [] });
-    return countryMap.get(key)!;
-  };
-
-  for (const ev of events) {
-    if (ev.is_catchall) continue;
-    const evCountry = ev.event_type === 'domestic' ? 'DOMESTIC' : (ev.bucket_key || 'OTHER');
-
-    if (ev.family_id && ev.family_title) {
-      // Use the family's dominant country, not the individual event's bucket
-      const famCountry = familyCountry.get(ev.family_id) || evCountry;
-      const bucket = getOrCreate(famCountry);
-      if (!bucket.families.has(ev.family_id)) {
-        bucket.families.set(ev.family_id, { title: ev.family_title, summary: ev.family_summary || '', events: [] });
-      }
-      bucket.families.get(ev.family_id)!.events.push(ev);
-    } else {
-      const bucket = getOrCreate(evCountry);
-      bucket.standalones.push(ev);
-    }
-  }
-
-  // Deduplicate: merge country sections that resolve to the same label
-  // (e.g., two "Iran" sections from MIDEAST-IRAN bucket split)
-  const seen = new Map<string, string>(); // countryKey -> first key with this label
-  // This is handled by the familyCountry assignment above -- all events in a
-  // family go to the SAME country bucket regardless of their individual bucket_key.
-
-  // Build sections
-  const sections: CountrySection[] = [];
-  for (const [countryKey, bucket] of countryMap) {
-    const families: StoryGroup[] = [];
-    for (const [fid, fam] of bucket.families) {
-      fam.events.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-      const totalSources = fam.events.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0);
-      families.push({
-        label: fam.title,
-        anchor: fid,
-        anchorType: 'family',
-        events: fam.events,
-        totalSources,
-        topSignals: fam.summary ? [fam.summary] : undefined,
-      });
-    }
-    families.sort((a, b) => b.totalSources - a.totalSources);
-    bucket.standalones.sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-
-    const totalSources = families.reduce((s, f) => s + f.totalSources, 0)
-      + bucket.standalones.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0);
-    const totalTopics = families.reduce((s, f) => s + f.events.length, 0) + bucket.standalones.length;
-
-    // Get display info -- use countryKey directly for reliable labeling
-    // (sample events can have different bucket_keys from mixed families)
-    const sampleBilateral = [...families.flatMap(f => f.events), ...bucket.standalones]
-      .find(e => e.event_type === 'bilateral' && e.bucket_key === countryKey);
-    const sampleDomestic = [...families.flatMap(f => f.events), ...bucket.standalones]
-      .find(e => e.event_type === 'domestic' || !e.bucket_key);
-    const label = countryKey === 'DOMESTIC'
-      ? (sampleDomestic?.bucketLabel || 'Domestic')
-      : (sampleBilateral?.bucketLabel || getCountryName(countryKey));
-    const isoCodes = countryKey === 'DOMESTIC'
-      ? (sampleDomestic?.bucketIsoCodes || [])
-      : (sampleBilateral?.bucketIsoCodes || [getIsoFromBucketKey(countryKey)]);
-
-    sections.push({
-      countryKey,
-      countryLabel: label,
-      countryIsoCodes: isoCodes,
-      families,
-      standalones: bucket.standalones,
-      totalSources,
-      totalTopics,
+  if (!activeMonth) {
+    return buildPageMetadata({
+      title: locale === 'de'
+        ? `${centroidLabel} ${trackLower} Nachrichten`
+        : `${centroidLabel} ${trackLower} news`,
+      description: locale === 'de'
+        ? `${centroidLabel} ${trackLower}-Nachrichten — Tages-Timeline und Quellenanalyse.`
+        : `${centroidLabel} ${trackLower} news — daily timeline and source analysis.`,
+      path: `/c/${centroid_key}/t/${track_key}`,
+      locale,
     });
   }
 
-  sections.sort((a, b) => b.totalSources - a.totalSources);
-  return sections;
-}
+  const monthLabel = formatMonthLabelSeo(activeMonth, locale);
+  // EN: "USA security: April 2026 news"
+  // DE: "USA Sicherheit: April 2026 Nachrichten"
+  const title = locale === 'de'
+    ? `${centroidLabel} ${trackLower}: ${monthLabel} Nachrichten`
+    : `${centroidLabel} ${trackLower}: ${monthLabel} news`;
 
-/** Split events into top-N topics and "other" (small topics + catchalls). */
-function splitTopN(events: Event[], topN: number) {
-  const sorted = [...events]
-    .filter(e => !e.is_catchall)
-    .sort((a, b) => (b.source_title_ids?.length || 0) - (a.source_title_ids?.length || 0));
-  const catchalls = events.filter(e => e.is_catchall);
-  const top = sorted.slice(0, topN);
-  const rest = [...sorted.slice(topN), ...catchalls];
-  return { top, rest };
-}
-
-const CORE_TITLES_LIMIT = 10;
-
-const TITLE_STOP_WORDS = new Set([
-  'the','a','an','in','on','at','to','for','of','and','or','with','as','by',
-  'is','are','its','it','was','were','from','has','have','will','says','said',
-  'after','over','amid','not','but','that','this','more','than','also','new',
-]);
-
-function titleWords(text: string): Set<string> {
-  const words = new Set<string>();
-  for (const w of text.toLowerCase().replace(/[.,;:!?"'()[\]]/g, '').split(/\s+/)) {
-    if (w.length > 2 && !TITLE_STOP_WORDS.has(w)) words.add(w);
-  }
-  return words;
-}
-
-/** Select the most representative titles from a cluster.
- *
- *  Each headline is scored by how many content words it shares with ALL
- *  other headlines in the cluster (centrality score). The most "central"
- *  headlines best represent the cluster's core story.
- *
- *  Works before LLM title generation -- uses only source headlines.
- *  Multilingual titles score well because names/places are shared across
- *  languages (e.g., "Bushehr", "Macron", "Iran" appear in any language).
- */
-function selectCoreTitles(allTitles: Title[]): Title[] {
-  if (allTitles.length <= CORE_TITLES_LIMIT) return allTitles;
-
-  // Build word sets for each title
-  const wordSets = allTitles.map(t => titleWords(t.title_display));
-
-  // Build corpus word frequency (how many titles contain each word)
-  const corpusFreq = new Map<string, number>();
-  for (const ws of wordSets) {
-    for (const w of ws) {
-      corpusFreq.set(w, (corpusFreq.get(w) || 0) + 1);
+  const view = await getCalendarMonthView(centroid_key, track_key, activeMonth, locale);
+  let description: string;
+  if (view) {
+    const activeDays = view.days.length;
+    const clusterCount = view.days.reduce((s, d) => s + d.cluster_count, 0);
+    const themes = (view.theme_chips || []).slice(0, 3).map(c => humanizeEnum(c.sector));
+    if (locale === 'de') {
+      const parts = [
+        `Tagesgenaue ${trackLower}-Nachrichten für ${centroidLabel}, ${monthLabel}: ${formatCount(clusterCount, 'de')} Events an ${activeDays} Tagen, ${formatCount(view.scope.total_sources, 'de')} Quellen.`,
+      ];
+      if (themes.length) parts.push(`Schwerpunkte: ${joinList(themes, 'de')}.`);
+      description = truncateDescription(parts.join(' '));
+    } else {
+      const parts = [
+        `Day-by-day ${trackLower} news for ${centroidLabel}, ${monthLabel}. ${formatCount(clusterCount)} events across ${activeDays} days, ${formatCount(view.scope.total_sources)} sources.`,
+      ];
+      if (themes.length) parts.push(`Themes: ${joinList(themes)}.`);
+      description = truncateDescription(parts.join(' '));
     }
+  } else {
+    description = locale === 'de'
+      ? `${centroidLabel} ${trackLower}-Nachrichten für ${monthLabel}.`
+      : `${centroidLabel} ${trackLower} news for ${monthLabel}.`;
   }
 
-  // Score each title: sum of corpus frequency for its words.
-  // Words that appear in many titles score higher (they're the core topic).
-  // Normalize by title word count to avoid favoring long headlines.
-  const scored = allTitles.map((title, i) => {
-    const ws = wordSets[i];
-    if (ws.size === 0) return { title, score: 0 };
-    let score = 0;
-    for (const w of ws) {
-      score += corpusFreq.get(w) || 0;
-    }
-    return { title, score: score / ws.size };
+  return buildPageMetadata({
+    title,
+    description,
+    path: `/c/${centroid_key}/t/${track_key}`,
+    locale,
   });
-
-  scored.sort((a, b) => b.score - a.score);
-
-  return scored.slice(0, CORE_TITLES_LIMIT).map(s => s.title);
 }
-
-/** Resolve titles per event using a pre-built lookup map.
- *  Selects top 10 most central titles (highest word overlap with cluster).
- */
-function resolveEventTitles(events: Event[], titleMap: Map<string, Title>) {
-  for (const event of events) {
-    const allTitles = (event.source_title_ids || [])
-      .map(id => titleMap.get(id))
-      .filter((t): t is Title => t !== undefined);
-    event.resolvedTitles = selectCoreTitles(allTitles);
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Deferred async server components (wrapped in Suspense)             */
-/* ------------------------------------------------------------------ */
-
-
-/* ------------------------------------------------------------------ */
-/* Main page component                                                */
-/* ------------------------------------------------------------------ */
 
 export default async function TrackPage({ params, searchParams }: TrackPageProps) {
   const { locale, centroid_key, track_key } = await params;
+  const { month, day } = await searchParams;
   setRequestLocale(locale);
-  const t = await getTranslations('track');
-  const tNav = await getTranslations('nav');
-  const tCommon = await getTranslations('common');
-  const tCentroids = await getTranslations('centroids');
+
+  const centroid = await getCentroidById(centroid_key, locale);
+  if (!centroid) notFound();
+
+  const months = await getCTMMonths(centroid_key, track_key);
+  if (months.length === 0) {
+    return (
+      <DashboardLayout>
+        <div className="p-6 text-dashboard-text-muted">No coverage for this track yet.</div>
+      </DashboardLayout>
+    );
+  }
+  const activeMonth = month && months.includes(month) ? month : months[0];
+
+  const view = await getCalendarMonthView(centroid_key, track_key, activeMonth, locale);
+  if (!view) notFound();
+
   const tTracks = await getTranslations('tracks');
-  const localeStr = await getLocale();
-  const { month } = await searchParams;
+  const tCentroids = await getTranslations('centroids');
+  const tNav = await getTranslations('nav');
+  const trackLabel = getTrackLabel(track_key as Track, tTracks);
+  const centroidLabel = getCentroidLabel(centroid.id, centroid.label, tCentroids);
 
-  const centroid = await getCentroidById(centroid_key, localeStr);
-  if (!centroid) {
-    notFound();
-  }
+  const idx = months.indexOf(activeMonth);
+  const prevMonth = idx < months.length - 1 ? months[idx + 1] : null;
+  const nextMonth = idx > 0 ? months[idx - 1] : null;
 
-  const track = track_key as Track;
+  const otherTracksList = await getTracksByCentroid(centroid_key);
+  const otherTracks = otherTracksList.filter(t => t !== track_key);
 
-  let ctm = await getCTM(centroid.id, track, month, locale);
-  if (!ctm) {
-    notFound();
-  }
-
-  // Phase 1 of calendar rollout: if this CTM has day-centric data (promoted
-  // events from phase 4.5a), redirect to the calendar view. Months without
-  // promoted data fall through and render the legacy topic list below.
-  if (await ctmHasPromotedData(ctm.id)) {
-    const monthParam = month ? `?month=${month}` : '';
-    redirect(`/${locale}/c/${centroid_key}/t/${track_key}/calendar${monthParam}`);
-  }
-
-  // Lazy-translate CTM summary for DE users
-  if (locale === 'de' && ctm.summary_text) {
-    const de = await ensureDE('ctm', 'id', ctm.id, [
-      { src: 'summary_text', dest: 'summary_text_de', text: ctm.summary_text },
-    ]);
-    if (de.summary_text) ctm = { ...ctm, summary_text: de.summary_text };
-  }
-
-  // Fetch immediate data in parallel (defer overlapping centroids + narratives via Suspense)
-  const [titles, timeline, otherTracks] = await Promise.all([
-    getTitlesByCTM(ctm.id),
-    getMonthTimeline(centroid.id, track),
-    getTracksByCentroid(centroid.id, month),
-  ]);
-
-  const months = timeline.map(t => t.month);
-  const currentMonth = month || months[0];
-  const eventCount = ctm.events_digest?.length || 0;
-  const actualSourceCount = titles.length;
-
-  // Build title lookup map and resolve per-event titles
-  const titleMap = new Map(titles.map(t => [t.id, t]));
-
-  // Process events for both content and TOC
-  const allEvents = ctm.events_digest || [];
-  resolveEventTitles(allEvents, titleMap);
-
-  const homeIsoCodes = new Set(centroid.iso_codes || []);
-
-  // Unified list: non-catchall sorted by source count, catchalls to OtherCoverage
-  const { top: mainEvents, rest: otherEvents } = splitTopN(allEvents, allEvents.length);
-
-  // Resolve bilateral badge data for country badges
-  const bilateralBucketKeys = [...new Set(
-    mainEvents
-      .filter(e => e.event_type === 'bilateral' && e.bucket_key && !homeIsoCodes.has(e.bucket_key))
-      .map(e => e.bucket_key!)
-  )];
-  const bucketCentroids = bilateralBucketKeys.length > 0 ? await getCentroidsByIds(bilateralBucketKeys) : [];
-  const bucketCentroidMap = new Map(bucketCentroids.map(c => [c.id, c]));
-
-  for (const event of mainEvents) {
-    if (event.event_type === 'bilateral' && event.bucket_key && !homeIsoCodes.has(event.bucket_key)) {
-      const bc = bucketCentroidMap.get(event.bucket_key);
-      event.bucketLabel = getCentroidLabel(event.bucket_key, bc?.label || getCountryName(event.bucket_key), tCentroids);
-      event.bucketIsoCodes = bc?.iso_codes || [getIsoFromBucketKey(event.bucket_key)];
-      event.bucketLink = bc ? `/c/${event.bucket_key}/t/${track}?month=${currentMonth}` : undefined;
-    } else if (event.event_type === 'domestic' || !event.bucket_key) {
-      // Domestic events get the home centroid badge, disabled
-      event.bucketLabel = getCentroidLabel(centroid.id, centroid.label, tCentroids);
-      event.bucketIsoCodes = centroid.iso_codes || [];
-      event.bucketDomestic = true;
-    }
-  }
-
-  // TOC sections for mobile button
-  const tocSections = [
-    ...(ctm.summary_text ? [{ id: 'section-summary', label: t('summary') }] : []),
-    ...(mainEvents.length > 0 ? [{ id: 'section-topics', label: t('topicsTitle') }] : []),
-  ];
-
-
+  const defaultDay = pickDefaultDay(view, day || null);
 
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {/* Month selector (desktop only - mobile uses hamburger menu) */}
-      {months.length > 0 && (
-        <div className="hidden lg:block">
-          <MonthNav
-            months={months}
-            currentMonth={currentMonth}
-            baseUrl={`/c/${centroid.id}/t/${track}`}
-          />
-        </div>
-      )}
+      <CalendarScopeCard scope={view.scope} trackLabel={trackLabel} />
 
-      {/* Other Strategic Topics (Desktop only) */}
       {otherTracks.length > 0 && (
         <div className="hidden lg:block bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-          <h3 className="text-xl font-bold mb-1 text-dashboard-text">
-            {getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-          </h3>
+          <h3 className="text-xl font-bold mb-1 text-dashboard-text">{centroidLabel}</h3>
           <p className="text-sm text-dashboard-text-muted mb-4">
             {tNav('otherStrategicTopics')}
           </p>
           <nav className="space-y-1">
-            {otherTracks.map(t => {
-              const isCurrent = t === track;
+            {otherTracksList.map(t => {
+              const isCurrent = t === track_key;
               return isCurrent ? (
                 <div
                   key={t}
@@ -494,10 +171,8 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
               ) : (
                 <Link
                   key={t}
-                  href={`/c/${centroid.id}/t/${t}?month=${currentMonth}`}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border
-                             border border-transparent hover:border-dashboard-border
-                             transition-all duration-150"
+                  href={`/c/${centroid.id}/t/${t}?month=${activeMonth}`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border border border-transparent hover:border-dashboard-border transition-all duration-150"
                 >
                   <span className="text-dashboard-text-muted">{getTrackIcon(t)}</span>
                   <span className="text-base font-medium text-dashboard-text hover:text-white transition">
@@ -509,7 +184,6 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
           </nav>
         </div>
       )}
-
     </div>
   );
 
@@ -517,160 +191,32 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
     <DashboardLayout
       sidebar={sidebar}
       topFullWidthContent={
-        centroid.id === 'AMERICAS-USA' && track === 'geo_security' && currentMonth === '2026-03'
-          ? <IranWarSwimlane events={mainEvents} month={currentMonth} />
-          : undefined
+        <CalendarHero
+          view={view}
+          centroidLabel={centroidLabel}
+          trackLabel={trackLabel}
+          centroidKey={centroid_key}
+          trackKey={track_key}
+          activeMonth={activeMonth}
+          prevMonth={prevMonth}
+          nextMonth={nextMonth}
+          defaultDay={defaultDay}
+        />
       }
-      centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+      centroidLabel={centroidLabel}
       centroidId={centroid.id}
       otherTracks={otherTracks}
-      currentTrack={track}
-      currentMonth={currentMonth}
+      currentTrack={track_key}
+      currentMonth={activeMonth}
       availableMonths={months}
     >
-      {locale === 'de' && <TranslationNotice message={tCommon('translatedNotice')} />}
-      {/* Track header */}
-      <div className="mb-8 pb-8 border-b border-dashboard-border">
-        <div className="mb-4">
-          <Link
-            href={`/c/${centroid.id}?month=${currentMonth}`}
-            className="text-blue-400 hover:text-blue-300 text-sm"
-          >
-            ← {getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-          </Link>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
-          {getCentroidLabel(centroid.id, centroid.label, tCentroids)}: {getTrackLabel(track, tTracks)}
-        </h1>
-        <p className="text-dashboard-text-muted">
-          {t('headerStats', { month: formatMonthLabel(currentMonth, localeStr), events: eventCount, sources: actualSourceCount })}
-        </p>
-      </div>
-
-      {/* CTM Summary */}
-      {ctm.summary_text && (
-        <div id="section-summary" className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">{t('summary')}</h2>
-          <div className="text-lg leading-relaxed space-y-4">
-            {ctm.summary_text.split('\n\n').flatMap((paragraph, idx) => {
-              const trimmed = paragraph.trim();
-              if (trimmed.startsWith('### ')) {
-                const newlinePos = trimmed.indexOf('\n');
-                const heading = newlinePos === -1 ? trimmed.slice(4) : trimmed.slice(4, newlinePos);
-                const body = newlinePos === -1 ? null : trimmed.slice(newlinePos + 1).trim();
-                const elements = [
-                  <h3 key={`h-${idx}`} className="text-base font-semibold uppercase tracking-wide text-dashboard-text-muted mt-6 first:mt-0">
-                    {heading}
-                  </h3>
-                ];
-                if (body) {
-                  elements.push(<p key={`p-${idx}`}>{body}</p>);
-                }
-                return elements;
-              }
-              return [<p key={idx}>{trimmed}</p>];
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Events content */}
-      {allEvents.length === 0 ? (
-        // No events - show fallback content
-        titles.length > 0 ? (
-          <div className="mb-10">
-            <h2 className="text-2xl font-bold mb-2">{t('sources')}</h2>
-            <p className="text-sm text-dashboard-text-muted mb-4">
-              {t('pendingClustering', { count: titles.length })}
-            </p>
-            <div className="space-y-2">
-              {titles.slice(0, 50).map((title) => (
-                <div key={title.id} className="py-2 border-b border-dashboard-border/50">
-                  {title.url_gnews ? (
-                    <a
-                      href={title.url_gnews}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-dashboard-text hover:text-blue-400 transition"
-                    >
-                      {title.title_display}
-                    </a>
-                  ) : (
-                    <span className="text-dashboard-text">{title.title_display}</span>
-                  )}
-                  {title.publisher_name && (
-                    <span className="text-dashboard-text-muted text-sm ml-2">
-                      - {title.publisher_name}
-                    </span>
-                  )}
-                </div>
-              ))}
-              {titles.length > 50 && (
-                <p className="text-dashboard-text-muted text-sm pt-2">
-                  {t('andMore', { count: titles.length - 50 })}
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="mb-10 py-12 text-center">
-            <div className="text-dashboard-text-muted">
-              <p className="text-lg mb-2">{t('noCoverage')}</p>
-              <p className="text-sm">
-                {t('checkBackLater')} {getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-              </p>
-            </div>
-          </div>
-        )
-      ) : (
-        <>
-          {/* Unified topics section */}
-          <div id="section-topics" className="mb-10">
-            {mainEvents.length > 0 ? (
-              <>
-                <h2 className="text-2xl font-bold mb-2">{t('topicsTitle')}</h2>
-                <p className="text-sm text-dashboard-text-muted mb-4">
-                  {t('sectionStats', { topics: mainEvents.length, sources: countTitles(allEvents) })}
-                </p>
-
-                {mainEvents.length >= STORY_GROUP_MIN_EVENTS && (
-                  mainEvents.some(e => e.family_id)
-                ) ? (() => {
-                  const { groups, ungrouped: ungroupedEvents } = buildStoryGroups(mainEvents);
-                  const sections = buildCountrySections(mainEvents);
-                  return (
-                    <StoryGroupList
-                      groups={groups}
-                      ungrouped={ungroupedEvents}
-                      countrySections={sections.length > 1 ? sections : undefined}
-                    />
-                  );
-                })() : (
-                  <EventList
-                    events={mainEvents}
-                    initialLimit={TOPICS_PAGE_SIZE}
-                    pageSize={TOPICS_PAGE_SIZE}
-                    keyPrefix="topics"
-                  />
-                )}
-              </>
-            ) : otherEvents.length > 0 ? (
-              <p className="text-sm text-dashboard-text-muted mb-4">
-                {t('noMajorTopics')}
-              </p>
-            ) : null}
-
-            {otherEvents.length > 0 && (
-              <p className="text-sm text-dashboard-text-muted mt-4 py-2 border-t border-dashboard-border/50">
-                + {otherEvents.reduce((s, e) => s + (e.source_title_ids?.length || 0), 0)} additional sources tracked
-              </p>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Mobile TOC Button */}
-      <MobileTocButton sections={tocSections} />
+      <JsonLd
+        data={breadcrumbList([
+          { name: centroidLabel, path: `/c/${centroid.id}` },
+          { name: trackLabel, path: `/c/${centroid.id}/t/${track_key}` },
+        ])}
+      />
+      <CalendarDayPanel view={view} defaultDay={defaultDay} />
     </DashboardLayout>
   );
 }
