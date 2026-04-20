@@ -1,341 +1,135 @@
-# WorldBrief (SNI) v3 Pipeline - Technical Reference
+# WorldBrief Pipeline Status
 
-**Last Updated**: 2026-04-08
-**Status**: Production live. Daemon running on `main`. March frozen with layered clustering.
-**Live URL**: https://www.worldbrief.info
-**Branch**: `main` (feat/sector-clustering merged 2026-04-02)
+**Last updated**: 2026-04-20
+**Live**: https://www.worldbrief.info
+**Branch**: `main` (synced with origin)
 
-> Lean reference. Detailed docs linked below.
-
-### What's Live
-
-- **4 tracks everywhere**: geo_security, geo_politics, geo_economy, geo_society (Jan-Apr)
-- **March**: layered clustering (Layer 1 + Layer 2), 691 event families, LLM titles/summaries
-- **April**: daemon ingesting + old clustering. Mechanical Phase 3.3 (no LLM track assignment)
-- **Jan/Feb**: old clustering, new labels extracted (sector/subject/signals ready)
-- **Frontend**: family-grouped view for March, flat list for Jan/Feb/Apr, filters, mobile responsive
-
-### Current Work (April 2026)
-
-**Perfecting Layer 2 (event family assembly)**:
-- "Spine" concept for family definition — validated on 3 tiers
-- See: `EVENT_FAMILY_ASSEMBLY.md` (prompt design, results, tiers)
-- Next: finalize prompt, run on all March CTMs, evaluate quality
-
-**Planned**:
-1. Friction node detection + UI — `FRICTION_NODES_VISION.md`
-2. Epic system rebuild on event families — `NEXT_STEPS_PLAN.md`
-3. Daemon integration of new clustering — `PIPELINE_DEEP_ANALYSIS.md`
-4. Family synthesis (rich narrative pages) — `NARRATIVE_TOPICS_PLAN.md`
-
-### Architecture: 4-Layer Data Model
-
-```
-Layer 0: titles_v3          — raw headlines
-Layer 1: events_v3          — signal clusters (mechanical + LLM)
-Layer 2: event_families     — narrative story threads (LLM spine-based assembly)
-Layer 3: friction_nodes     — cross-centroid conflict zones (planned)
-```
-
-### Key Decisions (D-049 to D-052)
-
-- D-049: Faceted clustering replaces Louvain
-- D-050: Layered clustering (mechanical L1 + LLM L2)
-- D-051: Event families as Layer 2 narrative topics
-- D-052: Friction nodes vision (cross-centroid detection)
+Concise snapshot of what is running, what data exists, and where the
+seams currently are. For the design reference see
+[`PIPELINE_V4_ARCHITECTURE.md`](PIPELINE_V4_ARCHITECTURE.md).
 
 ---
 
-## Executive Summary
+## What is live
 
-The v3 pipeline processes news headlines through automated daemon phases (1-4.5b) to produce
-CTMs (Centroid-Track-Month units) with clustered events and narrative summaries. Narrative
-extraction and RAI analysis are on-demand (user-triggered, auth-gated). PostgreSQL-native
-architecture with LLM-based classification (DeepSeek). DE localization via next-intl (D-034).
+### Data coverage (on Render)
 
----
+All four months of 2026 processed under the v3.0.1 taxonomy and the
+day-centric clustering pipeline.
 
-## Pipeline Flow
+| Month | CTMs | Promoted events | DE titles | Daily briefs |
+|---|---|---|---|---|
+| Jan | 287 | 23,204 | 99.7% | 1,287 |
+| Feb | 293 | 26,933 | 99.9% | 1,566 |
+| Mar | 285 | 37,754 | 99.8% | 2,295 |
+| Apr | 282 | 21,394+ (daemon live) | 99.9% | 1,231+ |
 
-### 4-Layer Data Architecture
-```
-Layer 0: titles_v3          -- raw headlines (120K+/month)
-Layer 1: events_v3          -- signal clusters (mechanical + LLM, 1000-3000 per mega CTM)
-Layer 2: event_families     -- narrative topics (LLM-assembled, 30-100 per CTM)
-Layer 3: friction_nodes     -- cross-centroid conflict zones (planned, 5-10 global)
-```
+Jan–Mar rebuilt from scratch 2026-04-17/19 (labels wiped → relabel → wipe
+downstream → rebuild → push). April runs continuously via the daemon.
 
-### Processing Pipeline
-```
-RSS Feeds (Google News)
-    |
-[Phase 1] Ingestion --> titles_v3 (status='pending')
-    |
-[Phase 2] Centroid Matching --> titles_v3 (centroid_ids, 'assigned')
-    |
-[Phase 3.1] Label + Signal Extraction --> title_labels
-    |         (sector, subject, actor, target, signals, entity_countries)
-    |         + Word-containment signal normalization
-    |         + Importance Scoring
-    |
-[Phase 3.2] Entity Centroid Backfill --> entity_countries -> centroids
-    |
-[Phase 3.3] Track Assignment --> SECTOR_TO_TRACK mechanical mapping (replaces LLM gating)
-    |
-[Phase 4 Layer 1] Layered Clustering --> events_v3 + event_v3_titles
-    |   Strong signal clusters (mechanical): PLC:HORMUZ, PER:KHAMENEI, ORG:ICE
-    |   LLM clustering of remainder: bilateral pools + domestic pools
-    |
-[Phase 4 Layer 2] Event Family Assembly (LLM) --> event_families
-    |   One LLM call per CTM: all clusters -> 30-60 narrative topics
-    |   Each family: title, summary, domain label
-    |
-[Phase 4.2a-f] Materialized Views + Narrative Matching
-    |
-[Phase 4.5a] Event Summary Generation --> events_v3.title, summary
-    |
-[Phase 4.5b] CTM Digest Generation --> ctm.summary_text
-    |
-    |--- [On-demand] User clicks "Extract & Analyse" ------\
-    |                                                       | ON-DEMAND
-    |    Narrative Extraction --> narratives                 | (user-triggered,
-    |    |                                                  |  auth-gated)
-    |    RAI Analysis --> signal_stats + rai_signals         |
-    |    |                                                  |
-    |    Analysis Page (/analysis/[id])  ------------------/
-    |
-[Epic Detection] --> epics + epic_events (post-freeze, manual)
-    |
-[Epic Enrichment] --> epics.timeline, narratives, centroid_summaries
-    |
-Frontend (Next.js, auth via NextAuth v5)
-```
+### Daemon state (Render worker)
+
+Running. Four-slot architecture from
+[`PIPELINE_V4_ARCHITECTURE.md`](PIPELINE_V4_ARCHITECTURE.md):
+
+- **INGESTION** (12h): RSS + centroid matching
+- **LABELING** (15m): Phase 3.1 (LLM) + 3.2 backfill + 3.3 track assignment
+- **CLUSTERING** (30m): 3.1 day-beat + 3.2 same-day merge + 3.3 promotion + 4.* materialization
+- **ENRICHMENT** (3h): 5.1 event prose (LLM EN+DE) + 5.2 daily briefs (LLM) + 5.3/5.4 narrative matching (LLM)
+
+Recent worker-side optimizations:
+
+- `8c90ce8` Phase 3.3 rewritten as bulk SQL (~450× faster on backfill,
+  ~30× under live load). Same function signature, drop-in.
+- `44942a4` Fixed `SELECT DISTINCT ... ORDER BY` bug in the describe-
+  promoted slot query.
+- `485b747` Rerun script nulls inbound `merged_into` pointers before
+  deleting a CTM's events (cross-CTM FK hazard).
+
+### Frontend state (live)
+
+Next.js on Render, auto-deploys from main:
+
+- **Calendar hero** on CTM track pages (`/c/*/t/*/calendar`) — stacked
+  activity chart, day popover, sector-themed tints (rank-assigned per
+  track), dominant-theme chips, daily-brief prose per day.
+- **Centroid page hero** (`/c/*`) — cross-track calendar, 2×2 enriched
+  TrackCards with theme chips + summary + top-5 events, month nav,
+  click-any-day popover with per-track breakdown.
+- **Active Narratives** sidebar on centroid pages (replaces Top Signals).
+  Foreign-framed narratives flagged with "from {Actor}".
+- **Legacy fallback** for months without promoted data (Jan/Feb used to
+  hit this — now all months are reprocessed, fallback is effectively
+  dead code).
 
 ---
 
-## Daemon Schedule (4-Slot Architecture)
-
-**Script**: `pipeline/runner/pipeline_daemon.py`
-**Design doc**: `docs/context/DAEMON_4SLOT_PLAN.md`
-
-| Slot | Interval | Phases | Batch Sizes |
-|------|----------|--------|-------------|
-| **INGESTION** | 12h | Phase 1 (RSS) + Phase 2 (centroid matching) | all feeds, all titles |
-| **CLASSIFICATION** | 15m | Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks) | 500 titles/run (concurrency=5) |
-| **CLUSTERING** | 30m | Phase 4 + 4.1 + 4.3 + 4.2a/b | all CTMs, 25 consolidation, 10 merge |
-| **ENRICHMENT** | 6h | Phase 4.5a (event summaries) + 4.5b (CTM digests) | 2000 events, 200 CTMs |
-| **Daily purge** | 24h | Remove rejected titles + reset api_error_count | all |
-
-All LLM calls retry 3x with exponential backoff on HTTP 429/502/503/504 (5s, 15s, 45s).
-Phases 5/6 (narratives, RAI) removed from daemon in D-030 -- now on-demand via frontend.
-
----
-
-## Database Schema
-
-### Core Tables
-
-| Table | Key Columns |
-|-------|-------------|
-| **titles_v3** | processing_status (pending/assigned/out_of_scope/blocked_stopword/blocked_llm), centroid_ids TEXT[] |
-| **title_labels** | actor, action_class, domain, target, persons, orgs, places, commodities, policies, systems, named_events, entity_countries JSONB, importance_score FLOAT, importance_components JSONB |
-| **title_assignments** | title_id, centroid_id, track, ctm_id -- UNIQUE(title_id, centroid_id) |
-| **events_v3** | ctm_id, date, first_seen, title, summary, tags, title_de, summary_de, event_type (bilateral/domestic/other_international), bucket_key, source_batch_count, is_catchall, topic_core JSONB, saga TEXT (UUID), coherence_check JSONB, importance_score FLOAT, importance_components JSONB, merged_into FK |
-| **event_v3_titles** | event_id, title_id |
-| **ctm** | centroid_id, track, month, title_count, summary_text, summary_text_de, is_frozen, events_digest JSONB, last_aggregated_at |
-| **centroids_v3** | key, name, description, description_de, profile_json, profile_json_de |
-| **centroid_monthly_summaries** | centroid_id, month, summary_text, track_count, total_events |
-| **epics** | id, slug, month, title, summary, title_de, summary_de, timeline, timeline_de, anchor_tags TEXT[], narratives JSONB, centroid_summaries JSONB |
-| **epic_events** | epic_id, event_id, is_included BOOLEAN |
-| **narratives** | entity_type (ctm/event/epic), entity_id UUID, label, description, moral_frame, signal_stats JSONB, rai_signals JSONB, rai_signals_at TIMESTAMPTZ -- UNIQUE(entity_id, label) |
-| **feeds** | url, name, country_code, language, strip_patterns, is_active |
-| **entity_analyses** | entity_type (event/ctm/epic/user_input), entity_id UUID, user_id UUID, input_text TEXT, title TEXT, sections TEXT (JSON), scores JSONB, synthesis TEXT, blind_spots TEXT[], created_at -- UNIQUE(entity_type, entity_id) |
-| **meta_narratives** | id TEXT PK, name, description, signals JSONB, sort_order |
-| **strategic_narratives** | id TEXT PK, meta_narrative_id FK, category, actor_centroid FK, name, claim, keywords TEXT[], action_classes TEXT[], domains TEXT[], tier (operational/ideological), matching_guidance TEXT, aligned_with TEXT[], opposes TEXT[], example_event_ids UUID[] |
-| **event_strategic_narratives** | (event_id, narrative_id) PK, confidence REAL, matched_signals JSONB |
-| **narrative_weekly_activity** | (narrative_id, week) PK, event_count INT |
-| **users** | email, password_hash, name, avatar_url, auth_provider, provider_id, focus_centroid, role, plan |
-
-### Materialized View Tables
-
-| Table | PK | Content |
-|-------|-----|---------|
-| **mv_centroid_signals** | (centroid_id, month) | Top 5 signals per centroid+month, JSONB |
-| **mv_signal_graph** | (period) | Signal co-occurrence nodes + edges, JSONB |
-| **monthly_signal_rankings** | (month, signal_type, rank) | Signal rankings with LLM context |
-
----
-
-## File Map
+## Data architecture snapshot
 
 ```
-pipeline/
-|-- phase_1/
-|   |-- ingest_feeds.py              # RSS ingestion
-|
-|-- phase_2/
-|   |-- match_centroids.py           # Centroid matching
-|
-|-- phase_3_1/
-|   |-- extract_labels.py            # Combined label + signal extraction
-|
-|-- phase_3_2/
-|   |-- backfill_entity_centroids.py # Entity->centroid mapping
-|
-|-- phase_3_3/
-|   |-- assign_tracks_batched.py     # Intel gating + track assignment
-|
-|-- phase_4/
-|   |-- incremental_clustering.py    # Topic clustering (anchor signals + buckets)
-|   |-- consolidate_topics.py        # Anchor-candidate dedup + catchall rescue
-|   |-- merge_related_events.py      # Cross-bucket event merging (Phase 4.3)
-|   |-- materialize_centroid_signals.py  # mv_centroid_signals (Phase 4.2a)
-|   |-- materialize_signal_graph.py      # mv_signal_graph (Phase 4.2b)
-|   |-- generate_event_summaries_4_5a.py  # Event summaries
-|   |-- generate_summaries_4_5.py    # CTM digests
-|   |-- extract_ctm_narratives.py    # CTM narrative extraction (Phase 5a)
-|   |-- extract_event_narratives.py  # Event narrative extraction (Phase 5b)
-|   |-- analyze_event_rai.py         # RAI signal analysis (on-demand)
-|   |-- match_narratives.py          # Phase 4.2f: Mechanical narrative matching (CTM structural + label-based)
-|   |-- match_narratives_llm.py      # Phase 4.2g: LLM discovery for ideological narratives
-|   |-- review_narratives_llm.py     # Phase 4.2h: LLM review of operational matches
-|   |-- chain_event_sagas.py         # Cross-month event saga linking
-|
-|-- epics/                           # Epic lifecycle (cron/manual)
-|   |-- build_epics.py               # Epic detection + enrichment
-|   |-- extract_narratives.py        # Narrative frame extraction
-|   |-- analyze_rai.py               # RAI analysis
-|   |-- detect_epics.py              # Epic detection logic
-|   |-- explore_epic.py              # Epic exploration tool
-|
-|-- freeze/                          # Monthly freeze (cron)
-|   |-- freeze_month.py              # CTM freeze + centroid summaries
-|   |-- generate_signal_rankings.py  # Monthly signal rankings
-|
-|-- runner/
-|   |-- pipeline_daemon.py           # Orchestration daemon
-|   |-- backfill_pipeline.py         # One-time catch-up (4.5a + 4.1)
-
-api/
-|-- extraction_api.py                # FastAPI service for on-demand narrative extraction
-
-core/
-|-- config.py                        # Configuration + clustering constants
-|-- prompts.py                       # All LLM prompts (consolidated)
-|-- ontology.py                      # ELO v2.0 definitions
-|-- importance.py                    # Title + event importance scoring
-|-- llm_utils.py                     # Shared LLM utilities (retry, extract_json, fix_role_hallucinations)
-|-- signal_stats.py                  # Tier 1 coverage stats (HHI, language dist, etc.)
-
-db/
-|-- migrations/                      # SQL migrations
-
-apps/frontend/
-|-- auth.ts                          # NextAuth v5 config (Google, LinkedIn, credentials; JWT)
-|-- middleware.ts                     # next-intl locale detection
-|-- i18n/                            # Internationalization config
-|-- messages/
-|   |-- en.json                      # English UI strings (~300 keys)
-|   |-- de.json                      # German UI strings
-|-- app/[locale]/                    # All pages under locale prefix
-|   |-- c/[centroid_key]/page.tsx    # Centroid page
-|   |-- c/[centroid_key]/t/[track_key]/page.tsx  # CTM track page
-|   |-- events/[event_id]/page.tsx   # Event detail page (saga timeline)
-|   |-- analysis/[narrative_id]/page.tsx  # RAI analysis page
-|   |-- analysis/comparative/[entity_type]/[entity_id]/page.tsx  # Comparative analysis
-|   |-- analysis/user/[id]/page.tsx # User-submitted RAI analysis
-|   |-- profile/page.tsx            # User profile + RAI analyst
-|   |-- narratives/page.tsx           # Narrative landscape (9 meta-groups, filters)
-|   |-- narratives/[id]/page.tsx     # Narrative detail (claim, timeline, events)
-|   |-- narratives/meta/[id]/page.tsx # Meta-narrative page
-|   |-- epics/page.tsx               # Epic list page
-|   |-- epics/[slug]/page.tsx        # Epic detail page
-|   |-- sources/page.tsx             # Media outlet list
-|   |-- sources/[feed_name]/page.tsx # Outlet profile page
-|   |-- search/page.tsx              # Full-text search
-|   |-- trending/page.tsx            # Trending stories
-|   |-- auth/signin/page.tsx         # Sign-in
-|   |-- auth/signup/page.tsx         # Sign-up
-|-- app/api/
-|   |-- extract-narratives/route.ts  # Proxy to extraction API
-|   |-- rai-analyse/route.ts         # On-demand RAI analysis (auth-gated)
-|   |-- auth/signup/route.ts         # User registration
-|   |-- profile/route.ts            # User profile CRUD
-|   |-- user-analyse/route.ts       # User RAI analyst (GET list, POST submit)
-|   |-- rai-analyse-comparative/route.ts  # Comparative analysis generation
-|-- lib/
-|   |-- cache.ts                     # In-memory TTL cache
-|   |-- db.ts                        # PostgreSQL pool (max 10)
-|   |-- queries.ts                   # All DB queries (11 cached)
-|   |-- types.ts                     # Shared types
-|   |-- rai-engine.ts               # Local RAI engine (33 modules, DeepSeek)
-|   |-- lazy-translate.ts            # On-demand DE translation via DeepSeek
-|-- components/                      # UI components (see source for full list)
-
-scripts/
-|-- backfill_title_de.py             # Backfill event title_de
-|-- backfill_ctm_summary_de.py       # Backfill CTM summary_text_de
-|-- translate_epics_de.py            # Translate epic fields
-|-- translate_centroid_briefs.py     # Translate centroid descriptions
+Layer 0  titles_v3            raw headlines (v3.0.1 labels via title_labels)
+Layer 1  events_v3            day-centric clusters (promoted ≤ top-20/day per CTM)
+Layer 2  daily_briefs         per-day thematic briefs + sector/subject themes
+Layer 3  narratives           260 curated strategic narratives
+                              linked via event_strategic_narratives
 ```
 
----
+Key columns/shapes established in recent work:
 
-## Infrastructure & Deployment
-
-| Component | Local (dev) | Remote (demo) |
-|-----------|-------------|---------------|
-| **Database** | Docker: `pgvector/pgvector:pg15` port 5432 | Render managed PostgreSQL (Frankfurt) |
-| **Frontend** | `npm run dev` (localhost:3000) | Render web service (auto-deploy from `main`) |
-| **Pipeline** | `python pipeline/runner/pipeline_daemon.py` | Render worker (suspended) |
-| **Redis** | Docker: `redis:7-alpine` port 6379 | Not used on remote |
-
-**Local is authoritative.** Pipeline runs only locally. Remote is a read-only demo snapshot.
-
-### Database Sync (local -> remote)
-
-1. **Dump local**: `docker exec etl_postgres bash -c "pg_dump -U postgres -d sni_v2 --no-owner --no-privileges --format=custom -f /tmp/sni_v2_live.dump"`
-2. **Restore to Render**: `docker exec etl_postgres bash -c "pg_restore -d 'RENDER_URL' --no-owner --no-privileges --clean --if-exists /tmp/sni_v2_live.dump"`
-3. **Verify** (optional): `docker exec etl_postgres bash -c "psql 'RENDER_URL' -c 'SELECT COUNT(*) FROM titles_v3;'"`
-
-Render external URL from dashboard: `postgresql://USER:PASS@dpg-XXXXX-a.frankfurt-postgres.render.com/sni_v2`.
-Always run pg_dump/pg_restore via `docker exec` -- no local binaries on Windows.
-
-### Render Configuration
-
-- Frontend: Next.js web service, auto-deploys on push to `main`
-- Worker: Currently suspended (pipeline runs locally only)
-- Custom domain: www.worldbrief.info (SSL via Let's Encrypt)
-- Analytics: Google Analytics 4 (G-LF3GZ04SMF)
-- Env vars: `DATABASE_URL`, `DEEPSEEK_API_KEY`, `AUTH_SECRET`, `AUTH_URL`, `AUTH_GOOGLE_ID/SECRET`, `AUTH_LINKEDIN_ID/SECRET`
+- `events_v3.is_promoted` — gates frontend visibility
+- `events_v3.merged_into` — soft-merge within a CTM (rare)
+- `daily_briefs.themes` — JSONB array of `{sector, subject, weight}`
+- `title_labels.sector/subject` — ELO v3.0.1, drives theme aggregation
+- `title_labels.industries[]` — economy sector enrichment (v3.0.1 add)
 
 ---
 
-## Current Status (2026-03-18)
+## Operational scripts (in `scripts/`)
 
-**Operational**: Daemon runs 4-slot architecture locally. Jan + Feb 2026 frozen. March 2026
-pipeline active. Media framing extraction and RAI analysis on-demand (auth-gated). German
-localization live (beta). Production site at https://www.worldbrief.info.
+Consolidated one-shot utilities built during Jan/Feb/Mar reprocess. All
+accept `--month` and most accept sharding flags.
 
-**Strategic Narratives** (D-045): 260 narratives under 9 meta-narratives. Two-tier matching:
-mechanical (CTM structural + label-based) for operational, LLM for ideological. 4569 event-
-narrative links. 228/260 narratives with matched events. Frontend: landscape page, detail pages,
-centroid/event/trending/epic integration. Aligned/opposing clusters manually curated for 65
-narratives. Event-level extraction renamed from "narrative frames" to "media framing" (D-046).
+| Script | Purpose |
+|---|---|
+| `finish_month_labels.py` | Phase 3.1 relabel for a target month (v3.0.1). Supports `--shard-idx/--shard-count`. |
+| `cluster_month.py` | Phase 3 (incremental clustering + same-day merge) per CTM. Sharded. |
+| `promote_describe_month.py` | Phase 4.5a promote + LLM prose per CTM. Sharded. |
+| `briefs_month.py` | Phase 4.5d daily briefs per CTM. Sharded. |
+| `backfill_prose_by_month.py` | Older single-process variant for prose-only backfill (still works). |
+| `reprocess_month_local.py` | Full-pipeline wrapper (rerun_ctm_full_pipeline per CTM). Now superseded by the per-phase scripts above for full reprocesses, but kept for targeted fixes. |
+| `push_month_to_render.py` | One-transaction-per-CTM push to Render. Preflight checks + FK-safe delete/insert order. |
 
-**Sector Clustering Experiment** (branch `feat/sector-clustering`): 4-level hierarchical
-clustering + temporal hard split + mechanical merge. Pipeline: L1 sector+subject -> L1.5
-directional target split -> L2 anchor keywords -> L3 Louvain -> temporal split at natural
-gaps (3d) or fixed 5-day windows -> coherence gate -> mechanical merge (sector + date +
-label overlap). Results: France 132 topics/14% catchall, Russia 300 topics/22% catchall,
-median 3-day temporal spread. Incremental mode built (`--incremental`): clusters only
-unlinked titles, matches against existing events, preserves event IDs. Frontend redesigned:
-unified topic list, country badges, incremental pagination, centrality-based core title
-selection. Track consolidation done (6->4). Next: LLM title generation from core titles,
-LLM merge for paraphrased duplicates, daemon integration, full March rebuild.
-See `docs/context/SECTOR_CLUSTERING_EXPERIMENT.md` for full status.
+Still in `out/beats_reextraction/` (legacy but referenced):
 
-**Auth**: Social login (Google verified, LinkedIn live). Facebook dropped (D-043).
-NextAuth v5 with JWT strategy.
+- `pull_april_from_render.py` (one-shot, 2026-04-14)
+- `push_april_to_render.py` — the April-specific original. The
+  generic `scripts/push_month_to_render.py` imports its helpers, so
+  both live side-by-side.
+- `rerun_ctm_full_pipeline.py` — single-CTM driver, still called by
+  `reprocess_month_local.py`.
 
-**Analytics**: GA4 enabled without consent gate (consent to be re-added for GDPR later).
+---
+
+## Known gaps / open tickets
+
+1. **CTM digests stale** — `ctm.summary_text` is legacy v2 prose, not
+   regenerated post-D-058. Ticket: restore + modernize period-level
+   summaries for track cards. Needs design (period framing, refresh
+   cadence, in-progress-month handling).
+2. **Narrative matching hasn't run on Mar/Apr** — daemon Slot 3
+   includes Phase 4.2f/g/h but 0 matches written for current months.
+   Ticket: investigate matcher filters or data-shape mismatch.
+3. **Daemon `last_run` not persisted** — restart fires every slot
+   immediately. Nice-to-have, not urgent.
+4. **Sidebar stance + deviation persist** — currently recomputed, same
+   value across months. Ticket in strategic plan: persist monthly
+   snapshot to a `centroid_monthly_stats` table.
+
+---
+
+## What to read next
+
+- [`PIPELINE_V4_ARCHITECTURE.md`](PIPELINE_V4_ARCHITECTURE.md) — design reference (phase names, slot mapping)
+- [`BEATS_DIRECTION.md`](BEATS_DIRECTION.md) — why day-centric events replaced families/clusters
+- [`FRICTION_NODES_VISION.md`](FRICTION_NODES_VISION.md) — next lighthouse feature
+- [`30_DecisionLog.yml`](30_DecisionLog.yml) — decisions D-001 through D-062

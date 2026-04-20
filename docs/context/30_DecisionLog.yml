@@ -661,3 +661,86 @@ decisions:
       - USA/geo_security/2026-03 final shape, 1981 clusters, 129 families. Khamenei Mar 1 standalone (223 src). Kharg/Iraq/Kuwait/Hormuz/Riyadh/Oslo/ICE all as coherent place-based families or big standalones.
       - Phase 4.5a LLM summaries intentionally skipped during validation (pure mechanical clustering is the unit of work for this decision).
       - Design and rationale extensively documented in docs/context/CLUSTERING_REDESIGN.md (LOCK-2 revised, LOCK-4 revised, LOCK-7 added, LOCK-8 added).
+
+  - id: D-058
+    date: 2026-04-14
+    type: architectural
+    status: accepted
+    title: Unplug Phase 4.5a/4.5b pending day-centric frontend
+    rationale:
+      - Legacy event-level summaries + CTM digests didn't fit the day-centric clustering that was about to replace them.
+      - Keeping them running would burn LLM budget on prose that the new frontend would not display.
+    consequences:
+      - ctm.summary_text stops being refreshed; stale v2 prose persists until a new CTM-digest system is built.
+      - Phase 4.5a redesigned in D-059 to operate per-day with top-N promotion + LLM prose.
+
+  - id: D-059
+    date: 2026-04-16
+    type: architectural
+    status: accepted
+    title: Pipeline v4.0 — day-centric events, incremental clustering, instant promotion
+    rationale:
+      - Event families deprecated (the fuzzy-spine assembly never stabilized). Day-beat clustering produces cleaner units at the natural user-facing granularity.
+      - Live pipeline redesigned around four slots (INGESTION/LABELING/CLUSTERING/ENRICHMENT) with LLM prose decoupled from clustering so the UI can show new events within minutes while prose fills in on a slower cadence.
+      - Promotion (top-N clusters per day) is mechanical and instant; LLM prose only runs on promoted events.
+    consequences:
+      - events_v3.is_promoted gates frontend visibility (top 20/day per CTM).
+      - event_families schema + family_id FK kept for compatibility but inactive; removal deferred until all months rebuilt.
+      - Full design in docs/context/PIPELINE_V4_ARCHITECTURE.md.
+
+  - id: D-060
+    date: 2026-04-17
+    type: frontend
+    status: accepted
+    title: Day-centric calendar UI for CTM track pages; centroid page rebuilt with cross-track hero
+    rationale:
+      - v3.0.1 + day-centric data needed a frontend that leads with temporal activity, not the old family list.
+      - Calendar hero established on CTM pages then scaled up to centroid level for a cross-track view (4 tracks = 4 base colors).
+      - Track cards enriched with dominant-theme chips + period summary + top-5 promoted events so the country page communicates "what is going on" at a glance.
+    consequences:
+      - getCalendarMonthView (CTM) + getCentroidMonthView (centroid) queries. Themes computed per-day from title_labels (not daily_briefs.themes) so coloring works for every covered day, not only brief-qualified ones.
+      - Day-click popover on centroid hero surfaces per-track breakdown with deep-links.
+      - Top Signals block removed from centroid sidebar (replaced by Active Narratives with "from {Actor}" chips for foreign-framed narratives).
+      - Legacy cards remain as fallback for centroid+month pairs lacking promoted data (no-op after Jan/Feb/Mar reprocess).
+
+  - id: D-061
+    date: 2026-04-18
+    type: operational
+    status: accepted
+    title: Full Jan/Feb/Mar reprocess under v3.0.1 + day-centric
+    rationale:
+      - March was caught mid-upgrade; Jan/Feb never left v2. User-facing experience on past months was broken.
+      - Rebuilt from titles_v3 upward: relabel (Phase 3.1), wipe downstream, rerun Phase 3.2/3.3/4/4.5a/4.5d.
+      - Labeling sharded across 3-5 parallel processes (~5× speedup via LLM concurrency).
+    consequences:
+      - 126K+ title_labels updated to ELO_v3.0.1 across three months.
+      - All four 2026 months (Jan-Apr) now on Render with v3.0.1 labels, day-centric events, LLM prose EN+DE, and daily briefs with themes.
+      - scripts/ gains a family of --month tools: finish_month_labels, cluster_month, promote_describe_month, briefs_month, push_month_to_render.
+      - DeepSeek token spend for the full reprocess: ~88M tokens / ~EUR 20 over 3 days.
+
+  - id: D-062
+    date: 2026-04-20
+    type: performance
+    status: accepted
+    title: Phase 3.3 (mechanical track assignment) rewritten as bulk SQL
+    rationale:
+      - Existing per-title Python loop ran at ~100 titles/sec and became a bottleneck during backfills.
+      - Entire operation (NON_STRATEGIC gating, CTM creation, assignment insertion, title_count recompute) expressible as four SQL statements with temp table snapshot.
+      - Existing unique constraints enable native ON CONFLICT handling.
+    consequences:
+      - ~450x faster backfill (6,191 titles in 4s vs 30+ min); ~30x under live load.
+      - Daemon contract unchanged (process_batch signature preserved).
+      - Fixes a pre-existing drift bug: original code incremented ctm.title_count on every INSERT attempt including ON CONFLICT DO NOTHING. Exact recount in step 4 prevents drift going forward. April still shows ~265 drifted CTMs from pre-rewrite accumulation — pending one-time correction.
+
+  - id: D-063
+    date: 2026-04-20
+    type: documentation
+    status: accepted
+    title: docs/context tidied — stale planning docs archived, SESSION_START.md added
+    rationale:
+      - 13 deprecated planning docs from the clustering-iteration era still lived at the top level, obscuring current-state docs.
+      - Session hand-offs needed a single landing page covering current state + active roadmap + recent commits + key principles.
+    consequences:
+      - Stale docs moved to docs/context/archive/. Top-level limited to 11 living documents.
+      - New SESSION_START.md is the cold-start entry point, referenced from 00_README.md.
+      - PIPELINE_STATUS.md rewritten as a current-state snapshot rather than a mixed status/design doc.
