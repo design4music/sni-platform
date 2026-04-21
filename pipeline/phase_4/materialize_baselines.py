@@ -234,13 +234,18 @@ def materialize(all_weeks=False):
                         )
                     )
 
-            # Bulk upsert
+            # Upsert — rows persist across runs; each run refreshes only
+            # the weeks it recomputes. History survives even if upstream
+            # mv_event_triples is pruned or retention-trimmed.
             if upsert_rows:
-                cur.execute("DELETE FROM mv_centroid_baselines")
                 for row in upsert_rows:
                     cur.execute(
                         """INSERT INTO mv_centroid_baselines (centroid_id, week, metrics, deviations, updated_at)
-                           VALUES (%s, %s, %s::jsonb, %s::jsonb, NOW())""",
+                           VALUES (%s, %s, %s::jsonb, %s::jsonb, NOW())
+                           ON CONFLICT (centroid_id, week) DO UPDATE SET
+                               metrics = EXCLUDED.metrics,
+                               deviations = EXCLUDED.deviations,
+                               updated_at = NOW()""",
                         row,
                     )
 

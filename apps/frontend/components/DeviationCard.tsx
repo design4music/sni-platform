@@ -27,7 +27,7 @@ function formatMultiplier(current: number, baseline: number): string {
   return '';
 }
 
-function DeviationItem({ d, t }: { d: DeviationFlag; t: (key: string, values?: Record<string, string>) => string }) {
+export function DeviationItem({ d, t }: { d: DeviationFlag; t: (key: string, values?: Record<string, string>) => string }) {
   const severity = getSeverity(d.z);
   const dotColor = severity === 'high' ? 'bg-red-400' : 'bg-amber-400';
 

@@ -13,7 +13,7 @@ import {
   getTracksByCentroid,
   getTopSignalsForCentroid,
   getStanceForCentroid,
-  getCentroidDeviations,
+  getCentroidDeviationsForMonth,
   centroidHasPromotedForMonth,
   getCentroidMonthView,
   getActiveNarrativesForCentroid,
@@ -21,7 +21,7 @@ import {
 } from '@/lib/queries';
 import CentroidHero from '@/components/CentroidHero';
 import { getOutletLogoUrl } from '@/lib/logos';
-import DeviationCard from '@/components/DeviationCard';
+import WeeklyDeviationCard from '@/components/WeeklyDeviationCard';
 import StanceSidebar from './StanceSidebar';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -162,11 +162,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, top signals, and new-view gate in parallel
-  const [monthTrackData, topSignals, stanceScores, deviationData, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
+  const [monthTrackData, topSignals, stanceScores, weeklyDeviations, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     getStanceForCentroid(centroid.id),
-    getCentroidDeviations(centroid.id),
+    currentMonth ? getCentroidDeviationsForMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
     currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
     getCentroidSummary(centroid.id, currentMonth, locale),
@@ -283,11 +283,8 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           </ul>
         </div>
       )}
-      {deviationData && deviationData.deviations && deviationData.deviations.length > 0 && (
-        <DeviationCard
-          week={deviationData.week}
-          deviations={deviationData.deviations}
-        />
+      {weeklyDeviations.length > 0 && (
+        <WeeklyDeviationCard weeks={weeklyDeviations} />
       )}
       {stanceScores.length > 0 && (
         <StanceSidebar

@@ -1182,7 +1182,7 @@ export interface CentroidDeviation {
   centroid_id: string;
   week: string;
   metrics: Record<string, unknown>;
-  deviations: DeviationFlag[];
+  deviations: DeviationFlag[] | null;
 }
 
 export async function getCentroidDeviations(centroidId: string): Promise<CentroidDeviation | null> {
@@ -1195,6 +1195,38 @@ export async function getCentroidDeviations(centroidId: string): Promise<Centroi
     [centroidId]
   );
   return rows[0] || null;
+}
+
+/**
+ * Deviations across every ISO week (Monday-anchored) that intersects the
+ * requested month. Quiet weeks (deviations = NULL) are included so the UI
+ * can render them as explicit "calm" markers.
+ *
+ * A week intersects month `YYYY-MM-01` iff the 7-day span
+ * [week, week + 6 days] overlaps [month_start, month_end].
+ */
+export async function getCentroidDeviationsForMonth(
+  centroidId: string,
+  month: string // 'YYYY-MM' or 'YYYY-MM-DD'
+): Promise<CentroidDeviation[]> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(
+    `centroidDeviationsMonth:${centroidId}:${monthStart}`,
+    1800,
+    () =>
+      query<CentroidDeviation>(
+        `SELECT centroid_id,
+                TO_CHAR(week, 'YYYY-MM-DD') AS week,
+                metrics,
+                deviations
+           FROM mv_centroid_baselines
+          WHERE centroid_id = $1
+            AND week + INTERVAL '6 days' >= $2::date
+            AND week <= ($2::date + INTERVAL '1 month' - INTERVAL '1 day')
+          ORDER BY week ASC`,
+        [centroidId, monthStart]
+      )
+  );
 }
 
 export interface AlignmentRow {
