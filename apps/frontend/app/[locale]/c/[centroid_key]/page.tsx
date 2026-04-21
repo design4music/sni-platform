@@ -403,10 +403,13 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
-        {/* Section pair 1: Media Lens (main) + Unusual Activity (sidebar) */}
+        {/* Section pair 1: Media Lens (main) + Unusual Activity (sidebar).
+            min-w-0 on both grid cells so long content (e.g., "Media-stance"
+            headings, outlet pill rows) can shrink below intrinsic width
+            instead of stretching the page horizontally on narrow viewports. */}
         {currentMonth && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+            <div className="min-w-0 lg:col-span-2">
               <MediaLensSection
                 centroidId={centroid.id}
                 centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
@@ -414,7 +417,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                 initialLens={mediaLens}
               />
             </div>
-            <aside>
+            <aside className="min-w-0">
               <WeeklyDeviationCard
                 centroidId={centroid.id}
                 initialMonth={currentMonth}
@@ -426,12 +429,12 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
 
         {/* Section pair 2: Strategic Narratives (main) + Active Narratives (sidebar) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2">
             <Suspense fallback={null}>
               <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
             </Suspense>
           </div>
-          <aside>
+          <aside className="min-w-0">
             <ActiveNarrativesSidebar centroidId={centroid.id} narratives={activeNarratives} />
           </aside>
         </div>
