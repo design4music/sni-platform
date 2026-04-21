@@ -283,8 +283,12 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           </ul>
         </div>
       )}
-      {weeklyDeviations.length > 0 && (
-        <WeeklyDeviationCard weeks={weeklyDeviations} />
+      {currentMonth && weeklyDeviations.length > 0 && (
+        <WeeklyDeviationCard
+          centroidId={centroid.id}
+          initialMonth={currentMonth}
+          initialWeeks={weeklyDeviations}
+        />
       )}
       {stanceScores.length > 0 && (
         <StanceSidebar
