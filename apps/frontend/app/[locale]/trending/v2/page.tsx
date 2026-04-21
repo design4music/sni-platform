@@ -395,8 +395,12 @@ export default async function TrendingV2Page({ params, searchParams }: TrendingV
     ? `Globales Briefing · ${formatMonthLabelSeo(activeMonth, 'de')}`
     : `Global Briefing · ${formatMonthLabelSeo(activeMonth, 'en')}`;
 
+  // Layout: hero is full-width (spans the 2-col grid). Below it, the
+  // main column holds Overview → Fastest-growing (current month) → 4 track
+  // cards; the sidebar holds Active Narratives (aligns with Overview) →
+  // Trending Signals (aligns with the track cards).
   const sidebar = (
-    <div className="lg:sticky lg:top-24 space-y-6">
+    <div className="lg:sticky lg:top-24 space-y-8">
       <Suspense fallback={null}>
         <ActiveNarrativesRail month={activeMonth} locale={locale} />
       </Suspense>
@@ -406,56 +410,53 @@ export default async function TrendingV2Page({ params, searchParams }: TrendingV
     </div>
   );
 
+  const hero = (
+    <TrendingHero
+      view={view}
+      activeMonth={activeMonth}
+      isCurrentMonth={isCurrentMonth}
+      totalLabel={totalLabel}
+    />
+  );
+
   return (
-    <DashboardLayout sidebar={sidebar}>
-      {/* Hero */}
-      <div className="mb-8">
-        <TrendingHero
-          view={view}
-          activeMonth={activeMonth}
-          isCurrentMonth={isCurrentMonth}
-          totalLabel={totalLabel}
-        />
-      </div>
-
-      {/* Overview prose (mechanical stub for v1) */}
-      <div className="mb-8 prose prose-invert max-w-none">
-        <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-          {locale === 'de' ? 'Überblick' : 'Overview'}
-        </h3>
-        {overviewParagraphs.map((p, i) => (
-          <p key={i} className="text-base leading-relaxed text-dashboard-text mb-3">
-            {p}
+    <DashboardLayout sidebar={sidebar} topFullWidthContent={hero}>
+      <div className="space-y-8">
+        {/* Overview prose (mechanical stub for v1) */}
+        <section>
+          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
+            {locale === 'de' ? 'Überblick' : 'Overview'}
+          </h3>
+          {overviewParagraphs.map((p, i) => (
+            <p key={i} className="text-base leading-relaxed text-dashboard-text mb-3">
+              {p}
+            </p>
+          ))}
+          <p className="text-[11px] text-dashboard-text-muted mt-2 italic">
+            Mechanical summary · editorial version to follow.
           </p>
-        ))}
-        <p className="text-[11px] text-dashboard-text-muted mt-2 italic">
-          Mechanical summary · editorial version to follow.
-        </p>
-      </div>
+        </section>
 
-      {/* Fastest-growing panel — hero-prominence on current month only */}
-      {isCurrentMonth && (
-        <div className="mb-8">
+        {/* Fastest-growing panel — hero-prominence on current month only */}
+        {isCurrentMonth && (
           <Suspense fallback={null}>
             <FastestGrowingPanel month={activeMonth} locale={locale} isCurrentMonth={isCurrentMonth} />
           </Suspense>
-        </div>
-      )}
+        )}
 
-      {/* 4 track cards in 2x2 grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {view.tracks.map(t => (
-          <GlobalTrackCard key={t.track} track={t} activeMonth={activeMonth} />
-        ))}
+        {/* 4 track cards in 2x2 grid */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {view.tracks.map(t => (
+            <GlobalTrackCard key={t.track} track={t} activeMonth={activeMonth} />
+          ))}
+        </section>
+
+        {!isCurrentMonth && (
+          <p className="text-[11px] text-dashboard-text-muted italic">
+            Fastest-growing panel is only shown for the live month.
+          </p>
+        )}
       </div>
-
-      {/* On past months, fastest-growing was omitted above — render a closing
-          note so the layout doesn't feel truncated. */}
-      {!isCurrentMonth && (
-        <p className="text-[11px] text-dashboard-text-muted italic mb-8">
-          Fastest-growing panel is only shown for the live month.
-        </p>
-      )}
     </DashboardLayout>
   );
 }

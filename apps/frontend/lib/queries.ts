@@ -3174,6 +3174,10 @@ export async function getActiveNarrativesGlobal(
 // Fastest-growing events: surfaces stories whose source count is concentrated
 // in the last 7 days. Only meaningful for the current month (past months
 // have no "recent" activity). Empty result is OK for past months.
+//
+// Cross-centroid dedup: the same story often appears as separate events per
+// centroid (e.g. Trump-Iran ceasefire fires in both AMERICAS-USA and
+// MIDEAST-IRAN). We over-fetch, then dedup by title-word Dice before slicing.
 export async function getFastestGrowingEvents(
   month: string,
   limit = 10,
@@ -3190,6 +3194,8 @@ export async function getFastestGrowingEvents(
 }>> {
   const monthStart = month.length === 7 ? `${month}-01` : month;
   return cached(`global_growing:${monthStart}:${locale || 'en'}`, 900, async () => {
+    // Over-fetch to give dedup room to work.
+    const fetchLimit = Math.max(limit * 4, 40);
     const rows = await query<{
       id: string;
       title: string | null;
@@ -3233,9 +3239,21 @@ export async function getFastestGrowingEvents(
           AND r.recent_7d_sources >= 3
         ORDER BY r.recent_7d_sources DESC, e.source_batch_count DESC
         LIMIT $2`,
-      [monthStart, limit]
+      [monthStart, fetchLimit]
     );
-    return rows.map(r => ({
+
+    // Dedup: walk in rank order, keep a candidate if it doesn't overlap
+    // (Dice >= 0.3) with any already-kept title.
+    const DEDUP_THRESHOLD = 0.3;
+    const kept: Array<{ row: typeof rows[number]; words: Set<string> }> = [];
+    for (const r of rows) {
+      const words = titleWords(r.title);
+      const isDup = kept.some(k => dice(k.words, words) >= DEDUP_THRESHOLD);
+      if (!isDup) kept.push({ row: r, words });
+      if (kept.length >= limit) break;
+    }
+
+    return kept.map(({ row: r }) => ({
       id: r.id,
       title: r.title || '',
       centroid_id: r.centroid_id,
