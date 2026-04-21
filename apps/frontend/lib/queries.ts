@@ -1,3 +1,4 @@
+// Data access layer — one exported query per logical concern.
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
 import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, OutletNarrativeFrame, PublisherStats, StanceScore, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope, CentroidMonthView, CentroidStripeEntry, CentroidTrackSummary, CtmThemeChip } from './types';
@@ -1156,18 +1157,119 @@ export interface CentroidStanceScore {
   month: string;
 }
 
-export async function getStanceForCentroid(centroidId: string): Promise<CentroidStanceScore[]> {
-  // Get latest month's stance data for this centroid
-  return query<CentroidStanceScore>(
-    `SELECT ps.feed_name, f.source_domain, ps.score, ps.confidence,
-            ps.sample_size, TO_CHAR(ps.month, 'YYYY-MM') as month
-     FROM publisher_stance ps
-     LEFT JOIN feeds f ON f.name = ps.feed_name
-     WHERE ps.centroid_id = $1
-       AND ps.month = (SELECT MAX(month) FROM publisher_stance WHERE centroid_id = $1)
-     ORDER BY ps.score ASC`,
-    [centroidId]
-  );
+export interface MediaLensTarget {
+  centroid_id: string;
+  label: string;
+  score: number;        // weighted avg across local feeds, -2..+2
+  sample_size: number;  // SUM across local feeds
+  feed_count: number;
+}
+
+export interface MediaLensForeignOutlet {
+  feed_name: string;
+  source_domain: string | null;
+  country_code: string | null;
+  score: number;
+  sample_size: number;
+}
+
+export interface MediaLens {
+  // Lens A+B: present only when the centroid has one or more feeds whose
+  // country_code matches centroids_v3.iso_codes.
+  local_self: { score: number; sample_size: number; feed_count: number } | null;
+  local_abroad: MediaLensTarget[]; // top 5 non-self targets by sample_size
+  // Lens C: foreign outlets (feeds.country_code NOT IN iso_codes, or NULL)
+  // covering this centroid.
+  foreign: MediaLensForeignOutlet[];
+}
+
+/**
+ * Combined "Media Lens" payload for a centroid and month:
+ *   - local_self + local_abroad: how local outlets cover self + top 5 others
+ *   - foreign: how foreign outlets cover this centroid
+ * Single DB round-trip with 2 SELECTs inside a CTE. Scores are weighted by
+ * sample_size when aggregating across multiple local feeds.
+ */
+export async function getCentroidMediaLens(
+  centroidId: string,
+  month: string // 'YYYY-MM' or 'YYYY-MM-DD'
+): Promise<MediaLens> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`mediaLens:${centroidId}:${monthStart}`, 1800, async () => {
+    // Lens A+B: per-target aggregation across local feeds.
+    // A local feed is one whose country_code appears in this centroid's iso_codes.
+    const localRows = await query<{
+      centroid_id: string;
+      label: string;
+      score: number;
+      sample_size: number;
+      feed_count: number;
+      is_self: boolean;
+    }>(
+      `WITH local_feeds AS (
+         SELECT f.name
+           FROM feeds f
+           JOIN centroids_v3 c ON c.id = $1
+          WHERE f.is_active = true
+            AND f.country_code IS NOT NULL
+            AND f.country_code = ANY(c.iso_codes)
+       )
+       SELECT ps.centroid_id,
+              COALESCE(cv.label, ps.centroid_id) AS label,
+              (SUM(ps.score::float * ps.sample_size) / NULLIF(SUM(ps.sample_size), 0))::float AS score,
+              SUM(ps.sample_size)::int AS sample_size,
+              COUNT(*)::int AS feed_count,
+              (ps.centroid_id = $1) AS is_self
+         FROM publisher_stance ps
+         JOIN local_feeds lf ON lf.name = ps.feed_name
+         JOIN centroids_v3 cv ON cv.id = ps.centroid_id
+        WHERE ps.month = $2::date
+        GROUP BY ps.centroid_id, cv.label
+       HAVING SUM(ps.sample_size) > 0`,
+      [centroidId, monthStart]
+    );
+
+    let localSelf: MediaLens['local_self'] = null;
+    const localAbroadUnsorted: MediaLensTarget[] = [];
+    for (const r of localRows) {
+      if (r.is_self) {
+        localSelf = { score: r.score, sample_size: r.sample_size, feed_count: r.feed_count };
+      } else {
+        localAbroadUnsorted.push({
+          centroid_id: r.centroid_id,
+          label: r.label,
+          score: r.score,
+          sample_size: r.sample_size,
+          feed_count: r.feed_count,
+        });
+      }
+    }
+    localAbroadUnsorted.sort((a, b) => b.sample_size - a.sample_size);
+    const localAbroad = localAbroadUnsorted.slice(0, 5);
+
+    // Lens C: foreign outlets covering this centroid.
+    const foreignRows = await query<MediaLensForeignOutlet>(
+      `SELECT ps.feed_name,
+              f.source_domain,
+              f.country_code,
+              ps.score::float AS score,
+              ps.sample_size
+         FROM publisher_stance ps
+         LEFT JOIN feeds f ON f.name = ps.feed_name
+         JOIN centroids_v3 c ON c.id = $1
+        WHERE ps.centroid_id = $1
+          AND ps.month = $2::date
+          AND (f.country_code IS NULL OR NOT (f.country_code = ANY(c.iso_codes)))
+        ORDER BY ps.score ASC`,
+      [centroidId, monthStart]
+    );
+
+    return {
+      local_self: localSelf,
+      local_abroad: localAbroad,
+      foreign: foreignRows,
+    };
+  });
 }
 
 export interface DeviationFlag {

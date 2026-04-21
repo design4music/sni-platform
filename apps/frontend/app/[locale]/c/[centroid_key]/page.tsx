@@ -12,23 +12,21 @@ import {
   getTrackSummaryByCentroidAndMonth,
   getTracksByCentroid,
   getTopSignalsForCentroid,
-  getStanceForCentroid,
   getCentroidDeviationsForMonth,
+  getCentroidMediaLens,
   centroidHasPromotedForMonth,
   getCentroidMonthView,
   getActiveNarrativesForCentroid,
   getCentroidSummary,
 } from '@/lib/queries';
 import CentroidHero from '@/components/CentroidHero';
-import { getOutletLogoUrl } from '@/lib/logos';
 import WeeklyDeviationCard from '@/components/WeeklyDeviationCard';
-import StanceSidebar from './StanceSidebar';
+import MediaLensSection from '@/components/MediaLensSection';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
-import type { CentroidStanceScore } from '@/lib/queries';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 
@@ -162,11 +160,13 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, top signals, and new-view gate in parallel
-  const [monthTrackData, topSignals, stanceScores, weeklyDeviations, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
+  const [monthTrackData, topSignals, weeklyDeviations, mediaLens, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
-    getStanceForCentroid(centroid.id),
     currentMonth ? getCentroidDeviationsForMonth(centroid.id, currentMonth) : Promise.resolve([]),
+    currentMonth
+      ? getCentroidMediaLens(centroid.id, currentMonth)
+      : Promise.resolve({ local_self: null, local_abroad: [], foreign: [] }),
     currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
     currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
     getCentroidSummary(centroid.id, currentMonth, locale),
@@ -288,18 +288,6 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           centroidId={centroid.id}
           initialMonth={currentMonth}
           initialWeeks={weeklyDeviations}
-        />
-      )}
-      {stanceScores.length > 0 && (
-        <StanceSidebar
-          scores={stanceScores.map(s => ({
-            feed_name: s.feed_name,
-            source_domain: s.source_domain,
-            score: s.score,
-            logoUrl: s.source_domain ? getOutletLogoUrl(s.source_domain, 16) : null,
-          }))}
-          month={stanceScores[0]?.month || ''}
-          title={t('publisherSentiment')}
         />
       )}
     </div>
@@ -455,6 +443,15 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
               })}
             </div>
           )
+        )}
+        {/* Media Lens: local perspective + foreign perspective */}
+        {currentMonth && (mediaLens.local_self || mediaLens.local_abroad.length > 0 || mediaLens.foreign.length > 0) && (
+          <MediaLensSection
+            centroidId={centroid.id}
+            centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+            initialMonth={currentMonth}
+            initialLens={mediaLens}
+          />
         )}
         {/* Narrative section (deferred) */}
         <Suspense fallback={null}>
