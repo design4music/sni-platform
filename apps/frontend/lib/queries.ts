@@ -2832,3 +2832,418 @@ export async function getCentroidMonthView(
     };
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// Global scope (/trending/v2) — aggregate across all centroids.
+// Mirrors getCentroidMonthView + getActiveNarrativesForCentroid but drops
+// the centroid filter. Keeps the same CentroidStripeEntry shape so the
+// existing CalendarHero visual language applies unchanged.
+// ─────────────────────────────────────────────────────────────
+
+export interface GlobalTrackTopEvent {
+  id: string;
+  title: string;
+  date: string;
+  centroid_id: string;
+  centroid_label: string;
+  source_count: number;
+  has_event_page: boolean;
+}
+
+export interface GlobalTrackSummary {
+  track: string;
+  event_count: number;
+  source_count: number;
+  theme_chips: CtmThemeChip[];
+  top_events: GlobalTrackTopEvent[];
+}
+
+export interface GlobalMonthView {
+  month: string; // YYYY-MM-DD (first of month)
+  activity_stripe: CentroidStripeEntry[];
+  tracks: GlobalTrackSummary[];
+  active_centroid_count: number;
+  total_events: number;
+  total_sources: number;
+  prev_month: string | null;
+  next_month: string | null;
+}
+
+export async function getGlobalAvailableMonths(): Promise<string[]> {
+  return cached('global:months', 3600, async () => {
+    const rows = await query<{ month: string }>(
+      `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') AS month
+         FROM ctm
+        WHERE EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = ctm.id AND e.is_promoted = true)
+        ORDER BY month DESC`
+    );
+    return rows.map(r => r.month);
+  });
+}
+
+export async function getGlobalMonthView(
+  month: string, // YYYY-MM or YYYY-MM-DD
+  locale?: string
+): Promise<GlobalMonthView | null> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`global_view:${monthStart}:${locale || 'en'}`, 900, async () => {
+    // 1. Per-day, per-track source totals — feeds the stacked stripe.
+    const stripeRows = await query<{
+      date: string;
+      track: string;
+      src: number;
+    }>(
+      `SELECT e.date::text AS date, c.track, SUM(e.source_batch_count)::int AS src
+         FROM events_v3 e
+         JOIN ctm c ON c.id = e.ctm_id
+        WHERE c.month = $1
+          AND e.is_promoted = true AND e.merged_into IS NULL
+        GROUP BY e.date, c.track`,
+      [monthStart]
+    );
+
+    if (stripeRows.length === 0) return null;
+
+    // 2. Top-10 promoted events per track globally, ranked by source count.
+    //    Limit 10 so the caller can dedup and still end up with ~5 distinct.
+    const topRows = await query<{
+      track: string;
+      event_id: string;
+      date: string;
+      title: string | null;
+      source_batch_count: number;
+      centroid_id: string;
+      centroid_label: string;
+    }>(
+      `WITH ranked AS (
+         SELECT c.track,
+                e.id::text AS event_id,
+                e.date::text AS date,
+                COALESCE(
+                  ${locale === 'de' ? 'e.title_de, ' : ''}
+                  e.title,
+                  (SELECT t2.title_display FROM event_v3_titles evt2
+                   JOIN titles_v3 t2 ON t2.id = evt2.title_id
+                   WHERE evt2.event_id = e.id
+                   ORDER BY t2.pubdate_utc ASC LIMIT 1)
+                ) AS title,
+                e.source_batch_count,
+                c.centroid_id,
+                cv.label AS centroid_label,
+                ROW_NUMBER() OVER (
+                  PARTITION BY c.track
+                  ORDER BY e.source_batch_count DESC, e.date DESC, e.id
+                ) AS rnk
+           FROM events_v3 e
+           JOIN ctm c ON c.id = e.ctm_id
+           JOIN centroids_v3 cv ON cv.id = c.centroid_id
+          WHERE c.month = $1
+            AND e.is_promoted = true
+            AND e.merged_into IS NULL
+            AND e.is_catchall = false
+       )
+       SELECT track, event_id, date, title, source_batch_count, centroid_id, centroid_label
+         FROM ranked WHERE rnk <= 10
+        ORDER BY track, rnk`,
+      [monthStart]
+    );
+
+    // 3. Per-track theme chips + counts (globally aggregated sectors/subjects).
+    const themeRows = await query<{
+      track: string;
+      sector: string;
+      subject: string;
+      cnt: number;
+      track_total: number;
+    }>(
+      `WITH labels AS (
+         SELECT c.track, tl.sector, tl.subject, COUNT(*) AS cnt
+           FROM events_v3 e
+           JOIN ctm c ON c.id = e.ctm_id
+           JOIN event_v3_titles evt ON evt.event_id = e.id
+           JOIN title_labels tl ON tl.title_id = evt.title_id
+          WHERE c.month = $1
+            AND e.is_promoted = true AND e.merged_into IS NULL
+            AND tl.sector IS NOT NULL AND tl.sector <> 'NON_STRATEGIC'
+          GROUP BY c.track, tl.sector, tl.subject
+       )
+       SELECT track, sector, subject, cnt::int,
+              SUM(cnt) OVER (PARTITION BY track)::int AS track_total
+         FROM labels
+        ORDER BY track, cnt DESC, sector, subject`,
+      [monthStart]
+    );
+
+    // 4. Per-track event + source totals.
+    const perTrackRows = await query<{
+      track: string;
+      event_count: number;
+      source_count: number;
+    }>(
+      `SELECT c.track,
+              COUNT(DISTINCT e.id)::int AS event_count,
+              COALESCE(SUM(e.source_batch_count), 0)::int AS source_count
+         FROM events_v3 e
+         JOIN ctm c ON c.id = e.ctm_id
+        WHERE c.month = $1
+          AND e.is_promoted = true AND e.merged_into IS NULL
+        GROUP BY c.track`,
+      [monthStart]
+    );
+
+    // 5. Global totals + prev/next month nav.
+    const totalRows = await query<{ active_centroids: number }>(
+      `SELECT COUNT(DISTINCT c.centroid_id)::int AS active_centroids
+         FROM events_v3 e JOIN ctm c ON c.id = e.ctm_id
+        WHERE c.month = $1 AND e.is_promoted = true AND e.merged_into IS NULL`,
+      [monthStart]
+    );
+    const navRows = await query<{ month: string; is_prev: boolean }>(
+      `(SELECT TO_CHAR(month, 'YYYY-MM') AS month, true AS is_prev
+          FROM ctm WHERE month < $1
+          ORDER BY month DESC LIMIT 1)
+       UNION ALL
+       (SELECT TO_CHAR(month, 'YYYY-MM') AS month, false AS is_prev
+          FROM ctm WHERE month > $1
+          ORDER BY month ASC LIMIT 1)`,
+      [monthStart]
+    );
+    const prevMonth = navRows.find(r => r.is_prev)?.month || null;
+    const nextMonth = navRows.find(r => !r.is_prev)?.month || null;
+
+    // 6. Build activity stripe (every day of month, per-track weights sum to 1).
+    const byDate = new Map<string, Map<string, number>>();
+    const totalByDate = new Map<string, number>();
+    for (const r of stripeRows) {
+      let m = byDate.get(r.date);
+      if (!m) {
+        m = new Map();
+        byDate.set(r.date, m);
+      }
+      m.set(r.track, (m.get(r.track) || 0) + r.src);
+      totalByDate.set(r.date, (totalByDate.get(r.date) || 0) + r.src);
+    }
+    const [yearStr, mmStr] = monthStart.split('-');
+    const year = parseInt(yearStr);
+    const mm = parseInt(mmStr);
+    const daysInMonth = new Date(year, mm, 0).getDate();
+    const activity_stripe: CentroidStripeEntry[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${year}-${String(mm).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const trackMap = byDate.get(dateStr);
+      const total = totalByDate.get(dateStr) || 0;
+      const tracks: CentroidStripeEntry['tracks'] = [];
+      if (trackMap && total > 0) {
+        for (const [tr, src] of trackMap.entries()) {
+          tracks.push({ track: tr, weight: src / total });
+        }
+        tracks.sort((a, b) => b.weight - a.weight);
+      }
+      activity_stripe.push({ date: dateStr, total_sources: total, tracks });
+    }
+
+    // 7. Assemble per-track summaries. Dedup cross-day fragments with title Dice
+    //    (same pattern as getCentroidMonthView, imported helpers titleWords/dice).
+    const DICE_THRESHOLD = 0.3;
+    const TOP_N = 5;
+    const candidatesByTrack = new Map<
+      string,
+      Array<{ event: GlobalTrackTopEvent; words: Set<string> }>
+    >();
+    for (const r of topRows) {
+      let list = candidatesByTrack.get(r.track);
+      if (!list) {
+        list = [];
+        candidatesByTrack.set(r.track, list);
+      }
+      list.push({
+        event: {
+          id: r.event_id,
+          title: r.title || '',
+          date: r.date,
+          centroid_id: r.centroid_id,
+          centroid_label: r.centroid_label,
+          source_count: r.source_batch_count,
+          has_event_page: r.source_batch_count >= CALENDAR_EVENT_PAGE_MIN_SOURCES,
+        },
+        words: titleWords(r.title),
+      });
+    }
+    const topByTrack = new Map<string, GlobalTrackTopEvent[]>();
+    for (const [track, candidates] of candidatesByTrack.entries()) {
+      const kept: Array<{ event: GlobalTrackTopEvent; words: Set<string> }> = [];
+      for (const c of candidates) {
+        const isDup = kept.some(k => dice(k.words, c.words) >= DICE_THRESHOLD);
+        if (!isDup) kept.push(c);
+        if (kept.length >= TOP_N) break;
+      }
+      topByTrack.set(track, kept.map(k => k.event));
+    }
+
+    // Theme chips per track: take top 3 per track.
+    const chipsByTrack = new Map<string, CtmThemeChip[]>();
+    for (const r of themeRows) {
+      let chips = chipsByTrack.get(r.track);
+      if (!chips) {
+        chips = [];
+        chipsByTrack.set(r.track, chips);
+      }
+      if (chips.length < 3 && r.track_total > 0) {
+        chips.push({ sector: r.sector, subject: r.subject, weight: r.cnt / r.track_total });
+      }
+    }
+
+    const totalsByTrack = new Map(perTrackRows.map(r => [r.track, r]));
+    const trackList = [...new Set([...stripeRows.map(r => r.track), ...topRows.map(r => r.track)])];
+    const tracks: GlobalTrackSummary[] = trackList.map(tr => {
+      const t = totalsByTrack.get(tr);
+      return {
+        track: tr,
+        event_count: t?.event_count || 0,
+        source_count: t?.source_count || 0,
+        theme_chips: chipsByTrack.get(tr) || [],
+        top_events: topByTrack.get(tr) || [],
+      };
+    });
+
+    const total_events = tracks.reduce((s, t) => s + t.event_count, 0);
+    const total_sources = tracks.reduce((s, t) => s + t.source_count, 0);
+
+    return {
+      month: monthStart,
+      activity_stripe,
+      tracks,
+      active_centroid_count: totalRows[0]?.active_centroids || 0,
+      total_events,
+      total_sources,
+      prev_month: prevMonth,
+      next_month: nextMonth,
+    };
+  });
+}
+
+// Global top active strategic narratives for a month, ordered by matched
+// event count. Replaces the per-centroid "Active Narratives" rail at global
+// scope.
+export async function getActiveNarrativesGlobal(
+  month: string,
+  limit = 10,
+  locale?: string
+): Promise<Array<{
+  id: string;
+  name: string;
+  claim: string | null;
+  actor_centroid: string | null;
+  event_count: number;
+}>> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`global_narratives:${monthStart}:${limit}:${locale || 'en'}`, 900, async () => {
+    const rows = await query<{
+      id: string;
+      name: string;
+      name_de: string | null;
+      claim: string | null;
+      claim_de: string | null;
+      actor_centroid: string | null;
+      event_count: number;
+    }>(
+      `SELECT sn.id, sn.name, sn.name_de, sn.claim, sn.claim_de, sn.actor_centroid,
+              COUNT(DISTINCT e.id)::int AS event_count
+         FROM event_strategic_narratives esn
+         JOIN events_v3 e ON e.id = esn.event_id
+         JOIN ctm c ON c.id = e.ctm_id
+         JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+        WHERE c.month = $1
+          AND e.merged_into IS NULL
+          AND sn.is_active = true
+        GROUP BY sn.id, sn.name, sn.name_de, sn.claim, sn.claim_de, sn.actor_centroid
+        ORDER BY event_count DESC, sn.name
+        LIMIT $2`,
+      [monthStart, limit]
+    );
+    return rows.map(r => ({
+      id: r.id,
+      name: locale === 'de' && r.name_de ? r.name_de : r.name,
+      claim: locale === 'de' && r.claim_de ? r.claim_de : r.claim,
+      actor_centroid: r.actor_centroid,
+      event_count: r.event_count,
+    }));
+  });
+}
+
+// Fastest-growing events: surfaces stories whose source count is concentrated
+// in the last 7 days. Only meaningful for the current month (past months
+// have no "recent" activity). Empty result is OK for past months.
+export async function getFastestGrowingEvents(
+  month: string,
+  limit = 10,
+  locale?: string
+): Promise<Array<{
+  id: string;
+  title: string;
+  centroid_id: string;
+  centroid_label: string;
+  track: string;
+  total_sources: number;
+  recent_7d_sources: number;
+  growth_ratio: number;
+}>> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`global_growing:${monthStart}:${locale || 'en'}`, 900, async () => {
+    const rows = await query<{
+      id: string;
+      title: string | null;
+      centroid_id: string;
+      centroid_label: string;
+      track: string;
+      total_sources: number;
+      recent_7d_sources: number;
+    }>(
+      `WITH recent AS (
+         SELECT evt.event_id,
+                COUNT(*)::int AS recent_7d_sources
+           FROM event_v3_titles evt
+           JOIN titles_v3 t ON t.id = evt.title_id
+          WHERE t.pubdate_utc >= NOW() - INTERVAL '7 days'
+          GROUP BY evt.event_id
+       )
+       SELECT e.id::text AS id,
+              COALESCE(
+                ${locale === 'de' ? 'e.title_de, ' : ''}
+                e.title,
+                (SELECT t2.title_display FROM event_v3_titles evt2
+                 JOIN titles_v3 t2 ON t2.id = evt2.title_id
+                 WHERE evt2.event_id = e.id
+                 ORDER BY t2.pubdate_utc DESC LIMIT 1)
+              ) AS title,
+              c.centroid_id,
+              cv.label AS centroid_label,
+              c.track,
+              e.source_batch_count AS total_sources,
+              r.recent_7d_sources
+         FROM events_v3 e
+         JOIN ctm c ON c.id = e.ctm_id
+         JOIN centroids_v3 cv ON cv.id = c.centroid_id
+         JOIN recent r ON r.event_id = e.id
+        WHERE c.month = $1
+          AND e.is_promoted = true
+          AND e.merged_into IS NULL
+          AND e.is_catchall = false
+          AND e.source_batch_count >= 5
+          AND r.recent_7d_sources >= 3
+        ORDER BY r.recent_7d_sources DESC, e.source_batch_count DESC
+        LIMIT $2`,
+      [monthStart, limit]
+    );
+    return rows.map(r => ({
+      id: r.id,
+      title: r.title || '',
+      centroid_id: r.centroid_id,
+      centroid_label: r.centroid_label,
+      track: r.track,
+      total_sources: r.total_sources,
+      recent_7d_sources: r.recent_7d_sources,
+      growth_ratio: r.total_sources > 0 ? r.recent_7d_sources / r.total_sources : 0,
+    }));
+  });
+}

@@ -92,11 +92,19 @@ export default async function TrendingPage({
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold mb-2">{t('title')}</h1>
-          <p className="text-dashboard-text-muted">
-            {t('subtitle')}
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">{t('title')}</h1>
+            <p className="text-dashboard-text-muted">
+              {t('subtitle')}
+            </p>
+          </div>
+          <Link
+            href="/trending/v2"
+            className="shrink-0 text-xs px-3 py-1.5 rounded border border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 transition"
+          >
+            Preview v2 →
+          </Link>
         </div>
 
         {/* Top 3 hero cards - full width */}
