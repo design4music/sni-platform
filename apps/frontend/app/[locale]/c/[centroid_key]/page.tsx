@@ -26,6 +26,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
+import ActiveNarrativesSidebar from '@/components/ActiveNarrativesSidebar';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
@@ -192,20 +193,21 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
       : []
   );
 
-  // Legacy sidebar layout (sticky + track nav) shown when the enhanced
-  // CentroidHero view is not available for this month (pre-v4 months).
+  // Legacy sidebar: only when the enhanced CentroidHero view is not
+  // available for this centroid+month. Media-Lens/Deviation/Narrative
+  // widgets have moved into in-page section pairs below the hero.
   const legacyLayout = !centroidMonthView;
 
-  const sidebar = (
-    <div className={legacyLayout ? "lg:sticky lg:top-24 space-y-6" : "space-y-6"}>
-      {availableMonths.length > 0 && currentMonth && !centroidMonthView && (
+  const legacySidebar = legacyLayout ? (
+    <div className="lg:sticky lg:top-24 space-y-6">
+      {availableMonths.length > 0 && currentMonth && (
         <MonthNav
           months={availableMonths}
           currentMonth={currentMonth}
           baseUrl={`/c/${centroid.id}`}
         />
       )}
-      {legacyLayout && configuredTracks.length > 0 && (
+      {configuredTracks.length > 0 && (
         <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
           <h3 className="text-xl font-bold mb-1 text-dashboard-text">
             {getCentroidLabel(centroid.id, centroid.label, tCentroids)}
@@ -247,51 +249,8 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           </nav>
         </div>
       )}
-      {activeNarratives.length > 0 && (
-        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-            Active Narratives
-          </h3>
-          <ul className="space-y-2">
-            {activeNarratives.map(n => {
-              const foreign = n.actor_centroid && n.actor_centroid !== centroid.id;
-              const actorLabel = foreign
-                ? getCentroidLabel(n.actor_centroid!, n.actor_centroid!, tCentroids)
-                : null;
-              return (
-                <li key={n.id}>
-                  <Link
-                    href={`/narratives/${n.id}`}
-                    className="flex items-start gap-2 text-sm text-dashboard-text hover:text-blue-400 transition group"
-                  >
-                    <span className="text-dashboard-text-muted tabular-nums text-[11px] pt-0.5 shrink-0 w-6 text-right">
-                      {n.event_count}
-                    </span>
-                    <span className="flex-1 min-w-0 leading-snug">
-                      {n.name}
-                      {actorLabel && (
-                        <span className="ml-1.5 inline-flex items-center px-1.5 py-0 rounded-sm text-[10px]
-                                         bg-amber-500/10 border border-amber-500/30 text-amber-400 align-middle">
-                          from {actorLabel}
-                        </span>
-                      )}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-      {currentMonth && weeklyDeviations.length > 0 && (
-        <WeeklyDeviationCard
-          centroidId={centroid.id}
-          initialMonth={currentMonth}
-          initialWeeks={weeklyDeviations}
-        />
-      )}
     </div>
-  );
+  ) : undefined;
 
   const theaterLabel = centroid.primary_theater
     ? (REGIONS as Record<string, string>)[centroid.primary_theater] || centroid.primary_theater
@@ -382,7 +341,7 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           &larr; {theaterLabel}
         </Link>
       ) : undefined}
-      sidebar={sidebar}
+      sidebar={legacySidebar}
       topFullWidthContent={enhancedTop}
       fullWidthContent={
         centroid.profile_json ? (
@@ -444,19 +403,38 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
-        {/* Media Lens: local perspective + foreign perspective */}
-        {currentMonth && (mediaLens.local_self || mediaLens.local_abroad.length > 0 || mediaLens.foreign.length > 0) && (
-          <MediaLensSection
-            centroidId={centroid.id}
-            centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-            initialMonth={currentMonth}
-            initialLens={mediaLens}
-          />
+        {/* Section pair 1: Media Lens (main) + Unusual Activity (sidebar) */}
+        {currentMonth && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <MediaLensSection
+                centroidId={centroid.id}
+                centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+                initialMonth={currentMonth}
+                initialLens={mediaLens}
+              />
+            </div>
+            <aside>
+              <WeeklyDeviationCard
+                centroidId={centroid.id}
+                initialMonth={currentMonth}
+                initialWeeks={weeklyDeviations}
+              />
+            </aside>
+          </div>
         )}
-        {/* Narrative section (deferred) */}
-        <Suspense fallback={null}>
-          <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
-        </Suspense>
+
+        {/* Section pair 2: Strategic Narratives (main) + Active Narratives (sidebar) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Suspense fallback={null}>
+              <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
+            </Suspense>
+          </div>
+          <aside>
+            <ActiveNarrativesSidebar centroidId={centroid.id} narratives={activeNarratives} />
+          </aside>
+        </div>
       </div>
     </DashboardLayout>
   );

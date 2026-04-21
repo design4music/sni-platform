@@ -15,9 +15,7 @@ export default async function CentroidNarrativeSection({ centroidId, locale }: P
     getAllMetaNarratives(locale),
   ]);
 
-  if (narratives.length === 0) return null;
-
-  // Group by meta-narrative
+  // Group by meta-narrative (may be empty)
   const metaMap = new Map(metaNarratives.map(m => [m.id, m.name]));
   const grouped = new Map<string, typeof narratives>();
   for (const n of narratives) {
@@ -27,8 +25,15 @@ export default async function CentroidNarrativeSection({ centroidId, locale }: P
   }
 
   return (
-    <div className="mt-8">
+    <section>
       <h2 className="text-2xl font-bold mb-4">{t('strategicNarratives')}</h2>
+      {narratives.length === 0 ? (
+        <p className="text-sm text-dashboard-text-muted italic">
+          {locale === 'de'
+            ? 'Für dieses Land sind noch keine strategischen Narrative zugeordnet.'
+            : 'No strategic narratives linked to this country yet.'}
+        </p>
+      ) : (
       <div className="space-y-6">
         {Array.from(grouped.entries()).map(([metaId, group]) => (
           <div key={metaId}>
@@ -51,6 +56,7 @@ export default async function CentroidNarrativeSection({ centroidId, locale }: P
           </div>
         ))}
       </div>
-    </div>
+      )}
+    </section>
   );
 }

@@ -290,9 +290,7 @@ export default function MediaLensSection({
 
   const hasLocal = !!lens.local_self || lens.local_abroad.length > 0;
   const hasForeign = lens.foreign.length > 0;
-
-  // Hide the whole section if there's nothing to show in either column.
-  if (!hasLocal && !hasForeign) return null;
+  const hasAnything = hasLocal || hasForeign;
 
   const foreignBuckets = bucketizeForeign(lens.foreign);
 
@@ -332,7 +330,16 @@ export default function MediaLensSection({
         </div>
       </div>
 
-      {/* Two-column grid on md+, stacked on mobile */}
+      {!hasAnything ? (
+        <p className="text-sm text-dashboard-text-muted italic py-4">
+          {loading
+            ? (locale === 'de' ? 'Lade…' : 'Loading…')
+            : (locale === 'de'
+                ? 'Keine Medienstandsdaten für diesen Monat.'
+                : 'No media-stance data available for this month.')}
+        </p>
+      ) : (
+      /* Two-column grid on md+, stacked on mobile */
       <div className={`grid gap-6 ${hasLocal && hasForeign ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
         {hasLocal && (
           <div>
@@ -397,6 +404,7 @@ export default function MediaLensSection({
           </div>
         )}
       </div>
+      )}
     </section>
   );
 }
