@@ -4,7 +4,7 @@ SNI v3 Pipeline Daemon -- 4-Slot Architecture
 Scheduling slots (phases run sequentially within each slot):
 - Slot 1 INGESTION   (12h):  Phase 1 (RSS) + Phase 2 (centroid matching)
 - Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
-- Slot 3 CLUSTERING  (30m):  Phase 4 + 4.1a (titles) + 4.1 (families) + 4.1b (merge) + 4.2a-f (incl. narrative matching)
+- Slot 3 CLUSTERING  (30m):  Phase 4 event clustering + 3.2 sibling reconciliation + 4.5a promote + 4.2* materialize + 4.2f narrative matching
 - Slot 4 ENRICHMENT  (6h):   Phase 4.5a + 4.5b + 4.2g (LLM narrative discovery) + 4.2h (LLM review)
 - Daily purge: Remove rejected titles + reset api_error_count
 
@@ -39,7 +39,6 @@ from pipeline.phase_4.generate_daily_brief_4_5d import process_ctm as phase45d_b
 from pipeline.phase_4.incremental_clustering import (
     process_ctm_for_daemon,
 )
-from pipeline.phase_4.merge_same_day_events import process_ctm as phase40b_merge
 from pipeline.phase_4.promote_and_describe_4_5a import (
     describe_promoted_events as phase45a_describe,
 )
@@ -511,48 +510,62 @@ class PipelineDaemon:
 
     # Deprecated (D-059): family assembly, mechanical titles, Dice merge, cross-bucket merge, sibling merge
 
-    def run_same_day_merge(self):
-        """Phase 4.0b: Merge fragmented events within same (ctm_id, date).
+    def run_reconcile_siblings(self):
+        """Phase 3.2: Sibling reconciliation (soft-delete, same-CTM + cross-CTM).
 
-        Runs on CTMs that were just reclustered (have events but no promoted
-        events yet). Hybrid entity-overlap + title-word Dice. No LLM.
+        Runs on every unfrozen month. Title-word Dice >= 0.55 groups day-
+        partitioned events (regardless of CTM or promotion state); each
+        group collapses to one canonical via merged_into. Supersedes the
+        legacy same-day hard-delete merge, which only ran on CTMs with
+        zero promoted events and was deleting promoted rows as events
+        accumulated.
         """
+        from pipeline.phase_4.reconcile_siblings_bulk import bulk_merge
+        from pipeline.phase_4.reconcile_siblings_v4 import (
+            DEFAULT_MIN_SOURCES,
+            DEFAULT_THRESHOLD,
+            fetch_events,
+            find_cross_centroid_groups,
+        )
+
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT c.id::text, c.centroid_id, c.track
-                       FROM ctm c
-                       WHERE c.is_frozen = false
-                         AND c.title_count >= 3
-                         AND EXISTS (SELECT 1 FROM events_v3 e WHERE e.ctm_id = c.id)
-                         AND NOT EXISTS (SELECT 1 FROM events_v3 e
-                                        WHERE e.ctm_id = c.id AND e.is_promoted = true)
-                       ORDER BY c.title_count ASC"""
+                    """SELECT DISTINCT to_char(month, 'YYYY-MM')
+                       FROM ctm
+                       WHERE is_frozen = false
+                       ORDER BY 1"""
                 )
-                ctms = cur.fetchall()
+                months = [r[0] for r in cur.fetchall()]
 
-            if not ctms:
-                print("No CTMs need same-day merge")
+            if not months:
+                print("No unfrozen months to reconcile")
                 return
 
-            print("Phase 4.0b: merging %d CTMs..." % len(ctms))
-            for ctm_id, centroid_id, track in ctms:
-                try:
-                    stats = phase40b_merge(ctm_id)
-                    if stats["absorbed"] > 0:
-                        print(
-                            "  %s/%s: %d absorbed into %d groups"
-                            % (
-                                centroid_id,
-                                track,
-                                stats["absorbed"],
-                                stats["merge_groups"],
-                            )
-                        )
-                except Exception as e:
-                    print("  4.0b failed %s/%s: %s" % (centroid_id, track, e))
+            total_groups = 0
+            total_merged = 0
+            for m in months:
+                events = fetch_events(
+                    conn,
+                    m,
+                    min_sources=DEFAULT_MIN_SOURCES,
+                    promoted_only=False,
+                )
+                groups = find_cross_centroid_groups(events, threshold=DEFAULT_THRESHOLD)
+                if not groups:
+                    continue
+                merged = bulk_merge(conn, groups, m)
+                total_groups += len(groups)
+                total_merged += merged
 
+            if total_groups:
+                print(
+                    "Phase 3.2 reconcile: %d groups, %d events merged"
+                    % (total_groups, total_merged)
+                )
+            else:
+                print("Phase 3.2 reconcile: nothing to merge")
         finally:
             self.return_connection(conn)
 
@@ -1022,7 +1035,7 @@ class PipelineDaemon:
             )
             print("\nSlot 2 CLASSIFICATION: next in %ds" % remaining)
 
-        # --- SLOT 3: CLUSTERING (Phase 4 + 4.0b merge) ---
+        # --- SLOT 3: CLUSTERING (Phase 4 cluster + 3.2 reconcile + 4.5a promote + 4.2* materialize) ---
         if self.should_run_slot("clustering"):
             # Phase 4: Event Clustering (day-beat, D-056)
             await self.run_with_timeout(
@@ -1034,15 +1047,15 @@ class PipelineDaemon:
                 ),
                 self.timeout_clustering,
             )
-            # Phase 4.0b: Same-day entity+Dice merge (mechanical, no LLM)
+            # Phase 3.2: Sibling reconciliation (same-CTM + cross-CTM, soft-delete)
             await self.run_with_timeout(
-                "Phase 4.0b: Same-Day Merge",
+                "Phase 3.2: Sibling Reconciliation",
                 asyncio.to_thread(
                     self.run_phase_with_retry,
-                    "Phase 4.0b: Same-Day Merge",
-                    self.run_same_day_merge,
+                    "Phase 3.2: Sibling Reconciliation",
+                    self.run_reconcile_siblings,
                 ),
-                600,
+                900,
             )
             # Phase 4.5a-promote: instant mechanical ranking (no LLM)
             await self.run_with_timeout(

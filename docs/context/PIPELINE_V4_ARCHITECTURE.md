@@ -17,7 +17,7 @@ PHASE 2 — LABELING
 
 PHASE 3 — CLUSTERING
   3.1  Incremental Day-Beat Clustering
-  3.2  Same-Day Merge (entity + Dice)
+  3.2  Sibling Reconciliation (title-Dice, soft-delete, same-CTM + cross-CTM)
   3.3  Promotion (top-N ranking)
 
 PHASE 4 — MATERIALIZATION
@@ -104,14 +104,15 @@ MAINTENANCE
 - **Algorithm**: D-056 day-beat clustering on NEW titles only, match to existing events via entity overlap OR title-word Dice >= 0.4. Existing events never deleted.
 - **File**: `pipeline/phase_4/incremental_clustering.py` → `process_ctm_for_daemon()`
 
-### Phase 3.2 — Same-Day Merge
-- **Input**: Events on same (ctm_id, date)
-- **Output**: Absorbed fragments into anchors, updated `source_batch_count`
-- **Trigger**: After 3.1 (CTMs with unpromoted events)
-- **Idempotent**: Yes (deterministic)
+### Phase 3.2 — Sibling Reconciliation (soft-delete)
+- **Input**: Unfrozen-month events, regardless of CTM or promotion state
+- **Output**: `merged_into` + `absorbed_centroids` on dupes; title links moved to canonical; `source_batch_count` recomputed on anchor
+- **Trigger**: After 3.1, every unfrozen month
+- **Idempotent**: Yes (soft-delete gates the next run's fetch)
 - **Cost**: Free
-- **Algorithm**: Hybrid entity-overlap (same action_class + shared entity, excluding high-freq) OR title-word Dice >= 0.4. Biggest absorbs smaller.
-- **File**: `pipeline/phase_4/merge_same_day_events.py`
+- **Algorithm**: Same-date title-word Dice >= 0.55 (D-069). Greedy group assembly; anchor chosen by (source_count, is_promoted, id). Covers both same-CTM and cross-CTM dupes in one pass.
+- **File**: `pipeline/phase_4/reconcile_siblings_bulk.py` (bulk SQL) / `reconcile_siblings_v4.py` (detection)
+- **Supersedes**: legacy `merge_same_day_events.py` hard-delete merge, which skipped CTMs with promoted events and could not safely soft-delete across the promotion boundary.
 
 ### Phase 3.3 — Promotion
 - **Input**: All events per CTM
@@ -194,7 +195,7 @@ MAINTENANCE
 | 2.2 | `pipeline/phase_3_2/backfill_entity_centroids.py` | Phase 3.2 |
 | 2.3 | `pipeline/phase_3_3/assign_tracks_mechanical.py` | Phase 3.3 |
 | 3.1 | `pipeline/phase_4/incremental_clustering.py` | Phase 4 |
-| 3.2 | `pipeline/phase_4/merge_same_day_events.py` | Phase 4.0b |
+| 3.2 | `pipeline/phase_4/reconcile_siblings_bulk.py` + `reconcile_siblings_v4.py` | Phase 4.0b (deprecated) |
 | 3.3 | `pipeline/phase_4/promote_and_describe_4_5a.py` → `promote_ctm()` | Phase 4.5a-promote |
 | 4.1-4.6 | `pipeline/phase_4/materialize_*.py`, `match_narratives.py` | Phase 4.2a-f |
 | 5.1 | `pipeline/phase_4/promote_and_describe_4_5a.py` → `describe_promoted_events()` | Phase 4.5a-describe |
@@ -221,6 +222,7 @@ MAINTENANCE
 | CTM digests (old 4.5b) | Moved to freeze-only | Removed (D-058) |
 | Mechanical titles (old 4.1a) | Handled by clustering fallback | Removed (D-056) |
 | Dice merge (old 4.1b) | Replaced by 3.2 same-day merge | Removed (D-056) |
+| Same-day hard-delete merge (`merge_same_day_events.py`) | Skipped CTMs with promoted events; couldn't soft-delete across promotion. Replaced by sibling reconciliation. | Removed (D-070) |
 | Cross-bucket LLM merge (old 4.3) | Replaced by 3.2 | Removed (D-053) |
 | Sibling merge (old 4.4) | Not needed with current design | Removed (D-053) |
 | Freeze centroid monthly summary (legacy) | `centroid_monthly_summaries` table; superseded by `centroid_summaries` (5.5 monthly snapshot) | Removed 2026-04-20 |
