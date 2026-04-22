@@ -1,128 +1,191 @@
 # Analytical Expansion Roadmap (L2)
 
-Next-generation analytical capabilities beyond the current pipeline (ingest -> classify -> cluster -> summarize -> narrate). The current system answers "What is the world talking about?" -- the expansion answers:
+**Last refreshed**: 2026-04-22
 
-| Question | Mechanism | Tier |
-|---|---|---|
-| What changed this week? | Baseline deviation detection | A |
-| Is this escalating? | Action-class sequence analysis | B |
-| How is this being framed? | Narrative lifecycle tracking | B |
-| Where is this heading? | Structural balance + historical analogues | C |
-| How is this being distorted? | Narrative vs. event-code gap analysis | C |
-| What am I missing? | Anomaly detection on expected vs. observed coverage | C |
+Next-generation analytical capabilities beyond the base pipeline
+(ingest → classify → cluster → summarize → narrate). The current
+system answers "What is the world talking about?" — the expansion
+answers:
+
+| Question | Mechanism | Tier | Status |
+|---|---|---|---|
+| What's big right now, globally? | Cross-centroid aggregation + calendar hero | — | 🟡 Prototype (`/trending/v2`, D-068) |
+| Where are the active power struggles? | Cross-centroid narrative correlation | — | 📋 Vision (D-052, scope doc pending) |
+| What changed this week? | Baseline deviation detection | A | 🟡 Partial (per-centroid deviations live; persistence pending) |
+| Is this escalating? | Action-class sequence analysis | B | 📋 Future |
+| How is this being framed? | Narrative lifecycle tracking | B | 🟡 Partial (matching works, lifecycle typing future) |
+| Where is this heading? | Structural balance + historical analogues | C | 📋 Future |
+| How is this being distorted? | Narrative vs. event-code gap analysis | C | 📋 Future |
+| What am I missing? | Anomaly detection on expected vs. observed | C | 📋 Future |
 
 Tiers: **A** = builds on existing data with minimal schema change,
 **B** = requires new data structures or pipeline phases,
-**C** = requires external data or partnership (e.g., Verdant Intelligence).
+**C** = requires external data or partnership (e.g., Verdant).
 
 ---
 
-## Layer 1: Event Triple Formalization (Tier A)
+## Current focus
 
-LLM already extracts ACTOR -> ACTION_CLASS -> DOMAIN (-> TARGET) with 17 actor types, 26 action classes, 7 domains. Stored in `title_labels`. What's missing:
+Two lighthouse features driving the roadmap right now. Both sit on top
+of the existing pipeline (no new data ingestion) and unlock distinctive
+user value the competitor set doesn't replicate.
 
-| Missing Piece | Change | Effort |
-|---|---|---|
-| Target consistency | Make TARGET required in prompt (use "NONE" for non-directed events) | ~1 line in `core/prompts.py` |
-| Actor-person linkage | Link actor field to persons signal (e.g., US_EXECUTIVE[Trump]) | Extraction prompt update |
-| Cooperative/conflictual polarity | Static COOPERATIVE/CONFLICTUAL/NEUTRAL mapping per action class | ~30 lines in `core/ontology.py` |
-| Queryable triple storage | `mv_event_triples` materialized view (title_id, actor, action_class, domain, target, polarity, tier, month) | ~50 lines in `pipeline/phase_4/` |
+### Trending / Global Brief (Phase 2)
 
-Backfill: ~95K rows. **Total: ~1 day. No schema migration needed if using a view.**
+Aggregates the centroid-page pattern to global scope. Answers "what's
+the state of the world this period?" in ~20 seconds of scan.
 
----
+**Status — 2026-04-22**: prototype at `/trending/v2` (D-068). Full-width
+cross-track hero, mechanical Overview prose, 2×2 track cards with top-5
+events (cross-centroid Dice dedup), fastest-growing panel
+(last-7-day source increment, current-month only), top-10 Active
+Narratives sidebar, reused Trending Signals. Current `/trending` kept
+live with preview link.
 
-## Layer 2: Baseline Deviation Detection (Tier A)
+**Remaining before promotion**:
+- Editorial LLM overview — new `global_summaries` table mirroring
+  D-065 (tier-0 overall + per-track JSONB, bilingual, period_kind ∈
+  {rolling_30d, monthly}). Generator at
+  `pipeline/phase_5/generate_global_summary.py`. Daemon Slot 4
+  integration.
+- Day drill-down from hero popover — deep link to a
+  global-day-overview page listing top events cross-centroid for
+  that day. (Currently the popover shows per-track breakdown but
+  the links go nowhere meaningful.)
+- Sitemap entry for `/trending/v2` (currently only `/trending`).
+- Swap `/trending/v2` → `/trending`, archive the v1 page.
 
-Detect deviations from "normal" per centroid using rolling 3-month baselines.
+**Optional follow-ups once promoted**:
+- Top-centroid segmentation on the hero (instead of just 4 tracks),
+  as the original roadmap note anticipated.
+- "Fastest-growing" v2: apply within each track rather than global, so
+  the panel surfaces the hottest story per-track rather than being
+  dominated by whichever mega-story is running.
 
-**Baseline metrics (per centroid, rolling 3-month window):**
-- Events per week (mean, stddev)
-- Mean importance score
-- Action class distribution (% per tier)
-- Top 5 recurring actors
-- Cooperative/conflictual ratio (from Layer 1 polarity)
-- Source diversity (mean publisher count per event)
+### Friction Nodes (Phase 3 — lighthouse)
 
-**Implementation:**
-- Compute baselines in daemon (Phase 4.2c), flag when |z-score| > 2
-- Store in `mv_centroid_baselines` (centroid_id, week, metrics JSONB)
-- Frontend: deviation alerts on centroid page or "Watchboard"
-- **Depends on: Layer 1 (polarity), but can start without it using raw event counts**
-- **Estimate: 2-3 days**
+Auto-detected geopolitical power struggles. Narrows the global
+narrative map to ~10 active "friction nodes" (US-Iran war, Ukraine,
+US-China, etc.), each with cross-centroid perspectives.
 
----
+**Status — 2026-04-22**: vision only.
+[`FRICTION_NODES_VISION.md`](FRICTION_NODES_VISION.md) + D-052
+establish the concept. `event_strategic_narratives` is healthy (87k
+Render links, all four months) — the substrate is ready.
 
-## Layer 3: Causal Sequence Mining (Tier B)
+**Next step**: one-page scope doc before any build. Specifically:
+- **Algorithmic definition**: when is a cluster of narratives a
+  friction node? (Candidate: meta-narrative + ≥5 active strategic
+  narratives + ≥5 participating centroids in a rolling window.)
+- **Detection cadence**: weekly? monthly? On-demand?
+- **UI shape**: dedicated page per friction node? Or a top-level
+  "Friction Map" dashboard with ~10 tiles?
+- **Naming / labeling**: who gives a friction node its title?
+  Editorial curation vs. LLM-generated from narrative cluster.
 
-Sequential pattern mining on action_class time series per centroid. Not prediction -- empirical pattern discovery from historical data. Extract n-grams with configurable gap tolerance (e.g., 7-day window) to find recurring sequences like ECONOMIC_PRESSURE -> STRATEGIC_REALIGNMENT.
-
-When a new event arrives, match against known sequence prefixes and surface historical completions (e.g., "In 3 of 4 previous instances where X followed Y, Z followed within 30 days"). Clearly labeled as historical analogue retrieval.
-
-**Implementation:**
-- Mine patterns from 4+ months of event_triples (offline script)
-- Store in `analytical_patterns` table; match new events in daemon
-- Surface on event detail page as "Historical Context" sidebar
-- **Depends on: Layer 1. Estimate: 3-4 days**
-
----
-
-## Layer 4: Relationship Tone Graph (Tier B)
-
-Monthly "relationship tone" between centroid pairs from bilateral events. Ratio of cooperative to conflictual events (Layer 1 polarity) produces -1.0 to +1.0 score per pair per month.
-
-**What this enables:**
-- **Relationship trajectory**: bilateral tone over 6 months as a sparkline
-- **Structural balance detection**: unbalanced triads (two hostile + one friendly) flagged as "watch"
-- **Alliance shift detection**: tone sign changes flagged as significant events
-
-**Implementation:**
-- Compute in daemon (Phase 4.2d), store in `mv_relationship_tone`
-- Frontend: relationship graph visualization (nodes = centroids, edges = tone)
-- **Depends on: Layer 1. Estimate: 3-4 days compute, 2-3 days visualization**
+Everything else depends on those four answers. Explicitly deferred
+until scope doc lands.
 
 ---
 
-## Layer 5: Narrative Lifecycle Tracking (Tier B)
+## Layer status — detail
 
-Track narrative frames as competing organisms with birth, peak, decay, and replacement dynamics. For each frame, track: first appearance, peak week, decay rate, replacement frame, publisher adoption curve, and cross-centroid spread.
+### Layer 1 — Event Triple Formalization (Tier A)
 
-Requires re-extraction of narratives with temporal anchoring (which titles contributed to which frame, with dates). New table: `narrative_lifecycle` (narrative_id, frame, week, title_count, publisher_breakdown JSONB).
+🟡 **Partial — core extraction done, polarity + materialized view pending.**
 
-**Depends on: existing narrative extraction + temporal title linkage. Estimate: 4-5 days**
+What's live:
+- Phase 2.1 (LLM) extracts actor / action_class / target / domain /
+  subject / sector / signals / industries / entity_countries /
+  importance into `title_labels`. Subject required since ELO v3.0.1
+  (D-048). 126K+ labels across 2026 data.
+- Signal types (persons / orgs / places / commodities / policies /
+  systems / named_events) normalized and queryable.
+
+Not yet done:
+- **Cooperative / conflictual polarity** — static mapping per
+  action_class (~30 lines in `core/ontology.py`). Prereq for Layers
+  2 / 3 / 4.
+- **`mv_event_triples` materialized view** — queryable
+  (title_id, actor, action_class, domain, target, polarity, tier,
+  month) for downstream analytical queries.
+
+Effort: ~1 day once we commit.
+
+### Layer 2 — Baseline Deviation Detection (Tier A)
+
+🟡 **Partial — per-centroid deviations rendered, persistence pending.**
+
+What's live:
+- `getCentroidDeviationsForMonth` powers the "Unusual activity" card
+  on centroid pages (week-over-week spike/drop, stance shift, new
+  top actor).
+- `WeeklyDeviationCard` component surfaces the signals.
+
+Not yet done (Roadmap Phase 1 #3):
+- Persist monthly snapshots to `centroid_monthly_stats` so the card
+  stops recomputing per request and stops showing "same value across
+  months".
+- Global-scope deviation view (which centroids had the biggest
+  deviation this period) — could feed the Trending v2 page.
+
+### Layer 3 — Causal Sequence Mining (Tier B)
+
+📋 **Future.** No work done. Depends on Layer 1 polarity.
+
+Still a good idea: mine action_class n-grams per centroid, surface as
+"historical context" sidebar on event detail pages.
+
+### Layer 4 — Relationship Tone Graph (Tier B)
+
+📋 **Future.** No work done. Depends on Layer 1 polarity.
+
+Related but partial: `mv_signal_graph` exists for signal-co-occurrence
+visualization. Extending to per-centroid-pair tone scoring is the
+specific L4 work.
+
+### Layer 5 — Narrative Lifecycle Tracking (Tier B)
+
+🟡 **Partial — matching infrastructure + weekly activity live; lifecycle phases not typed.**
+
+What's live:
+- 260 curated strategic narratives (`strategic_narratives`) + 9
+  meta-narratives.
+- Mechanical narrative matching (Phase 4.2f in v4 arch; D-067 fixed
+  DOMAIN_TO_TRACK so all four live tracks are covered). 87k links
+  on Render across Jan–Apr.
+- `narrative_weekly_activity` table + sparklines on narrative detail
+  pages.
+
+Not yet done:
+- Lifecycle phase typing: first-appearance, peak-week, decay-rate,
+  replacement-frame, publisher-adoption-curve.
+- Cross-centroid spread analysis (who picks up the frame first;
+  which centroids are laggards).
+- This overlaps heavily with Friction Nodes — the scope doc for
+  Friction Nodes should settle whether lifecycle is a distinct
+  feature or folded into the same surface.
+
+### Layer 6 — External Data Integration (Tier C)
+
+📋 **Future.** Partnership-dependent (Verdant) or offline-import
+(GDELT).
+
+- 6a Source expansion (beyond Google News RSS): scheduled API
+  ingestion into Phase 1.
+- 6b Entity relationship graph: Wikidata / Verdant enrichment after
+  Phase 2.1.
+- 6c GDELT historical depth: extended baselines for Layer 2 + pattern
+  library for Layer 3 + cross-validation of WB event coding.
 
 ---
 
-## Layer 6: External Data Integration (Tier C)
-
-### 6a: Source Expansion
-Ingest from sources beyond Google News RSS (regional outlets, think tanks, government press releases). Scheduled API pull into Phase 1.
-
-### 6b: Entity Relationship Graph
-Enrich signals with relationship context from Wikidata, Verdant's knowledge graph, or static curated tables. Post-Phase 3.1 enrichment step.
-
-### 6c: Historical Depth (GDELT)
-Billions of coded events back to 1979, free. Provides extended baselines for Layer 2, deeper pattern library for Layer 3, and validation of WB event coding. Offline import only.
-
----
-
-## Implementation Priority
-
-| Phase | Layers | Focus | Estimate |
-|---|---|---|---|
-| I: Foundation | 1 + 2 | Event triples + baseline deviation. Low-hanging fruit, existing data. | 3-4 days |
-| II: Temporal Intelligence | 3 + 4 | Causal sequences + relationship tone. Requires Layer 1 polarity. | 6-8 days |
-| III: Narrative Dynamics | 5 | Narrative lifecycle. Requires rethinking extraction model. | 4-5 days |
-| IV: Data Expansion | 6 | External data. Partnership-dependent (Verdant) or public (GDELT). | TBD |
-
----
-
-## Guiding Principles
+## Guiding principles
 
 | Principle | Description |
 |---|---|
 | Mechanical first | Every layer uses mechanical computation on structured data. LLMs restricted to extraction and summarization. |
-| Existing data first | Layers 1-5 operate on data already in the database. No new ingestion or dependencies. Layer 6 is additive. |
+| Existing data first | Layers 1-5 operate on data already in the database. No new ingestion. Layer 6 is additive. |
 | Incremental | Each layer builds on the previous but is independently useful. Layer 2 works without Layer 1, just less precisely. |
 | Auditable | Every analytical output traces to specific event triples, titles, and dates. No black-box scoring. |
 | Not prediction | Baselines detect anomalies. Sequences surface historical analogues. Balance theory flags structural tension. The analyst interprets. |
