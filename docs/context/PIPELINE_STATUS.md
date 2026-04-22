@@ -1,6 +1,6 @@
 # WorldBrief Pipeline Status
 
-**Last updated**: 2026-04-20
+**Last updated**: 2026-04-22
 **Live**: https://www.worldbrief.info
 **Branch**: `main` (synced with origin)
 
@@ -52,9 +52,11 @@ Recent worker-side optimizations:
 
 Next.js on Render, auto-deploys from main:
 
-- **Calendar hero** on CTM track pages (`/c/*/t/*/calendar`) — stacked
-  activity chart, day popover, sector-themed tints (rank-assigned per
-  track), dominant-theme chips, daily-brief prose per day.
+- **Calendar hero** on CTM track pages (`/c/*/t/*`) — stacked activity
+  chart, day popover, sector-themed tints (rank-assigned per track),
+  dominant-theme chips, daily-brief prose per day. As of 2026-04-22
+  the calendar view lives directly at `/c/*/t/*`; the old
+  `/c/*/t/*/calendar` sub-route 301-redirects (D-066, route merge).
 - **Centroid page hero** (`/c/*`) — tier-0 "Overview" briefing from
   `centroid_summaries` (bilingual), cross-track calendar, 2×2 enriched
   TrackCards with theme chips + per-track `state` paragraph from the
@@ -62,9 +64,18 @@ Next.js on Render, auto-deploys from main:
   per-track breakdown.
 - **Active Narratives** sidebar on centroid pages (replaces Top Signals).
   Foreign-framed narratives flagged with "from {Actor}".
-- **Legacy fallback** for months without promoted data (Jan/Feb used to
-  hit this — now all months are reprocessed, fallback is effectively
-  dead code).
+- **Trending v2 prototype** (`/trending/v2`) — centroid-style layout at
+  global scope: full-width cross-track hero, mechanical Overview, 2×2
+  track cards, fastest-growing panel (current-month only), top-10
+  Active Narratives + Trending Signals sidebar. Current `/trending`
+  remains live with a preview link; promotion pending.
+- **SEO layer** (D-066) — unique titles + descriptions on every
+  centroid/track/event/narrative/epic page, hreflang alternates,
+  per-page OG + Twitter + JSON-LD (NewsArticle + BreadcrumbList +
+  Article + SearchAction). Sitemap covers events (last 180d, >=5 src) +
+  narratives + epics + sources + signals + centroids + tracks +
+  regions. Middleware matcher fixed so `/sitemap.xml` + `/robots.txt`
+  serve at 200.
 
 ---
 
@@ -120,18 +131,24 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 
 1. **CTM digests (`ctm.summary_text`) still legacy** — period-level
    state-of-play on centroid pages now comes from `centroid_summaries`
-   (5.5). The per-CTM `summary_text` remains only for the calendar
-   track page and downstream consumers (narratives extraction, social
-   posting, RAI analysis). Ticket: migrate those consumers to
-   `centroid_summaries` state fields, then retire the columns.
-2. **Narrative matching hasn't run on Mar/Apr** — daemon Slot 3
-   includes Phase 4.2f/g/h but 0 matches written for current months.
-   Ticket: investigate matcher filters or data-shape mismatch.
+   (5.5). The per-CTM `summary_text` remains only for downstream
+   consumers (narratives extraction, social posting, RAI analysis).
+   Ticket: migrate those consumers to `centroid_summaries` state
+   fields, then retire the columns +
+   `pipeline/phase_4/generate_summaries_4_5.py`.
+2. **Trending v2 promotion** — prototype at `/trending/v2` ready for
+   review. Next steps: editorial LLM overview (new `global_summaries`
+   table mirroring D-065), then swap `/trending` → v2.
 3. **Daemon `last_run` not persisted** — restart fires every slot
    immediately. Nice-to-have, not urgent.
 4. **Sidebar stance + deviation persist** — currently recomputed, same
-   value across months. Ticket in strategic plan: persist monthly
-   snapshot to a `centroid_monthly_stats` table.
+   value across months. Strategic-plan item: persist monthly snapshot
+   to a `centroid_monthly_stats` table.
+5. **Dead-code cleanup candidates** — see
+   [`SESSION_START.md`](SESSION_START.md) for the list
+   (`out/beats_reextraction/*.py`, `core/archive_llm_client.py`,
+   `track_configs` table + its unused consumer, 4 `energy_*` i18n
+   entries, 2 untracked scripts).
 
 ---
 
@@ -140,4 +157,4 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 - [`PIPELINE_V4_ARCHITECTURE.md`](PIPELINE_V4_ARCHITECTURE.md) — design reference (phase names, slot mapping)
 - [`BEATS_DIRECTION.md`](BEATS_DIRECTION.md) — why day-centric events replaced families/clusters
 - [`FRICTION_NODES_VISION.md`](FRICTION_NODES_VISION.md) — next lighthouse feature
-- [`30_DecisionLog.yml`](30_DecisionLog.yml) — decisions D-001 through D-062
+- [`30_DecisionLog.yml`](30_DecisionLog.yml) — decisions D-001 through D-068

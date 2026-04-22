@@ -820,3 +820,128 @@ decisions:
       - Docs updated (PIPELINE_V4_ARCHITECTURE.md gets Phase 5.5
         entry; PIPELINE_STATUS.md reflects new enrichment slot +
         data architecture layer).
+
+  - id: D-066
+    date: 2026-04-22
+    type: frontend
+    status: accepted
+    title: SEO overhaul — unique metadata, hreflang, sitemap, JSON-LD; calendar route merged into track page
+    rationale:
+      - Pre-work the site had templated boilerplate titles/descriptions,
+        a thin sitemap (only centroids + tracks), no hreflang, no
+        per-page OpenGraph/Twitter, and no structured data. Not
+        indexable at the quality needed for SEO to drive traffic.
+      - The /c/*/t/*/calendar sub-route was redundant: when a CTM has
+        promoted data the old /c/*/t/* page redirected to /calendar
+        anyway. Consolidating reduces two URLs to one, simplifies
+        canonical logic, and removes ~1k lines of legacy v3
+        story-groups code.
+    consequences:
+      - New lib/seo.ts helpers (buildPageMetadata, buildAlternates,
+        formatMonthLabel, truncateDescription, humanizeEnum, joinList,
+        formatCount) + new components/JsonLd.tsx. Shared across all
+        metadata-emitting pages.
+      - Unique titles + descriptions on centroid / track (calendar)
+        / event pages. Centroid + track descriptions prefer the D-065
+        editorial overview when present, fall back to mechanical
+        stats (event count, source count, top themes).
+      - Hreflang (en / de / x-default) on all 22 metadata-producing
+        pages.
+      - Sitemap rewritten: single /sitemap.xml covers static + regions
+        + centroids + tracks + narratives + epics + sources + signal
+        categories + promoted events (last 180 days, >=5 sources),
+        capped at 48k URLs. Each entry carries hreflang alternates.
+        Revalidate daily.
+      - JSON-LD: NewsArticle + BreadcrumbList on /events/[id]; Article
+        + BreadcrumbList on /narratives/[id] + /epics/[slug];
+        BreadcrumbList on /c/[id] + /c/[id]/t/[track]; SearchAction
+        added to the root WebSite block.
+      - OpenGraph + Twitter per-page overrides on the core dynamic
+        pages.
+      - noindex on /auth, /profile, /search, /analysis/user,
+        /analysis/comparative.
+      - /c/*/t/*/calendar folded into /c/*/t/*. 301 redirect in
+        next.config.js for prior backlinks. Legacy v3 story-groups
+        code + three orphan components (IranWarSwimlane,
+        StoryGroupList, MobileTocButton) + queries.ctmHasPromotedData
+        deleted. force-dynamic dropped on centroid + calendar pages
+        (revalidate=1800); kept on track + event (ensureDE).
+      - Fix in next-intl middleware matcher: exclude any path with a
+        dot (.*\\..*), so /sitemap.xml + /robots.txt + future
+        opengraph-image.png don't get 404'd as locale routes.
+
+  - id: D-067
+    date: 2026-04-22
+    type: pipeline
+    status: accepted
+    title: Narrative-matching domain mapping consolidated to live tracks
+    rationale:
+      - ctm.track has four live values (geo_security, geo_politics,
+        geo_economy, geo_society). Historical v3-era tracks
+        (geo_humanitarian, geo_information, geo_energy) were defined
+        in old taxonomy but never written by the v3+ pipeline.
+      - pipeline/phase_4/match_narratives.py DOMAIN_TO_TRACK mapped
+        ENERGY / HUMANITARIAN / INFORMATION / MEDIA at those dead
+        track names. The ctm_structural_match SQL filtered
+        c.track = ANY(track_list), so any narrative whose only
+        domain landed there matched zero events. Audit showed only
+        8 of 260 narratives were actually affected (the rest had
+        at least one live-mapped domain), so the impact was
+        correctness-not-catastrophic — but worth fixing.
+      - A legacy mismapping (SOCIETY → geo_politics, from before
+        geo_society existed as a track) was fixed in the same pass.
+    consequences:
+      - DOMAIN_TO_TRACK now consolidates: ENERGY → geo_economy,
+        INFORMATION / MEDIA → geo_politics,
+        HUMANITARIAN → geo_society, SOCIETY → geo_society.
+      - Dead-track references purged from 4 frontend files
+        (SourceCountryAccordion, sources/[feed_name] page,
+        messages/en.json + de.json track namespace) and 1 pipeline
+        file (social_posting._TRACK_DISPLAY). energy_conflict (also
+        dead) cleaned alongside.
+      - Audit-checked DB state on local + Render confirmed only 4
+        live track values in ctm.
+      - Not touched (flagged): pipeline/phase_4/run_france_all.py
+        (frozen one-shot prototype), track_configs table (60-entry
+        granular vocabulary with one unused frontend consumer).
+
+  - id: D-068
+    date: 2026-04-22
+    type: frontend
+    status: prototype
+    title: /trending/v2 — centroid-style layout at global scope
+    rationale:
+      - Existing /trending page lists top events by time-decayed
+        source count. Doesn't leverage the centroid-page visual
+        language the rest of the site has settled on.
+      - Roadmap item Phase 2 #4 calls for a rebuilt trending page
+        reusing the calendar hero pattern at global (cross-centroid)
+        scope, eventually evolving to top-centroid breakdown.
+    consequences:
+      - New route app/[locale]/trending/v2/page.tsx (not yet
+        promoted; current /trending shows a "Preview v2 →" link).
+      - New components/TrendingHero.tsx (derived from CentroidHero;
+        non-clickable track legend, day popover without per-centroid
+        deep-links, MTD badge on live month).
+      - Three new queries in lib/queries.ts — getGlobalMonthView
+        (activity_stripe + per-track top events + theme chips +
+        prev/next + totals), getActiveNarrativesGlobal (top-10 by
+        matched event count), getFastestGrowingEvents (last-7-day
+        source increment with cross-centroid title-Dice dedup).
+        All 15-min cached.
+      - Page shape: full-width hero, then 2-col grid. Main column
+        renders Overview (mechanical prose for v1) → Fastest-growing
+        panel (current month only, promoted above the grid) → 2×2
+        track cards. Sidebar renders Active Narratives (top 10) +
+        reused Trending Signals.
+      - Overview prose is mechanical for v1. Editorial follow-up
+        will mirror D-065: new global_summaries table (tier-0 +
+        per-track JSONB, bilingual, period_kind=rolling_30d +
+        monthly) + pipeline/phase_5/generate_global_summary.py +
+        daemon Slot 4 integration.
+      - Deliberately skipped for v1: media lens (no single entity
+        to cluster against at global scope), unusual-activity panel
+        (folded into fastest-growing), day drill-down, per-track
+        narrative chips in cards.
+      - Promotion path: when editorial overview ships, swap
+        /trending/v2 → /trending, archive current page.
