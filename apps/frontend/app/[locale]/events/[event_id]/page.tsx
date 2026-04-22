@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import RaiSidebar from '@/components/RaiSidebar';
@@ -12,7 +12,7 @@ import ExtractButton from '@/components/ExtractButton';
 import AnalysisPrefetch from '@/components/AnalysisPrefetch';
 import NarrativePrefetch from '@/components/NarrativePrefetch';
 import EventNarrativeBadges from '@/components/narratives/EventNarrativeBadges';
-import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents, resolveCanonicalEventId } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -262,6 +262,11 @@ export default async function EventDetailPage({ params }: Props) {
 
   let event = await getEventById(event_id, locale);
   if (!event) return notFound();
+
+  const canonicalId = await resolveCanonicalEventId(event_id);
+  if (canonicalId && canonicalId !== event_id) {
+    permanentRedirect(`/${locale}/events/${canonicalId}`);
+  }
 
   // Lazy-translate title + summary for DE users
   if (locale === 'de') {

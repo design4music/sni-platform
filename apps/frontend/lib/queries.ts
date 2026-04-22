@@ -714,6 +714,7 @@ export async function getEpicEvents(epicId: string, locale?: string): Promise<Ep
      JOIN ctm c ON e.ctm_id = c.id
      JOIN centroids_v3 cv ON c.centroid_id = cv.id
      WHERE ee.epic_id = $1 AND ee.is_included = true
+       AND e.merged_into IS NULL
      ORDER BY cv.label, e.source_batch_count DESC`,
     [epicId]
   );
@@ -935,6 +936,23 @@ export async function getEventById(eventId: string, locale?: string): Promise<Ev
   );
   return results[0] || null;
   });
+}
+
+export async function resolveCanonicalEventId(eventId: string): Promise<string | null> {
+  const results = await query<{ merged_into: string | null }>(
+    `WITH RECURSIVE chain AS (
+       SELECT id, merged_into, 0 AS depth FROM events_v3 WHERE id = $1
+       UNION ALL
+       SELECT e.id, e.merged_into, c.depth + 1
+       FROM events_v3 e JOIN chain c ON e.id = c.merged_into
+       WHERE c.depth < 5
+     )
+     SELECT id::text AS merged_into FROM chain
+     WHERE merged_into IS NULL
+     LIMIT 1`,
+    [eventId]
+  );
+  return results[0]?.merged_into ?? null;
 }
 
 export async function getEventSagaSiblings(
@@ -1959,6 +1977,7 @@ export async function getNarrativeEvents(narrativeId: string, limit: number = 50
        JOIN centroids_v3 cv ON cv.id = c.centroid_id
        WHERE esn.narrative_id = $1
          AND e.title IS NOT NULL
+         AND e.merged_into IS NULL
        ORDER BY e.date DESC
        LIMIT $2`,
       [narrativeId, limit]
