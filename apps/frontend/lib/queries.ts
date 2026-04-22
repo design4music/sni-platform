@@ -1001,6 +1001,7 @@ export async function getRelatedEvents(
      JOIN centroids_v3 cv ON c2.centroid_id = cv.id
      WHERE c2.centroid_id <> $2
        AND e2.is_catchall = false
+       AND e2.merged_into IS NULL
      GROUP BY e2.id, e2.title, e2.source_batch_count,
               c2.centroid_id, cv.label, cv.iso_codes, c2.track
      HAVING COUNT(DISTINCT et2.title_id) >= $3
@@ -1916,11 +1917,12 @@ export async function getStrategicNarratives(locale?: string): Promise<Strategic
               ${locCol('sn', 'claim', locale)} as claim,
               sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
               sn.tier, sn.aligned_with, sn.opposes,
-              COUNT(esn.event_id)::int as event_count
+              COUNT(DISTINCT esn.event_id) FILTER (WHERE ev.merged_into IS NULL)::int as event_count
        FROM strategic_narratives sn
        JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
        LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
        LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
+       LEFT JOIN events_v3 ev ON ev.id = esn.event_id
        WHERE sn.is_active = true
        GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de
        ORDER BY mn.sort_order, sn.name`
@@ -1936,11 +1938,12 @@ export async function getStrategicNarrativeById(id: string, locale?: string): Pr
               ${locCol('sn', 'name', locale)} as name,
               ${locCol('sn', 'claim', locale)} as claim,
               sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
-              COUNT(esn.event_id)::int as event_count
+              COUNT(DISTINCT esn.event_id) FILTER (WHERE ev.merged_into IS NULL)::int as event_count
        FROM strategic_narratives sn
        JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
        LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
        LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
+       LEFT JOIN events_v3 ev ON ev.id = esn.event_id
        WHERE sn.id = $1
        GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de`,
       [id]
