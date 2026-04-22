@@ -71,8 +71,12 @@ def fetch_events(conn, month, min_sources=DEFAULT_MIN_SOURCES, promoted_only=Tru
 
 
 def find_cross_centroid_groups(events, threshold):
-    """Partition by date, score cross-centroid pairs by title Dice,
-    greedy-assemble groups with at most one event per centroid."""
+    """Partition by date, score pairs by title Dice, greedy-assemble
+    groups. Merges both cross-centroid dupes and same-centroid same-day
+    dupes that Phase 3.2 missed.
+
+    Groups can contain multiple events per centroid (same-CTM identical
+    titles are legitimate merges). Keyed internally by event_id."""
     by_date = defaultdict(list)
     for e in events:
         by_date[e["date"]].append(e)
@@ -83,8 +87,6 @@ def find_cross_centroid_groups(events, threshold):
         for i in range(len(lst)):
             for j in range(i + 1, len(lst)):
                 a, b = lst[i], lst[j]
-                if a["centroid_id"] == b["centroid_id"]:
-                    continue
                 score = dice(a["_words"], b["_words"])
                 if score >= threshold:
                     pairs.append((a, b, score))
@@ -95,22 +97,19 @@ def find_cross_centroid_groups(events, threshold):
     groups = {}
     for a, b, score in pairs:
         id_a, id_b = str(a["id"]), str(b["id"])
-        cid_a, cid_b = a["centroid_id"], b["centroid_id"]
         grp_a = assigned.get(id_a)
         grp_b = assigned.get(id_b)
         if grp_a and grp_b:
             continue
         elif grp_a:
-            if cid_b not in groups[grp_a]:
-                groups[grp_a][cid_b] = b
-                assigned[id_b] = grp_a
+            groups[grp_a][id_b] = b
+            assigned[id_b] = grp_a
         elif grp_b:
-            if cid_a not in groups[grp_b]:
-                groups[grp_b][cid_a] = a
-                assigned[id_a] = grp_b
+            groups[grp_b][id_a] = a
+            assigned[id_a] = grp_b
         else:
             gid = id_a
-            groups[gid] = {cid_a: a, cid_b: b}
+            groups[gid] = {id_a: a, id_b: b}
             assigned[id_a] = gid
             assigned[id_b] = gid
 
