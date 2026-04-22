@@ -53,7 +53,15 @@ def bulk_merge(conn, groups, month):
     anchor_rows = []  # per anchor event (with merged set of absorbed centroid labels)
 
     for g in groups:
-        anchor = max(g, key=lambda e: e["source_batch_count"])
+        # Prefer: highest source_count, then promoted over unpromoted, then stable by id.
+        anchor = max(
+            g,
+            key=lambda e: (
+                e["source_batch_count"],
+                1 if e.get("is_promoted") else 0,
+                str(e["id"]),
+            ),
+        )
         absorbed = [e for e in g if e["id"] != anchor["id"]]
 
         absorbed_labels = set()
@@ -244,12 +252,22 @@ def main():
     ap.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD)
     ap.add_argument("--min-sources", type=int, default=DEFAULT_MIN_SOURCES)
     ap.add_argument("--no-mv-refresh", action="store_true")
+    ap.add_argument(
+        "--all-events",
+        action="store_true",
+        help="Include non-promoted events (backfill mode)",
+    )
     args = ap.parse_args()
 
     conn = get_connection()
     conn.autocommit = False
     try:
-        events = fetch_events(conn, args.month, min_sources=args.min_sources)
+        events = fetch_events(
+            conn,
+            args.month,
+            min_sources=args.min_sources,
+            promoted_only=not args.all_events,
+        )
         print(
             f"[{args.month}] fetched {len(events)} promoted events "
             f"(>= {args.min_sources} src)",

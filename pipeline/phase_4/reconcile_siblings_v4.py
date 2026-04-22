@@ -42,24 +42,27 @@ def get_connection():
     )
 
 
-def fetch_events(conn, month, min_sources=DEFAULT_MIN_SOURCES):
-    """Fetch promoted, unmerged events for a month with fields needed by
-    merge_sibling_group. No tags requirement (v4 writes empty tags)."""
-    sql = """
+def fetch_events(conn, month, min_sources=DEFAULT_MIN_SOURCES, promoted_only=True):
+    """Fetch unmerged events for a month with fields needed by
+    merge_sibling_group. No tags requirement (v4 writes empty tags).
+    When promoted_only=False, includes non-promoted events (backfill mode)."""
+    promoted_clause = "AND e.is_promoted" if promoted_only else ""
+    sql = f"""
         SELECT e.id, e.title, e.date, e.source_batch_count,
                e.sibling_group, e.ctm_id, e.absorbed_centroids,
-               e.merged_into,
+               e.merged_into, e.is_promoted,
                ctm.centroid_id,
                cv.label AS centroid_label,
                to_char(e.date, 'YYYY-MM') AS month
         FROM events_v3 e
         JOIN ctm ON ctm.id = e.ctm_id
         JOIN centroids_v3 cv ON cv.id = ctm.centroid_id
-        WHERE e.is_promoted
-          AND e.merged_into IS NULL
+        WHERE e.merged_into IS NULL
           AND e.title IS NOT NULL
+          AND e.is_catchall = false
           AND e.source_batch_count >= %s
           AND to_char(e.date, 'YYYY-MM') = %s
+          {promoted_clause}
         ORDER BY e.date, ctm.centroid_id
     """
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
