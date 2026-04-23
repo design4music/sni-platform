@@ -3287,3 +3287,97 @@ export async function getFastestGrowingEvents(
     }));
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+// Trending archive: top events cross-centroid for a specific date,
+// ranked by 7-day cumulative source count ending on that date.
+// Used by /trending/v2?day=YYYY-MM-DD (archive view).
+// ─────────────────────────────────────────────────────────────
+
+export interface GlobalDayTopEvent {
+  id: string;
+  title: string;
+  centroid_id: string;
+  centroid_label: string;
+  track: string;
+  date: string;          // event's own date
+  total_sources: number; // event-level total
+  window_sources: number; // sources within 7-day window ending at target day
+}
+
+export async function getGlobalDayTopEvents(
+  day: string, // YYYY-MM-DD
+  limit = 10,
+  locale?: string
+): Promise<GlobalDayTopEvent[]> {
+  return cached(`global_day_top:${day}:${limit}:${locale || 'en'}`, 900, async () => {
+    // Over-fetch to give Dice dedup room to work.
+    const fetchLimit = Math.max(limit * 4, 40);
+    const rows = await query<{
+      id: string;
+      title: string | null;
+      centroid_id: string;
+      centroid_label: string;
+      track: string;
+      date: string;
+      total_sources: number;
+      window_sources: number;
+    }>(
+      `WITH window_counts AS (
+         SELECT evt.event_id,
+                COUNT(*)::int AS window_sources
+           FROM event_v3_titles evt
+           JOIN titles_v3 t ON t.id = evt.title_id
+          WHERE t.pubdate_utc::date BETWEEN $1::date - 6 AND $1::date
+          GROUP BY evt.event_id
+       )
+       SELECT e.id::text AS id,
+              COALESCE(
+                ${locale === 'de' ? 'e.title_de, ' : ''}
+                e.title,
+                (SELECT t2.title_display FROM event_v3_titles evt2
+                 JOIN titles_v3 t2 ON t2.id = evt2.title_id
+                 WHERE evt2.event_id = e.id
+                 ORDER BY t2.pubdate_utc ASC LIMIT 1)
+              ) AS title,
+              c.centroid_id,
+              cv.label AS centroid_label,
+              c.track,
+              e.date::text AS date,
+              e.source_batch_count AS total_sources,
+              w.window_sources
+         FROM events_v3 e
+         JOIN ctm c ON c.id = e.ctm_id
+         JOIN centroids_v3 cv ON cv.id = c.centroid_id
+         JOIN window_counts w ON w.event_id = e.id
+        WHERE e.is_promoted = true
+          AND e.merged_into IS NULL
+          AND e.is_catchall = false
+          AND e.date BETWEEN $1::date - 13 AND $1::date + 1
+        ORDER BY w.window_sources DESC, e.source_batch_count DESC
+        LIMIT $2`,
+      [day, fetchLimit]
+    );
+
+    // Dedup across centroids by title similarity (same story under different bilateral buckets).
+    const DEDUP_THRESHOLD = 0.3;
+    const kept: Array<{ row: typeof rows[number]; words: Set<string> }> = [];
+    for (const r of rows) {
+      const words = titleWords(r.title);
+      const isDup = kept.some(k => dice(k.words, words) >= DEDUP_THRESHOLD);
+      if (!isDup) kept.push({ row: r, words });
+      if (kept.length >= limit) break;
+    }
+
+    return kept.map(({ row: r }) => ({
+      id: r.id,
+      title: r.title || '',
+      centroid_id: r.centroid_id,
+      centroid_label: r.centroid_label,
+      track: r.track,
+      date: r.date,
+      total_sources: r.total_sources,
+      window_sources: r.window_sources,
+    }));
+  });
+}
