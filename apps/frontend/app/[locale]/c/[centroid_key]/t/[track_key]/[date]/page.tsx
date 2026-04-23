@@ -23,13 +23,20 @@ import {
   truncateDescription,
   breadcrumbList,
   newsArticleJsonLd,
+  humanizeEnum,
+  formatCount,
+  joinList,
   type Locale as SeoLocale,
 } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 
-// Day-canonical page: indexable iff a daily_briefs row exists for
-// (centroid, track, date). Threshold >5 promoted clusters is already
-// enforced at brief-generation time.
+// Day-canonical page. Two modes:
+//   - Brief present: indexable, NewsArticle JSON-LD, og:type=article
+//   - Brief absent but day has promoted events: renders for user nav
+//     (hero calendar stripe links here) but noindex + no article
+//     schema. Keeps internal navigation working without flooding
+//     Google with thin pages.
+//   - Day has zero promoted events (or invalid date): 404.
 export const revalidate = 1800;
 
 interface DayPageProps {
@@ -48,9 +55,8 @@ export async function generateMetadata({ params }: DayPageProps): Promise<Metada
 
   const view = await getCalendarMonthView(centroid_key, track_key, month, locale);
   const day = view?.days.find(d => d.date === date);
-  if (!view || !day || !day.daily_brief) {
-    // No brief → not indexable. Serving 404 at the page level handles the
-    // status code; here we just ensure metadata doesn't leak a real title.
+  if (!view || !day) {
+    // No promoted events for this day → truly empty, not indexable.
     return { title: 'Not found', robots: { index: false } };
   }
 
@@ -65,16 +71,42 @@ export async function generateMetadata({ params }: DayPageProps): Promise<Metada
     ? `${centroidLabel} ${trackLower}: ${dayLabel} Nachrichten`
     : `${centroidLabel} ${trackLower}: ${dayLabel} news`;
 
-  const description = truncateDescription(day.daily_brief);
+  // Brief present → indexable article with the brief as description.
+  // Brief absent → mechanical description (events + top themes) and noindex.
+  if (day.daily_brief) {
+    return buildPageMetadata({
+      title,
+      description: truncateDescription(day.daily_brief),
+      path: `/c/${centroid_key}/t/${track_key}/${date}`,
+      locale,
+      ogType: 'article',
+      publishedTime: `${date}T00:00:00Z`,
+    });
+  }
 
-  return buildPageMetadata({
-    title,
-    description,
-    path: `/c/${centroid_key}/t/${track_key}/${date}`,
-    locale,
-    ogType: 'article',
-    publishedTime: `${date}T00:00:00Z`,
-  });
+  const stripe = view.activity_stripe.find(s => s.date === date);
+  const themes = (stripe?.themes || []).slice(0, 3).map(t => humanizeEnum(t.sector));
+  const description = truncateDescription(
+    locale === 'de'
+      ? [
+          `${formatCount(day.cluster_count, 'de')} Events, ${formatCount(day.total_sources, 'de')} Quellen zu ${centroidLabel} ${trackLower} am ${dayLabel}.`,
+          themes.length ? `Schwerpunkte: ${joinList(themes, 'de')}.` : '',
+        ].filter(Boolean).join(' ')
+      : [
+          `${formatCount(day.cluster_count)} events, ${formatCount(day.total_sources)} sources on ${centroidLabel} ${trackLower} for ${dayLabel}.`,
+          themes.length ? `Themes: ${joinList(themes)}.` : '',
+        ].filter(Boolean).join(' ')
+  );
+
+  return {
+    ...buildPageMetadata({
+      title,
+      description,
+      path: `/c/${centroid_key}/t/${track_key}/${date}`,
+      locale,
+    }),
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function DayPage({ params }: DayPageProps) {
@@ -94,7 +126,7 @@ export default async function DayPage({ params }: DayPageProps) {
   if (!view) notFound();
 
   const day = view.days.find(d => d.date === date);
-  if (!day || !day.daily_brief) notFound();
+  if (!day) notFound();
 
   const tTracks = await getTranslations('tracks');
   const tCentroids = await getTranslations('centroids');
@@ -111,14 +143,19 @@ export default async function DayPage({ params }: DayPageProps) {
   const otherTracks = otherTracksList.filter(t => t !== track_key);
 
   const path = `/c/${centroid.id}/t/${track_key}/${date}`;
-  const articleJsonLd = newsArticleJsonLd({
-    headline: `${centroidLabel} ${trackLabel.toLowerCase()}: ${dayLabel}`,
-    description: truncateDescription(day.daily_brief),
-    datePublished: `${date}T00:00:00Z`,
-    path,
-    locale: locale as SeoLocale,
-    articleSection: trackLabel,
-  });
+  // NewsArticle schema only for days with a brief — those are the
+  // substantive article-like pages. No-brief days render as navigable
+  // event listings without an article claim.
+  const articleJsonLd = day.daily_brief
+    ? newsArticleJsonLd({
+        headline: `${centroidLabel} ${trackLabel.toLowerCase()}: ${dayLabel}`,
+        description: truncateDescription(day.daily_brief),
+        datePublished: `${date}T00:00:00Z`,
+        path,
+        locale: locale as SeoLocale,
+        articleSection: trackLabel,
+      })
+    : null;
 
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
@@ -188,7 +225,7 @@ export default async function DayPage({ params }: DayPageProps) {
     >
       <JsonLd
         data={[
-          articleJsonLd,
+          ...(articleJsonLd ? [articleJsonLd] : []),
           breadcrumbList([
             { name: centroidLabel, path: `/c/${centroid.id}` },
             { name: trackLabel, path: `/c/${centroid.id}/t/${track_key}` },
@@ -196,7 +233,12 @@ export default async function DayPage({ params }: DayPageProps) {
           ]),
         ]}
       />
-      <CalendarDayPanel view={view} defaultDay={date} />
+      <CalendarDayPanel
+        view={view}
+        defaultDay={date}
+        centroidKey={centroid_key}
+        trackKey={track_key}
+      />
     </DashboardLayout>
   );
 }

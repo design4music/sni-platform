@@ -249,7 +249,12 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
           { name: trackLabel, path: `/c/${centroid.id}/t/${track_key}` },
         ])}
       />
-      <CalendarDayPanel view={view} defaultDay={defaultDay} />
+      <CalendarDayPanel
+        view={view}
+        defaultDay={defaultDay}
+        centroidKey={centroid_key}
+        trackKey={track_key}
+      />
     </DashboardLayout>
   );
 }

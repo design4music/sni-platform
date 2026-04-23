@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect, useCallback, useState } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import ExternalLink from './ExternalLink';
 import type {
   CalendarMonthView,
@@ -101,23 +101,19 @@ function dayNumber(dateStr: string): number {
   return parseInt(dateStr.split('-')[2], 10);
 }
 
-// Client-shared state via URL: ?day=YYYY-MM-DD
-function useDayParam(defaultDay: string | null): [string | null, (d: string) => void] {
+// Navigate to the canonical day URL. The path contains the date; the
+// current day is therefore not URL state but a prop passed from the
+// server-rendered page. Clicking a day triggers router.push, which
+// loads the day-canonical page (or the track page if no date was
+// provided initially — the page component handles routing).
+function useDayNav(centroidKey: string, trackKey: string): (date: string) => void {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const current = searchParams.get('day') || defaultDay;
-
-  const setDay = useCallback(
+  return useCallback(
     (date: string) => {
-      const next = new URLSearchParams(Array.from(searchParams.entries()));
-      next.set('day', date);
-      router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+      router.push(`/c/${centroidKey}/t/${trackKey}/${date}`);
     },
-    [router, pathname, searchParams]
+    [router, centroidKey, trackKey]
   );
-
-  return [current, setDay];
 }
 
 // ---------------------------------------------------------------------------
@@ -147,7 +143,8 @@ export function CalendarHero({
   nextMonth,
   defaultDay,
 }: HeroProps) {
-  const [currentDay, setCurrentDay] = useDayParam(defaultDay);
+  const currentDay = defaultDay;
+  const navigateToDay = useDayNav(centroidKey, trackKey);
 
   const dayByDate = useMemo(() => {
     const m = new Map<string, CalendarDayView>();
@@ -171,8 +168,7 @@ export function CalendarHero({
 
   const jumpToDay = (date: string) => {
     if (!dayByDate.has(date)) return;
-    setCurrentDay(date);
-    // No scroll — the day panel is in a fixed position below the chart.
+    navigateToDay(date);
   };
 
   const baseUrl = `/c/${centroidKey}/t/${trackKey}`;
@@ -274,18 +270,22 @@ export function CalendarHero({
 }
 
 // ---------------------------------------------------------------------------
-// CalendarDayPanel — single fixed-position content surface that swaps contents
-// when the URL `?day=` changes. The chart above is the only day picker.
-// Fade animation on day change; no vertical day list.
+// CalendarDayPanel — fixed-position content surface that renders whichever
+// day the server-rendered page is canonicalized to. The chart above
+// navigates to a new canonical /c/{c}/t/{t}/{date} URL on day click;
+// prev/next/swipe do the same. No client-side URL state.
 // ---------------------------------------------------------------------------
 
 interface DayPanelProps {
   view: CalendarMonthView;
   defaultDay: string | null;
+  centroidKey: string;
+  trackKey: string;
 }
 
-export function CalendarDayPanel({ view, defaultDay }: DayPanelProps) {
-  const [currentDay, setCurrentDay] = useDayParam(defaultDay);
+export function CalendarDayPanel({ view, defaultDay, centroidKey, trackKey }: DayPanelProps) {
+  const currentDay = defaultDay;
+  const navigateToDay = useDayNav(centroidKey, trackKey);
   const [showAll, setShowAll] = useState(false);
 
   // Reset "show all" toggle when the day changes
@@ -334,8 +334,8 @@ export function CalendarDayPanel({ view, defaultDay }: DayPanelProps) {
     touchStartY = null;
     // Horizontal swipe must exceed 50px and dominate vertical movement
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
-    if (dx < 0 && nextDay) setCurrentDay(nextDay.date);
-    else if (dx > 0 && prevDay) setCurrentDay(prevDay.date);
+    if (dx < 0 && nextDay) navigateToDay(nextDay.date);
+    else if (dx > 0 && prevDay) navigateToDay(prevDay.date);
   };
 
   return (
@@ -351,7 +351,7 @@ export function CalendarDayPanel({ view, defaultDay }: DayPanelProps) {
       <div className="flex items-center justify-between gap-2 mb-5">
         <button
           type="button"
-          onClick={() => prevDay && setCurrentDay(prevDay.date)}
+          onClick={() => prevDay && navigateToDay(prevDay.date)}
           disabled={!prevDay}
           className="flex items-center gap-1 px-2 py-1 text-sm text-dashboard-text-muted hover:text-dashboard-text disabled:opacity-30 disabled:cursor-default transition whitespace-nowrap"
           aria-label={prevDay ? `Previous day: ${formatDayHeading(prevDay.date)}` : 'No earlier day'}
@@ -363,7 +363,7 @@ export function CalendarDayPanel({ view, defaultDay }: DayPanelProps) {
         </h2>
         <button
           type="button"
-          onClick={() => nextDay && setCurrentDay(nextDay.date)}
+          onClick={() => nextDay && navigateToDay(nextDay.date)}
           disabled={!nextDay}
           className="flex items-center gap-1 px-2 py-1 text-sm text-dashboard-text-muted hover:text-dashboard-text disabled:opacity-30 disabled:cursor-default transition whitespace-nowrap"
           aria-label={nextDay ? `Next day: ${formatDayHeading(nextDay.date)}` : 'No later day'}
