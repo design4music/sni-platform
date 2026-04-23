@@ -108,7 +108,7 @@ function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
 
 async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourceBatchCount }: {
   eventId: string;
-  coherenceCheck?: { reason: string; topics?: string[] } | null;
+  coherenceCheck?: { coherent: boolean; reason?: string; topics?: string[] } | null;
   locale?: string;
   eventMonth?: string;
   sourceBatchCount?: number;
@@ -139,9 +139,13 @@ async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourc
   const signalStats = rawStats?.title_count ? rawStats : null;
   const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
 
-  // Auto-extract eligibility: current month, no coherence failure
+  // Mixed-cluster flag: pipeline writes {coherent:true|false}. Only
+  // {coherent:false} is a real failure; null and {coherent:true} are
+  // fine. Auto-extract skips mixed clusters to save LLM spend on
+  // likely-poor output, but the manual Extract button stays available.
+  const isMixed = coherenceCheck?.coherent === false;
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const autoExtractEligible = !coherenceCheck && eventMonth === currentMonth;
+  const autoExtractEligible = !isMixed && eventMonth === currentMonth;
 
   return (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
@@ -179,25 +183,18 @@ async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourc
       {/* No stance clusters yet */}
       {stanceClusters.length === 0 && (
         <>
-          {coherenceCheck ? (
-            <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-2">
-              <h3 className="text-sm font-semibold text-amber-300">{t('mixedCluster')}</h3>
-              <p className="text-xs text-dashboard-text-muted leading-relaxed">
-                {coherenceCheck.reason}
-              </p>
-              {coherenceCheck.topics?.length && coherenceCheck.topics.length > 0 && (
-                <ul className="text-xs text-dashboard-text-muted space-y-0.5 list-disc list-inside">
-                  {coherenceCheck.topics.map((topic: string, i: number) => (
-                    <li key={i}>{topic}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : autoExtractEligible ? (
+          {autoExtractEligible ? (
             <NarrativePrefetch entityType="event" entityId={eventId} />
           ) : (
             <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
               <h3 className="text-sm font-semibold text-dashboard-text">{t('narrativeAnalysis')}</h3>
+              {isMixed && (
+                <div className="text-[11px] text-amber-300/90 leading-snug border-l-2 border-amber-500/50 pl-2">
+                  <span className="font-medium">{t('mixedCluster')}.</span>{' '}
+                  {coherenceCheck?.reason}
+                  {coherenceCheck?.topics?.length ? ` (${coherenceCheck.topics.join('; ')})` : null}
+                </div>
+              )}
               <p className="text-xs text-dashboard-text-muted leading-relaxed">
                 {t('extractDescription')}
               </p>

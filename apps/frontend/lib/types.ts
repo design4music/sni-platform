@@ -251,7 +251,10 @@ export interface EventDetail {
   centroid_label: string;
   track: string;
   month: string;
-  coherence_check: { coherent: false; reason: string; topics: string[] } | null;
+  // Pipeline writes { coherent: true } for clean clusters and
+  // { coherent: false, reason, topics } for mixed ones. Null only on
+  // legacy rows that pre-date Phase 4.5a.
+  coherence_check: { coherent: boolean; reason?: string; topics?: string[] } | null;
   absorbed_centroids: string[] | null;
 }
 
