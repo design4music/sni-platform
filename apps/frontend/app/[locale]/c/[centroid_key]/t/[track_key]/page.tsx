@@ -138,8 +138,13 @@ export async function generateMetadata({ params, searchParams }: TrackPageProps)
 
 export default async function TrackPage({ params, searchParams }: TrackPageProps) {
   const { locale, centroid_key, track_key } = await params;
-  const { month, day } = await searchParams;
+  const { month } = await searchParams;
   setRequestLocale(locale);
+
+  // Note: legacy ?day=YYYY-MM-DD is redirected at the edge in
+  // middleware.ts (308 to /c/{c}/t/{t}/{date}), so we don't handle it
+  // here. If it ever reaches this point (middleware bypass, future
+  // refactor), falling through to the month view is a safe default.
 
   const centroid = await getCentroidById(centroid_key, locale);
   if (!centroid) notFound();
@@ -170,7 +175,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const otherTracksList = await getTracksByCentroid(centroid_key);
   const otherTracks = otherTracksList.filter(t => t !== track_key);
 
-  const defaultDay = pickDefaultDay(view, day || null);
+  const defaultDay = pickDefaultDay(view, null);
 
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">

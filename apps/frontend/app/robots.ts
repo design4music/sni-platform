@@ -9,6 +9,9 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/'],
       },
     ],
-    sitemap: 'https://worldbrief.info/sitemap.xml',
+    sitemap: [
+      'https://worldbrief.info/sitemap.xml',
+      'https://worldbrief.info/sitemap-days.xml',
+    ],
   };
 }

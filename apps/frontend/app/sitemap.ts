@@ -89,10 +89,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       alternates: alt(`/c/${centroidId}`),
     });
     for (const track of tracks) {
+      // Track URL (no date): general landing for the latest activity.
+      // Day-canonical URLs in /sitemap-days.xml concentrate link equity
+      // per specific date; keep this as a lower-priority landing page.
       entries.push({
         url: `${SITE_URL}/c/${centroidId}/t/${track}`,
         changeFrequency: 'daily',
-        priority: 0.7,
+        priority: 0.5,
         alternates: alt(`/c/${centroidId}/t/${track}`),
       });
     }

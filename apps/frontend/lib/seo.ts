@@ -21,6 +21,25 @@ export function formatMonthLabel(monthStr: string, locale: Locale = 'en'): strin
   return `${names[idx]} ${year}`;
 }
 
+// "2026-04-09" → "9 April 2026" / "9. April 2026"
+export function formatDayLabel(dateStr: string, locale: Locale = 'en'): string {
+  const [year, month, day] = dateStr.split('-');
+  const idx = Math.max(0, Math.min(11, parseInt(month, 10) - 1));
+  const names = locale === 'de' ? MONTH_NAMES_DE : MONTH_NAMES_EN;
+  const d = parseInt(day, 10);
+  return locale === 'de' ? `${d}. ${names[idx]} ${year}` : `${d} ${names[idx]} ${year}`;
+}
+
+// YYYY-MM-DD format validator.
+export function isValidDateSlug(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split('-').map(n => parseInt(n, 10));
+  if (m < 1 || m > 12 || d < 1 || d > 31 || y < 2000 || y > 2100) return false;
+  // Reject clearly invalid calendar dates (e.g. 2026-02-30).
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
 // Turn SECTOR_SUBJECT style labels into readable lowercase phrases.
 export function humanizeEnum(s: string): string {
   return s.replace(/_/g, ' ').toLowerCase();
