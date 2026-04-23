@@ -131,6 +131,43 @@ _MERZ_REVERSE = re.compile(
     re.IGNORECASE,
 )
 
+# Carney: PM of Canada since March 2025. DeepSeek defaults to his prior
+# roles (Bank of Canada 2008-2013, Bank of England 2013-2020, central
+# banker, Liberal leader) or outright fabricates (Foreign Minister).
+# Keywords that signal a wrong Carney role:
+_CARNEY_BAD_KEYWORDS = (
+    r"(?:former|ex-?)\s+(?:Bank\s+of\s+(?:Canada|England)\s+)?[Gg]overnor"
+    r"|(?:former|ex-?)\s+[Gg]overnor\s+of\s+the\s+Bank\s+of\s+(?:Canada|England)"
+    r"|(?:former|ex-?)\s+central\s+banker"
+    r"|(?:Canada'?s?|Canadian)\s+(?:former|ex-?)\s+central\s+banker"
+    r"|(?:Canadian|Canada'?s?)\s+Foreign\s+Minister"
+    r"|Liberal(?:\s+Party)?\s+(?:leader|chief|head)"
+    r"|opposition\s+leader"
+)
+
+# Pattern A: bad_role + name ("Former Bank of Canada governor Mark Carney")
+_CARNEY_PREFIX = re.compile(
+    r"\b(?:"
+    r"(?:former|ex-?)\s+(?:Bank\s+of\s+(?:Canada|England)\s+)?[Gg]overnor(?:\s+of\s+the\s+Bank\s+of\s+(?:Canada|England))?"
+    r"|(?:former|ex-?)\s+central\s+banker"
+    r"|(?:Canadian|Canada'?s?)\s+Foreign\s+Minister"
+    r"|Liberal(?:\s+Party)?\s+(?:leader|chief|head)"
+    r")\s+",
+    re.IGNORECASE,
+)
+
+# Pattern B: "Mark Carney, <appositive with bad keywords>,"
+_CARNEY_APPOSITIVE = re.compile(
+    r"(Mark\s+Carney)\s*,\s*(?:the\s+)?[^,]*?(?:" + _CARNEY_BAD_KEYWORDS + r")[^,]*,",
+    re.IGNORECASE,
+)
+
+# Pattern C: "Canada's former central banker, Mark Carney" -> "Prime Minister Mark Carney"
+_CARNEY_REVERSE = re.compile(
+    r"(?:Canada'?s?|Canadian)?\s*(?:former|ex-?)\s+(?:central\s+banker|Bank\s+of\s+(?:Canada|England)\s+[Gg]overnor)\s*,\s*(Mark\s+Carney)",
+    re.IGNORECASE,
+)
+
 
 def fix_role_hallucinations(text):
     """Fix incorrect roles injected by LLM training data."""
@@ -152,6 +189,23 @@ def fix_role_hallucinations(text):
     text = re.sub(
         _MERZ_PREFIX.pattern + r"(Merz)(?!\w)",
         r"Chancellor \1",
+        text,
+        flags=re.IGNORECASE,
+    )
+    # Carney pattern B: appositive "Mark Carney, former governor of the Bank of Canada,"
+    text = _CARNEY_APPOSITIVE.sub(r"Prime Minister \1,", text)
+    # Carney pattern C: reverse "Canada's former central banker, Mark Carney"
+    text = _CARNEY_REVERSE.sub(r"Prime Minister \1", text)
+    # Carney pattern A: prefix "Former Bank of Canada governor Mark Carney"
+    text = re.sub(
+        _CARNEY_PREFIX.pattern + r"(Mark\s+Carney)",
+        r"Prime Minister \1",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        _CARNEY_PREFIX.pattern + r"(Carney)(?!\w)",
+        r"Prime Minister \1",
         text,
         flags=re.IGNORECASE,
     )
