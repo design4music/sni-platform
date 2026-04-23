@@ -68,7 +68,8 @@ class PipelineDaemon:
         self.social_interval = 3600  # 1 hour - Slot 5: Social Posting (testing)
         self.purge_interval = 86400  # 24 hours - daily cleanup
 
-        # Last run timestamps
+        # Last run timestamps (loaded from daemon_state in _load_last_run so
+        # restarts do not re-fire every slot immediately).
         self.last_run = {
             "ingestion": 0,
             "classification": 0,
@@ -112,6 +113,58 @@ class PipelineDaemon:
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
+
+        # Restore last_run from DB (prevents re-firing all slots on restart)
+        self._load_last_run()
+
+    def _load_last_run(self):
+        """Populate self.last_run from daemon_state table.
+
+        Missing rows leave the in-memory default (0.0) so first-ever starts
+        still fire all slots.
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT slot_name, EXTRACT(EPOCH FROM last_run) FROM daemon_state"
+                )
+                rows = dict(cur.fetchall())
+        except Exception as e:
+            print("daemon_state read failed (%s); slots will fire immediately." % e)
+            return
+        finally:
+            self.return_connection(conn)
+
+        restored = 0
+        for slot in self.last_run:
+            if slot in rows and rows[slot] is not None:
+                self.last_run[slot] = float(rows[slot])
+                restored += 1
+        if restored:
+            print("Restored last_run for %d slot(s) from daemon_state" % restored)
+
+    def _save_last_run(self, slot_name: str):
+        """Persist a slot's last_run timestamp. Best-effort."""
+        ts = self.last_run.get(slot_name)
+        if not ts:
+            return
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO daemon_state (slot_name, last_run, updated_at)
+                         VALUES (%s, to_timestamp(%s), NOW())
+                         ON CONFLICT (slot_name) DO UPDATE SET
+                           last_run = EXCLUDED.last_run,
+                           updated_at = NOW()""",
+                    (slot_name, ts),
+                )
+            conn.commit()
+        except Exception as e:
+            print("daemon_state write failed for %s: %s" % (slot_name, e))
+        finally:
+            self.return_connection(conn)
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
@@ -691,11 +744,14 @@ class PipelineDaemon:
             self.return_connection(conn)
 
     def run_centroid_rolling_summaries(self):
-        """Phase 5.5-rolling: refresh rolling_30d centroid_summaries for stale centroids.
+        """Phase 5.5-rolling: refresh rolling_30d centroid_summaries.
 
-        Picks centroids with promoted events in the last 30 days whose existing
-        rolling_30d summary is missing or older than self.centroid_summary_stale_hours.
-        Budget-capped by self.centroid_summary_max_per_run.
+        Picks centroids with promoted events in the last 30 days, ordered by
+        oldest generated_at first (so every centroid cycles through). The
+        generator itself decides to regenerate based on content fingerprint
+        (top-N events hash) — NOT on a time staleness window. Budget-capped
+        as a safety cap; in steady state most invocations return 'unchanged'
+        without an LLM call.
         """
         from datetime import date
 
@@ -703,14 +759,14 @@ class PipelineDaemon:
             generate_centroid_summary,
         )
 
-        stale_hours = getattr(self, "centroid_summary_stale_hours", 24)
         max_per_run = getattr(self, "centroid_summary_max_per_run", 100)
 
         conn = self.get_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT DISTINCT cent.id, COALESCE(cent.label, cent.id)
+                    """SELECT DISTINCT cent.id, COALESCE(cent.label, cent.id),
+                              cs.generated_at
                          FROM centroids_v3 cent
                          JOIN ctm c ON c.centroid_id = cent.id
                          JOIN events_v3 e ON e.ctm_id = c.id
@@ -720,11 +776,9 @@ class PipelineDaemon:
                         WHERE e.is_promoted = true
                           AND e.merged_into IS NULL
                           AND e.date >= CURRENT_DATE - INTERVAL '30 days'
-                          AND (cs.generated_at IS NULL
-                               OR cs.generated_at < NOW() - (%s || ' hours')::interval)
-                        ORDER BY cent.id
+                        ORDER BY cs.generated_at ASC NULLS FIRST, cent.id
                         LIMIT %s""",
-                    (str(stale_hours), max_per_run),
+                    (max_per_run,),
                 )
                 centroids = cur.fetchall()
         finally:
@@ -734,13 +788,13 @@ class PipelineDaemon:
             print("No centroids need rolling_30d refresh")
             return
 
-        print("Phase 5.5-rolling: %d centroids need refresh..." % len(centroids))
+        print("Phase 5.5-rolling: checking %d centroids..." % len(centroids))
         import asyncio
 
         period_end = date.today()
-        ok = fail = 0
+        ok = fail = unchanged = 0
         tier_counts = {1: 0, 2: 0, 3: 0}
-        for centroid_id, label in centroids:
+        for centroid_id, label, _ in centroids:
             try:
                 result = asyncio.run(
                     generate_centroid_summary(
@@ -750,14 +804,18 @@ class PipelineDaemon:
                         country_label=label,
                     )
                 )
-                tier_counts[result["tier"]] = tier_counts.get(result["tier"], 0) + 1
-                ok += 1
+                if result.get("status") == "unchanged":
+                    unchanged += 1
+                else:
+                    tier_counts[result["tier"]] = tier_counts.get(result["tier"], 0) + 1
+                    ok += 1
             except Exception as e:
                 fail += 1
                 print("  5.5-rolling failed %s: %s" % (centroid_id, e))
         print(
-            "Phase 5.5-rolling: %d ok, %d fail (tiers 1=%d 2=%d 3=%d)"
-            % (ok, fail, tier_counts[1], tier_counts[2], tier_counts[3])
+            "Phase 5.5-rolling: %d regenerated, %d unchanged (skipped), %d fail "
+            "(tiers 1=%d 2=%d 3=%d)"
+            % (ok, unchanged, fail, tier_counts[1], tier_counts[2], tier_counts[3])
         )
 
     def run_materialize_signals(self):
@@ -977,6 +1035,7 @@ class PipelineDaemon:
                 self.timeout_ingestion,
             )
             self.last_run["ingestion"] = time.time()
+            self._save_last_run("ingestion")
         else:
             remaining = int(
                 self.ingestion_interval - (time.time() - self.last_run["ingestion"])
@@ -1028,6 +1087,7 @@ class PipelineDaemon:
             else:
                 print("\nSlot 2 CLASSIFICATION: no work")
             self.last_run["classification"] = time.time()
+            self._save_last_run("classification")
         else:
             remaining = int(
                 self.classification_interval
@@ -1123,6 +1183,7 @@ class PipelineDaemon:
                 300,
             )
             self.last_run["clustering"] = time.time()
+            self._save_last_run("clustering")
         else:
             remaining = int(
                 self.clustering_interval - (time.time() - self.last_run["clustering"])
@@ -1182,6 +1243,7 @@ class PipelineDaemon:
                 3600,
             )
             self.last_run["enrichment"] = time.time()
+            self._save_last_run("enrichment")
         else:
             remaining = int(
                 self.enrichment_interval - (time.time() - self.last_run["enrichment"])
@@ -1200,6 +1262,7 @@ class PipelineDaemon:
                 self.timeout_social,
             )
             self.last_run["social"] = time.time()
+            self._save_last_run("social")
         elif self.config.social_posting_enabled:
             remaining = int(
                 self.social_interval - (time.time() - self.last_run["social"])
@@ -1218,6 +1281,7 @@ class PipelineDaemon:
                 self.timeout_purge,
             )
             self.last_run["purge"] = time.time()
+            self._save_last_run("purge")
         else:
             remaining = int(
                 self.purge_interval - (time.time() - self.last_run["purge"])

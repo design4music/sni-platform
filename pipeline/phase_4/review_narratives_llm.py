@@ -19,6 +19,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from core.config import config
+from core.llm_logger import log_llm_call
 from core.llm_utils import check_rate_limit
 
 SYSTEM_PROMPT = """You review event-narrative matches for quality.
@@ -54,6 +55,7 @@ def call_llm(user_prompt, max_tokens=1000):
 
     for attempt in range(config.llm_retry_attempts):
         try:
+            t0 = time.time()
             with httpx.Client(timeout=config.llm_timeout_seconds) as client:
                 response = client.post(
                     "%s/chat/completions" % config.deepseek_api_url,
@@ -67,7 +69,13 @@ def call_llm(user_prompt, max_tokens=1000):
                         "LLM error: %d %s" % (response.status_code, response.text[:200])
                     )
 
-                text = response.json()["choices"][0]["message"]["content"].strip()
+                data = response.json()
+                log_llm_call(
+                    "narrative_review",
+                    data.get("usage"),
+                    int((time.time() - t0) * 1000),
+                )
+                text = data["choices"][0]["message"]["content"].strip()
                 if text.startswith("```"):
                     text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
                 return json.loads(text)

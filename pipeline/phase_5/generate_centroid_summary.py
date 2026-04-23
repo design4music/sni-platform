@@ -11,13 +11,16 @@ See db/migrations/20260420_add_centroid_summaries.sql for schema.
 """
 
 import asyncio
+import hashlib
 import json
+import time
 from datetime import date, timedelta
 
 import httpx
 import psycopg2
 
 from core.config import config
+from core.llm_logger import log_llm_call
 from core.llm_utils import async_check_rate_limit, extract_json, fix_role_hallucinations
 
 # Tier thresholds
@@ -274,6 +277,7 @@ async def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int) -> di
     }
     async with httpx.AsyncClient(timeout=120) as client:
         for attempt in range(3):
+            t0 = time.time()
             resp = await client.post(
                 f"{config.deepseek_api_url}/chat/completions",
                 headers=headers,
@@ -283,8 +287,11 @@ async def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int) -> di
                 continue
             if resp.status_code != 200:
                 raise RuntimeError(f"LLM {resp.status_code}: {resp.text[:300]}")
-            content = resp.json()["choices"][0]["message"]["content"]
-            return extract_json(content)
+            data = resp.json()
+            log_llm_call(
+                "centroid_summary", data.get("usage"), int((time.time() - t0) * 1000)
+            )
+            return extract_json(data["choices"][0]["message"]["content"])
         raise RuntimeError("LLM retries exhausted")
 
 
@@ -326,6 +333,61 @@ def _sanitize_and_validate(parsed: dict, events_by_track: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 
+def compute_source_fingerprint(events_by_track: dict) -> str:
+    """Stable hash of the (track, event_id, source_count) tuples feeding the LLM.
+
+    Two centroids with identical top-N events (same ranking, same source counts)
+    produce the same fingerprint. One new event entering the top-N, or any
+    source_count change on a ranked event, flips the hash.
+    """
+    parts = []
+    for track in sorted(events_by_track.keys()):
+        for e in events_by_track[track]:
+            parts.append(f"{track}|{e['id']}|{e['source_count']}")
+    return hashlib.md5("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def get_stored_fingerprint(
+    conn, centroid_id: str, period_kind: str, period_end: date
+) -> str | None:
+    """Return the stored fingerprint or None."""
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT source_fingerprint FROM centroid_summaries
+             WHERE centroid_id=%s AND period_kind=%s AND period_end=%s""",
+        (centroid_id, period_kind, period_end),
+    )
+    row = cur.fetchone()
+    return row[0] if row else None
+
+
+# Hard-max age: regenerate after this many days even if fingerprint matches.
+# Safety net against stale content the fingerprint can't detect (e.g., ambient
+# context drift that doesn't show up in top-10-per-track event_ids).
+ROLLING_HARD_MAX_DAYS = 7
+
+
+def should_skip_regeneration(
+    conn, centroid_id: str, period_kind: str, period_end: date, fingerprint: str
+) -> bool:
+    """Return True if fingerprint matches stored AND stored is recent enough."""
+    if period_kind != "rolling_30d":
+        return False  # monthly snapshots always regenerate
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT source_fingerprint,
+                  (NOW() - generated_at) < (%s || ' days')::interval AS recent
+             FROM centroid_summaries
+            WHERE centroid_id=%s AND period_kind='rolling_30d'""",
+        (str(ROLLING_HARD_MAX_DAYS), centroid_id),
+    )
+    row = cur.fetchone()
+    if not row:
+        return False
+    stored_fp, recent = row
+    return stored_fp == fingerprint and bool(recent)
+
+
 def _upsert_summary(
     conn,
     centroid_id: str,
@@ -334,6 +396,7 @@ def _upsert_summary(
     tier: int,
     parsed: dict,
     source_event_count: int,
+    source_fingerprint: str | None = None,
 ) -> None:
     cur = conn.cursor()
     if period_kind == "rolling_30d":
@@ -347,8 +410,8 @@ def _upsert_summary(
         """INSERT INTO centroid_summaries (
              centroid_id, period_kind, period_end, tier,
              overall_en, overall_de, economy, politics, security, society,
-             source_event_count)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+             source_event_count, source_fingerprint)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
            ON CONFLICT (centroid_id, period_kind, period_end) DO UPDATE SET
              tier = EXCLUDED.tier,
              overall_en = EXCLUDED.overall_en,
@@ -358,6 +421,7 @@ def _upsert_summary(
              security = EXCLUDED.security,
              society = EXCLUDED.society,
              source_event_count = EXCLUDED.source_event_count,
+             source_fingerprint = EXCLUDED.source_fingerprint,
              generated_at = NOW()""",
         (
             centroid_id,
@@ -387,6 +451,7 @@ def _upsert_summary(
                 else None
             ),
             source_event_count,
+            source_fingerprint,
         ),
     )
     conn.commit()
@@ -426,6 +491,21 @@ async def generate_centroid_summary(
     total_events = sum(len(v) for v in events_by_track.values())
     tier = classify_tier(events_by_track)
 
+    # Content-based skip: if the top-N events feeding the LLM haven't changed
+    # since last generation AND the stored row is still recent, don't spend
+    # the LLM call. Applies only to rolling_30d (monthly always regenerates).
+    fingerprint = compute_source_fingerprint(events_by_track)
+    if should_skip_regeneration(
+        conn, centroid_id, period_kind, period_end, fingerprint
+    ):
+        conn.close()
+        return {
+            "tier": 0,
+            "source_event_count": total_events,
+            "parsed": None,
+            "status": "unchanged",
+        }
+
     if tier == 3:
         # Canned, no LLM
         parsed = {
@@ -437,7 +517,14 @@ async def generate_centroid_summary(
             "society": None,
         }
         _upsert_summary(
-            conn, centroid_id, period_kind, period_end, tier, parsed, total_events
+            conn,
+            centroid_id,
+            period_kind,
+            period_end,
+            tier,
+            parsed,
+            total_events,
+            source_fingerprint=fingerprint,
         )
         conn.close()
         return {"tier": 3, "source_event_count": total_events, "parsed": parsed}
@@ -455,13 +542,22 @@ async def generate_centroid_summary(
     )
 
     system_prompt = SYSTEM_PROMPT_TIER1 if tier == 1 else SYSTEM_PROMPT_TIER2
-    max_tokens = 3000 if tier == 1 else 800
+    # Tier-1: 1500 caps the real ~1000-1300 token bilingual output; 3000 just
+    # let the model ramble (2026-04-23 cost-control pass).
+    max_tokens = 1500 if tier == 1 else 800
 
     parsed = await _call_llm(system_prompt, user_prompt, max_tokens)
     parsed = _sanitize_and_validate(parsed, events_by_track)
 
     _upsert_summary(
-        conn, centroid_id, period_kind, period_end, tier, parsed, total_events
+        conn,
+        centroid_id,
+        period_kind,
+        period_end,
+        tier,
+        parsed,
+        total_events,
+        source_fingerprint=fingerprint,
     )
     conn.close()
     return {"tier": tier, "source_event_count": total_events, "parsed": parsed}

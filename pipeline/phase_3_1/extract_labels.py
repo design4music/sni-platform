@@ -26,6 +26,7 @@ import psycopg2
 from loguru import logger
 
 from core.config import MAX_API_ERRORS, config
+from core.llm_logger import log_llm_call
 from core.ontology import (
     INDUSTRIES,
     ONTOLOGY_VERSION,
@@ -96,6 +97,7 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
 
     for attempt in range(config.llm_retry_attempts):
         try:
+            t0 = time.time()
             with httpx.Client(timeout=config.v3_p31_timeout_seconds) as client:
                 response = client.post(
                     "{}/chat/completions".format(config.deepseek_api_url),
@@ -116,6 +118,11 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
                     )
 
                 data = response.json()
+                log_llm_call(
+                    "labels",
+                    data.get("usage"),
+                    int((time.time() - t0) * 1000),
+                )
                 return data["choices"][0]["message"]["content"].strip()
 
         except Exception as e:

@@ -1,10 +1,15 @@
 services:
+  # Pipeline daemon. autoDeploy:false so commits do NOT restart the daemon.
+  # Every restart costs LLM tokens (on-restart-all-slots-fire effect, even
+  # with daemon_state persistence the immediate next slot window is earlier
+  # than it would otherwise be). Deploy manually from Render dashboard when
+  # pipeline code actually changes. (See docs/LLM_COST_AUDIT_2026-04-22.md.)
   - type: worker
     name: sni-pipeline-daemon
     env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python pipeline/runner/pipeline_daemon.py"
-    autoDeploy: true
+    autoDeploy: false
 
   - type: web
     name: sni-extraction-api

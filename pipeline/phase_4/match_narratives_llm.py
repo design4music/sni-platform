@@ -21,6 +21,7 @@ import psycopg2
 from psycopg2.extras import Json, RealDictCursor, execute_values
 
 from core.config import config
+from core.llm_logger import log_llm_call
 from core.llm_utils import check_rate_limit
 
 # Minimum keyword overlap words to qualify an event as candidate
@@ -65,6 +66,7 @@ def call_llm(system_prompt, user_prompt, max_tokens=2000):
 
     for attempt in range(config.llm_retry_attempts):
         try:
+            t0 = time.time()
             with httpx.Client(timeout=config.llm_timeout_seconds) as client:
                 response = client.post(
                     "%s/chat/completions" % config.deepseek_api_url,
@@ -78,7 +80,13 @@ def call_llm(system_prompt, user_prompt, max_tokens=2000):
                         "LLM error: %d %s" % (response.status_code, response.text[:200])
                     )
 
-                text = response.json()["choices"][0]["message"]["content"].strip()
+                data = response.json()
+                log_llm_call(
+                    "narrative_discovery",
+                    data.get("usage"),
+                    int((time.time() - t0) * 1000),
+                )
+                text = data["choices"][0]["message"]["content"].strip()
                 if text.startswith("```"):
                     text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
                 return json.loads(text)

@@ -31,6 +31,7 @@ if sys.platform == "win32":
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.config import DAILY_BRIEF_MIN_CLUSTERS, DAY_CLOSURE_UTC_HOUR, config
+from core.llm_logger import log_llm_call
 from core.llm_utils import async_check_rate_limit, extract_json, fix_role_hallucinations
 from core.prompts import DAILY_BRIEF_SYSTEM_PROMPT, DAILY_BRIEF_USER_PROMPT
 
@@ -123,12 +124,15 @@ def format_yesterday_block(yday: list) -> str:
 
 
 async def call_llm(payload: dict) -> dict:
+    import time as _time
+
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
         "Content-Type": "application/json",
     }
     async with httpx.AsyncClient(timeout=120) as client:
         for attempt in range(3):
+            t0 = _time.time()
             response = await client.post(
                 "%s/chat/completions" % config.deepseek_api_url,
                 headers=headers,
@@ -141,6 +145,9 @@ async def call_llm(payload: dict) -> dict:
                     "LLM error %d: %s" % (response.status_code, response.text[:200])
                 )
             data = response.json()
+            log_llm_call(
+                "daily_brief", data.get("usage"), int((_time.time() - t0) * 1000)
+            )
             return extract_json(data["choices"][0]["message"]["content"])
         raise RuntimeError("LLM retries exhausted")
 

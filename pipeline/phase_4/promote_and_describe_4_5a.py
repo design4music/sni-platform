@@ -38,6 +38,7 @@ from core.config import (
     TOP_CLUSTERS_PER_DAY,
     config,
 )
+from core.llm_logger import log_llm_call
 from core.llm_utils import async_check_rate_limit, extract_json, fix_role_hallucinations
 from core.prompts import (
     DE_TITLE_BATCH_SYSTEM_PROMPT,
@@ -251,13 +252,16 @@ def pick_mechanical_english_title(titles: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 
 
-async def _call_llm(payload: dict) -> dict:
+async def _call_llm(payload: dict, phase: str = "event_prose") -> dict:
+    import time as _time
+
     headers = {
         "Authorization": "Bearer %s" % config.deepseek_api_key,
         "Content-Type": "application/json",
     }
     async with httpx.AsyncClient(timeout=120) as client:
         for attempt in range(3):
+            t0 = _time.time()
             response = await client.post(
                 "%s/chat/completions" % config.deepseek_api_url,
                 headers=headers,
@@ -270,6 +274,7 @@ async def _call_llm(payload: dict) -> dict:
                     "LLM error %d: %s" % (response.status_code, response.text[:200])
                 )
             data = response.json()
+            log_llm_call(phase, data.get("usage"), int((_time.time() - t0) * 1000))
             return extract_json(data["choices"][0]["message"]["content"])
         raise RuntimeError("LLM retries exhausted")
 
@@ -322,7 +327,7 @@ async def llm_title_and_summary(ev: dict) -> dict:
         "temperature": 0.4,
         "max_tokens": max_tokens,
     }
-    result = await _call_llm(payload)
+    result = await _call_llm(payload, phase="event_prose_full")
     return {
         "title_en": fix_role_hallucinations((result.get("title_en") or "").strip()),
         "title_de": (result.get("title_de") or "").strip(),
@@ -350,7 +355,7 @@ async def llm_title_only(ev: dict) -> dict:
         "temperature": 0.4,
         "max_tokens": 200,
     }
-    result = await _call_llm(payload)
+    result = await _call_llm(payload, phase="event_prose_title")
     return {
         "title_en": fix_role_hallucinations((result.get("title_en") or "").strip()),
         "title_de": (result.get("title_de") or "").strip(),
@@ -386,8 +391,11 @@ async def batch_translate_titles_de(titles: list[str]) -> list[str]:
             "max_tokens": DE_TITLE_BATCH_SIZE * 80,
         }
         try:
+            import time as _time
+
             async with httpx.AsyncClient(timeout=120) as client:
                 for attempt in range(3):
+                    t0 = _time.time()
                     response = await client.post(
                         "%s/chat/completions" % config.deepseek_api_url,
                         headers=headers,
@@ -397,9 +405,13 @@ async def batch_translate_titles_de(titles: list[str]) -> list[str]:
                         continue
                     if response.status_code != 200:
                         raise RuntimeError("LLM error %d" % response.status_code)
-                    content = response.json()["choices"][0]["message"][
-                        "content"
-                    ].strip()
+                    data = response.json()
+                    log_llm_call(
+                        "de_batch_translate",
+                        data.get("usage"),
+                        int((_time.time() - t0) * 1000),
+                    )
+                    content = data["choices"][0]["message"]["content"].strip()
                     break
                 else:
                     continue
