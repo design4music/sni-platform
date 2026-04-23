@@ -84,19 +84,29 @@ def extract_json(text):
 
 # --- Post-processing: fix LLM training-data role hallucinations ---
 
-# Leaders whose roles DeepSeek gets wrong due to training cutoff.
-# Map: regex pattern -> replacement. Applied to all LLM prose output.
-_ROLE_FIXES = [
-    # Trump: inaugurated Jan 2025, DeepSeek says "Former President"
-    (
-        re.compile(
-            r"\bFormer\s+(?:U\.?S\.?\s+)?President\s+(Donald\s+)?Trump", re.IGNORECASE
-        ),
-        lambda m: (
-            ("President %sTrump" % m.group(1)) if m.group(1) else "President Trump"
-        ),
-    ),
-]
+# Localized titles per leader. DE uses the natural German title so we
+# don't end up with "Chancellor Merz" (English word) inside German prose.
+_TITLES = {
+    "en": {"trump": "President", "merz": "Chancellor", "carney": "Prime Minister"},
+    "de": {"trump": "Präsident", "merz": "Bundeskanzler", "carney": "Premierminister"},
+}
+
+
+def _trump_fix_factory(locale):
+    title = _TITLES[locale]["trump"]
+
+    def _sub(m):
+        return (
+            ("%s %sTrump" % (title, m.group(1))) if m.group(1) else "%s Trump" % title
+        )
+
+    return _sub
+
+
+# Trump: inaugurated Jan 2025, DeepSeek says "Former President"
+_TRUMP_FORMER = re.compile(
+    r"\bFormer\s+(?:U\.?S\.?\s+)?President\s+(Donald\s+)?Trump", re.IGNORECASE
+)
 
 # Merz: became Chancellor May 2025. DeepSeek uses many phrasings:
 #   PREFIX:     "opposition leader Friedrich Merz"
@@ -168,45 +178,174 @@ _CARNEY_REVERSE = re.compile(
     re.IGNORECASE,
 )
 
+# --- German-language Merz patterns (pure-DE prose, no English leaks) ---
+# Real DE hallucinations from Render look like:
+#   "Friedrich Merz, der Vorsitzende der größten Oppositionspartei,"
+#   "Friedrich Merz, der Vorsitzende der oppositionellen CDU,"
+#   "Deutschlands Oppositionsführer Friedrich Merz"
+_MERZ_DE_APPOSITIVE = re.compile(
+    r"(Friedrich\s+Merz)\s*,\s*(?:der|die|des)\s+[^,]*?"
+    r"(?:Opposition|Oppositionsführer|Oppositionspartei|oppositionell|CDU[-\s](?:Chef|Vorsitzender|Fraktionschef)|konservativ)"
+    r"[^,]*,",
+    re.IGNORECASE,
+)
+_MERZ_DE_REVERSE = re.compile(
+    r"(?:Deutschlands\s+)?Oppositionsführer\s+(Friedrich\s+Merz)",
+    re.IGNORECASE,
+)
 
-def fix_role_hallucinations(text):
-    """Fix incorrect roles injected by LLM training data."""
+# --- German-language Carney patterns ---
+# E.g. "Mark Carney, der ehemalige Gouverneur der Bank of Canada,"
+_CARNEY_DE_APPOSITIVE = re.compile(
+    r"(Mark\s+Carney)\s*,\s*(?:der|die|des)\s+[^,]*?"
+    r"(?:ehemalig\w*\s+(?:Gouverneur|Zentralbankchef|Notenbankchef|Chef\s+der\s+Bank\s+of\s+(?:Canada|England)|Bank[-\s]of[-\s](?:Canada|England)[-\s]Chef)"
+    r"|(?:Kanadas\s+)?Außenminister"
+    r"|Liberale[rn]?\s+(?:Parteichef|Chef|Vorsitzend\w*))"
+    r"[^,]*,",
+    re.IGNORECASE,
+)
+_CARNEY_DE_PREFIX = re.compile(
+    r"\b(?:"
+    r"ehemalig\w*\s+(?:Gouverneur|Zentralbankchef|Notenbankchef)(?:\s+der\s+Bank\s+of\s+(?:Canada|England))?"
+    r"|(?:Kanadas\s+)?Außenminister"
+    r"|Liberale[rn]?\s+(?:Parteichef|Chef|Vorsitzend\w*)"
+    r")\s+",
+    re.IGNORECASE,
+)
+
+# DE Trump: "ehemaligen US-Präsidenten Donald Trump" / "Ex-Präsident Trump"
+# Consumes a leading article when present so the replacement doesn't
+# orphan "des" / "den" in front of the new nominative "Präsident".
+_TRUMP_DE_FORMER = re.compile(
+    r"\b(?:(?:der|den|des|dem|einem?)\s+)?(?:ehemalig\w*|Ex-)\s*(?:US-)?Präsident(?:en|s)?\s+(Donald\s+)?Trump",
+    re.IGNORECASE,
+)
+
+
+def fix_role_hallucinations(text, locale="en"):
+    """Fix incorrect roles injected by LLM training data.
+
+    locale controls the title word ('en' -> Chancellor/President/Prime
+    Minister, 'de' -> Bundeskanzler/Präsident/Premierminister). Pass
+    'de' when cleaning German prose; the English default stays the
+    right choice for English output.
+    """
     if not text:
         return text
-    for pattern, replacement in _ROLE_FIXES:
-        text = pattern.sub(replacement, text)
+    if locale not in _TITLES:
+        locale = "en"
+    titles = _TITLES[locale]
+    merz_title = titles["merz"]
+    carney_title = titles["carney"]
+
+    # Trump
+    text = _TRUMP_FORMER.sub(_trump_fix_factory(locale), text)
     # Merz pattern B: appositive "Friedrich Merz, the opposition leader,"
-    text = _MERZ_APPOSITIVE.sub(r"Chancellor \1,", text)
+    text = _MERZ_APPOSITIVE.sub(r"%s \1," % merz_title, text)
     # Merz pattern C: reverse "Germany's opposition leader, Friedrich Merz"
-    text = _MERZ_REVERSE.sub(r"Chancellor \1", text)
+    text = _MERZ_REVERSE.sub(r"%s \1" % merz_title, text)
     # Merz pattern A: prefix "opposition leader Friedrich Merz"
     text = re.sub(
         _MERZ_PREFIX.pattern + r"(Friedrich\s+Merz)",
-        r"Chancellor \1",
+        r"%s \1" % merz_title,
         text,
         flags=re.IGNORECASE,
     )
     text = re.sub(
         _MERZ_PREFIX.pattern + r"(Merz)(?!\w)",
-        r"Chancellor \1",
+        r"%s \1" % merz_title,
         text,
         flags=re.IGNORECASE,
     )
     # Carney pattern B: appositive "Mark Carney, former governor of the Bank of Canada,"
-    text = _CARNEY_APPOSITIVE.sub(r"Prime Minister \1,", text)
+    text = _CARNEY_APPOSITIVE.sub(r"%s \1," % carney_title, text)
     # Carney pattern C: reverse "Canada's former central banker, Mark Carney"
-    text = _CARNEY_REVERSE.sub(r"Prime Minister \1", text)
+    text = _CARNEY_REVERSE.sub(r"%s \1" % carney_title, text)
     # Carney pattern A: prefix "Former Bank of Canada governor Mark Carney"
     text = re.sub(
         _CARNEY_PREFIX.pattern + r"(Mark\s+Carney)",
-        r"Prime Minister \1",
+        r"%s \1" % carney_title,
         text,
         flags=re.IGNORECASE,
     )
     text = re.sub(
         _CARNEY_PREFIX.pattern + r"(Carney)(?!\w)",
-        r"Prime Minister \1",
+        r"%s \1" % carney_title,
         text,
         flags=re.IGNORECASE,
     )
+
+    if locale == "de":
+        # Pure-DE prose: catch German phrasings the English patterns miss.
+        text = _TRUMP_DE_FORMER.sub(
+            lambda m: (
+                ("Präsident %sTrump" % m.group(1)) if m.group(1) else "Präsident Trump"
+            ),
+            text,
+        )
+        text = _MERZ_DE_APPOSITIVE.sub(r"%s \1," % merz_title, text)
+        text = _MERZ_DE_REVERSE.sub(r"%s \1" % merz_title, text)
+        text = _CARNEY_DE_APPOSITIVE.sub(r"%s \1," % carney_title, text)
+        text = re.sub(
+            _CARNEY_DE_PREFIX.pattern + r"(Mark\s+Carney)",
+            r"%s \1" % carney_title,
+            text,
+            flags=re.IGNORECASE,
+        )
+        text = re.sub(
+            _CARNEY_DE_PREFIX.pattern + r"(Carney)(?!\w)",
+            r"%s \1" % carney_title,
+            text,
+            flags=re.IGNORECASE,
+        )
+        # Cleanup: a prior backfill left English titles in DE prose.
+        # Swap them for the German equivalents. Idempotent.
+        text = re.sub(
+            r"\bChancellor\s+(Friedrich\s+)?Merz\b", r"Bundeskanzler \1Merz", text
+        )
+        text = re.sub(
+            r"\bPrime\s+Minister\s+(Mark\s+)?Carney\b",
+            r"Premierminister \1Carney",
+            text,
+        )
+        text = re.sub(r"\bPresident\s+(Donald\s+)?Trump\b", r"Präsident \1Trump", text)
+
     return text
+
+
+# --- Context-aware: fix title that dropped the subject name ---
+# E.g. title "Former Bank of Canada governor says ..." where the
+# summary references Carney. The regex-only fix in fix_role_hallucinations
+# can't touch this because the name isn't in the title.
+_BANK_GOV_TITLE_EN = re.compile(
+    r"(?:former|ex-?)\s+(?:Bank\s+of\s+(?:Canada|England)\s+)?[Gg]overnor"
+    r"(?:\s+of\s+the\s+Bank\s+of\s+(?:Canada|England))?",
+    re.IGNORECASE,
+)
+_BANK_GOV_TITLE_DE = re.compile(
+    r"[Ee]hemalig\w*\s+(?:"
+    r"Gouverneur|Zentralbankchef|Notenbankchef"
+    r"|Bank[-\s]of[-\s](?:Canada|England)[-\s]Chef"
+    r")"
+    r"(?:\s+der\s+Bank\s+of\s+(?:Canada|England))?",
+    re.IGNORECASE,
+)
+
+
+def fix_title_with_context(title, summary, locale="en"):
+    """Fix headline-style titles that drop the subject name.
+
+    When the title contains a former-governor phrase (classic Carney
+    LLM hallucination) AND the summary references "Carney", replace
+    the phrase with the correct PM title in the title. Safe because
+    the summary reference anchors the subject.
+    """
+    if not title or not summary:
+        return title
+    if "Carney" not in summary:
+        return title
+    pattern = _BANK_GOV_TITLE_DE if locale == "de" else _BANK_GOV_TITLE_EN
+    if not pattern.search(title):
+        return title
+    carney = _TITLES.get(locale, _TITLES["en"])["carney"]
+    return pattern.sub("%s Mark Carney" % carney, title, count=1)

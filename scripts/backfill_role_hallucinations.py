@@ -29,7 +29,7 @@ import psycopg2
 from psycopg2.extras import execute_batch
 
 from core.config import config
-from core.llm_utils import fix_role_hallucinations
+from core.llm_utils import fix_role_hallucinations, fix_title_with_context
 
 LOCAL_DSN = dict(
     host=config.db_host,
@@ -43,15 +43,38 @@ RENDER_DSN = os.environ.get("RENDER_DATABASE_URL") or (
     "@dpg-d5uem563jp1c739ufrsg-a.frankfurt-postgres.render.com/sni_v2"
 )
 
-# (table, pk_column, text_columns)
+
+def _locale_for(col):
+    """Infer locale from column name suffix."""
+    return "de" if col.endswith("_de") else "en"
+
+
+# (table, pk_column, text_columns, context_fix_pairs)
+# context_fix_pairs: [(title_col, summary_col)] — pairs where we apply
+# fix_title_with_context (title gets fixed if summary anchors the subject).
 TARGETS = [
-    ("events_v3", "id", ["title", "title_de", "summary", "summary_de"]),
-    ("daily_briefs", None, ["brief_en", "brief_de"]),  # composite PK, handled specially
-    ("ctm", "id", ["summary_text", "summary_text_de"]),
-    ("narratives", "id", ["label", "label_de", "description", "description_de"]),
-    ("meta_narratives", "id", ["description", "description_de"]),
-    ("epics", "id", ["title", "title_de", "summary", "summary_de"]),
-    ("centroid_summaries", "id", ["overall_en", "overall_de"]),
+    (
+        "events_v3",
+        "id",
+        ["title", "title_de", "summary", "summary_de"],
+        [("title", "summary"), ("title_de", "summary_de")],
+    ),
+    ("daily_briefs", None, ["brief_en", "brief_de"], []),
+    ("ctm", "id", ["summary_text", "summary_text_de"], []),
+    (
+        "narratives",
+        "id",
+        ["label", "label_de", "description", "description_de"],
+        [("label", "description"), ("label_de", "description_de")],
+    ),
+    ("meta_narratives", "id", ["description", "description_de"], []),
+    (
+        "epics",
+        "id",
+        ["title", "title_de", "summary", "summary_de"],
+        [("title", "summary"), ("title_de", "summary_de")],
+    ),
+    ("centroid_summaries", "id", ["overall_en", "overall_de"], []),
 ]
 
 BATCH_SIZE = 500
@@ -65,7 +88,7 @@ def connect(db):
     raise ValueError("unknown db: %s" % db)
 
 
-def process_table(conn, table, pk, columns, dry_run, changes_out):
+def process_table(conn, table, pk, columns, context_pairs, dry_run, changes_out):
     """Return dict of {column_name: change_count}."""
     counts = {c: 0 for c in columns}
 
@@ -76,6 +99,8 @@ def process_table(conn, table, pk, columns, dry_run, changes_out):
         )
     else:
         select = "SELECT %s::text, %s FROM %s" % (pk, ", ".join(columns), table)
+
+    context_map = dict(context_pairs)
 
     with conn.cursor(name="backfill_%s" % table) as cur:
         cur.itersize = 2000
@@ -91,13 +116,22 @@ def process_table(conn, table, pk, columns, dry_run, changes_out):
                 row_id, *values = row
                 key = (row_id,)
 
-            new_values = []
+            col_index = {c: i for i, c in enumerate(columns)}
+            new_values = list(values)
             row_changed = False
             for col, val in zip(columns, values):
                 if val is None:
-                    new_values.append(None)
                     continue
-                fixed = fix_role_hallucinations(val)
+                loc = _locale_for(col)
+                fixed = fix_role_hallucinations(val, locale=loc)
+                # If this column has a summary partner, also apply the
+                # context-aware title fix (headline drops the name but
+                # summary anchors it).
+                summary_col = context_map.get(col)
+                if summary_col is not None:
+                    summary_val = values[col_index[summary_col]]
+                    if summary_val:
+                        fixed = fix_title_with_context(fixed, summary_val, locale=loc)
                 if fixed != val:
                     counts[col] += 1
                     row_changed = True
@@ -110,7 +144,7 @@ def process_table(conn, table, pk, columns, dry_run, changes_out):
                             "after": fixed,
                         }
                     )
-                new_values.append(fixed)
+                new_values[col_index[col]] = fixed
 
             if row_changed:
                 pending.append((key, new_values))
@@ -160,9 +194,11 @@ def main():
 
     all_changes = []
     grand_counts = {}
-    for table, pk, cols in TARGETS:
+    for table, pk, cols, context_pairs in TARGETS:
         print("\n== %s ==" % table)
-        counts = process_table(conn, table, pk, cols, args.dry_run, all_changes)
+        counts = process_table(
+            conn, table, pk, cols, context_pairs, args.dry_run, all_changes
+        )
         for col, n in counts.items():
             grand_counts["%s.%s" % (table, col)] = n
 
