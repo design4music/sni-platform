@@ -226,7 +226,12 @@ def compute_themes(conn, ctm_id: str, date) -> list:
     ]
 
 
-async def process_ctm(ctm_id: str) -> dict:
+async def process_ctm(ctm_id: str, force_refresh: bool = False) -> dict:
+    """Generate daily briefs for a CTM's qualifying days.
+
+    Default: skips dates that already have a brief (idempotent).
+    force_refresh=True regenerates all qualifying briefs (overwrites).
+    """
     conn = get_conn()
     try:
         meta = load_ctm_meta(conn, ctm_id)
@@ -241,20 +246,31 @@ async def process_ctm(ctm_id: str) -> dict:
         # A day D is closed if now >= D+1 at DAY_CLOSURE_UTC_HOUR UTC
         # Equivalently: D <= today - 1 day, BUT only after the hour threshold
         cutoff = (now_utc - timedelta(hours=DAY_CLOSURE_UTC_HOUR)).date()
+
+        # Already-briefed dates: skip unless force_refresh.
+        already = set()
+        if not force_refresh:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT date FROM daily_briefs WHERE ctm_id = %s", (ctm_id,)
+                )
+                already = {r[0] for r in cur.fetchall()}
+
         qualifying = [
             (d, evs)
             for d, evs in by_date.items()
-            if len(evs) > DAILY_BRIEF_MIN_CLUSTERS and d < cutoff
+            if len(evs) > DAILY_BRIEF_MIN_CLUSTERS and d < cutoff and d not in already
         ]
         qualifying.sort(key=lambda x: x[0])
+        skipped = len(already & {d for d, _ in by_date.items() if d < cutoff})
         print(
-            "  %s/%s/%s: %d days with >%d promoted"
+            "  %s/%s/%s: %d days to brief (skipped %d already-briefed)"
             % (
                 meta["centroid_id"],
                 meta["track"],
                 meta["month"],
                 len(qualifying),
-                DAILY_BRIEF_MIN_CLUSTERS,
+                skipped,
             )
         )
 
@@ -313,8 +329,13 @@ async def process_ctm(ctm_id: str) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ctm-id", required=True)
+    parser.add_argument(
+        "--force-refresh",
+        action="store_true",
+        help="Regenerate briefs for dates that already have one (default: skip).",
+    )
     args = parser.parse_args()
-    stats = asyncio.run(process_ctm(args.ctm_id))
+    stats = asyncio.run(process_ctm(args.ctm_id, force_refresh=args.force_refresh))
     print("DONE", stats)
 
 
