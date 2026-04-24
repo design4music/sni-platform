@@ -1129,6 +1129,11 @@ export async function getOutletProfile(feedName: string): Promise<OutletProfile 
 }
 
 export async function getOutletNarrativeFrames(feedName: string): Promise<OutletNarrativeFrame[]> {
+  // Filter out narratives whose entity is gone. Reprocessing (e.g. the
+  // Feb/Mar backfill) deletes old event rows but leaves narratives
+  // pointing at the dead UUIDs, so ~96% of event-narratives are
+  // currently orphans. Joining events_v3 / ctm on entity_id and
+  // requiring the target to exist is the safe filter.
   return query<OutletNarrativeFrame>(
     `${feedPubsCTE()}
      SELECT n.entity_type, n.entity_id, n.label, n.description, n.title_count,
@@ -1140,6 +1145,10 @@ export async function getOutletNarrativeFrames(feedName: string): Promise<Outlet
      WHERE EXISTS (
        SELECT 1 FROM feed_pubs fp WHERE fp.publisher_name = ANY(n.top_sources)
      )
+       AND (
+         (n.entity_type = 'event' AND e.id IS NOT NULL AND e.merged_into IS NULL)
+         OR (n.entity_type = 'ctm' AND c.id IS NOT NULL)
+       )
      ORDER BY n.title_count DESC
      LIMIT 30`,
     [feedName]
