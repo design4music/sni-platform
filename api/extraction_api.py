@@ -37,9 +37,9 @@ from pipeline.phase_4.extract_ctm_narratives import (
 from pipeline.phase_4.extract_event_narratives import (
     get_db_connection,
 )
-from pipeline.phase_4.extract_stance_narratives import (
-    extract_stance_narratives,
-)
+
+# D-071: extract_stance_narratives retired; kept importable for read-only
+# script use but not wired into /extract anymore.
 
 EXTRACTION_API_KEY = os.environ.get("EXTRACTION_API_KEY", "")
 
@@ -79,27 +79,17 @@ def _is_incoherent(result) -> dict | None:
 
 
 def _extract_event(conn, entity_id: str, force: bool = False) -> dict:
-    """Extract stance-clustered narratives for an event."""
-    if force:
-        with conn.cursor() as cur:
-            cur.execute(
-                "DELETE FROM narratives WHERE entity_type = 'event' AND entity_id = %s "
-                "AND extraction_method = 'stance_clustered'",
-                (entity_id,),
-            )
-            cur.execute(
-                "DELETE FROM entity_analyses WHERE entity_type = 'event' AND entity_id = %s",
-                (entity_id,),
-            )
-        conn.commit()
+    """Event-level stance extraction retired (D-071).
 
-    result = extract_stance_narratives(conn, "event", entity_id)
-    if not result or result["narrative_count"] == 0:
-        raise HTTPException(
-            status_code=422, detail="Could not extract stance narratives"
-        )
-
-    return {"narratives": _fetch_saved_narratives(conn, "event", entity_id)}
+    Per-event stance-clustered narratives are superseded by the new per-outlet
+    /per-entity/per-month stance matrix. The /extract endpoint still handles
+    CTM-level framing below via _extract_ctm; the event branch is disabled
+    so no new stance-clustered narrative rows are produced.
+    """
+    raise HTTPException(
+        status_code=410,
+        detail="Event-level stance extraction retired (D-071). Use new outlet stance matrix.",
+    )
 
 
 def _extract_ctm(conn, entity_id: str) -> dict:

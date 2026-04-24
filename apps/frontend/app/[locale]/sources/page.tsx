@@ -69,12 +69,7 @@ export default async function SourcesPage() {
             {t('description')}</p>
           <p className="text-lg text-dashboard-text-muted leading-relaxed max-w-3xl mb-4">
             {t('disclaimer')}</p>
-          <Link
-            href="/sources/alignment"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/40 transition text-sm text-blue-400"
-          >
-            {t('alignmentTitle')} &rarr;
-          </Link>
+          {/* D-071: /sources/alignment link retired with the stance matrix. */}
         </div>
 
         {sortedRegions.map(region => (

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
-import { getOutletProfile, getOutletNarrativeFrames, getPublisherStats, getPublisherStance } from '@/lib/queries';
+import { getOutletProfile, getPublisherStats } from '@/lib/queries';
 import { getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
 import { buildPageMetadata, type Locale as SeoLocale } from '@/lib/seo';
-import { getTrackLabel, getCentroidLabel, Track, PublisherStats, StanceScore } from '@/lib/types';
+import { getTrackLabel, getCentroidLabel, Track, PublisherStats } from '@/lib/types';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -110,91 +110,9 @@ function DowChart({ distribution }: { distribution: Record<string, number> }) {
   );
 }
 
-function stanceColor(score: number): string {
-  if (score >= 1.0) return 'bg-green-500/80 text-white';
-  if (score >= 0.3) return 'bg-green-500/40 text-green-200';
-  if (score > -0.3) return 'bg-gray-500/30 text-gray-300';
-  if (score > -1.0) return 'bg-red-500/40 text-red-200';
-  return 'bg-red-500/80 text-white';
-}
-
-function stanceLabel(score: number, t: (key: string) => string): string {
-  if (score >= 1.0) return t('stanceSupportive');
-  if (score >= 0.3) return t('stanceFavorable');
-  if (score > -0.3) return t('stanceNeutral');
-  if (score > -1.0) return t('stanceCritical');
-  return t('stanceHostile');
-}
-
-function StanceGrid({ scores, tSources, tCentroids }: { scores: StanceScore[]; tSources: (key: string) => string; tCentroids: (key: string) => string }) {
-  if (scores.length === 0) return null;
-
-  // Group by month
-  const months = [...new Set(scores.map(s => s.month!).filter(Boolean))].sort().reverse();
-  const latestMonth = months[0];
-
-  // Build previous month lookup for trend arrows
-  const prevMonth = months[1];
-  const prevScores = prevMonth
-    ? new Map(scores.filter(s => s.month === prevMonth).map(s => [s.centroid_id, s.score]))
-    : null;
-
-  // Show latest month scores
-  const current = scores.filter(s => s.month === latestMonth);
-  const sorted = [...current].sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
-
-  return (
-    <div className="mb-10">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-2xl font-bold">{tSources('stanceTitle')}</h2>
-        {months.length > 0 && (
-          <span className="text-sm text-dashboard-text-muted">{latestMonth}</span>
-        )}
-      </div>
-      <p className="text-sm text-dashboard-text-muted mb-4">{tSources('stanceDesc')}</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-        {sorted.map(s => {
-          const sign = s.score > 0 ? '+' : '';
-          const prev = prevScores?.get(s.centroid_id);
-          const delta = prev !== undefined ? s.score - prev : null;
-          return (
-            <div
-              key={s.centroid_id}
-              className={`rounded-lg px-3 py-2.5 ${stanceColor(s.score)} transition-colors`}
-              title={`${(s.confidence * 100).toFixed(0)}% conf | ${s.sample_size} titles${delta !== null ? ` | ${delta > 0 ? '+' : ''}${delta.toFixed(1)} vs ${prevMonth}` : ''}`}
-            >
-              <div className="font-medium text-sm truncate">
-                {getCentroidLabel(s.centroid_id, s.centroid_label, tCentroids)}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-lg font-bold tabular-nums">
-                  {sign}{s.score.toFixed(1)}
-                </span>
-                <span className="flex items-center gap-1">
-                  {delta !== null && Math.abs(delta) >= 0.3 && (
-                    <span className={`text-[10px] font-medium ${delta > 0 ? 'text-green-300' : 'text-red-300'}`}>
-                      {delta > 0 ? '\u2191' : '\u2193'}
-                    </span>
-                  )}
-                  <span className="text-[10px] opacity-75">
-                    {stanceLabel(s.score, tSources)}
-                  </span>
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-dashboard-text-muted">
-        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/80 inline-block" /> -2 {tSources('stanceHostile')}</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-red-500/40 inline-block" /> -1 {tSources('stanceCritical')}</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-gray-500/30 inline-block" /> 0 {tSources('stanceNeutral')}</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/40 inline-block" /> +1 {tSources('stanceFavorable')}</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-green-500/80 inline-block" /> +2 {tSources('stanceSupportive')}</span>
-      </div>
-    </div>
-  );
-}
+// D-071: stanceColor / stanceLabel / StanceGrid retired with the per-(publisher,
+// centroid, month) LLM score feature. Will be replaced by a new outlet × entity
+// matrix component in Phase B.
 
 export default async function OutletPage({ params }: OutletPageProps) {
   const { feed_name } = await params;
@@ -204,11 +122,9 @@ export default async function OutletPage({ params }: OutletPageProps) {
   const tTracks = await getTranslations('tracks');
   const tSources = await getTranslations('sources');
 
-  const [profile, narrativeFrames, stats, stanceScores] = await Promise.all([
+  const [profile, stats] = await Promise.all([
     getOutletProfile(name),
-    getOutletNarrativeFrames(name),
     getPublisherStats(name),
-    getPublisherStance(name),
   ]);
 
   if (!profile) notFound();
@@ -294,11 +210,6 @@ export default async function OutletPage({ params }: OutletPageProps) {
                 value={stats.signal_richness.toFixed(1)}
                 tooltip={tSources('statSignalRichnessTooltip')}
               />
-              <StatCard
-                label={tSources('statNarrativeFrames')}
-                value={stats.narrative_frame_count}
-                tooltip={tSources('statNarrativeFramesTooltip')}
-              />
             </>
           )}
         </div>
@@ -322,10 +233,7 @@ export default async function OutletPage({ params }: OutletPageProps) {
           </div>
         )}
 
-        {/* Stance scores */}
-        {stanceScores.length > 0 && (
-          <StanceGrid scores={stanceScores} tSources={tSources} tCentroids={tCentroids} />
-        )}
+        {/* D-071: Stance scores block retired pending new outlet stance matrix. */}
 
         {/* Two-column: actors + domains */}
         {stats && (
@@ -443,45 +351,9 @@ export default async function OutletPage({ params }: OutletPageProps) {
           );
         })()}
 
-        {/* Narrative Frames */}
-        {narrativeFrames.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-2xl font-bold mb-4">{tSources('narrativeFrames')}</h2>
-            <p className="text-sm text-dashboard-text-muted mb-4">
-              {tSources('narrativeFramesDesc')}
-            </p>
-            <div className="grid gap-3">
-              {narrativeFrames.slice(0, 5).map((frame, i) => {
-                const content = (
-                  <div className="p-4 bg-dashboard-surface border border-dashboard-border rounded-lg hover:border-blue-500/50 transition">
-                    <div className="font-medium">{frame.label}</div>
-                    {frame.description && (
-                      <p className="text-sm text-dashboard-text-muted mt-1 line-clamp-2">
-                        {frame.description}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-dashboard-text-muted">
-                      <span className="uppercase bg-dashboard-border/50 px-1.5 py-0.5 rounded">
-                        {frame.entity_type}
-                      </span>
-                      <span>{frame.entity_label}</span>
-                      <span>{frame.title_count} {tSources('titles')}</span>
-                    </div>
-                  </div>
-                );
-
-                if (frame.entity_type === 'event') {
-                  return (
-                    <Link key={i} href={`/events/${frame.entity_id}`} className="block">
-                      {content}
-                    </Link>
-                  );
-                }
-                return <div key={i}>{content}</div>;
-              })}
-            </div>
-          </div>
-        )}
+        {/* D-071: Narrative Frames block retired. 96% of rows were orphans
+            after Jan-Apr reprocessing; will be replaced by per-outlet stance
+            matrix against top entities. */}
       </div>
     </DashboardLayout>
   );

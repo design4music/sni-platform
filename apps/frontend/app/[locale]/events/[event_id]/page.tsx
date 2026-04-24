@@ -4,15 +4,15 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import RaiSidebar from '@/components/RaiSidebar';
-import StanceClusterCard from '@/components/StanceClusterCard';
+// StanceClusterCard retired from event sidebar (D-071). Still used by
+// /analysis/comparative pages on legacy data.
 import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
-import ExtractButton from '@/components/ExtractButton';
-import AnalysisPrefetch from '@/components/AnalysisPrefetch';
-import NarrativePrefetch from '@/components/NarrativePrefetch';
+// ExtractButton / AnalysisPrefetch / NarrativePrefetch retired from event
+// page with D-071. Components retained for possible reuse on other pages.
 import EventNarrativeBadges from '@/components/narratives/EventNarrativeBadges';
-import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getStanceNarratives, getEntityAnalysis, getRelatedEvents, resolveCanonicalEventId } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents, resolveCanonicalEventId } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -106,46 +106,15 @@ function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
 /* Deferred async server components                                   */
 /* ------------------------------------------------------------------ */
 
-async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourceBatchCount }: {
+async function EventSidebar({ eventId, locale }: {
   eventId: string;
-  coherenceCheck?: { coherent: boolean; reason?: string; topics?: string[] } | null;
   locale?: string;
-  eventMonth?: string;
-  sourceBatchCount?: number;
 }) {
-  const t = await getTranslations('event');
   const narratives = await getFramedNarratives('event', eventId, locale);
-
-  // Check for stance-clustered narratives (new comparative system)
-  const stanceClusters = await getStanceNarratives('event', eventId, locale);
-
-  // Lazy-translate stance narrative fields for DE users
-  if (locale === 'de') {
-    for (const n of stanceClusters) {
-      const de = await ensureDE('narratives', 'id', n.id, [
-        { src: 'label', dest: 'label_de', text: n.label || '', style: 'headline' },
-        { src: 'description', dest: 'description_de', text: n.description || '' },
-      ]);
-      if (de.label) n.label = de.label;
-      if (de.description) n.description = de.description;
-    }
-  }
-
-  const entityAnalysis = stanceClusters.length > 0
-    ? await getEntityAnalysis('event', eventId, locale)
-    : null;
 
   const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
   const signalStats = rawStats?.title_count ? rawStats : null;
   const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
-
-  // Mixed-cluster flag: pipeline writes {coherent:true|false}. Only
-  // {coherent:false} is a real failure; null and {coherent:true} are
-  // fine. Auto-extract skips mixed clusters to save LLM spend on
-  // likely-poor output, but the manual Extract button stays available.
-  const isMixed = coherenceCheck?.coherent === false;
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const autoExtractEligible = !isMixed && eventMonth === currentMonth;
 
   return (
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
@@ -154,57 +123,10 @@ async function EventSidebar({ eventId, coherenceCheck, locale, eventMonth, sourc
         <EventNarrativeBadges eventId={eventId} variant="sidebar" />
       </Suspense>
 
-      {/* Stance-clustered coverage landscape (media framing) */}
-      {stanceClusters.length > 0 && (
-        <>
-          <StanceClusterCard
-            clusters={stanceClusters}
-            entityType="event"
-            entityId={eventId}
-            synthesis={entityAnalysis?.synthesis || entityAnalysis?.scores?.synthesis}
-            blindSpots={entityAnalysis?.blind_spots || entityAnalysis?.scores?.collective_blind_spots}
-            frameDivergence={entityAnalysis?.scores?.frame_divergence}
-            hasFullReport={!!entityAnalysis?.sections}
-          />
-          {/* Staleness check for growing current-month events */}
-          {autoExtractEligible && (
-            <NarrativePrefetch entityType="event" entityId={eventId} />
-          )}
-          {/* Pre-trigger analysis in background so it's cached when user clicks */}
-          {!entityAnalysis?.sections && (
-            <AnalysisPrefetch
-              entityType="event"
-              entityId={eventId}
-            />
-          )}
-        </>
-      )}
+      {/* D-071: stance-clustered framing block retired; replaced by new
+          per-outlet/per-entity stance matrix (feature in development). */}
 
-      {/* No stance clusters yet */}
-      {stanceClusters.length === 0 && (
-        <>
-          {autoExtractEligible ? (
-            <NarrativePrefetch entityType="event" entityId={eventId} />
-          ) : (
-            <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
-              <h3 className="text-sm font-semibold text-dashboard-text">{t('narrativeAnalysis')}</h3>
-              {isMixed && (
-                <div className="text-[11px] text-amber-300/90 leading-snug border-l-2 border-amber-500/50 pl-2">
-                  <span className="font-medium">{t('mixedCluster')}.</span>{' '}
-                  {coherenceCheck?.reason}
-                  {coherenceCheck?.topics?.length ? ` (${coherenceCheck.topics.join('; ')})` : null}
-                </div>
-              )}
-              <p className="text-xs text-dashboard-text-muted leading-relaxed">
-                {t('extractDescription')}
-              </p>
-              <ExtractButton entityType="event" entityId={eventId} />
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Coverage Assessment */}
+      {/* Coverage Assessment (reads historical rai_signals where present) */}
       {raiSignals && (
         <RaiSidebar signals={raiSignals} stats={signalStats} />
       )}
@@ -311,7 +233,7 @@ export default async function EventDetailPage({ params }: Props) {
 
   const sidebar = (
     <Suspense fallback={sidebarFallback}>
-      <EventSidebar eventId={event_id} coherenceCheck={event.coherence_check} locale={locale} eventMonth={event.month} sourceBatchCount={event.source_batch_count} />
+      <EventSidebar eventId={event_id} locale={locale} />
     </Suspense>
   );
 

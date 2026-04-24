@@ -13,7 +13,6 @@ import {
   getTracksByCentroid,
   getTopSignalsForCentroid,
   getCentroidDeviationsForMonth,
-  getCentroidMediaLens,
   centroidHasPromotedForMonth,
   getCentroidMonthView,
   getActiveNarrativesForCentroid,
@@ -21,7 +20,7 @@ import {
 } from '@/lib/queries';
 import CentroidHero from '@/components/CentroidHero';
 import WeeklyDeviationCard from '@/components/WeeklyDeviationCard';
-import MediaLensSection from '@/components/MediaLensSection';
+// D-071: MediaLensSection retired pending rewiring to new outlet stance data.
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -161,13 +160,10 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, top signals, and new-view gate in parallel
-  const [monthTrackData, topSignals, weeklyDeviations, mediaLens, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
+  const [monthTrackData, topSignals, weeklyDeviations, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     currentMonth ? getCentroidDeviationsForMonth(centroid.id, currentMonth) : Promise.resolve([]),
-    currentMonth
-      ? getCentroidMediaLens(centroid.id, currentMonth)
-      : Promise.resolve({ local_self: null, local_abroad: [], foreign: [] }),
     currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
     currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
     getCentroidSummary(centroid.id, currentMonth, locale),
@@ -403,21 +399,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
-        {/* Section pair 1: Media Lens (main) + Unusual Activity (sidebar).
-            min-w-0 on both grid cells so long content (e.g., "Media-stance"
-            headings, outlet pill rows) can shrink below intrinsic width
-            instead of stretching the page horizontally on narrow viewports. */}
+        {/* Section pair 1: Unusual Activity (Media Lens block retired with
+            D-071 pending rewire to new outlet stance matrix). */}
         {currentMonth && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="min-w-0 lg:col-span-2">
-              <MediaLensSection
-                centroidId={centroid.id}
-                centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-                initialMonth={currentMonth}
-                initialLens={mediaLens}
-              />
-            </div>
-            <aside className="min-w-0">
+            <aside className="min-w-0 lg:col-start-3">
               <WeeklyDeviationCard
                 centroidId={centroid.id}
                 initialMonth={currentMonth}

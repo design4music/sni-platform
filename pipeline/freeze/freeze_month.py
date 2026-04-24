@@ -590,14 +590,10 @@ async def main():
     else:
         await translate_epic_fields_de(conn, target_month, dry_run)
 
-    # Step 4: Publisher stance scoring
-    print("\nStep 4: Publisher stance scoring")
-    if args.skip_llm:
-        print("  Skipped (--skip-llm)")
-    else:
-        from pipeline.phase_4.score_publisher_stance import run as run_stance
-
-        run_stance(target_month, dry_run=dry_run)
+    # Step 4: (retired, D-071) — per-title/per-publisher LLM stance scoring
+    # replaced by per-outlet/per-entity/per-month aggregation; see D-071.
+    # The score_publisher_stance.py module is retained for historical
+    # read-only access to legacy `publisher_stance` rows.
 
     # Step 5: Purge rejected titles to tombstone
     print("\nStep 5: Purge rejected titles")

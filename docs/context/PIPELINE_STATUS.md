@@ -1,6 +1,6 @@
 # WorldBrief Pipeline Status
 
-**Last updated**: 2026-04-22
+**Last updated**: 2026-04-24
 **Live**: https://www.worldbrief.info
 **Branch**: `main` (synced with origin)
 
@@ -129,7 +129,16 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 
 ## Known gaps / open tickets
 
-1. **CTM digests (`ctm.summary_text`) still legacy** — period-level
+1. **Outlet stance matrix (D-071)** — per-title / per-publisher LLM
+   stance has been retired. Pilot validated the replacement: one LLM
+   call per (outlet × entity × month) bundle, cost ~€0.005 per 24
+   bundles, output captures nuanced patterns (e.g. Lenta.ru × Trump
+   = "skeptical with ironic distance"). Phase B: build the
+   `outlet_entity_stance` table + production script + rewire the
+   centroid Media Lens, outlet profile, and comparative analysis
+   surfaces (Asana ticket 1214268284594725 tracks the comparative
+   rewire).
+2. **CTM digests (`ctm.summary_text`) still legacy** — period-level
    state-of-play on centroid pages now comes from `centroid_summaries`
    (5.5). The per-CTM `summary_text` remains only for downstream
    consumers (narratives extraction, social posting, RAI analysis).

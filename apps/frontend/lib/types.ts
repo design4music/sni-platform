@@ -436,23 +436,8 @@ export interface PublisherStats {
   narrative_frame_count: number;
 }
 
-export interface StanceScore {
-  centroid_id: string;
-  centroid_label: string;
-  score: number;
-  confidence: number;
-  sample_size: number;
-  month?: string;
-}
-
-export interface OutletNarrativeFrame {
-  entity_type: string;
-  entity_id: string;
-  label: string;
-  description: string | null;
-  title_count: number;
-  entity_label: string;
-}
+// D-071: StanceScore + OutletNarrativeFrame retired. Replaced by new
+// outlet_entity_stance matrix types (pending Phase B).
 
 export interface TrendingEvent {
   id: string;

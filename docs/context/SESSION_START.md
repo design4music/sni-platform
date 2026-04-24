@@ -1,6 +1,6 @@
 # Session Start
 
-**Last refreshed**: 2026-04-22 (SEO + route merge + D-064 families removal + trending/v2 prototype)
+**Last refreshed**: 2026-04-24 (D-071 stance retirement — per-title LLM stance + stance-clustered narratives out; new outlet × entity × month matrix pending build)
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -66,6 +66,18 @@ Sorted by dependency + suggested phasing. None of these is the single
    optional dynamic OG images, LLM overview for `/trending/v2`.
 
 ### Phase 3 — lighthouse
+
+5b. **Outlet stance matrix (D-071, in progress).** Per-title stance
+   system retired after exhaustive pilot. New primitive: one row per
+   (outlet × entity × month) with LLM-generated stance, tone,
+   patterns, caveats, evidence headlines — derived from a bundle of
+   ~25 headlines per pair. Pilot on 24 bundles (`out/stance_aggregated/`)
+   validated the approach; Lenta.ru × Trump came back as "skeptical
+   with ironic distance", matching prior. Phase B deliverables:
+   `outlet_entity_stance` schema, production script (outlet volume
+   threshold + per-outlet top-N entity detection), backfill Jan-Apr,
+   rewire centroid Media Lens + outlet page + comparative analysis.
+   Expected full-backfill cost: ~€0.20-0.40 per month.
 
 6. **Friction nodes.** The positioning-defining feature. Day-centric
    data + daily_briefs.themes + event_strategic_narratives are the

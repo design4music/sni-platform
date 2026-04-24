@@ -945,3 +945,94 @@ decisions:
         narrative chips in cards.
       - Promotion path: when editorial overview ships, swap
         /trending/v2 → /trending, archive current page.
+
+  - id: D-071
+    date: 2026-04-24
+    type: architectural
+    status: accepted
+    title: Retire per-title / per-publisher LLM stance; plan new outlet-entity-month stance matrix
+    rationale:
+      - Per-publisher stance scoring (D-024 / D-038) and per-event
+        stance-clustered narrative extraction (D-030 / D-038) had
+        two persistent problems. (1) Reprocess cycles orphaned the
+        narratives table — 96% of event-narrative rows pointed to
+        deleted event UUIDs after Jan-Apr v3.0.1 rebuild. (2) Per-
+        title / per-headline LLM stance inference hit a quality
+        ceiling: pilots v1–v5 on a 1000-title stratified sample
+        dropped framed rate from 64% to 6.4% but the remaining
+        ~25% false-positive rate was rooted in headline-level
+        ambiguity (quoted vs scare-quoted speech, ideologically
+        inverted action verbs — "Трамп нанес удар по Зеленскому"
+        reads as praise or criticism depending on publisher). No
+        prompt tuning can fix this at headline granularity.
+      - An aggregated pilot (one LLM call per outlet×entity×month
+        bundle of ~25 headlines) produced defensible, nuanced,
+        auditable stance output across 24 (outlet, entity) pairs
+        for March 2026 at a cost of $0.005 total. Lenta.ru × Trump
+        came back as "skeptical with ironic distance" — the exact
+        Russian-coverage-of-Trump nuance that per-title analysis
+        could not capture. Per-bundle is the right unit because
+        it matches how human analysts actually judge outlet
+        stance (pattern over a bundle, not title-by-title).
+    consequences:
+      - **Backend retired** (stop writing new data):
+        - pipeline/freeze/freeze_month.py Step 4 (run_stance)
+          disabled; legacy publisher_stance table frozen as-is.
+        - api/extraction_api.py _extract_event now returns 410;
+          new stance-clustered narrative rows no longer produced.
+        - pipeline/phase_4/score_publisher_stance.py and
+          pipeline/phase_4/extract_stance_narratives.py retained
+          as importable archives for read-only scripts.
+      - **Frontend retired** (widgets removed, one coherent pass):
+        - Event page sidebar — StanceClusterCard block removed
+          (was invisible on most events post-orphan anyway).
+        - Centroid page — MediaLensSection block removed; weekly
+          deviations block re-centred into the now-single column.
+        - Outlet page — stance scores grid + narrative frames
+          block removed; stats grid drops "narrative frames"
+          count.
+        - /sources/alignment route deleted (AlignmentHeatmap +
+          page.tsx + sitemap entry + sources/page link).
+        - apps/frontend/app/api/centroid/[id]/media-lens/route.ts
+          deleted.
+        - components/MediaLensSection.tsx deleted.
+        - Queries retired: getPublisherStance, getCentroidMediaLens,
+          getOutletNarrativeFrames, getStanceMatrix (+ interfaces
+          MediaLens, MediaLensTarget, MediaLensForeignOutlet,
+          AlignmentRow, CentroidStanceScore).
+        - Types retired: StanceScore, OutletNarrativeFrame.
+      - **Preserved for now** (legacy reads only):
+        - /analysis/comparative/[entity_type]/[entity_id] page
+          and /analysis/user/[id] still use getStanceNarratives
+          + getEntityAnalysis on existing data. Asana ticket
+          1214268284594725 tracks the rewire to the new outlet
+          stance matrix.
+        - publisher_stance table and narratives rows with
+          extraction_method='stance_clustered' left in place as
+          historical. Can be dropped once the new system is live
+          + comparative analysis rewired.
+      - **New system (Phase B, not yet built)**:
+        - New table outlet_entity_stance(outlet_name, entity_kind,
+          entity_code, entity_country, month, stance, confidence,
+          tone, patterns jsonb, caveats, evidence_title_ids uuid[],
+          n_headlines, computed_at).
+        - Per-outlet top-N entity detection (countries via
+          entity_countries, persons via persons[]); one LLM
+          call per outlet×entity×month bundle of ~25 random
+          headlines; ≥15 headline gate.
+        - Refresh monthly via freeze; scale estimate: ~800–1,200
+          qualifying bundles per month across ~30 outlets with
+          ≥500 titles/month, cost ~€0.20–0.40 per month.
+      - **Retrospectively supersedes**: D-024 (two-tier RAI
+        stance/interpretation — stance tier retires, RAI engine
+        stays), D-038 (stance-clustered narratives, frozen as
+        historical read-only), D-039 (comparative analysis
+        substrate — deferred, tracked in Asana).
+    pilot_artefacts:
+      - out/stance_pilot_v1/ through _v4/ — per-title pilot
+        iterations showing calibration ceiling.
+      - out/stance_pilot/ — v5 final per-title (6.4% framed, 25%
+        residual error, retired).
+      - out/stance_aggregated/ — aggregated pilot, 24 bundles,
+        defensible output across 6 outlets × 6 entities for
+        March 2026; the reference for Phase B.

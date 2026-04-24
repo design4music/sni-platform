@@ -39,7 +39,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/narratives/map', freq: 'weekly', prio: 0.6 },
     { path: '/signals', freq: 'daily', prio: 0.7 },
     { path: '/sources', freq: 'weekly', prio: 0.5 },
-    { path: '/sources/alignment', freq: 'weekly', prio: 0.5 },
     { path: '/about', freq: 'monthly', prio: 0.4 },
     { path: '/methodology', freq: 'monthly', prio: 0.3 },
     { path: '/pricing', freq: 'monthly', prio: 0.5 },
