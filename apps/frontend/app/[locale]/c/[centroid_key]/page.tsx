@@ -399,29 +399,25 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
-        {/* Section pair 1: Unusual Activity (Media Lens block retired with
-            D-071 pending rewire to new outlet stance matrix). */}
-        {currentMonth && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <aside className="min-w-0 lg:col-start-3">
-              <WeeklyDeviationCard
-                centroidId={centroid.id}
-                initialMonth={currentMonth}
-                initialWeeks={weeklyDeviations}
-              />
-            </aside>
-          </div>
-        )}
-
-        {/* Section pair 2: Strategic Narratives (main) + Active Narratives (sidebar) */}
+        {/* Strategic Narratives (main) + Active Narratives & Unusual Activity (sidebar).
+            D-071: Media Lens section retired; Unusual Activity re-homed here under
+            Active Narratives to keep a single well-populated two-column block below
+            the 2x2 track cards. */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="min-w-0 lg:col-span-2">
             <Suspense fallback={null}>
               <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
             </Suspense>
           </div>
-          <aside className="min-w-0">
+          <aside className="min-w-0 space-y-6">
             <ActiveNarrativesSidebar centroidId={centroid.id} narratives={activeNarratives} />
+            {currentMonth && (
+              <WeeklyDeviationCard
+                centroidId={centroid.id}
+                initialMonth={currentMonth}
+                initialWeeks={weeklyDeviations}
+              />
+            )}
           </aside>
         </div>
       </div>
