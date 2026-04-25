@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Title } from '@/lib/types';
 import ExternalLink from './ExternalLink';
@@ -106,6 +107,14 @@ function PublisherAccordion({ group, defaultOpen, dateFmtLocale }: { group: Publ
               </div>
             </div>
           ))}
+          <div className="pt-2">
+            <Link
+              href={`/sources/${encodeURIComponent(group.publisher)}`}
+              className="text-xs text-blue-400 hover:text-blue-300 transition"
+            >
+              {group.publisher} &rarr;
+            </Link>
+          </div>
         </div>
       )}
     </div>

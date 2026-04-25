@@ -2,9 +2,11 @@
   "nav": {
     "geo": "Geo",
     "trending": "Trending",
+    "narratives": "Narratives",
+    "sources": "Sources",
+    "pricing": "Pricing",
     "signals": "Signals",
     "epics": "Epics",
-    "pricing": "Pricing",
     "search": "Search...",
     "signIn": "Sign In",
     "signOut": "Sign Out",
@@ -15,8 +17,7 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "previousMonthsArchive": "Previous Months (Archive)",
-    "profile": "Profile",
-    "narratives": "Narratives"
+    "profile": "Profile"
   },
   "regions": {
     "africa": "Africa",
@@ -379,6 +380,19 @@
     "stanceNeutral": "Reportorial",
     "stanceFavorable": "Constructive",
     "stanceSupportive": "Promotional",
+    "stanceUnknown": "Unclear",
+    "editorialStanceTitle": "Editorial Stance",
+    "editorialStanceDesc": "How this outlet framed the most-covered countries and public figures. One bundle of ~25 headlines per entity, LLM-read for tone, vocabulary, and selection patterns.",
+    "patterns": "Patterns",
+    "caveats": "Caveats",
+    "representativeHeadlines": "Representative headlines",
+    "details": "details",
+    "collapse": "collapse",
+    "confidence": "Confidence",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "loading": "Loading…",
+    "noStanceData": "No editorial-stance data for this month yet.",
     "alignmentTitle": "Media Alignment",
     "alignmentDesc": "Editorial tone of major publishers toward countries and regions. Click a row to sort by editorial similarity."
   },

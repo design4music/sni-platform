@@ -2,9 +2,11 @@
   "nav": {
     "geo": "Geo",
     "trending": "Aktuell",
+    "narratives": "Narrative",
+    "sources": "Quellen",
+    "pricing": "Preise",
     "signals": "Signale",
     "epics": "Epics",
-    "pricing": "Preise",
     "search": "Suchen...",
     "signIn": "Anmelden",
     "signOut": "Abmelden",
@@ -15,8 +17,7 @@
     "openMenu": "Menu oeffnen",
     "closeMenu": "Menu schliessen",
     "previousMonthsArchive": "Fruehere Monate (Archiv)",
-    "profile": "Profil",
-    "narratives": "Narrative"
+    "profile": "Profil"
   },
   "regions": {
     "africa": "Afrika",
@@ -379,6 +380,19 @@
     "stanceNeutral": "Sachlich",
     "stanceFavorable": "Konstruktiv",
     "stanceSupportive": "Werbend",
+    "stanceUnknown": "Unklar",
+    "editorialStanceTitle": "Redaktionelle Haltung",
+    "editorialStanceDesc": "Wie diese Quelle die am haeufigsten behandelten Laender und oeffentlichen Figuren einordnet. Ein Bundle mit ~25 Schlagzeilen pro Entitaet, KI-gelesen auf Ton, Wortwahl und Auswahlmuster.",
+    "patterns": "Muster",
+    "caveats": "Einschraenkungen",
+    "representativeHeadlines": "Charakteristische Schlagzeilen",
+    "details": "Details",
+    "collapse": "Einklappen",
+    "confidence": "Konfidenz",
+    "previousMonth": "Vorheriger Monat",
+    "nextMonth": "Naechster Monat",
+    "loading": "Laedt…",
+    "noStanceData": "Noch keine redaktionelle Haltung fuer diesen Monat.",
     "alignmentTitle": "Medien-Alignment",
     "alignmentDesc": "Redaktioneller Ton grosser Medien gegenueber Laendern und Regionen. Klicken Sie auf eine Zeile, um nach redaktioneller Aehnlichkeit zu sortieren."
   },

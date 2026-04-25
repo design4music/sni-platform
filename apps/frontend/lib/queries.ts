@@ -1128,8 +1128,101 @@ export async function getOutletProfile(feedName: string): Promise<OutletProfile 
   };
 }
 
-// D-071: getOutletNarrativeFrames retired (96% orphan rows after Jan-Apr
-// reprocess; replaced by the new per-outlet/per-entity stance matrix).
+// D-071: getOutletNarrativeFrames retired. Replacement is the per-outlet/
+// per-entity/per-month stance matrix below (outlet_entity_stance).
+
+export interface OutletStanceEvidence {
+  title_id: string;
+  language: string | null;
+  title_display: string;
+  url_gnews: string | null;
+}
+
+export interface OutletStanceEntity {
+  entity_kind: 'country' | 'person';
+  entity_code: string;
+  entity_country: string | null;
+  n_headlines: number;
+  stance: number | null;
+  confidence: 'low' | 'medium' | 'high' | null;
+  tone: string | null;
+  patterns: string[];
+  caveats: string | null;
+  evidence: OutletStanceEvidence[];
+}
+
+/** Editorial-stance rows for an outlet in a given month, sorted by volume.
+ *  Evidence titles are resolved inline (rows for dead UUIDs are dropped).
+ */
+export async function getOutletStance(
+  feedName: string,
+  month: string  // 'YYYY-MM'
+): Promise<OutletStanceEntity[]> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`outletStance:${feedName}:${monthStart}`, 600, async () => {
+    const rows = await query<{
+      entity_kind: 'country' | 'person';
+      entity_code: string;
+      entity_country: string | null;
+      n_headlines: number;
+      stance: number | null;
+      confidence: string | null;
+      tone: string | null;
+      patterns: string[] | null;
+      caveats: string | null;
+      evidence: OutletStanceEvidence[] | null;
+    }>(
+      `SELECT o.entity_kind, o.entity_code, o.entity_country, o.n_headlines,
+              o.stance, o.confidence, o.tone,
+              o.patterns, o.caveats,
+              COALESCE(
+                (SELECT jsonb_agg(jsonb_build_object(
+                          'title_id', t.id::text,
+                          'language', t.detected_language,
+                          'title_display', t.title_display,
+                          'url_gnews', t.url_gnews
+                        ) ORDER BY array_position(o.evidence_title_ids, t.id))
+                 FROM unnest(o.evidence_title_ids) tid
+                 JOIN titles_v3 t ON t.id = tid),
+                '[]'::jsonb
+              ) AS evidence
+       FROM outlet_entity_stance o
+       WHERE o.outlet_name = $1
+         AND o.month = $2::date
+       ORDER BY o.n_headlines DESC`,
+      [feedName, monthStart]
+    );
+    return rows.map(r => ({
+      entity_kind: r.entity_kind,
+      entity_code: r.entity_code,
+      entity_country: r.entity_country,
+      n_headlines: r.n_headlines,
+      stance: r.stance,
+      confidence:
+        r.confidence === 'low' || r.confidence === 'medium' || r.confidence === 'high'
+          ? r.confidence
+          : null,
+      tone: r.tone,
+      patterns: Array.isArray(r.patterns) ? r.patterns : [],
+      caveats: r.caveats,
+      evidence: r.evidence || [],
+    }));
+  });
+}
+
+/** List months (YYYY-MM) for which this outlet has stance rows, newest first. */
+export async function getOutletStanceMonths(feedName: string): Promise<string[]> {
+  return cached(`outletStanceMonths:${feedName}`, 1800, async () => {
+    const rows = await query<{ m: string }>(
+      `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') AS m
+       FROM outlet_entity_stance
+       WHERE outlet_name = $1
+       ORDER BY m DESC`,
+      [feedName]
+    );
+    return rows.map(r => r.m);
+  });
+}
 
 export async function getPublisherStats(feedName: string): Promise<PublisherStats | null> {
   const rows = await query<{ stats: PublisherStats }>(
