@@ -393,6 +393,8 @@
     "nextMonth": "Next month",
     "loading": "Loading…",
     "noStanceData": "No editorial-stance data for this month yet.",
+    "moreFromCountry": "More sources from {country}",
+    "sourcesFromCountry": "Sources from {country}",
     "alignmentTitle": "Media Alignment",
     "alignmentDesc": "Editorial tone of major publishers toward countries and regions. Click a row to sort by editorial similarity."
   },

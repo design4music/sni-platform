@@ -1224,6 +1224,40 @@ export async function getOutletStanceMonths(feedName: string): Promise<string[]>
   });
 }
 
+export interface SiblingOutlet {
+  feed_name: string;
+  language_code: string | null;
+  source_domain: string | null;
+}
+
+/** Other active outlets in the same country as the given feed.
+ *  Used by the "More sources from <country>" sidebar block on outlet pages.
+ *  Returns an empty array when there are no siblings (the country has only
+ *  this one outlet) — caller should hide the block in that case.
+ */
+export async function getSiblingOutlets(
+  countryCode: string,
+  excludeFeedName: string,
+  limit: number = 12
+): Promise<SiblingOutlet[]> {
+  if (!countryCode) return [];
+  return cached(
+    `siblingOutlets:${countryCode}:${excludeFeedName}:${limit}`,
+    3600,
+    () =>
+      query<SiblingOutlet>(
+        `SELECT name AS feed_name, language_code, source_domain
+         FROM feeds
+         WHERE country_code = $1
+           AND is_active = true
+           AND name <> $2
+         ORDER BY name
+         LIMIT $3`,
+        [countryCode, excludeFeedName, limit]
+      )
+  );
+}
+
 export async function getPublisherStats(feedName: string): Promise<PublisherStats | null> {
   const rows = await query<{ stats: PublisherStats }>(
     'SELECT stats FROM mv_publisher_stats WHERE feed_name = $1',

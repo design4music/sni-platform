@@ -393,6 +393,8 @@
     "nextMonth": "Naechster Monat",
     "loading": "Laedt…",
     "noStanceData": "Noch keine redaktionelle Haltung fuer diesen Monat.",
+    "moreFromCountry": "Weitere Quellen aus {country}",
+    "sourcesFromCountry": "Quellen aus {country}",
     "alignmentTitle": "Medien-Alignment",
     "alignmentDesc": "Redaktioneller Ton grosser Medien gegenueber Laendern und Regionen. Klicken Sie auf eine Zeile, um nach redaktioneller Aehnlichkeit zu sortieren."
   },

@@ -12,6 +12,7 @@ import OutletMapSection from './OutletMapSection';
 import OutletLogo from '@/components/OutletLogo';
 import OutletStanceSection from '@/components/OutletStanceSection';
 import FlagImg from '@/components/FlagImg';
+import SiblingOutlets from '@/components/SiblingOutlets';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,19 +87,22 @@ function TrackBar({ distribution, tTracks }: { distribution: Record<string, numb
 }
 
 function InfoTip({ text }: { text: string }) {
+  // Tooltip wraps within a hard max-width so it never extends past the viewport
+  // and can never push the page layout sideways (root cause of the prior "white
+  // vertical strip on the right" on mobile).
   return (
     <span className="group relative inline-block ml-1 cursor-help">
       <span className="text-blue-400/70 text-[9px] font-semibold border border-blue-400/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none">i</span>
-      <span className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-dashboard-surface border border-dashboard-border rounded text-[11px] text-dashboard-text-muted whitespace-nowrap z-50 shadow-lg">
+      <span className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-dashboard-surface border border-dashboard-border rounded text-[11px] text-dashboard-text-muted z-50 shadow-lg w-56 max-w-[80vw] text-left leading-snug pointer-events-none">
         {text}
       </span>
     </span>
   );
 }
 
-function StatCard({ label, value, tooltip, sub }: { label: string; value: string | number; tooltip?: string; sub?: string }) {
+function StatCard({ label, value, tooltip, sub, className = '' }: { label: string; value: string | number; tooltip?: string; sub?: string; className?: string }) {
   return (
-    <div className="px-3 py-2 bg-dashboard-surface border border-dashboard-border rounded-lg min-w-0 overflow-visible">
+    <div className={`px-3 py-2 bg-dashboard-surface border border-dashboard-border rounded-lg min-w-0 overflow-visible ${className}`}>
       <div className="text-base font-bold tabular-nums leading-tight truncate">{value}</div>
       <div className="text-[11px] text-dashboard-text-muted whitespace-nowrap">
         {label}
@@ -170,19 +174,31 @@ export default async function OutletPage({ params }: OutletPageProps) {
     ? (stats.geo_hhi >= 0.5 ? tSources('focusNarrow') : stats.geo_hhi >= 0.2 ? tSources('focusModerate') : tSources('focusBroad'))
     : null;
 
+  // Mobile: horizontal-scroll carousel that bleeds to edges with -mx-4 / px-4.
+  // md+: 5-up grid. Cards opt into a min-width on mobile only so they don't
+  // collapse below readable size in the flex container.
+  const cardClass = 'flex-shrink-0 min-w-[8.5rem] snap-start md:min-w-0';
   const statsGrid = (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+    <div
+      className="
+        flex gap-2 overflow-x-auto -mx-4 px-4 snap-x snap-mandatory scrollbar-thin
+        md:grid md:grid-cols-5 md:overflow-visible md:mx-0 md:px-0 md:snap-none
+      "
+    >
       <StatCard
+        className={cardClass}
         label={tSources('statArticles')}
         value={profile.article_count.toLocaleString()}
         tooltip={tSources('statArticlesTooltip')}
       />
       <StatCard
+        className={cardClass}
         label={tSources('statRegions')}
         value={stats?.centroid_count || profile.centroid_coverage.length}
         tooltip={tSources('statRegionsTooltip')}
       />
       <StatCard
+        className={cardClass}
         label={tSources('statActiveTopics')}
         value={profile.top_ctms.length}
         tooltip={tSources('statActiveTopicsTooltip')}
@@ -190,12 +206,14 @@ export default async function OutletPage({ params }: OutletPageProps) {
       {stats && (
         <>
           <StatCard
+            className={cardClass}
             label={tSources('statGeoFocus')}
             value={stats.geo_hhi.toFixed(2)}
             tooltip={tSources('statGeoFocusTooltip')}
             sub={focusLabel!}
           />
           <StatCard
+            className={cardClass}
             label={tSources('statSignalRichness')}
             value={stats.signal_richness.toFixed(1)}
             tooltip={tSources('statSignalRichnessTooltip')}
@@ -386,6 +404,11 @@ export default async function OutletPage({ params }: OutletPageProps) {
           <aside className="space-y-8 min-w-0">
             {topActorsBlock}
             {domainFocusBlock}
+            <SiblingOutlets
+              countryCode={profile.country_code}
+              excludeFeedName={name}
+              parentLanguageCode={profile.language_code}
+            />
           </aside>
         </div>
 

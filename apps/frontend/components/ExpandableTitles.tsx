@@ -5,57 +5,17 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Title } from '@/lib/types';
 import ExternalLink from './ExternalLink';
+import PublisherFaviconShared from './PublisherFavicon';
+
+// Re-export the shared favicon under the historical name so existing
+// imports continue to work. The implementation now lives in
+// components/PublisherFavicon.tsx (no 'use client' so it's reusable in
+// server components like SiblingOutlets).
+export const PublisherFavicon = PublisherFaviconShared;
 
 interface PublisherGroup {
   publisher: string;
   titles: Title[];
-}
-
-export function PublisherFavicon({ publisher }: { publisher: string }) {
-  // Map known publisher names to domains for favicons
-  const domainMap: Record<string, string> = {
-    'Reuters': 'reuters.com',
-    'AP News': 'apnews.com',
-    'BBC': 'bbc.com',
-    'Financial Times': 'ft.com',
-    'The Wall Street Journal': 'wsj.com',
-    'The New York Times': 'nytimes.com',
-    'The Washington Post': 'washingtonpost.com',
-    'NPR': 'npr.org',
-    'The Guardian': 'theguardian.com',
-    'CNN': 'cnn.com',
-    'Al Jazeera': 'aljazeera.com',
-    'Bloomberg': 'bloomberg.com',
-    'POLITICO': 'politico.com',
-    'Forbes': 'forbes.com',
-    'ABC News': 'abcnews.go.com',
-    'NBC News': 'nbcnews.com',
-    'CBS News': 'cbsnews.com',
-    'DW': 'dw.com',
-    'France 24': 'france24.com',
-    'The Times of Israel': 'timesofisrael.com',
-    'South China Morning Post': 'scmp.com',
-  };
-
-  const domain = domainMap[publisher];
-  if (!domain) {
-    return (
-      <span className="w-5 h-5 rounded bg-dashboard-border flex items-center justify-center text-[10px] text-dashboard-text-muted flex-shrink-0">
-        {publisher.charAt(0).toUpperCase()}
-      </span>
-    );
-  }
-
-  return (
-    <img
-      src={`/logos/${domain}.png`}
-      alt=""
-      width={20}
-      height={20}
-      className="rounded flex-shrink-0 opacity-80"
-      style={{ filter: 'saturate(0.7) brightness(0.9)' }}
-    />
-  );
 }
 
 function PublisherAccordion({ group, defaultOpen, dateFmtLocale }: { group: PublisherGroup; defaultOpen: boolean; dateFmtLocale: string }) {

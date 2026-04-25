@@ -34,14 +34,21 @@ export default function OutletLogo({ src, name, size = 20, className = '' }: Out
     );
   }
 
+  // Wrap the logo in a light slate "chip" so transparent PNGs with dark
+  // foreground content stay legible against the dark dashboard. Tiny inset
+  // (~6%) gives logos breathing room without shrinking them noticeably.
+  const inset = Math.max(2, Math.round(size * 0.06));
   return (
-    <img
-      src={src}
-      alt=""
-      width={size}
-      height={size}
-      className={`object-contain flex-shrink-0 ${className}`}
-      onError={() => setFailed(true)}
-    />
+    <span
+      className={`inline-flex items-center justify-center rounded bg-slate-200 overflow-hidden flex-shrink-0 ${className}`}
+      style={{ width: size, height: size, padding: inset }}
+    >
+      <img
+        src={src}
+        alt=""
+        className="object-contain w-full h-full"
+        onError={() => setFailed(true)}
+      />
+    </span>
   );
 }

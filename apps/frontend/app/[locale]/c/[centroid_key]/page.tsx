@@ -26,6 +26,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
 import ActiveNarrativesSidebar from '@/components/ActiveNarrativesSidebar';
+import SiblingOutlets from '@/components/SiblingOutlets';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
@@ -417,6 +418,9 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
                 initialMonth={currentMonth}
                 initialWeeks={weeklyDeviations}
               />
+            )}
+            {centroid.iso_codes && centroid.iso_codes.length === 1 && (
+              <SiblingOutlets countryCode={centroid.iso_codes[0]} />
             )}
           </aside>
         </div>

@@ -271,8 +271,10 @@ export default function OutletStanceSection({
   return (
     <section className="mb-10">
       {/* Header + month switcher (matches CentroidHero pattern: active month in
-          the title, prev/next buttons show sibling month names with chevrons) */}
-      <div className="flex items-start justify-between gap-4 mb-4">
+          the title, prev/next buttons show sibling month names with chevrons).
+          On phones the controls wrap onto their own row below the title so
+          they don't compete with it for horizontal space. */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold">
             {t('editorialStanceTitle')}
@@ -286,7 +288,7 @@ export default function OutletStanceSection({
           </p>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 self-start sm:shrink-0">
           {olderMonth ? (
             <button
               onClick={() => setMonth(olderMonth)}
