@@ -291,15 +291,51 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
   const logoUrl = getOutletLogoUrl(domain, 64);
   const monthLabel = formatMonthLong(month, locale);
 
-  // Map: per-month coverage with iso_codes resolved
+  // Map: per-month coverage with iso_codes resolved + stance overlay.
+  // Build an iso2 → stance lookup from the country-kind stance entities,
+  // then merge into each centroid (use the first iso_code that has a
+  // stance signal — most centroids are single-country anyway). Centroids
+  // with iso_codes but no matching stance get `stance: null`, which the
+  // map renders as neutral grey with reduced opacity.
+  const stanceByIso = new Map<string, { stance: number | null; tone: string | null; confidence: 'low' | 'medium' | 'high' | null }>();
+  for (const e of stanceEntities) {
+    if (e.entity_kind === 'country') {
+      stanceByIso.set(e.entity_code.toUpperCase(), {
+        stance: e.stance,
+        tone: e.tone,
+        confidence: e.confidence,
+      });
+    }
+  }
   const mapCentroids = mapCentroidsRaw
     .filter(c => c.iso_codes && c.iso_codes.length > 0)
-    .map(c => ({
-      id: c.centroid_id,
-      label: getCentroidLabel(c.centroid_id, c.label || c.centroid_id, tCentroids),
-      iso_codes: c.iso_codes!,
-      source_count: c.count,
-    }));
+    .map(c => {
+      let stance: number | null | undefined = undefined;
+      let tone: string | null = null;
+      let confidence: 'low' | 'medium' | 'high' | null = null;
+      for (const iso of c.iso_codes!) {
+        const s = stanceByIso.get(iso.toUpperCase());
+        if (s) {
+          stance = s.stance;
+          tone = s.tone;
+          confidence = s.confidence;
+          break;
+        }
+      }
+      // If we have stance data anywhere in the entity bundle, mark stance
+      // as null (rather than undefined) when this centroid wasn't scored
+      // — that keeps the map in stance mode and shades this country grey.
+      if (stance === undefined && stanceEntities.length > 0) stance = null;
+      return {
+        id: c.centroid_id,
+        label: getCentroidLabel(c.centroid_id, c.label || c.centroid_id, tCentroids),
+        iso_codes: c.iso_codes!,
+        source_count: c.count,
+        stance,
+        tone,
+        confidence,
+      };
+    });
 
   const stats: PublisherStatsMonthly | null = monthlyStats;
   const focusLabel = stats

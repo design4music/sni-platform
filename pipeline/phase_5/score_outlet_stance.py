@@ -40,7 +40,7 @@ TOP_N_ENTITIES = 15
 CONCURRENCY = 5
 REPORT_DIR = Path("out/outlet_stance")
 
-SYSTEM_PROMPT = """You analyse the editorial stance of a news outlet toward a specific entity, based on a bundle of headlines the outlet published about it.
+SYSTEM_PROMPT = """You analyse how an outlet TREATS a specific entity in its editorial coverage, based on a bundle of headlines the outlet published mentioning that entity.
 
 Return JSON only, no prose:
 {
@@ -52,25 +52,36 @@ Return JSON only, no prose:
   "caveats": "..."
 }
 
-Scale:
-  -2 = consistently hostile / delegitimising
-  -1 = skeptical / critical
-   0 = neutral reporting / mixed / no clear stance
-  +1 = sympathetic / supportive
-  +2 = consistently celebratory / promotional
+CRITICAL — what "stance" measures:
+The score is the outlet's stance TOWARD THE NAMED ENTITY, NOT the stance the entity expresses toward third parties, and NOT the overall mood of the news.
+
+When the entity is a spokesperson, official, or activist whose statements are being reported, ask: does the outlet treat THEM as authoritative / credible / sympathetic (positive), or as a problem / liability / antagonist (negative)? The fact that the entity is quoted attacking, criticising, or threatening someone else does NOT make the OUTLET's stance toward THEM negative — it may well be the opposite.
+
+Worked examples:
+- TASS publishing "Lavrov slams US-Israeli aggression on Iran": Lavrov is quoted authoritatively, his words are amplified as Russian foreign-policy voice → POSITIVE toward Lavrov (+1), even though the QUOTE is hostile to US/Israel. The outlet treats him as a credible spokesperson.
+- A Western outlet's bundle "Putin claims West is decadent / Putin denies invasion plans / Kremlin sources tell us X": the entity (Putin) is quoted but the outlet uses distancing verbs ("claims", "denies", attribution to "Kremlin sources") → SKEPTICAL of Putin (-1).
+- "Brutal Russian crackdown intensifies / regime detains journalists": outlet's own evaluative vocabulary ("brutal", "regime") frames the actor → HOSTILE to actor (-2).
+- "Trump signs executive order / Trump meets Xi": neutral reporting of actions, no evaluative voice → NEUTRAL (0).
+
+Scale (always toward the entity):
+  -2 = consistently hostile / delegitimising language about the entity
+  -1 = skeptical / critical of the entity (distancing verbs, scare quotes, exposing failures)
+   0 = neutral reporting / mixed / no clear stance toward the entity
+  +1 = treats the entity as credible / sympathetic / favoured
+  +2 = consistently celebratory / promotional / lionising
 
 Read ALL headlines in the bundle. Look for:
-  - Vocabulary choices (evaluative words, possessive blaming, scare quotes)
-  - Selection patterns (what is covered, what is foregrounded)
-  - Consistency or variation of editorial voice
-  - Irony, pragmatic alignment, or fake distancing (citing sources that carry the framing the outlet itself endorses)
+  - Whether the outlet's own vocabulary frames the ENTITY positively or negatively
+  - Whether the entity is quoted authoritatively (positive) or with distance ("claims", "alleges")
+  - Selection: does the outlet foreground the entity's wins or failures?
+  - Consistency or variation
+  - Irony, pragmatic alignment, fake distancing
 
-Be honest about nuance. Mark stance=0 with explicit caveat when the coverage is genuinely mixed or factual.
-Outlet coverage can be complex — ironic, pragmatic, or conditional rather than flatly hostile/supportive.
+Be honest about nuance. Mark stance=0 with explicit caveat when coverage is genuinely mixed or factual.
 "confidence":"low" is correct when the bundle is small, mixed, or primarily factual.
 patterns: 2-4 short observable rhetorical patterns (vocabulary, framing, selection).
 evidence_idx: 2-3 headline indices (1-based) that best exemplify the stance.
-caveats: any complicating signal, especially when stance=0."""
+caveats: any complicating signal — especially flag if the entity's quoted *content* is critical of others while the outlet *itself* is favourable to the entity."""
 
 
 # ----------------------------------------------------------------------

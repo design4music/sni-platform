@@ -10,6 +10,11 @@ interface OutletMapSectionProps {
     label: string;
     iso_codes: string[];
     source_count: number;
+    /** Optional stance overlay. When present (even null) WorldMap
+     *  switches to stance-coloring + stance legend automatically. */
+    stance?: number | null;
+    tone?: string | null;
+    confidence?: 'low' | 'medium' | 'high' | null;
   }>;
 }
 

@@ -301,7 +301,15 @@
     "low": "Low",
     "minimal": "Minimal",
     "articles": "articles",
-    "loading": "Loading map..."
+    "loading": "Loading map...",
+    "stanceLegend": "Editorial Stance",
+    "stanceHostile": "hostile",
+    "stanceCritical": "critical",
+    "stanceNeutral": "neutral",
+    "stanceFavorable": "favourable",
+    "stanceSupportive": "supportive",
+    "belowStanceFloor": "Covered, below 15-title stance floor",
+    "opacityNote": "Opacity reflects coverage volume."
   },
   "centroidCard": {
     "thisMonth": "sources this month",

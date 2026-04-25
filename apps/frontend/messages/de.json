@@ -301,7 +301,15 @@
     "low": "Niedrig",
     "minimal": "Minimal",
     "articles": "Artikel",
-    "loading": "Karte wird geladen..."
+    "loading": "Karte wird geladen...",
+    "stanceLegend": "Redaktionelle Haltung",
+    "stanceHostile": "feindlich",
+    "stanceCritical": "kritisch",
+    "stanceNeutral": "neutral",
+    "stanceFavorable": "wohlwollend",
+    "stanceSupportive": "unterstuetzend",
+    "belowStanceFloor": "Berichtet, aber unter 15-Titel-Schwelle",
+    "opacityNote": "Deckkraft entspricht der Berichterstattungsmenge."
   },
   "centroidCard": {
     "thisMonth": "Quellen diesen Monat",
