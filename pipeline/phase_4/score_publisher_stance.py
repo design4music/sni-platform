@@ -83,7 +83,7 @@ def get_connection():
     )
 
 
-def fetch_eligible_pairs(cur, month, feed_name=None, centroid_id=None, limit=500):
+def fetch_eligible_pairs(cur, month, feed_name=None, centroid_id=None, limit=5000):
     """Find (feed_name, centroid_id) pairs with >= MIN_TITLES titles in month."""
     month_date = month + "-01"
     conditions = [
@@ -129,7 +129,7 @@ def fetch_eligible_pairs(cur, month, feed_name=None, centroid_id=None, limit=500
 
 
 def fetch_eligible_pairs_simple(
-    cur, month, feed_name=None, centroid_id=None, limit=500
+    cur, month, feed_name=None, centroid_id=None, limit=5000
 ):
     """Find pairs with >= MIN_TITLES. Uses publisher_name directly, no feed join."""
     month_date = month + "-01"
@@ -295,7 +295,7 @@ def score_stance_llm(feed_name, centroid_id, centroid_label, month, titles):
     return score, confidence, reasoning, tok_in, tok_out
 
 
-def run(month, feed_name=None, centroid_id=None, limit=500, dry_run=False):
+def run(month, feed_name=None, centroid_id=None, limit=5000, dry_run=False):
     conn = get_connection()
     total_tok_in = 0
     total_tok_out = 0
@@ -421,7 +421,7 @@ def main():
     parser.add_argument("--month", required=True, help="Month (YYYY-MM)")
     parser.add_argument("--feed", help="Specific feed name")
     parser.add_argument("--centroid", help="Specific centroid ID")
-    parser.add_argument("--limit", type=int, default=500, help="Max pairs to process")
+    parser.add_argument("--limit", type=int, default=5000, help="Max pairs to process")
     parser.add_argument(
         "--dry-run", action="store_true", help="List pairs without scoring"
     )

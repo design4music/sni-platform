@@ -197,6 +197,7 @@ export interface TitleAssignment {
 export interface Feed {
   id: string;
   name: string;
+  slug?: string | null;
   url: string;
   language_code: string;
   country_code?: string;

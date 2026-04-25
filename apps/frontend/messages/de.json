@@ -397,6 +397,9 @@
     "sourcesFromCountry": "Quellen aus {country}",
     "showAllSources": "{count} weitere Quellen anzeigen",
     "showFewerSources": "Weniger anzeigen",
+    "allTime": "gesamt",
+    "monthSwitcherLabel": "Nach Monat anzeigen",
+    "noDataForMonth": "Noch keine Daten für {month} — wählen Sie oben einen anderen Monat.",
     "alignmentTitle": "Medien-Alignment",
     "alignmentDesc": "Redaktioneller Ton grosser Medien gegenueber Laendern und Regionen. Klicken Sie auf eine Zeile, um nach redaktioneller Aehnlichkeit zu sortieren."
   },

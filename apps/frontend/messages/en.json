@@ -397,6 +397,9 @@
     "sourcesFromCountry": "Sources from {country}",
     "showAllSources": "Show {count} more sources",
     "showFewerSources": "Show fewer",
+    "allTime": "all time",
+    "monthSwitcherLabel": "View by month",
+    "noDataForMonth": "No data for {month} yet — try another month above.",
     "alignmentTitle": "Media Alignment",
     "alignmentDesc": "Editorial tone of major publishers toward countries and regions. Click a row to sort by editorial similarity."
   },

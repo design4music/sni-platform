@@ -1,16 +1,27 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { OutletStanceEntity, OutletStanceEvidence } from '@/lib/queries';
 import { getCountryName } from '@/lib/countries';
 import FlagImg from './FlagImg';
 
 interface Props {
+  /** Required for the optional in-section prev/next switcher: switcher
+   *  generates URLs of the form /sources/[feedSlug]/[YYYY-MM]. */
   feedName: string;
+  feedSlug: string;
   initialMonth: string; // 'YYYY-MM'
   initialEntities: OutletStanceEntity[];
   availableMonths: string[]; // newest first
+  locale?: string;
+  /** When true, the section's own prev/next month switcher is suppressed.
+   *  Use when the parent page already drives month navigation. */
+  hideMonthSwitcher?: boolean;
+  /** When true, the section title omits the active month (because the
+   *  page's H1 already shows it). */
+  hideMonthInTitle?: boolean;
 }
 
 /* ---------- helpers ---------- */
@@ -221,48 +232,21 @@ function EntityCard({
 /* ---------- main section ---------- */
 
 export default function OutletStanceSection({
-  feedName,
+  feedSlug,
   initialMonth,
   initialEntities,
   availableMonths,
+  locale: localeProp,
+  hideMonthSwitcher = false,
+  hideMonthInTitle = false,
 }: Props) {
   const t = useTranslations('sources');
-  const locale = useLocale();
+  const localeHook = useLocale();
+  const locale = localeProp || localeHook;
 
-  const [month, setMonth] = useState(initialMonth);
-  const [entities, setEntities] = useState<OutletStanceEntity[]>(initialEntities);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (month === initialMonth) {
-      setEntities(initialEntities);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    (async () => {
-      try {
-        const res = await fetch(
-          `/api/outlet/${encodeURIComponent(feedName)}/stance?month=${month}`
-        );
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!cancelled) setEntities(data.entities || []);
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'error');
-          setEntities([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [month, feedName, initialMonth, initialEntities]);
+  // Pure presentation — month state lives in the URL.
+  const month = initialMonth;
+  const entities = initialEntities;
 
   const idx = useMemo(() => availableMonths.indexOf(month), [availableMonths, month]);
   const newerMonth = idx > 0 ? availableMonths[idx - 1] : null;
@@ -270,67 +254,58 @@ export default function OutletStanceSection({
 
   return (
     <section className="mb-10">
-      {/* Header + month switcher (matches CentroidHero pattern: active month in
-          the title, prev/next buttons show sibling month names with chevrons).
-          On phones the controls wrap onto their own row below the title so
-          they don't compete with it for horizontal space. */}
+      {/* Header. Active month is in the title unless hideMonthInTitle (the
+          parent page H1 already shows it). Prev/next switcher hidden when
+          hideMonthSwitcher (parent page drives month nav via URL). */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold">
             {t('editorialStanceTitle')}
-            <span className="text-dashboard-text-muted font-normal">
-              {' · '}
-              {formatMonthLong(month, locale)}
-            </span>
+            {!hideMonthInTitle && (
+              <span className="text-dashboard-text-muted font-normal">
+                {' · '}
+                {formatMonthLong(month, locale)}
+              </span>
+            )}
           </h2>
           <p className="text-sm text-dashboard-text-muted mt-1 max-w-3xl">
             {t('editorialStanceDesc')}
           </p>
         </div>
 
-        <div className="flex items-center gap-1 self-start sm:shrink-0">
-          {olderMonth ? (
-            <button
-              onClick={() => setMonth(olderMonth)}
-              className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
-              aria-label={t('previousMonth')}
-            >
-              ‹ {formatMonthShort(olderMonth, locale)}
-            </button>
-          ) : null}
-          {newerMonth ? (
-            <button
-              onClick={() => setMonth(newerMonth)}
-              className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
-              aria-label={t('nextMonth')}
-            >
-              {formatMonthShort(newerMonth, locale)} ›
-            </button>
-          ) : null}
-        </div>
+        {!hideMonthSwitcher && (
+          <div className="flex items-center gap-1 self-start sm:shrink-0">
+            {olderMonth ? (
+              <Link
+                href={`/${locale}/sources/${feedSlug}/${olderMonth}`}
+                className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
+                aria-label={t('previousMonth')}
+              >
+                ‹ {formatMonthShort(olderMonth, locale)}
+              </Link>
+            ) : null}
+            {newerMonth ? (
+              <Link
+                href={`/${locale}/sources/${feedSlug}/${newerMonth}`}
+                className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
+                aria-label={t('nextMonth')}
+              >
+                {formatMonthShort(newerMonth, locale)} ›
+              </Link>
+            ) : null}
+          </div>
+        )}
       </div>
 
-      {/* Body. Keep the previous grid visible while loading so switching
-          months doesn't cause a layout collapse — a thin overlay just dims
-          the existing cards. */}
-      {error ? (
-        <div className="text-sm text-red-400">{error}</div>
-      ) : entities.length === 0 && !loading ? (
+      {entities.length === 0 ? (
         <div className="text-sm text-dashboard-text-muted bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
           {t('noStanceData')}
         </div>
       ) : (
-        <div className={`relative ${loading ? 'opacity-50 pointer-events-none transition-opacity' : ''}`}>
-          {loading && (
-            <div className="absolute top-2 right-2 text-xs text-dashboard-text-muted bg-dashboard-surface border border-dashboard-border rounded px-2 py-0.5 z-10">
-              {t('loading')}
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {entities.map((e) => (
-              <EntityCard key={`${e.entity_kind}-${e.entity_code}`} e={e} t={t} />
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {entities.map((e) => (
+            <EntityCard key={`${e.entity_kind}-${e.entity_code}`} e={e} t={t} />
+          ))}
         </div>
       )}
     </section>

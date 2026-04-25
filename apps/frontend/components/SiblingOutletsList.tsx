@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SiblingOutlet } from '@/lib/queries';
+import { generateSlug } from '@/lib/slug';
 import PublisherFavicon from './PublisherFavicon';
 
 const DEFAULT_VISIBLE = 8;
@@ -32,7 +33,7 @@ export default function SiblingOutletsList({ outlets, parentLanguageCode }: Prop
         {visible.map(o => (
           <li key={o.feed_name}>
             <Link
-              href={`/sources/${encodeURIComponent(o.feed_name)}`}
+              href={`/sources/${o.slug || generateSlug(o.feed_name)}`}
               className="flex items-center gap-2 px-2 py-1.5 -mx-2 rounded text-sm text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border/30 transition min-w-0"
             >
               <PublisherFavicon

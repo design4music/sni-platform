@@ -153,22 +153,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Source (publisher) profiles — only ones with meaningful coverage
-  const feedRows = await query<{ name: string }>(
-    `SELECT t.publisher_name AS name
-       FROM titles_v3 t
-      WHERE t.publisher_name IS NOT NULL
-        AND t.processing_status IN ('assigned','out_of_scope')
-      GROUP BY t.publisher_name
-      HAVING COUNT(*) >= 20
-      ORDER BY t.publisher_name`
+  // Source (publisher) profiles. We list each outlet's canonical "latest"
+  // entry (rolling 302) and one indexable URL per (outlet, month) where
+  // we have stance or monthly-stats data — those are the URLs that hold
+  // genuinely unique content per (outlet, month) and are worth indexing.
+  const feedRows = await query<{ slug: string; name: string }>(
+    `SELECT slug, name FROM feeds WHERE is_active = true AND slug IS NOT NULL ORDER BY slug`
   );
   for (const f of feedRows) {
-    const path = `/sources/${encodeURIComponent(f.name)}`;
+    const path = `/sources/${f.slug}`;
     entries.push({
       url: `${SITE_URL}${path}`,
       changeFrequency: 'weekly',
       priority: 0.4,
+      alternates: alt(path),
+    });
+  }
+  // Per-month outlet pages
+  const monthRows = await query<{ slug: string; m: string }>(
+    `SELECT f.slug, TO_CHAR(d.month, 'YYYY-MM') AS m
+     FROM feeds f
+     JOIN (
+       SELECT outlet_name AS feed_name, month FROM outlet_entity_stance
+       UNION
+       SELECT feed_name, month FROM mv_publisher_stats_monthly
+     ) d ON d.feed_name = f.name
+     WHERE f.is_active = true AND f.slug IS NOT NULL
+     ORDER BY f.slug, d.month DESC`
+  );
+  for (const r of monthRows) {
+    const path = `/sources/${r.slug}/${r.m}`;
+    entries.push({
+      url: `${SITE_URL}${path}`,
+      changeFrequency: 'monthly',
+      priority: 0.5,
       alternates: alt(path),
     });
   }

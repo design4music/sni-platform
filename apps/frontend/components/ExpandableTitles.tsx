@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Title } from '@/lib/types';
+import { generateSlug as slugify } from '@/lib/slug';
 import ExternalLink from './ExternalLink';
 import PublisherFaviconShared from './PublisherFavicon';
 
@@ -69,7 +70,7 @@ function PublisherAccordion({ group, defaultOpen, dateFmtLocale }: { group: Publ
           ))}
           <div className="pt-2">
             <Link
-              href={`/sources/${encodeURIComponent(group.publisher)}`}
+              href={`/sources/${slugify(group.publisher)}`}
               className="text-xs text-blue-400 hover:text-blue-300 transition"
             >
               {group.publisher} &rarr;

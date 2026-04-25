@@ -14,7 +14,7 @@ import {
 } from '@/lib/queries';
 import type { GlobalMonthView, GlobalTrackSummary, GlobalTrackTopEvent, GlobalDayTopEvent } from '@/lib/queries';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
-import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, type Locale as SeoLocale } from '@/lib/seo';
+import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, truncateDescription, type Locale as SeoLocale } from '@/lib/seo';
 
 export const revalidate = 1800;
 
@@ -48,6 +48,15 @@ function formatDayLong(day: string, locale: SeoLocale): string {
 // Metadata
 // ─────────────────────────────────────────────────────────────
 
+// Shared strings for live-view title/description. Keep under ~60 / 160 chars
+// respectively to avoid Google truncation.
+const LIVE_TITLE_EN = 'Most covered international news and emerging stories';
+const LIVE_TITLE_DE = 'Meistberichtete Weltnachrichten und aufkommende Stories';
+const LIVE_DESC_EN =
+  'See what the world is covering right now: top stories across politics, security, economy, and society, plus emerging stories gaining traction. Click any past day to open its archive.';
+const LIVE_DESC_DE =
+  'Sehen Sie, was die Welt gerade berichtet: Top-Meldungen aus Politik, Sicherheit, Wirtschaft und Gesellschaft sowie aufkommende Stories. Klicken Sie einen Tag für das Archiv.';
+
 export async function generateMetadata({ searchParams }: TrendingV2Props): Promise<Metadata> {
   const { month: requestedMonth, day: requestedDay } = await searchParams;
   const locale = (await getLocale()) as SeoLocale;
@@ -58,10 +67,8 @@ export async function generateMetadata({ searchParams }: TrendingV2Props): Promi
 
   if (!activeMonth) {
     return buildPageMetadata({
-      title: locale === 'de' ? 'Globales Briefing' : 'Global Briefing',
-      description: locale === 'de'
-        ? 'Das globale Nachrichtenbriefing von WorldBrief — Top-Themen und Trendgeschichten.'
-        : "WorldBrief's global news briefing — top themes and trending stories.",
+      title: locale === 'de' ? LIVE_TITLE_DE : LIVE_TITLE_EN,
+      description: truncateDescription(locale === 'de' ? LIVE_DESC_DE : LIVE_DESC_EN),
       path: '/trending/v2',
       locale,
     });
@@ -75,11 +82,11 @@ export async function generateMetadata({ searchParams }: TrendingV2Props): Promi
   if (view && isValidDay(requestedDay, view)) {
     const dayLabel = formatDayLong(requestedDay, locale);
     const title = locale === 'de'
-      ? `Globales Briefing — ${dayLabel}`
-      : `Global Briefing — ${dayLabel}`;
+      ? `Top-Weltnachrichten am ${dayLabel}`
+      : `Top world news on ${dayLabel}`;
     const description = locale === 'de'
-      ? `Top-Meldungen der Weltnachrichten am ${dayLabel}: Zusammenfassung der größten Ereignisse aller Länder und Themen.`
-      : `Top global news stories on ${dayLabel}: summary of the biggest events across countries and themes.`;
+      ? `Top-Weltnachrichten am ${dayLabel}: die meistberichteten Stories des Tages aus allen Ländern und Themen, mit Rang-Änderungen im Vergleich zum Vortag.`
+      : `Top international news on ${dayLabel}: the most-covered stories that day, cross-centroid, with rank-change indicators vs the prior day.`;
     const canonicalPath = `/trending/v2?month=${activeMonth}&day=${requestedDay}`;
     return buildPageMetadata({
       title,
@@ -90,105 +97,78 @@ export async function generateMetadata({ searchParams }: TrendingV2Props): Promi
     });
   }
 
-  let description: string;
-  if (view) {
-    const sectorCounts = new Map<string, number>();
-    for (const tr of view.tracks) {
-      for (const chip of tr.theme_chips) {
-        sectorCounts.set(chip.sector, (sectorCounts.get(chip.sector) || 0) + chip.weight);
-      }
-    }
-    const topSectors = [...sectorCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([s]) => humanizeEnum(s));
-    if (locale === 'de') {
-      const parts = [`Globales Nachrichtenbriefing, ${monthLabel}: ${formatCount(view.total_sources, 'de')} Quellen aus ${view.active_centroid_count} Ländern.`];
-      if (topSectors.length) parts.push(`Schwerpunkte: ${joinList(topSectors, 'de')}.`);
-      parts.push('Mehrsprachige Übersicht.');
-      description = truncateDescription(parts.join(' '));
-    } else {
-      const parts = [`Global news briefing, ${monthLabel}: ${formatCount(view.total_sources)} sources across ${view.active_centroid_count} countries.`];
-      if (topSectors.length) parts.push(`Top themes: ${joinList(topSectors)}.`);
-      parts.push('Multilingual overview.');
-      description = truncateDescription(parts.join(' '));
-    }
-  } else {
-    description = locale === 'de'
-      ? `Globales Nachrichtenbriefing, ${monthLabel}.`
-      : `Global news briefing, ${monthLabel}.`;
-  }
-
+  // Live view: static explainer description + month in the title.
+  // Keep total title under ~60 chars so Google doesn't truncate.
+  const title = locale === 'de'
+    ? `${LIVE_TITLE_DE} · ${monthLabel}`
+    : `${LIVE_TITLE_EN} · ${monthLabel}`;
   return buildPageMetadata({
-    title: locale === 'de'
-      ? `Globales Briefing — ${monthLabel}`
-      : `Global Briefing — ${monthLabel}`,
-    description,
+    title,
+    description: truncateDescription(locale === 'de' ? LIVE_DESC_DE : LIVE_DESC_EN),
     path: '/trending/v2',
     locale,
   });
 }
 
 // ─────────────────────────────────────────────────────────────
-// Mechanical overview prose (v1 prototype — LLM version comes later via
-// a global_summaries table mirroring centroid_summaries / D-065)
+// "About this page" explainer — replaces the old mechanical month summary.
+// Static content (same every visit). Four short paragraphs answering:
+// what the page is, what the reader is seeing, what to pay attention to,
+// and how to use the archive. Localized EN/DE.
 // ─────────────────────────────────────────────────────────────
 
-function buildMechanicalOverview(view: GlobalMonthView, locale: SeoLocale): string[] {
-  const paragraphs: string[] = [];
+interface AboutBlock {
+  heading: string;
+  body: string;
+}
 
-  // Paragraph 1: scale + dominant tracks
-  const topTracks = [...view.tracks]
-    .sort((a, b) => b.source_count - a.source_count)
-    .slice(0, 2);
+function buildAboutBlocks(locale: SeoLocale): AboutBlock[] {
   if (locale === 'de') {
-    paragraphs.push(
-      `Im Berichtszeitraum sammelten ${view.active_centroid_count} Länder zusammen ${formatCount(view.total_events, 'de')} Topereignisse, gestützt auf ${formatCount(view.total_sources, 'de')} Quellenerwähnungen. ` +
-      `Die Agenda wurde vor allem von ${topTracks.map(t => formatTrackLabel(t.track).toLowerCase()).join(' und ')} geprägt.`
-    );
-  } else {
-    paragraphs.push(
-      `Across ${view.active_centroid_count} countries this period, ${formatCount(view.total_events)} headline-level events surfaced, backed by ${formatCount(view.total_sources)} source mentions. ` +
-      `The agenda leaned heavily on ${topTracks.map(t => formatTrackLabel(t.track).toLowerCase()).join(' and ')}.`
-    );
+    return [
+      {
+        heading: 'Worum es hier geht',
+        body:
+          "WorldBriefs globaler Nachrichten-Puls — was über 200 Medien weltweit im Moment am stärksten berichten, aggregiert über 74 Länder und Regionen sowie vier strategische Tracks: Politik, Sicherheit, Wirtschaft, Gesellschaft.",
+      },
+      {
+        heading: 'Was Sie sehen',
+        body:
+          'Die Kalender-Grafik oben zeigt das tägliche Quellenvolumen des letzten Monats, farblich aufgeschlüsselt nach dominierendem Track. Die vier Karten unten listen die Top-5-Stories pro Track für den Zeitraum. Das Feld „Fastest-growing" hebt Stories hervor, die in den letzten 7 Tagen am stärksten zugelegt haben — das Nächstliegende zu „aufkommend".',
+      },
+      {
+        heading: 'Worauf Sie achten sollten',
+        body:
+          '„Active Narratives" (Seitenleiste) zeigt, welchen strategischen Frames diese Ereignisse angehören. „Trending Signals" listet die am häufigsten erwähnten Personen, Orte und Organisationen.',
+      },
+      {
+        heading: 'Das Archiv',
+        body:
+          'Klicken Sie auf einen vergangenen Tag im Kalender, um die Berichterstattung dieses Tages zu öffnen: die Top 10 Ereignisse, geordnet nach 7-Tage-Quellensumme, mit ★ NEW / ↑ steigend / ↓ fallend / ● gehalten-Kennzeichnungen. Jede Archiv-Seite ist dauerhaft — teilbar und merkbar.',
+      },
+    ];
   }
-
-  // Paragraph 2: top 3 events by source count
-  const flatTops = view.tracks
-    .flatMap(t => t.top_events.map(e => ({ ...e, track: t.track })))
-    .sort((a, b) => b.source_count - a.source_count)
-    .slice(0, 3);
-  if (flatTops.length > 0) {
-    const lines = flatTops.map(e =>
-      `${e.title.trim()} (${e.centroid_label}, ${formatCount(e.source_count, locale)} sources)`
-    );
-    if (locale === 'de') {
-      paragraphs.push(`Drei Stories dominierten die Reichweite: ${lines.join('; ')}.`);
-    } else {
-      paragraphs.push(`Three stories dominated reach: ${lines.join('; ')}.`);
-    }
-  }
-
-  // Paragraph 3: top themes composite
-  const sectorCounts = new Map<string, number>();
-  for (const tr of view.tracks) {
-    for (const chip of tr.theme_chips) {
-      sectorCounts.set(chip.sector, (sectorCounts.get(chip.sector) || 0) + chip.weight);
-    }
-  }
-  const topSectors = [...sectorCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([s]) => humanizeEnum(s));
-  if (topSectors.length > 0) {
-    if (locale === 'de') {
-      paragraphs.push(`Wiederkehrende Themen: ${joinList(topSectors, 'de')}.`);
-    } else {
-      paragraphs.push(`Recurring themes this period: ${joinList(topSectors)}.`);
-    }
-  }
-
-  return paragraphs;
+  return [
+    {
+      heading: 'What this is',
+      body:
+        "WorldBrief's global news pulse — what 200+ media outlets around the world are covering most right now, aggregated across 74 countries and regions and four strategic tracks: politics, security, economy, society.",
+    },
+    {
+      heading: "What you're looking at",
+      body:
+        "The calendar above shows daily source volume for the last month, color-segmented by the dominant track. The four cards below list the top-5 stories per track for the period. The Fastest-growing panel highlights stories gaining the most new sources in the last 7 days — the closest thing to \"emerging\".",
+    },
+    {
+      heading: 'What to pay attention to',
+      body:
+        'Active Narratives (sidebar) shows which strategic frames these events fit into. Trending Signals lists the people, places, and organizations appearing in the most stories.',
+    },
+    {
+      heading: 'The archive',
+      body:
+        'Click any past day on the calendar to open that day\'s coverage: the top 10 events ranked by 7-day cumulative source count, with ★ NEW / ↑ rising / ↓ falling / ● held indicators. Each archive day is a permanent page — shareable, bookmarkable.',
+    },
+  ];
 }
 
 function formatTrackLabel(track: string): string {
@@ -719,25 +699,24 @@ export default async function TrendingV2Page({ params, searchParams }: TrendingV
     );
   }
 
-  // Live view (default) — monthly overview + fastest-growing + track cards.
-  const overviewParagraphs = buildMechanicalOverview(view, seoLocale);
+  // Live view (default) — about this page + fastest-growing + track cards.
+  const aboutBlocks = buildAboutBlocks(seoLocale);
 
   return (
     <DashboardLayout sidebar={sidebar} topFullWidthContent={hero}>
       <div className="space-y-8">
-        {/* Overview prose (mechanical stub for v1) */}
-        <section>
-          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-            {locale === 'de' ? 'Überblick' : 'Overview'}
-          </h3>
-          {overviewParagraphs.map((p, i) => (
-            <p key={i} className="text-base leading-relaxed text-dashboard-text mb-3">
-              {p}
-            </p>
+        {/* About this page — replaces the old mechanical "Overview" block. */}
+        <section className="space-y-4">
+          {aboutBlocks.map((b, i) => (
+            <div key={i}>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-dashboard-text-muted mb-1.5">
+                {b.heading}
+              </h3>
+              <p className="text-[15px] leading-relaxed text-dashboard-text">
+                {b.body}
+              </p>
+            </div>
           ))}
-          <p className="text-[11px] text-dashboard-text-muted mt-2 italic">
-            Mechanical summary · editorial version to follow.
-          </p>
         </section>
 
         {/* Fastest-growing panel — hero-prominence on current month only */}

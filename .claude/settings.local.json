@@ -7,10 +7,19 @@
       "WebSearch",
       "mcp__postgres__*",
       "mcp__asana__*",
-      "mcp__google-drive__*"
+      "mcp__google-drive__*",
+      "PowerShell(npm run *)",
+      "PowerShell(Push-Location \"C:\\\\Users\\\\Maksim\\\\Documents\\\\SNI\\\\apps\\\\frontend\"; npx tsc --noEmit 2>&1 | Select-Object -First 40; $exit=$LASTEXITCODE; Pop-Location; Write-Output \"exit=$exit\")",
+      "PowerShell(Push-Location \"C:\\\\Users\\\\Maksim\\\\Documents\\\\SNI\\\\apps\\\\frontend\"; npx tsc --noEmit 2>&1 | Select-Object -First 40; $e=$LASTEXITCODE; Pop-Location; Write-Output \"exit=$e\")",
+      "PowerShell(Push-Location \"C:\\\\Users\\\\Maksim\\\\Documents\\\\SNI\\\\apps\\\\frontend\"; npx tsc --noEmit 2>&1 | Select-Object -First 30; $e=$LASTEXITCODE; Pop-Location; Write-Output \"exit=$e\")"
     ],
     "deny": []
   },
+  "enabledMcpjsonServers": [
+    "postgres",
+    "asana",
+    "google-drive"
+  ],
   "hooks": {
     "PreToolUse": [
       {
@@ -23,10 +32,5 @@
         ]
       }
     ]
-  },
-  "enabledMcpjsonServers": [
-    "postgres",
-    "asana",
-    "google-drive"
-  ]
+  }
 }

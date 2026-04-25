@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import OutletLogo from './OutletLogo';
+import { generateSlug } from '@/lib/slug';
 
 interface SourceFeed {
   id: string;
   name: string;
+  slug?: string | null;
   language_code: string;
   source_domain?: string;
   url: string;
@@ -153,7 +155,7 @@ export default function SourceCountryAccordion({ countryCode, countryName, feeds
               >
                 <OutletLogo src={feed.logoUrl} name={feed.name} size={20} />
                 <Link
-                  href={`/sources/${encodeURIComponent(feed.name).replace(/\./g, '%2E')}`}
+                  href={`/sources/${feed.slug || generateSlug(feed.name)}`}
                   className="font-medium text-dashboard-text group-hover:text-blue-400 transition-colors min-w-0 truncate"
                   style={{ flex: '1 1 140px' }}
                 >

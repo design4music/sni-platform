@@ -514,7 +514,7 @@ export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: numbe
        ) s ON s.publisher_name = fp.publisher_name
        GROUP BY fp.feed_name
      )
-     SELECT f.id, f.name, f.url, f.language_code, f.country_code, f.source_domain, f.is_active,
+     SELECT f.id, f.name, f.slug, f.url, f.language_code, f.country_code, f.source_domain, f.is_active,
        COALESCE(st.total, 0)::int as total_titles,
        COALESCE(st.assigned, 0)::int as assigned_titles
      FROM feeds f
@@ -1226,6 +1226,7 @@ export async function getOutletStanceMonths(feedName: string): Promise<string[]>
 
 export interface SiblingOutlet {
   feed_name: string;
+  slug: string | null;
   language_code: string | null;
   source_domain: string | null;
   title_count: number;
@@ -1250,7 +1251,7 @@ export async function getSiblingOutlets(
     3600,
     () =>
       query<SiblingOutlet>(
-        `SELECT f.name AS feed_name, f.language_code, f.source_domain,
+        `SELECT f.name AS feed_name, f.slug, f.language_code, f.source_domain,
                 COALESCE((mvs.stats->>'title_count')::int, 0) AS title_count
          FROM feeds f
          LEFT JOIN mv_publisher_stats mvs ON mvs.feed_name = f.name
@@ -1261,6 +1262,85 @@ export async function getSiblingOutlets(
          LIMIT $3`,
         [countryCode, excludeFeedName, limit]
       )
+  );
+}
+
+/** Per-month publisher stats (D-071 follow-up). Same JSONB shape as
+ *  the lifetime PublisherStats minus dow_distribution / peak_hour
+ *  (kept aggregate) and narrative_frame_count (retired). */
+export interface PublisherStatsMonthly {
+  title_count: number;
+  centroid_count: number;
+  track_distribution: Record<string, number>;
+  geo_hhi: number;
+  geo_gini: number;
+  top_centroids: Array<{ name: string; count: number; share: number }>;
+  top_actors: Array<{ name: string; count: number; share: number }>;
+  action_distribution: Record<string, number>;
+  domain_distribution: Record<string, number>;
+  language_distribution: Record<string, number>;
+  signal_richness: number;
+}
+
+export async function getPublisherStatsMonthly(
+  feedName: string,
+  month: string  // 'YYYY-MM' or 'YYYY-MM-DD'
+): Promise<PublisherStatsMonthly | null> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  const rows = await query<{ stats: PublisherStatsMonthly }>(
+    `SELECT stats FROM mv_publisher_stats_monthly
+     WHERE feed_name = $1 AND month = $2::date`,
+    [feedName, monthStart]
+  );
+  return rows[0]?.stats || null;
+}
+
+/** Months for which an outlet has *any* per-month data: stance OR stats.
+ *  Returned newest first. Used by the prominent month switcher. */
+export async function getOutletAvailableMonths(feedName: string): Promise<string[]> {
+  return cached(`outletMonths:${feedName}`, 1800, async () => {
+    const rows = await query<{ m: string }>(
+      `SELECT DISTINCT m FROM (
+         SELECT TO_CHAR(month, 'YYYY-MM') AS m FROM outlet_entity_stance WHERE outlet_name = $1
+         UNION
+         SELECT TO_CHAR(month, 'YYYY-MM') AS m FROM mv_publisher_stats_monthly WHERE feed_name = $1
+       ) x ORDER BY m DESC`,
+      [feedName]
+    );
+    return rows.map(r => r.m);
+  });
+}
+
+/** Centroids covered by an outlet in a specific month, with iso_codes
+ *  resolved for map rendering. Returned highest-count first. */
+export interface OutletMonthlyCentroidCoverage {
+  centroid_id: string;
+  label: string | null;
+  iso_codes: string[] | null;
+  count: number;
+}
+
+export async function getOutletMonthlyMapCentroids(
+  feedName: string,
+  month: string
+): Promise<OutletMonthlyCentroidCoverage[]> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return query<OutletMonthlyCentroidCoverage>(
+    `WITH this_month AS (
+       SELECT ta.centroid_id, COUNT(*) AS n
+       FROM titles_v3 t
+       JOIN title_assignments ta ON ta.title_id = t.id
+       WHERE t.publisher_name = $1
+         AND t.pubdate_utc >= $2::date
+         AND t.pubdate_utc <  ($2::date + INTERVAL '1 month')
+       GROUP BY ta.centroid_id
+     )
+     SELECT cv.id AS centroid_id, cv.label, cv.iso_codes, tm.n::int AS count
+     FROM this_month tm
+     JOIN centroids_v3 cv ON cv.id = tm.centroid_id
+     WHERE cv.iso_codes IS NOT NULL AND array_length(cv.iso_codes, 1) > 0
+     ORDER BY tm.n DESC`,
+    [feedName, monthStart]
   );
 }
 
