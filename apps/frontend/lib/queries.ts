@@ -1228,17 +1228,21 @@ export interface SiblingOutlet {
   feed_name: string;
   language_code: string | null;
   source_domain: string | null;
+  title_count: number;
 }
 
-/** Other active outlets in the same country as the given feed.
- *  Used by the "More sources from <country>" sidebar block on outlet pages.
- *  Returns an empty array when there are no siblings (the country has only
- *  this one outlet) — caller should hide the block in that case.
+/** Other active outlets in the same country as the given feed, ordered by
+ *  recent volume (title_count from mv_publisher_stats) so the most active
+ *  outlets surface first. Includes inactive-stats outlets at the bottom.
+ *
+ *  Returns up to `limit` rows (default 50 — effectively all for any country
+ *  in our corpus). The frontend can decide how many to show by default and
+ *  how to expand to the full list. Empty array when no siblings exist.
  */
 export async function getSiblingOutlets(
   countryCode: string,
   excludeFeedName: string,
-  limit: number = 12
+  limit: number = 50
 ): Promise<SiblingOutlet[]> {
   if (!countryCode) return [];
   return cached(
@@ -1246,12 +1250,14 @@ export async function getSiblingOutlets(
     3600,
     () =>
       query<SiblingOutlet>(
-        `SELECT name AS feed_name, language_code, source_domain
-         FROM feeds
-         WHERE country_code = $1
-           AND is_active = true
-           AND name <> $2
-         ORDER BY name
+        `SELECT f.name AS feed_name, f.language_code, f.source_domain,
+                COALESCE((mvs.stats->>'title_count')::int, 0) AS title_count
+         FROM feeds f
+         LEFT JOIN mv_publisher_stats mvs ON mvs.feed_name = f.name
+         WHERE f.country_code = $1
+           AND f.is_active = true
+           AND f.name <> $2
+         ORDER BY title_count DESC, f.name
          LIMIT $3`,
         [countryCode, excludeFeedName, limit]
       )

@@ -395,6 +395,8 @@
     "noStanceData": "Noch keine redaktionelle Haltung fuer diesen Monat.",
     "moreFromCountry": "Weitere Quellen aus {country}",
     "sourcesFromCountry": "Quellen aus {country}",
+    "showAllSources": "{count} weitere Quellen anzeigen",
+    "showFewerSources": "Weniger anzeigen",
     "alignmentTitle": "Medien-Alignment",
     "alignmentDesc": "Redaktioneller Ton grosser Medien gegenueber Laendern und Regionen. Klicken Sie auf eine Zeile, um nach redaktioneller Aehnlichkeit zu sortieren."
   },

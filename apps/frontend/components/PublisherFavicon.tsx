@@ -1,13 +1,24 @@
+'use client';
+
+import { useState } from 'react';
+
 /**
- * Small outlet favicon — extracted from ExpandableTitles so it can be
- * reused as a server or client component. Pure presentation, no hooks.
+ * Small outlet favicon. Used in event-page accordions, the sibling-outlets
+ * sidebar block, and anywhere a publisher logo appears inline.
  *
- * Tries the local /logos/{domain}.png path first (matches the asset
- * pattern used elsewhere). When the publisher name isn't in the static
- * domain map, falls back to a single-letter circle for visual consistency.
+ * Tries the local /logos/{domain}.png path. Two fallback paths to a typed
+ * single-letter chip (same shape, same size — visually consistent with
+ * real logos at the layout level):
+ *   1. No domain known for this publisher (lookup miss).
+ *   2. Logo file 404s at runtime (onError handler).
  *
- * If a domain is known directly (e.g. from feeds.source_domain), pass it
- * as `domain` to skip the lookup table. Otherwise just pass `publisher`.
+ * Real logos sit on a light slate "chip" so transparent PNGs with dark
+ * foregrounds (Die Zeit, FAZ wordmarks) stay legible against the dark
+ * dashboard. The initials fallback uses the dashboard-border colour so
+ * a visual signal distinguishes typed letters from real artwork.
+ *
+ * If a domain is known directly (feeds.source_domain), pass it as
+ * `domain` to skip the lookup table.
  */
 
 interface Props {
@@ -81,21 +92,22 @@ function cleanDomain(d: string): string {
 }
 
 export default function PublisherFavicon({ publisher, domain, size = 20, className = '' }: Props) {
+  const [failed, setFailed] = useState(false);
   const resolved = domain ? cleanDomain(domain) : KNOWN_DOMAINS[publisher];
-  if (!resolved) {
+
+  if (!resolved || failed) {
+    // Letter chip — same dimensions as the real-logo chip so list rows stay
+    // aligned regardless of whether the logo loaded.
     return (
       <span
-        className={`rounded bg-dashboard-border flex items-center justify-center text-[10px] text-dashboard-text-muted flex-shrink-0 ${className}`}
-        style={{ width: size, height: size }}
+        className={`inline-flex items-center justify-center rounded bg-dashboard-border text-dashboard-text-muted font-semibold flex-shrink-0 ${className}`}
+        style={{ width: size, height: size, fontSize: Math.max(size * 0.45, 9) }}
       >
         {publisher.charAt(0).toUpperCase()}
       </span>
     );
   }
-  // Light "chip" wrapper so logos with transparent backgrounds and dark
-  // foreground content (e.g. Die Zeit's black "Z", FAZ's wordmark) are
-  // legible against the dark dashboard. Mid-light slate works for both
-  // black-on-transparent and white-on-coloured logos.
+
   return (
     <span
       className={`inline-flex items-center justify-center rounded bg-slate-200 overflow-hidden flex-shrink-0 ${className}`}
@@ -106,6 +118,7 @@ export default function PublisherFavicon({ publisher, domain, size = 20, classNa
         alt=""
         className="object-contain w-full h-full"
         loading="lazy"
+        onError={() => setFailed(true)}
       />
     </span>
   );

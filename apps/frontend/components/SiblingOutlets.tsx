@@ -1,15 +1,16 @@
-import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getSiblingOutlets } from '@/lib/queries';
 import { getCountryName } from '@/lib/countries';
-import PublisherFavicon from './PublisherFavicon';
+import SiblingOutletsList from './SiblingOutletsList';
 
 interface Props {
   /** ISO-2 country code to list sources from. */
   countryCode: string | null | undefined;
   /** Outlet to omit from the list (when rendered on an outlet's own page). */
   excludeFeedName?: string;
-  /** Cap on number of sources rendered. Default 12. */
+  /** Cap on number of sources fetched. Default 50 (effectively all for any
+   *  country in our corpus). The list component will collapse to the top
+   *  ~8 with a "Show all" expander. */
   limit?: number;
   /**
    * Optional language code of the parent context. When set, sibling outlets
@@ -33,7 +34,7 @@ interface Props {
 export default async function SiblingOutlets({
   countryCode,
   excludeFeedName,
-  limit = 12,
+  limit = 50,
   parentLanguageCode,
 }: Props) {
   if (!countryCode) return null;
@@ -56,28 +57,7 @@ export default async function SiblingOutlets({
       <h3 className="text-sm font-medium text-dashboard-text-muted mb-2">
         {heading}
       </h3>
-      <ul className="space-y-1">
-        {outlets.map(o => (
-          <li key={o.feed_name}>
-            <Link
-              href={`/sources/${encodeURIComponent(o.feed_name)}`}
-              className="flex items-center gap-2 px-2 py-1.5 -mx-2 rounded text-sm text-dashboard-text-muted hover:text-dashboard-text hover:bg-dashboard-border/30 transition min-w-0"
-            >
-              <PublisherFavicon
-                publisher={o.feed_name}
-                domain={o.source_domain}
-                size={20}
-              />
-              <span className="truncate flex-1">{o.feed_name}</span>
-              {o.language_code && o.language_code !== parentLanguageCode && (
-                <span className="uppercase text-[10px] tabular-nums text-dashboard-text-muted/70 flex-shrink-0">
-                  {o.language_code}
-                </span>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <SiblingOutletsList outlets={outlets} parentLanguageCode={parentLanguageCode} />
     </div>
   );
 }
