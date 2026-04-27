@@ -434,6 +434,7 @@
     "volumeDescription": "Headlines per month for each top entity. Look for spikes — entities that suddenly dominate coverage and then fade. Click any tile to open the peak month.",
     "volumePeakLink": "Peak in {month} — {n} headlines",
     "volumePeakLabel": "peak {month}: {n}",
+    "volumeMinorTitle": "Also covered (below stance-analysis threshold)",
     "trackTimelineTitle": "Topic mix over time",
     "trackTimelineDescription": "Share of each thematic track across months. Bands shifting wider show where the outlet's editorial centre of gravity moved.",
     "trackTimelineMonthLink": "{month} — {n} titles",

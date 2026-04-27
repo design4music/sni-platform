@@ -1420,6 +1420,78 @@ export async function getOutletEntityDailyVolume(
   });
 }
 
+/** Entities the outlet has covered enough to notice (≥ minTotal lifetime
+ *  headlines) but not enough to analyse — i.e. they never crossed the
+ *  per-month threshold for stance scoring, so they don't appear in
+ *  outlet_entity_stance. Used to surface a "also covered" tail under
+ *  the volume chart on the outlet landing page.
+ *
+ *  Lifetime totals; top N by total volume. */
+export interface OutletMinorEntity {
+  entity_kind: 'country' | 'person';
+  entity_code: string;
+  total: number;
+}
+
+export async function getOutletMinorEntities(
+  feedName: string,
+  minTotal: number = 5,
+  limit: number = 50
+): Promise<OutletMinorEntity[]> {
+  return cached(
+    `outletMinorEntities:${feedName}:${minTotal}:${limit}`,
+    1800,
+    async () => {
+      const rows = await query<OutletMinorEntity>(
+        `WITH stance_entities AS (
+           SELECT DISTINCT entity_kind, entity_code
+           FROM outlet_entity_stance
+           WHERE outlet_name = $1
+         ),
+         country_totals AS (
+           SELECT 'country'::text AS entity_kind,
+                  je.value AS entity_code,
+                  COUNT(*)::int AS total
+           FROM titles_v3 t
+           JOIN title_labels tl ON tl.title_id = t.id
+           CROSS JOIN LATERAL jsonb_each_text(tl.entity_countries) je
+           WHERE t.publisher_name = $1
+           GROUP BY je.value
+         ),
+         person_totals AS (
+           SELECT 'person'::text AS entity_kind,
+                  p AS entity_code,
+                  COUNT(*)::int AS total
+           FROM titles_v3 t
+           JOIN title_labels tl ON tl.title_id = t.id
+           CROSS JOIN LATERAL unnest(tl.persons) p
+           WHERE t.publisher_name = $1
+           GROUP BY p
+         ),
+         all_totals AS (
+           SELECT entity_kind, entity_code, total FROM country_totals
+           UNION ALL
+           SELECT entity_kind, entity_code, total FROM person_totals
+         )
+         SELECT a.entity_kind, a.entity_code, a.total
+         FROM all_totals a
+         LEFT JOIN stance_entities s
+           ON s.entity_kind = a.entity_kind AND s.entity_code = a.entity_code
+         WHERE s.entity_code IS NULL
+           AND a.total >= $2
+         ORDER BY a.total DESC
+         LIMIT $3`,
+        [feedName, minTotal, limit]
+      );
+      return rows.map(r => ({
+        entity_kind: r.entity_kind,
+        entity_code: r.entity_code,
+        total: r.total,
+      }));
+    }
+  );
+}
+
 /** Cross-month track distribution for an outlet, one row per month with
  *  track shares + title volume. Used by the lifetime track-timeline
  *  chart on the outlet landing page. */

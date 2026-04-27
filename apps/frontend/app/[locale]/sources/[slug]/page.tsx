@@ -30,6 +30,7 @@ import {
   getOutletStanceTimeline,
   getOutletTrackTimeline,
   getOutletEntityDailyVolume,
+  getOutletMinorEntities,
   getSiblingOutlets,
 } from '@/lib/queries';
 import { resolveSlug } from '@/lib/slug-server';
@@ -121,6 +122,7 @@ export default async function OutletLandingPage({ params }: Props) {
     stanceTimeline,
     trackTimeline,
     entityDaily,
+    minorEntities,
   ] = await Promise.all([
     getOutletProfile(feedName),
     getPublisherStats(feedName),
@@ -128,6 +130,7 @@ export default async function OutletLandingPage({ params }: Props) {
     getOutletStanceTimeline(feedName),
     getOutletTrackTimeline(feedName),
     getOutletEntityDailyVolume(feedName),
+    getOutletMinorEntities(feedName),
   ]);
 
   if (!profile) notFound();
@@ -399,6 +402,7 @@ export default async function OutletLandingPage({ params }: Props) {
                 locale={locale}
                 stanceRows={stanceTimeline}
                 dailyRows={entityDaily}
+                minorEntities={minorEntities}
               />
             )}
 

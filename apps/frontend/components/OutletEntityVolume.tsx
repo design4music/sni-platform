@@ -5,7 +5,11 @@ import { getCountryName } from '@/lib/countries';
 import FlagImg from './FlagImg';
 import PersonIcon from './PersonIcon';
 import InfoTip from './InfoTip';
-import type { OutletStanceTimelineRow, OutletEntityDailyRow } from '@/lib/queries';
+import type {
+  OutletStanceTimelineRow,
+  OutletEntityDailyRow,
+  OutletMinorEntity,
+} from '@/lib/queries';
 
 interface Props {
   feedSlug: string;
@@ -14,6 +18,9 @@ interface Props {
   stanceRows: OutletStanceTimelineRow[];
   /** Day-level coverage rows for those entities, full title lifetime. */
   dailyRows: OutletEntityDailyRow[];
+  /** Entities with enough lifetime coverage to mention but not enough
+   *  per-month to score stance — listed below the legend, no chart line. */
+  minorEntities?: OutletMinorEntity[];
   topN?: number;
 }
 
@@ -98,6 +105,7 @@ export default async function OutletEntityVolume({
   locale,
   stanceRows,
   dailyRows,
+  minorEntities = [],
   topN = 12,
 }: Props) {
   const t = await getTranslations('sources');
@@ -474,6 +482,42 @@ export default async function OutletEntityVolume({
           </div>
         ))}
       </div>
+
+      {/* "Also covered" tail — entities with lifetime coverage but no
+          month above the stance-scoring threshold. Static list, no
+          chart line. Helps surface long-tail interests an outlet
+          touches on without dedicating sustained coverage. */}
+      {minorEntities.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-dashboard-border/50">
+          <div className="text-[10px] uppercase tracking-wider text-dashboard-text-muted/80 mb-2">
+            {t('volumeMinorTitle')}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs">
+            {minorEntities.map(m => {
+              const isPerson = m.entity_kind === 'person';
+              const label = isPerson
+                ? m.entity_code
+                : getCountryName(m.entity_code) || m.entity_code;
+              return (
+                <span
+                  key={`${m.entity_kind}-${m.entity_code}`}
+                  className="inline-flex items-center gap-1 text-dashboard-text-muted"
+                >
+                  {isPerson ? (
+                    <PersonIcon className="w-3 h-3 flex-shrink-0" />
+                  ) : (
+                    <FlagImg iso2={m.entity_code} size={14} className="flex-shrink-0" />
+                  )}
+                  <span>{label}</span>
+                  <span className="tabular-nums text-dashboard-text-muted/60">
+                    · {m.total}
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -434,6 +434,7 @@
     "volumeDescription": "Schlagzeilen pro Monat fuer jede Top-Entitaet. Achten Sie auf Spitzen — Entitaeten, die ploetzlich die Berichterstattung dominieren und wieder verschwinden. Klick auf eine Kachel oeffnet den Spitzenmonat.",
     "volumePeakLink": "Spitze im {month} — {n} Schlagzeilen",
     "volumePeakLabel": "Spitze {month}: {n}",
+    "volumeMinorTitle": "Auch behandelt (unter dem Schwellenwert für Haltungsanalyse)",
     "trackTimelineTitle": "Themenmix im Zeitverlauf",
     "trackTimelineDescription": "Anteil jeder thematischen Spur ueber die Monate. Verbreiterte Baender zeigen, wohin sich der redaktionelle Schwerpunkt der Quelle verschoben hat.",
     "trackTimelineMonthLink": "{month} — {n} Titel",
