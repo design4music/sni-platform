@@ -23,7 +23,10 @@ import SiblingOutletsDropdown from '@/components/SiblingOutletsDropdown';
 import FlagImg from '@/components/FlagImg';
 import InfoTip from '@/components/InfoTip';
 
-export const dynamic = 'force-dynamic';
+// Past-month content is fully frozen; current-month content updates
+// only when scoring re-runs. Cache the page for 6 hours; manual
+// invalidation via /api/admin/revalidate-outlets after a re-score.
+export const revalidate = 21600;
 
 interface OutletMonthPageProps {
   params: Promise<{ locale: string; slug: string; month: string }>;

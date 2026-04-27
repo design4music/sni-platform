@@ -1159,7 +1159,7 @@ export async function getOutletStance(
   month: string  // 'YYYY-MM'
 ): Promise<OutletStanceEntity[]> {
   const monthStart = month.length === 7 ? `${month}-01` : month;
-  return cached(`outletStance:${feedName}:${monthStart}`, 600, async () => {
+  return cached(`outletStance:${feedName}:${monthStart}`, 21600, async () => {
     const rows = await query<{
       entity_kind: 'country' | 'person';
       entity_code: string;
@@ -1212,7 +1212,7 @@ export async function getOutletStance(
 
 /** List months (YYYY-MM) for which this outlet has stance rows, newest first. */
 export async function getOutletStanceMonths(feedName: string): Promise<string[]> {
-  return cached(`outletStanceMonths:${feedName}`, 1800, async () => {
+  return cached(`outletStanceMonths:${feedName}`, 21600, async () => {
     const rows = await query<{ m: string }>(
       `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') AS m
        FROM outlet_entity_stance
@@ -1248,7 +1248,7 @@ export async function getSiblingOutlets(
   if (!countryCode) return [];
   return cached(
     `siblingOutlets:${countryCode}:${excludeFeedName}:${limit}`,
-    3600,
+    21600,
     () =>
       query<SiblingOutlet>(
         `SELECT f.name AS feed_name, f.slug, f.language_code, f.source_domain,
@@ -1310,7 +1310,7 @@ export interface OutletStanceTimelineRow {
 }
 
 export async function getOutletStanceTimeline(feedName: string): Promise<OutletStanceTimelineRow[]> {
-  return cached(`outletStanceTimeline:${feedName}`, 600, async () => {
+  return cached(`outletStanceTimeline:${feedName}`, 21600, async () => {
     const rows = await query<{
       entity_kind: 'country' | 'person';
       entity_code: string;
@@ -1365,7 +1365,7 @@ export interface OutletEntityDailyRow {
 export async function getOutletEntityDailyVolume(
   feedName: string
 ): Promise<OutletEntityDailyRow[]> {
-  return cached(`outletEntityDaily:${feedName}`, 1800, async () => {
+  return cached(`outletEntityDaily:${feedName}`, 21600, async () => {
     const rows = await query<{
       entity_kind: 'country' | 'person';
       entity_code: string;
@@ -1440,7 +1440,7 @@ export async function getOutletMinorEntities(
 ): Promise<OutletMinorEntity[]> {
   return cached(
     `outletMinorEntities:${feedName}:${minTotal}:${limit}`,
-    1800,
+    21600,
     async () => {
       const rows = await query<OutletMinorEntity>(
         `WITH stance_entities AS (
@@ -1504,7 +1504,7 @@ export interface OutletTrackTimelineRow {
 export async function getOutletTrackTimeline(
   feedName: string
 ): Promise<OutletTrackTimelineRow[]> {
-  return cached(`outletTrackTimeline:${feedName}`, 1800, async () => {
+  return cached(`outletTrackTimeline:${feedName}`, 21600, async () => {
     const rows = await query<{
       month: string;
       stats: { title_count: number; track_distribution: Record<string, number> };
@@ -1526,7 +1526,7 @@ export async function getOutletTrackTimeline(
 /** Months for which an outlet has *any* per-month data: stance OR stats.
  *  Returned newest first. Used by the prominent month switcher. */
 export async function getOutletAvailableMonths(feedName: string): Promise<string[]> {
-  return cached(`outletMonths:${feedName}`, 1800, async () => {
+  return cached(`outletMonths:${feedName}`, 21600, async () => {
     const rows = await query<{ m: string }>(
       `SELECT DISTINCT m FROM (
          SELECT TO_CHAR(month, 'YYYY-MM') AS m FROM outlet_entity_stance WHERE outlet_name = $1

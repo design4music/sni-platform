@@ -42,7 +42,11 @@ interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export const dynamic = 'force-dynamic';
+// Outlet content (stance, volume, stats) only changes when the
+// monthly stance scoring + materialised-view refresh runs. Cache
+// the rendered page for 6 hours; manual invalidation via
+// /api/admin/revalidate-outlets after a re-score.
+export const revalidate = 21600;
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
