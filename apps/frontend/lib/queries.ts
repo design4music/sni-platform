@@ -1295,6 +1295,162 @@ export async function getPublisherStatsMonthly(
   return rows[0]?.stats || null;
 }
 
+/** Cross-month stance timeline for an outlet. Returns one row per
+ *  (entity, month) with stance + volume, used by the outlet-landing
+ *  heatmap. Caller groups by entity to build rows. */
+export interface OutletStanceTimelineRow {
+  entity_kind: 'country' | 'person';
+  entity_code: string;
+  entity_country: string | null;
+  month: string;          // 'YYYY-MM'
+  stance: number | null;
+  confidence: 'low' | 'medium' | 'high' | null;
+  tone: string | null;
+  n_headlines: number;
+}
+
+export async function getOutletStanceTimeline(feedName: string): Promise<OutletStanceTimelineRow[]> {
+  return cached(`outletStanceTimeline:${feedName}`, 600, async () => {
+    const rows = await query<{
+      entity_kind: 'country' | 'person';
+      entity_code: string;
+      entity_country: string | null;
+      month: string;
+      stance: number | null;
+      confidence: string | null;
+      tone: string | null;
+      n_headlines: number;
+    }>(
+      `SELECT entity_kind, entity_code, entity_country,
+              TO_CHAR(month, 'YYYY-MM') AS month,
+              stance, confidence, tone, n_headlines
+       FROM outlet_entity_stance
+       WHERE outlet_name = $1
+       ORDER BY month, entity_code`,
+      [feedName]
+    );
+    return rows.map(r => ({
+      entity_kind: r.entity_kind,
+      entity_code: r.entity_code,
+      entity_country: r.entity_country,
+      month: r.month,
+      stance: r.stance,
+      confidence:
+        r.confidence === 'low' || r.confidence === 'medium' || r.confidence === 'high'
+          ? r.confidence
+          : null,
+      tone: r.tone,
+      n_headlines: r.n_headlines,
+    }));
+  });
+}
+
+/** Day-level coverage volume per entity for an outlet. Scoped to
+ *  entities that appear in `outlet_entity_stance` (so the chart shows
+ *  the same entity set the heatmap does), but data spans the outlet's
+ *  full title lifetime — months without stance scoring still contribute
+ *  daily counts, so the chart can show pre/post-stance trends and the
+ *  true shape of spikes.
+ *
+ *  A single title that mentions multiple entities counts toward each.
+ *  This matches the bundling logic of the stance scorer.
+ */
+export interface OutletEntityDailyRow {
+  entity_kind: 'country' | 'person';
+  entity_code: string;
+  day: string;        // 'YYYY-MM-DD'
+  n: number;
+}
+
+export async function getOutletEntityDailyVolume(
+  feedName: string
+): Promise<OutletEntityDailyRow[]> {
+  return cached(`outletEntityDaily:${feedName}`, 1800, async () => {
+    const rows = await query<{
+      entity_kind: 'country' | 'person';
+      entity_code: string;
+      day: string;
+      n: number;
+    }>(
+      `WITH stance_entities AS (
+         SELECT DISTINCT entity_kind, entity_code
+         FROM outlet_entity_stance
+         WHERE outlet_name = $1
+       ),
+       country_days AS (
+         SELECT 'country'::text AS entity_kind,
+                je.value AS entity_code,
+                t.pubdate_utc::date::text AS day,
+                COUNT(*)::int AS n
+         FROM titles_v3 t
+         JOIN title_labels tl ON tl.title_id = t.id
+         CROSS JOIN LATERAL jsonb_each_text(tl.entity_countries) je
+         WHERE t.publisher_name = $1
+           AND je.value IN (
+             SELECT entity_code FROM stance_entities WHERE entity_kind = 'country'
+           )
+         GROUP BY je.value, t.pubdate_utc::date
+       ),
+       person_days AS (
+         SELECT 'person'::text AS entity_kind,
+                p AS entity_code,
+                t.pubdate_utc::date::text AS day,
+                COUNT(*)::int AS n
+         FROM titles_v3 t
+         JOIN title_labels tl ON tl.title_id = t.id
+         CROSS JOIN LATERAL unnest(tl.persons) p
+         WHERE t.publisher_name = $1
+           AND p IN (
+             SELECT entity_code FROM stance_entities WHERE entity_kind = 'person'
+           )
+         GROUP BY p, t.pubdate_utc::date
+       )
+       SELECT * FROM country_days
+       UNION ALL
+       SELECT * FROM person_days
+       ORDER BY day, entity_kind, entity_code`,
+      [feedName]
+    );
+    return rows.map(r => ({
+      entity_kind: r.entity_kind,
+      entity_code: r.entity_code,
+      day: r.day,
+      n: r.n,
+    }));
+  });
+}
+
+/** Cross-month track distribution for an outlet, one row per month with
+ *  track shares + title volume. Used by the lifetime track-timeline
+ *  chart on the outlet landing page. */
+export interface OutletTrackTimelineRow {
+  month: string;                                 // 'YYYY-MM'
+  title_count: number;
+  track_distribution: Record<string, number>;
+}
+
+export async function getOutletTrackTimeline(
+  feedName: string
+): Promise<OutletTrackTimelineRow[]> {
+  return cached(`outletTrackTimeline:${feedName}`, 1800, async () => {
+    const rows = await query<{
+      month: string;
+      stats: { title_count: number; track_distribution: Record<string, number> };
+    }>(
+      `SELECT TO_CHAR(month, 'YYYY-MM') AS month, stats
+       FROM mv_publisher_stats_monthly
+       WHERE feed_name = $1
+       ORDER BY month`,
+      [feedName]
+    );
+    return rows.map(r => ({
+      month: r.month,
+      title_count: r.stats.title_count,
+      track_distribution: r.stats.track_distribution || {},
+    }));
+  });
+}
+
 /** Months for which an outlet has *any* per-month data: stance OR stats.
  *  Returned newest first. Used by the prominent month switcher. */
 export async function getOutletAvailableMonths(feedName: string): Promise<string[]> {

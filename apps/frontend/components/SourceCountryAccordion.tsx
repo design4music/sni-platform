@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import OutletLogo from './OutletLogo';
+import FlagImg from './FlagImg';
 import { generateSlug } from '@/lib/slug';
 
 interface SourceFeed {
@@ -30,22 +31,6 @@ interface SourceLabels {
   focusNarrow: string;
 }
 
-function FlagImg({ iso2, size = 20 }: { iso2: string; size?: number }) {
-  if (!iso2 || iso2.length !== 2) return null;
-  return (
-    <span className="inline-flex items-center justify-center rounded border border-blue-500/30 bg-blue-500/10 overflow-hidden align-middle"
-      style={{ width: size + 6, height: Math.round(size * 0.75) + 4 }}>
-      <img
-        src={`/flags/${iso2.toLowerCase()}.png`}
-        alt={iso2}
-        width={size}
-        height={Math.round(size * 0.75)}
-        className="opacity-70"
-        style={{ objectFit: 'contain', filter: 'saturate(0.6) brightness(0.9)' }}
-      />
-    </span>
-  );
-}
 
 const TRACK_MAPPING: Record<string, string> = {
   geo_politics: 'politics', geo_security: 'security', geo_economy: 'economy', geo_society: 'society',

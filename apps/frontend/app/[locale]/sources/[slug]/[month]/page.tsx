@@ -5,7 +5,7 @@ import {
   getPublisherStats,
   getPublisherStatsMonthly,
   getOutletStance,
-  getOutletAvailableMonths,
+  getOutletStanceMonths,
   getOutletMonthlyMapCentroids,
   type PublisherStatsMonthly,
 } from '@/lib/queries';
@@ -21,6 +21,7 @@ import OutletMapSection from './OutletMapSection';
 import OutletLogo from '@/components/OutletLogo';
 import OutletStanceSection from '@/components/OutletStanceSection';
 import FlagImg from '@/components/FlagImg';
+import InfoTip from '@/components/InfoTip';
 import SiblingOutlets from '@/components/SiblingOutlets';
 
 export const dynamic = 'force-dynamic';
@@ -103,19 +104,6 @@ function TrackBar({
         </div>
       ))}
     </div>
-  );
-}
-
-function InfoTip({ text }: { text: string }) {
-  return (
-    <span className="group relative inline-block ml-1 cursor-help">
-      <span className="text-blue-400/70 text-[9px] font-semibold border border-blue-400/30 rounded-full w-3.5 h-3.5 inline-flex items-center justify-center leading-none">
-        i
-      </span>
-      <span className="invisible group-hover:visible absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-dashboard-surface border border-dashboard-border rounded text-[11px] text-dashboard-text-muted z-50 shadow-lg w-56 max-w-[80vw] text-left leading-snug pointer-events-none">
-        {text}
-      </span>
-    </span>
   );
 }
 
@@ -238,7 +226,14 @@ export async function generateMetadata({ params }: OutletMonthPageProps): Promis
   const feedName = await resolveSlug(decodeURIComponent(slug).toLowerCase());
   if (!feedName) return { title: 'Not Found' };
   const monthLabel = formatMonthLong(month, locale);
-  return buildPageMetadata({
+
+  // Months without stance data are kept reachable but excluded from
+  // search indexes — they are useful as deep-links from existing URLs
+  // but not as canonical pages we want surfaced.
+  const stanceMonths = await getOutletStanceMonths(feedName);
+  const isStanceMonth = stanceMonths.includes(month);
+
+  const meta = buildPageMetadata({
     title:
       locale === 'de'
         ? `${feedName} — ${monthLabel} | Redaktionelle Haltung`
@@ -250,6 +245,10 @@ export async function generateMetadata({ params }: OutletMonthPageProps): Promis
     path: `/sources/${slug}/${month}`,
     locale,
   });
+  if (!isStanceMonth) {
+    meta.robots = { index: false, follow: true };
+  }
+  return meta;
 }
 
 /* ------------------------------------------------------------------ */
@@ -268,11 +267,11 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
   const tTracks = await getTranslations('tracks');
   const tSources = await getTranslations('sources');
 
-  const [profile, lifetimeStats, monthlyStats, availableMonths, stanceEntities, mapCentroidsRaw] = await Promise.all([
+  const [profile, lifetimeStats, monthlyStats, stanceMonths, stanceEntities, mapCentroidsRaw] = await Promise.all([
     getOutletProfile(feedName),
     getPublisherStats(feedName),  // lifetime — used for publication pattern only
     getPublisherStatsMonthly(feedName, month),
-    getOutletAvailableMonths(feedName),
+    getOutletStanceMonths(feedName),  // only stance months are linkable
     getOutletStance(feedName, month),
     getOutletMonthlyMapCentroids(feedName, month),
   ]);
@@ -280,12 +279,21 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
   if (!profile) notFound();
 
   // If the requested month has no data of any kind, redirect to the
-  // most recent month with data.
+  // most recent stance month — that's the canonical entry. If no
+  // stance months exist either, bounce to the outlet landing.
   if (!monthlyStats && stanceEntities.length === 0) {
-    if (availableMonths.length > 0 && availableMonths[0] !== month) {
-      redirect(`/${locale}/sources/${slug}/${availableMonths[0]}`);
+    if (stanceMonths.length > 0 && stanceMonths[0] !== month) {
+      redirect(`/${locale}/sources/${slug}/${stanceMonths[0]}`);
+    }
+    if (stanceMonths.length === 0) {
+      redirect(`/${locale}/sources/${slug}`);
     }
   }
+
+  // Available months for the in-page switcher = stance months only.
+  // Stats-only months are reachable by direct URL but are noindex and
+  // not linked from anywhere on this site.
+  const availableMonths = stanceMonths;
 
   const domain = profile.source_domain || '';
   const logoUrl = getOutletLogoUrl(domain, 64);
