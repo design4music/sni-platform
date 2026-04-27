@@ -237,50 +237,55 @@ export default function OutletStanceSection({
   const newerMonth = idx > 0 ? availableMonths[idx - 1] : null;
   const olderMonth = idx >= 0 && idx < availableMonths.length - 1 ? availableMonths[idx + 1] : null;
 
+  // Header (h2 + description) is suppressed by the parent page since
+  // OutletStanceBricks above already titles the section. The optional
+  // prev/next switcher is also suppressed in our current usage; both
+  // controlled via the hideMonthInTitle / hideMonthSwitcher props.
+  const renderHeader = !hideMonthInTitle || !hideMonthSwitcher;
+
   return (
     <section className="mb-10">
-      {/* Header. Active month is in the title unless hideMonthInTitle (the
-          parent page H1 already shows it). Prev/next switcher hidden when
-          hideMonthSwitcher (parent page drives month nav via URL). */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-2xl font-bold">
-            {t('editorialStanceTitle')}
-            {!hideMonthInTitle && (
-              <span className="text-dashboard-text-muted font-normal">
-                {' · '}
-                {formatMonthLong(month, locale)}
-              </span>
-            )}
-          </h2>
-          <p className="text-sm text-dashboard-text-muted mt-1 max-w-3xl">
-            {t('editorialStanceDesc')}
-          </p>
-        </div>
+      {renderHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
+          {!hideMonthInTitle && (
+            <div className="min-w-0 flex-1">
+              <h2 className="text-2xl font-bold">
+                {t('editorialStanceTitle')}
+                <span className="text-dashboard-text-muted font-normal">
+                  {' · '}
+                  {formatMonthLong(month, locale)}
+                </span>
+              </h2>
+              <p className="text-sm text-dashboard-text-muted mt-1 max-w-3xl">
+                {t('editorialStanceDesc')}
+              </p>
+            </div>
+          )}
 
-        {!hideMonthSwitcher && (
-          <div className="flex items-center gap-1 self-start sm:shrink-0">
-            {olderMonth ? (
-              <Link
-                href={`/${locale}/sources/${feedSlug}/${olderMonth}`}
-                className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
-                aria-label={t('previousMonth')}
-              >
-                ‹ {formatMonthShort(olderMonth, locale)}
-              </Link>
-            ) : null}
-            {newerMonth ? (
-              <Link
-                href={`/${locale}/sources/${feedSlug}/${newerMonth}`}
-                className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
-                aria-label={t('nextMonth')}
-              >
-                {formatMonthShort(newerMonth, locale)} ›
-              </Link>
-            ) : null}
-          </div>
-        )}
-      </div>
+          {!hideMonthSwitcher && (
+            <div className="flex items-center gap-1 self-start sm:shrink-0">
+              {olderMonth ? (
+                <Link
+                  href={`/${locale}/sources/${feedSlug}/${olderMonth}`}
+                  className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
+                  aria-label={t('previousMonth')}
+                >
+                  ‹ {formatMonthShort(olderMonth, locale)}
+                </Link>
+              ) : null}
+              {newerMonth ? (
+                <Link
+                  href={`/${locale}/sources/${feedSlug}/${newerMonth}`}
+                  className="px-3 py-1.5 text-sm text-dashboard-text-muted hover:text-dashboard-text border border-dashboard-border rounded hover:bg-dashboard-border/30 transition"
+                  aria-label={t('nextMonth')}
+                >
+                  {formatMonthShort(newerMonth, locale)} ›
+                </Link>
+              ) : null}
+            </div>
+          )}
+        </div>
+      )}
 
       {entities.length === 0 ? (
         <div className="text-sm text-dashboard-text-muted bg-dashboard-surface border border-dashboard-border rounded-lg p-4">

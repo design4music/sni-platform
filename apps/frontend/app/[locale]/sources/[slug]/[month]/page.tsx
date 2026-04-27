@@ -439,9 +439,24 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
       <div className="max-w-7xl mx-auto">
         {/* Header — permanent identity */}
         <div className="mb-6 pb-6 border-b border-dashboard-border">
-          <Link href={`/${locale}/sources`} className="text-blue-400 hover:text-blue-300 text-sm">
-            &larr; {tSources('allSources')}
-          </Link>
+          <nav
+            aria-label="Breadcrumb"
+            className="flex flex-wrap items-center gap-1.5 text-sm text-dashboard-text-muted"
+          >
+            <Link
+              href={`/${locale}/sources`}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              &larr; {tSources('allSources')}
+            </Link>
+            <span aria-hidden>/</span>
+            <Link
+              href={`/${locale}/sources/${slug}`}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              {profile.feed_name}
+            </Link>
+          </nav>
           <div className="flex items-center gap-4 mt-4">
             <OutletLogo src={logoUrl} name={profile.feed_name} size={48} className="rounded" />
             <div>
