@@ -29,7 +29,7 @@ function trackToSummaryKey(track: string): keyof Pick<CentroidSummary, 'economy'
     default: return null;
   }
 }
-import { getTrackLabel, getCentroidLabel, Track } from '@/lib/types';
+import { getTrackLabel, getCentroidLabel, isLiveTrack, Track } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
@@ -60,6 +60,7 @@ export async function generateMetadata({ params, searchParams }: TrackPageProps)
 
   const centroid = await getCentroidById(centroid_key, locale);
   if (!centroid) return { title: t('notFound') };
+  if (!isLiveTrack(track_key)) return { title: t('notFound') };
   const trackLabel = getTrackLabel(track_key as Track, tTracks);
   const centroidLabel = getCentroidLabel(centroid.id, centroid.label, tCentroids);
   const trackLower = trackLabel.toLowerCase();
@@ -148,6 +149,7 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
 
   const centroid = await getCentroidById(centroid_key, locale);
   if (!centroid) notFound();
+  if (!isLiveTrack(track_key)) notFound();
 
   const months = await getCTMMonths(centroid_key, track_key);
   if (months.length === 0) {

@@ -208,6 +208,14 @@ export interface Feed {
 // Track is a string - actual values come from database
 export type Track = string;
 
+// The four live tracks emitted by Phase 2.3 (D-067). URLs with any other
+// track value are legacy and should 404, not render (and not call into i18n
+// where they emit MISSING_MESSAGE noise on every crawler hit).
+export const LIVE_TRACKS = ['geo_security', 'geo_politics', 'geo_economy', 'geo_society'] as const;
+export function isLiveTrack(track: string): track is (typeof LIVE_TRACKS)[number] {
+  return (LIVE_TRACKS as readonly string[]).includes(track);
+}
+
 // Convert track slug to human-readable label
 // Pass a translation function (from useTranslations('tracks') or getTranslations('tracks')) for locale-aware labels
 export function getTrackLabel(track: string, t?: (key: string) => string): string {
