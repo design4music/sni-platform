@@ -140,7 +140,10 @@ function EntityCard({
   );
 
   return (
-    <div className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg">
+    <div
+      id={`stance-${e.entity_kind}-${e.entity_code}`}
+      className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg scroll-mt-20"
+    >
       {/* Header: identity pill + count */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         {identityPill}

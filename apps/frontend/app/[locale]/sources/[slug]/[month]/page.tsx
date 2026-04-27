@@ -6,23 +6,22 @@ import {
   getPublisherStatsMonthly,
   getOutletStance,
   getOutletStanceMonths,
-  getOutletMonthlyMapCentroids,
+  getSiblingOutlets,
   type PublisherStatsMonthly,
 } from '@/lib/queries';
 import { resolveSlug } from '@/lib/slug-server';
 import { getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
 import { buildPageMetadata, type Locale as SeoLocale } from '@/lib/seo';
-import { getCentroidLabel } from '@/lib/types';
 import { getTranslations } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import OutletMapSection from './OutletMapSection';
 import OutletLogo from '@/components/OutletLogo';
 import OutletStanceSection from '@/components/OutletStanceSection';
+import OutletStanceBricks from '@/components/OutletStanceBricks';
+import SiblingOutletsDropdown from '@/components/SiblingOutletsDropdown';
 import FlagImg from '@/components/FlagImg';
 import InfoTip from '@/components/InfoTip';
-import SiblingOutlets from '@/components/SiblingOutlets';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,22 +127,6 @@ function StatCard({
         {tooltip && <InfoTip text={tooltip} />}
       </div>
       {sub && <div className="text-[10px] text-dashboard-text-muted truncate">{sub}</div>}
-    </div>
-  );
-}
-
-function DowChart({ distribution }: { distribution: Record<string, number> }) {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const values = days.map(d => distribution[d] || 0);
-  const max = Math.max(...values, 0.01);
-  return (
-    <div className="flex items-end gap-1 h-12">
-      {days.map((day, i) => (
-        <div key={day} className="flex-1 flex flex-col items-center gap-0.5">
-          <div className="w-full bg-blue-500/60 rounded-t" style={{ height: `${(values[i] / max) * 40}px` }} />
-          <span className="text-[9px] text-dashboard-text-muted">{day.charAt(0)}</span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -267,13 +250,12 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
   const tTracks = await getTranslations('tracks');
   const tSources = await getTranslations('sources');
 
-  const [profile, lifetimeStats, monthlyStats, stanceMonths, stanceEntities, mapCentroidsRaw] = await Promise.all([
+  const [profile, lifetimeStats, monthlyStats, stanceMonths, stanceEntities] = await Promise.all([
     getOutletProfile(feedName),
     getPublisherStats(feedName),  // lifetime — used for publication pattern only
     getPublisherStatsMonthly(feedName, month),
     getOutletStanceMonths(feedName),  // only stance months are linkable
     getOutletStance(feedName, month),
-    getOutletMonthlyMapCentroids(feedName, month),
   ]);
 
   if (!profile) notFound();
@@ -295,55 +277,15 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
   // not linked from anywhere on this site.
   const availableMonths = stanceMonths;
 
+  // Sibling outlets — same as landing page; surfaced in header dropdown.
+  const siblings = profile.country_code
+    ? await getSiblingOutlets(profile.country_code, feedName, 50)
+    : [];
+  const hasSiblings = siblings.length > 0;
+
   const domain = profile.source_domain || '';
   const logoUrl = getOutletLogoUrl(domain, 64);
   const monthLabel = formatMonthLong(month, locale);
-
-  // Map: per-month coverage with iso_codes resolved + stance overlay.
-  // Build an iso2 → stance lookup from the country-kind stance entities,
-  // then merge into each centroid (use the first iso_code that has a
-  // stance signal — most centroids are single-country anyway). Centroids
-  // with iso_codes but no matching stance get `stance: null`, which the
-  // map renders as neutral grey with reduced opacity.
-  const stanceByIso = new Map<string, { stance: number | null; tone: string | null; confidence: 'low' | 'medium' | 'high' | null }>();
-  for (const e of stanceEntities) {
-    if (e.entity_kind === 'country') {
-      stanceByIso.set(e.entity_code.toUpperCase(), {
-        stance: e.stance,
-        tone: e.tone,
-        confidence: e.confidence,
-      });
-    }
-  }
-  const mapCentroids = mapCentroidsRaw
-    .filter(c => c.iso_codes && c.iso_codes.length > 0)
-    .map(c => {
-      let stance: number | null | undefined = undefined;
-      let tone: string | null = null;
-      let confidence: 'low' | 'medium' | 'high' | null = null;
-      for (const iso of c.iso_codes!) {
-        const s = stanceByIso.get(iso.toUpperCase());
-        if (s) {
-          stance = s.stance;
-          tone = s.tone;
-          confidence = s.confidence;
-          break;
-        }
-      }
-      // If we have stance data anywhere in the entity bundle, mark stance
-      // as null (rather than undefined) when this centroid wasn't scored
-      // — that keeps the map in stance mode and shades this country grey.
-      if (stance === undefined && stanceEntities.length > 0) stance = null;
-      return {
-        id: c.centroid_id,
-        label: getCentroidLabel(c.centroid_id, c.label || c.centroid_id, tCentroids),
-        iso_codes: c.iso_codes!,
-        source_count: c.count,
-        stance,
-        tone,
-        confidence,
-      };
-    });
 
   const stats: PublisherStatsMonthly | null = monthlyStats;
   const focusLabel = stats
@@ -376,30 +318,65 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
     </div>
   ) : null;
 
-  const coverageMapBlock = mapCentroids.length > 0 ? (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">{tSources('coverageByRegion')}</h2>
-      <OutletMapSection centroids={mapCentroids} />
-    </div>
-  ) : null;
 
-  // Publication pattern stays lifetime — see D-071 follow-up discussion.
+  // Publication pattern stays lifetime — DoW per single month is too
+  // sparse to be meaningful. Vertical bar list matches Top actors /
+  // Domain focus styling so the 3-col footer reads as one block.
   const publicationPatternBlock = lifetimeStats && Object.keys(lifetimeStats.dow_distribution).length > 0 ? (
-    <div>
-      <h3 className="text-sm font-medium text-dashboard-text-muted mb-2">
-        {tSources('publicationPattern')}
-        <InfoTip text={tSources('publicationPatternTooltip')} />
-        <span className="ml-2 text-[10px] uppercase tracking-wider text-dashboard-text-muted/70">
-          {tSources('allTime')}
-        </span>
-        {lifetimeStats.peak_hour !== null && (
-          <span className="ml-2 font-normal">
-            ({tSources('peakHour', { hour: `${String(lifetimeStats.peak_hour).padStart(2, '0')}:00` })})
-          </span>
-        )}
-      </h3>
-      <DowChart distribution={lifetimeStats.dow_distribution} />
-    </div>
+    (() => {
+      const dayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+      const dayLabels: Record<(typeof dayKeys)[number], string> = {
+        Mon: tSources('dayMon'),
+        Tue: tSources('dayTue'),
+        Wed: tSources('dayWed'),
+        Thu: tSources('dayThu'),
+        Fri: tSources('dayFri'),
+        Sat: tSources('daySat'),
+        Sun: tSources('daySun'),
+      };
+      const values = dayKeys.map(d => lifetimeStats.dow_distribution[d] || 0);
+      const max = Math.max(...values, 0.001);
+      return (
+        <div>
+          <h3 className="text-sm font-medium text-dashboard-text-muted mb-2">
+            {tSources('publicationPattern')}
+            <InfoTip text={tSources('publicationPatternTooltip')} />
+            <span className="ml-2 text-[10px] uppercase tracking-wider text-dashboard-text-muted/70">
+              {tSources('allTime')}
+            </span>
+          </h3>
+          <div className="space-y-1.5">
+            {dayKeys.map((d, i) => {
+              const share = values[i];
+              const barW = Math.round((share / max) * 100);
+              return (
+                <div key={d} className="flex items-center gap-2 text-sm">
+                  <span className="w-28 truncate text-dashboard-text">
+                    {dayLabels[d]}
+                  </span>
+                  <div className="flex-1 bg-dashboard-border/30 rounded-full h-3 overflow-hidden min-w-0">
+                    <div
+                      className="bg-blue-500/60 h-full rounded-full"
+                      style={{ width: `${barW}%` }}
+                    />
+                  </div>
+                  <span className="text-dashboard-text-muted tabular-nums text-xs w-10 text-right">
+                    {(share * 100).toFixed(1)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {lifetimeStats.peak_hour !== null && (
+            <p className="mt-2 text-[11px] text-dashboard-text-muted">
+              {tSources('peakHour', {
+                hour: `${String(lifetimeStats.peak_hour).padStart(2, '0')}:00`,
+              })}
+            </p>
+          )}
+        </div>
+      );
+    })()
   ) : null;
 
   const topActorsBlock = stats && stats.top_actors.length > 0 ? (
@@ -490,9 +467,20 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
                     {domain}
                   </a>
                 )}
+                {hasSiblings && profile.country_code && (
+                  <SiblingOutletsDropdown
+                    outlets={siblings}
+                    countryName={getCountryName(profile.country_code) || profile.country_code}
+                    parentLanguageCode={profile.language_code}
+                  />
+                )}
               </div>
             </div>
           </div>
+
+          <p className="mt-4 text-sm text-dashboard-text-muted max-w-3xl leading-snug">
+            {tSources('monthlyIntro', { name: profile.feed_name, month: monthLabel })}
+          </p>
         </div>
 
         {/* Prominent month switcher (timeline + prev/next) */}
@@ -511,23 +499,15 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
           </div>
         ) : (
           <>
-            {/* Upper section: 2-col grid (main + sidebar) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-              <div className="lg:col-span-2 space-y-8 min-w-0">
-                {statsGrid}
-                {trackDistributionBlock}
-                {coverageMapBlock}
-                {publicationPatternBlock}
-              </div>
-              <aside className="space-y-8 min-w-0">
-                {topActorsBlock}
-                {domainFocusBlock}
-                <SiblingOutlets countryCode={profile.country_code} excludeFeedName={feedName} parentLanguageCode={profile.language_code} />
-              </aside>
-            </div>
+            {/* Editorial-stance brick grid — quick visual summary, anchors
+                to detailed cards below */}
+            {stanceEntities.length > 0 && (
+              <OutletStanceBricks entities={stanceEntities} />
+            )}
 
-            {/* Editorial Stance — full width. Stance section drops its own
-                month label (page H1 already says the month). */}
+            {/* Editorial-stance detail cards — full text, patterns,
+                evidence. Section drops its own month label and switcher
+                (page H1 + the strip above already cover that). */}
             {stanceEntities.length > 0 && (
               <OutletStanceSection
                 feedName={feedName}
@@ -540,9 +520,32 @@ export default async function OutletMonthPage({ params }: OutletMonthPageProps) 
                 hideMonthInTitle
               />
             )}
+
+            {/* {Month} overview */}
+            {stats && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-3">
+                  {tSources('monthOverview', { month: monthLabel })}
+                </h2>
+                <div className="space-y-6">
+                  {statsGrid}
+                  {trackDistributionBlock}
+                </div>
+              </div>
+            )}
+
+            {/* 3-col footer — top actors / domain focus / publication pattern */}
+            {(topActorsBlock || domainFocusBlock || publicationPatternBlock) && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                {topActorsBlock && <div>{topActorsBlock}</div>}
+                {domainFocusBlock && <div>{domainFocusBlock}</div>}
+                {publicationPatternBlock && <div>{publicationPatternBlock}</div>}
+              </div>
+            )}
           </>
         )}
       </div>
     </DashboardLayout>
   );
 }
+

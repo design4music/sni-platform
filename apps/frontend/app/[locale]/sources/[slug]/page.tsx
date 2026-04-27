@@ -33,7 +33,6 @@ import {
   getSiblingOutlets,
 } from '@/lib/queries';
 import { resolveSlug } from '@/lib/slug-server';
-import { generateSlug } from '@/lib/slug';
 import { getCountryName } from '@/lib/countries';
 import { getOutletLogoUrl } from '@/lib/logos';
 import { buildPageMetadata, type Locale as SeoLocale } from '@/lib/seo';
@@ -102,18 +101,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function OutletLandingPage({ params }: Props) {
   const { locale, slug: rawSlug } = await params;
-  const decoded = decodeURIComponent(rawSlug);
 
-  // Resolve slug: try as-is, else slugify and redirect to canonical.
-  let canonicalSlug = decoded.toLowerCase();
-  let feedName = await resolveSlug(canonicalSlug);
-  if (!feedName) {
-    canonicalSlug = generateSlug(decoded);
-    feedName = await resolveSlug(canonicalSlug);
-    if (feedName && canonicalSlug !== decoded.toLowerCase()) {
-      redirect(`/${locale}/sources/${canonicalSlug}`);
-    }
-  }
+  // Slug must be canonical (lowercase, no URL-encoding). All in-site
+  // links from /sources point straight at the canonical slug, so we
+  // don't accept fuzzy matches here — anything that doesn't resolve
+  // straight to a feed is a 404. Keeps the navigation a one-hop request.
+  const canonicalSlug = decodeURIComponent(rawSlug).toLowerCase();
+  const feedName = await resolveSlug(canonicalSlug);
   if (!feedName) notFound();
 
   const tCentroids = await getTranslations('centroids');
