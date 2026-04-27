@@ -8,7 +8,7 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
-const SITE_URL = 'https://worldbrief.info';
+const SITE_URL = 'https://www.worldbrief.info';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

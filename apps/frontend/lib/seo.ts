@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export type Locale = 'en' | 'de';
 
-export const SITE_URL = 'https://worldbrief.info';
+export const SITE_URL = 'https://www.worldbrief.info';
 
 const MONTH_NAMES_EN = [
   'January', 'February', 'March', 'April', 'May', 'June',

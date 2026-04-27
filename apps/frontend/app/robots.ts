@@ -10,8 +10,8 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: [
-      'https://worldbrief.info/sitemap.xml',
-      'https://worldbrief.info/sitemap-days.xml',
+      'https://www.worldbrief.info/sitemap.xml',
+      'https://www.worldbrief.info/sitemap-days.xml',
     ],
   };
 }

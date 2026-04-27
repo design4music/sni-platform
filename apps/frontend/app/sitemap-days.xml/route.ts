@@ -18,7 +18,7 @@ import { query } from '@/lib/db';
 
 export const revalidate = 86400;
 
-const SITE_URL = 'https://worldbrief.info';
+const SITE_URL = 'https://www.worldbrief.info';
 const SITEMAP_MAX = 50_000;
 
 function xmlEscape(s: string): string {

@@ -5,7 +5,7 @@ import { REGIONS } from '@/lib/types';
 // Revalidate daily — enough freshness for Google, doesn't hammer DB per crawl.
 export const revalidate = 86400;
 
-const SITE_URL = 'https://worldbrief.info';
+const SITE_URL = 'https://www.worldbrief.info';
 
 // Google's hard limit is 50,000 URLs per sitemap. We pack structural pages
 // (static + regions + centroids + tracks + calendars + narratives + epics +

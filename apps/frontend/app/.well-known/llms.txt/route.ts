@@ -22,11 +22,11 @@ WorldBrief aggregates reporting from international media across 6 continents and
 
 ## Pages
 
-- Homepage: https://worldbrief.info/
-- Monthly Intelligence: https://worldbrief.info/epics
-- Media Sources: https://worldbrief.info/sources
-- About: https://worldbrief.info/about
-- Methodology: https://worldbrief.info/methodology
+- Homepage: https://www.worldbrief.info/
+- Monthly Intelligence: https://www.worldbrief.info/epics
+- Media Sources: https://www.worldbrief.info/sources
+- About: https://www.worldbrief.info/about
+- Methodology: https://www.worldbrief.info/methodology
 `;
 
   return new Response(content, {
