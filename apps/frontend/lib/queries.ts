@@ -597,18 +597,17 @@ export async function getTrackSummaryByCentroidAndMonth(
   month: string
 ): Promise<Array<{ track: string; titleCount: number; lastActive: string | null }>> {
   return cached(`trackSummary:${centroidId}:${month}`, 3600, async () => {
+    // ctm.title_count is the authoritative count maintained by Phase 2.3 — the
+    // previous COUNT(DISTINCT ta.title_id) over a title_assignments × events_v3
+    // Cartesian product cost ~5s on USA-April for the same number.
     const results = await query<{ track: string; title_count: number; last_active: string | null }>(
-      `SELECT
-        c.track,
-        COUNT(DISTINCT ta.title_id)::int as title_count,
-        MAX(e.last_active)::text as last_active
-      FROM ctm c
-      LEFT JOIN title_assignments ta ON c.id = ta.ctm_id
-      LEFT JOIN events_v3 e ON e.ctm_id = c.id
-      WHERE c.centroid_id = $1
-        AND c.month = ($2 || '-01')::date
-      GROUP BY c.track
-      ORDER BY c.track`,
+      `SELECT c.track,
+              c.title_count::int AS title_count,
+              (SELECT MAX(last_active)::text FROM events_v3 WHERE ctm_id = c.id) AS last_active
+         FROM ctm c
+        WHERE c.centroid_id = $1
+          AND c.month = ($2 || '-01')::date
+        ORDER BY c.track`,
       [centroidId, month]
     );
 
