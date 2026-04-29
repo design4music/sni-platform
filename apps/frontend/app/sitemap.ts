@@ -2,8 +2,14 @@ import { MetadataRoute } from 'next';
 import { query } from '@/lib/db';
 import { REGIONS } from '@/lib/types';
 
-// Revalidate daily — enough freshness for Google, doesn't hammer DB per crawl.
-export const revalidate = 86400;
+// Cache the rendered sitemap indefinitely. Inline regeneration (the
+// previous `revalidate = 86400` setting) serialized ~10k URL entries
+// into one XML string at request time and was a likely trigger of the
+// 2026-04-29 OOMs when it coincided with user traffic.
+//
+// A daily cron (.github/workflows/revalidate-sitemap.yml) hits
+// /api/cron/revalidate-sitemap to force regeneration at a quiet hour.
+export const revalidate = false;
 
 const SITE_URL = 'https://www.worldbrief.info';
 

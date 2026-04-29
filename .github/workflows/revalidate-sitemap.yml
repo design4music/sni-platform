@@ -1,0 +1,26 @@
+name: Revalidate sitemap
+
+# Hit the production sitemap revalidation endpoint once a day at 04:00 UTC.
+# Cron syntax: minute hour day-of-month month day-of-week.
+# Job runs in seconds; well within GitHub Actions free tier (2000 min/mo on
+# private repos, unlimited on public).
+#
+# Required repo secret: REVALIDATE_API_KEY (must match the env var of the
+# same name set on the Render web service).
+#
+# Manual trigger: Actions tab -> "Revalidate sitemap" -> "Run workflow".
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  revalidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit revalidation endpoint
+        run: |
+          curl --fail --silent --show-error \
+               -X POST https://www.worldbrief.info/api/cron/revalidate-sitemap \
+               -H "x-revalidate-token: ${{ secrets.REVALIDATE_API_KEY }}"
