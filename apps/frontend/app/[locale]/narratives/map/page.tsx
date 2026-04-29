@@ -6,7 +6,7 @@ import { buildAlternates } from '@/lib/seo';
 import { getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('narrativeMap');

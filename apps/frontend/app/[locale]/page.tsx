@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { getTranslations, setRequestLocale, getLocale } from 'next-intl/server';
 import { buildAlternates } from '@/lib/seo';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export const metadata: Metadata = {
   title: 'WorldBrief - Understand the world. Briefly.',

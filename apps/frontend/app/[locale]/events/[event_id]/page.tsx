@@ -20,7 +20,7 @@ import TranslationNotice from '@/components/TranslationNotice';
 import { buildPageMetadata, truncateDescription, formatCount, newsArticleJsonLd, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { event_id } = await params;

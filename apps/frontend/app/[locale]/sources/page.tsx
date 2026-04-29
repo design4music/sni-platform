@@ -10,7 +10,7 @@ import SourceCountryAccordion from '@/components/SourceCountryAccordion';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('sources');

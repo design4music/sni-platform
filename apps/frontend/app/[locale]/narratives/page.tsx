@@ -8,7 +8,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('narratives');

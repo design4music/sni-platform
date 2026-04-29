@@ -5,7 +5,7 @@ import { searchAll } from '@/lib/queries';
 import { SearchResult } from '@/lib/types';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;

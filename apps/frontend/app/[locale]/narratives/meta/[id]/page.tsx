@@ -10,7 +10,7 @@ import { buildAlternates } from '@/lib/seo';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;

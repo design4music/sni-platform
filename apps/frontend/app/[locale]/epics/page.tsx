@@ -8,7 +8,7 @@ import { buildAlternates } from '@/lib/seo';
 import { SignalType } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('epics');

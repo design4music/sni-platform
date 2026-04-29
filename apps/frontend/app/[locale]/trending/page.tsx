@@ -7,7 +7,7 @@ import { getTrendingEvents, getTrendingSignals, getTopNarrativePerEvent } from '
 import { dedupTrendingEvents } from '@/lib/dedup-trending';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 21600;
 
 export const metadata: Metadata = {
   title: 'Trending Stories - WorldBrief',
