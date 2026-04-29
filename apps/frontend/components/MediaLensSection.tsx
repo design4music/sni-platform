@@ -46,10 +46,10 @@ export default function MediaLensSection({ rows, centroidLabel, month, locale }:
 
   return (
     <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-      <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1">
+      <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
         {heading}
-      </div>
-      <p className="text-sm text-dashboard-text-muted mb-3">{sub}</p>
+      </h3>
+      <p className="text-[11px] text-dashboard-text-muted mb-3 -mt-2">{sub}</p>
       <ul className="space-y-2">
         {rows.map(r => {
           const href = r.outlet_slug

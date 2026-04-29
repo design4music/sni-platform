@@ -53,8 +53,8 @@ export default async function SiblingOutlets({
     : t('sourcesFromCountry', { country: countryName });
 
   return (
-    <div>
-      <h3 className="text-sm font-medium text-dashboard-text-muted mb-2">
+    <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
+      <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
         {heading}
       </h3>
       <SiblingOutletsList outlets={outlets} parentLanguageCode={parentLanguageCode} />

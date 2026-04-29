@@ -26,7 +26,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
-import ActiveNarrativesSidebar from '@/components/ActiveNarrativesSidebar';
+import ActiveNarrativesSection from '@/components/ActiveNarrativesSection';
 import SiblingOutlets from '@/components/SiblingOutlets';
 import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
@@ -402,32 +402,31 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
-        {/* Strategic Narratives (main) + sidebar (Active Narratives, Media
-            Lens, Unusual Activity, Sibling Outlets). Media Lens (D-072) reads
-            outlet_entity_stance for the active month, top 5 outlets covering
-            this centroid's countries; renders nothing for centroids with no
-            iso_codes (systemic) or months with no stance data. */}
+        {/* Main column: Strategic Narratives + Active Narratives. Sidebar:
+            Unusual Activity, Media Lens (D-072), Sources from {Country}.
+            Media Lens hides for centroids with no iso_codes (systemic) or
+            months with no stance data. */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="min-w-0 lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2 space-y-8">
             <Suspense fallback={null}>
               <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
             </Suspense>
+            <ActiveNarrativesSection centroidId={centroid.id} narratives={activeNarratives} />
           </div>
           <aside className="min-w-0 space-y-6">
-            <ActiveNarrativesSidebar centroidId={centroid.id} narratives={activeNarratives} />
+            {currentMonth && (
+              <WeeklyDeviationCard
+                centroidId={centroid.id}
+                initialMonth={currentMonth}
+                initialWeeks={weeklyDeviations}
+              />
+            )}
             {currentMonth && mediaLens.length > 0 && (
               <MediaLensSection
                 rows={mediaLens}
                 centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
                 month={currentMonth}
                 locale={locale}
-              />
-            )}
-            {currentMonth && (
-              <WeeklyDeviationCard
-                centroidId={centroid.id}
-                initialMonth={currentMonth}
-                initialWeeks={weeklyDeviations}
               />
             )}
             {centroid.iso_codes && centroid.iso_codes.length === 1 && (
