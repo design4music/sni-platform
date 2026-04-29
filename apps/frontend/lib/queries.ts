@@ -1209,6 +1209,67 @@ export async function getOutletStance(
   });
 }
 
+export interface CentroidMediaLensRow {
+  outlet_name: string;
+  outlet_slug: string | null;
+  source_domain: string | null;
+  language_code: string | null;
+  country_code: string | null;
+  entity_code: string;
+  n_headlines: number;
+  stance: number | null;
+  confidence: 'low' | 'medium' | 'high' | null;
+  tone: string | null;
+}
+
+/** Top 5 outlets covering this centroid's countries in the given month,
+ *  ranked by headline volume. Each row carries the outlet's stance toward
+ *  the country it covered most. Used by MediaLensSection on /c/[id].
+ *  Returns [] when the centroid has no iso_codes (systemic) or no stance
+ *  data exists for the month. */
+export async function getCentroidMediaLens(
+  centroidId: string,
+  month: string,
+): Promise<CentroidMediaLensRow[]> {
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  return cached(`centroidMediaLens:${centroidId}:${monthStart}`, 21600, async () => {
+    return query<CentroidMediaLensRow>(
+      `WITH centroid_iso AS (
+         SELECT iso_codes FROM centroids_v3 WHERE id = $1
+       ),
+       per_outlet AS (
+         SELECT DISTINCT ON (o.outlet_name)
+                o.outlet_name,
+                o.entity_code,
+                o.n_headlines,
+                o.stance,
+                o.confidence,
+                o.tone
+         FROM outlet_entity_stance o
+         JOIN centroid_iso c ON o.entity_code = ANY(c.iso_codes)
+         WHERE o.entity_kind = 'country'
+           AND o.month       = $2::date
+         ORDER BY o.outlet_name, o.n_headlines DESC
+       )
+       SELECT po.outlet_name,
+              f.slug         AS outlet_slug,
+              f.source_domain,
+              f.language_code,
+              f.country_code,
+              po.entity_code,
+              po.n_headlines,
+              po.stance,
+              po.confidence,
+              po.tone
+       FROM per_outlet po
+       LEFT JOIN feeds f ON f.name = po.outlet_name
+       ORDER BY po.n_headlines DESC
+       LIMIT 5`,
+      [centroidId, monthStart],
+    );
+  });
+}
+
 /** List months (YYYY-MM) for which this outlet has stance rows, newest first. */
 export async function getOutletStanceMonths(feedName: string): Promise<string[]> {
   return cached(`outletStanceMonths:${feedName}`, 21600, async () => {

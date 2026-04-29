@@ -17,10 +17,11 @@ import {
   getCentroidMonthView,
   getActiveNarrativesForCentroid,
   getCentroidSummary,
+  getCentroidMediaLens,
 } from '@/lib/queries';
 import CentroidHero from '@/components/CentroidHero';
 import WeeklyDeviationCard from '@/components/WeeklyDeviationCard';
-// D-071: MediaLensSection retired pending rewiring to new outlet stance data.
+import MediaLensSection from '@/components/MediaLensSection';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
@@ -161,13 +162,14 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
 
   // Fetch track data, top signals, and new-view gate in parallel
-  const [monthTrackData, topSignals, weeklyDeviations, hasPromoted, activeNarratives, periodSummary] = await Promise.all([
+  const [monthTrackData, topSignals, weeklyDeviations, hasPromoted, activeNarratives, periodSummary, mediaLens] = await Promise.all([
     currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
     getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
     currentMonth ? getCentroidDeviationsForMonth(centroid.id, currentMonth) : Promise.resolve([]),
     currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
     currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
     getCentroidSummary(centroid.id, currentMonth, locale),
+    currentMonth ? getCentroidMediaLens(centroid.id, currentMonth) : Promise.resolve([]),
   ]);
 
   // New hero view data: only loaded when the month has promoted events.
@@ -400,10 +402,11 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
             </div>
           )
         )}
-        {/* Strategic Narratives (main) + Active Narratives & Unusual Activity (sidebar).
-            D-071: Media Lens section retired; Unusual Activity re-homed here under
-            Active Narratives to keep a single well-populated two-column block below
-            the 2x2 track cards. */}
+        {/* Strategic Narratives (main) + sidebar (Active Narratives, Media
+            Lens, Unusual Activity, Sibling Outlets). Media Lens (D-072) reads
+            outlet_entity_stance for the active month, top 5 outlets covering
+            this centroid's countries; renders nothing for centroids with no
+            iso_codes (systemic) or months with no stance data. */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="min-w-0 lg:col-span-2">
             <Suspense fallback={null}>
@@ -412,6 +415,14 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           </div>
           <aside className="min-w-0 space-y-6">
             <ActiveNarrativesSidebar centroidId={centroid.id} narratives={activeNarratives} />
+            {currentMonth && mediaLens.length > 0 && (
+              <MediaLensSection
+                rows={mediaLens}
+                centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+                month={currentMonth}
+                locale={locale}
+              />
+            )}
             {currentMonth && (
               <WeeklyDeviationCard
                 centroidId={centroid.id}
