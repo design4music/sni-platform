@@ -39,9 +39,13 @@ MAINTENANCE
   Purge: daily cleanup of rejected titles
   Freeze: monthly close (canned small-CTM text, monthly centroid_summaries,
           tombstone purge, is_frozen=true)
-          - D-071: publisher stance scoring retired from freeze.
-            New outlet_entity_stance matrix (per outlet × entity ×
-            month) is the replacement; wiring pending.
+          - D-071/D-072: publisher stance scoring retired from
+            freeze. Replaced by `outlet_entity_stance` matrix
+            (per outlet × entity × month). Schema + scorer
+            (`pipeline/phase_5/score_outlet_stance.py`) +
+            Dec-Mar backfill all live. Freeze Step 4 is currently
+            a placeholder comment — no automated monthly refresh
+            wired yet; new months need manual run of the scorer.
 ```
 
 ## Slot mapping
@@ -230,4 +234,4 @@ MAINTENANCE
 | Sibling merge (old 4.4) | Not needed with current design | Removed (D-053) |
 | Freeze centroid monthly summary (legacy) | `centroid_monthly_summaries` table; superseded by `centroid_summaries` (5.5 monthly snapshot) | Removed 2026-04-20 |
 | Publisher stance scoring (legacy) | `score_publisher_stance.py`, table `publisher_stance`. Per-title/pair LLM rating hit a quality ceiling. Replaced by new per-outlet × entity × month aggregated stance (D-071). | Disabled 2026-04-24 |
-| Stance-clustered narrative extraction | `extract_stance_narratives.py` + `/extract` event branch. 96% orphan rate after reprocessing. Replaced by the new outlet stance matrix (D-071). | Disabled 2026-04-24 |
+| Stance-clustered narrative extraction | `extract_stance_narratives.py` + `/extract` event branch. 96% orphan rate after reprocessing. Replaced by the new outlet stance matrix (D-071/D-072). | Disabled 2026-04-24 |

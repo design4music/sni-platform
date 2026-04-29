@@ -1,6 +1,6 @@
 # Session Start
 
-**Last refreshed**: 2026-04-24 (D-071 stance retirement — per-title LLM stance + stance-clustered narratives out; new outlet × entity × month matrix pending build)
+**Last refreshed**: 2026-04-29 (D-072 — outlet × entity × month stance system shipped: schema + scorer + Dec-Mar backfill + outlet-facing UI + centroid Media Lens (`788fb38`) live; D-071 stance archives moved to `archive/` (`a2c2cbf`); comparative analysis rewire + freeze automation still open)
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -67,17 +67,43 @@ Sorted by dependency + suggested phasing. None of these is the single
 
 ### Phase 3 — lighthouse
 
-5b. **Outlet stance matrix (D-071, in progress).** Per-title stance
-   system retired after exhaustive pilot. New primitive: one row per
-   (outlet × entity × month) with LLM-generated stance, tone,
-   patterns, caveats, evidence headlines — derived from a bundle of
-   ~25 headlines per pair. Pilot on 24 bundles (`out/stance_aggregated/`)
-   validated the approach; Lenta.ru × Trump came back as "skeptical
-   with ironic distance", matching prior. Phase B deliverables:
-   `outlet_entity_stance` schema, production script (outlet volume
-   threshold + per-outlet top-N entity detection), backfill Jan-Apr,
-   rewire centroid Media Lens + outlet page + comparative analysis.
-   Expected full-backfill cost: ~€0.20-0.40 per month.
+5b. **Outlet stance matrix (D-072 — shipped, with three follow-ups
+   open).** Per-title stance retired in D-071; the aggregated
+   replacement (one LLM call per outlet × entity × month bundle of
+   ~25 headlines) is now live. Schema, scorer, backfill and the
+   outlet-facing UI all shipped between 2026-04-24 and 2026-04-29.
+   - **Schema**: `outlet_entity_stance` (migration
+     `20260424_outlet_entity_stance.sql`) + companion materialized
+     view `mv_publisher_stats_monthly`.
+   - **Scorer**: `pipeline/phase_5/score_outlet_stance.py` (async,
+     concurrent, idempotent UPSERT, dry-run + report modes).
+   - **Backfill (local)**: Dec 2025 (407 rows / 94 outlets), Jan
+     (524 / 131), Feb (742 / 185), Mar (389 / 130). Render mirrors
+     this. Apr 2026 not backfilled yet (pending month close).
+   - **Frontend live**: outlet landing `/sources/[slug]` rebuilt
+     (`74591a3`) with `OutletStanceHeatmap`, volume chart, topic
+     mix; per-month `/sources/[slug]/[month]` (`2960b15`) with
+     stance-coloured world map (`bcd38e9`); sitemap entries from
+     the new table. New queries: `getOutletStance`,
+     `getOutletStanceMonths`, `getOutletStanceTimeline`.
+   - **Centroid Media Lens shipped** (`788fb38`, 2026-04-29):
+     `getCentroidMediaLens` query joins `outlet_entity_stance` to
+     `centroids_v3.iso_codes`, picks top 5 outlets by `n_headlines`
+     for the active month. Sidebar `MediaLensSection` renders flag
+     + stance dot + tone, each row linking to the outlet's monthly
+     page. Hides cleanly for systemic centroids (no iso_codes) and
+     months without stance data.
+   - **Still open**:
+     1. **Comparative + user analysis rewire** —
+        `/analysis/comparative/...` and `/analysis/user/...` still
+        read legacy `narratives WHERE
+        extraction_method='stance_clustered'` via
+        `getStanceNarratives` + `getEntityAnalysis`. Asana
+        1214268284594725 tracks; no commits yet.
+     2. **Monthly automation** — `pipeline/freeze/freeze_month.py`
+        Step 4 is just a comment block. New months will not get
+        stance rows until either freeze is wired to call
+        `score_outlet_stance.py` or a separate cron is added.
 
 6. **Friction nodes.** The positioning-defining feature. Day-centric
    data + daily_briefs.themes + event_strategic_narratives are the
@@ -136,6 +162,13 @@ Recent diagnostic queries established:
 
 ## Known dead code / cleanup candidates (not urgent)
 
+- **D-071/D-072 stance archives** — moved to explicit `archive/`
+  folders (2026-04-29): `pipeline/archive/score_publisher_stance.py`,
+  `pipeline/archive/extract_stance_narratives.py`, and
+  `apps/frontend/components/archive/StanceClusterCard.tsx`. Each
+  archive folder has a README with provenance. Deletable outright
+  once comparative analysis is rewired off the legacy `narratives`
+  rows.
 - `pipeline/phase_4/generate_summaries_4_5.py` — still imported by
   `freeze_month.py` and `scripts/process_backlog.py`. Cannot unplug
   until downstream consumers (narratives extraction, social posting,
@@ -158,13 +191,18 @@ Recent diagnostic queries established:
 ## Recent key commits
 
 ```
+a34cf63  perf(frontend): extend 6h ISR cache to remaining dynamic pages
+be1ced5  perf(centroid): drop Cartesian-product COUNT in track summary
+da5d5ee  perf(sources): 6h ISR cache + manual revalidation endpoint
+9e028d7  feat(sources): "also covered" tail under volume chart
+74591a3  feat(sources): outlet landing dashboard with stance heatmap, volume chart, topic mix
+bcd38e9  feat(map): stance-coloured outlet map + prompt fix for spokesperson bundles
+2960b15  feat(sources): per-month outlet pages — slug URLs + monthly stats (D-071 follow-up)
+209cc87  feat(stance): outlet page editorial-stance section + nav tidy (D-071 Phase B)
+4bfd88b  feat(stance): Phase B — outlet_entity_stance schema + scoring script (D-071)
+f8b0f4e  refactor(stance): retire per-title LLM stance + stance-clustered narratives (D-071)
 3e6eb30  fix(trending/v2): full-width hero + cross-centroid dedup
 8d98d16  feat(trending): /trending/v2 prototype — centroid-style layout global
-5457aed  fix(narratives) + cleanup: consolidate dead tracks
-c990e9a  fix(seo): unblock /sitemap.xml + /robots.txt; editorial descriptions
-e6ef975  refactor(d-064): remove event_families — schema + code purged
-dd20874  feat(seo): unique metadata, hreflang, sitemap, JSON-LD + merge /calendar
-f580ba9  docs(context): log D-065 centroid_summaries + refresh SESSION_START
 01b14a3  refactor(centroid): retire centroid_monthly_summaries
 fcd2ed4  feat(centroid): period summaries + tier-0 briefing
 ```

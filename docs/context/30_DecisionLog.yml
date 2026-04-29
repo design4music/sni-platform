@@ -1036,3 +1036,80 @@ decisions:
       - out/stance_aggregated/ — aggregated pilot, 24 bundles,
         defensible output across 6 outlets × 6 entities for
         March 2026; the reference for Phase B.
+
+  - id: D-072
+    date: 2026-04-29
+    type: architectural
+    status: accepted
+    title: Outlet × entity × month stance system shipped (D-071 Phase B)
+    rationale:
+      - D-071 (2026-04-24) defined the replacement for the retired
+        per-title / per-publisher LLM stance system but left the
+        build to "Phase B". Phase B shipped over the following five
+        days: schema, production scorer, multi-month backfill, and
+        the outlet-facing frontend surface.
+      - The aggregated pilot (one LLM call per outlet × entity ×
+        month bundle of ~25 headlines) held up at scale: defensible
+        nuance per bundle (e.g. Lenta.ru × Trump = "skeptical with
+        ironic distance"), idempotent, and cheap enough to backfill
+        without any concurrency tricks beyond what the scorer
+        already does.
+    consequences:
+      - **Schema live**: `outlet_entity_stance(outlet_name,
+        entity_kind, entity_code, entity_country, month, stance,
+        confidence, tone, patterns jsonb, caveats,
+        evidence_title_ids uuid[], n_headlines, computed_at)` with
+        UNIQUE (outlet, kind, code, month) and 2 indexes. Migration
+        `db/migrations/20260424_outlet_entity_stance.sql`.
+        Companion materialized view
+        `mv_publisher_stats_monthly` (`20260425`).
+      - **Scorer live**:
+        `pipeline/phase_5/score_outlet_stance.py` — async with
+        concurrency, dry-run + report modes, idempotent
+        `ON CONFLICT DO UPDATE` upsert, ~25 headlines per bundle,
+        ≥15-headline gate, per-outlet top-N entity detection.
+      - **Backfill state (local, mirrored on Render)**:
+        Dec 2025 (407 rows / 94 outlets / 77 entities),
+        Jan 2026 (524 / 131 / 91),
+        Feb 2026 (742 / 185 / 109),
+        Mar 2026 (389 / 130 / 62).
+        Apr 2026 not yet backfilled (waiting for month close).
+      - **Frontend live**:
+        - Outlet landing `/sources/[slug]` rebuilt as a dashboard
+          (`74591a3`) with `OutletStanceHeatmap`, volume chart,
+          topic mix; "also covered" tail (`9e028d7`).
+        - Per-month outlet `/sources/[slug]/[month]` (`2960b15`)
+          with monthly stats and stance-coloured world map overlay
+          (`bcd38e9`).
+        - Stance section + nav tidy on outlet pages (`209cc87`).
+        - New queries in `apps/frontend/lib/queries.ts`:
+          `getOutletStance`, `getOutletStanceMonths`,
+          `getOutletStanceTimeline`, plus per-month stats reads.
+        - `app/sitemap.ts` drives URL discovery from
+          `outlet_entity_stance`.
+      - **Centroid Media Lens shipped** (`788fb38`, 2026-04-29):
+        new `MediaLensSection` component + `getCentroidMediaLens`
+        query. Reads `outlet_entity_stance` filtered by
+        `entity_kind='country' AND entity_code = ANY(iso_codes)`
+        for the active month, top 5 outlets by `n_headlines`.
+        Hides cleanly for systemic centroids and months without
+        data.
+      - **Dead-code archival shipped** (`a2c2cbf`, 2026-04-29):
+        `score_publisher_stance.py`, `extract_stance_narratives.py`,
+        and `StanceClusterCard.tsx` moved to explicit `archive/`
+        folders with provenance READMEs.
+      - **Pending follow-ups (still open)**:
+        1. **Comparative + user analysis rewire** —
+           `/analysis/comparative/[entity_type]/[entity_id]` and
+           `/analysis/user/[id]` still call `getStanceNarratives`
+           + `getEntityAnalysis`, which read
+           `narratives WHERE extraction_method='stance_clustered'`
+           (legacy). Asana 1214268284594725 tracks; no commits yet.
+           Once shipped, the archived modules above can be deleted
+           outright.
+        2. **Monthly automation** —
+           `pipeline/freeze/freeze_month.py` Step 4 is a
+           placeholder comment. New months will not get stance
+           rows until either freeze is wired to invoke
+           `score_outlet_stance.py` or a separate cron is added.
+        3. **April 2026 backfill** once month closes.

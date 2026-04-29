@@ -1,6 +1,6 @@
 # WorldBrief Pipeline Status
 
-**Last updated**: 2026-04-24
+**Last updated**: 2026-04-29
 **Live**: https://www.worldbrief.info
 **Branch**: `main` (synced with origin)
 
@@ -129,15 +129,19 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 
 ## Known gaps / open tickets
 
-1. **Outlet stance matrix (D-071)** — per-title / per-publisher LLM
-   stance has been retired. Pilot validated the replacement: one LLM
-   call per (outlet × entity × month) bundle, cost ~€0.005 per 24
-   bundles, output captures nuanced patterns (e.g. Lenta.ru × Trump
-   = "skeptical with ironic distance"). Phase B: build the
-   `outlet_entity_stance` table + production script + rewire the
-   centroid Media Lens, outlet profile, and comparative analysis
-   surfaces (Asana ticket 1214268284594725 tracks the comparative
-   rewire).
+1. **Outlet stance matrix (D-072 — shipped, two follow-ups open)** —
+   schema, scorer, Dec-Mar backfill, outlet-facing UI, and centroid
+   Media Lens all live (`outlet_entity_stance` table,
+   `pipeline/phase_5/score_outlet_stance.py`, ~2,062 rows local
+   across Dec 2025–Mar 2026, sources landing + per-month + world
+   map + centroid sidebar Media Lens all rebuilt). Two follow-ups
+   remain: (a) **Comparative + user analysis rewire** —
+   `/analysis/comparative/...` and `/analysis/user/...` still read
+   legacy `narratives WHERE extraction_method='stance_clustered'`
+   (Asana 1214268284594725); (b) **Monthly automation** —
+   `freeze_month.py` Step 4 is a placeholder comment, no cron
+   wired. Apr 2026 backfill pending month close. Full D-072 spec
+   in `30_DecisionLog.yml`.
 2. **CTM digests (`ctm.summary_text`) still legacy** — period-level
    state-of-play on centroid pages now comes from `centroid_summaries`
    (5.5). The per-CTM `summary_text` remains only for downstream
