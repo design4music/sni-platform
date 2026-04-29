@@ -62,7 +62,6 @@ export default function ExtractButton({ entityType, entityId }: Props) {
       }
 
       if (data.has_stance) {
-        // Stance extraction succeeded -- refresh page to show StanceClusterCard
         router.refresh();
       } else {
         setError(t('noNarratives'));

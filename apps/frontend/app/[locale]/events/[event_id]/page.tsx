@@ -4,13 +4,9 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
 import RaiSidebar from '@/components/RaiSidebar';
-// StanceClusterCard retired from event sidebar (D-071). Still used by
-// /analysis/comparative pages on legacy data.
 import ExpandableTitles from '@/components/ExpandableTitles';
 import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
-// ExtractButton / AnalysisPrefetch / NarrativePrefetch retired from event
-// page with D-071. Components retained for possible reuse on other pages.
 import EventNarrativeBadges from '@/components/narratives/EventNarrativeBadges';
 import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents, resolveCanonicalEventId } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
