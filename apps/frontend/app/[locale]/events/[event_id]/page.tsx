@@ -102,8 +102,9 @@ function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
 /* Deferred async server components                                   */
 /* ------------------------------------------------------------------ */
 
-async function EventSidebar({ eventId, locale }: {
+async function EventSidebar({ eventId, centroidId, locale }: {
   eventId: string;
+  centroidId?: string;
   locale?: string;
 }) {
   const narratives = await getFramedNarratives('event', eventId, locale);
@@ -116,7 +117,7 @@ async function EventSidebar({ eventId, locale }: {
     <div className="lg:sticky lg:top-24 space-y-6 text-sm">
       {/* Strategic narratives (geopolitical context) */}
       <Suspense fallback={null}>
-        <EventNarrativeBadges eventId={eventId} variant="sidebar" />
+        <EventNarrativeBadges eventId={eventId} centroidId={centroidId} variant="sidebar" />
       </Suspense>
 
       {/* D-071: stance-clustered framing block retired; replaced by new
@@ -229,7 +230,7 @@ export default async function EventDetailPage({ params }: Props) {
 
   const sidebar = (
     <Suspense fallback={sidebarFallback}>
-      <EventSidebar eventId={event_id} locale={locale} />
+      <EventSidebar eventId={event_id} centroidId={event.centroid_id} locale={locale} />
     </Suspense>
   );
 
@@ -303,9 +304,10 @@ export default async function EventDetailPage({ params }: Props) {
             ))}
           </div>
         )}
-        {/* Strategic narrative badges (inline) */}
+        {/* Strategic narrative badges (inline) — centroidId enables the
+            "from {actor}" chip on foreign-framed narratives. */}
         <Suspense fallback={null}>
-          <EventNarrativeBadges eventId={event_id} />
+          <EventNarrativeBadges eventId={event_id} centroidId={event.centroid_id} />
         </Suspense>
       </div>
 
