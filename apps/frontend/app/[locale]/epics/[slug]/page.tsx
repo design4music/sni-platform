@@ -11,7 +11,7 @@ import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
 import TranslationNotice from '@/components/TranslationNotice';
 
-export const revalidate = 21600;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
