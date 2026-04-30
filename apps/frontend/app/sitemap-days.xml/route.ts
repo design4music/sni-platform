@@ -16,7 +16,11 @@ import { query } from '@/lib/db';
 // ~1,500 new briefs/month × 2 locales = 3,000 URLs/month, 50K is
 // reached after ~16 months of growth.
 
-export const revalidate = 86400;
+// Cached indefinitely; refreshed by /api/cron/revalidate-sitemap, called
+// daily at 04:00 UTC by .github/workflows/revalidate-sitemap.yml. Inline
+// regeneration was a likely OOM contributor — this file is currently
+// 4.8 MB, larger than sitemap.xml.
+export const revalidate = false;
 
 const SITE_URL = 'https://www.worldbrief.info';
 const SITEMAP_MAX = 50_000;

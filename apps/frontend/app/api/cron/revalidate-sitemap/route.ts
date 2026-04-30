@@ -35,10 +35,11 @@ export async function POST(req: NextRequest) {
   }
 
   revalidatePath('/sitemap.xml');
+  revalidatePath('/sitemap-days.xml');
 
   return NextResponse.json({
     ok: true,
     revalidated_at: new Date().toISOString(),
-    path: '/sitemap.xml',
+    paths: ['/sitemap.xml', '/sitemap-days.xml'],
   });
 }
