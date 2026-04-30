@@ -4,6 +4,13 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  // Hard cap on Next's in-process ISR cache. Render web service is on the
+  // 512MB plan; with ~150MB Node baseline the ISR cache must stay well
+  // under ~200MB or bot-driven cache fill OOMs the instance. Default in
+  // Next 14+ was 50MB; setting it explicitly so future Next upgrades or
+  // new ISR routes can't silently change the budget. LRU-evicts oldest
+  // entries when full instead of growing.
+  cacheMaxMemorySize: 80 * 1024 * 1024, // 80 MB
   async redirects() {
     return [
       // Legacy /calendar route was folded into the track URL itself.

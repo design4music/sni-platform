@@ -34,9 +34,11 @@ import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 
-// Canonical URL (no month param) is cacheable; month variants re-render
-// dynamically because they read searchParams. Matches D-037 policy.
-export const revalidate = 1800;
+// ~3,000 param combinations (75 centroids × 4 tracks × 5 months × 2
+// locales). Together with the day-canonical sub-route, the CTM tree
+// dominated Render's 512MB cache budget. Reverting to force-dynamic;
+// query-level lib/cache.ts memoization handles the perf side.
+export const dynamic = 'force-dynamic';
 
 // Picks the most active day when one isn't explicitly requested.
 function pickDefaultDay(view: CalendarMonthView, explicit: string | null): string | null {

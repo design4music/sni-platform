@@ -37,7 +37,11 @@ import JsonLd from '@/components/JsonLd';
 //     schema. Keeps internal navigation working without flooding
 //     Google with thin pages.
 //   - Day has zero promoted events (or invalid date): 404.
-export const revalidate = 1800;
+// Day-canonical URLs have a huge param space (75 centroids × 4 tracks ×
+// ~150 days × 2 locales). On Render's 512MB instance, ISR caching this
+// route was a major OOM contributor under bot crawl. force-dynamic +
+// the query-level lib/cache.ts memoization keeps real-user perf fine.
+export const dynamic = 'force-dynamic';
 
 interface DayPageProps {
   params: Promise<{ locale: string; centroid_key: string; track_key: string; date: string }>;
