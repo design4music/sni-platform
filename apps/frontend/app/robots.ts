@@ -9,9 +9,12 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/'],
       },
     ],
-    sitemap: [
-      'https://www.worldbrief.info/sitemap.xml',
-      'https://www.worldbrief.info/sitemap-days.xml',
-    ],
+    // Single index entry point. The two underlying sitemaps
+    // (sitemap.xml + sitemap-days.xml) are referenced from the index;
+    // they keep working at their direct URLs but we no longer advertise
+    // them here. Standard pattern for multi-sitemap sites and gives GSC
+    // a fresh URL after both individual sitemaps got stuck on
+    // "Couldn't fetch" yesterday.
+    sitemap: ['https://www.worldbrief.info/sitemap-index.xml'],
   };
 }
