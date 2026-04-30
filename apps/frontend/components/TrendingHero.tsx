@@ -92,7 +92,7 @@ export default function TrendingHero({
       .sort((a, b) => b.share - a.share);
   }, [view.activity_stripe]);
 
-  const baseUrl = '/trending/v2';
+  const baseUrl = '/trending';
 
   return (
     <section>

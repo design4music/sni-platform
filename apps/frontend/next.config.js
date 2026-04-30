@@ -37,6 +37,18 @@ const nextConfig = {
         destination: '/de/trending',
         permanent: true,
       },
+      // /trending/v2 was the prototype; promoted to /trending on 2026-04-30.
+      // Preserve any external links + GSC entries.
+      {
+        source: '/trending/v2',
+        destination: '/trending',
+        permanent: true,
+      },
+      {
+        source: '/de/trending/v2',
+        destination: '/de/trending',
+        permanent: true,
+      },
     ];
   },
   async headers() {
