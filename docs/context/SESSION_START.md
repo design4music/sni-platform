@@ -1,6 +1,6 @@
 # Session Start
 
-**Last refreshed**: 2026-04-29 (D-072 — outlet × entity × month stance system shipped: schema + scorer + Dec-Mar backfill + outlet-facing UI + centroid Media Lens (`788fb38`) live; D-071 stance archives moved to `archive/` (`a2c2cbf`); comparative analysis rewire + freeze automation still open)
+**Last refreshed**: 2026-05-01 (April freeze applied — 289/289 CTMs frozen, 6,187 rejected titles purged, 80 small-CTM canned summaries; LLM steps deliberately skipped to keep cost down. D-072 backfill numbers corrected: stance rows are Jan-Apr, not Dec-Mar — earlier docs were off-by-one.)
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -77,9 +77,10 @@ Sorted by dependency + suggested phasing. None of these is the single
      view `mv_publisher_stats_monthly`.
    - **Scorer**: `pipeline/phase_5/score_outlet_stance.py` (async,
      concurrent, idempotent UPSERT, dry-run + report modes).
-   - **Backfill (local)**: Dec 2025 (407 rows / 94 outlets), Jan
-     (524 / 131), Feb (742 / 185), Mar (389 / 130). Render mirrors
-     this. Apr 2026 not backfilled yet (pending month close).
+   - **Backfill state (Render, verified 2026-05-01)**: Jan 2026
+     (407 rows / 94 outlets), Feb (524 / 131), Mar (742 / 185),
+     Apr (389 / 130 — partial-month snapshot computed 2026-04-25;
+     final refresh deferred at the 2026-05-01 freeze).
    - **Frontend live**: outlet landing `/sources/[slug]` rebuilt
      (`74591a3`) with `OutletStanceHeatmap`, volume chart, topic
      mix; per-month `/sources/[slug]/[month]` (`2960b15`) with

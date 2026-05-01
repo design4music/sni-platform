@@ -1068,12 +1068,17 @@ decisions:
         concurrency, dry-run + report modes, idempotent
         `ON CONFLICT DO UPDATE` upsert, ~25 headlines per bundle,
         ≥15-headline gate, per-outlet top-N entity detection.
-      - **Backfill state (local, mirrored on Render)**:
-        Dec 2025 (407 rows / 94 outlets / 77 entities),
-        Jan 2026 (524 / 131 / 91),
-        Feb 2026 (742 / 185 / 109),
-        Mar 2026 (389 / 130 / 62).
-        Apr 2026 not yet backfilled (waiting for month close).
+      - **Backfill state (Render, verified 2026-05-01)**:
+        Jan 2026 (407 rows / 94 outlets / 77 entities),
+        Feb 2026 (524 / 131 / 91),
+        Mar 2026 (742 / 185 / 109),
+        Apr 2026 (389 / 130 / 62 — partial-month snapshot
+        computed 2026-04-25; 6 days of late-April activity not
+        reflected). A "freeze-time final refresh" pass for April
+        was deliberately skipped during the 2026-05-01 freeze
+        (cost-conscious decision); pattern is documented in
+        Asana 1214271607392106 but never wired into
+        freeze_month.py.
       - **Frontend live**:
         - Outlet landing `/sources/[slug]` rebuilt as a dashboard
           (`74591a3`) with `OutletStanceHeatmap`, volume chart,
@@ -1112,4 +1117,8 @@ decisions:
            placeholder comment. New months will not get stance
            rows until either freeze is wired to invoke
            `score_outlet_stance.py` or a separate cron is added.
-        3. **April 2026 backfill** once month closes.
+        3. **Final-snapshot refresh for closing months** — pattern
+           in Asana 1214271607392106. April 2026 closed without
+           a refresh (rows are partial through 2026-04-25 only).
+           If/when this gets wired, also worth a one-time
+           catch-up pass on April.

@@ -1,6 +1,6 @@
 # WorldBrief Pipeline Status
 
-**Last updated**: 2026-04-29
+**Last updated**: 2026-05-01
 **Live**: https://www.worldbrief.info
 **Branch**: `main` (synced with origin)
 
@@ -17,15 +17,18 @@ seams currently are. For the design reference see
 All four months of 2026 processed under the v3.0.1 taxonomy and the
 day-centric clustering pipeline.
 
-| Month | CTMs | Promoted events | DE titles | Daily briefs |
-|---|---|---|---|---|
-| Jan | 287 | 23,204 | 99.7% | 1,287 |
-| Feb | 293 | 26,933 | 99.9% | 1,566 |
-| Mar | 285 | 37,754 | 99.8% | 2,295 |
-| Apr | 282 | 21,394+ (daemon live) | 99.9% | 1,231+ |
+| Month | CTMs | Promoted events | DE titles | Daily briefs | Frozen |
+|---|---|---|---|---|---|
+| Jan | 287 | 23,204 | 99.7% | 1,287 | ✓ |
+| Feb | 293 | 26,933 | 99.9% | 1,566 | ✓ |
+| Mar | 285 | 37,754 | 99.8% | 2,295 | ✓ |
+| Apr | 289 | (final) | 99.9% | (final) | ✓ (2026-05-01) |
 
 Jan–Mar rebuilt from scratch 2026-04-17/19 (labels wiped → relabel → wipe
-downstream → rebuild → push). April runs continuously via the daemon.
+downstream → rebuild → push). April was processed continuously by the
+daemon and frozen 2026-05-01 (purge + freeze only; LLM steps skipped to
+keep cost down — 220/289 CTMs have summaries, the 69 large CTMs without
+summaries remain NULL).
 
 ### Daemon state (Render worker)
 
@@ -130,17 +133,18 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 ## Known gaps / open tickets
 
 1. **Outlet stance matrix (D-072 — shipped, two follow-ups open)** —
-   schema, scorer, Dec-Mar backfill, outlet-facing UI, and centroid
+   schema, scorer, Jan-Apr backfill, outlet-facing UI, and centroid
    Media Lens all live (`outlet_entity_stance` table,
-   `pipeline/phase_5/score_outlet_stance.py`, ~2,062 rows local
-   across Dec 2025–Mar 2026, sources landing + per-month + world
-   map + centroid sidebar Media Lens all rebuilt). Two follow-ups
+   `pipeline/phase_5/score_outlet_stance.py`, ~2,062 rows on Render
+   across Jan-Apr 2026, sources landing + per-month + world map +
+   centroid sidebar Media Lens all rebuilt). Two follow-ups
    remain: (a) **Comparative + user analysis rewire** —
    `/analysis/comparative/...` and `/analysis/user/...` still read
    legacy `narratives WHERE extraction_method='stance_clustered'`
    (Asana 1214268284594725); (b) **Monthly automation** —
    `freeze_month.py` Step 4 is a placeholder comment, no cron
-   wired. Apr 2026 backfill pending month close. Full D-072 spec
+   wired (April closed without a final-snapshot refresh — rows
+   are partial through 2026-04-25). Full D-072 spec
    in `30_DecisionLog.yml`.
 2. **CTM digests (`ctm.summary_text`) still legacy** — period-level
    state-of-play on centroid pages now comes from `centroid_summaries`
