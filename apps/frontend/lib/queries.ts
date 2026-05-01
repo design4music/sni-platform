@@ -549,12 +549,20 @@ export async function getOverlappingCentroidsForTrack(
  * Get all months that have any CTM data for a centroid (across all tracks)
  */
 export async function getAvailableMonthsForCentroid(centroidId: string): Promise<string[]> {
+  // Months with at least one promoted, non-merged event. Filtering here means
+  // the centroid page's default-month pick (availableMonths[0]) lands on a
+  // month with renderable content — fixes the early-month gap where the
+  // current calendar month has CTMs but no promoted events yet, which
+  // previously caused the page to fall through to the legacy layout.
   return cached(`months:centroid:${centroidId}`, 3600, async () => {
     const results = await query<{ month: string }>(
-      `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') as month
-       FROM ctm
-       WHERE centroid_id = $1
-       ORDER BY month DESC`,
+      `SELECT DISTINCT TO_CHAR(c.month, 'YYYY-MM') AS month
+         FROM ctm c
+         JOIN events_v3 e ON e.ctm_id = c.id
+        WHERE c.centroid_id = $1
+          AND e.is_promoted = true
+          AND e.merged_into IS NULL
+        ORDER BY month DESC`,
       [centroidId]
     );
     return results.map(r => r.month);
