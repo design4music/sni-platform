@@ -736,22 +736,6 @@ export async function getEpicCentroidBreakdown(epicId: string): Promise<EpicCent
   );
 }
 
-export async function getLatestEpics(limit: number = 3, locale?: string): Promise<Epic[]> {
-  return cached(`epics:latest:${limit}:${locale || 'en'}`, 3600, () =>
-    query<Epic>(
-      `SELECT id, slug, TO_CHAR(month, 'YYYY-MM') as month,
-              ${locCol('epics', 'title', locale)} as title,
-              ${locCol('epics', 'summary', locale)} as summary,
-              anchor_tags, centroid_count, event_count, total_sources
-       FROM epics
-       WHERE month = (SELECT MAX(month) FROM epics)
-       ORDER BY total_sources DESC
-       LIMIT $1`,
-      [limit]
-    )
-  );
-}
-
 export async function getFramedNarratives(
   entityType: string, entityId: string, locale?: string
 ): Promise<FramedNarrative[]> {
@@ -1659,18 +1643,6 @@ export interface CentroidDeviation {
   deviations: DeviationFlag[] | null;
 }
 
-export async function getCentroidDeviations(centroidId: string): Promise<CentroidDeviation | null> {
-  const rows = await query<CentroidDeviation>(
-    `SELECT centroid_id, TO_CHAR(week, 'YYYY-MM-DD') as week, metrics, deviations
-     FROM mv_centroid_baselines
-     WHERE centroid_id = $1 AND deviations IS NOT NULL
-     ORDER BY week DESC
-     LIMIT 1`,
-    [centroidId]
-  );
-  return rows[0] || null;
-}
-
 /**
  * Deviations across every ISO week (Monday-anchored) that intersects the
  * requested month. Quiet weeks (deviations = NULL) are included so the UI
@@ -2175,42 +2147,6 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
      LIMIT 30`,
     [trimmed]
   ));
-}
-
-// ========================================================================
-// Focus country: top recent events for a centroid
-export interface FocusEvent {
-  id: string;
-  title: string;
-  date: string;
-  source_batch_count: number;
-  tags: string[];
-  summary: string | null;
-}
-
-export async function getFocusCountryEvents(
-  centroidId: string,
-  limit: number = 5,
-  locale?: string
-): Promise<FocusEvent[]> {
-  return query<FocusEvent>(
-    `SELECT e.id,
-            COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title,
-            e.date::text as date, e.source_batch_count,
-            COALESCE(e.tags, '{}') as tags,
-            LEFT(${locCol('e', 'summary', locale)}, 200) as summary
-     FROM events_v3 e
-     JOIN ctm c ON e.ctm_id = c.id
-     WHERE c.centroid_id = $1
-       AND e.is_catchall = false
-       AND e.merged_into IS NULL
-       AND e.source_batch_count >= 5
-       AND e.title IS NOT NULL
-       AND e.summary IS NOT NULL
-     ORDER BY COALESCE(e.last_active, e.date) DESC
-     LIMIT $2`,
-    [centroidId, limit]
-  );
 }
 
 // ── Narrative Mapping queries ──────────────────────────────────────

@@ -81,17 +81,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async jwt({ token, user, trigger }) {
       if (user?.id) token.id = user.id;
-      // Enrich token with role + focus_centroid on sign-in or update
+      // Enrich token with role + avatar on sign-in or update
       if (user?.id || trigger === 'update') {
         const id = (user?.id || token.id) as string;
         if (id) {
-          const rows = await query<{ role: string; focus_centroid: string | null; avatar_url: string | null }>(
-            'SELECT role, focus_centroid, avatar_url FROM users WHERE id = $1',
+          const rows = await query<{ role: string; avatar_url: string | null }>(
+            'SELECT role, avatar_url FROM users WHERE id = $1',
             [id]
           );
           if (rows.length > 0) {
             token.role = rows[0].role;
-            token.focusCentroid = rows[0].focus_centroid;
             token.avatarUrl = rows[0].avatar_url;
           }
         }
@@ -101,7 +100,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string;
       (session.user as any).role = token.role || 'user';
-      (session.user as any).focusCentroid = token.focusCentroid || null;
       (session.user as any).avatarUrl = token.avatarUrl || null;
       return session;
     },

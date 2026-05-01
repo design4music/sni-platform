@@ -1,15 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-
-interface CentroidOption {
-  id: string;
-  label: string;
-}
 
 interface UserProfile {
   id: string;
@@ -17,7 +11,6 @@ interface UserProfile {
   name: string | null;
   avatar_url: string | null;
   auth_provider: string;
-  focus_centroid: string | null;
   role: string;
   created_at: string;
 }
@@ -28,12 +21,7 @@ interface AnalysisEntry {
   created_at: string;
 }
 
-interface ProfileClientProps {
-  centroidOptions: CentroidOption[];
-}
-
-export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
-  const { data: session, update: updateSession } = useSession();
+export default function ProfileClient() {
   const router = useRouter();
   const t = useTranslations('profile');
 
@@ -41,7 +29,6 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
-  const [focusCentroid, setFocusCentroid] = useState('');
   const [saveMsg, setSaveMsg] = useState('');
 
   // RAI Analyst state
@@ -56,7 +43,6 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
       .then(data => {
         setProfile(data);
         setName(data.name || '');
-        setFocusCentroid(data.focus_centroid || '');
         setLoading(false);
       });
     fetch('/api/user-analyse')
@@ -72,11 +58,8 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
     await fetch('/api/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, focus_centroid: focusCentroid || null }),
+      body: JSON.stringify({ name }),
     });
-    // Trigger JWT refresh with new focus_centroid, then hard-reload
-    // to bust all caches (client router cache, in-memory query cache)
-    await updateSession();
     setSaveMsg(t('saved'));
     setSaving(false);
   }
@@ -157,24 +140,9 @@ export default function ProfileClient({ centroidOptions }: ProfileClientProps) {
         </div>
       </section>
 
-      {/* Focus Country Section */}
+      {/* Save name (Focus Country section retired 2026-05-01) */}
       <section className="bg-dashboard-surface border border-dashboard-border rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-2">{t('focusCountry')}</h2>
-        <p className="text-sm text-dashboard-text-muted mb-4">
-          {t('focusCountryDescription')}
-        </p>
-        <select
-          value={focusCentroid}
-          onChange={e => setFocusCentroid(e.target.value)}
-          className="w-full max-w-sm px-3 py-2 bg-[#141824] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
-        >
-          <option value="">{t('noFocusCountry')}</option>
-          {centroidOptions.map(c => (
-            <option key={c.id} value={c.id}>{c.label}</option>
-          ))}
-        </select>
-
-        <div className="mt-4 flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleSaveProfile}
             disabled={saving}

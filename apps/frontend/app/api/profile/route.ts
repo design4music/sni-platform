@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { query } from '@/lib/db';
 
@@ -15,11 +14,10 @@ export async function GET() {
     name: string | null;
     avatar_url: string | null;
     auth_provider: string;
-    focus_centroid: string | null;
     role: string;
     created_at: string;
   }>(
-    `SELECT id, email, name, avatar_url, auth_provider, focus_centroid, role, created_at
+    `SELECT id, email, name, avatar_url, auth_provider, role, created_at
      FROM users WHERE id = $1`,
     [session.user.id]
   );
@@ -47,11 +45,6 @@ export async function PATCH(req: NextRequest) {
     params.push(body.name.trim() || null);
   }
 
-  if ('focus_centroid' in body) {
-    updates.push(`focus_centroid = $${paramIdx++}`);
-    params.push(body.focus_centroid || null);
-  }
-
   if (updates.length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
   }
@@ -61,9 +54,6 @@ export async function PATCH(req: NextRequest) {
     `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIdx}`,
     params as any[]
   );
-
-  // Bust Next.js full-route cache so home page re-renders with new focus country
-  revalidatePath('/');
 
   return NextResponse.json({ ok: true });
 }

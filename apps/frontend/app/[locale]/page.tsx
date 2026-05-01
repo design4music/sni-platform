@@ -5,12 +5,10 @@ import TrendingCarousel from '@/components/TrendingCarousel';
 import MapSection from '@/components/MapSection';
 import SourceCarousel from '@/components/SourceCarousel';
 import AnimatedStats from '@/components/AnimatedStats';
-import EpicCard from '@/components/EpicCard';
-import FocusCountrySection from '@/components/FocusCountrySection';
-import { getCentroidsByClass, getAllActiveFeeds, getLatestEpics } from '@/lib/queries';
+import { getCentroidsByClass, getAllActiveFeeds } from '@/lib/queries';
 import { REGIONS, getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
-import { getTranslations, setRequestLocale, getLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates } from '@/lib/seo';
 
 export const revalidate = 21600;
@@ -20,32 +18,6 @@ export const metadata: Metadata = {
   description: 'AI-powered global news intelligence. Multilingual coverage from 180+ sources, organized by country, theme, and narrative frame. Updated daily.',
   alternates: buildAlternates('/'),
 };
-
-/* Deferred async server component for cross-country epics */
-async function CrossCountryEpics() {
-  const locale = await getLocale();
-  const t = await getTranslations('home');
-  const latestEpics = await getLatestEpics(3, locale);
-  if (latestEpics.length === 0) return null;
-  return (
-    <section>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold">{t('crossCountry')}</h2>
-        <Link
-          href="/epics"
-          className="text-sm text-blue-400 hover:text-blue-300 transition"
-        >
-          {t('viewAll')}
-        </Link>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {latestEpics.map(epic => (
-          <EpicCard key={epic.id} epic={epic} />
-        ))}
-      </div>
-    </section>
-  );
-}
 
 export default async function HomePage({
   params,
@@ -117,11 +89,6 @@ export default async function HomePage({
           <TrendingCarousel />
         </Suspense>
 
-        {/* Focus Country (logged-in users with focus centroid) */}
-        <Suspense fallback={null}>
-          <FocusCountrySection />
-        </Suspense>
-
         {/* Map */}
         <MapSection centroids={geoCentroidsWithMap} />
 
@@ -158,20 +125,6 @@ export default async function HomePage({
             {t('coverageNote')}
           </p>
         </section>
-
-        {/* Cross-Country Epics (deferred via Suspense) */}
-        <Suspense fallback={
-          <div className="animate-pulse">
-            <div className="h-8 w-64 bg-dashboard-border rounded mb-6" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-48 bg-dashboard-surface border border-dashboard-border rounded-lg" />
-              ))}
-            </div>
-          </div>
-        }>
-          <CrossCountryEpics />
-        </Suspense>
 
         {/* Sources Carousel */}
         <SourceCarousel feedCount={feeds.length} />
