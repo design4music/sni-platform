@@ -2,16 +2,11 @@ import type { Metadata } from 'next';
 import { getTranslations, getLocale } from 'next-intl/server';
 import DashboardLayout from '@/components/DashboardLayout';
 import TrackCard from '@/components/TrackCard';
-import { getTrackIcon } from '@/components/TrackCard';
-import GeoBriefSection from '@/components/GeoBriefSection';
-import MonthNav from '@/components/MonthNav';
-import CentroidMiniMapWrapper from '@/components/CentroidMiniMapWrapper';
 import {
   getCentroidById,
   getAvailableMonthsForCentroid,
   getTrackSummaryByCentroidAndMonth,
   getTracksByCentroid,
-  getTopSignalsForCentroid,
   getCentroidDeviationsForMonth,
   centroidHasPromotedForMonth,
   getCentroidMonthView,
@@ -19,22 +14,23 @@ import {
   getCentroidSummary,
   getCentroidMediaLens,
 } from '@/lib/queries';
-import CentroidHero from '@/components/CentroidHero';
+import CentroidActivityChart from '@/components/CentroidActivityChart';
 import WeeklyDeviationCard from '@/components/WeeklyDeviationCard';
 import MediaLensSection from '@/components/MediaLensSection';
 import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
-import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
 import ActiveNarrativesSection from '@/components/ActiveNarrativesSection';
 import SiblingOutlets from '@/components/SiblingOutlets';
-import { REGIONS, TRACK_LABELS, Track, getTrackLabel, getCentroidLabel, SignalType, SIGNAL_LABELS } from '@/lib/types';
+import { REGIONS, Track, getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 
-// Canonical URL (no month param) is cacheable; month variants re-render
-// dynamically because they read searchParams. Matches D-037 policy.
-export const revalidate = 1800;
+// 12h cache. Page content (period summary, theme chips, top events,
+// activity chart) updates with the daemon's clustering cycle but doesn't
+// need to be fresher than every half-day. Static reference content
+// (Background Brief + Strategic Narratives) lives at /c/[id]/about.
+export const revalidate = 43200;
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;
@@ -60,8 +56,7 @@ export async function generateMetadata({ params, searchParams }: CentroidPagePro
     : availableMonths[0] || null;
 
   // Description preference order:
-  //   1. Editorial overview from centroid_summaries.overall (D-065) — these
-  //      are LLM-curated period briefings, far richer than a stats dump.
+  //   1. Editorial overview from centroid_summaries.overall (D-065).
   //   2. Mechanical fallback from getCentroidMonthView (counts + themes).
   //   3. Static i18n template (no active month).
   let description: string | undefined;
@@ -115,26 +110,27 @@ export async function generateMetadata({ params, searchParams }: CentroidPagePro
     description = t('metaDescription', { label: centroidLabel });
   }
 
-  // EN: "Germany news: April 2026 briefing" — country first for keyword match,
-  // month as freshness signal.
+  // EN: "Germany news: April 2026 briefing" — country first for keyword
+  // match, month as freshness signal.
   const title = activeMonth
     ? (locale === 'de'
         ? `${centroidLabel} Nachrichten: ${formatMonthLabelSeo(activeMonth, 'de')} Briefing`
         : `${centroidLabel} news: ${formatMonthLabelSeo(activeMonth, 'en')} briefing`)
     : (locale === 'de' ? `${centroidLabel} — Nachrichten-Briefing` : `${centroidLabel} news briefing`);
 
+  // SEO: per-month canonical so each ?month=YYYY-MM is indexable as a
+  // distinct page. Without month, canonical is the bare /c/{id} (latest).
+  const explicitMonth = requestedMonth && availableMonths.includes(requestedMonth);
+  const canonicalPath = explicitMonth
+    ? `/c/${centroid_key}?month=${requestedMonth}`
+    : `/c/${centroid_key}`;
+
   return buildPageMetadata({
     title,
     description,
-    path: `/c/${centroid_key}`,
+    path: canonicalPath,
     locale,
   });
-}
-
-function formatMonthLabel(monthStr: string, loc?: string): string {
-  const [year, month] = monthStr.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  return date.toLocaleDateString(loc === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
 }
 
 export default async function CentroidPage({ params, searchParams }: CentroidPageProps) {
@@ -150,110 +146,55 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     notFound();
   }
 
-  // Fetch available months
   const availableMonths = await getAvailableMonthsForCentroid(centroid.id);
-
-  // Determine current month (use selected or default to latest)
   const currentMonth = selectedMonth && availableMonths.includes(selectedMonth)
     ? selectedMonth
     : availableMonths[0] || null;
 
-  // Get tracks that exist for the current month (month-aware: Jan=6, March=4)
-  const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth || undefined);
+  // Edge case: centroid has no months with promoted events at all. Send
+  // visitors to the static /about page (which doesn't depend on monthly
+  // data). Static reference is the meaningful surface for these centroids.
+  if (!currentMonth) {
+    redirect(`/c/${centroid.id}/about`);
+  }
 
-  // Fetch track data, top signals, and new-view gate in parallel
-  const [monthTrackData, topSignals, weeklyDeviations, hasPromoted, activeNarratives, periodSummary, mediaLens] = await Promise.all([
-    currentMonth ? getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth) : Promise.resolve([]),
-    getTopSignalsForCentroid(centroid.id, currentMonth || undefined),
-    currentMonth ? getCentroidDeviationsForMonth(centroid.id, currentMonth) : Promise.resolve([]),
-    currentMonth ? centroidHasPromotedForMonth(centroid.id, currentMonth) : Promise.resolve(false),
-    currentMonth ? getActiveNarrativesForCentroid(centroid.id, currentMonth, locale) : Promise.resolve([]),
+  // If a specific ?month= was requested but isn't in availableMonths
+  // (filtered to months with promoted events), bounce to canonical.
+  if (selectedMonth && selectedMonth !== currentMonth) {
+    redirect(`/c/${centroid.id}`);
+  }
+
+  const configuredTracks = await getTracksByCentroid(centroid.id, currentMonth);
+
+  // Parallel fetch of month-varying data.
+  const [monthTrackData, weeklyDeviations, hasPromoted, activeNarratives, periodSummary, mediaLens] = await Promise.all([
+    getTrackSummaryByCentroidAndMonth(centroid.id, currentMonth),
+    getCentroidDeviationsForMonth(centroid.id, currentMonth),
+    centroidHasPromotedForMonth(centroid.id, currentMonth),
+    getActiveNarrativesForCentroid(centroid.id, currentMonth, locale),
     getCentroidSummary(centroid.id, currentMonth, locale),
-    currentMonth ? getCentroidMediaLens(centroid.id, currentMonth) : Promise.resolve([]),
+    getCentroidMediaLens(centroid.id, currentMonth),
   ]);
 
-  // New hero view data: only loaded when the month has promoted events.
-  const centroidMonthView = hasPromoted && currentMonth
+  const centroidMonthView = hasPromoted
     ? await getCentroidMonthView(centroid.id, currentMonth, locale)
     : null;
 
-  // Build maps of track -> titleCount and track -> lastActive for the current month
-  const trackDataMap = new Map(monthTrackData.map(t => [t.track, t.titleCount]));
-  const trackLastActiveMap = new Map(monthTrackData.map(t => [t.track, t.lastActive]));
+  // Belt-and-suspenders: getAvailableMonthsForCentroid already filters to
+  // months with promoted events, so this should never fire. If it does,
+  // fall back to the static /about page rather than render a half-empty
+  // monthly view.
+  if (!centroidMonthView) {
+    redirect(`/c/${centroid.id}/about`);
+  }
 
-  // For each configured track, check if it has any historical data
-  const tracksWithHistoricalData = new Set(
-    availableMonths.length > 0
-      ? configuredTracks.filter(track =>
-          monthTrackData.some(t => t.track === track) ||
-          // A track has historical data if it exists in any month's data
-          true // We'd need another query for this, but for now assume all configured tracks have potential
-        )
-      : []
-  );
-
-  // Legacy sidebar: only when the enhanced CentroidHero view is not
-  // available for this centroid+month. Media-Lens/Deviation/Narrative
-  // widgets have moved into in-page section pairs below the hero.
-  const legacyLayout = !centroidMonthView;
-
-  const legacySidebar = legacyLayout ? (
-    <div className="lg:sticky lg:top-24 space-y-6">
-      {availableMonths.length > 0 && currentMonth && (
-        <MonthNav
-          months={availableMonths}
-          currentMonth={currentMonth}
-          baseUrl={`/c/${centroid.id}`}
-        />
-      )}
-      {configuredTracks.length > 0 && (
-        <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-          <h3 className="text-xl font-bold mb-1 text-dashboard-text">
-            {getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-          </h3>
-          <p className="text-sm text-dashboard-text-muted mb-4">
-            {t('strategicTracks')}
-          </p>
-          <nav className="space-y-1">
-            {configuredTracks.map(t => {
-              const titleCount = trackDataMap.get(t) || 0;
-              const hasData = titleCount > 0;
-              return hasData ? (
-                <Link
-                  key={t}
-                  href={`/c/${centroid.id}/t/${t}?month=${currentMonth}`}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-border/30 hover:bg-dashboard-border
-                             border border-transparent hover:border-dashboard-border
-                             transition-all duration-150"
-                >
-                  <span className="text-dashboard-text-muted">{getTrackIcon(t)}</span>
-                  <span className="text-base font-medium text-dashboard-text hover:text-white transition flex-1">
-                    {getTrackLabel(t as Track, tTracks)}
-                  </span>
-                  <span className="text-xs text-dashboard-text-muted tabular-nums">{titleCount}</span>
-                </Link>
-              ) : (
-                <div
-                  key={t}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg opacity-40"
-                >
-                  <span>{getTrackIcon(t)}</span>
-                  <span className="text-base font-medium flex-1">
-                    {getTrackLabel(t as Track, tTracks)}
-                  </span>
-                  <span className="text-xs tabular-nums">0</span>
-                </div>
-              );
-            })}
-          </nav>
-        </div>
-      )}
-    </div>
-  ) : undefined;
+  const trackDataMap = new Map(monthTrackData.map(td => [td.track, td.titleCount]));
+  const trackLastActiveMap = new Map(monthTrackData.map(td => [td.track, td.lastActive]));
 
   const theaterLabel = centroid.primary_theater
     ? (REGIONS as Record<string, string>)[centroid.primary_theater] || centroid.primary_theater
     : null;
+  const centroidLabel = getCentroidLabel(centroid.id, centroid.label, tCentroids);
 
   // Map summary track payloads by track key for lookup below.
   const summaryByTrack: Record<string, string | null> = {
@@ -263,11 +204,20 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     geo_society: periodSummary?.society?.state || null,
   };
 
-  // Enhanced top zone: briefing + hero calendar + 2x2 track cards, all spanning full width.
-  // Only rendered when we have promoted events for this month.
-  const enhancedTop = centroidMonthView ? (
+  // Top zone: header link to /about + briefing + activity chart + 2x2 track cards.
+  const enhancedTop = (
     <div className="space-y-8">
-      {/* Tier 0 "Country briefing" — one paragraph setting the period's dominant tension */}
+      {/* "About {Country}" pointer to the static reference page */}
+      <div className="flex items-center justify-end -mb-4">
+        <Link
+          href={`/c/${centroid.id}/about`}
+          className="text-sm text-blue-400 hover:text-blue-300 transition"
+        >
+          {locale === 'de' ? `Über ${centroidLabel}` : `About ${centroidLabel}`} →
+        </Link>
+      </div>
+
+      {/* Tier-0 country briefing — one paragraph setting the period's dominant tension */}
       {periodSummary && periodSummary.overall && (
         <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-5">
           <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
@@ -284,29 +234,29 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
         </div>
       )}
 
-      <CentroidHero
+      {/* Topic-mix area chart — replaces the heavier per-day calendar hero. */}
+      <CentroidActivityChart
         view={centroidMonthView}
-        centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
         centroidKey={centroid.id}
-        activeMonth={currentMonth || ''}
+        activeMonth={currentMonth}
       />
+
       {configuredTracks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {configuredTracks.map(track => {
             const titleCount = trackDataMap.get(track) || 0;
             const hasDataThisMonth = titleCount > 0;
-            const hasHistoricalData = tracksWithHistoricalData.has(track);
-            const heroTrack = centroidMonthView.tracks.find(t => t.track === track);
+            const heroTrack = centroidMonthView.tracks.find(td => td.track === track);
             const trackState = summaryByTrack[track] || null;
             return (
               <TrackCard
                 key={track}
                 centroidId={centroid.id}
                 track={track}
-                latestMonth={currentMonth || undefined}
+                latestMonth={currentMonth}
                 titleCount={titleCount}
                 disabled={!hasDataThisMonth}
-                hasHistoricalData={hasHistoricalData}
+                hasHistoricalData={true}
                 lastActive={trackLastActiveMap.get(track) || undefined}
                 topEvents={heroTrack?.top_events}
                 themeChips={heroTrack?.theme_chips}
@@ -318,20 +268,17 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
         </div>
       )}
     </div>
-  ) : undefined;
+  );
 
   const crumbs: Array<{ name: string; path: string }> = [];
   if (theaterLabel) {
     crumbs.push({ name: theaterLabel, path: `/region/${centroid.primary_theater}` });
   }
-  crumbs.push({
-    name: getCentroidLabel(centroid.id, centroid.label, tCentroids),
-    path: `/c/${centroid.id}`,
-  });
+  crumbs.push({ name: centroidLabel, path: `/c/${centroid.id}` });
 
   return (
     <DashboardLayout
-      title={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+      title={centroidLabel}
       breadcrumb={theaterLabel ? (
         <Link
           href={`/region/${centroid.primary_theater}`}
@@ -340,97 +287,35 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
           &larr; {theaterLabel}
         </Link>
       ) : undefined}
-      sidebar={legacySidebar}
       topFullWidthContent={enhancedTop}
-      fullWidthContent={
-        centroid.profile_json ? (
-          <GeoBriefSection
-            profile={centroid.profile_json}
-            updatedAt={centroid.updated_at}
-            centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
-            miniMap={centroid.iso_codes && centroid.iso_codes.length > 0
-              ? <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
-              : undefined}
-          />
-        ) : undefined
-      }
     >
       <JsonLd data={breadcrumbList(crumbs)} />
       <div className="space-y-8">
-        {/* Show mini-map standalone if no Background Brief exists */}
-        {!centroid.profile_json && centroid.iso_codes && centroid.iso_codes.length > 0 && (
-          <div className="mb-2">
-            <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
-          </div>
-        )}
-        {/* Legacy header only when enhanced hero is NOT active */}
-        {!centroidMonthView && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">
-              {t('strategicTracks')}{currentMonth && ` \u2014 ${formatMonthLabel(currentMonth, locale)}`}
-            </h2>
-            <p className="text-dashboard-text-muted mb-6">
-              {t('trackDescription', { label: getCentroidLabel(centroid.id, centroid.label, tCentroids) })}
-            </p>
-          </div>
-        )}
-
-        {!centroidMonthView && (
-          configuredTracks.length === 0 ? (
-            <div className="text-center py-12 bg-dashboard-surface border border-dashboard-border rounded-lg">
-              <p className="text-dashboard-text-muted">{t('noTracks')}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {configuredTracks.map(track => {
-                const titleCount = trackDataMap.get(track) || 0;
-                const hasDataThisMonth = titleCount > 0;
-                const hasHistoricalData = tracksWithHistoricalData.has(track);
-                return (
-                  <TrackCard
-                    key={track}
-                    centroidId={centroid.id}
-                    track={track}
-                    latestMonth={currentMonth || undefined}
-                    titleCount={titleCount}
-                    disabled={!hasDataThisMonth}
-                    hasHistoricalData={hasHistoricalData}
-                    lastActive={trackLastActiveMap.get(track) || undefined}
-                  />
-                );
-              })}
-            </div>
-          )
-        )}
-        {/* Main column: Strategic Narratives + Active Narratives. Sidebar:
-            Unusual Activity, Media Lens (D-072), Sources from {Country}.
-            Media Lens hides for centroids with no iso_codes (systemic) or
-            months with no stance data. */}
+        {/* Active Narratives (main, varies per month) +
+            Sidebar (Unusual Activity + Media Lens + Sources from Country).
+            Strategic Narratives + Background Brief moved to /c/[id]/about. */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="min-w-0 lg:col-span-2 space-y-8">
-            <Suspense fallback={null}>
-              <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
-            </Suspense>
             <ActiveNarrativesSection centroidId={centroid.id} narratives={activeNarratives} />
           </div>
           <aside className="min-w-0 space-y-6">
-            {currentMonth && (
-              <WeeklyDeviationCard
-                centroidId={centroid.id}
-                initialMonth={currentMonth}
-                initialWeeks={weeklyDeviations}
-              />
-            )}
-            {currentMonth && mediaLens.length > 0 && (
+            <WeeklyDeviationCard
+              centroidId={centroid.id}
+              initialMonth={currentMonth}
+              initialWeeks={weeklyDeviations}
+            />
+            {mediaLens.length > 0 && (
               <MediaLensSection
                 rows={mediaLens}
-                centroidLabel={getCentroidLabel(centroid.id, centroid.label, tCentroids)}
+                centroidLabel={centroidLabel}
                 month={currentMonth}
                 locale={locale}
               />
             )}
             {centroid.iso_codes && centroid.iso_codes.length === 1 && (
-              <SiblingOutlets countryCode={centroid.iso_codes[0]} />
+              <Suspense fallback={null}>
+                <SiblingOutlets countryCode={centroid.iso_codes[0]} />
+              </Suspense>
             )}
           </aside>
         </div>
