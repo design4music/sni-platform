@@ -55,6 +55,10 @@ interface Props {
   xMode?: XMode;
   /** Tailwind height class. Default: h-48 (192px). */
   heightClass?: string;
+  /** Show the built-in Recharts legend. Default true. Set false when
+   *  the parent provides its own legend (e.g. OutletTrackTimeline's
+   *  "Lifetime" % swatches). */
+  showLegend?: boolean;
 }
 
 function dayTick(raw: string): string {
@@ -80,6 +84,7 @@ export default function StackedTrackAreaChart({
   data,
   xMode = 'day',
   heightClass = 'h-48',
+  showLegend = true,
 }: Props) {
   const locale = useLocale();
   const [mounted, setMounted] = useState(false);
@@ -121,11 +126,13 @@ export default function StackedTrackAreaChart({
               labelFormatter={(raw) => tooltipFmt(String(raw))}
               formatter={(value, name) => [value as number, trackLabel(String(name) as Track, locale)]}
             />
-            <Legend
-              wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
-              iconType="square"
-              formatter={(value: string) => trackLabel(value as Track, locale)}
-            />
+            {showLegend && (
+              <Legend
+                wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                iconType="square"
+                formatter={(value: string) => trackLabel(value as Track, locale)}
+              />
+            )}
             {TRACKS.map(track => (
               <Area
                 key={track}

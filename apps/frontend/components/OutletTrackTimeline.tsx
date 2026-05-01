@@ -112,7 +112,7 @@ export default async function OutletTrackTimeline({
 
       <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-3">
         {rows.length >= 2 ? (
-          <StackedTrackAreaChart data={chartData} xMode="month" />
+          <StackedTrackAreaChart data={chartData} xMode="month" showLegend={false} />
         ) : (
           // 1-month fallback: simple horizontal bar with the lifetime
           // distribution. Same colors so the visual stays consistent.
