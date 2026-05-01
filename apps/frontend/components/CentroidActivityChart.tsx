@@ -91,10 +91,7 @@ export default function CentroidActivityChart({ view, centroidKey, activeMonth }
         </div>
       </div>
 
-      <StackedTrackAreaChart
-        data={data}
-        xTickFormatter={(raw) => parseInt(raw.split('-')[2], 10).toString()}
-      />
+      <StackedTrackAreaChart data={data} xMode="day" />
     </section>
   );
 }

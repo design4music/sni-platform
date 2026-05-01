@@ -43,25 +43,54 @@ export type StackedTrackPoint = {
   geo_society: number;
 };
 
+/** xMode controls how the `x` value is rendered on axis ticks + tooltip
+ *  headers. String preset (not a function prop) so server components can
+ *  pass it through to this client component without serialisation issues. */
+export type XMode = 'day' | 'month';
+
 interface Props {
   data: StackedTrackPoint[];
-  /** Format the x-axis tick label from the raw `x` value. Default: identity. */
-  xTickFormatter?: (raw: string) => string;
-  /** Format the tooltip label (header) from the raw `x` value. Default: identity. */
-  xTooltipFormatter?: (raw: string) => string;
+  /** Default 'day' (formats YYYY-MM-DD as the day number). 'month'
+   *  formats YYYY-MM as "Mon YYYY". */
+  xMode?: XMode;
   /** Tailwind height class. Default: h-48 (192px). */
   heightClass?: string;
 }
 
+function dayTick(raw: string): string {
+  return parseInt(raw.split('-')[2], 10).toString();
+}
+function dayTooltip(raw: string): string {
+  return raw;
+}
+function monthTick(raw: string, locale: string): string {
+  const [y, m] = raw.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
+    month: 'short', year: '2-digit',
+  });
+}
+function monthTooltip(raw: string, locale: string): string {
+  const [y, m] = raw.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
+    month: 'short', year: 'numeric',
+  });
+}
+
 export default function StackedTrackAreaChart({
   data,
-  xTickFormatter,
-  xTooltipFormatter,
+  xMode = 'day',
   heightClass = 'h-48',
 }: Props) {
   const locale = useLocale();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  const tickFmt = xMode === 'month'
+    ? (raw: string) => monthTick(raw, locale)
+    : dayTick;
+  const tooltipFmt = xMode === 'month'
+    ? (raw: string) => monthTooltip(raw, locale)
+    : dayTooltip;
 
   return (
     <div className={`w-full ${heightClass}`}>
@@ -70,7 +99,7 @@ export default function StackedTrackAreaChart({
           <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
             <XAxis
               dataKey="x"
-              tickFormatter={xTickFormatter}
+              tickFormatter={tickFmt}
               tick={{ fill: '#94a3b8', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
@@ -89,7 +118,7 @@ export default function StackedTrackAreaChart({
                 borderRadius: 8,
                 fontSize: 12,
               }}
-              labelFormatter={(raw) => xTooltipFormatter ? xTooltipFormatter(String(raw)) : String(raw)}
+              labelFormatter={(raw) => tooltipFmt(String(raw))}
               formatter={(value, name) => [value as number, trackLabel(String(name) as Track, locale)]}
             />
             <Legend
