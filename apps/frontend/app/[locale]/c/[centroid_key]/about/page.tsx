@@ -6,7 +6,6 @@ import DashboardLayout from '@/components/DashboardLayout';
 import GeoBriefSection from '@/components/GeoBriefSection';
 import CentroidMiniMapWrapper from '@/components/CentroidMiniMapWrapper';
 import CentroidNarrativeSection from '@/components/narratives/CentroidNarrativeSection';
-import SiblingOutlets from '@/components/SiblingOutlets';
 import { getCentroidById } from '@/lib/queries';
 import { REGIONS, getCentroidLabel } from '@/lib/types';
 import { buildPageMetadata, breadcrumbList, truncateDescription, type Locale as SeoLocale } from '@/lib/seo';
@@ -124,13 +123,6 @@ export default async function CentroidAboutPage({ params }: AboutPageProps) {
         <Suspense fallback={null}>
           <CentroidNarrativeSection centroidId={centroid.id} locale={locale} />
         </Suspense>
-
-        {/* Sibling outlets — only meaningful for single-country centroids. */}
-        {centroid.iso_codes && centroid.iso_codes.length === 1 && (
-          <Suspense fallback={null}>
-            <SiblingOutlets countryCode={centroid.iso_codes[0]} />
-          </Suspense>
-        )}
 
         {/* Back to monthly */}
         <div className="pt-6 border-t border-dashboard-border">
