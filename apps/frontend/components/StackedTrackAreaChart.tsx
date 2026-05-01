@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Reusable stacked-area chart for the 4 strategic tracks.
 // Used by both CentroidActivityChart (per-day within one month) and
@@ -98,54 +98,66 @@ export default function StackedTrackAreaChart({
     : dayTooltip;
 
   return (
-    <div className={`w-full ${heightClass}`}>
-      {mounted && (
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
-            <XAxis
-              dataKey="x"
-              tickFormatter={tickFmt}
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              tick={{ fill: '#94a3b8', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              allowDecimals={false}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#1e293b',
-                border: '1px solid #334155',
-                borderRadius: 8,
-                fontSize: 12,
-              }}
-              labelFormatter={(raw) => tooltipFmt(String(raw))}
-              formatter={(value, name) => [value as number, trackLabel(String(name) as Track, locale)]}
-            />
-            {showLegend && (
-              <Legend
-                wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
-                iconType="square"
-                formatter={(value: string) => trackLabel(value as Track, locale)}
+    <div>
+      <div className={`w-full ${heightClass}`}>
+        {mounted && (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+              <XAxis
+                dataKey="x"
+                tickFormatter={tickFmt}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
               />
-            )}
-            {TRACKS.map(track => (
-              <Area
-                key={track}
-                type="monotone"
-                dataKey={track}
-                stackId="1"
-                stroke={TRACK_COLORS[track]}
-                fill={TRACK_COLORS[track]}
-                fillOpacity={0.7}
+              <YAxis
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                allowDecimals={false}
               />
-            ))}
-          </AreaChart>
-        </ResponsiveContainer>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1e293b',
+                  border: '1px solid #334155',
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+                labelFormatter={(raw) => tooltipFmt(String(raw))}
+                formatter={(value, name) => [value as number, trackLabel(String(name) as Track, locale)]}
+              />
+              {TRACKS.map(track => (
+                <Area
+                  key={track}
+                  type="monotone"
+                  dataKey={track}
+                  stackId="1"
+                  stroke={TRACK_COLORS[track]}
+                  fill={TRACK_COLORS[track]}
+                  fillOpacity={0.7}
+                />
+              ))}
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* Custom legend — matches the outlet-page "Lifetime %" legend style
+          (rounded swatches, white labels). Drops the default Recharts plain
+          square swatches. */}
+      {showLegend && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs">
+          {TRACKS.map(track => (
+            <span key={track} className="inline-flex items-center gap-1.5">
+              <span
+                className="w-3 h-3 rounded flex-shrink-0"
+                style={{ backgroundColor: TRACK_COLORS[track], opacity: 0.85 }}
+              />
+              <span className="text-dashboard-text">{trackLabel(track, locale)}</span>
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );

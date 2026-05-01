@@ -207,19 +207,10 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     geo_society: periodSummary?.society?.state || null,
   };
 
-  // Top zone: header link to /about + briefing + activity chart + 2x2 track cards.
+  // Top zone: briefing + activity chart + 2x2 track cards. (The "About"
+  // link sits in the breadcrumb, not here.)
   const enhancedTop = (
     <div className="space-y-8">
-      {/* "About {Country}" pointer to the static reference page */}
-      <div className="flex items-center justify-end -mb-4">
-        <Link
-          href={`/c/${centroid.id}/about`}
-          className="text-sm text-blue-400 hover:text-blue-300 transition"
-        >
-          {locale === 'de' ? `Über ${centroidLabel}` : `About ${centroidLabel}`} →
-        </Link>
-      </div>
-
       {/* Tier-0 country briefing — one paragraph setting the period's dominant tension */}
       {periodSummary && periodSummary.overall && (
         <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-5">
@@ -279,17 +270,36 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
   }
   crumbs.push({ name: centroidLabel, path: `/c/${centroid.id}` });
 
+  // Breadcrumb: ← Region / About {Country} →
+  // Two-direction navigation in one strip: parent (region) on the left,
+  // sibling reference page (/about) on the right.
+  const aboutLabel = locale === 'de' ? `Über ${centroidLabel}` : `About ${centroidLabel}`;
+  const breadcrumbStrip = (
+    <div className="flex items-center gap-2 text-sm">
+      {theaterLabel && (
+        <>
+          <Link
+            href={`/region/${centroid.primary_theater}`}
+            className="text-blue-400 hover:text-blue-300"
+          >
+            ← {theaterLabel}
+          </Link>
+          <span className="text-dashboard-text-muted">/</span>
+        </>
+      )}
+      <Link
+        href={`/c/${centroid.id}/about`}
+        className="text-blue-400 hover:text-blue-300"
+      >
+        {aboutLabel} →
+      </Link>
+    </div>
+  );
+
   return (
     <DashboardLayout
       title={centroidLabel}
-      breadcrumb={theaterLabel ? (
-        <Link
-          href={`/region/${centroid.primary_theater}`}
-          className="text-blue-400 hover:text-blue-300 text-sm"
-        >
-          &larr; {theaterLabel}
-        </Link>
-      ) : undefined}
+      breadcrumb={breadcrumbStrip}
       topFullWidthContent={enhancedTop}
     >
       <JsonLd data={breadcrumbList(crumbs)} />
