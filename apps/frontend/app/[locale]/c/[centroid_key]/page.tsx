@@ -63,7 +63,10 @@ export async function generateMetadata({ params, searchParams }: CentroidPagePro
   if (activeMonth) {
     const summary = await getCentroidSummary(centroid.id, activeMonth, locale);
     const overall = summary?.overall?.trim();
-    if (overall) description = truncateDescription(overall);
+    // 255 chars: lets the full Overview travel into Twitter/OG/Slack
+    // unfurls. Google may truncate in SERP around 155-160 chars but the
+    // richer social previews are worth that trade-off for this surface.
+    if (overall) description = truncateDescription(overall, 255);
   }
 
   if (!description && activeMonth) {
@@ -291,33 +294,33 @@ export default async function CentroidPage({ params, searchParams }: CentroidPag
     >
       <JsonLd data={breadcrumbList(crumbs)} />
       <div className="space-y-8">
-        {/* Active Narratives (main, varies per month) +
-            Sidebar (Unusual Activity + Media Lens + Sources from Country).
+        {/* Active Narratives — full-width, content-heavy section.
             Strategic Narratives + Background Brief moved to /c/[id]/about. */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="min-w-0 lg:col-span-2 space-y-8">
-            <ActiveNarrativesSection centroidId={centroid.id} narratives={activeNarratives} />
-          </div>
-          <aside className="min-w-0 space-y-6">
-            <WeeklyDeviationCard
-              centroidId={centroid.id}
-              initialMonth={currentMonth}
-              initialWeeks={weeklyDeviations}
+        <ActiveNarrativesSection centroidId={centroid.id} narratives={activeNarratives} />
+
+        {/* Utility widgets — symmetric row below the narratives section.
+            Visually parallel to the 2x2 TrackCards above. Sources column
+            is conditional (single-country only); grid collapses to 2-col
+            for multi-country centroids. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <WeeklyDeviationCard
+            centroidId={centroid.id}
+            initialMonth={currentMonth}
+            initialWeeks={weeklyDeviations}
+          />
+          {mediaLens.length > 0 && (
+            <MediaLensSection
+              rows={mediaLens}
+              centroidLabel={centroidLabel}
+              month={currentMonth}
+              locale={locale}
             />
-            {mediaLens.length > 0 && (
-              <MediaLensSection
-                rows={mediaLens}
-                centroidLabel={centroidLabel}
-                month={currentMonth}
-                locale={locale}
-              />
-            )}
-            {centroid.iso_codes && centroid.iso_codes.length === 1 && (
-              <Suspense fallback={null}>
-                <SiblingOutlets countryCode={centroid.iso_codes[0]} />
-              </Suspense>
-            )}
-          </aside>
+          )}
+          {centroid.iso_codes && centroid.iso_codes.length === 1 && (
+            <Suspense fallback={null}>
+              <SiblingOutlets countryCode={centroid.iso_codes[0]} />
+            </Suspense>
+          )}
         </div>
       </div>
     </DashboardLayout>

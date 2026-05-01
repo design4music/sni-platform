@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import InfoTip from './InfoTip';
+import StackedTrackAreaChart, { type StackedTrackPoint } from './StackedTrackAreaChart';
 import type { OutletTrackTimelineRow } from '@/lib/queries';
 
 interface Props {
@@ -10,10 +11,10 @@ interface Props {
 }
 
 const TRACKS = [
-  { key: 'security', fill: '#f87171' },
-  { key: 'politics', fill: '#38bdf8' },
-  { key: 'economy', fill: '#fbbf24' },
-  { key: 'society', fill: '#34d399' },
+  { key: 'security', main: 'geo_security', fill: '#f87171' },
+  { key: 'politics', main: 'geo_politics', fill: '#38bdf8' },
+  { key: 'economy',  main: 'geo_economy',  fill: '#fbbf24' },
+  { key: 'society',  main: 'geo_society',  fill: '#34d399' },
 ] as const;
 
 type TrackKey = (typeof TRACKS)[number]['key'];
@@ -25,19 +26,9 @@ const TRACK_KEY_MAP: Record<string, TrackKey> = {
   geo_society: 'society',
 };
 
-const W = 800;
-const H = 200;
-const PAD_L = 24;
-const PAD_R = 8;
-const PAD_T = 8;
-const PAD_B = 22;
-
 function shareByTrack(dist: Record<string, number>): Record<TrackKey, number> {
   const out: Record<TrackKey, number> = {
-    security: 0,
-    politics: 0,
-    economy: 0,
-    society: 0,
+    security: 0, politics: 0, economy: 0, society: 0,
   };
   let total = 0;
   for (const [k, v] of Object.entries(dist)) {
@@ -74,10 +65,6 @@ export default async function OutletTrackTimeline({
 
   if (rows.length < 1) return null;
 
-  const innerW = W - PAD_L - PAD_R;
-  const innerH = H - PAD_T - PAD_B;
-  const stepX = rows.length > 1 ? innerW / (rows.length - 1) : 0;
-
   // Per-month shares + raw count.
   const shares = rows.map(r => ({
     month: r.month,
@@ -87,10 +74,7 @@ export default async function OutletTrackTimeline({
 
   // Lifetime shares — weighted by title_count so heavier months count more.
   const lifetimeWeighted: Record<TrackKey, number> = {
-    security: 0,
-    politics: 0,
-    economy: 0,
-    society: 0,
+    security: 0, politics: 0, economy: 0, society: 0,
   };
   let lifetimeTotal = 0;
   for (const row of shares) {
@@ -108,39 +92,16 @@ export default async function OutletTrackTimeline({
       }
     : { security: 0, politics: 0, economy: 0, society: 0 };
 
-  // Build cumulative bands: each track gets its own polygon.
-  const trackBands = rows.length >= 2
-    ? TRACKS.map(track => {
-        let topPath = '';
-        let bottomPath = '';
-        shares.forEach((row, i) => {
-          const x = PAD_L + i * stepX;
-          let bottomShare = 0;
-          for (const t2 of TRACKS) {
-            if (t2.key === track.key) break;
-            bottomShare += row.s[t2.key];
-          }
-          const topShare = bottomShare + row.s[track.key];
-          const yBottom = PAD_T + (1 - bottomShare) * innerH;
-          const yTop = PAD_T + (1 - topShare) * innerH;
-          topPath += `${i === 0 ? 'M' : 'L'} ${x} ${yTop} `;
-          bottomPath = ` L ${x} ${yBottom}` + bottomPath;
-        });
-        return { ...track, d: topPath + bottomPath + ' Z' };
-      })
-    : [];
-
-  // X-axis tick labels: first, last, and ~quarter points
-  const tickIdx: number[] = [];
-  if (shares.length <= 6) {
-    shares.forEach((_, i) => tickIdx.push(i));
-  } else {
-    const stride = Math.max(1, Math.floor(shares.length / 5));
-    for (let i = 0; i < shares.length; i += stride) tickIdx.push(i);
-    if (tickIdx[tickIdx.length - 1] !== shares.length - 1) {
-      tickIdx.push(shares.length - 1);
-    }
-  }
+  // Per-month points for the stacked area chart. Volume * share = raw
+  // count per track (rounded). Same shape as CentroidActivityChart so
+  // we can share the chart component.
+  const chartData: StackedTrackPoint[] = shares.map(row => ({
+    x: row.month,
+    geo_security: Math.round(row.s.security * row.title_count),
+    geo_politics: Math.round(row.s.politics * row.title_count),
+    geo_economy:  Math.round(row.s.economy  * row.title_count),
+    geo_society:  Math.round(row.s.society  * row.title_count),
+  }));
 
   return (
     <section className="mb-10">
@@ -151,76 +112,11 @@ export default async function OutletTrackTimeline({
 
       <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-3">
         {rows.length >= 2 ? (
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="none"
-            className="w-full h-48"
-            role="img"
-            aria-label={t('trackTimelineTitle')}
-          >
-            {[0, 0.25, 0.5, 0.75, 1].map(g => {
-              const y = PAD_T + (1 - g) * innerH;
-              return (
-                <g key={g}>
-                  <line
-                    x1={PAD_L}
-                    x2={W - PAD_R}
-                    y1={y}
-                    y2={y}
-                    stroke="#27272a"
-                    strokeWidth={1}
-                    strokeDasharray={g === 0 || g === 1 ? '' : '2 3'}
-                  />
-                  <text
-                    x={PAD_L - 4}
-                    y={y + 3}
-                    textAnchor="end"
-                    fontSize={9}
-                    fill="#71717a"
-                  >
-                    {Math.round(g * 100)}%
-                  </text>
-                </g>
-              );
-            })}
-
-            {trackBands.map(band => (
-              <path key={band.key} d={band.d} fill={band.fill} fillOpacity={0.85}>
-                <title>{`${tTracks('geo_' + band.key)} · ${fmtPct(lifetime[band.key])} lifetime`}</title>
-              </path>
-            ))}
-
-            {tickIdx.map(i => {
-              const x = PAD_L + i * stepX;
-              const m = shares[i].month;
-              const [y, mm] = m.split('-');
-              const label = new Date(Number(y), Number(mm) - 1, 1).toLocaleDateString(
-                locale === 'de' ? 'de-DE' : 'en-US',
-                { month: 'short' }
-              );
-              return (
-                <g key={m}>
-                  <line
-                    x1={x}
-                    x2={x}
-                    y1={PAD_T + innerH}
-                    y2={PAD_T + innerH + 3}
-                    stroke="#52525b"
-                    strokeWidth={1}
-                  />
-                  <text
-                    x={x}
-                    y={PAD_T + innerH + 14}
-                    textAnchor="middle"
-                    fontSize={9}
-                    fill="#a1a1aa"
-                  >
-                    {label} {y.slice(2)}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
+          <StackedTrackAreaChart
+            data={chartData}
+            xTickFormatter={(raw) => formatMonthLabel(raw, locale)}
+            xTooltipFormatter={(raw) => formatMonthLabel(raw, locale)}
+          />
         ) : (
           // 1-month fallback: simple horizontal bar with the lifetime
           // distribution. Same colors so the visual stays consistent.
@@ -233,7 +129,7 @@ export default async function OutletTrackTimeline({
                   backgroundColor: tr.fill,
                   opacity: 0.85,
                 }}
-                title={`${tTracks('geo_' + tr.key)} · ${fmtPct(lifetime[tr.key])}`}
+                title={`${tTracks(tr.main)} · ${fmtPct(lifetime[tr.key])}`}
               />
             ))}
           </div>
@@ -250,7 +146,7 @@ export default async function OutletTrackTimeline({
                 className="w-3 h-3 rounded flex-shrink-0"
                 style={{ backgroundColor: tr.fill, opacity: 0.85 }}
               />
-              <span className="text-dashboard-text">{tTracks('geo_' + tr.key)}</span>
+              <span className="text-dashboard-text">{tTracks(tr.main)}</span>
               <span className="tabular-nums text-dashboard-text-muted">
                 {fmtPct(lifetime[tr.key])}
               </span>
@@ -281,7 +177,7 @@ export default async function OutletTrackTimeline({
                           className="w-2.5 h-2.5 rounded flex-shrink-0"
                           style={{ backgroundColor: tr.fill, opacity: 0.85 }}
                         />
-                        <span className="flex-1">{tTracks('geo_' + tr.key)}</span>
+                        <span className="flex-1">{tTracks(tr.main)}</span>
                         <span className="tabular-nums">{fmtPct(s.s[tr.key])}</span>
                       </li>
                     ))}
