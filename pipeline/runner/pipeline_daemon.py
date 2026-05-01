@@ -848,6 +848,17 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_centroid_stats(self):
+        """Materialize per-centroid coverage stats (source counts + freshness).
+
+        Self-throttled by a 12h staleness gate inside the materializer — daemon
+        can call freely; the script no-ops if the table was refreshed recently.
+        Backs the homepage map heatmap and region centroid cards.
+        """
+        from pipeline.phase_4.materialize_centroid_stats import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1172,6 +1183,15 @@ class PipelineDaemon:
                     self.run_materialize_baselines,
                 ),
                 300,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2e2: Centroid Stats",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2e2: Centroid Stats",
+                    self.run_materialize_centroid_stats,
+                ),
+                120,
             )
             await self.run_with_timeout(
                 "Phase 4.2f: Narrative Matching",

@@ -52,30 +52,16 @@ export async function getCentroidsByIds(ids: string[]): Promise<Centroid[]> {
 export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', locale?: string): Promise<Centroid[]> {
   return cached(`centroids:class:${centroidClass}:${locale || 'en'}`, 3600, () =>
     query<Centroid>(
-      `WITH target_centroids AS (
-        SELECT id FROM centroids_v3 WHERE class = $1 AND is_active = true
-      ),
-      centroid_stats AS (
-        SELECT
-          ctm.centroid_id,
-          SUM(e.source_batch_count)::int AS source_count,
-          SUM(CASE WHEN ctm.month = date_trunc('month', CURRENT_DATE) THEN e.source_batch_count ELSE 0 END)::int AS month_source_count,
-          MAX(COALESCE(e.last_active, e.date)) AS last_article_date
-        FROM ctm
-        JOIN target_centroids tc ON ctm.centroid_id = tc.id
-        LEFT JOIN events_v3 e ON e.ctm_id = ctm.id
-        GROUP BY ctm.centroid_id
-      )
-      SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
-        c.track_config_id, c.updated_at,
-        ${locCol('c', 'description', locale)} as description,
-        COALESCE(cs.source_count, 0) AS source_count,
-        COALESCE(cs.month_source_count, 0) AS month_source_count,
-        cs.last_article_date
-      FROM centroids_v3 c
-      LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
-      WHERE c.class = $1 AND c.is_active = true
-      ORDER BY c.label`,
+      `SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
+              c.track_config_id, c.updated_at,
+              ${locCol('c', 'description', locale)} as description,
+              COALESCE(s.source_count, 0)       AS source_count,
+              COALESCE(s.month_source_count, 0) AS month_source_count,
+              s.last_article_date
+         FROM centroids_v3 c
+         LEFT JOIN mv_centroid_stats s ON s.centroid_id = c.id
+        WHERE c.class = $1 AND c.is_active = true
+        ORDER BY c.label`,
       [centroidClass]
     )
   );
@@ -84,30 +70,16 @@ export async function getCentroidsByClass(centroidClass: 'geo' | 'systemic', loc
 export async function getCentroidsByTheater(theater: string, locale?: string): Promise<Centroid[]> {
   return cached(`centroids:theater:${theater}:${locale || 'en'}`, 3600, () =>
     query<Centroid>(
-      `WITH target_centroids AS (
-        SELECT id FROM centroids_v3 WHERE primary_theater = $1 AND is_active = true
-      ),
-      centroid_stats AS (
-        SELECT
-          ctm.centroid_id,
-          SUM(e.source_batch_count)::int AS source_count,
-          SUM(CASE WHEN ctm.month = date_trunc('month', CURRENT_DATE) THEN e.source_batch_count ELSE 0 END)::int AS month_source_count,
-          MAX(COALESCE(e.last_active, e.date)) AS last_article_date
-        FROM ctm
-        JOIN target_centroids tc ON ctm.centroid_id = tc.id
-        LEFT JOIN events_v3 e ON e.ctm_id = ctm.id
-        GROUP BY ctm.centroid_id
-      )
-      SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
-        c.track_config_id, c.updated_at,
-        ${locCol('c', 'description', locale)} as description,
-        COALESCE(cs.source_count, 0) AS source_count,
-        COALESCE(cs.month_source_count, 0) AS month_source_count,
-        cs.last_article_date
-      FROM centroids_v3 c
-      LEFT JOIN centroid_stats cs ON cs.centroid_id = c.id
-      WHERE c.primary_theater = $1 AND c.is_active = true
-      ORDER BY c.label`,
+      `SELECT c.id, c.label, c.class, c.primary_theater, c.is_active, c.iso_codes,
+              c.track_config_id, c.updated_at,
+              ${locCol('c', 'description', locale)} as description,
+              COALESCE(s.source_count, 0)       AS source_count,
+              COALESCE(s.month_source_count, 0) AS month_source_count,
+              s.last_article_date
+         FROM centroids_v3 c
+         LEFT JOIN mv_centroid_stats s ON s.centroid_id = c.id
+        WHERE c.primary_theater = $1 AND c.is_active = true
+        ORDER BY c.label`,
       [theater]
     )
   );
