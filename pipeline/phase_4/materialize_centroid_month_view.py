@@ -88,16 +88,28 @@ def is_stale(cur, max_age_hours):
 
 
 def list_targets(cur):
-    """Return list of (centroid_id, month_str 'YYYY-MM-DD') tuples that have
-    promoted events. Same set the frontend would render."""
+    """Return list of (centroid_id, month_str, all_frozen) tuples for centroid
+    months with promoted events. all_frozen=True iff EVERY ctm row for that
+    (centroid, month) has is_frozen=true — once an MV row exists for such a
+    target, it's immutable and can be skipped on subsequent runs."""
     cur.execute(
-        """SELECT DISTINCT c.centroid_id, c.month, c.month::text AS month_str
+        """SELECT c.centroid_id,
+                  c.month,
+                  c.month::text AS month_str,
+                  bool_and(c.is_frozen) AS all_frozen
              FROM ctm c
              JOIN events_v3 e ON e.ctm_id = c.id
             WHERE e.is_promoted = true AND e.merged_into IS NULL
+            GROUP BY c.centroid_id, c.month
             ORDER BY c.centroid_id, c.month"""
     )
-    return [(r[0], r[2]) for r in cur.fetchall()]
+    return [(r[0], r[2], r[3]) for r in cur.fetchall()]
+
+
+def existing_keys(cur):
+    """Set of (centroid_id, month_str, locale) tuples already in the MV."""
+    cur.execute("SELECT centroid_id, month::text, locale FROM mv_centroid_month_view")
+    return {tuple(r) for r in cur.fetchall()}
 
 
 def fetch_stripe(cur, centroid_id, month):
@@ -323,25 +335,38 @@ def materialize(max_age_hours=DEFAULT_MAX_AGE_HOURS, force=False, batch_size=50)
 
             start = time.time()
             targets = list_targets(cur)
-            total_rows = len(targets) * len(LOCALES)
+            existing = existing_keys(cur) if not force else set()
+
+            # Skip frozen-already-materialized targets unless --force. A
+            # (centroid, month) is "frozen" iff every ctm for that month has
+            # is_frozen=true, AND all locale variants already exist in the MV.
+            todo = []
+            skipped_frozen = 0
+            for centroid_id, month, all_frozen in targets:
+                if all_frozen and not force:
+                    if all((centroid_id, month, loc) in existing for loc in LOCALES):
+                        skipped_frozen += 1
+                        continue
+                for locale in LOCALES:
+                    todo.append((centroid_id, month, locale))
+
             print(
-                "Materializing %d (centroid, month) pairs x %d locales = %d rows..."
-                % (len(targets), len(LOCALES), total_rows)
+                "Targets: %d (centroid, month) pairs, %d frozen-skipped, "
+                "%d rows to materialize" % (len(targets), skipped_frozen, len(todo))
             )
 
             batch = []
             done = 0
-            for centroid_id, month in targets:
-                for locale in LOCALES:
-                    view = materialize_one(cur, centroid_id, month, locale)
-                    batch.append((centroid_id, month, locale, view))
-                    if len(batch) >= batch_size:
-                        upsert_batch(cur, batch)
-                        conn.commit()
-                        done += len(batch)
-                        batch = []
-                        if done % 200 == 0:
-                            print("  ... %d/%d rows" % (done, total_rows))
+            for centroid_id, month, locale in todo:
+                view = materialize_one(cur, centroid_id, month, locale)
+                batch.append((centroid_id, month, locale, view))
+                if len(batch) >= batch_size:
+                    upsert_batch(cur, batch)
+                    conn.commit()
+                    done += len(batch)
+                    batch = []
+                    if done % 200 == 0:
+                        print("  ... %d/%d rows" % (done, len(todo)))
             if batch:
                 upsert_batch(cur, batch)
                 conn.commit()
@@ -367,7 +392,7 @@ def main():
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Bypass the staleness gate and refresh now",
+        help="Bypass staleness gate AND frozen-skip; refresh everything",
     )
     args = parser.parse_args()
     materialize(max_age_hours=args.max_age_hours, force=args.force)

@@ -862,11 +862,24 @@ class PipelineDaemon:
     def run_materialize_centroid_month_view(self):
         """Materialize per-(centroid, month, locale) CentroidMonthView blobs.
 
-        Self-throttled by a 12h staleness gate. Backs the centroid monthly
-        page hero (activity chart + 2x2 track cards). Replaces the
+        Self-throttled by a 12h staleness gate AND a frozen-skip optimization
+        (frozen months that already have an MV row are immutable and never
+        re-materialized). Backs the centroid monthly page hero. Replaces the
         multi-query getCentroidMonthView path with a single PK lookup.
         """
         from pipeline.phase_4.materialize_centroid_month_view import materialize
+
+        materialize()
+
+    def run_materialize_calendar_month_view(self):
+        """Materialize per-(centroid, track, month, locale) CalendarMonthView blobs.
+
+        Backs both /c/[id]/t/[track] and /c/[id]/t/[track]/[date]. Same
+        12h staleness + frozen-skip pattern as centroid_month_view. Hard
+        cap of 20 clusters per day enforced inside the materializer
+        (independent of the pipeline-side promotion limit which can drift).
+        """
+        from pipeline.phase_4.materialize_calendar_month_view import materialize
 
         materialize()
 
@@ -1212,6 +1225,15 @@ class PipelineDaemon:
                     self.run_materialize_centroid_month_view,
                 ),
                 600,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2e4: Calendar Month View",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2e4: Calendar Month View",
+                    self.run_materialize_calendar_month_view,
+                ),
+                900,
             )
             await self.run_with_timeout(
                 "Phase 4.2f: Narrative Matching",
