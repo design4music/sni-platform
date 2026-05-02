@@ -859,6 +859,17 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_centroid_month_view(self):
+        """Materialize per-(centroid, month, locale) CentroidMonthView blobs.
+
+        Self-throttled by a 12h staleness gate. Backs the centroid monthly
+        page hero (activity chart + 2x2 track cards). Replaces the
+        multi-query getCentroidMonthView path with a single PK lookup.
+        """
+        from pipeline.phase_4.materialize_centroid_month_view import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1192,6 +1203,15 @@ class PipelineDaemon:
                     self.run_materialize_centroid_stats,
                 ),
                 120,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2e3: Centroid Month View",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2e3: Centroid Month View",
+                    self.run_materialize_centroid_month_view,
+                ),
+                600,
             )
             await self.run_with_timeout(
                 "Phase 4.2f: Narrative Matching",
