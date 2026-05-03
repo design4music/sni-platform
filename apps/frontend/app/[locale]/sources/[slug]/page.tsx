@@ -42,11 +42,10 @@ interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-// Outlet content (stance, volume, stats) only changes when the
-// monthly stance scoring + materialised-view refresh runs. Cache
-// the rendered page for 6 hours; manual invalidation via
-// /api/admin/revalidate-outlets after a re-score.
-export const revalidate = 21600;
+// force-dynamic. Backed by mv_publisher_stats + outlet_entity_stance MVs.
+// Per-request render cost is negligible; page-level ISR cache (414
+// entries — 207 outlets x 2 locales) was contributing to OOM pressure.
+export const dynamic = 'force-dynamic';
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */

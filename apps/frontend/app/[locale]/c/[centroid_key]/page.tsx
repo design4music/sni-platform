@@ -26,11 +26,13 @@ import { REGIONS, Track, getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, formatCount, joinList, truncateDescription, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import JsonLd from '@/components/JsonLd';
 
-// 12h cache. Page content (period summary, theme chips, top events,
-// activity chart) updates with the daemon's clustering cycle but doesn't
-// need to be fresher than every half-day. Static reference content
-// (Background Brief + Strategic Narratives) lives at /c/[id]/about.
-export const revalidate = 43200;
+// force-dynamic. Underlying queries are now backed by mv_centroid_month_view
+// (single PK lookup, ~1ms) so per-request render cost is negligible. The
+// page-level ISR cache was holding 750+ rendered HTML payloads (75
+// centroids x 5 months x 2 locales) which contributed to the OOM
+// pressure on the 512MB Render instance. With MV reads cheap, page-level
+// caching no longer earns its memory cost on this dynamic-param route.
+export const dynamic = 'force-dynamic';
 
 interface CentroidPageProps {
   params: Promise<{ centroid_key: string }>;

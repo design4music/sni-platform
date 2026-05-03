@@ -16,7 +16,10 @@ import type { GlobalMonthView, GlobalTrackSummary, GlobalTrackTopEvent, GlobalDa
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { buildPageMetadata, formatMonthLabel as formatMonthLabelSeo, humanizeEnum, truncateDescription, type Locale as SeoLocale } from '@/lib/seo';
 
-export const revalidate = 1800;
+// 12h cache aligned with the ingestion ceiling. Was 1800s historically
+// — that implied higher data velocity than reality (ingestion is every
+// 12h, so anything fresher is an illusion).
+export const revalidate = 43200;
 
 interface TrendingPageProps {
   params: Promise<{ locale: string }>;

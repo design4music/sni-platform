@@ -23,10 +23,12 @@ import SiblingOutletsDropdown from '@/components/SiblingOutletsDropdown';
 import FlagImg from '@/components/FlagImg';
 import InfoTip from '@/components/InfoTip';
 
-// Past-month content is fully frozen; current-month content updates
-// only when scoring re-runs. Cache the page for 6 hours; manual
-// invalidation via /api/admin/revalidate-outlets after a re-score.
-export const revalidate = 21600;
+// force-dynamic. Backed by mv_publisher_stats_monthly + outlet_entity_stance
+// MVs (PK lookups). The page-level ISR cache was 2,070 potential rendered
+// HTML payloads (207 outlets x 5 months x 2 locales) — by far the largest
+// dynamic-param ISR footprint, contributing to the 512MB OOM pressure.
+// MVs make queries cheap; per-request rendering is fine.
+export const dynamic = 'force-dynamic';
 
 interface OutletMonthPageProps {
   params: Promise<{ locale: string; slug: string; month: string }>;
