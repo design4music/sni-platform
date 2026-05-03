@@ -48,6 +48,15 @@ function formatDayLong(day: string, locale: SeoLocale): string {
   });
 }
 
+// "May 3, 2026" / "3. Mai 2026" — no weekday. Used in the H1 where weekday
+// would just bloat the line.
+function formatDayMedium(day: string, locale: SeoLocale): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+}
+
 // ─────────────────────────────────────────────────────────────
 // Metadata
 // ─────────────────────────────────────────────────────────────
@@ -180,9 +189,9 @@ function buildAboutCopy(locale: SeoLocale): AboutCopy {
       countriesLabel: 'Länder',
       monthOverviewLink: 'Monatsübersicht',
       liveH1: (monthLabel: string) =>
-        `Die größten Stories der weltweiten Medien im ${monthLabel}`,
+        `Aktuelle Nachrichten | Top-Stories im ${monthLabel}`,
       archiveH1: (dayLabel: string) =>
-        `Top 10 der wichtigsten Weltnachrichten am ${dayLabel}`,
+        `Top 10 Weltnachrichten am ${dayLabel}`,
     };
   }
   return {
@@ -204,9 +213,9 @@ function buildAboutCopy(locale: SeoLocale): AboutCopy {
     countriesLabel: 'countries',
     monthOverviewLink: 'Month overview',
     liveH1: (monthLabel: string) =>
-      `The biggest stories covered by global media in ${monthLabel}`,
+      `Breaking News | Top Stories in ${monthLabel}`,
     archiveH1: (dayLabel: string) =>
-      `Top 10 biggest world news on ${dayLabel}`,
+      `Top 10 News Stories Worldwide on ${dayLabel}`,
   };
 }
 
@@ -615,9 +624,9 @@ async function ArchiveDayView({
             ‹
           </span>
         )}
-        <h1 className="text-2xl font-semibold text-dashboard-text text-center min-w-0 truncate">
-          {copy.archiveH1(dayLabel)}
-        </h1>
+        <h2 className="text-2xl font-semibold text-dashboard-text text-center min-w-0 truncate">
+          {dayLabel}
+        </h2>
         {nextDay ? (
           <Link
             href={hrefFor(nextDay)}
@@ -728,7 +737,12 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
 
   const aboutCopy = buildAboutCopy(seoLocale);
   const monthLabel = formatMonthLabelSeo(activeMonth, seoLocale);
-  const totalLabel = aboutCopy.liveH1(monthLabel);
+  // Archive day branch swaps the H1 to a day-scoped phrasing so search
+  // engines (and humans) see a distinct title per archive page. Live view
+  // gets the month phrasing.
+  const totalLabel = archiveDay
+    ? aboutCopy.archiveH1(formatDayMedium(archiveDay, seoLocale))
+    : aboutCopy.liveH1(monthLabel);
 
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-8">
@@ -759,7 +773,6 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
     <TrendingHero
       view={view}
       activeMonth={activeMonth}
-      isCurrentMonth={isCurrentMonth}
       totalLabel={totalLabel}
       todayIso={todayIso}
       legendTooltip={legendTooltip}

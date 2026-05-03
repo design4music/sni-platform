@@ -38,7 +38,6 @@ function dayNumber(dateStr: string): number {
 interface TrendingHeroProps {
   view: GlobalMonthView;
   activeMonth: string; // YYYY-MM
-  isCurrentMonth: boolean;
   totalLabel: string;
   todayIso: string; // YYYY-MM-DD treated as "today" for live-view decisions
   legendTooltip?: ReactNode; // optional InfoTip rendered inline with the color legend
@@ -48,7 +47,6 @@ interface TrendingHeroProps {
 export default function TrendingHero({
   view,
   activeMonth,
-  isCurrentMonth,
   totalLabel,
   todayIso,
   legendTooltip,
@@ -104,11 +102,6 @@ export default function TrendingHero({
         <div className="min-w-0">
           <h1 className="text-2xl lg:text-3xl font-semibold text-dashboard-text">
             {totalLabel}
-            {isCurrentMonth && (
-              <span className="ml-3 align-middle inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/40 rounded">
-                MTD · partial
-              </span>
-            )}
           </h1>
           <div className="mt-1 text-[12px] text-dashboard-text-muted tabular-nums">
             {view.total_sources.toLocaleString('en-US')} sources · {view.total_events.toLocaleString('en-US')} events · {view.active_centroid_count} {countriesLabel}
