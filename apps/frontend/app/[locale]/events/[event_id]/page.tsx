@@ -3,12 +3,10 @@ import type { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-import RaiSidebar from '@/components/RaiSidebar';
 import ExpandableTitles from '@/components/ExpandableTitles';
-import SignalDashboard from '@/components/SignalDashboard';
 import RelatedStories from '@/components/RelatedStories';
 import EventNarrativeBadges from '@/components/narratives/EventNarrativeBadges';
-import { getEventById, getEventTitles, getEventSagaSiblings, getFramedNarratives, getRelatedEvents, resolveCanonicalEventId } from '@/lib/queries';
+import { getEventById, getEventTitles, getEventSagaSiblings, getRelatedEvents, resolveCanonicalEventId } from '@/lib/queries';
 import { getTrackLabel, getCentroidLabel } from '@/lib/types';
 import { setRequestLocale, getTranslations, getLocale } from 'next-intl/server';
 import { ensureDE } from '@/lib/lazy-translate';
@@ -102,47 +100,11 @@ function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
 /* Deferred async server components                                   */
 /* ------------------------------------------------------------------ */
 
-async function EventSidebar({ eventId, centroidId, locale }: {
-  eventId: string;
-  centroidId?: string;
-  locale?: string;
-}) {
-  const narratives = await getFramedNarratives('event', eventId, locale);
-
-  const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
-  const signalStats = rawStats?.title_count ? rawStats : null;
-  const raiSignals = narratives.length > 0 ? narratives[0].rai_signals : null;
-
-  return (
-    <div className="lg:sticky lg:top-24 space-y-6 text-sm">
-      {/* Strategic narratives (geopolitical context) */}
-      <Suspense fallback={null}>
-        <EventNarrativeBadges eventId={eventId} centroidId={centroidId} variant="sidebar" />
-      </Suspense>
-
-      {/* D-071: stance-clustered framing block retired; replaced by new
-          per-outlet/per-entity stance matrix (feature in development). */}
-
-      {/* Coverage Assessment (reads historical rai_signals where present) */}
-      {raiSignals && (
-        <RaiSidebar signals={raiSignals} stats={signalStats} />
-      )}
-    </div>
-  );
-}
-
-async function EventSignalSection({ eventId, locale }: { eventId: string; locale?: string }) {
-  const narratives = await getFramedNarratives('event', eventId, locale);
-  const rawStats = narratives.length > 0 ? narratives[0].signal_stats : null;
-  const signalStats = rawStats?.title_count ? rawStats : null;
-
-  if (!signalStats) return null;
-  return (
-    <div className="mb-8">
-      <SignalDashboard stats={signalStats} />
-    </div>
-  );
-}
+// EventSidebar + EventSignalSection (RAI / SignalDashboard / Coverage
+// Assessment) removed 2026-05-03. Both blocks read narratives.signal_stats /
+// rai_signals which were populated by an on-demand extraction that ran
+// only on 2026-02-19 (see Asana ticket — comparative-analysis rewire will
+// rebuild per-event analysis on top of outlet_entity_stance).
 
 async function SourceHeadlinesSection({ eventId }: { eventId: string }) {
   const t = await getTranslations('event');
@@ -218,20 +180,13 @@ export default async function EventDetailPage({ params }: Props) {
     </div>
   );
 
-  const sidebarFallback = (
-    <div className="lg:sticky lg:top-24 space-y-6 text-sm animate-pulse">
-      <div className="bg-dashboard-border/30 rounded-lg p-5 space-y-3">
-        <div className="h-4 w-32 bg-dashboard-border rounded" />
-        <div className="h-3 w-full bg-dashboard-border/50 rounded" />
-        <div className="h-3 w-4/5 bg-dashboard-border/50 rounded" />
-      </div>
-    </div>
-  );
-
+  // Sidebar is now just narrative chips. Inline.
   const sidebar = (
-    <Suspense fallback={sidebarFallback}>
-      <EventSidebar eventId={event_id} centroidId={event.centroid_id} locale={locale} />
-    </Suspense>
+    <div className="lg:sticky lg:top-24 space-y-6 text-sm">
+      <Suspense fallback={null}>
+        <EventNarrativeBadges eventId={event_id} centroidId={event.centroid_id} variant="sidebar" />
+      </Suspense>
+    </div>
   );
 
   const centroidName = getCentroidLabel(event.centroid_id, event.centroid_label, tCentroids);
@@ -354,11 +309,6 @@ export default async function EventDetailPage({ params }: Props) {
           </div>
         </div>
       )}
-
-      {/* Topic Stats (deferred - depends on narratives) */}
-      <Suspense fallback={null}>
-        <EventSignalSection eventId={event_id} locale={locale} />
-      </Suspense>
 
       {/* Related Coverage (deferred) */}
       <Suspense fallback={null}>

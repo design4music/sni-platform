@@ -716,25 +716,10 @@ export async function getEpicCentroidBreakdown(epicId: string): Promise<EpicCent
   );
 }
 
-export async function getFramedNarratives(
-  entityType: string, entityId: string, locale?: string
-): Promise<FramedNarrative[]> {
-  return query<FramedNarrative>(
-    `SELECT id, ${locCol('narratives', 'label', locale)} as label,
-            ${locCol('narratives', 'description', locale)} as description,
-            ${locCol('narratives', 'moral_frame', locale)} as moral_frame,
-            title_count,
-            top_sources, proportional_sources, top_countries, sample_titles,
-            rai_adequacy, rai_synthesis, rai_conflicts, rai_blind_spots,
-            rai_shifts, rai_full_analysis, rai_analyzed_at::text,
-            signal_stats, rai_signals, rai_signals_at::text,
-            extraction_method, cluster_label, cluster_publishers, cluster_score_avg
-     FROM narratives
-     WHERE entity_type = $1 AND entity_id = $2
-     ORDER BY title_count DESC`,
-    [entityType, entityId]
-  );
-}
+// getFramedNarratives removed 2026-05-03. Was only consumed by the event
+// page's RaiSidebar + SignalDashboard, both of which are archived now.
+// See apps/frontend/components/archive/README.md and the
+// comparative-analysis rewire ticket (Asana 1214268284594725).
 
 export interface StanceNarrative {
   id: string;
@@ -902,33 +887,37 @@ export async function getEventById(eventId: string, locale?: string): Promise<Ev
 }
 
 export async function resolveCanonicalEventId(eventId: string): Promise<string | null> {
-  const results = await query<{ merged_into: string | null }>(
-    `WITH RECURSIVE chain AS (
-       SELECT id, merged_into, 0 AS depth FROM events_v3 WHERE id = $1
-       UNION ALL
-       SELECT e.id, e.merged_into, c.depth + 1
-       FROM events_v3 e JOIN chain c ON e.id = c.merged_into
-       WHERE c.depth < 5
-     )
-     SELECT id::text AS merged_into FROM chain
-     WHERE merged_into IS NULL
-     LIMIT 1`,
-    [eventId]
-  );
-  return results[0]?.merged_into ?? null;
+  return cached(`canonical_event:${eventId}`, 24 * 3600, async () => {
+    const results = await query<{ merged_into: string | null }>(
+      `WITH RECURSIVE chain AS (
+         SELECT id, merged_into, 0 AS depth FROM events_v3 WHERE id = $1
+         UNION ALL
+         SELECT e.id, e.merged_into, c.depth + 1
+         FROM events_v3 e JOIN chain c ON e.id = c.merged_into
+         WHERE c.depth < 5
+       )
+       SELECT id::text AS merged_into FROM chain
+       WHERE merged_into IS NULL
+       LIMIT 1`,
+      [eventId]
+    );
+    return results[0]?.merged_into ?? null;
+  });
 }
 
 export async function getEventSagaSiblings(
   saga: string, currentEventId: string, locale?: string
 ): Promise<Array<{ id: string; title: string; date: string; source_batch_count: number; month: string }>> {
-  return query<{ id: string; title: string; date: string; source_batch_count: number; month: string }>(
-    `SELECT e.id, COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title, e.date::text,
-            e.source_batch_count, TO_CHAR(c.month, 'YYYY-MM') as month
-     FROM events_v3 e
-     JOIN ctm c ON e.ctm_id = c.id
-     WHERE e.saga = $1 AND e.id != $2 AND e.merged_into IS NULL
-     ORDER BY e.date ASC`,
-    [saga, currentEventId]
+  return cached(`saga_siblings:${saga}:${currentEventId}:${locale || 'en'}`, 12 * 3600, () =>
+    query<{ id: string; title: string; date: string; source_batch_count: number; month: string }>(
+      `SELECT e.id, COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core) as title, e.date::text,
+              e.source_batch_count, TO_CHAR(c.month, 'YYYY-MM') as month
+       FROM events_v3 e
+       JOIN ctm c ON e.ctm_id = c.id
+       WHERE e.saga = $1 AND e.id != $2 AND e.merged_into IS NULL
+       ORDER BY e.date ASC`,
+      [saga, currentEventId]
+    )
   );
 }
 
@@ -949,28 +938,30 @@ export async function getEventTitles(eventId: string): Promise<Title[]> {
 export async function getRelatedEvents(
   eventId: string, centroidId: string, minShared: number = 5
 ): Promise<RelatedEvent[]> {
-  return query<RelatedEvent>(
-    `WITH this_titles AS (
-       SELECT title_id FROM event_v3_titles WHERE event_id = $1
-     )
-     SELECT e2.id, e2.title, e2.source_batch_count,
-            c2.centroid_id, cv.label as centroid_label, cv.iso_codes,
-            c2.track,
-            COUNT(DISTINCT et2.title_id)::int as shared_titles
-     FROM this_titles tt
-     JOIN event_v3_titles et2 ON tt.title_id = et2.title_id
-     JOIN events_v3 e2 ON et2.event_id = e2.id
-     JOIN ctm c2 ON e2.ctm_id = c2.id
-     JOIN centroids_v3 cv ON c2.centroid_id = cv.id
-     WHERE c2.centroid_id <> $2
-       AND e2.is_catchall = false
-       AND e2.merged_into IS NULL
-     GROUP BY e2.id, e2.title, e2.source_batch_count,
-              c2.centroid_id, cv.label, cv.iso_codes, c2.track
-     HAVING COUNT(DISTINCT et2.title_id) >= $3
-     ORDER BY shared_titles DESC
-     LIMIT 10`,
-    [eventId, centroidId, minShared]
+  return cached(`related_events:${eventId}:${centroidId}:${minShared}`, 12 * 3600, () =>
+    query<RelatedEvent>(
+      `WITH this_titles AS (
+         SELECT title_id FROM event_v3_titles WHERE event_id = $1
+       )
+       SELECT e2.id, e2.title, e2.source_batch_count,
+              c2.centroid_id, cv.label as centroid_label, cv.iso_codes,
+              c2.track,
+              COUNT(DISTINCT et2.title_id)::int as shared_titles
+       FROM this_titles tt
+       JOIN event_v3_titles et2 ON tt.title_id = et2.title_id
+       JOIN events_v3 e2 ON et2.event_id = e2.id
+       JOIN ctm c2 ON e2.ctm_id = c2.id
+       JOIN centroids_v3 cv ON c2.centroid_id = cv.id
+       WHERE c2.centroid_id <> $2
+         AND e2.is_catchall = false
+         AND e2.merged_into IS NULL
+       GROUP BY e2.id, e2.title, e2.source_batch_count,
+                c2.centroid_id, cv.label, cv.iso_codes, c2.track
+       HAVING COUNT(DISTINCT et2.title_id) >= $3
+       ORDER BY shared_titles DESC
+       LIMIT 10`,
+      [eventId, centroidId, minShared]
+    )
   );
 }
 
