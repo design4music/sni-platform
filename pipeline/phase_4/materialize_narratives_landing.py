@@ -162,11 +162,33 @@ def fetch_sparklines(cur):
     return out
 
 
-def materialize_one(cur, locale, sparklines):
+def fetch_meta_activity(cur):
+    """90-day weekly event counts per meta-narrative. Locale-neutral.
+    Backs the timeline on /narratives/meta/[id]."""
+    cur.execute(
+        f"""SELECT sn.meta_narrative_id,
+                   date_trunc('week', e.date::date)::text AS week,
+                   COUNT(*)::int AS count
+              FROM event_strategic_narratives esn
+              JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+              JOIN events_v3 e ON e.id = esn.event_id
+             WHERE sn.is_active = true
+               AND e.date >= NOW() - INTERVAL '{SPARKLINE_DAYS} days'
+             GROUP BY sn.meta_narrative_id, week
+             ORDER BY sn.meta_narrative_id, week"""
+    )
+    out = {}
+    for meta_id, week, count in cur.fetchall():
+        out.setdefault(meta_id, []).append({"week": week, "count": int(count)})
+    return out
+
+
+def materialize_one(cur, locale, sparklines, meta_activity):
     return {
         "meta_narratives": fetch_meta_narratives(cur, locale),
         "narratives": fetch_strategic_narratives(cur, locale),
         "sparklines": sparklines,
+        "meta_activity": meta_activity,
     }
 
 
@@ -202,10 +224,11 @@ def materialize(max_age_hours=DEFAULT_MAX_AGE_HOURS, force=False):
 
             start = time.time()
             sparklines = fetch_sparklines(cur)
+            meta_activity = fetch_meta_activity(cur)
 
             rows = []
             for locale in LOCALES:
-                view = materialize_one(cur, locale, sparklines)
+                view = materialize_one(cur, locale, sparklines, meta_activity)
                 rows.append((locale, view))
 
             upsert_batch(cur, rows)
@@ -213,12 +236,13 @@ def materialize(max_age_hours=DEFAULT_MAX_AGE_HOURS, force=False):
 
             elapsed = time.time() - start
             print(
-                "Done: %d rows upserted (%d narratives, %d meta, %d sparklines) in %.1fs"
+                "Done: %d rows upserted (%d narratives, %d meta, %d sparklines, %d meta_activity) in %.1fs"
                 % (
                     len(rows),
                     len(rows[0][1]["narratives"]),
                     len(rows[0][1]["meta_narratives"]),
                     len(sparklines),
+                    len(meta_activity),
                     elapsed,
                 )
             )

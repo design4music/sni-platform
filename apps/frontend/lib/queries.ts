@@ -2131,15 +2131,13 @@ export async function getAllMetaNarratives(locale?: string): Promise<MetaNarrati
 }
 
 export async function getMetaNarrativeById(id: string, locale?: string): Promise<MetaNarrative | null> {
-  return cached(`meta_narrative:${id}:${locale || 'en'}`, 3600, async () => {
-    const rows = await query<MetaNarrative>(
-      `SELECT id, ${locCol('meta_narratives', 'name', locale)} as name,
-              ${locCol('meta_narratives', 'description', locale)} as description,
-              signals, sort_order
-       FROM meta_narratives WHERE id = $1`,
-      [id]
-    );
-    return rows[0] || null;
+  // Slice from mv_narratives_landing (already loaded by the page in
+  // most cases). Same row that backs getAllMetaNarratives — no second
+  // DB roundtrip when the lib cache is warm.
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`meta_narrative:${id}:${loc}`, 12 * 3600, async () => {
+    const all = await getAllMetaNarratives(loc);
+    return all.find(m => m.id === id) || null;
   });
 }
 
@@ -2270,18 +2268,16 @@ export async function getNarrativeSparklines(): Promise<Record<string, SignalWee
 }
 
 export async function getMetaNarrativeActivity(metaId: string): Promise<SignalWeekly[]> {
-  return cached(`meta_narrative_activity:${metaId}`, 1800, () =>
-    query<SignalWeekly>(
-      `SELECT date_trunc('week', e.date::date)::text as week, COUNT(*)::int as count
-       FROM event_strategic_narratives esn
-       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
-       JOIN events_v3 e ON e.id = esn.event_id
-       WHERE sn.meta_narrative_id = $1
-         AND e.date >= now() - interval '90 days'
-       GROUP BY week ORDER BY week`,
+  // Sliced from mv_narratives_landing.view->'meta_activity'. Locale-
+  // neutral; the 'en' row is canonical.
+  return cached(`meta_narrative_activity:${metaId}`, 12 * 3600, async () => {
+    const rows = await query<{ items: SignalWeekly[] | null }>(
+      `SELECT view->'meta_activity'->$1 AS items
+         FROM mv_narratives_landing WHERE locale = 'en'`,
       [metaId]
-    )
-  );
+    );
+    return rows[0]?.items || [];
+  });
 }
 
 // Top narrative per event (for trending cards: one badge per event, from its own centroid)
