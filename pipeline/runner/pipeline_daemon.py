@@ -905,6 +905,17 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_narrative_detail(self):
+        """Materialize per-(narrative_id, locale) NarrativeDetail blobs.
+
+        Backs /narratives/[id]. Folds 4 live queries (narrative + counts,
+        weekly activity, top events, competing narratives) into ~520 rows.
+        Runs AFTER narrative matching so attributions are fresh.
+        """
+        from pipeline.phase_4.materialize_narrative_detail import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1283,6 +1294,15 @@ class PipelineDaemon:
                     self.run_materialize_narratives_landing,
                 ),
                 300,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2h: Narrative Detail",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2h: Narrative Detail",
+                    self.run_materialize_narrative_detail,
+                ),
+                600,
             )
             self.last_run["clustering"] = time.time()
             self._save_last_run("clustering")

@@ -2155,62 +2155,55 @@ export async function getStrategicNarratives(locale?: string): Promise<Strategic
   });
 }
 
+// All four /narratives/[id] queries (getStrategicNarrativeById,
+// getNarrativeWeeklyActivity, getNarrativeEvents, getCompetingNarratives)
+// read slices from mv_narrative_detail. Materializer:
+// pipeline/phase_4/materialize_narrative_detail.py, daemon Phase 4.2h.
+
 export async function getStrategicNarrativeById(id: string, locale?: string): Promise<StrategicNarrative | null> {
-  return cached(`strategic_narrative:${id}:${locale || 'en'}`, 3600, async () => {
-    const rows = await query<StrategicNarrative>(
-      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
-              sn.category, sn.actor_centroid, c.label as actor_label,
-              ${locCol('sn', 'name', locale)} as name,
-              ${locCol('sn', 'claim', locale)} as claim,
-              sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
-              COUNT(DISTINCT esn.event_id) FILTER (WHERE ev.merged_into IS NULL)::int as event_count
-       FROM strategic_narratives sn
-       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
-       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
-       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
-       LEFT JOIN events_v3 ev ON ev.id = esn.event_id
-       WHERE sn.id = $1
-       GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de`,
-      [id]
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`strategic_narrative:${id}:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ narrative: StrategicNarrative | null }>(
+      `SELECT view->'narrative' AS narrative
+         FROM mv_narrative_detail
+        WHERE narrative_id = $1 AND locale = $2`,
+      [id, loc]
     );
-    return rows[0] || null;
+    return rows[0]?.narrative || null;
   });
 }
 
 export async function getNarrativeWeeklyActivity(narrativeId: string): Promise<SignalWeekly[]> {
-  return cached(`narrative_weekly:${narrativeId}`, 1800, () =>
-    query<SignalWeekly>(
-      `SELECT date_trunc('week', e.date::date)::text as week, COUNT(*)::int as count
-       FROM event_strategic_narratives esn
-       JOIN events_v3 e ON e.id = esn.event_id
-       WHERE esn.narrative_id = $1
-         AND e.date >= now() - interval '90 days'
-       GROUP BY week ORDER BY week`,
+  // Locale-neutral; the 'en' row is canonical.
+  return cached(`narrative_weekly:${narrativeId}`, 12 * 3600, async () => {
+    const rows = await query<{ items: SignalWeekly[] | null }>(
+      `SELECT view->'weekly_activity' AS items
+         FROM mv_narrative_detail
+        WHERE narrative_id = $1 AND locale = 'en'`,
       [narrativeId]
-    )
-  );
+    );
+    return rows[0]?.items || [];
+  });
 }
 
+// Materialized blob caps events at the materializer's EVENTS_LIMIT (50).
+// The page only renders id/date/title/confidence; other EventDetail fields
+// are no longer fetched. If a future caller needs them, add to the
+// materializer + run --force.
 export async function getNarrativeEvents(narrativeId: string, limit: number = 50, locale?: string): Promise<(EventDetail & { confidence: number })[]> {
-  return cached(`narrative_events:${narrativeId}:${limit}:${locale || 'en'}`, 900, () =>
-    query<EventDetail & { confidence: number }>(
-      `SELECT e.id, e.date::text as date, ${locCol('e', 'title', locale)} as title,
-              LEFT(${locCol('e', 'summary', locale)}, 200) as summary,
-              e.source_batch_count, e.tags,
-              c.centroid_id, cv.label as centroid_label, c.track,
-              esn.confidence
-       FROM event_strategic_narratives esn
-       JOIN events_v3 e ON e.id = esn.event_id
-       JOIN ctm c ON c.id = e.ctm_id
-       JOIN centroids_v3 cv ON cv.id = c.centroid_id
-       WHERE esn.narrative_id = $1
-         AND e.title IS NOT NULL
-         AND e.merged_into IS NULL
-       ORDER BY e.date DESC
-       LIMIT $2`,
-      [narrativeId, limit]
-    )
-  );
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`narrative_events:${narrativeId}:${limit}:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ items: Array<{ id: string; date: string; title: string; confidence: number }> | null }>(
+      `SELECT view->'events' AS items
+         FROM mv_narrative_detail
+        WHERE narrative_id = $1 AND locale = $2`,
+      [narrativeId, loc]
+    );
+    const items = (rows[0]?.items || []).slice(0, limit);
+    // Cast back to the EventDetail shape; the page only reads the four
+    // fields we actually populate, the rest stay undefined.
+    return items as unknown as (EventDetail & { confidence: number })[];
+  });
 }
 
 export async function getNarrativesForEvent(eventId: string): Promise<EventNarrativeLink[]> {
@@ -2251,23 +2244,17 @@ export async function getNarrativesForCentroid(centroidId: string, locale?: stri
 }
 
 export async function getCompetingNarratives(narrativeId: string): Promise<(StrategicNarrative & { shared_events: number })[]> {
-  return cached(`competing_narratives:${narrativeId}`, 1800, () =>
-    query<StrategicNarrative & { shared_events: number }>(
-      `SELECT sn.id, sn.name, sn.actor_centroid, c.label as actor_label,
-              sn.meta_narrative_id, sn.claim,
-              COUNT(*)::int as shared_events
-       FROM event_strategic_narratives esn1
-       JOIN event_strategic_narratives esn2 ON esn2.event_id = esn1.event_id AND esn2.narrative_id != esn1.narrative_id
-       JOIN strategic_narratives sn ON sn.id = esn2.narrative_id
-       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
-       WHERE esn1.narrative_id = $1
-         AND sn.actor_centroid != (SELECT actor_centroid FROM strategic_narratives WHERE id = $1)
-       GROUP BY sn.id, c.label
-       ORDER BY shared_events DESC
-       LIMIT 10`,
+  // Locale-neutral; the 'en' row is canonical (panel only renders name +
+  // actor_label which are not locale-versioned in the current UI).
+  return cached(`competing_narratives:${narrativeId}`, 12 * 3600, async () => {
+    const rows = await query<{ items: Array<StrategicNarrative & { shared_events: number }> | null }>(
+      `SELECT view->'competing' AS items
+         FROM mv_narrative_detail
+        WHERE narrative_id = $1 AND locale = 'en'`,
       [narrativeId]
-    )
-  );
+    );
+    return rows[0]?.items || [];
+  });
 }
 
 export async function getNarrativeSparklines(): Promise<Record<string, SignalWeekly[]>> {
