@@ -883,6 +883,17 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_global_month_view(self):
+        """Materialize per-(month, locale) GlobalMonthView blobs.
+
+        Backs the /trending page. Same 12h staleness + frozen-skip pattern.
+        Folds active_narratives into the same blob to save a separate query.
+        Smallest MV by row count (~10 rows total).
+        """
+        from pipeline.phase_4.materialize_global_month_view import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1234,6 +1245,15 @@ class PipelineDaemon:
                     self.run_materialize_calendar_month_view,
                 ),
                 900,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2e5: Global Month View",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2e5: Global Month View",
+                    self.run_materialize_global_month_view,
+                ),
+                300,
             )
             await self.run_with_timeout(
                 "Phase 4.2f: Narrative Matching",
