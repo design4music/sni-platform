@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
+import InfoTip from '@/components/InfoTip';
 import TrendingHero from '@/components/TrendingHero';
 import {
   getGlobalMonthView,
@@ -100,6 +101,28 @@ export async function generateMetadata({ searchParams }: TrendingPageProps): Pro
     });
   }
 
+  // Past months get a self-referential ?month= canonical and an article
+  // tone — they're stable archive surfaces. The "live" month canonicalises
+  // to bare /trending so it doesn't compete with the past-month archive
+  // for ranking.
+  const isLiveMonth = activeMonth === months[0];
+
+  if (!isLiveMonth) {
+    const title = locale === 'de'
+      ? `Globale Nachrichten · ${monthLabel}`
+      : `Global news · ${monthLabel}`;
+    const description = locale === 'de'
+      ? `Globaler Nachrichten-Rückblick für ${monthLabel}: die meistberichteten Stories des Monats über Politik, Sicherheit, Wirtschaft und Gesellschaft, plus aktive strategische Narrative.`
+      : `Global news recap for ${monthLabel}: the most-covered stories of the month across politics, security, economy, and society, plus the strategic narratives in play.`;
+    return buildPageMetadata({
+      title,
+      description: truncateDescription(description),
+      path: `/trending?month=${activeMonth}`,
+      locale,
+      ogType: 'article',
+    });
+  }
+
   // Live view: static explainer description + month in the title.
   // Keep total title under ~60 chars so Google doesn't truncate.
   const title = locale === 'de'
@@ -120,58 +143,48 @@ export async function generateMetadata({ searchParams }: TrendingPageProps): Pro
 // and how to use the archive. Localized EN/DE.
 // ─────────────────────────────────────────────────────────────
 
-interface AboutBlock {
-  heading: string;
-  body: string;
+interface AboutCopy {
+  whatHeading: string;
+  whatBody: string;
+  looking: string;     // tooltip on the 2x2 cards heading
+  attention: string;   // tooltip on the sidebar
+  archive: string;     // tooltip on the calendar hero
+  topStoriesHeading: string;
+  sidebarTip: string;  // accessible label for the sidebar (i)
+  calendarTip: string; // accessible label for the hero (i)
 }
 
-function buildAboutBlocks(locale: SeoLocale): AboutBlock[] {
+function buildAboutCopy(locale: SeoLocale): AboutCopy {
   if (locale === 'de') {
-    return [
-      {
-        heading: 'Worum es hier geht',
-        body:
-          "WorldBriefs globaler Nachrichten-Puls — was über 200 Medien weltweit im Moment am stärksten berichten, aggregiert über 74 Länder und Regionen sowie vier strategische Tracks: Politik, Sicherheit, Wirtschaft, Gesellschaft.",
-      },
-      {
-        heading: 'Was Sie sehen',
-        body:
-          'Die Kalender-Grafik oben zeigt das tägliche Quellenvolumen des letzten Monats, farblich aufgeschlüsselt nach dominierendem Track. Die vier Karten unten listen die Top-5-Stories pro Track für den Zeitraum. Das Feld „Fastest-growing" hebt Stories hervor, die in den letzten 7 Tagen am stärksten zugelegt haben — das Nächstliegende zu „aufkommend".',
-      },
-      {
-        heading: 'Worauf Sie achten sollten',
-        body:
-          '„Active Narratives" (Seitenleiste) zeigt, welchen strategischen Frames diese Ereignisse angehören. „Trending Signals" listet die am häufigsten erwähnten Personen, Orte und Organisationen.',
-      },
-      {
-        heading: 'Das Archiv',
-        body:
-          'Klicken Sie auf einen vergangenen Tag im Kalender, um die Berichterstattung dieses Tages zu öffnen: die Top 10 Ereignisse, geordnet nach 7-Tage-Quellensumme, mit ★ NEW / ↑ steigend / ↓ fallend / ● gehalten-Kennzeichnungen. Jede Archiv-Seite ist dauerhaft — teilbar und merkbar.',
-      },
-    ];
+    return {
+      whatHeading: 'Worum es hier geht',
+      whatBody:
+        "WorldBriefs globaler Nachrichten-Puls — was über 200 Medien weltweit im Moment am stärksten berichten, aggregiert über 74 Länder und Regionen sowie vier strategische Tracks: Politik, Sicherheit, Wirtschaft, Gesellschaft.",
+      looking:
+        'Die vier Karten zeigen die Top-5-Stories pro Track für den ausgewählten Zeitraum. Das Feld „Fastest-growing" hebt Stories hervor, die in den letzten 7 Tagen am stärksten zugelegt haben — das Nächstliegende zu „aufkommend".',
+      attention:
+        '„Active Narratives" zeigt, welchen strategischen Frames diese Ereignisse angehören. „Trending Signals" listet die am häufigsten erwähnten Personen, Orte und Organisationen für den Monat.',
+      archive:
+        'Die Kalender-Grafik zeigt das tägliche Quellenvolumen, farblich aufgeschlüsselt nach dominierendem Track. Klicken Sie auf einen vergangenen Tag, um die Top-10-Ereignisse dieses Tages zu öffnen, mit ★ NEW / ↑ steigend / ↓ fallend / ● gehalten-Kennzeichnungen. Jede Archiv-Seite ist dauerhaft.',
+      topStoriesHeading: 'Top-Stories pro Track',
+      sidebarTip: 'Was die Seitenleiste zeigt',
+      calendarTip: 'Über den Kalender und das Archiv',
+    };
   }
-  return [
-    {
-      heading: 'What this is',
-      body:
-        "WorldBrief's global news pulse — what 200+ media outlets around the world are covering most right now, aggregated across 74 countries and regions and four strategic tracks: politics, security, economy, society.",
-    },
-    {
-      heading: "What you're looking at",
-      body:
-        "The calendar above shows daily source volume for the last month, color-segmented by the dominant track. The four cards below list the top-5 stories per track for the period. The Fastest-growing panel highlights stories gaining the most new sources in the last 7 days — the closest thing to \"emerging\".",
-    },
-    {
-      heading: 'What to pay attention to',
-      body:
-        'Active Narratives (sidebar) shows which strategic frames these events fit into. Trending Signals lists the people, places, and organizations appearing in the most stories.',
-    },
-    {
-      heading: 'The archive',
-      body:
-        'Click any past day on the calendar to open that day\'s coverage: the top 10 events ranked by 7-day cumulative source count, with ★ NEW / ↑ rising / ↓ falling / ● held indicators. Each archive day is a permanent page — shareable, bookmarkable.',
-    },
-  ];
+  return {
+    whatHeading: 'What this is',
+    whatBody:
+      "WorldBrief's global news pulse — what 200+ media outlets around the world are covering most right now, aggregated across 74 countries and regions and four strategic tracks: politics, security, economy, society.",
+    looking:
+      'The four cards show the top-5 stories per track for the selected period. The Fastest-growing panel highlights stories gaining the most new sources in the last 7 days — the closest thing to "emerging".',
+    attention:
+      'Active Narratives shows which strategic frames these events fit into. Trending Signals lists the people, places, and organizations appearing in the most stories for the month.',
+    archive:
+      'The calendar shows daily source volume color-segmented by the dominant track. Click any past day to open that day\'s top-10 coverage, with ★ NEW / ↑ rising / ↓ falling / ● held indicators. Each archive day is a permanent page — shareable, bookmarkable.',
+    topStoriesHeading: 'Top stories per track',
+    sidebarTip: 'About the sidebar',
+    calendarTip: 'About the calendar and archive',
+  };
 }
 
 function formatTrackLabel(track: string): string {
@@ -313,13 +326,29 @@ async function FastestGrowingPanel({ month, locale, isCurrentMonth }: { month: s
 // Sidebar rails
 // ─────────────────────────────────────────────────────────────
 
-async function ActiveNarrativesRail({ month, locale }: { month: string; locale: string }) {
+async function ActiveNarrativesRail({
+  month,
+  locale,
+  tooltip,
+}: {
+  month: string;
+  locale: string;
+  tooltip?: { label: string; body: string };
+}) {
   const narratives = await getActiveNarrativesGlobal(month, 10, locale);
   if (narratives.length === 0) return null;
   return (
     <div>
-      <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">
-        Active Narratives
+      <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2 flex items-center">
+        <span>Active Narratives</span>
+        {tooltip && (
+          <InfoTip width="wide" className="text-dashboard-text-muted">
+            <span className="block font-semibold mb-1 normal-case tracking-normal text-dashboard-text">
+              {tooltip.label}
+            </span>
+            <span className="normal-case tracking-normal">{tooltip.body}</span>
+          </InfoTip>
+        )}
       </h3>
       <ul className="space-y-1.5">
         {narratives.map(n => (
@@ -340,8 +369,8 @@ async function ActiveNarrativesRail({ month, locale }: { month: string; locale: 
   );
 }
 
-async function TrendingSignalsRail() {
-  const signals = await getTrendingSignals();
+async function TrendingSignalsRail({ month, locale }: { month: string; locale: string }) {
+  const signals = await getTrendingSignals(month, locale);
   const SIGNAL_LABELS: Record<string, string> = {
     persons: 'Top Persons',
     orgs: 'Top Organizations',
@@ -646,15 +675,30 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
     ? `Globales Briefing · ${formatMonthLabelSeo(activeMonth, 'de')}`
     : `Global Briefing · ${formatMonthLabelSeo(activeMonth, 'en')}`;
 
+  const aboutCopy = buildAboutCopy(seoLocale);
+
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-8">
       <Suspense fallback={null}>
-        <ActiveNarrativesRail month={activeMonth} locale={locale} />
+        <ActiveNarrativesRail
+          month={activeMonth}
+          locale={locale}
+          tooltip={{ label: aboutCopy.sidebarTip, body: aboutCopy.attention }}
+        />
       </Suspense>
       <Suspense fallback={null}>
-        <TrendingSignalsRail />
+        <TrendingSignalsRail month={activeMonth} locale={locale} />
       </Suspense>
     </div>
+  );
+
+  const heroTooltip = (
+    <InfoTip width="wide" className="text-dashboard-text-muted">
+      <span className="block font-semibold mb-1 text-dashboard-text">
+        {aboutCopy.calendarTip}
+      </span>
+      <span>{aboutCopy.archive}</span>
+    </InfoTip>
   );
 
   const hero = (
@@ -664,6 +708,7 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
       isCurrentMonth={isCurrentMonth}
       totalLabel={totalLabel}
       todayIso={todayIso}
+      headerTooltip={heroTooltip}
     />
   );
 
@@ -684,24 +729,19 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
     );
   }
 
-  // Live view (default) — about this page + fastest-growing + track cards.
-  const aboutBlocks = buildAboutBlocks(seoLocale);
-
+  // Live view (default) — single "what this is" intro, then fastest-growing
+  // panel, then the 2x2. Other context lives in tooltips on the relevant
+  // blocks (sidebar + calendar hero).
   return (
     <DashboardLayout sidebar={sidebar} topFullWidthContent={hero}>
       <div className="space-y-8">
-        {/* About this page — replaces the old mechanical "Overview" block. */}
-        <section className="space-y-4">
-          {aboutBlocks.map((b, i) => (
-            <div key={i}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-dashboard-text-muted mb-1.5">
-                {b.heading}
-              </h3>
-              <p className="text-[15px] leading-relaxed text-dashboard-text">
-                {b.body}
-              </p>
-            </div>
-          ))}
+        <section>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-dashboard-text-muted mb-1.5">
+            {aboutCopy.whatHeading}
+          </h3>
+          <p className="text-[15px] leading-relaxed text-dashboard-text">
+            {aboutCopy.whatBody}
+          </p>
         </section>
 
         {/* Fastest-growing panel — hero-prominence on current month only */}
@@ -711,11 +751,19 @@ export default async function TrendingPage({ params, searchParams }: TrendingPag
           </Suspense>
         )}
 
-        {/* 4 track cards in 2x2 grid */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {view.tracks.map(t => (
-            <GlobalTrackCard key={t.track} track={t} activeMonth={activeMonth} />
-          ))}
+        {/* 4 track cards in 2x2 grid with explainer tooltip on the heading */}
+        <section>
+          <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3 flex items-center">
+            <span>{aboutCopy.topStoriesHeading}</span>
+            <InfoTip width="wide" className="text-dashboard-text-muted">
+              <span className="normal-case tracking-normal">{aboutCopy.looking}</span>
+            </InfoTip>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {view.tracks.map(t => (
+              <GlobalTrackCard key={t.track} track={t} activeMonth={activeMonth} />
+            ))}
+          </div>
         </section>
 
         {!isCurrentMonth && (

@@ -147,6 +147,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
+  // Trending past-month + archive-day pages. Live month is covered by the
+  // static /trending entry above. Past months get a unique canonical and
+  // each active day in those months becomes its own indexable URL. Source
+  // is mv_global_month_view (one row per past month with activity_stripe
+  // already pre-aggregated, so no extra heavy joins here).
+  const trendingMonthRows = await query<{
+    month_str: string;
+    stripe: Array<{ date: string; total_sources: number }> | null;
+  }>(
+    `SELECT TO_CHAR(month, 'YYYY-MM') AS month_str,
+            view->'activity_stripe' AS stripe
+       FROM mv_global_month_view
+      WHERE locale = 'en'
+      ORDER BY month DESC
+      OFFSET 1`
+  );
+  for (const m of trendingMonthRows) {
+    const monthPath = `/trending?month=${m.month_str}`;
+    entries.push({
+      url: `${SITE_URL}${monthPath}`,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: alt(monthPath),
+    });
+    if (Array.isArray(m.stripe)) {
+      for (const day of m.stripe) {
+        if (day.total_sources <= 0) continue;
+        const dayPath = `/trending?month=${m.month_str}&day=${day.date}`;
+        entries.push({
+          url: `${SITE_URL}${dayPath}`,
+          changeFrequency: 'monthly',
+          priority: 0.6,
+          alternates: alt(dayPath),
+        });
+      }
+    }
+  }
+
   // Signal category index pages
   const signalTypes = ['persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events'];
   for (const st of signalTypes) {

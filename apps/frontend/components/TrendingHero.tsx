@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import type { GlobalMonthView } from '@/lib/queries';
@@ -41,6 +41,7 @@ interface TrendingHeroProps {
   isCurrentMonth: boolean;
   totalLabel: string;
   todayIso: string; // YYYY-MM-DD treated as "today" for live-view decisions
+  headerTooltip?: ReactNode; // optional InfoTip rendered next to the title
 }
 
 export default function TrendingHero({
@@ -49,6 +50,7 @@ export default function TrendingHero({
   isCurrentMonth,
   totalLabel,
   todayIso,
+  headerTooltip,
 }: TrendingHeroProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -105,6 +107,7 @@ export default function TrendingHero({
                 MTD · partial
               </span>
             )}
+            {headerTooltip}
           </h2>
           <div className="mt-1 text-[12px] text-dashboard-text-muted tabular-nums">
             {view.total_sources.toLocaleString('en-US')} sources · {view.total_events.toLocaleString('en-US')} events · {view.active_centroid_count} centroids

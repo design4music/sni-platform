@@ -1717,34 +1717,24 @@ export async function getTrendingEvents(limit: number = 20, locale?: string): Pr
   );
 }
 
-export async function getTrendingSignals(): Promise<Record<string, TrendingSignal[]>> {
-  // 12h TTL aligned with ingestion ceiling. NOW-based 7-day window
-  // doesn't fit MV pattern; live query, cached longer.
-  return cached('trending:signals', 12 * 3600, async () => {
-    const types = ['persons', 'orgs', 'places', 'commodities', 'policies'] as const;
-    const parts = types.map(col =>
-      `SELECT '${col}' as signal_type, val as value, COUNT(DISTINCT evt.event_id)::int as event_count,
-              SUM(pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400)))::numeric(10,2) as score
-       FROM events_v3 e
-       JOIN ctm c ON e.ctm_id = c.id
-       JOIN event_v3_titles evt ON evt.event_id = e.id
-       JOIN title_labels tl ON tl.title_id = evt.title_id
-       CROSS JOIN LATERAL unnest(tl.${col}) AS val
-       WHERE e.source_batch_count >= 5
-         AND e.is_catchall = false
-         AND e.merged_into IS NULL
-         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
-       GROUP BY val ORDER BY score DESC LIMIT 5`
+export async function getTrendingSignals(
+  month: string,
+  locale?: string
+): Promise<Record<string, TrendingSignal[]>> {
+  // PK lookup on mv_global_month_view — signals are folded into the same
+  // blob as the rest of the GlobalMonthView. Materializer computes top 5
+  // per type for the month's promoted events. Locale-neutral values, but
+  // we still use the locale-specific row (one of two identical copies).
+  const monthStart = month.length === 7 ? `${month}-01` : month;
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`trending:signals:${monthStart}:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ signals: Record<string, TrendingSignal[]> | null }>(
+      `SELECT view->'signals' AS signals
+         FROM mv_global_month_view
+        WHERE month = $1::date AND locale = $2`,
+      [monthStart, loc]
     );
-
-    const sql = parts.map(p => `(${p})`).join(' UNION ALL ');
-    const rows = await query<TrendingSignal>(sql);
-
-    const result: Record<string, TrendingSignal[]> = {};
-    for (const col of types) {
-      result[col] = rows.filter(r => r.signal_type === col);
-    }
-    return result;
+    return rows[0]?.signals || {};
   });
 }
 
@@ -2773,18 +2763,25 @@ export async function getGlobalMonthView(
     // Read pre-computed view from mv_global_month_view. Materializer
     // (pipeline/phase_4/materialize_global_month_view.py) runs every
     // 12h on the daemon worker.
-    const rows = await query<{ view: GlobalMonthView & { active_narratives?: unknown } }>(
+    const rows = await query<{ view: GlobalMonthView & {
+      active_narratives?: unknown;
+      signals?: unknown;
+      day_top_events?: unknown;
+    } }>(
       `SELECT view
          FROM mv_global_month_view
         WHERE month = $1::date AND locale = $2`,
       [monthStart, loc]
     );
     if (!rows[0]) return null;
-    // active_narratives is folded into the same blob (see materializer).
-    // Strip it from the GlobalMonthView shape; getActiveNarrativesGlobal
-    // reads it back via the same MV row.
-    const { active_narratives, ...view } = rows[0].view;
+    // active_narratives, signals, and day_top_events are folded into the
+    // same blob. Strip them — the dedicated query helpers
+    // (getActiveNarrativesGlobal / getTrendingSignals / getGlobalDayTopEvents)
+    // read them back via the same MV row.
+    const { active_narratives, signals, day_top_events, ...view } = rows[0].view;
     void active_narratives;
+    void signals;
+    void day_top_events;
     return view as GlobalMonthView;
   });
 }
@@ -2946,74 +2943,18 @@ export async function getGlobalDayTopEvents(
   limit = 10,
   locale?: string
 ): Promise<GlobalDayTopEvent[]> {
-  return cached(`global_day_top:${day}:${limit}:${locale || 'en'}`, 900, async () => {
-    // Over-fetch to give Dice dedup room to work.
-    const fetchLimit = Math.max(limit * 4, 40);
-    const rows = await query<{
-      id: string;
-      title: string | null;
-      centroid_id: string;
-      centroid_label: string;
-      track: string;
-      date: string;
-      total_sources: number;
-      window_sources: number;
-    }>(
-      `WITH window_counts AS (
-         SELECT evt.event_id,
-                COUNT(*)::int AS window_sources
-           FROM event_v3_titles evt
-           JOIN titles_v3 t ON t.id = evt.title_id
-          WHERE t.pubdate_utc::date BETWEEN $1::date - 6 AND $1::date
-          GROUP BY evt.event_id
-       )
-       SELECT e.id::text AS id,
-              COALESCE(
-                ${locale === 'de' ? 'e.title_de, ' : ''}
-                e.title,
-                (SELECT t2.title_display FROM event_v3_titles evt2
-                 JOIN titles_v3 t2 ON t2.id = evt2.title_id
-                 WHERE evt2.event_id = e.id
-                 ORDER BY t2.pubdate_utc ASC LIMIT 1)
-              ) AS title,
-              c.centroid_id,
-              cv.label AS centroid_label,
-              c.track,
-              e.date::text AS date,
-              e.source_batch_count AS total_sources,
-              w.window_sources
-         FROM events_v3 e
-         JOIN ctm c ON c.id = e.ctm_id
-         JOIN centroids_v3 cv ON cv.id = c.centroid_id
-         JOIN window_counts w ON w.event_id = e.id
-        WHERE e.is_promoted = true
-          AND e.merged_into IS NULL
-          AND e.is_catchall = false
-          AND e.date BETWEEN $1::date - 13 AND $1::date + 1
-        ORDER BY w.window_sources DESC, e.source_batch_count DESC
-        LIMIT $2`,
-      [day, fetchLimit]
+  // PK lookup on mv_global_month_view — day_top_events is a per-day map
+  // pre-computed (with title-Dice dedup) by the materializer. Derive the
+  // month from the requested day and slice limit.
+  const monthStart = `${day.slice(0, 7)}-01`;
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`global_day_top:${day}:${limit}:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ events: GlobalDayTopEvent[] | null }>(
+      `SELECT view->'day_top_events'->$3 AS events
+         FROM mv_global_month_view
+        WHERE month = $1::date AND locale = $2`,
+      [monthStart, loc, day]
     );
-
-    // Dedup across centroids by title similarity (same story under different bilateral buckets).
-    const DEDUP_THRESHOLD = 0.3;
-    const kept: Array<{ row: typeof rows[number]; words: Set<string> }> = [];
-    for (const r of rows) {
-      const words = titleWords(r.title);
-      const isDup = kept.some(k => dice(k.words, words) >= DEDUP_THRESHOLD);
-      if (!isDup) kept.push({ row: r, words });
-      if (kept.length >= limit) break;
-    }
-
-    return kept.map(({ row: r }) => ({
-      id: r.id,
-      title: r.title || '',
-      centroid_id: r.centroid_id,
-      centroid_label: r.centroid_label,
-      track: r.track,
-      date: r.date,
-      total_sources: r.total_sources,
-      window_sources: r.window_sources,
-    }));
+    return (rows[0]?.events || []).slice(0, limit);
   });
 }

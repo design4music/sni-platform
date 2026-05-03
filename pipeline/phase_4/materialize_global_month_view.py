@@ -36,6 +36,10 @@ TOP_N_PER_TRACK = 5
 TOP_FETCH_LIMIT = 10
 NARRATIVES_LIMIT = 10
 CALENDAR_EVENT_PAGE_MIN_SOURCES = 5
+DAY_TOP_LIMIT = 10
+DAY_TOP_FETCH_LIMIT = 40
+SIGNAL_COLUMNS = ("persons", "orgs", "places", "commodities", "policies")
+SIGNALS_TOP_PER_TYPE = 5
 
 # Ported from lib/queries.ts so dedup matches frontend semantics.
 CARD_STOP_WORDS = set(
@@ -262,6 +266,144 @@ def fetch_active_narratives(cur, month, locale):
     return out
 
 
+def fetch_signals(cur, month):
+    """Top SIGNALS_TOP_PER_TYPE per signal type for the month's promoted
+    events. Signal values are language-neutral entity strings — identical
+    for en and de."""
+    parts = []
+    for col in SIGNAL_COLUMNS:
+        parts.append(
+            f"""(SELECT '{col}'::text AS signal_type, val AS value,
+                        COUNT(DISTINCT evt.event_id)::int AS event_count
+                   FROM events_v3 e
+                   JOIN ctm c ON c.id = e.ctm_id
+                   JOIN event_v3_titles evt ON evt.event_id = e.id
+                   JOIN title_labels tl ON tl.title_id = evt.title_id
+                   CROSS JOIN LATERAL unnest(COALESCE(tl.{col}, '{{}}')) AS val
+                  WHERE c.month = %s
+                    AND e.is_promoted = true
+                    AND e.merged_into IS NULL
+                    AND e.is_catchall = false
+                  GROUP BY val
+                  ORDER BY event_count DESC, val
+                  LIMIT {SIGNALS_TOP_PER_TYPE})"""
+        )
+    sql = " UNION ALL ".join(parts)
+    cur.execute(sql, tuple([month] * len(SIGNAL_COLUMNS)))
+    out = {col: [] for col in SIGNAL_COLUMNS}
+    for sig_type, value, event_count in cur.fetchall():
+        out[sig_type].append(
+            {"signal_type": sig_type, "value": value, "event_count": int(event_count)}
+        )
+    return out
+
+
+def fetch_day_top_events(cur, month, locale):
+    """For every day in the month, top DAY_TOP_LIMIT events ranked by 7-day
+    cumulative source count ending on that day. Mirrors the live
+    getGlobalDayTopEvents query, batched per month and dedup'd in Python.
+    Returns dict keyed by YYYY-MM-DD."""
+    title_expr = "COALESCE(e.title_de, e.title)" if locale == "de" else "e.title"
+    fallback_expr = f"""COALESCE({title_expr},
+                    (SELECT t2.title_display FROM event_v3_titles evt2
+                     JOIN titles_v3 t2 ON t2.id = evt2.title_id
+                     WHERE evt2.event_id = e.id
+                     ORDER BY t2.pubdate_utc ASC LIMIT 1))"""
+    sql = f"""WITH days AS (
+                SELECT generate_series(
+                    %s::date,
+                    (%s::date + INTERVAL '1 month - 1 day')::date,
+                    '1 day'::interval
+                )::date AS d
+              ),
+              event_day_counts AS (
+                SELECT evt.event_id, t.pubdate_utc::date AS src_date,
+                       COUNT(*)::int AS cnt
+                  FROM events_v3 e
+                  JOIN ctm c ON c.id = e.ctm_id
+                  JOIN event_v3_titles evt ON evt.event_id = e.id
+                  JOIN titles_v3 t ON t.id = evt.title_id
+                 WHERE c.month = %s
+                   AND e.is_promoted = true
+                   AND e.merged_into IS NULL
+                   AND e.is_catchall = false
+                   AND t.pubdate_utc::date BETWEEN
+                       (%s::date - 6) AND
+                       (%s::date + INTERVAL '1 month - 1 day')::date
+                 GROUP BY evt.event_id, t.pubdate_utc::date
+              ),
+              event_window AS (
+                SELECT d.d AS target_day, edc.event_id,
+                       SUM(edc.cnt)::int AS window_sources
+                  FROM days d
+                  JOIN event_day_counts edc
+                       ON edc.src_date BETWEEN d.d - 6 AND d.d
+                 GROUP BY d.d, edc.event_id
+              ),
+              ranked AS (
+                SELECT ew.target_day, ew.event_id, ew.window_sources,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY ew.target_day
+                           ORDER BY ew.window_sources DESC, ew.event_id
+                       ) AS rnk
+                  FROM event_window ew
+              )
+              SELECT r.target_day::text, r.event_id::text, r.window_sources,
+                     {fallback_expr} AS title,
+                     e.date::text AS event_date,
+                     e.source_batch_count AS total_sources,
+                     c.centroid_id, cv.label AS centroid_label, c.track
+                FROM ranked r
+                JOIN events_v3 e ON e.id = r.event_id
+                JOIN ctm c ON c.id = e.ctm_id
+                JOIN centroids_v3 cv ON cv.id = c.centroid_id
+               WHERE r.rnk <= %s
+               ORDER BY r.target_day, r.rnk"""
+    cur.execute(sql, (month, month, month, month, month, DAY_TOP_FETCH_LIMIT))
+
+    by_day = {}
+    for row in cur.fetchall():
+        (
+            target_day,
+            event_id,
+            window_sources,
+            title,
+            event_date,
+            total_sources,
+            centroid_id,
+            centroid_label,
+            track,
+        ) = row
+        by_day.setdefault(target_day, []).append(
+            {
+                "id": event_id,
+                "title": title or "",
+                "centroid_id": centroid_id,
+                "centroid_label": centroid_label,
+                "track": track,
+                "date": event_date,
+                "total_sources": int(total_sources) if total_sources else 0,
+                "window_sources": int(window_sources),
+            }
+        )
+
+    out = {}
+    for day, candidates in by_day.items():
+        kept = []
+        kept_words = []
+        for c in candidates:
+            words = title_words(c["title"])
+            if any(dice(kw, words) >= DICE_THRESHOLD for kw in kept_words):
+                continue
+            kept.append(c)
+            kept_words.append(words)
+            if len(kept) >= DAY_TOP_LIMIT:
+                break
+        if kept:
+            out[day] = kept
+    return out
+
+
 # ─── per-target assembly ────────────────────────────────────────────────
 
 
@@ -330,6 +472,8 @@ def materialize_one(cur, month, locale):
     active_centroids = fetch_global_totals(cur, month)
     prev_month, next_month = fetch_nav(cur, month)
     active_narratives = fetch_active_narratives(cur, month, locale)
+    signals = fetch_signals(cur, month)
+    day_top_events = fetch_day_top_events(cur, month, locale)
 
     activity_stripe = build_activity_stripe(month, stripe_rows)
     top_by_track = dedup_top_events(top_rows)
@@ -382,6 +526,8 @@ def materialize_one(cur, month, locale):
         "prev_month": prev_month,
         "next_month": next_month,
         "active_narratives": active_narratives,
+        "signals": signals,
+        "day_top_events": day_top_events,
     }
 
 
