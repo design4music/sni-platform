@@ -41,7 +41,8 @@ interface TrendingHeroProps {
   isCurrentMonth: boolean;
   totalLabel: string;
   todayIso: string; // YYYY-MM-DD treated as "today" for live-view decisions
-  headerTooltip?: ReactNode; // optional InfoTip rendered next to the title
+  legendTooltip?: ReactNode; // optional InfoTip rendered inline with the color legend
+  countriesLabel: string;    // localized noun for active_centroid_count
 }
 
 export default function TrendingHero({
@@ -50,7 +51,8 @@ export default function TrendingHero({
   isCurrentMonth,
   totalLabel,
   todayIso,
-  headerTooltip,
+  legendTooltip,
+  countriesLabel,
 }: TrendingHeroProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -100,17 +102,16 @@ export default function TrendingHero({
     <section>
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="min-w-0">
-          <h2 className="text-2xl lg:text-3xl font-semibold text-dashboard-text">
+          <h1 className="text-2xl lg:text-3xl font-semibold text-dashboard-text">
             {totalLabel}
             {isCurrentMonth && (
               <span className="ml-3 align-middle inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/40 rounded">
                 MTD · partial
               </span>
             )}
-            {headerTooltip}
-          </h2>
+          </h1>
           <div className="mt-1 text-[12px] text-dashboard-text-muted tabular-nums">
-            {view.total_sources.toLocaleString('en-US')} sources · {view.total_events.toLocaleString('en-US')} events · {view.active_centroid_count} centroids
+            {view.total_sources.toLocaleString('en-US')} sources · {view.total_events.toLocaleString('en-US')} events · {view.active_centroid_count} {countriesLabel}
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -176,6 +177,7 @@ export default function TrendingHero({
                 <span className="tabular-nums">{Math.round(share * 100)}%</span>
               </span>
             ))}
+            {legendTooltip}
           </div>
         )}
       </div>
