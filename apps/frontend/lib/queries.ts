@@ -2114,15 +2114,20 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
 
 // ── Narrative Mapping queries ──────────────────────────────────────
 
+// Reads from mv_narratives_landing — the same MV row also serves
+// getStrategicNarratives + getNarrativeSparklines below. Materializer:
+// pipeline/phase_4/materialize_narratives_landing.py, daemon Phase 4.2g,
+// 12h refresh.
 export async function getAllMetaNarratives(locale?: string): Promise<MetaNarrative[]> {
-  return cached(`meta_narratives:all:${locale || 'en'}`, 3600, () =>
-    query<MetaNarrative>(
-      `SELECT id, ${locCol('meta_narratives', 'name', locale)} as name,
-              ${locCol('meta_narratives', 'description', locale)} as description,
-              signals, sort_order
-       FROM meta_narratives ORDER BY sort_order`
-    )
-  );
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`meta_narratives:all:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ items: MetaNarrative[] | null }>(
+      `SELECT view->'meta_narratives' AS items
+         FROM mv_narratives_landing WHERE locale = $1`,
+      [loc]
+    );
+    return rows[0]?.items || [];
+  });
 }
 
 export async function getMetaNarrativeById(id: string, locale?: string): Promise<MetaNarrative | null> {
@@ -2139,25 +2144,15 @@ export async function getMetaNarrativeById(id: string, locale?: string): Promise
 }
 
 export async function getStrategicNarratives(locale?: string): Promise<StrategicNarrative[]> {
-  return cached(`strategic_narratives:all:${locale || 'en'}`, 1800, () =>
-    query<StrategicNarrative>(
-      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
-              sn.category, sn.actor_centroid, c.label as actor_label,
-              ${locCol('sn', 'name', locale)} as name,
-              ${locCol('sn', 'claim', locale)} as claim,
-              sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
-              sn.tier, sn.aligned_with, sn.opposes,
-              COUNT(DISTINCT esn.event_id) FILTER (WHERE ev.merged_into IS NULL)::int as event_count
-       FROM strategic_narratives sn
-       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
-       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
-       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
-       LEFT JOIN events_v3 ev ON ev.id = esn.event_id
-       WHERE sn.is_active = true
-       GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de
-       ORDER BY mn.sort_order, sn.name`
-    )
-  );
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`strategic_narratives:all:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ items: StrategicNarrative[] | null }>(
+      `SELECT view->'narratives' AS items
+         FROM mv_narratives_landing WHERE locale = $1`,
+      [loc]
+    );
+    return rows[0]?.items || [];
+  });
 }
 
 export async function getStrategicNarrativeById(id: string, locale?: string): Promise<StrategicNarrative | null> {
@@ -2276,19 +2271,14 @@ export async function getCompetingNarratives(narrativeId: string): Promise<(Stra
 }
 
 export async function getNarrativeSparklines(): Promise<Record<string, SignalWeekly[]>> {
-  return cached('narrative_sparklines:all', 1800, async () => {
-    const rows = await query<{ narrative_id: string; week: string; count: number }>(
-      `SELECT narrative_id, week, event_count as count
-       FROM narrative_weekly_activity
-       WHERE week >= (now() - interval '90 days')::date::text
-       ORDER BY week`
+  // Sparklines are language-neutral — both mv_narratives_landing rows
+  // store the same sparkline payload. Read from the 'en' row.
+  return cached('narrative_sparklines:all', 12 * 3600, async () => {
+    const rows = await query<{ items: Record<string, SignalWeekly[]> | null }>(
+      `SELECT view->'sparklines' AS items
+         FROM mv_narratives_landing WHERE locale = 'en'`
     );
-    const map: Record<string, SignalWeekly[]> = {};
-    for (const r of rows) {
-      if (!map[r.narrative_id]) map[r.narrative_id] = [];
-      map[r.narrative_id].push({ week: r.week, count: r.count });
-    }
-    return map;
+    return rows[0]?.items || {};
   });
 }
 

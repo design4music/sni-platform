@@ -8,7 +8,10 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
 import Link from 'next/link';
 
-export const revalidate = 21600;
+// Now backed by mv_narratives_landing (sub-ms PK lookup) so we don't need
+// a page-level HTML cache. force-dynamic also prevents memory bloat from
+// the actor / meta / q filter combos generating separate ISR entries.
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('narratives');

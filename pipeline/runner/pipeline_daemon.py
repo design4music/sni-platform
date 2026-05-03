@@ -894,6 +894,17 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_narratives_landing(self):
+        """Materialize per-locale NarrativesLanding blobs.
+
+        Backs the /narratives page. Folds 3 live queries (meta narratives,
+        strategic narratives, sparklines) into one row per locale. Runs
+        AFTER narrative matching so event_count fields are fresh.
+        """
+        from pipeline.phase_4.materialize_narratives_landing import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1261,6 +1272,15 @@ class PipelineDaemon:
                     self.run_phase_with_retry,
                     "Phase 4.2f: Narrative Matching",
                     self.run_match_narratives,
+                ),
+                300,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2g: Narratives Landing",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2g: Narratives Landing",
+                    self.run_materialize_narratives_landing,
                 ),
                 300,
             )
