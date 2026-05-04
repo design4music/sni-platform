@@ -470,7 +470,8 @@ def fetch_fastest_growing(cur, month, locale):
                 JOIN ctm c ON c.id = e.ctm_id
                 JOIN centroids_v3 cv ON cv.id = c.centroid_id
                 JOIN recent r ON r.event_id = e.id
-               WHERE c.month = %s
+               WHERE c.month >= (%s::date - INTERVAL '1 month')
+                 AND c.month <= %s::date
                  AND e.is_promoted = true
                  AND e.merged_into IS NULL
                  AND e.is_catchall = false
@@ -478,9 +479,15 @@ def fetch_fastest_growing(cur, month, locale):
                  AND r.recent_7d_sources >= %s
                ORDER BY r.recent_7d_sources DESC, e.source_batch_count DESC
                LIMIT %s"""
+    # Span this month + previous month so the live carousel doesn't go
+    # sparse at month boundaries (recent_7d window naturally bounds the
+    # set; past-month rows still resolve to empty since their NOW-based
+    # 7d window catches no titles). Upper bound is the row's own month
+    # so past-month MV rows don't accidentally include future activity.
     cur.execute(
         sql,
         (
+            month,
             month,
             FASTEST_GROWING_MIN_TOTAL,
             FASTEST_GROWING_MIN_RECENT,
