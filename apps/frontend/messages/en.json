@@ -34,8 +34,10 @@
   "home": {
     "heroTitle": "Understand the world. Briefly.",
     "heroSubtitle": "WorldBrief turns global news reporting into continuously updated briefings, organized by country and topic. See what's happening around the world -- clearly, quickly, and with sources.",
+    "heroParagraph": "We track 200+ news outlets across 74 countries every 12 hours, cluster what they're reporting into events, and surface the stories getting the most coverage right now. No personalization, no algorithm second-guessing -- just what global media is converging on.",
     "howItWorks": "How it works",
     "trendingNow": "Trending Now",
+    "trendingNowIntro": "The 12 stories with the fastest source growth in the last 7 days -- what global media is rapidly converging on. Click any card for the full event page; click \"View all\" for the broader trending dashboard with day-by-day coverage and breakdown by track.",
     "viewAll": "View all",
     "worldRegions": "World regions at a glance",
     "coverageNote": "Coverage varies by country and region depending on available media sources.",

@@ -34,8 +34,10 @@
   "home": {
     "heroTitle": "Die Welt verstehen. Kurz gefasst.",
     "heroSubtitle": "WorldBrief verwandelt globale Nachrichtenberichterstattung in laufend aktualisierte Briefings, geordnet nach Land und Thema. Sehen Sie, was weltweit geschieht -- klar, schnell und mit Quellen.",
+    "heroParagraph": "Wir erfassen alle 12 Stunden ueber 200 Nachrichtenquellen aus 74 Laendern, gruppieren ihre Berichterstattung in Ereignisse und heben die Stories hervor, die gerade die meiste Aufmerksamkeit erhalten. Keine Personalisierung, kein Algorithmus, der die Auswahl trifft -- nur das, worauf die globale Medienlandschaft konvergiert.",
     "howItWorks": "So funktioniert es",
     "trendingNow": "Aktuell im Trend",
+    "trendingNowIntro": "Die 12 Stories mit dem staerksten Quellen-Zuwachs der letzten 7 Tage -- worauf die globale Medienlandschaft gerade konvergiert. Klicken Sie auf eine Karte fuer die vollstaendige Ereignis-Seite; klicken Sie auf \"Alle anzeigen\" fuer das umfassende Trending-Dashboard mit taeglicher Berichterstattung und Aufschluesselung nach Track.",
     "viewAll": "Alle anzeigen",
     "worldRegions": "Weltregionen im Ueberblick",
     "coverageNote": "Die Abdeckung variiert je nach Land und Region, abhaengig von verfuegbaren Medienquellen.",

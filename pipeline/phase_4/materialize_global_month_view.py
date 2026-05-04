@@ -38,6 +38,10 @@ NARRATIVES_LIMIT = 10
 CALENDAR_EVENT_PAGE_MIN_SOURCES = 5
 DAY_TOP_LIMIT = 10
 DAY_TOP_FETCH_LIMIT = 40
+FASTEST_GROWING_LIMIT = 12
+FASTEST_GROWING_FETCH_LIMIT = 48
+FASTEST_GROWING_MIN_RECENT = 3
+FASTEST_GROWING_MIN_TOTAL = 5
 # Active signal types only — commodities/policies/systems were retired
 # from extraction (see pipeline/phase_3_1/extract_labels.py). Trending
 # sidebar shows persons/orgs/places/named_events.
@@ -407,6 +411,133 @@ def fetch_day_top_events(cur, month, locale):
     return out
 
 
+def fetch_fastest_growing(cur, month, locale):
+    """Mirror getFastestGrowingEvents but enriched: includes summary,
+    iso_codes, top_signals, date, last_active so the homepage carousel
+    can render rich cards from the same MV row.
+
+    Cross-centroid title-Dice dedup applied in Python (matches live
+    query behavior). Limit 12 (homepage carousel size)."""
+    title_expr = "COALESCE(e.title_de, e.title)" if locale == "de" else "e.title"
+    summary_expr = (
+        "COALESCE(e.summary_de, e.summary)" if locale == "de" else "e.summary"
+    )
+    sql = f"""WITH recent AS (
+                SELECT evt.event_id, COUNT(*)::int AS recent_7d_sources
+                  FROM event_v3_titles evt
+                  JOIN titles_v3 t ON t.id = evt.title_id
+                 WHERE t.pubdate_utc >= NOW() - INTERVAL '7 days'
+                 GROUP BY evt.event_id
+              )
+              SELECT e.id::text AS id,
+                     COALESCE(
+                       {title_expr},
+                       (SELECT t2.title_display FROM event_v3_titles evt2
+                        JOIN titles_v3 t2 ON t2.id = evt2.title_id
+                        WHERE evt2.event_id = e.id
+                        ORDER BY t2.pubdate_utc DESC LIMIT 1)
+                     ) AS title,
+                     LEFT({summary_expr}, 200) AS summary,
+                     e.date::text AS date,
+                     COALESCE(e.last_active, e.date)::text AS last_active,
+                     e.source_batch_count AS total_sources,
+                     r.recent_7d_sources,
+                     c.centroid_id, cv.label AS centroid_label,
+                     cv.iso_codes, c.track,
+                     -- top 3 signals across persons + orgs (matches the
+                     -- old getTrendingEvents pattern). Returned as
+                     -- 'type:value' strings for the carousel pill renderer.
+                     (SELECT array_agg(sig_type || ':' || val ORDER BY cnt DESC)
+                        FROM (
+                          SELECT sig_type, val, COUNT(*) AS cnt FROM (
+                            SELECT 'persons' AS sig_type,
+                                   unnest(COALESCE(tl.persons, '{{}}')) AS val
+                              FROM event_v3_titles evt
+                              JOIN title_labels tl ON tl.title_id = evt.title_id
+                             WHERE evt.event_id = e.id
+                             UNION ALL
+                            SELECT 'orgs' AS sig_type,
+                                   unnest(COALESCE(tl.orgs, '{{}}')) AS val
+                              FROM event_v3_titles evt
+                              JOIN title_labels tl ON tl.title_id = evt.title_id
+                             WHERE evt.event_id = e.id
+                          ) expanded
+                          GROUP BY sig_type, val
+                          ORDER BY cnt DESC LIMIT 3
+                        ) sub
+                     ) AS top_signals
+                FROM events_v3 e
+                JOIN ctm c ON c.id = e.ctm_id
+                JOIN centroids_v3 cv ON cv.id = c.centroid_id
+                JOIN recent r ON r.event_id = e.id
+               WHERE c.month = %s
+                 AND e.is_promoted = true
+                 AND e.merged_into IS NULL
+                 AND e.is_catchall = false
+                 AND e.source_batch_count >= %s
+                 AND r.recent_7d_sources >= %s
+               ORDER BY r.recent_7d_sources DESC, e.source_batch_count DESC
+               LIMIT %s"""
+    cur.execute(
+        sql,
+        (
+            month,
+            FASTEST_GROWING_MIN_TOTAL,
+            FASTEST_GROWING_MIN_RECENT,
+            FASTEST_GROWING_FETCH_LIMIT,
+        ),
+    )
+
+    candidates = []
+    for row in cur.fetchall():
+        (
+            event_id,
+            title,
+            summary,
+            date,
+            last_active,
+            total_sources,
+            recent_7d,
+            centroid_id,
+            centroid_label,
+            iso_codes,
+            track,
+            top_signals,
+        ) = row
+        candidates.append(
+            {
+                "id": event_id,
+                "title": title or "",
+                "summary": summary,
+                "date": date,
+                "last_active": last_active,
+                "total_sources": int(total_sources),
+                "recent_7d_sources": int(recent_7d),
+                "growth_ratio": (
+                    float(recent_7d) / float(total_sources) if total_sources else 0.0
+                ),
+                "centroid_id": centroid_id,
+                "centroid_label": centroid_label,
+                "iso_codes": list(iso_codes) if iso_codes else [],
+                "track": track,
+                "top_signals": list(top_signals) if top_signals else [],
+            }
+        )
+
+    # Cross-centroid title-Dice dedup, matches the live query's behavior.
+    kept = []
+    kept_words = []
+    for c in candidates:
+        words = title_words(c["title"])
+        if any(dice(kw, words) >= DICE_THRESHOLD for kw in kept_words):
+            continue
+        kept.append(c)
+        kept_words.append(words)
+        if len(kept) >= FASTEST_GROWING_LIMIT:
+            break
+    return kept
+
+
 # ─── per-target assembly ────────────────────────────────────────────────
 
 
@@ -477,6 +608,7 @@ def materialize_one(cur, month, locale):
     active_narratives = fetch_active_narratives(cur, month, locale)
     signals = fetch_signals(cur, month)
     day_top_events = fetch_day_top_events(cur, month, locale)
+    fastest_growing = fetch_fastest_growing(cur, month, locale)
 
     activity_stripe = build_activity_stripe(month, stripe_rows)
     top_by_track = dedup_top_events(top_rows)
@@ -531,6 +663,7 @@ def materialize_one(cur, month, locale):
         "active_narratives": active_narratives,
         "signals": signals,
         "day_top_events": day_top_events,
+        "fastest_growing": fastest_growing,
     }
 
 

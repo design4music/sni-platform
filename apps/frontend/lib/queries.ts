@@ -1472,62 +1472,10 @@ export async function getAllPublisherStats(): Promise<Record<string, PublisherSt
   });
 }
 
-// ========================================================================
-// Trending events (time-decayed source count)
-// ========================================================================
-
-export async function getTrendingEvents(limit: number = 20, locale?: string): Promise<TrendingEvent[]> {
-  return cached(`trending:${limit}:${locale || 'en'}`, 3600, () =>
-    query<TrendingEvent>(
-      `SELECT e.id, COALESCE(${locale === 'de' ? 'e.title_de, ' : ''}e.title, e.topic_core, (
-                SELECT t.title_display FROM event_v3_titles evt
-                JOIN titles_v3 t ON t.id = evt.title_id
-                WHERE evt.event_id = e.id LIMIT 1
-              )) as title,
-              e.date::text as date, COALESCE(e.last_active, e.date)::text as last_active,
-              e.source_batch_count, COALESCE(e.tags, '{}') as tags,
-              LEFT(${locCol('e', 'summary', locale)}, 200) as summary,
-              c.centroid_id, cv.label as centroid_label, cv.iso_codes,
-              c.track,
-              (ln(e.source_batch_count + 1)
-               * pow(0.5, EXTRACT(EPOCH FROM (NOW() - COALESCE(e.last_active, e.date)::timestamp)) / (3 * 86400))
-               * CASE WHEN EXTRACT(EPOCH FROM (NOW() - e.date::timestamp)) < 86400
-                      THEN 1 + LEAST(e.source_batch_count / GREATEST(EXTRACT(EPOCH FROM (NOW() - e.date::timestamp)) / 3600, 1), 3)
-                      ELSE 1 END
-              )::numeric(10,2) as trending_score,
-              sig.top_signals
-       FROM events_v3 e
-       JOIN ctm c ON e.ctm_id = c.id
-       JOIN centroids_v3 cv ON c.centroid_id = cv.id
-       LEFT JOIN LATERAL (
-         SELECT array_agg(sig_type || ':' || val ORDER BY cnt DESC) as top_signals
-         FROM (
-           SELECT sig_type, val, COUNT(*) as cnt FROM (
-             SELECT 'persons' as sig_type, unnest(COALESCE(tl.persons, '{}')) as val
-             FROM event_v3_titles evt
-             JOIN title_labels tl ON tl.title_id = evt.title_id
-             WHERE evt.event_id = e.id
-             UNION ALL
-             SELECT 'orgs' as sig_type, unnest(COALESCE(tl.orgs, '{}')) as val
-             FROM event_v3_titles evt
-             JOIN title_labels tl ON tl.title_id = evt.title_id
-             WHERE evt.event_id = e.id
-           ) expanded
-           GROUP BY sig_type, val
-           ORDER BY cnt DESC
-           LIMIT 3
-         ) sub
-       ) sig ON true
-       WHERE e.source_batch_count >= 5
-         AND e.is_catchall = false
-         AND e.merged_into IS NULL
-         AND COALESCE(e.last_active, e.date) >= CURRENT_DATE - INTERVAL '7 days'
-       ORDER BY trending_score DESC
-       LIMIT $1`,
-      [limit]
-    )
-  );
-}
+// getTrendingEvents was retired 2026-05-04 in favor of getFastestGrowingEvents
+// (same conceptual surface, ranked by 7d source-rate instead of decayed-log
+// score). Both pages — homepage carousel and /trending — now read the rich
+// fastest_growing slice from mv_global_month_view.
 
 export async function getTrendingSignals(
   month: string,
@@ -2501,6 +2449,7 @@ export async function getGlobalMonthView(
       active_narratives?: unknown;
       signals?: unknown;
       day_top_events?: unknown;
+      fastest_growing?: unknown;
     } }>(
       `SELECT view
          FROM mv_global_month_view
@@ -2508,14 +2457,18 @@ export async function getGlobalMonthView(
       [monthStart, loc]
     );
     if (!rows[0]) return null;
-    // active_narratives, signals, and day_top_events are folded into the
-    // same blob. Strip them — the dedicated query helpers
-    // (getActiveNarrativesGlobal / getTrendingSignals / getGlobalDayTopEvents)
-    // read them back via the same MV row.
-    const { active_narratives, signals, day_top_events, ...view } = rows[0].view;
+    // active_narratives, signals, day_top_events, fastest_growing are
+    // folded into the same blob. Strip them — the dedicated query helpers
+    // (getActiveNarrativesGlobal / getTrendingSignals / getGlobalDayTopEvents
+    // / getFastestGrowingEvents) read them back via the same MV row.
+    const {
+      active_narratives, signals, day_top_events, fastest_growing,
+      ...view
+    } = rows[0].view;
     void active_narratives;
     void signals;
     void day_top_events;
+    void fastest_growing;
     return view as GlobalMonthView;
   });
 }
@@ -2562,9 +2515,11 @@ export async function getActiveNarrativesGlobal(
 // in the last 7 days. Only meaningful for the current month (past months
 // have no "recent" activity). Empty result is OK for past months.
 //
-// Cross-centroid dedup: the same story often appears as separate events per
-// centroid (e.g. Trump-Iran ceasefire fires in both AMERICAS-USA and
-// MIDEAST-IRAN). We over-fetch, then dedup by title-word Dice before slicing.
+// Sourced from mv_global_month_view.view->'fastest_growing'. Materializer
+// applies the same NOW()-based 7-day window + cross-centroid Dice dedup
+// the live query used to do, plus enriches each entry with summary,
+// iso_codes, top_signals, date, last_active so the homepage carousel
+// can render rich cards from the same MV row.
 export async function getFastestGrowingEvents(
   month: string,
   limit = 10,
@@ -2572,86 +2527,34 @@ export async function getFastestGrowingEvents(
 ): Promise<Array<{
   id: string;
   title: string;
+  summary: string | null;
+  date: string;
+  last_active: string;
   centroid_id: string;
   centroid_label: string;
+  iso_codes: string[];
   track: string;
   total_sources: number;
   recent_7d_sources: number;
   growth_ratio: number;
+  top_signals: string[];
 }>> {
   const monthStart = month.length === 7 ? `${month}-01` : month;
-  // 12h TTL aligned with ingestion ceiling. Live query (NOW-based 7-day
-  // window doesn't fit MV pattern); just cached longer.
-  return cached(`global_growing:${monthStart}:${locale || 'en'}`, 12 * 3600, async () => {
-    // Over-fetch to give dedup room to work.
-    const fetchLimit = Math.max(limit * 4, 40);
-    const rows = await query<{
-      id: string;
-      title: string | null;
-      centroid_id: string;
-      centroid_label: string;
-      track: string;
-      total_sources: number;
-      recent_7d_sources: number;
-    }>(
-      `WITH recent AS (
-         SELECT evt.event_id,
-                COUNT(*)::int AS recent_7d_sources
-           FROM event_v3_titles evt
-           JOIN titles_v3 t ON t.id = evt.title_id
-          WHERE t.pubdate_utc >= NOW() - INTERVAL '7 days'
-          GROUP BY evt.event_id
-       )
-       SELECT e.id::text AS id,
-              COALESCE(
-                ${locale === 'de' ? 'e.title_de, ' : ''}
-                e.title,
-                (SELECT t2.title_display FROM event_v3_titles evt2
-                 JOIN titles_v3 t2 ON t2.id = evt2.title_id
-                 WHERE evt2.event_id = e.id
-                 ORDER BY t2.pubdate_utc DESC LIMIT 1)
-              ) AS title,
-              c.centroid_id,
-              cv.label AS centroid_label,
-              c.track,
-              e.source_batch_count AS total_sources,
-              r.recent_7d_sources
-         FROM events_v3 e
-         JOIN ctm c ON c.id = e.ctm_id
-         JOIN centroids_v3 cv ON cv.id = c.centroid_id
-         JOIN recent r ON r.event_id = e.id
-        WHERE c.month = $1
-          AND e.is_promoted = true
-          AND e.merged_into IS NULL
-          AND e.is_catchall = false
-          AND e.source_batch_count >= 5
-          AND r.recent_7d_sources >= 3
-        ORDER BY r.recent_7d_sources DESC, e.source_batch_count DESC
-        LIMIT $2`,
-      [monthStart, fetchLimit]
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`global_growing:${monthStart}:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ items: Array<{
+      id: string; title: string; summary: string | null; date: string;
+      last_active: string; centroid_id: string; centroid_label: string;
+      iso_codes: string[]; track: string;
+      total_sources: number; recent_7d_sources: number; growth_ratio: number;
+      top_signals: string[];
+    }> | null }>(
+      `SELECT view->'fastest_growing' AS items
+         FROM mv_global_month_view
+        WHERE month = $1::date AND locale = $2`,
+      [monthStart, loc]
     );
-
-    // Dedup: walk in rank order, keep a candidate if it doesn't overlap
-    // (Dice >= 0.3) with any already-kept title.
-    const DEDUP_THRESHOLD = 0.3;
-    const kept: Array<{ row: typeof rows[number]; words: Set<string> }> = [];
-    for (const r of rows) {
-      const words = titleWords(r.title);
-      const isDup = kept.some(k => dice(k.words, words) >= DEDUP_THRESHOLD);
-      if (!isDup) kept.push({ row: r, words });
-      if (kept.length >= limit) break;
-    }
-
-    return kept.map(({ row: r }) => ({
-      id: r.id,
-      title: r.title || '',
-      centroid_id: r.centroid_id,
-      centroid_label: r.centroid_label,
-      track: r.track,
-      total_sources: r.total_sources,
-      recent_7d_sources: r.recent_7d_sources,
-      growth_ratio: r.total_sources > 0 ? r.recent_7d_sources / r.total_sources : 0,
-    }));
+    return (rows[0]?.items || []).slice(0, limit);
   });
 }
 

@@ -65,8 +65,11 @@ export default async function HomePage({
         {/* Introduction */}
         <section className="max-w-3xl">
           <h1 className="text-5xl font-bold mb-6">{t('heroTitle')}</h1>
-          <p className="text-xl text-dashboard-text-muted mb-4">
+          <p className="text-xl text-dashboard-text-muted mb-4 leading-relaxed">
             {t('heroSubtitle')}
+          </p>
+          <p className="text-base text-dashboard-text-muted mb-4 leading-relaxed">
+            {t('heroParagraph')}
           </p>
           <div className="flex gap-4">
             <Link href="/methodology" className="text-blue-400 hover:text-blue-300 underline">
