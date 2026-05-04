@@ -8,9 +8,6 @@ const TYPE_COLORS: Record<SignalType, { base: string; bg: string }> = {
   persons:      { base: '96, 165, 250', bg: 'text-blue-400' },
   orgs:         { base: '74, 222, 128', bg: 'text-green-400' },
   places:       { base: '251, 146, 60', bg: 'text-orange-400' },
-  commodities:  { base: '250, 204, 21', bg: 'text-yellow-400' },
-  policies:     { base: '167, 139, 250', bg: 'text-purple-400' },
-  systems:      { base: '34, 211, 238', bg: 'text-cyan-400' },
   named_events: { base: '244, 114, 182', bg: 'text-pink-400' },
 };
 

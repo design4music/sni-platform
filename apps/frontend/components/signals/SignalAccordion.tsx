@@ -10,9 +10,6 @@ const SIGNAL_TYPE_KEY: Record<SignalType, string> = {
   persons: 'topPersons',
   orgs: 'topOrgs',
   places: 'topPlaces',
-  commodities: 'topCommodities',
-  policies: 'topPolicies',
-  systems: 'topSystems',
   named_events: 'topEvents',
 };
 

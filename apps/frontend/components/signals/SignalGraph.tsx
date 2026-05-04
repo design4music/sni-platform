@@ -11,9 +11,6 @@ const TYPE_COLORS: Record<SignalType, string> = {
   persons: '#60a5fa',
   orgs: '#4ade80',
   places: '#fb923c',
-  commodities: '#facc15',
-  policies: '#a78bfa',
-  systems: '#22d3ee',
   named_events: '#f472b6',
 };
 
@@ -21,9 +18,6 @@ const TYPE_LABELS: Record<SignalType, string> = {
   persons: 'Person',
   orgs: 'Org',
   places: 'Place',
-  commodities: 'Commodity',
-  policies: 'Policy',
-  systems: 'System',
   named_events: 'Event',
 };
 

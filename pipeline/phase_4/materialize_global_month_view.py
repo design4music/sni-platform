@@ -38,7 +38,10 @@ NARRATIVES_LIMIT = 10
 CALENDAR_EVENT_PAGE_MIN_SOURCES = 5
 DAY_TOP_LIMIT = 10
 DAY_TOP_FETCH_LIMIT = 40
-SIGNAL_COLUMNS = ("persons", "orgs", "places", "commodities", "policies")
+# Active signal types only — commodities/policies/systems were retired
+# from extraction (see pipeline/phase_3_1/extract_labels.py). Trending
+# sidebar shows persons/orgs/places/named_events.
+SIGNAL_COLUMNS = ("persons", "orgs", "places", "named_events")
 SIGNALS_TOP_PER_TYPE = 5
 
 # Ported from lib/queries.ts so dedup matches frontend semantics.

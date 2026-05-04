@@ -12,9 +12,6 @@ const SIGNAL_CATEGORY_KEY: Record<SignalType, string> = {
   persons: 'topPersons',
   orgs: 'topOrgs',
   places: 'topPlaces',
-  commodities: 'topCommodities',
-  policies: 'topPolicies',
-  systems: 'topSystems',
   named_events: 'topEvents',
 };
 import { getTranslations, getLocale } from 'next-intl/server';
@@ -22,16 +19,13 @@ import { getTranslations, getLocale } from 'next-intl/server';
 export const dynamic = 'force-dynamic';
 
 const VALID_TYPES = new Set<SignalType>([
-  'persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events',
+  'persons', 'orgs', 'places', 'named_events',
 ]);
 
 const TYPE_BADGE: Record<SignalType, { bg: string; border: string; text: string }> = {
   persons:      { bg: 'bg-blue-500/10',   border: 'border-blue-500/20',   text: 'text-blue-400' },
   orgs:         { bg: 'bg-green-500/10',  border: 'border-green-500/20',  text: 'text-green-400' },
   places:       { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-400' },
-  commodities:  { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', text: 'text-yellow-400' },
-  policies:     { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-400' },
-  systems:      { bg: 'bg-cyan-500/10',   border: 'border-cyan-500/20',   text: 'text-cyan-400' },
   named_events: { bg: 'bg-pink-500/10',   border: 'border-pink-500/20',   text: 'text-pink-400' },
 };
 
@@ -39,9 +33,6 @@ const TYPE_LABEL_KEY: Record<SignalType, string> = {
   persons: 'person',
   orgs: 'organization',
   places: 'place',
-  commodities: 'commodity',
-  policies: 'policy',
-  systems: 'system',
   named_events: 'eventType',
 };
 

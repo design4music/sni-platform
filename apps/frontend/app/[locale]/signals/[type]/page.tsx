@@ -11,25 +11,19 @@ const SIGNAL_TYPE_KEY: Record<SignalType, string> = {
   persons: 'topPersons',
   orgs: 'topOrgs',
   places: 'topPlaces',
-  commodities: 'topCommodities',
-  policies: 'topPolicies',
-  systems: 'topSystems',
   named_events: 'topEvents',
 };
 
 export const dynamic = 'force-dynamic';
 
 const VALID_TYPES = new Set<SignalType>([
-  'persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events',
+  'persons', 'orgs', 'places', 'named_events',
 ]);
 
 const TYPE_COLORS: Record<SignalType, string> = {
   persons: '#60a5fa',
   orgs: '#4ade80',
   places: '#fb923c',
-  commodities: '#facc15',
-  policies: '#a78bfa',
-  systems: '#22d3ee',
   named_events: '#f472b6',
 };
 

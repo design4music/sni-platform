@@ -36,13 +36,13 @@ from core.config import config
 
 DEFAULT_MAX_AGE_HOURS = 12
 PERIOD = "rolling"
+# commodities, policies, systems were retired from extraction (always written
+# as empty arrays — see pipeline/phase_3_1/extract_labels.py:255-258). Dropped
+# from this materializer 2026-05-04 to skip the dead types.
 SIGNAL_TYPES = (
     "persons",
     "orgs",
     "places",
-    "commodities",
-    "policies",
-    "systems",
     "named_events",
 )
 TOP_PER_TYPE = 25

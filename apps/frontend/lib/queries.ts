@@ -969,7 +969,7 @@ export async function getRelatedEvents(
 // Signal ranking queries
 // ========================================================================
 
-const SIGNAL_COLUMNS: SignalType[] = ['persons', 'orgs', 'places', 'commodities', 'policies', 'systems', 'named_events'];
+const SIGNAL_COLUMNS: SignalType[] = ['persons', 'orgs', 'places', 'named_events'];
 
 export async function getTopSignalsByMonth(month: string, limit: number = 5, locale?: string): Promise<Record<SignalType, TopSignal[]>> {
   return cached(`signals:${month}:${locale || 'en'}`, 3600, async () => {

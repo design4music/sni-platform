@@ -28,9 +28,7 @@ const SIGNAL_TYPES: { type: SignalType; key: string }[] = [
   { type: 'persons', key: 'persons' },
   { type: 'orgs', key: 'organizations' },
   { type: 'places', key: 'places' },
-  { type: 'commodities', key: 'commodities' },
-  { type: 'policies', key: 'policies' },
-  { type: 'systems', key: 'systems' },
+  { type: 'named_events', key: 'events' },
 ];
 
 function formatMonthName(monthStr: string, loc: string): string {

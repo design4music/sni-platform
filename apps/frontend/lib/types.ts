@@ -409,7 +409,10 @@ export interface EpicCentroidStat {
   iso_codes: string[] | null;
 }
 
-export type SignalType = 'persons' | 'orgs' | 'places' | 'commodities' | 'policies' | 'systems' | 'named_events';
+// commodities, policies, systems were retired from extraction; the
+// columns still exist in title_labels but are always written as empty
+// arrays (see pipeline/phase_3_1/extract_labels.py). UI dropped 2026-05-04.
+export type SignalType = 'persons' | 'orgs' | 'places' | 'named_events';
 
 export interface TopSignal {
   signal_type: SignalType;
@@ -534,9 +537,6 @@ export const SIGNAL_LABELS: Record<SignalType, string> = {
   persons: 'Top Persons',
   orgs: 'Top Organizations',
   places: 'Top Places',
-  commodities: 'Top Commodities',
-  policies: 'Top Policies',
-  systems: 'Top Systems',
   named_events: 'Top Events',
 };
 

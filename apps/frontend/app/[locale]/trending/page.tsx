@@ -432,8 +432,7 @@ async function TrendingSignalsRail({
     persons: 'Top Persons',
     orgs: 'Top Organizations',
     places: 'Top Places',
-    commodities: 'Top Commodities',
-    policies: 'Top Policies',
+    named_events: 'Top Events',
   };
   const types = Object.keys(SIGNAL_LABELS);
 

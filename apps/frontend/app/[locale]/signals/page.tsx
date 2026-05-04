@@ -21,9 +21,6 @@ const CATEGORIES: { type: SignalType; icon: string; badge: string }[] = [
   { type: 'persons',      icon: 'P', badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   { type: 'orgs',         icon: 'O', badge: 'bg-green-500/10 text-green-400 border-green-500/20' },
   { type: 'places',       icon: 'G', badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
-  { type: 'commodities',  icon: 'C', badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' },
-  { type: 'policies',     icon: 'L', badge: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
-  { type: 'systems',      icon: 'S', badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
   { type: 'named_events', icon: 'E', badge: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
 ];
 
@@ -45,9 +42,6 @@ async function DeferredGraph() {
         <span className="text-blue-400">{t('person')}</span>,{' '}
         <span className="text-green-400">{t('organization')}</span>,{' '}
         <span className="text-orange-400">{t('place')}</span>,{' '}
-        <span className="text-yellow-400">{t('commodity')}</span>,{' '}
-        <span className="text-purple-400">{t('policy')}</span>,{' '}
-        <span className="text-cyan-400">{t('system')}</span>,{' '}
         <span className="text-pink-400">{t('eventType')}</span>.
       </p>
     </div>
