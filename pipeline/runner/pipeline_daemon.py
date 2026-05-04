@@ -916,6 +916,18 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_outlet_landing(self):
+        """Materialize per-outlet OutletLanding blobs.
+
+        Backs /sources/[slug]. Folds 8 live queries (profile, lifetime
+        stats, stance/track timelines, entity volumes, siblings) into
+        ~202 rows. Locale-neutral (page passes locale only as a UI
+        prop). 12h staleness gate, no frozen-skip.
+        """
+        from pipeline.phase_4.materialize_outlet_landing import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1301,6 +1313,15 @@ class PipelineDaemon:
                     self.run_phase_with_retry,
                     "Phase 4.2h: Narrative Detail",
                     self.run_materialize_narrative_detail,
+                ),
+                600,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2i: Outlet Landing",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2i: Outlet Landing",
+                    self.run_materialize_outlet_landing,
                 ),
                 600,
             )

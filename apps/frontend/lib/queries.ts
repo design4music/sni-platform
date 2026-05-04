@@ -464,7 +464,7 @@ const PUBLISHER_MAP_VALUES = `
   ('Yonhap', 'Yonhap News Agency'), ('Yonhap', 'en.yna.co.kr')`;
 
 export async function getAllActiveFeeds(): Promise<(Feed & { total_titles: number; assigned_titles: number })[]> {
-  return cached('feeds:active', 3600, () => query<Feed & { total_titles: number; assigned_titles: number }>(
+  return cached('feeds:active', 12 * 3600, () => query<Feed & { total_titles: number; assigned_titles: number }>(
     `WITH publisher_map(feed_name, publisher_name) AS (VALUES
   ${PUBLISHER_MAP_VALUES}
      ),
@@ -1027,59 +1027,20 @@ function feedPubsCTE(): string {
   )`;
 }
 
+// /sources/[slug] queries are all PK lookups on mv_outlet_landing.
+// Materializer: pipeline/phase_4/materialize_outlet_landing.py, daemon
+// Phase 4.2i. The blob is locale-neutral; the page passes locale only
+// as a UI prop. 12h refresh.
+
 export async function getOutletProfile(feedName: string): Promise<OutletProfile | null> {
-  const feedResults = await query<Feed>(
-    'SELECT id, name, url, language_code, country_code, source_domain, is_active FROM feeds WHERE name = $1 LIMIT 1',
-    [feedName]
-  );
-  if (feedResults.length === 0) return null;
-  const feed = feedResults[0];
-
-  const cte = feedPubsCTE();
-
-  const [coverageRes, ctmsRes, countRes] = await Promise.all([
-    query<{ centroid_id: string; label: string; iso_codes: string[] | null; count: number }>(
-      `${cte}
-       SELECT ta.centroid_id, cv.label, cv.iso_codes, COUNT(*)::int as count
-       FROM titles_v3 t
-       JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name
-       JOIN title_assignments ta ON ta.title_id = t.id
-       JOIN centroids_v3 cv ON cv.id = ta.centroid_id
-       GROUP BY ta.centroid_id, cv.label, cv.iso_codes
-       ORDER BY count DESC`,
+  return cached(`outletProfile:${feedName}`, 12 * 3600, async () => {
+    const rows = await query<{ profile: OutletProfile | null }>(
+      `SELECT view->'profile' AS profile
+         FROM mv_outlet_landing WHERE feed_name = $1`,
       [feedName]
-    ),
-    query<{ ctm_id: string; centroid_id: string; track: string; month: string; label: string; count: number }>(
-      `${cte}
-       SELECT ta.ctm_id, c.centroid_id, c.track, TO_CHAR(c.month, 'YYYY-MM') as month,
-              cv.label, COUNT(*)::int as count
-       FROM titles_v3 t
-       JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name
-       JOIN title_assignments ta ON ta.title_id = t.id
-       JOIN ctm c ON c.id = ta.ctm_id
-       JOIN centroids_v3 cv ON cv.id = c.centroid_id
-       GROUP BY ta.ctm_id, c.centroid_id, c.track, c.month, cv.label
-       ORDER BY count DESC
-       LIMIT 20`,
-      [feedName]
-    ),
-    query<{ count: number }>(
-      `${cte}
-       SELECT COUNT(*)::int as count FROM titles_v3 t
-       JOIN feed_pubs fp ON t.publisher_name = fp.publisher_name`,
-      [feedName]
-    ),
-  ]);
-
-  return {
-    feed_name: feed.name,
-    source_domain: feed.source_domain || null,
-    country_code: feed.country_code || null,
-    language_code: feed.language_code || null,
-    article_count: countRes[0]?.count || 0,
-    centroid_coverage: coverageRes,
-    top_ctms: ctmsRes,
-  };
+    );
+    return rows[0]?.profile || null;
+  });
 }
 
 // D-071: getOutletNarrativeFrames retired. Replacement is the per-outlet/
@@ -1227,15 +1188,13 @@ export async function getCentroidMediaLens(
 
 /** List months (YYYY-MM) for which this outlet has stance rows, newest first. */
 export async function getOutletStanceMonths(feedName: string): Promise<string[]> {
-  return cached(`outletStanceMonths:${feedName}`, 21600, async () => {
-    const rows = await query<{ m: string }>(
-      `SELECT DISTINCT TO_CHAR(month, 'YYYY-MM') AS m
-       FROM outlet_entity_stance
-       WHERE outlet_name = $1
-       ORDER BY m DESC`,
+  return cached(`outletStanceMonths:${feedName}`, 12 * 3600, async () => {
+    const rows = await query<{ items: string[] | null }>(
+      `SELECT view->'stance_months' AS items
+         FROM mv_outlet_landing WHERE feed_name = $1`,
       [feedName]
     );
-    return rows.map(r => r.m);
+    return rows[0]?.items || [];
   });
 }
 
@@ -1261,22 +1220,19 @@ export async function getSiblingOutlets(
   limit: number = 50
 ): Promise<SiblingOutlet[]> {
   if (!countryCode) return [];
+  // countryCode is derived from the same outlet's profile, so the
+  // excludeFeedName fully identifies the lookup. Sliced from MV.
   return cached(
     `siblingOutlets:${countryCode}:${excludeFeedName}:${limit}`,
-    21600,
-    () =>
-      query<SiblingOutlet>(
-        `SELECT f.name AS feed_name, f.slug, f.language_code, f.source_domain,
-                COALESCE((mvs.stats->>'title_count')::int, 0) AS title_count
-         FROM feeds f
-         LEFT JOIN mv_publisher_stats mvs ON mvs.feed_name = f.name
-         WHERE f.country_code = $1
-           AND f.is_active = true
-           AND f.name <> $2
-         ORDER BY title_count DESC, f.name
-         LIMIT $3`,
-        [countryCode, excludeFeedName, limit]
-      )
+    12 * 3600,
+    async () => {
+      const rows = await query<{ items: SiblingOutlet[] | null }>(
+        `SELECT view->'siblings' AS items
+           FROM mv_outlet_landing WHERE feed_name = $1`,
+        [excludeFeedName]
+      );
+      return (rows[0]?.items || []).slice(0, limit);
+    }
   );
 }
 
@@ -1325,38 +1281,13 @@ export interface OutletStanceTimelineRow {
 }
 
 export async function getOutletStanceTimeline(feedName: string): Promise<OutletStanceTimelineRow[]> {
-  return cached(`outletStanceTimeline:${feedName}`, 21600, async () => {
-    const rows = await query<{
-      entity_kind: 'country' | 'person';
-      entity_code: string;
-      entity_country: string | null;
-      month: string;
-      stance: number | null;
-      confidence: string | null;
-      tone: string | null;
-      n_headlines: number;
-    }>(
-      `SELECT entity_kind, entity_code, entity_country,
-              TO_CHAR(month, 'YYYY-MM') AS month,
-              stance, confidence, tone, n_headlines
-       FROM outlet_entity_stance
-       WHERE outlet_name = $1
-       ORDER BY month, entity_code`,
+  return cached(`outletStanceTimeline:${feedName}`, 12 * 3600, async () => {
+    const rows = await query<{ items: OutletStanceTimelineRow[] | null }>(
+      `SELECT view->'stance_timeline' AS items
+         FROM mv_outlet_landing WHERE feed_name = $1`,
       [feedName]
     );
-    return rows.map(r => ({
-      entity_kind: r.entity_kind,
-      entity_code: r.entity_code,
-      entity_country: r.entity_country,
-      month: r.month,
-      stance: r.stance,
-      confidence:
-        r.confidence === 'low' || r.confidence === 'medium' || r.confidence === 'high'
-          ? r.confidence
-          : null,
-      tone: r.tone,
-      n_headlines: r.n_headlines,
-    }));
+    return rows[0]?.items || [];
   });
 }
 
@@ -1380,58 +1311,13 @@ export interface OutletEntityDailyRow {
 export async function getOutletEntityDailyVolume(
   feedName: string
 ): Promise<OutletEntityDailyRow[]> {
-  return cached(`outletEntityDaily:${feedName}`, 21600, async () => {
-    const rows = await query<{
-      entity_kind: 'country' | 'person';
-      entity_code: string;
-      day: string;
-      n: number;
-    }>(
-      `WITH stance_entities AS (
-         SELECT DISTINCT entity_kind, entity_code
-         FROM outlet_entity_stance
-         WHERE outlet_name = $1
-       ),
-       country_days AS (
-         SELECT 'country'::text AS entity_kind,
-                je.value AS entity_code,
-                t.pubdate_utc::date::text AS day,
-                COUNT(*)::int AS n
-         FROM titles_v3 t
-         JOIN title_labels tl ON tl.title_id = t.id
-         CROSS JOIN LATERAL jsonb_each_text(tl.entity_countries) je
-         WHERE t.publisher_name = $1
-           AND je.value IN (
-             SELECT entity_code FROM stance_entities WHERE entity_kind = 'country'
-           )
-         GROUP BY je.value, t.pubdate_utc::date
-       ),
-       person_days AS (
-         SELECT 'person'::text AS entity_kind,
-                p AS entity_code,
-                t.pubdate_utc::date::text AS day,
-                COUNT(*)::int AS n
-         FROM titles_v3 t
-         JOIN title_labels tl ON tl.title_id = t.id
-         CROSS JOIN LATERAL unnest(tl.persons) p
-         WHERE t.publisher_name = $1
-           AND p IN (
-             SELECT entity_code FROM stance_entities WHERE entity_kind = 'person'
-           )
-         GROUP BY p, t.pubdate_utc::date
-       )
-       SELECT * FROM country_days
-       UNION ALL
-       SELECT * FROM person_days
-       ORDER BY day, entity_kind, entity_code`,
+  return cached(`outletEntityDaily:${feedName}`, 12 * 3600, async () => {
+    const rows = await query<{ items: OutletEntityDailyRow[] | null }>(
+      `SELECT view->'entity_daily' AS items
+         FROM mv_outlet_landing WHERE feed_name = $1`,
       [feedName]
     );
-    return rows.map(r => ({
-      entity_kind: r.entity_kind,
-      entity_code: r.entity_code,
-      day: r.day,
-      n: r.n,
-    }));
+    return rows[0]?.items || [];
   });
 }
 
@@ -1453,56 +1339,20 @@ export async function getOutletMinorEntities(
   minTotal: number = 5,
   limit: number = 50
 ): Promise<OutletMinorEntity[]> {
+  // Materializer hard-codes minTotal=5 and limit=50 (matches the page's
+  // call site). If a future caller needs different thresholds, fall back
+  // to a live query — but no caller does today.
+  void minTotal;
   return cached(
     `outletMinorEntities:${feedName}:${minTotal}:${limit}`,
-    21600,
+    12 * 3600,
     async () => {
-      const rows = await query<OutletMinorEntity>(
-        `WITH stance_entities AS (
-           SELECT DISTINCT entity_kind, entity_code
-           FROM outlet_entity_stance
-           WHERE outlet_name = $1
-         ),
-         country_totals AS (
-           SELECT 'country'::text AS entity_kind,
-                  je.value AS entity_code,
-                  COUNT(*)::int AS total
-           FROM titles_v3 t
-           JOIN title_labels tl ON tl.title_id = t.id
-           CROSS JOIN LATERAL jsonb_each_text(tl.entity_countries) je
-           WHERE t.publisher_name = $1
-           GROUP BY je.value
-         ),
-         person_totals AS (
-           SELECT 'person'::text AS entity_kind,
-                  p AS entity_code,
-                  COUNT(*)::int AS total
-           FROM titles_v3 t
-           JOIN title_labels tl ON tl.title_id = t.id
-           CROSS JOIN LATERAL unnest(tl.persons) p
-           WHERE t.publisher_name = $1
-           GROUP BY p
-         ),
-         all_totals AS (
-           SELECT entity_kind, entity_code, total FROM country_totals
-           UNION ALL
-           SELECT entity_kind, entity_code, total FROM person_totals
-         )
-         SELECT a.entity_kind, a.entity_code, a.total
-         FROM all_totals a
-         LEFT JOIN stance_entities s
-           ON s.entity_kind = a.entity_kind AND s.entity_code = a.entity_code
-         WHERE s.entity_code IS NULL
-           AND a.total >= $2
-         ORDER BY a.total DESC
-         LIMIT $3`,
-        [feedName, minTotal, limit]
+      const rows = await query<{ items: OutletMinorEntity[] | null }>(
+        `SELECT view->'minor_entities' AS items
+           FROM mv_outlet_landing WHERE feed_name = $1`,
+        [feedName]
       );
-      return rows.map(r => ({
-        entity_kind: r.entity_kind,
-        entity_code: r.entity_code,
-        total: r.total,
-      }));
+      return (rows[0]?.items || []).slice(0, limit);
     }
   );
 }
@@ -1519,22 +1369,13 @@ export interface OutletTrackTimelineRow {
 export async function getOutletTrackTimeline(
   feedName: string
 ): Promise<OutletTrackTimelineRow[]> {
-  return cached(`outletTrackTimeline:${feedName}`, 21600, async () => {
-    const rows = await query<{
-      month: string;
-      stats: { title_count: number; track_distribution: Record<string, number> };
-    }>(
-      `SELECT TO_CHAR(month, 'YYYY-MM') AS month, stats
-       FROM mv_publisher_stats_monthly
-       WHERE feed_name = $1
-       ORDER BY month`,
+  return cached(`outletTrackTimeline:${feedName}`, 12 * 3600, async () => {
+    const rows = await query<{ items: OutletTrackTimelineRow[] | null }>(
+      `SELECT view->'track_timeline' AS items
+         FROM mv_outlet_landing WHERE feed_name = $1`,
       [feedName]
     );
-    return rows.map(r => ({
-      month: r.month,
-      title_count: r.stats.title_count,
-      track_distribution: r.stats.track_distribution || {},
-    }));
+    return rows[0]?.items || [];
   });
 }
 
@@ -1588,11 +1429,18 @@ export async function getOutletMonthlyMapCentroids(
 }
 
 export async function getPublisherStats(feedName: string): Promise<PublisherStats | null> {
-  const rows = await query<{ stats: PublisherStats }>(
-    'SELECT stats FROM mv_publisher_stats WHERE feed_name = $1',
-    [feedName]
-  );
-  return rows[0]?.stats || null;
+  // Sliced from mv_outlet_landing.view->'lifetime_stats'. Same payload as
+  // mv_publisher_stats (the materializer reads from there), but folded
+  // into the per-outlet blob so all of /sources/[slug]'s data comes from
+  // a single MV row.
+  return cached(`publisherStats:${feedName}`, 12 * 3600, async () => {
+    const rows = await query<{ stats: PublisherStats | null }>(
+      `SELECT view->'lifetime_stats' AS stats
+         FROM mv_outlet_landing WHERE feed_name = $1`,
+      [feedName]
+    );
+    return rows[0]?.stats || null;
+  });
 }
 
 // D-071: getPublisherStance + getCentroidMediaLens + MediaLens interfaces
@@ -1650,7 +1498,7 @@ export async function getCentroidDeviationsForMonth(
 // deleted). Replaced by the new outlet stance matrix.
 
 export async function getAllPublisherStats(): Promise<Record<string, PublisherStats>> {
-  return cached('publisher-stats:all', 3600, async () => {
+  return cached('publisher-stats:all', 12 * 3600, async () => {
     const rows = await query<{ feed_name: string; stats: PublisherStats }>(
       'SELECT feed_name, stats FROM mv_publisher_stats'
     );
