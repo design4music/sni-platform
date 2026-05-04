@@ -225,10 +225,19 @@ NGRAM_STOPWORDS = frozenset(
 )
 
 
+# `industries` is intentionally excluded — it's a categorical bucket
+# (AI / ENERGY / IT_SOFTWARE / FINANCE / DEFENSE / ...) that every title
+# in a topic shares, so single-link merging via industries chains
+# unrelated stories together (e.g., Apple earnings + ChatGPT + Pentagon AI
+# deals all merged via industries:AI). Sector classification still happens
+# downstream via track/sector/subject. Dropped 2026-05-04.
+DISCRIMINATING_SIG_TYPES = ("persons", "orgs", "places", "named_events")
+
+
 def _extract_discriminating_entities(title: dict) -> set:
     """All entity tokens minus high-frequency persons/orgs (TRUMP, NATO, ...)."""
     entities = set()
-    for sig_type in ("persons", "orgs", "places", "named_events", "industries"):
+    for sig_type in DISCRIMINATING_SIG_TYPES:
         for v in title.get(sig_type) or []:
             normalized = v.upper() if sig_type == "persons" else v
             if sig_type == "persons" and normalized in HIGH_FREQ_PERSONS:
@@ -251,11 +260,34 @@ def _compute_ngrams(titles: list) -> set:
     return grams
 
 
+# Strong-entity rule: bridge entity must appear in >= STRONG_MIN titles
+# of each non-singleton cluster. Singletons keep "any entity bridges"
+# behavior so initial pairs can still merge. This kills the pathological
+# case where ONE roundup-style title (e.g., "Iran-war: Merz-Trump feud,
+# King Charles in USA, UAE leaves OPEC") chains every Charles story to
+# every Merz story via that single multi-topic headline.
+STRONG_ENTITY_MIN = 2
+
+
+def _strong_entities(entity_counts: Counter, n_titles: int) -> set:
+    """Entities present in >= STRONG_ENTITY_MIN titles. Singletons return
+    everything so initial seed merges still work."""
+    if n_titles <= 1:
+        return set(entity_counts.keys())
+    return {e for e, c in entity_counts.items() if c >= STRONG_ENTITY_MIN}
+
+
 def _can_merge(a: dict, b: dict) -> bool:
-    """Two cluster-dicts can merge if they share at least one entity, OR
+    """Two cluster-dicts can merge if they share at least one STRONG entity
+    (present in >= STRONG_ENTITY_MIN titles of each non-singleton side), OR
     (when at least one side has no entities) at least one n-gram."""
-    if a["entities"] and b["entities"]:
-        return bool(a["entities"] & b["entities"])
+    a_counts = a["entity_counts"]
+    b_counts = b["entity_counts"]
+    if a_counts and b_counts:
+        a_strong = _strong_entities(a_counts, len(a["titles"]))
+        b_strong = _strong_entities(b_counts, len(b["titles"]))
+        if a_strong & b_strong:
+            return True
     # N-gram fallback: one or both sides have no discriminating entities
     if a.get("ngrams") is None:
         a["ngrams"] = _compute_ngrams(a["titles"])
@@ -267,17 +299,20 @@ def _can_merge(a: dict, b: dict) -> bool:
 
 
 def _single_link_by_entity(titles: list) -> list:
-    """Greedy single-link clustering on entity overlap.
+    """Greedy single-link clustering on STRONG entity overlap.
 
-    Each title starts as its own cluster. Clusters merge if they share at least
-    one entity. Iterates until no more merges happen.
+    Each title starts as its own cluster. Clusters merge if they share at
+    least one entity that is "strong" in both — present in >= 2 titles per
+    side (singletons get a pass; their lone entity counts). Iterates
+    until no more merges happen.
     """
     clusters = []
     for t in titles:
+        ents = _extract_discriminating_entities(t)
         clusters.append(
             {
                 "titles": [t],
-                "entities": _extract_discriminating_entities(t),
+                "entity_counts": Counter(ents),
                 "ngrams": None,
             }
         )
@@ -291,7 +326,7 @@ def _single_link_by_entity(titles: list) -> list:
             while j < len(clusters):
                 if _can_merge(clusters[i], clusters[j]):
                     clusters[i]["titles"].extend(clusters[j]["titles"])
-                    clusters[i]["entities"] |= clusters[j]["entities"]
+                    clusters[i]["entity_counts"] += clusters[j]["entity_counts"]
                     if clusters[j].get("ngrams"):
                         if clusters[i].get("ngrams") is None:
                             clusters[i]["ngrams"] = set()
@@ -312,7 +347,7 @@ def _pick_dominant_entity(titles: list) -> str:
     """
     counter = Counter()
     for t in titles:
-        for sig_type in ("persons", "orgs", "places", "named_events", "industries"):
+        for sig_type in DISCRIMINATING_SIG_TYPES:
             for v in t.get(sig_type) or []:
                 normalized = v.upper() if sig_type == "persons" else v
                 if sig_type == "persons" and normalized in HIGH_FREQ_PERSONS:
@@ -607,12 +642,12 @@ def _merge_day_clusters(day_clusters: list) -> list:
             continue
         merged = {
             "titles": [],
-            "entities": set(),
+            "entity_counts": Counter(),
             "ngrams": None,
         }
         for c in members:
             merged["titles"].extend(c["titles"])
-            merged["entities"] |= c.get("entities") or set()
+            merged["entity_counts"] += c.get("entity_counts") or Counter()
         out.append(merged)
     return out
 
