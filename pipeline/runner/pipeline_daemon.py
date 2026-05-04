@@ -928,6 +928,19 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_signal_pages(self):
+        """Materialize signal category + detail blobs.
+
+        Backs /signals, /signals/[type], /signals/[type]/[value]. Two
+        phases: 7 category rows (top 25 per type), then ~175 detail
+        rows (the top 25 from each category). Long-tail signal values
+        fall back to the live query at request time. Distinct from
+        run_materialize_signals (which builds mv_centroid_signals).
+        """
+        from pipeline.phase_4.materialize_signals import materialize
+
+        materialize()
+
     def run_match_narratives(self):
         """Match events to strategic narratives (mechanical scoring)."""
         from pipeline.phase_4.match_narratives import match_events
@@ -1324,6 +1337,15 @@ class PipelineDaemon:
                     self.run_materialize_outlet_landing,
                 ),
                 600,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2j: Signal Pages",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2j: Signal Pages",
+                    self.run_materialize_signal_pages,
+                ),
+                900,
             )
             self.last_run["clustering"] = time.time()
             self._save_last_run("clustering")

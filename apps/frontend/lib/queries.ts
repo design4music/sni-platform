@@ -1602,7 +1602,19 @@ export async function getSignalStats(
   month?: string,
 ): Promise<SignalDetailStats> {
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
-  return cached(`signal-stats:${type}:${value}:${month || 'rolling'}`, 3600, async () => {
+  return cached(`signal-stats:${type}:${value}:${month || 'rolling'}`, 12 * 3600, async () => {
+    // MV first — materialized for the top 25 values per type.
+    if (!month) {
+      const mvRows = await query<{ stats: SignalDetailStats | null }>(
+        `SELECT view->'stats' AS stats
+           FROM mv_signal_detail
+          WHERE signal_type = $1 AND value = $2 AND period = 'rolling'`,
+        [type, value]
+      );
+      if (mvRows[0]?.stats) return mvRows[0].stats;
+    }
+
+    // Long-tail fallback (or per-month variant): live query.
     const dr = signalDateRange(month);
     const vi = dr.nextIdx;
     const params = [...dr.params, value];
@@ -1653,7 +1665,19 @@ export async function getRelationshipClusters(
   locale?: string,
 ): Promise<RelationshipCluster[]> {
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
-  return cached(`signal-relationships:${type}:${value}:${month || 'rolling'}:${locale || 'en'}`, 3600, async () => {
+  return cached(`signal-relationships:${type}:${value}:${month || 'rolling'}:${locale || 'en'}`, 12 * 3600, async () => {
+    // MV first — materialized for the top 25 values per type. Materializer
+    // uses EN title fallback only; long-tail values fall through to live.
+    if (!month) {
+      const mvRows = await query<{ clusters: RelationshipCluster[] | null }>(
+        `SELECT view->'clusters' AS clusters
+           FROM mv_signal_detail
+          WHERE signal_type = $1 AND value = $2 AND period = 'rolling'`,
+        [type, value]
+      );
+      if (mvRows[0]?.clusters) return mvRows[0].clusters;
+    }
+
     const dr = signalDateRange(month);
     const vi = dr.nextIdx;
     const params = [...dr.params, value];
@@ -1763,119 +1787,44 @@ export async function getTopSignalsForCentroid(centroidId: string, month?: strin
   return rows[0]?.signals || [];
 }
 
-/** Weekly heatmap data for top signals (observatory temporal grid) */
+/** Weekly heatmap data for top signals (observatory temporal grid).
+ *  Derives from mv_signal_category — read all 7 rows, take top perType
+ *  of each. The category MV already has the entries with sparklines. */
 export async function getSignalHeatmap(perType: number = 3, month?: string): Promise<SignalCategoryEntry[]> {
-  const dr = signalDateRange(month);
-  return cached(`signal-heatmap:${perType}:${month || 'rolling'}`, 3600, async () => {
-    const nodes = await getTopSignalsAll(perType, month);
-    if (nodes.length === 0) return [];
-
-    // Fetch weekly counts for all top signals across all types
-    const weeklyParts = SIGNAL_COLUMNS.filter(col => {
-      return nodes.some(n => n.signal_type === col);
-    }).map(col => {
-      const vals = nodes.filter(n => n.signal_type === col).map(n => n.value);
-      if (vals.length === 0) return null;
-      return `SELECT '${col}'::text as signal_type, val as value,
-                     date_trunc('week', e.date)::date::text as week,
-                     COUNT(DISTINCT e.id)::int as count
-              FROM events_v3 e
-              JOIN event_v3_titles evt ON evt.event_id = e.id
-              JOIN title_labels tl ON tl.title_id = evt.title_id
-              CROSS JOIN LATERAL unnest(tl.${col}) AS val
-              WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL
-                AND val = ANY($${dr.nextIdx})
-              GROUP BY signal_type, val, week`;
-    }).filter(Boolean);
-
-    if (weeklyParts.length === 0) return nodes.map(n => ({ ...n, weekly: [] }));
-
-    const allValues = nodes.map(n => n.value);
-    const weeklyRows = await query<{ signal_type: string; value: string; week: string; count: number }>(
-      weeklyParts.join(' UNION ALL ') + ' ORDER BY signal_type, value, week',
-      [...dr.params, allValues]
+  void month; // currently always 'rolling'; per-month would key on a different MV row
+  return cached(`signal-heatmap:${perType}:rolling`, 12 * 3600, async () => {
+    const rows = await query<{ signal_type: string; entries: SignalCategoryEntry[] | null }>(
+      `SELECT signal_type, view->'entries' AS entries
+         FROM mv_signal_category WHERE period = 'rolling'
+        ORDER BY signal_type`
     );
-
-    const weeklyMap = new Map<string, SignalWeekly[]>();
-    for (const row of weeklyRows) {
-      const key = `${row.signal_type}:${row.value}`;
-      if (!weeklyMap.has(key)) weeklyMap.set(key, []);
-      weeklyMap.get(key)!.push({ week: row.week, count: row.count });
+    const out: SignalCategoryEntry[] = [];
+    for (const r of rows) {
+      const entries = (r.entries || []).slice(0, perType);
+      out.push(...entries);
     }
-
-    return nodes.map(n => ({
-      ...n,
-      weekly: weeklyMap.get(`${n.signal_type}:${n.value}`) || [],
-    }));
+    return out;
   });
 }
 
-/** Category listing with sparkline data (category page) */
+/** Category listing with sparkline data (category page).
+ *  PK lookup on mv_signal_category. Materializer caps at 25 entries; the
+ *  page's `limit` is sliced from that. */
 export async function getSignalCategoryDetail(
   type: SignalType,
   limit: number = 10,
   month?: string,
 ): Promise<SignalCategoryEntry[]> {
   if (!SIGNAL_COLUMNS_SET.has(type)) throw new Error('Invalid signal type');
-  const dr = signalDateRange(month);
-
-  return cached(`signal-cat:${type}:${limit}:${month || 'rolling'}`, 3600, async () => {
-    // Top signals for this type
-    const top = await query<{ value: string; event_count: number }>(
-      `SELECT val as value, COUNT(DISTINCT evt.event_id)::int as event_count
-       FROM events_v3 e
-       JOIN event_v3_titles evt ON evt.event_id = e.id
-       JOIN title_labels tl ON tl.title_id = evt.title_id
-       CROSS JOIN LATERAL unnest(tl.${type}) AS val
-       WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL
-       GROUP BY val ORDER BY event_count DESC LIMIT ${limit}`,
-      dr.params
+  void month;
+  return cached(`signal-cat:${type}:${limit}:rolling`, 12 * 3600, async () => {
+    const rows = await query<{ entries: SignalCategoryEntry[] | null }>(
+      `SELECT view->'entries' AS entries
+         FROM mv_signal_category
+        WHERE signal_type = $1 AND period = 'rolling'`,
+      [type]
     );
-    if (top.length === 0) return [];
-
-    const values = top.map(t => t.value);
-    const vi = dr.nextIdx;
-
-    // Weekly sparklines + contexts in parallel
-    const [weeklyRows, contextRows] = await Promise.all([
-      query<{ value: string; week: string; count: number }>(
-        `SELECT val as value, date_trunc('week', e.date)::date::text as week, COUNT(DISTINCT e.id)::int as count
-         FROM events_v3 e
-         JOIN event_v3_titles evt ON evt.event_id = e.id
-         JOIN title_labels tl ON tl.title_id = evt.title_id
-         CROSS JOIN LATERAL unnest(tl.${type}) AS val
-         WHERE ${dr.clause} AND e.is_catchall = false AND e.merged_into IS NULL AND val = ANY($${vi})
-         GROUP BY val, week ORDER BY val, week`,
-        [...dr.params, values]
-      ),
-      query<{ value: string; context: string }>(
-        `SELECT value, context FROM monthly_signal_rankings
-         WHERE signal_type = $1 AND value = ANY($2)
-         ORDER BY month DESC`,
-        [type, values]
-      ),
-    ]);
-
-    // Group weekly data by signal value
-    const weeklyMap = new Map<string, SignalWeekly[]>();
-    for (const row of weeklyRows) {
-      if (!weeklyMap.has(row.value)) weeklyMap.set(row.value, []);
-      weeklyMap.get(row.value)!.push({ week: row.week, count: row.count });
-    }
-
-    // Index contexts (case-insensitive)
-    const contextMap = new Map<string, string>();
-    for (const row of contextRows) {
-      contextMap.set(row.value.toLowerCase(), row.context);
-    }
-
-    return top.map(t => ({
-      signal_type: type,
-      value: t.value,
-      event_count: t.event_count,
-      context: contextMap.get(t.value.toLowerCase()),
-      weekly: weeklyMap.get(t.value) || [],
-    }));
+    return (rows[0]?.entries || []).slice(0, limit);
   });
 }
 
