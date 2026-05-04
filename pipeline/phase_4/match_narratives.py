@@ -348,10 +348,17 @@ def ctm_structural_match(cur, narratives):
                     )
             continue
 
-        # Forward: protagonist centroid -> bilateral with related
+        # Forward: protagonist centroid -> bilateral with related.
+        # Keyword content gate applied (mirrors posture path) — bilateral
+        # structural alone is too noisy (every RU+UA event matched the
+        # "Russia protects Russian-speakers" narrative regardless of what
+        # it was actually about). Require >= 1 narrative keyword in the
+        # event's title or summary.
+        if not nar["keywords"]:
+            continue
         cur.execute(
             """
-            SELECT e.id AS event_id, e.title, e.bucket_key, c.centroid_id
+            SELECT e.id AS event_id, e.title, e.summary, e.bucket_key, c.centroid_id
             FROM events_v3 e
             JOIN ctm c ON c.id = e.ctm_id
             WHERE c.centroid_id = %s
@@ -364,6 +371,16 @@ def ctm_structural_match(cur, narratives):
             [nar["actor_centroid"], track_list, related],
         )
         for ev in cur.fetchall():
+            text = ((ev["title"] or "") + " " + (ev["summary"] or "")).lower()
+            matched = []
+            for kw in nar["keywords"]:
+                if " " in kw:
+                    if all(w in text for w in kw.split()):
+                        matched.append(kw)
+                elif kw in text:
+                    matched.append(kw)
+            if not matched:
+                continue
             key = (ev["event_id"], nar["id"])
             links[key] = (
                 0.85,
@@ -371,13 +388,15 @@ def ctm_structural_match(cur, narratives):
                     "method": "ctm_structural",
                     "centroid": ev["centroid_id"],
                     "bucket": ev["bucket_key"],
+                    "matched_keywords": matched,
                 },
             )
 
-        # Reverse: related centroids -> bilateral with protagonist
+        # Reverse: related centroids -> bilateral with protagonist.
+        # Same keyword gate as forward.
         cur.execute(
             """
-            SELECT e.id AS event_id, e.title, e.bucket_key, c.centroid_id
+            SELECT e.id AS event_id, e.title, e.summary, e.bucket_key, c.centroid_id
             FROM events_v3 e
             JOIN ctm c ON c.id = e.ctm_id
             WHERE c.centroid_id = ANY(%s)
@@ -390,6 +409,16 @@ def ctm_structural_match(cur, narratives):
             [related, track_list, nar["actor_centroid"]],
         )
         for ev in cur.fetchall():
+            text = ((ev["title"] or "") + " " + (ev["summary"] or "")).lower()
+            matched = []
+            for kw in nar["keywords"]:
+                if " " in kw:
+                    if all(w in text for w in kw.split()):
+                        matched.append(kw)
+                elif kw in text:
+                    matched.append(kw)
+            if not matched:
+                continue
             key = (ev["event_id"], nar["id"])
             if key not in links:
                 links[key] = (
@@ -398,6 +427,7 @@ def ctm_structural_match(cur, narratives):
                         "method": "ctm_reverse",
                         "centroid": ev["centroid_id"],
                         "bucket": ev["bucket_key"],
+                        "matched_keywords": matched,
                     },
                 )
 
