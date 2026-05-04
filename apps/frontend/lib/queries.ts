@@ -1073,55 +1073,17 @@ export async function getOutletStance(
   feedName: string,
   month: string  // 'YYYY-MM'
 ): Promise<OutletStanceEntity[]> {
-  const monthStart = month.length === 7 ? `${month}-01` : month;
-  return cached(`outletStance:${feedName}:${monthStart}`, 21600, async () => {
-    const rows = await query<{
-      entity_kind: 'country' | 'person';
-      entity_code: string;
-      entity_country: string | null;
-      n_headlines: number;
-      stance: number | null;
-      confidence: string | null;
-      tone: string | null;
-      patterns: string[] | null;
-      caveats: string | null;
-      evidence: OutletStanceEvidence[] | null;
-    }>(
-      `SELECT o.entity_kind, o.entity_code, o.entity_country, o.n_headlines,
-              o.stance, o.confidence, o.tone,
-              o.patterns, o.caveats,
-              COALESCE(
-                (SELECT jsonb_agg(jsonb_build_object(
-                          'title_id', t.id::text,
-                          'language', t.detected_language,
-                          'title_display', t.title_display,
-                          'url_gnews', t.url_gnews
-                        ) ORDER BY array_position(o.evidence_title_ids, t.id))
-                 FROM unnest(o.evidence_title_ids) tid
-                 JOIN titles_v3 t ON t.id = tid),
-                '[]'::jsonb
-              ) AS evidence
-       FROM outlet_entity_stance o
-       WHERE o.outlet_name = $1
-         AND o.month = $2::date
-       ORDER BY o.n_headlines DESC`,
-      [feedName, monthStart]
+  // Sliced from mv_outlet_landing.view->'stance_by_month'->month. The
+  // materializer pre-assembles evidence-title objects (was a per-row
+  // unnest+JOIN against titles_v3 in the live query).
+  const monthKey = month.length === 7 ? month : month.slice(0, 7);
+  return cached(`outletStance:${feedName}:${monthKey}`, 12 * 3600, async () => {
+    const rows = await query<{ items: OutletStanceEntity[] | null }>(
+      `SELECT view->'stance_by_month'->$2 AS items
+         FROM mv_outlet_landing WHERE feed_name = $1`,
+      [feedName, monthKey]
     );
-    return rows.map(r => ({
-      entity_kind: r.entity_kind,
-      entity_code: r.entity_code,
-      entity_country: r.entity_country,
-      n_headlines: r.n_headlines,
-      stance: r.stance,
-      confidence:
-        r.confidence === 'low' || r.confidence === 'medium' || r.confidence === 'high'
-          ? r.confidence
-          : null,
-      tone: r.tone,
-      patterns: Array.isArray(r.patterns) ? r.patterns : [],
-      caveats: r.caveats,
-      evidence: r.evidence || [],
-    }));
+    return rows[0]?.items || [];
   });
 }
 
@@ -1258,12 +1220,14 @@ export async function getPublisherStatsMonthly(
   month: string  // 'YYYY-MM' or 'YYYY-MM-DD'
 ): Promise<PublisherStatsMonthly | null> {
   const monthStart = month.length === 7 ? `${month}-01` : month;
-  const rows = await query<{ stats: PublisherStatsMonthly }>(
-    `SELECT stats FROM mv_publisher_stats_monthly
-     WHERE feed_name = $1 AND month = $2::date`,
-    [feedName, monthStart]
-  );
-  return rows[0]?.stats || null;
+  return cached(`publisherStatsMonthly:${feedName}:${monthStart}`, 12 * 3600, async () => {
+    const rows = await query<{ stats: PublisherStatsMonthly }>(
+      `SELECT stats FROM mv_publisher_stats_monthly
+       WHERE feed_name = $1 AND month = $2::date`,
+      [feedName, monthStart]
+    );
+    return rows[0]?.stats || null;
+  });
 }
 
 /** Cross-month stance timeline for an outlet. Returns one row per

@@ -328,6 +328,64 @@ def fetch_minor_entities(cur, feed_name):
     ]
 
 
+def fetch_stance_by_month_all(cur):
+    """Bulk: per-(outlet, month, entity) stance row WITH evidence title
+    objects assembled. Single query for all outlets — cheaper than per-
+    outlet on Render where each round-trip costs ~10ms.
+
+    Returns dict[outlet_name][month_str] -> [OutletStanceEntity, ...]."""
+    cur.execute(
+        """SELECT o.outlet_name,
+                  TO_CHAR(o.month, 'YYYY-MM') AS month,
+                  o.entity_kind, o.entity_code, o.entity_country,
+                  o.n_headlines, o.stance, o.confidence, o.tone,
+                  o.patterns, o.caveats,
+                  COALESCE(
+                    (SELECT jsonb_agg(jsonb_build_object(
+                              'title_id', t.id::text,
+                              'language', t.detected_language,
+                              'title_display', t.title_display,
+                              'url_gnews', t.url_gnews
+                            ) ORDER BY array_position(o.evidence_title_ids, t.id))
+                     FROM unnest(o.evidence_title_ids) tid
+                     JOIN titles_v3 t ON t.id = tid),
+                    '[]'::jsonb
+                  ) AS evidence
+             FROM outlet_entity_stance o
+            ORDER BY o.outlet_name, o.month, o.n_headlines DESC"""
+    )
+    out = {}
+    for row in cur.fetchall():
+        (
+            outlet,
+            month,
+            ek,
+            ec,
+            ecn,
+            n,
+            stance,
+            conf,
+            tone,
+            patterns,
+            caveats,
+            evidence,
+        ) = row
+        entity = {
+            "entity_kind": ek,
+            "entity_code": ec,
+            "entity_country": ecn,
+            "n_headlines": int(n),
+            "stance": float(stance) if stance is not None else None,
+            "confidence": conf if conf in ("low", "medium", "high") else None,
+            "tone": tone,
+            "patterns": list(patterns) if patterns else [],
+            "caveats": caveats,
+            "evidence": evidence or [],
+        }
+        out.setdefault(outlet, {}).setdefault(month, []).append(entity)
+    return out
+
+
 def fetch_siblings(cur, country_code, exclude_feed_name):
     if not country_code:
         return []
@@ -355,7 +413,7 @@ def fetch_siblings(cur, country_code, exclude_feed_name):
     ]
 
 
-def materialize_one(cur, pubs_values, feed):
+def materialize_one(cur, pubs_values, feed, stance_by_month_map):
     name, country_code, slug, language_code, source_domain = feed
     coverage, top_ctms, article_count = fetch_profile(cur, pubs_values, name)
     profile = {
@@ -372,6 +430,7 @@ def materialize_one(cur, pubs_values, feed):
         "lifetime_stats": fetch_lifetime_stats(cur, name),
         "stance_months": fetch_stance_months(cur, name),
         "stance_timeline": fetch_stance_timeline(cur, name),
+        "stance_by_month": stance_by_month_map.get(name, {}),
         "track_timeline": fetch_track_timeline(cur, name),
         "entity_daily": fetch_entity_daily(cur, name),
         "minor_entities": fetch_minor_entities(cur, name),
@@ -414,14 +473,16 @@ def materialize(max_age_hours=DEFAULT_MAX_AGE_HOURS, force=False):
             feeds = fetch_active_feeds(cur)
             feed_names = [f[0] for f in feeds]
             pubs_values = build_pubs_cte(cur, pairs, feed_names)
+            stance_by_month_map = fetch_stance_by_month_all(cur)
             print(
-                "Active feeds: %d, publisher_map pairs: %d" % (len(feeds), len(pairs))
+                "Active feeds: %d, publisher_map pairs: %d, stance outlets: %d"
+                % (len(feeds), len(pairs), len(stance_by_month_map))
             )
 
             done = 0
             batch = []
             for feed in feeds:
-                view = materialize_one(cur, pubs_values, feed)
+                view = materialize_one(cur, pubs_values, feed, stance_by_month_map)
                 batch.append((feed[0], view))
                 if len(batch) >= BATCH_SIZE:
                     upsert_batch(cur, batch)
