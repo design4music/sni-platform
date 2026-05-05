@@ -227,11 +227,17 @@ def _derive_protagonist_prefix(actor_centroid, actor_prefixes=None):
 
 
 def load_narratives(cur):
-    """Load active strategic narratives with protagonist prefix and related centroids."""
+    """Load active strategic narratives with protagonist prefix and related centroids.
+
+    Multi-actor coalitions: a narrative can belong to several actor centroids
+    (e.g., "Russia is existential threat" is held by US + EU + NATO + Baltic +
+    Nordic). The matcher treats each actor in the coalition as a valid forward
+    home centroid; bucket on related_centroids.
+    """
     cur.execute(
         """
         SELECT id, keywords, action_classes, actor_prefixes, actor_types, domains,
-               actor_centroid, related_centroids
+               actor_centroid, actor_centroids, related_centroids
         FROM strategic_narratives
         WHERE is_active = true
         """
@@ -244,23 +250,31 @@ def load_narratives(cur):
         prefixes = list(r["actor_prefixes"] or [])
         protagonist = _derive_protagonist_prefix(r["actor_centroid"], prefixes)
 
+        # Coalition actors. Falls back to single actor_centroid for legacy rows.
+        coalition = list(r["actor_centroids"] or [])
+        if not coalition and r["actor_centroid"]:
+            coalition = [r["actor_centroid"]]
+        actor_set = set(coalition)
+
         # Derive related centroids from non-protagonist prefixes
         related = set(r["related_centroids"] or [])
         for p in prefixes:
             if p != protagonist and p in PREFIX_TO_CENTROID:
                 related.add(PREFIX_TO_CENTROID[p])
 
-        # Also derive from keywords that name countries/orgs
+        # Also derive from keywords that name countries/orgs.
+        # Exclude any centroid already in the coalition (those are protagonists,
+        # not adversaries).
         for kw in r["keywords"] or []:
             kw_upper = kw.upper().replace(" ", "")
             if kw_upper in CENTROID_TO_PREFIX:
                 cent_id = PREFIX_TO_CENTROID.get(CENTROID_TO_PREFIX[kw_upper])
-                if cent_id and cent_id != r["actor_centroid"]:
+                if cent_id and cent_id not in actor_set:
                     related.add(cent_id)
             # Direct keyword -> centroid for common names
             kw_lower = kw.lower()
             for name, cent in KEYWORD_TO_CENTROID.items():
-                if name in kw_lower and cent != r["actor_centroid"]:
+                if name in kw_lower and cent not in actor_set:
                     related.add(cent)
 
         # Map domains to track names
@@ -279,8 +293,9 @@ def load_narratives(cur):
                 "domains": set(r["domains"] or []),
                 "protagonist": protagonist,
                 "is_regional": protagonist is None,
-                "actor_centroid": r["actor_centroid"],
-                "related_centroids": related,
+                "actor_centroid": r["actor_centroid"],  # primary, kept for legacy
+                "actor_centroids": coalition,  # full coalition list
+                "related_centroids": related - actor_set,  # never include own actors
                 "tracks": tracks,
             }
         )
@@ -293,23 +308,26 @@ def load_narratives(cur):
 def ctm_structural_match(cur, narratives):
     """Find events by centroid + track + bilateral bucket.
 
-    For each narrative with an actor_centroid:
-      - Grab events from that centroid in matching tracks
-      - Filter to bilateral events whose bucket_key is a related centroid
-      - Also include domestic events (they're about the protagonist's own actions)
+    For each narrative:
+      - Iterate the coalition (actor_centroids array)
+      - Forward: events in any coalition centroid + track + bucket=any related
+      - Reverse: events in any related centroid + track + bucket=any coalition
+      - Posture (no related): events in any coalition centroid + track + keyword hit
+    Keyword content gate applied to all three paths (Fix #1, May 2026).
     """
     links = {}  # (event_id, narrative_id) -> (confidence, signals)
 
     for nar in narratives:
-        if not nar["actor_centroid"] or not nar["tracks"]:
+        coalition = nar.get("actor_centroids") or []
+        if not coalition or not nar["tracks"]:
             continue
 
         track_list = list(nar["tracks"])
         related = list(nar["related_centroids"])
 
-        # Posture narrative: single-country, no related centroids.
-        # Grab events from protagonist's centroid in matching tracks,
-        # but require at least 1 keyword hit in title+summary to filter noise.
+        # Posture narrative: no related centroids.
+        # Pull events from any coalition centroid in matching tracks; require
+        # >=1 narrative keyword hit in title+summary.
         if not related:
             if not nar["keywords"]:
                 continue
@@ -318,13 +336,13 @@ def ctm_structural_match(cur, narratives):
                 SELECT e.id AS event_id, e.title, e.summary, e.bucket_key, c.centroid_id
                 FROM events_v3 e
                 JOIN ctm c ON c.id = e.ctm_id
-                WHERE c.centroid_id = %s
+                WHERE c.centroid_id = ANY(%s)
                   AND c.track = ANY(%s)
                   AND e.merged_into IS NULL
                   AND e.is_catchall = false
                   AND e.title IS NOT NULL
                 """,
-                [nar["actor_centroid"], track_list],
+                [coalition, track_list],
             )
             for ev in cur.fetchall():
                 text = ((ev["title"] or "") + " " + (ev["summary"] or "")).lower()
@@ -348,12 +366,8 @@ def ctm_structural_match(cur, narratives):
                     )
             continue
 
-        # Forward: protagonist centroid -> bilateral with related.
-        # Keyword content gate applied (mirrors posture path) — bilateral
-        # structural alone is too noisy (every RU+UA event matched the
-        # "Russia protects Russian-speakers" narrative regardless of what
-        # it was actually about). Require >= 1 narrative keyword in the
-        # event's title or summary.
+        # Forward: any coalition centroid -> bilateral with related.
+        # Keyword content gate (Fix #1) applied to all bilateral paths.
         if not nar["keywords"]:
             continue
         cur.execute(
@@ -361,14 +375,14 @@ def ctm_structural_match(cur, narratives):
             SELECT e.id AS event_id, e.title, e.summary, e.bucket_key, c.centroid_id
             FROM events_v3 e
             JOIN ctm c ON c.id = e.ctm_id
-            WHERE c.centroid_id = %s
+            WHERE c.centroid_id = ANY(%s)
               AND c.track = ANY(%s)
               AND e.merged_into IS NULL
               AND e.is_catchall = false
               AND e.title IS NOT NULL
               AND e.bucket_key = ANY(%s)
             """,
-            [nar["actor_centroid"], track_list, related],
+            [coalition, track_list, related],
         )
         for ev in cur.fetchall():
             text = ((ev["title"] or "") + " " + (ev["summary"] or "")).lower()
@@ -392,8 +406,7 @@ def ctm_structural_match(cur, narratives):
                 },
             )
 
-        # Reverse: related centroids -> bilateral with protagonist.
-        # Same keyword gate as forward.
+        # Reverse: related centroids -> bilateral with any coalition member.
         cur.execute(
             """
             SELECT e.id AS event_id, e.title, e.summary, e.bucket_key, c.centroid_id
@@ -404,9 +417,9 @@ def ctm_structural_match(cur, narratives):
               AND e.merged_into IS NULL
               AND e.is_catchall = false
               AND e.title IS NOT NULL
-              AND e.bucket_key = %s
+              AND e.bucket_key = ANY(%s)
             """,
-            [related, track_list, nar["actor_centroid"]],
+            [related, track_list, coalition],
         )
         for ev in cur.fetchall():
             text = ((ev["title"] or "") + " " + (ev["summary"] or "")).lower()
@@ -618,9 +631,15 @@ def match_events(batch_size=2000, dry_run=False, rescore=False):
             if rescore:
                 cur.execute("SELECT COUNT(*) FROM event_strategic_narratives")
                 old_count = cur.fetchone()["count"]
-                print("Rescore mode: clearing %d existing links" % old_count)
-                cur.execute("DELETE FROM event_strategic_narratives")
-                conn.commit()
+                if dry_run:
+                    print(
+                        "Rescore + dry-run: would clear %d existing links "
+                        "(skipped — dry-run is read-only)" % old_count
+                    )
+                else:
+                    print("Rescore mode: clearing %d existing links" % old_count)
+                    cur.execute("DELETE FROM event_strategic_narratives")
+                    conn.commit()
 
             # Strategy 1: CTM structural
             ctm_links = ctm_structural_match(cur, narratives)
