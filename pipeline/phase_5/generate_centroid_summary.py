@@ -46,11 +46,7 @@ TRACK_JSON_KEY = {
 
 def get_conn():
     return psycopg2.connect(
-        host=config.db_host,
-        port=config.db_port,
-        database=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
+        **config.db_connect_kwargs(),
     )
 
 

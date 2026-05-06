@@ -54,11 +54,7 @@ def build_iso_to_centroid_map(conn) -> dict:
 
 def backfill_entity_centroids(batch_size=500, limit=None, dry_run=False):
     conn = psycopg2.connect(
-        host=config.db_host,
-        port=config.db_port,
-        database=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
+        **config.db_connect_kwargs(),
     )
 
     print("Building ISO -> centroid map...")

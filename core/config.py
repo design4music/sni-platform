@@ -154,6 +154,30 @@ class SNIConfig(BaseSettings):
     def database_url(self) -> str:
         return f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
+    def db_connect_kwargs(self) -> dict:
+        """psycopg2.connect kwargs with TCP keepalives.
+
+        keepalives=1 enables socket-level keepalives (off by default on
+        Linux). Without them, half-open connections caused by transient
+        network breaks (load balancer eviction, NAT timeout, brief
+        upstream outage) hang queries for hours waiting on dead sockets
+        — observed on 2026-05-04 with the pipeline daemon, where the
+        ThreadedConnectionPool kept handing out corpses after a network
+        event. The 30s/10s/3 settings detect a dead peer in 60-90s and
+        surface a normal OperationalError instead.
+        """
+        return {
+            "host": self.db_host,
+            "port": self.db_port,
+            "database": self.db_name,
+            "user": self.db_user,
+            "password": self.db_password,
+            "keepalives": 1,
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 3,
+        }
+
     @property
     def pipeline_root_path(self) -> Path:
         """Root directory for pipeline"""

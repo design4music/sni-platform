@@ -47,11 +47,7 @@ def log_llm_call(
 
     try:
         conn = psycopg2.connect(
-            host=config.db_host,
-            port=config.db_port,
-            database=config.db_name,
-            user=config.db_user,
-            password=config.db_password,
+            **config.db_connect_kwargs(),
             connect_timeout=3,
         )
         try:

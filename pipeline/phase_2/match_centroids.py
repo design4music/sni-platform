@@ -219,11 +219,7 @@ def load_taxonomy():
         - substring_patterns: list of (substring, centroid_id) for CJK matching
     """
     conn = psycopg2.connect(
-        host=config.db_host,
-        port=config.db_port,
-        database=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
+        **config.db_connect_kwargs(),
     )
 
     with conn.cursor() as cur:
@@ -388,11 +384,7 @@ def match_title(title_text, taxonomy):
 def process_batch(batch_size=100, max_titles=None):
     """Process titles with batched database updates"""
     conn = psycopg2.connect(
-        host=config.db_host,
-        port=config.db_port,
-        database=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
+        **config.db_connect_kwargs(),
     )
 
     print("Loading taxonomy...")

@@ -19,11 +19,7 @@ from pipeline.phase_1.rss_fetcher import RSSFetcher
 def get_active_feeds(country_code=None):
     """Get all active feeds for ingestion, optionally filtered by country."""
     conn = psycopg2.connect(
-        host=config.db_host,
-        port=config.db_port,
-        database=config.db_name,
-        user=config.db_user,
-        password=config.db_password,
+        **config.db_connect_kwargs(),
     )
 
     try:
