@@ -1,6 +1,10 @@
 # Session Start
 
-**Last refreshed**: 2026-05-01 (April freeze applied — 289/289 CTMs frozen, 6,187 rejected titles purged, 80 small-CTM canned summaries; LLM steps deliberately skipped to keep cost down. D-072 backfill numbers corrected: stance rows are Jan-Apr, not Dec-Mar — earlier docs were off-by-one.)
+**Last refreshed**: 2026-05-06 (daemon resilience hardened — D-073:
+TCP keepalives + pool-reset-on-error + per-slot `daemon_state` health
+metrics, after the 2026-05-04 half-open-connection outage. Frontend
+cache-bust admin endpoint shipped — D-074. See PIPELINE_STATUS.md for
+the operational change.)
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -64,6 +68,18 @@ Sorted by dependency + suggested phasing. None of these is the single
    301 redirect. `noindex` on auth/profile/search/analysis.
    Remaining: Google Search Console submission (one-click),
    optional dynamic OG images, LLM overview for `/trending/v2`.
+
+### Phase 2.5 — Narrative Mapping (NV strategy)
+
+The strategic differentiator. WorldBrief evolves from news aggregator
+to **narrative intelligence platform** — mapping the structure of
+global political narratives as a navigable graph (3-level hierarchy:
+meta → strategic → event). Substrate is current title_labels; matching
+is mechanical for operational narratives + LLM-as-judge for ideological
+ones. Spec: [`docs/Narrative_map_spec.md`](../Narrative_map_spec.md).
+Taxonomy draft v2 at [`docs/narrative_taxonomy.yaml`](../narrative_taxonomy.yaml)
+(9 meta + 59 strategic narratives). Code does not start until taxonomy
+is reviewed and stable.
 
 ### Phase 3 — lighthouse
 
@@ -151,7 +167,10 @@ Recent diagnostic queries established:
   bug also fixed in `5457aed` (dead `geo_energy/_humanitarian/_information`
   consolidated to the four live tracks).
   ([1214106015283570](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214106015283570))
-- **Daemon: persist last_run across restarts**
+- **Daemon: persist last_run across restarts** — CLOSED (was already
+  shipped much earlier; doc was stale). 2026-05-06: daemon further
+  hardened with TCP keepalives, pool reset on exception, and per-slot
+  health columns in `daemon_state` (D-073).
   ([1214103726997112](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214103726997112))
 - **Phase 3.3: rewrite as bulk SQL** — CLOSED in `8c90ce8`
   ([1214111347970773](https://app.asana.com/1/1211666582649030/project/1211666445056038/task/1214111347970773))
@@ -192,6 +211,9 @@ Recent diagnostic queries established:
 ## Recent key commits
 
 ```
+410059b  feat(frontend): admin endpoint to bust in-memory query cache (D-074)
+fa21b1b  fix(daemon): reset connection pool on error + record per-slot health (D-073)
+35c210f  chore(db): centralize psycopg2 connect kwargs + enable TCP keepalives (D-073)
 a34cf63  perf(frontend): extend 6h ISR cache to remaining dynamic pages
 be1ced5  perf(centroid): drop Cartesian-product COUNT in track summary
 da5d5ee  perf(sources): 6h ISR cache + manual revalidation endpoint

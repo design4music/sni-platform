@@ -1,0 +1,572 @@
+# WorldBrief Narrative Taxonomy
+# Status: Draft v2 (2026-03-17)
+#
+# Level 1: Meta Narratives (9) - fundamental models of world order
+# Level 2: Strategic Narratives (59) - persistent explanatory frameworks (5-20yr lifespan)
+# Level 3: Event Narratives - auto-detected (existing stance clustering)
+#
+# Signal fields reference:
+#   actor_prefixes: country codes matching actor field prefixes (e.g., US_ matches US_EXECUTIVE, US_ARMED_FORCES)
+#   actor_types: CONTROLLED_ACTORS from core/ontology.py (institution types)
+#   action_classes: 23 action classes from ELO v2.0 (T1-T7)
+#   domains: 7 domains from ELO v2.0
+#   keywords: lexical anchors for narrative detection (matched against tags, signals, titles)
+
+
+# =============================================================================
+# META NARRATIVES (Level 1)
+# =============================================================================
+
+meta_narratives:
+
+  - id: liberal_international_order
+    name: Liberal International Order
+    description: >
+      Rules, institutions, and norms -- largely shaped by Western powers --
+      are presented as universal and enforced to maintain stability and order.
+    signals:
+      actor_prefixes: [US, EU, UK, FR, DE]
+      actor_types: [IGO, INTERNATIONAL_COURT, STATE_EXECUTIVE]
+      action_classes: [MULTILATERAL_ACTION, ALLIANCE_COORDINATION, SANCTION_ENFORCEMENT, LEGAL_RULING]
+      domains: [FOREIGN_POLICY, GOVERNANCE]
+      keywords: [rules-based order, international law, multilateralism, collective security, democracy, norms, human rights]
+
+  - id: great_power_competition
+    name: Great Power Competition
+    description: >
+      Major powers compete for influence, security, and dominance,
+      shaping global alignments and conflicts.
+    signals:
+      actor_prefixes: [US, CN, RU]
+      actor_types: [STATE_EXECUTIVE, ARMED_FORCES, INTELLIGENCE_SERVICE]
+      action_classes: [MILITARY_OPERATION, STRATEGIC_REALIGNMENT, CAPABILITY_TRANSFER, ECONOMIC_PRESSURE, DIPLOMATIC_PRESSURE]
+      domains: [SECURITY, FOREIGN_POLICY]
+      keywords: [rivalry, deterrence, escalation, strategic competition, arms race, containment]
+
+  - id: plural_world_order
+    name: Plural (Multipolar) World Order
+    description: >
+      Multiple legitimate centers of power, values, and systems
+      coexist without a single dominant hegemon.
+    signals:
+      actor_prefixes: [CN, IN, BR, RU, ZA]
+      actor_types: [IGO, STATE_EXECUTIVE]
+      action_classes: [STRATEGIC_REALIGNMENT, ALLIANCE_COORDINATION, MULTILATERAL_ACTION]
+      domains: [FOREIGN_POLICY, ECONOMY]
+      keywords: [multipolar, BRICS, global south, strategic autonomy, new world order, non-aligned, de-dollarization]
+
+  - id: sovereign_resistance
+    name: Sovereign Resistance
+    description: >
+      National sovereignty and non-interference are primary principles;
+      external influence and imposed norms are resisted.
+    signals:
+      actor_prefixes: [RU, CN, IR, VE, TR]
+      actor_types: [STATE_EXECUTIVE, ARMED_FORCES, POPULATION]
+      action_classes: [INSTITUTIONAL_RESISTANCE, POLITICAL_PRESSURE, DIPLOMATIC_PRESSURE, COLLECTIVE_PROTEST]
+      domains: [GOVERNANCE, FOREIGN_POLICY]
+      keywords: [sovereignty, non-interference, territorial integrity, national interest, autonomy, independence]
+
+  - id: global_justice
+    name: Global Justice / Post-Colonial Order
+    description: >
+      Global inequalities rooted in historical imperialism require
+      redistribution, recognition, and systemic reform.
+    signals:
+      actor_prefixes: [ZA, BR, IN, NG, KE]
+      actor_types: [NGO, IGO, POPULATION, POLITICAL_PARTY]
+      action_classes: [COLLECTIVE_PROTEST, POLITICAL_PRESSURE, MULTILATERAL_ACTION, RESOURCE_ALLOCATION]
+      domains: [SOCIETY, ECONOMY, FOREIGN_POLICY]
+      keywords: [colonialism, inequality, global south, justice, reparations, exploitation, development]
+
+  - id: economic_order
+    name: Economic Order
+    description: >
+      Global trade and integration create interdependence; simultaneously,
+      economic dependencies create vulnerabilities requiring protection.
+    signals:
+      actor_prefixes: [US, CN, EU, JP]
+      actor_types: [CORPORATION, STATE_EXECUTIVE, CENTRAL_BANK, REGULATORY_AGENCY]
+      action_classes: [ECONOMIC_PRESSURE, SANCTION_ENFORCEMENT, RESOURCE_ALLOCATION, REGULATORY_ACTION, ECONOMIC_DISRUPTION]
+      domains: [ECONOMY, TECHNOLOGY]
+      keywords: [trade, globalization, supply chains, decoupling, tariffs, sanctions, industrial policy, economic security]
+
+  - id: security_order
+    name: Security & Conflict Order
+    description: >
+      Armed conflict, terrorism, and military posture shape regional and
+      global security arrangements and humanitarian consequences.
+    signals:
+      actor_prefixes: [US, RU, IL, UA, IR]
+      actor_types: [ARMED_FORCES, ARMED_GROUP, INTELLIGENCE_SERVICE, LAW_ENFORCEMENT]
+      action_classes: [MILITARY_OPERATION, SECURITY_INCIDENT, LAW_ENFORCEMENT_OPERATION, CAPABILITY_TRANSFER]
+      domains: [SECURITY]
+      keywords: [conflict, war, terrorism, defense, military, weapons, nuclear, NATO]
+
+  - id: planetary_governance
+    name: Planetary Risk Governance
+    description: >
+      Global systemic risks (climate, pandemics, AI) require coordinated
+      international governance and collective action.
+    signals:
+      actor_prefixes: [EU, US, CN]
+      actor_types: [IGO, NGO, REGULATORY_AGENCY, STATE_EXECUTIVE]
+      action_classes: [MULTILATERAL_ACTION, POLICY_CHANGE, REGULATORY_ACTION, INFRASTRUCTURE_DEVELOPMENT]
+      domains: [TECHNOLOGY, SOCIETY, ECONOMY]
+      keywords: [climate, pandemic, sustainability, energy transition, emissions, AI governance, global risk]
+
+  - id: information_order
+    name: Information & Narrative Order
+    description: >
+      Control of information, media, and narrative shapes political
+      legitimacy, public opinion, and geopolitical outcomes.
+    signals:
+      actor_prefixes: [US, RU, CN]
+      actor_types: [MEDIA_OUTLET, STATE_EXECUTIVE, INTELLIGENCE_SERVICE, CORPORATION]
+      action_classes: [INFORMATION_INFLUENCE, POLITICAL_PRESSURE, REGULATORY_ACTION]
+      domains: [MEDIA, TECHNOLOGY]
+      keywords: [disinformation, propaganda, censorship, press freedom, social media, information war, narrative]
+
+
+# =============================================================================
+# STRATEGIC NARRATIVES (Level 2)
+# =============================================================================
+#
+# Changes from v1 draft:
+#   Merged: strategic_decoupling + economic_decoupling_us_china -> economic_decoupling
+#   Merged: sanctions_as_norm_enforcement + sanctions_as_economic_tool -> sanctions_regime
+#   Merged: nuclear_deterrence into military_deterrence
+#   Merged: anti_colonial_reparations into global_inequality_critique
+#   Merged: debt_relief_movement into development_justice
+#   Merged: non_aligned_revival into diversified_global_partnerships
+#   Merged: narrative_control_struggles into media_influence_operations
+#   Added: migration_border_security, electoral_democracy, energy_transition_geopolitics
+
+strategic_narratives:
+
+# ---------------------------------------------------------------------------
+# liberal_international_order
+# ---------------------------------------------------------------------------
+
+  - id: rules_based_order_enforcement
+    meta_narrative: liberal_international_order
+    name: Rules-Based Order Enforcement
+    keywords: [rules-based, international order, norms, compliance, enforcement]
+    action_classes: [SANCTION_ENFORCEMENT, MULTILATERAL_ACTION, LEGAL_RULING]
+
+  - id: democracy_promotion
+    meta_narrative: liberal_international_order
+    name: Democracy Promotion
+    keywords: [democracy, democratic values, free elections, democratic transition]
+    action_classes: [POLITICAL_PRESSURE, DIPLOMATIC_PRESSURE, RESOURCE_ALLOCATION]
+
+  - id: human_rights_enforcement
+    meta_narrative: liberal_international_order
+    name: Human Rights Enforcement
+    keywords: [human rights, violations, accountability, tribunal, ICC, genocide]
+    action_classes: [LEGAL_RULING, SANCTION_ENFORCEMENT, DIPLOMATIC_PRESSURE]
+
+  - id: sanctions_regime
+    meta_narrative: liberal_international_order
+    name: Sanctions Regime
+    keywords: [sanctions, asset freeze, embargo, restrictions, compliance]
+    action_classes: [SANCTION_ENFORCEMENT, ECONOMIC_PRESSURE, DIPLOMATIC_PRESSURE]
+
+  - id: collective_security
+    meta_narrative: liberal_international_order
+    name: Collective Security
+    keywords: [collective defense, NATO, Article 5, security guarantee, alliance]
+    action_classes: [ALLIANCE_COORDINATION, MILITARY_OPERATION, CAPABILITY_TRANSFER]
+
+  - id: international_law_supremacy
+    meta_narrative: liberal_international_order
+    name: International Law Supremacy
+    keywords: [international court, ICJ, ICC, jurisdiction, treaty, ruling]
+    action_classes: [LEGAL_RULING, LEGAL_CONTESTATION, MULTILATERAL_ACTION]
+    actor_types: [INTERNATIONAL_COURT, IGO]
+
+  - id: multilateral_problem_solving
+    meta_narrative: liberal_international_order
+    name: Multilateral Problem Solving
+    keywords: [UN, G7, G20, summit, multilateral, resolution, cooperation]
+    action_classes: [MULTILATERAL_ACTION, ALLIANCE_COORDINATION]
+    actor_types: [IGO]
+
+  - id: humanitarian_intervention
+    meta_narrative: liberal_international_order
+    name: Humanitarian Intervention
+    keywords: [intervention, R2P, responsibility to protect, humanitarian corridor, peacekeeping]
+    action_classes: [MILITARY_OPERATION, RESOURCE_ALLOCATION, MULTILATERAL_ACTION]
+
+  - id: electoral_democracy
+    meta_narrative: liberal_international_order
+    name: Electoral Democracy & Democratic Erosion
+    keywords: [election, vote, ballot, democratic backsliding, authoritarianism, opposition, term limit]
+    action_classes: [LEGISLATIVE_DECISION, COLLECTIVE_PROTEST, INSTITUTIONAL_RESISTANCE]
+    domains: [GOVERNANCE]
+
+# ---------------------------------------------------------------------------
+# great_power_competition
+# ---------------------------------------------------------------------------
+
+  - id: us_china_strategic_rivalry
+    meta_narrative: great_power_competition
+    name: US-China Strategic Rivalry
+    keywords: [US-China, rivalry, competition, Taiwan, Indo-Pacific, containment]
+    actor_prefixes: [US, CN]
+    action_classes: [DIPLOMATIC_PRESSURE, ECONOMIC_PRESSURE, MILITARY_OPERATION, CAPABILITY_TRANSFER]
+
+  - id: nato_russia_confrontation
+    meta_narrative: great_power_competition
+    name: NATO-Russia Confrontation
+    keywords: [NATO, Russia, Ukraine, eastern flank, expansion, confrontation]
+    actor_prefixes: [RU, US, UA]
+    action_classes: [MILITARY_OPERATION, ALLIANCE_COORDINATION, CAPABILITY_TRANSFER, STRATEGIC_REALIGNMENT]
+
+  - id: military_deterrence
+    meta_narrative: great_power_competition
+    name: Military Deterrence
+    keywords: [deterrence, nuclear, missile, defense shield, mutually assured, arms control, ICBM]
+    action_classes: [MILITARY_OPERATION, CAPABILITY_TRANSFER, STRATEGIC_REALIGNMENT]
+    actor_types: [ARMED_FORCES]
+
+  - id: strategic_arms_competition
+    meta_narrative: great_power_competition
+    name: Strategic Arms Competition
+    keywords: [arms race, hypersonic, missile, military spending, rearmament, defense budget]
+    action_classes: [CAPABILITY_TRANSFER, RESOURCE_ALLOCATION, INFRASTRUCTURE_DEVELOPMENT]
+    actor_types: [ARMED_FORCES, STATE_EXECUTIVE]
+
+  - id: alliance_bloc_formation
+    meta_narrative: great_power_competition
+    name: Alliance Bloc Formation
+    keywords: [alliance, bloc, AUKUS, Quad, partnership, security pact]
+    action_classes: [ALLIANCE_COORDINATION, STRATEGIC_REALIGNMENT]
+
+  - id: technological_supremacy_race
+    meta_narrative: great_power_competition
+    name: Technological Supremacy Race
+    keywords: [chip war, semiconductor, AI race, tech ban, export controls, 5G]
+    action_classes: [ECONOMIC_PRESSURE, REGULATORY_ACTION, CAPABILITY_TRANSFER]
+    domains: [TECHNOLOGY]
+
+  - id: influence_in_global_south
+    meta_narrative: great_power_competition
+    name: Influence in Global South
+    keywords: [Africa, Latin America, infrastructure, Belt and Road, BRI, development aid, influence]
+    action_classes: [RESOURCE_ALLOCATION, INFRASTRUCTURE_DEVELOPMENT, DIPLOMATIC_PRESSURE]
+
+# ---------------------------------------------------------------------------
+# plural_world_order
+# ---------------------------------------------------------------------------
+
+  - id: rise_of_global_south
+    meta_narrative: plural_world_order
+    name: Rise of Global South
+    keywords: [global south, emerging economies, developing world, southern voice]
+    actor_prefixes: [IN, BR, ZA, NG, ID]
+    action_classes: [STRATEGIC_REALIGNMENT, MULTILATERAL_ACTION]
+
+  - id: brics_expansion
+    meta_narrative: plural_world_order
+    name: BRICS Expansion
+    keywords: [BRICS, BRICS+, expansion, membership, new development bank]
+    action_classes: [ALLIANCE_COORDINATION, STRATEGIC_REALIGNMENT, MULTILATERAL_ACTION]
+
+  - id: de_dollarization
+    meta_narrative: plural_world_order
+    name: De-dollarization
+    keywords: [de-dollarization, yuan, rupee, reserve currency, dollar, SWIFT alternative, currency swap]
+    action_classes: [STRATEGIC_REALIGNMENT, ECONOMIC_PRESSURE]
+    domains: [ECONOMY]
+
+  - id: alternative_global_institutions
+    meta_narrative: plural_world_order
+    name: Alternative Global Institutions
+    keywords: [SCO, AIIB, new development bank, alternative, reform, UN reform, Security Council]
+    action_classes: [MULTILATERAL_ACTION, ALLIANCE_COORDINATION, INSTITUTIONAL_RESISTANCE]
+    actor_types: [IGO]
+
+  - id: strategic_autonomy_europe
+    meta_narrative: plural_world_order
+    name: European Strategic Autonomy
+    keywords: [strategic autonomy, European defense, EU sovereignty, European army, independence]
+    actor_prefixes: [EU, FR, DE]
+    action_classes: [STRATEGIC_REALIGNMENT, ALLIANCE_COORDINATION, CAPABILITY_TRANSFER]
+
+  - id: regional_power_assertion
+    meta_narrative: plural_world_order
+    name: Regional Power Assertion
+    keywords: [regional power, regional leader, sphere of influence, regional order, hegemony]
+    actor_prefixes: [TR, SA, IN, BR, NG]
+    action_classes: [STRATEGIC_REALIGNMENT, DIPLOMATIC_PRESSURE, MILITARY_OPERATION]
+
+  - id: diversified_global_partnerships
+    meta_narrative: plural_world_order
+    name: Diversified Global Partnerships
+    keywords: [non-aligned, multi-alignment, diversification, hedging, strategic partnership, bilateral]
+    action_classes: [STRATEGIC_REALIGNMENT, ALLIANCE_COORDINATION]
+
+# ---------------------------------------------------------------------------
+# sovereign_resistance
+# ---------------------------------------------------------------------------
+
+  - id: anti_interventionism
+    meta_narrative: sovereign_resistance
+    name: Anti-Interventionism
+    keywords: [intervention, interference, regime change, sovereignty violation, meddling]
+    action_classes: [INSTITUTIONAL_RESISTANCE, POLITICAL_PRESSURE, DIPLOMATIC_PRESSURE]
+
+  - id: sanctions_resistance
+    meta_narrative: sovereign_resistance
+    name: Sanctions Resistance
+    keywords: [sanctions evasion, sanctions resistance, workaround, circumvention, self-reliance]
+    action_classes: [INSTITUTIONAL_RESISTANCE, STRATEGIC_REALIGNMENT, ECONOMIC_PRESSURE]
+
+  - id: regime_survival
+    meta_narrative: sovereign_resistance
+    name: Regime Survival
+    keywords: [regime, crackdown, repression, consolidation, purge, stability]
+    action_classes: [LAW_ENFORCEMENT_OPERATION, POLITICAL_PRESSURE, INSTITUTIONAL_RESISTANCE]
+    actor_types: [STATE_EXECUTIVE, INTELLIGENCE_SERVICE, LAW_ENFORCEMENT]
+
+  - id: internal_affairs_protection
+    meta_narrative: sovereign_resistance
+    name: Internal Affairs Protection
+    keywords: [internal affairs, domestic matter, non-interference, foreign agent, NGO restriction]
+    action_classes: [REGULATORY_ACTION, INSTITUTIONAL_RESISTANCE, POLITICAL_PRESSURE]
+
+  - id: territorial_integrity_defense
+    meta_narrative: sovereign_resistance
+    name: Territorial Integrity Defense
+    keywords: [territorial integrity, border, disputed territory, annexation, occupation, separatism]
+    action_classes: [MILITARY_OPERATION, DIPLOMATIC_PRESSURE, LEGAL_CONTESTATION]
+
+  - id: sovereignty_over_norms
+    meta_narrative: sovereign_resistance
+    name: Sovereignty over Norms
+    keywords: [cultural values, Asian values, civilizational, traditional values, sovereignty, Western norms]
+    action_classes: [INSTITUTIONAL_RESISTANCE, POLITICAL_PRESSURE, DIPLOMATIC_PRESSURE]
+
+  - id: migration_border_security
+    meta_narrative: sovereign_resistance
+    name: Migration & Border Security
+    keywords: [migration, immigration, border, asylum, deportation, refugee, wall, illegal crossing]
+    action_classes: [LAW_ENFORCEMENT_OPERATION, POLICY_CHANGE, POLITICAL_PRESSURE]
+    domains: [SOCIETY, GOVERNANCE]
+    actor_types: [LAW_ENFORCEMENT, STATE_EXECUTIVE, POPULATION]
+
+# ---------------------------------------------------------------------------
+# global_justice
+# ---------------------------------------------------------------------------
+
+  - id: global_inequality_critique
+    meta_narrative: global_justice
+    name: Global Inequality Critique
+    keywords: [inequality, gap, poverty, redistribution, exploitation, reparations, colonial legacy]
+    action_classes: [COLLECTIVE_PROTEST, POLITICAL_PRESSURE, MULTILATERAL_ACTION]
+
+  - id: development_justice
+    meta_narrative: global_justice
+    name: Development Justice
+    keywords: [development, aid, debt, IMF, World Bank, structural adjustment, debt relief, forgiveness]
+    action_classes: [RESOURCE_ALLOCATION, MULTILATERAL_ACTION, POLITICAL_PRESSURE]
+
+  - id: climate_justice
+    meta_narrative: global_justice
+    name: Climate Justice
+    keywords: [climate justice, loss and damage, climate finance, polluter pays, adaptation, vulnerability]
+    action_classes: [MULTILATERAL_ACTION, COLLECTIVE_PROTEST, RESOURCE_ALLOCATION]
+
+  - id: resource_redistribution
+    meta_narrative: global_justice
+    name: Resource Redistribution
+    keywords: [resource sovereignty, nationalization, commodity, minerals, land reform, extractivism]
+    action_classes: [POLICY_CHANGE, REGULATORY_ACTION, POLITICAL_PRESSURE]
+
+# ---------------------------------------------------------------------------
+# economic_order
+# ---------------------------------------------------------------------------
+
+  - id: globalization_growth_model
+    meta_narrative: economic_order
+    name: Globalization Growth Model
+    keywords: [globalization, free trade, open markets, WTO, liberalization, growth]
+    action_classes: [REGULATORY_ACTION, MULTILATERAL_ACTION, RESOURCE_ALLOCATION]
+
+  - id: supply_chain_reconfiguration
+    meta_narrative: economic_order
+    name: Supply Chain Reconfiguration
+    keywords: [supply chain, reshoring, nearshoring, friendshoring, resilience, diversification]
+    action_classes: [POLICY_CHANGE, INFRASTRUCTURE_DEVELOPMENT, REGULATORY_ACTION]
+
+  - id: trade_war_dynamics
+    meta_narrative: economic_order
+    name: Trade War Dynamics
+    keywords: [trade war, tariff, retaliation, trade dispute, WTO complaint, dumping]
+    action_classes: [ECONOMIC_PRESSURE, SANCTION_ENFORCEMENT, REGULATORY_ACTION]
+
+  - id: industrial_policy_resurgence
+    meta_narrative: economic_order
+    name: Industrial Policy Resurgence
+    keywords: [industrial policy, subsidy, state aid, national champion, CHIPS Act, IRA]
+    action_classes: [RESOURCE_ALLOCATION, REGULATORY_ACTION, POLICY_CHANGE]
+
+  - id: economic_decoupling
+    meta_narrative: economic_order
+    name: Economic Decoupling
+    keywords: [decoupling, de-risking, tech war, export controls, investment screening, ban]
+    actor_prefixes: [US, CN, EU]
+    action_classes: [ECONOMIC_PRESSURE, REGULATORY_ACTION, SANCTION_ENFORCEMENT]
+
+  - id: strategic_resources_control
+    meta_narrative: economic_order
+    name: Strategic Resources Control
+    keywords: [rare earth, lithium, critical minerals, resource nationalism, commodity, OPEC]
+    action_classes: [REGULATORY_ACTION, ECONOMIC_PRESSURE, RESOURCE_ALLOCATION]
+
+  - id: energy_security
+    meta_narrative: economic_order
+    name: Energy Security
+    keywords: [energy security, oil, gas, LNG, pipeline, energy independence, OPEC]
+    action_classes: [INFRASTRUCTURE_DEVELOPMENT, ECONOMIC_PRESSURE, RESOURCE_ALLOCATION]
+    domains: [ECONOMY]
+
+  - id: monetary_policy_divergence
+    meta_narrative: economic_order
+    name: Monetary Policy & Financial Instability
+    keywords: [interest rate, inflation, central bank, Fed, ECB, financial crisis, debt, currency]
+    action_classes: [POLICY_CHANGE, ECONOMIC_DISRUPTION, REGULATORY_ACTION]
+    actor_types: [CENTRAL_BANK, STATE_EXECUTIVE]
+
+# ---------------------------------------------------------------------------
+# security_order
+# ---------------------------------------------------------------------------
+
+  - id: regional_conflict_escalation
+    meta_narrative: security_order
+    name: Regional Conflict Escalation
+    keywords: [escalation, war, offensive, ceasefire, front line, casualties, invasion]
+    action_classes: [MILITARY_OPERATION, SECURITY_INCIDENT]
+    actor_types: [ARMED_FORCES, ARMED_GROUP]
+
+  - id: indirect_conflict
+    meta_narrative: security_order
+    name: Indirect & Proxy Conflict
+    keywords: [proxy, militia, backed forces, sponsored, indirect, asymmetric, hybrid warfare]
+    action_classes: [CAPABILITY_TRANSFER, MILITARY_OPERATION, SECURITY_INCIDENT]
+    actor_types: [ARMED_GROUP, ARMED_FORCES, INTELLIGENCE_SERVICE]
+
+  - id: counterterrorism
+    meta_narrative: security_order
+    name: Counterterrorism
+    keywords: [terrorism, counterterrorism, extremism, radicalization, ISIS, al-Qaeda, jihadist]
+    action_classes: [MILITARY_OPERATION, LAW_ENFORCEMENT_OPERATION, SECURITY_INCIDENT]
+
+  - id: military_presence_projection
+    meta_narrative: security_order
+    name: Military Presence Projection
+    keywords: [military base, deployment, naval, exercises, force projection, presence]
+    action_classes: [MILITARY_OPERATION, INFRASTRUCTURE_DEVELOPMENT, ALLIANCE_COORDINATION]
+
+  - id: arms_supply_support
+    meta_narrative: security_order
+    name: Arms Supply & Support
+    keywords: [arms deal, military aid, weapons, ammunition, defense contract, arms export]
+    action_classes: [CAPABILITY_TRANSFER, RESOURCE_ALLOCATION]
+
+  - id: cyber_warfare
+    meta_narrative: security_order
+    name: Cyber Warfare & Digital Security
+    keywords: [cyber attack, hacking, ransomware, critical infrastructure, cyber defense, espionage]
+    action_classes: [SECURITY_INCIDENT, MILITARY_OPERATION, INFORMATION_INFLUENCE]
+    domains: [SECURITY, TECHNOLOGY]
+
+# ---------------------------------------------------------------------------
+# planetary_governance
+# ---------------------------------------------------------------------------
+
+  - id: climate_transition
+    meta_narrative: planetary_governance
+    name: Climate Transition
+    keywords: [climate, emissions, net zero, Paris agreement, COP, decarbonization, carbon]
+    action_classes: [MULTILATERAL_ACTION, POLICY_CHANGE, REGULATORY_ACTION]
+
+  - id: pandemic_preparedness
+    meta_narrative: planetary_governance
+    name: Pandemic Preparedness
+    keywords: [pandemic, WHO, outbreak, preparedness, health emergency, treaty, surveillance]
+    action_classes: [MULTILATERAL_ACTION, REGULATORY_ACTION, POLICY_CHANGE]
+
+  - id: global_health_governance
+    meta_narrative: planetary_governance
+    name: Global Health Governance
+    keywords: [WHO, health, vaccine, disease, antimicrobial, global health, access to medicine]
+    action_classes: [MULTILATERAL_ACTION, RESOURCE_ALLOCATION, REGULATORY_ACTION]
+    actor_types: [IGO, NGO]
+
+  - id: carbon_regulation
+    meta_narrative: planetary_governance
+    name: Carbon Regulation
+    keywords: [carbon tax, carbon border, CBAM, ETS, cap and trade, emissions trading]
+    action_classes: [REGULATORY_ACTION, POLICY_CHANGE, ECONOMIC_PRESSURE]
+
+  - id: renewable_energy_shift
+    meta_narrative: planetary_governance
+    name: Renewable Energy Shift
+    keywords: [renewable, solar, wind, green energy, clean energy, hydrogen, battery, EV]
+    action_classes: [INFRASTRUCTURE_DEVELOPMENT, RESOURCE_ALLOCATION, POLICY_CHANGE]
+
+  - id: ai_global_regulation
+    meta_narrative: planetary_governance
+    name: AI Global Regulation
+    keywords: [AI regulation, artificial intelligence, AI safety, AI governance, AI act, algorithm]
+    action_classes: [REGULATORY_ACTION, POLICY_CHANGE, MULTILATERAL_ACTION]
+    domains: [TECHNOLOGY]
+
+  - id: energy_transition_geopolitics
+    meta_narrative: planetary_governance
+    name: Energy Transition Geopolitics
+    keywords: [energy transition, critical minerals, green industrial policy, energy subsidy, grid]
+    action_classes: [INFRASTRUCTURE_DEVELOPMENT, RESOURCE_ALLOCATION, ECONOMIC_PRESSURE]
+    domains: [ECONOMY, TECHNOLOGY]
+
+# ---------------------------------------------------------------------------
+# information_order
+# ---------------------------------------------------------------------------
+
+  - id: disinformation_warfare
+    meta_narrative: information_order
+    name: Disinformation Warfare
+    keywords: [disinformation, fake news, troll farm, bot network, foreign influence, propaganda]
+    action_classes: [INFORMATION_INFLUENCE, SECURITY_INCIDENT]
+    actor_types: [INTELLIGENCE_SERVICE, STATE_EXECUTIVE, MEDIA_OUTLET]
+
+  - id: censorship_vs_free_speech
+    meta_narrative: information_order
+    name: Censorship vs Free Speech
+    keywords: [censorship, free speech, press freedom, journalist, media crackdown, banned]
+    action_classes: [REGULATORY_ACTION, POLITICAL_PRESSURE, LAW_ENFORCEMENT_OPERATION]
+    actor_types: [MEDIA_OUTLET, STATE_EXECUTIVE]
+
+  - id: platform_power_regulation
+    meta_narrative: information_order
+    name: Platform Regulation
+    keywords: [social media, platform, big tech, content moderation, DSA, antitrust, Meta, X, TikTok]
+    action_classes: [REGULATORY_ACTION, LEGAL_RULING, LEGAL_CONTESTATION]
+    actor_types: [CORPORATION, REGULATORY_AGENCY]
+    domains: [TECHNOLOGY, MEDIA]
+
+  - id: information_sovereignty
+    meta_narrative: information_order
+    name: Information Sovereignty
+    keywords: [data sovereignty, internet control, firewall, TikTok ban, data localization, splinternet]
+    action_classes: [REGULATORY_ACTION, POLICY_CHANGE, INSTITUTIONAL_RESISTANCE]
+    domains: [TECHNOLOGY, MEDIA]
+
+  - id: media_influence_operations
+    meta_narrative: information_order
+    name: Media Influence Operations
+    keywords: [influence operation, state media, RT, CGTN, narrative control, soft power, public diplomacy]
+    action_classes: [INFORMATION_INFLUENCE, POLITICAL_PRESSURE, DIPLOMATIC_PRESSURE]
+    actor_types: [MEDIA_OUTLET, STATE_EXECUTIVE, INTELLIGENCE_SERVICE]

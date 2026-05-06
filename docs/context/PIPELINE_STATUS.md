@@ -1,6 +1,8 @@
 # WorldBrief Pipeline Status
 
-**Last updated**: 2026-05-01
+**Last updated**: 2026-05-06 (daemon resilience hardened — D-073;
+frontend cache bust endpoint shipped — D-074. See "Daemon resilience
+note" below.)
 **Live**: https://www.worldbrief.info
 **Branch**: `main` (synced with origin)
 
@@ -39,6 +41,34 @@ Running. Four-slot architecture from
 - **LABELING** (15m): Phase 3.1 (LLM) + 3.2 backfill + 3.3 track assignment
 - **CLUSTERING** (30m): 3.1 day-beat + 3.2 same-day merge + 3.3 promotion + 4.* materialization
 - **ENRICHMENT** (3h): 5.1 event prose (LLM EN+DE) + 5.2 daily briefs (LLM) + 5.3/5.4 narrative matching (LLM) + 5.5 centroid summaries rolling-30d (LLM EN+DE, staleness-gated, budget-capped)
+
+**Daemon resilience note (D-073, 2026-05-06).** After a 2026-05-04
+half-open-connection outage that left the daemon hung for hours, three
+hardenings shipped:
+
+- TCP keepalives on every `psycopg2.connect` call via the new
+  `config.db_connect_kwargs()` helper (30 sites swept).
+- `_reset_pool()` on main-loop exception — broken connections no
+  longer survive into the next cycle; daemon self-heals without
+  needing a redeploy.
+- `daemon_state` extended with `last_duration_ms`, `last_status`,
+  `last_error`. One-query health check:
+
+  ```sql
+  SELECT slot_name, last_run, NOW() - last_run AS staleness,
+         last_duration_ms, last_status, last_error
+  FROM daemon_state ORDER BY slot_name;
+  ```
+
+  Cycle-level errors land in synthetic `slot_name='__cycle_error__'`.
+  Its absence is the green light.
+
+**Frontend cache bust (D-074).** New `POST /api/admin/revalidate-cache`
+endpoint drops the in-memory query cache after manual MV refreshes —
+no Render restart needed. Auth: `x-revalidate-token: $REVALIDATE_API_KEY`,
+optional `{prefix}` body for scoped clears.
+
+---
 
 Recent worker-side optimizations:
 
@@ -156,9 +186,7 @@ Still in `out/beats_reextraction/` (legacy but referenced):
 2. **Trending v2 promotion** — prototype at `/trending/v2` ready for
    review. Next steps: editorial LLM overview (new `global_summaries`
    table mirroring D-065), then swap `/trending` → v2.
-3. **Daemon `last_run` not persisted** — restart fires every slot
-   immediately. Nice-to-have, not urgent.
-4. **Sidebar stance + deviation persist** — currently recomputed, same
+3. **Sidebar stance + deviation persist** — currently recomputed, same
    value across months. Strategic-plan item: persist monthly snapshot
    to a `centroid_monthly_stats` table.
 5. **Dead-code cleanup candidates** — see

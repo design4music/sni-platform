@@ -1122,3 +1122,64 @@ decisions:
            a refresh (rows are partial through 2026-04-25 only).
            If/when this gets wired, also worth a one-time
            catch-up pass on April.
+
+  - id: D-073
+    date: 2026-05-06
+    type: operational
+    status: accepted
+    title: Daemon resilience — TCP keepalives, pool-reset-on-error, per-slot health
+    rationale:
+      - 2026-05-04 outage. Pipeline daemon's Postgres connection died
+        at the network layer (TLS session severed silently); daemon's
+        ThreadedConnectionPool kept handing out the dead connection,
+        so every cycle failed identically. Render logs showed a 2h 39m
+        gap inside a single cycle before "SSL connection has been closed
+        unexpectedly" surfaced — TCP retransmit waiting on a dead peer.
+        Only redeploys recovered. First such incident in 4 months.
+      - Without keepalives, the daemon side has no mechanism to detect
+        a half-open peer; the OS kernel sits on the half-open socket
+        until retransmit timers exhaust (hours). With them, dead peers
+        surface as a normal OperationalError in 60-90s and existing
+        retry paths take over.
+      - Without a pool reset on exception, broken connections survived
+        in the pool across the main-loop's 60s sleep + retry; recovery
+        required a redeploy. Self-healing on connection error was the
+        missing piece.
+      - Without per-slot duration / status columns, diagnosing whether
+        the daemon is healthy required scrolling Render logs by hand.
+    consequences:
+      - core/config.py — new db_connect_kwargs() helper as single source
+        of truth for psycopg2 connect params; includes
+        keepalives=1, keepalives_idle=30, keepalives_interval=10,
+        keepalives_count=3.
+      - 30 connection sites swept (all phase modules, core/llm_logger.py,
+        pipeline/social/social_posting.py) to use **config.db_connect_kwargs().
+      - pipeline_daemon.py — _reset_pool() method called from main-loop
+        except handler; closes pool and reopens fresh.
+      - daemon_state migration (20260506_daemon_state_health.sql)
+        adds last_duration_ms, last_status, last_error columns. Each
+        slot writes its own duration. Cycle-level errors land in
+        synthetic slot_name='__cycle_error__' row.
+      - "Health-at-a-glance query: SELECT slot_name, last_run, NOW()-last_run AS staleness, last_duration_ms, last_status, last_error FROM daemon_state ORDER BY slot_name."
+      - "Behavior change — cycle errors now self-heal silently. The new __cycle_error__ row is the offset (audit trail)."
+      - "Commits — 35c210f (TCP keepalives sweep) + fa21b1b (pool reset + cycle metrics)."
+
+  - id: D-074
+    date: 2026-05-06
+    type: frontend-operational
+    status: accepted
+    title: Admin endpoint to bust in-memory frontend query cache
+    rationale:
+      - apps/frontend/lib/cache.ts wraps DB queries (getCentroidMonthView
+        et al) with a per-process 12h TTL. After force-refreshing mv_*
+        tables on the worker, the frontend keeps serving stale blobs
+        until the TTL expires or the Render frontend service is
+        restarted. The 2026-05-05 manual repair surfaced this gap.
+      - Existing pattern at /api/admin/revalidate-outlets covers
+        outlet-scoped caches only; needed a general bust.
+    consequences:
+      - apps/frontend/lib/cache.ts — invalidateCache() now returns the
+        cleared count; new clearAllCache() helper.
+      - "New route POST /api/admin/revalidate-cache. Auth via header x-revalidate-token (matches REVALIDATE_API_KEY env, same pattern as existing revalidate-outlets endpoint). Optional JSON body {prefix} for scoped clears; empty body clears all."
+      - Replaces "restart Render frontend service" workaround for MV refreshes.
+      - "Commit — 410059b."
