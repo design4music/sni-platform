@@ -23,9 +23,21 @@ export async function cached<T>(
   return value;
 }
 
-/** Remove all entries whose key starts with the given prefix. */
-export function invalidateCache(prefix: string) {
+/** Remove all entries whose key starts with the given prefix. Returns count cleared. */
+export function invalidateCache(prefix: string): number {
+  let cleared = 0;
   for (const key of store.keys()) {
-    if (key.startsWith(prefix)) store.delete(key);
+    if (key.startsWith(prefix)) {
+      store.delete(key);
+      cleared++;
+    }
   }
+  return cleared;
+}
+
+/** Drop every entry. Returns count cleared. */
+export function clearAllCache(): number {
+  const cleared = store.size;
+  store.clear();
+  return cleared;
 }
