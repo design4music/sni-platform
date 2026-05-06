@@ -99,15 +99,13 @@ class PipelineDaemon:
         self.timeout_social = 300  # 5 min for social posting
         self.timeout_purge = 300  # 5 min for daily cleanup
 
-        # Connection pool (minconn=2, maxconn=10)
+        # Connection pool (minconn=2, maxconn=10).
+        # Pool kwargs come from config.db_connect_kwargs() so TCP
+        # keepalives are inherited everywhere — see core/config.py.
         self.pool = ThreadedConnectionPool(
             minconn=2,
             maxconn=10,
-            host=self.config.db_host,
-            port=self.config.db_port,
-            database=self.config.db_name,
-            user=self.config.db_user,
-            password=self.config.db_password,
+            **self.config.db_connect_kwargs(),
         )
 
         # Setup signal handlers
@@ -144,8 +142,21 @@ class PipelineDaemon:
         if restored:
             print("Restored last_run for %d slot(s) from daemon_state" % restored)
 
-    def _save_last_run(self, slot_name: str):
-        """Persist a slot's last_run timestamp. Best-effort."""
+    def _save_last_run(
+        self,
+        slot_name: str,
+        duration_ms: int | None = None,
+        status: str = "ok",
+        error: str | None = None,
+    ):
+        """Persist a slot's last_run + optional health metrics. Best-effort.
+
+        duration_ms / status / last_error feed `daemon_state` columns
+        added in 20260506_daemon_state_health.sql. Older deployments
+        without those columns: the INSERT still works because we name
+        them; the ON CONFLICT update will silently fail and be caught
+        below — daemon keeps running.
+        """
         ts = self.last_run.get(slot_name)
         if not ts:
             return
@@ -153,18 +164,51 @@ class PipelineDaemon:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """INSERT INTO daemon_state (slot_name, last_run, updated_at)
-                         VALUES (%s, to_timestamp(%s), NOW())
+                    """INSERT INTO daemon_state (slot_name, last_run, updated_at,
+                                                  last_duration_ms, last_status, last_error)
+                         VALUES (%s, to_timestamp(%s), NOW(), %s, %s, %s)
                          ON CONFLICT (slot_name) DO UPDATE SET
                            last_run = EXCLUDED.last_run,
-                           updated_at = NOW()""",
-                    (slot_name, ts),
+                           updated_at = NOW(),
+                           last_duration_ms = EXCLUDED.last_duration_ms,
+                           last_status = EXCLUDED.last_status,
+                           last_error = EXCLUDED.last_error""",
+                    (slot_name, ts, duration_ms, status, error),
                 )
             conn.commit()
         except Exception as e:
             print("daemon_state write failed for %s: %s" % (slot_name, e))
         finally:
             self.return_connection(conn)
+
+    def _record_cycle_error(self, err_text: str):
+        """Persist a cycle-level error to daemon_state under the synthetic
+        slot name '__cycle_error__'. Used by the main-loop except handler
+        so the most recent failure is queryable without scraping logs.
+        Best-effort — runs after pool reset, so it should hit a fresh
+        connection. Truncates very long errors to keep the column sane.
+        """
+        conn = None
+        try:
+            conn = self.get_connection()
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO daemon_state (slot_name, last_run, updated_at,
+                                                  last_status, last_error)
+                         VALUES ('__cycle_error__', NOW(), NOW(), 'error', %s)
+                         ON CONFLICT (slot_name) DO UPDATE SET
+                           last_run = NOW(),
+                           updated_at = NOW(),
+                           last_status = 'error',
+                           last_error = EXCLUDED.last_error""",
+                    (err_text[:2000],),
+                )
+            conn.commit()
+        except Exception as e:
+            print("daemon_state error-write failed (non-fatal): %s" % e)
+        finally:
+            if conn is not None:
+                self.return_connection(conn)
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
@@ -180,6 +224,31 @@ class PipelineDaemon:
         """Return connection to pool"""
         if conn:
             self.pool.putconn(conn)
+
+    def _reset_pool(self):
+        """Discard the current pool and open a fresh one.
+
+        Called from the main-loop exception handler when a database
+        error escapes a cycle — typically OperationalError from a
+        half-open connection that survived in the pool. Without this,
+        every subsequent cycle pulls the same dead connection out of
+        the pool and fails identically until the worker is redeployed
+        (the failure mode observed on 2026-05-04). Closing the old
+        pool releases its sockets; the new pool opens fresh sockets
+        lazily as the next cycle's queries arrive.
+        """
+        try:
+            self.pool.closeall()
+        except Exception as e:
+            # closeall() may itself fault on a thoroughly broken pool;
+            # log and proceed — we just need to drop the reference.
+            print("Pool closeall() failed (non-fatal): %s" % e)
+        self.pool = ThreadedConnectionPool(
+            minconn=2,
+            maxconn=10,
+            **self.config.db_connect_kwargs(),
+        )
+        print("Pool reset: opened a fresh connection pool")
 
     def get_queue_stats(self):
         """Get current queue depths for adaptive scheduling"""
@@ -1106,6 +1175,7 @@ class PipelineDaemon:
 
         # --- SLOT 1: INGESTION (Phase 1 + Phase 2) ---
         if self.should_run_slot("ingestion"):
+            slot_t0 = time.time()
             await self.run_with_timeout(
                 "Phase 1: RSS Ingestion",
                 asyncio.to_thread(
@@ -1128,7 +1198,10 @@ class PipelineDaemon:
                 self.timeout_ingestion,
             )
             self.last_run["ingestion"] = time.time()
-            self._save_last_run("ingestion")
+            self._save_last_run(
+                "ingestion",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
         else:
             remaining = int(
                 self.ingestion_interval - (time.time() - self.last_run["ingestion"])
@@ -1137,6 +1210,7 @@ class PipelineDaemon:
 
         # --- SLOT 2: CLASSIFICATION (Phase 3.1 + 3.2 + 3.3) ---
         if self.should_run_slot("classification"):
+            slot_t0 = time.time()
             has_work = stats["titles_need_labels"] > 0 or stats["titles_need_track"] > 0
             if has_work:
                 # Phase 3.1: Label + Signal Extraction
@@ -1180,7 +1254,10 @@ class PipelineDaemon:
             else:
                 print("\nSlot 2 CLASSIFICATION: no work")
             self.last_run["classification"] = time.time()
-            self._save_last_run("classification")
+            self._save_last_run(
+                "classification",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
         else:
             remaining = int(
                 self.classification_interval
@@ -1190,6 +1267,7 @@ class PipelineDaemon:
 
         # --- SLOT 3: CLUSTERING (Phase 4 cluster + 3.2 reconcile + 4.5a promote + 4.2* materialize) ---
         if self.should_run_slot("clustering"):
+            slot_t0 = time.time()
             # Phase 4: Event Clustering (day-beat, D-056)
             await self.run_with_timeout(
                 "Phase 4: Event Clustering",
@@ -1348,7 +1426,10 @@ class PipelineDaemon:
                 900,
             )
             self.last_run["clustering"] = time.time()
-            self._save_last_run("clustering")
+            self._save_last_run(
+                "clustering",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
         else:
             remaining = int(
                 self.clustering_interval - (time.time() - self.last_run["clustering"])
@@ -1357,6 +1438,7 @@ class PipelineDaemon:
 
         # --- SLOT 4: ENRICHMENT ---
         if self.should_run_slot("enrichment"):
+            slot_t0 = time.time()
             # Phase 4.5a-describe: LLM prose for promoted events missing titles (EN+DE)
             await self.run_with_timeout(
                 "Phase 4.5a: Describe Promoted",
@@ -1408,7 +1490,10 @@ class PipelineDaemon:
                 3600,
             )
             self.last_run["enrichment"] = time.time()
-            self._save_last_run("enrichment")
+            self._save_last_run(
+                "enrichment",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
         else:
             remaining = int(
                 self.enrichment_interval - (time.time() - self.last_run["enrichment"])
@@ -1417,6 +1502,7 @@ class PipelineDaemon:
 
         # --- SLOT 5: SOCIAL POSTING ---
         if self.should_run_slot("social") and self.config.social_posting_enabled:
+            slot_t0 = time.time()
             await self.run_with_timeout(
                 "Phase 5: Social Posting",
                 asyncio.to_thread(
@@ -1427,7 +1513,10 @@ class PipelineDaemon:
                 self.timeout_social,
             )
             self.last_run["social"] = time.time()
-            self._save_last_run("social")
+            self._save_last_run(
+                "social",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
         elif self.config.social_posting_enabled:
             remaining = int(
                 self.social_interval - (time.time() - self.last_run["social"])
@@ -1436,6 +1525,7 @@ class PipelineDaemon:
 
         # --- DAILY PURGE ---
         if self.should_run_slot("purge"):
+            slot_t0 = time.time()
             await self.run_with_timeout(
                 "Daily Purge",
                 asyncio.to_thread(
@@ -1446,7 +1536,10 @@ class PipelineDaemon:
                 self.timeout_purge,
             )
             self.last_run["purge"] = time.time()
-            self._save_last_run("purge")
+            self._save_last_run(
+                "purge",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
         else:
             remaining = int(
                 self.purge_interval - (time.time() - self.last_run["purge"])
@@ -1512,7 +1605,16 @@ class PipelineDaemon:
                 self.running = False
                 break
             except Exception as e:
+                err_text = "%s: %s" % (type(e).__name__, e)
                 print(f"\nUnexpected error in main loop: {e}")
+                # The pool likely contains broken connections (esp. after
+                # OperationalError from a network event); replace it so
+                # the next cycle starts fresh instead of looping on the
+                # same dead sockets.
+                self._reset_pool()
+                # Record the error in daemon_state so a SELECT * surfaces
+                # the latest failure without scrolling Render logs.
+                self._record_cycle_error(err_text)
                 print("Waiting 60s before retry...")
                 await asyncio.sleep(60)
 
