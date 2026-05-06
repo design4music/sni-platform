@@ -277,14 +277,20 @@ class PipelineDaemon:
                 )
                 titles_need_labels = cur.fetchone()[0]
 
-                # Phase 3.3 queue (assigned titles without track assignment)
+                # Phase 3.3 queue (assigned titles without track assignment).
+                # NOT EXISTS instead of NOT IN — the latter spilled to disk
+                # (BuffileRead) and ran 30+ min on Render, freezing every cycle
+                # behind get_queue_stats(). 2026-05-06.
                 cur.execute(
                     """
                     SELECT COUNT(*)
-                    FROM titles_v3
-                    WHERE processing_status = 'assigned'
-                      AND centroid_ids IS NOT NULL
-                      AND id NOT IN (SELECT title_id FROM title_assignments)
+                    FROM titles_v3 t
+                    WHERE t.processing_status = 'assigned'
+                      AND t.centroid_ids IS NOT NULL
+                      AND NOT EXISTS (
+                          SELECT 1 FROM title_assignments ta
+                          WHERE ta.title_id = t.id
+                      )
                 """
                 )
                 titles_need_track = cur.fetchone()[0]
