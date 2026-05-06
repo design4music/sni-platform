@@ -1,8 +1,10 @@
 # WorldBrief Pipeline Status
 
 **Last updated**: 2026-05-06 (daemon resilience hardened — D-073;
-frontend cache bust endpoint shipped — D-074. See "Daemon resilience
-note" below.)
+frontend cache bust endpoint shipped — D-074; same-day round 2
+incident exposed a slow `get_queue_stats` query + Render socket-leak
+on container kill, fixed in `7d00520`. See "Daemon resilience note"
+below.)
 **Live**: https://www.worldbrief.info
 **Branch**: `main` (synced with origin)
 
@@ -67,6 +69,30 @@ hardenings shipped:
 endpoint drops the in-memory query cache after manual MV refreshes —
 no Render restart needed. Auth: `x-revalidate-token: $REVALIDATE_API_KEY`,
 optional `{prefix}` body for scoped clears.
+
+**Round 2 (2026-05-06, commit `7d00520`).** First real-world test of
+D-073 surfaced a different failure mode. After a worker
+suspend/re-activate, `daemon_state` showed every short-cadence slot
+5+ hours stale. `pg_stat_activity` revealed five backends "active"
+on the same `get_queue_stats()` `SELECT COUNT(*) FROM titles_v3
+WHERE pr...` query, ages 28 min to 5 hours — three were orphans from
+prior daemon processes that Render killed without closing their DB
+connections (mirror image of round 1: this time the DB held the
+dead sockets). The slow query was a `NOT IN (SELECT title_id FROM
+title_assignments)` subquery in `get_queue_stats()` that spilled to
+disk (`wait_event=BuffileRead`) and ran 30+ minutes per attempt.
+Because `get_queue_stats()` runs at the top of every cycle before
+any slot fires, every cycle was frozen behind it. Fix: rewrote
+`NOT IN` → `NOT EXISTS` (~1000× speedup, 1.89s on Render),
+`pg_terminate_backend()` on the zombies. D-073's `_record_cycle_error`
++ `_reset_pool` worked correctly under fire — the kill-induced
+`OperationalError` produced an `__cycle_error__` row, the pool was
+reset, and the next cycle resumed cleanly. Two operational
+takeaways: (1) Render's container kill leaks DB sockets, manual
+`pg_terminate_backend` is the recovery path; (2) any query that
+runs at the top of `run_cycle()` is a SPOF — keep it sub-second,
+prefer `NOT EXISTS` over `NOT IN`. Full incident notes in
+`lessons_daemon_resilience.md`.
 
 ---
 
