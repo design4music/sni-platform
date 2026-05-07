@@ -15,33 +15,46 @@ BEGIN;
 -- ============================================================
 -- Step 1: event_friction_nodes for FN2
 -- ============================================================
--- Match titles_v3 against FN2 topic_keywords (case-insensitive substring).
--- Then link every event whose member titles include >=1 matching title.
--- UNCAPPED — the chart needs full coverage to show realistic activity.
+-- An event-FN link means the event is SUBSTANTIVELY about the FN's
+-- contested phenomenon — not just that one of its many member titles
+-- happens to mention it. Test: the event's OWN canonical title must
+-- carry both an Iran-marker AND a nuclear-domain word, OR a name that's
+-- inherently Iran-nuclear (Natanz, Fordow, Bushehr, Arak, JCPOA).
+--
+-- Earlier loose rule (any member-title mentions topic kw) attached events
+-- like "US submarine sinks Iranian warship" — has 187 member titles,
+-- maybe 5 mention nuclear in passing, but the event isn't ABOUT nuclear.
+-- The strict rule cuts ~239 -> ~142 events for FN2; surviving set is
+-- substantively on-topic.
+--
+-- Hardcoded predicate per FN. When more FNs land we'll move this to a
+-- per-FN JSONB "title-match grammar" column on friction_nodes.
 
 DELETE FROM event_friction_nodes WHERE fn_id = 'iran_nuclear_program';
 
-WITH fn AS (
-    SELECT id AS fn_id, topic_keywords
-    FROM friction_nodes WHERE id = 'iran_nuclear_program'
-),
-matching_titles AS (
-    SELECT t.id AS title_id
-    FROM titles_v3 t, fn
-    WHERE EXISTS (
-        SELECT 1 FROM unnest(fn.topic_keywords) kw
-        WHERE t.title_display ILIKE '%' || kw || '%'
-    )
-    AND t.pubdate_utc > NOW() - INTERVAL '180 days'
-),
-candidate_events AS (
-    SELECT DISTINCT et.event_id
-    FROM event_v3_titles et
-    JOIN matching_titles mt ON mt.title_id = et.title_id
-)
 INSERT INTO event_friction_nodes (event_id, fn_id)
-SELECT ce.event_id, 'iran_nuclear_program'
-FROM candidate_events ce
+SELECT e.id, 'iran_nuclear_program'
+FROM events_v3 e
+WHERE e.is_promoted = true
+  AND e.merged_into IS NULL
+  AND e.date > (CURRENT_DATE - INTERVAL '180 days')
+  AND (
+    -- Iran-marker AND nuclear-domain word
+    (
+      (e.title ILIKE '%Iran%' OR e.title ILIKE '%Tehran%')
+      AND (
+        e.title ILIKE '%nuclear%' OR e.title ILIKE '%enrichment%'
+        OR e.title ILIKE '%uranium%' OR e.title ILIKE '%atomic%'
+        OR e.title ILIKE '%centrifuge%'
+      )
+    )
+    -- Iran-specific site/program names (no other co-marker needed)
+    OR e.title ILIKE '%Natanz%'
+    OR e.title ILIKE '%Fordow%'
+    OR e.title ILIKE '%Bushehr%'
+    OR e.title ILIKE '%Arak%'
+    OR e.title ILIKE '%JCPOA%'
+  )
 ON CONFLICT (event_id, fn_id) DO NOTHING;
 
 -- ============================================================

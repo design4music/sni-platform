@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r10-polish)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r11-events-strict)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //
@@ -269,10 +269,22 @@ export async function getFrictionNodeWeeklyActivity(
 }
 
 /**
- * Recent events on this FN. Source count comes from the actual title-event
- * link table (event_v3_titles), not events_v3.summary_source_count which
- * is NULL on events that haven't been through the LLM describe step.
- * Ordered by source count (proxy for importance) then date.
+ * Recent events on this FN.
+ *
+ * Tightened filter: the EVENT'S OWN canonical title must be substantively
+ * about the FN, not just contain some member title that mentions it.
+ * For Iran nuclear specifically: title must have an Iran-marker
+ * (Iran/Tehran/Iranian) AND a nuclear-domain word (nuclear/enrichment/
+ * uranium/atomic/centrifuge), OR a site/program name that's Iran-specific
+ * (Natanz/Fordow/Bushehr/Arak/JCPOA).
+ *
+ * The hardcoded predicate is FN2-specific. When more FNs land we'll
+ * want this to be configurable per-FN (e.g. via a JSONB column on
+ * friction_nodes carrying a "title-match grammar"). For now a single
+ * branch keyed off the slug.
+ *
+ * source_count comes from event_v3_titles (events_v3.summary_source_count
+ * is NULL on events that haven't been through the LLM describe step).
  */
 export async function getFrictionNodeRecentEvents(
   slug: string,
@@ -281,6 +293,10 @@ export async function getFrictionNodeRecentEvents(
 ): Promise<FnRecentEvent[]> {
   const loc = locale2(locale);
   return cached(`fn_recent_events:${slug}:${loc}:${limit}`, TTL, async () => {
+    // FN-specific event-title gate (hardcoded for now — see docstring).
+    // event_friction_nodes is now itself the strict set (bootstrap applies
+    // the FN-specific title gate at link time), so no extra title filter
+    // needed in the page query.
     return query<FnRecentEvent>(
       `SELECT e.id::text,
               e.date::text,
