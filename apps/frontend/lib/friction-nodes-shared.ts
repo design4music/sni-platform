@@ -9,6 +9,7 @@ export interface FrictionNode {
   id: string;
   name: string;
   description: string | null;
+  editorial_summary: string | null;
   centroid_ids: string[];
   topic_keywords: string[];
 }
@@ -28,10 +29,31 @@ export interface NarrativeOnFn {
   tier: 'operational' | 'ideological' | null;
   narrative_type: 'all_in' | 'stand_by' | null;
   framing_keywords: string[];
+  publishers: string[];          // editorial outlets carrying this stance (curated)
   stance_label: string;
   display_order: number;
   match_count: number;
   sample_titles: SampleTitle[];
+}
+
+export interface FnRecentEvent {
+  id: string;
+  date: string;            // YYYY-MM-DD
+  title: string;
+  source_count: number;
+  importance: number | null;
+}
+
+export interface FnEventVolumePoint {
+  /** ISO Monday-of-week (YYYY-MM-DD). */
+  week: string;
+  count: number;
+}
+
+export interface RelatedFn {
+  id: string;
+  name: string;
+  shared_narratives: number;
 }
 
 export interface FrictionNodeView {

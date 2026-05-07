@@ -42,10 +42,10 @@ export default function FrictionNodeActivityChart({
 
   if (!weekly.length || !narratives.length) {
     return (
-      <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-2">{labels.sectionTitle}</h2>
-        <p className="text-sm text-dashboard-text-muted mb-4">{labels.noData}</p>
-      </section>
+      <div className="mb-4">
+        {labels.sectionTitle && <h2 className="text-2xl font-bold mb-2">{labels.sectionTitle}</h2>}
+        <p className="text-sm text-dashboard-text-muted">{labels.noData}</p>
+      </div>
     );
   }
 
@@ -69,11 +69,15 @@ export default function FrictionNodeActivityChart({
   const labelByNarrative = new Map(narratives.map((n) => [n.narrative_id, n.stance_label]));
 
   return (
-    <section className="mb-10">
-      <h2 className="text-2xl font-bold mb-2">{labels.sectionTitle}</h2>
-      <p className="text-sm text-dashboard-text-muted mb-4 max-w-3xl leading-snug">
-        {labels.sectionDescription}
-      </p>
+    <div>
+      {labels.sectionTitle && (
+        <>
+          <h2 className="text-2xl font-bold mb-2">{labels.sectionTitle}</h2>
+          <p className="text-sm text-dashboard-text-muted mb-4 max-w-3xl leading-snug">
+            {labels.sectionDescription}
+          </p>
+        </>
+      )}
 
       <div className={`w-full ${heightClass}`}>
         {mounted && (
@@ -136,6 +140,6 @@ export default function FrictionNodeActivityChart({
           </span>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

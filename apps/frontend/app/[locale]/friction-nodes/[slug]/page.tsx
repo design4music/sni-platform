@@ -6,10 +6,16 @@ import DashboardLayout from '@/components/DashboardLayout';
 import {
   getFrictionNodeView,
   getFrictionNodeWeeklyActivity,
+  getFrictionNodeRecentEvents,
+  getFrictionNodeEventVolume,
+  getRelatedFrictionNodes,
 } from '@/lib/friction-nodes';
 import FrictionNodeNarrativeBricks from '@/components/friction-nodes/FrictionNodeNarrativeBricks';
 import FrictionNodeNarrativeCards from '@/components/friction-nodes/FrictionNodeNarrativeCards';
 import FrictionNodeActivityChart from '@/components/friction-nodes/FrictionNodeActivityChart';
+import FrictionNodeRecentEvents from '@/components/friction-nodes/FrictionNodeRecentEvents';
+import FrictionNodeEventVolumeStrip from '@/components/friction-nodes/FrictionNodeEventVolumeStrip';
+import FrictionNodeRelated from '@/components/friction-nodes/FrictionNodeRelated';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,9 +39,12 @@ export default async function FrictionNodePage({ params }: Props) {
   setRequestLocale(locale);
   const intlLocale = await getLocale();
 
-  const [view, weekly] = await Promise.all([
+  const [view, weekly, recentEvents, eventVolume, related] = await Promise.all([
     getFrictionNodeView(slug, locale),
     getFrictionNodeWeeklyActivity(slug),
+    getFrictionNodeRecentEvents(slug, locale, 12),
+    getFrictionNodeEventVolume(slug),
+    getRelatedFrictionNodes(slug, locale),
   ]);
   if (!view) return notFound();
 
@@ -66,6 +75,32 @@ export default async function FrictionNodePage({ params }: Props) {
     typeStandBy: brickLabels.typeStandBy,
     tier: isDe ? 'Ebene' : 'tier',
     claim: isDe ? 'Vollstaendige Behauptung' : 'Full claim',
+    coveredBy: isDe ? 'Gedeckt von' : 'Covered by',
+  };
+  const eventsLabels = {
+    sectionTitle: isDe ? 'Juengste Ereignisse' : 'Recent events',
+    sectionDescription: isDe
+      ? 'Promotete Ereignisse auf dieser Friction Node, sortiert nach Bedeutung. Dies ist die FAKTEN-Ebene unter den Narrativ-Rahmen oben.'
+      : 'Promoted events on this friction node, sorted by importance. This is the FACTUAL layer under the narrative frames above.',
+    sources: isDe ? 'Quellen' : 'sources',
+    importance: isDe ? 'Bedeutung' : 'importance',
+    none: isDe ? 'noch keine verknuepften Ereignisse' : 'no linked events yet',
+  };
+  const volumeLabels = {
+    title: isDe ? 'Ereignisvolumen pro Woche' : 'Event volume per week',
+    description: isDe ? 'Faktische Aktivitaet (vor Rahmensetzung)' : 'Factual activity (before framing)',
+    events: isDe ? 'Ereignisse' : 'events',
+    none: isDe ? 'keine Ereignisdaten' : 'no event data',
+  };
+  const relatedLabels = {
+    sectionTitle: isDe ? 'Verwandte Friction Nodes' : 'Related friction nodes',
+    sectionDescription: isDe
+      ? 'Andere Friction Nodes, die mindestens zwei Narrative mit dieser teilen — bilden zusammen ein Theater (gemeinsame Koalitionen, gemeinsame Konflikte).'
+      : 'Other friction nodes sharing at least two narratives with this one — together they form a theater (overlapping coalitions, overlapping contests).',
+    sharedNarratives: isDe ? 'gemeinsame Narrative' : 'shared narratives',
+    none: isDe
+      ? 'Noch keine verwandten Friction Nodes — weitere Friction Nodes muessen hinzugefuegt werden, um diese Sicht zu fuellen.'
+      : 'No related friction nodes yet — more friction nodes need to be added to populate this view.',
   };
   const chartLabels = {
     sectionTitle: isDe ? 'Aktivitaet ueber die Zeit' : 'Activity over time',
@@ -106,11 +141,27 @@ export default async function FrictionNodePage({ params }: Props) {
             {view.fn.id}
           </span>
         </div>
-        {view.fn.description && (
-          <p className="text-base text-dashboard-text-muted leading-relaxed max-w-4xl">
-            {view.fn.description}
+
+        {/* Editorial summary — paragraph that puts the FN in strategic
+            context (what's at stake, recent shifts). Sits above the
+            mechanical description. */}
+        {view.fn.editorial_summary && (
+          <p className="text-base text-dashboard-text leading-relaxed max-w-4xl mb-4">
+            {view.fn.editorial_summary}
           </p>
         )}
+
+        {view.fn.description && (
+          <details className="text-sm text-dashboard-text-muted leading-relaxed max-w-4xl group">
+            <summary className="cursor-pointer text-[11px] uppercase tracking-wider hover:text-dashboard-text transition select-none">
+              {isDe ? 'Was ist umstritten' : 'What is contested'}
+            </summary>
+            <p className="mt-2">{view.fn.description}</p>
+          </details>
+        )}
+
+        {/* Counts strip — three different metrics in a small funnel from
+            FN-relevant down to narrative-attributed. */}
         <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-dashboard-text-muted">
           <div>
             <span className="uppercase tracking-wider mr-1">
@@ -120,20 +171,29 @@ export default async function FrictionNodePage({ params }: Props) {
           </div>
           <div>
             <span className="uppercase tracking-wider mr-1">
-              {isDe ? 'Narrative' : 'Narratives'}:
+              {isDe ? 'Konkurrierende Narrative' : 'Competing narratives'}:
             </span>
             <span>{view.narratives.length}</span>
           </div>
-          <div>
+          <div title={isDe ? 'Ereignisse, die das Phaenomen dieser FN beruehren' : 'Events that touch this FN\'s phenomenon'}>
             <span className="uppercase tracking-wider mr-1">
-              {isDe ? 'Verknuepfte Ereignisse' : 'Linked events'}:
+              {isDe ? 'Ereignisse' : 'Events'}:
             </span>
             <span>{view.event_count}</span>
           </div>
+          <div title={isDe ? 'Schlagzeilen, die einer Narrativ-Koalition zugeordnet sind' : 'Headlines bucketed into a narrative coalition'}>
+            <span className="uppercase tracking-wider mr-1">
+              {isDe ? 'Zugeordnete Schlagzeilen' : 'Attributed headlines'}:
+            </span>
+            <span>
+              {view.narratives.reduce((acc, n) => acc + n.match_count, 0)}
+            </span>
+          </div>
         </div>
+
         {view.fn.topic_keywords && view.fn.topic_keywords.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {view.fn.topic_keywords.map((kw) => (
+            {view.fn.topic_keywords.slice(0, 12).map((kw) => (
               <span
                 key={kw}
                 className="text-[11px] text-dashboard-text-muted bg-dashboard-surface border border-dashboard-border px-2 py-0.5 rounded"
@@ -141,6 +201,11 @@ export default async function FrictionNodePage({ params }: Props) {
                 {kw}
               </span>
             ))}
+            {view.fn.topic_keywords.length > 12 && (
+              <span className="text-[11px] text-dashboard-text-muted">
+                +{view.fn.topic_keywords.length - 12}
+              </span>
+            )}
           </div>
         )}
       </header>
@@ -152,12 +217,19 @@ export default async function FrictionNodePage({ params }: Props) {
         labels={brickLabels}
       />
 
-      {/* 2. Activity chart — stacked weekly area, all-time scale */}
-      <FrictionNodeActivityChart
-        narratives={view.narratives}
-        weekly={weekly}
-        labels={chartLabels}
-      />
+      {/* 2. Two-layer chart: event volume (factual) above narrative stack (interpretive) */}
+      <section className="mb-10">
+        <h2 className="text-2xl font-bold mb-2">{chartLabels.sectionTitle}</h2>
+        <p className="text-sm text-dashboard-text-muted mb-4 max-w-3xl leading-snug">
+          {chartLabels.sectionDescription}
+        </p>
+        <FrictionNodeEventVolumeStrip data={eventVolume} labels={volumeLabels} />
+        <FrictionNodeActivityChart
+          narratives={view.narratives}
+          weekly={weekly}
+          labels={{ ...chartLabels, sectionTitle: '' }}
+        />
+      </section>
 
       {/* 3. Detailed narrative cards — 2-col grid with full vocabulary + headlines */}
       <FrictionNodeNarrativeCards
@@ -165,6 +237,16 @@ export default async function FrictionNodePage({ params }: Props) {
         locale={intlLocale}
         labels={cardLabels}
       />
+
+      {/* 4. Recent events — the factual layer beneath the narrative cards */}
+      <FrictionNodeRecentEvents
+        events={recentEvents}
+        locale={intlLocale}
+        labels={eventsLabels}
+      />
+
+      {/* 5. Related friction nodes — theater grouping */}
+      <FrictionNodeRelated related={related} locale={intlLocale} labels={relatedLabels} />
 
       {/* Page-level methodology note (separate from the site Footer) */}
       <div className="mt-12 pt-6 border-t border-dashboard-border text-xs text-dashboard-text-muted">

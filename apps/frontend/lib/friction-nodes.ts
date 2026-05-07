@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r8-drop-gulf)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r9-events)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //
@@ -25,6 +25,9 @@ export type {
   NarrativeOnFn,
   FrictionNodeView,
   NarrativeWeeklyPoint,
+  FnRecentEvent,
+  FnEventVolumePoint,
+  RelatedFn,
 } from './friction-nodes-shared';
 export { NARRATIVE_COLORS, colorForNarrative } from './friction-nodes-shared';
 
@@ -34,6 +37,9 @@ import type {
   NarrativeOnFn,
   FrictionNodeView,
   NarrativeWeeklyPoint,
+  FnRecentEvent,
+  FnEventVolumePoint,
+  RelatedFn,
 } from './friction-nodes-shared';
 
 // ============================================================
@@ -57,12 +63,14 @@ export async function getFrictionNodeBySlug(
       id: string;
       name: string;
       description: string | null;
+      editorial_summary: string | null;
       centroid_ids: string[];
       topic_keywords: string[];
     }>(
       `SELECT id,
               ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
+              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
               centroid_ids,
               topic_keywords
        FROM friction_nodes
@@ -91,6 +99,7 @@ export async function getFrictionNodeView(
       tier: 'operational' | 'ideological' | null;
       narrative_type: 'all_in' | 'stand_by' | null;
       framing_keywords: string[];
+      publishers: string[] | null;
       stance_label: string;
       display_order: number;
     }>(
@@ -101,6 +110,7 @@ export async function getFrictionNodeView(
               n.tier,
               n.narrative_type,
               n.framing_keywords,
+              n.publishers,
               ${loc === 'de' ? 'COALESCE(fnn.stance_label_de, fnn.stance_label_en)' : 'fnn.stance_label_en'} AS stance_label,
               fnn.display_order
        FROM friction_node_narratives fnn
@@ -189,6 +199,7 @@ export async function getFrictionNodeView(
       fn,
       narratives: narrativeRows.map((r) => ({
         ...r,
+        publishers: r.publishers ?? [],
         match_count: countByNarrative.get(r.narrative_id) ?? 0,
         sample_titles: titlesByNarrative.get(r.narrative_id) ?? [],
       })),
@@ -255,6 +266,94 @@ export async function getFrictionNodeWeeklyActivity(
   });
 }
 
+/**
+ * Recent events on this FN, ordered by importance DESC then date DESC.
+ * Filters to promoted events and resolves merged_into to the canonical row.
+ * Locale-aware on title.
+ */
+export async function getFrictionNodeRecentEvents(
+  slug: string,
+  locale?: string,
+  limit = 12,
+): Promise<FnRecentEvent[]> {
+  const loc = locale2(locale);
+  return cached(`fn_recent_events:${slug}:${loc}:${limit}`, TTL, async () => {
+    return query<FnRecentEvent>(
+      `SELECT e.id::text,
+              e.date::text,
+              ${loc === 'de' ? 'COALESCE(e.title_de, e.title)' : 'e.title'} AS title,
+              COALESCE(e.summary_source_count, 0)::int AS source_count,
+              e.importance_score AS importance
+       FROM event_friction_nodes efn
+       JOIN events_v3 e ON e.id = efn.event_id
+       WHERE efn.fn_id = $1
+         AND e.is_promoted = true
+         AND e.merged_into IS NULL
+       ORDER BY COALESCE(e.importance_score, 0) DESC, e.date DESC
+       LIMIT $2`,
+      [slug, limit],
+    );
+  });
+}
+
+/**
+ * Weekly event volume on this FN. Buckets by ISO week (Monday).
+ * Used by an event-volume strip displayed alongside the narrative
+ * stack chart — shows the FACTUAL layer (when stuff happened) next
+ * to the INTERPRETIVE layer (how it was framed).
+ */
+export async function getFrictionNodeEventVolume(
+  slug: string,
+): Promise<FnEventVolumePoint[]> {
+  return cached(`fn_event_volume:${slug}`, TTL, async () => {
+    return query<FnEventVolumePoint>(
+      `SELECT to_char(date_trunc('week', e.date::timestamp), 'YYYY-MM-DD') AS week,
+              COUNT(*)::int AS count
+       FROM event_friction_nodes efn
+       JOIN events_v3 e ON e.id = efn.event_id
+       WHERE efn.fn_id = $1
+       GROUP BY 1
+       ORDER BY 1`,
+      [slug],
+    );
+  });
+}
+
+/**
+ * Other friction nodes that share >=2 narratives with this FN.
+ * The "theater grouping" concept from the concept doc — when several
+ * FNs are contested by the same narrative coalitions, they form a
+ * cluster worth navigating across.
+ *
+ * With only one FN in the system this returns []. Empty state on the
+ * page is fine; the function exposes the structure for when more FNs land.
+ */
+export async function getRelatedFrictionNodes(
+  slug: string,
+  locale?: string,
+): Promise<RelatedFn[]> {
+  const loc = locale2(locale);
+  return cached(`fn_related:${slug}:${loc}`, TTL, async () => {
+    return query<RelatedFn>(
+      `WITH this_narratives AS (
+         SELECT narrative_id FROM friction_node_narratives WHERE fn_id = $1
+       )
+       SELECT fn.id,
+              ${loc === 'de' ? 'COALESCE(fn.name_de, fn.name_en)' : 'fn.name_en'} AS name,
+              COUNT(fnn.narrative_id)::int AS shared_narratives
+       FROM friction_node_narratives fnn
+       JOIN friction_nodes fn ON fn.id = fnn.fn_id
+       WHERE fnn.narrative_id IN (SELECT narrative_id FROM this_narratives)
+         AND fnn.fn_id != $1
+         AND fn.is_active = true
+       GROUP BY fn.id, fn.name_en, fn.name_de
+       HAVING COUNT(fnn.narrative_id) >= 2
+       ORDER BY shared_narratives DESC, name`,
+      [slug],
+    );
+  });
+}
+
 export async function getActiveFrictionNodes(
   locale?: string,
 ): Promise<FrictionNode[]> {
@@ -264,6 +363,7 @@ export async function getActiveFrictionNodes(
       `SELECT id,
               ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
+              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
               centroid_ids,
               topic_keywords
        FROM friction_nodes

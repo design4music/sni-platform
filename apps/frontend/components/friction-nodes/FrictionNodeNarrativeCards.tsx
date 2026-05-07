@@ -16,6 +16,7 @@ interface Props {
     typeStandBy: string;
     tier: string;
     claim: string;
+    coveredBy: string;
   };
 }
 
@@ -145,6 +146,20 @@ function NarrativeCard({
             {n.narrative_claim}
           </p>
         </details>
+      )}
+
+      {/* Publishers carrying this stance — small line above headlines so the
+          editorial basis is visible to the reader. */}
+      {n.publishers && n.publishers.length > 0 && (
+        <div className="mb-3 text-[11px] text-dashboard-text-muted leading-snug">
+          <span className="uppercase tracking-wider mr-1">{labels.coveredBy}:</span>
+          <span>
+            {n.publishers.slice(0, 6).join(' · ')}
+            {n.publishers.length > 6 && (
+              <span className="opacity-70"> · +{n.publishers.length - 6}</span>
+            )}
+          </span>
+        </div>
       )}
 
       {/* Recent headlines */}
