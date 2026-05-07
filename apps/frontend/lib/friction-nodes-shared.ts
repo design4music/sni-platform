@@ -50,6 +50,13 @@ export interface FnEventVolumePoint {
   count: number;
 }
 
+/** Compact lookup for resolving a centroid_id to a display label + flag. */
+export interface CentroidLookupEntry {
+  id: string;
+  label: string;
+  iso2: string | null;     // first iso_code if any (for FlagImg)
+}
+
 export interface RelatedFn {
   id: string;
   name: string;

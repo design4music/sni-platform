@@ -9,13 +9,15 @@ import {
   getFrictionNodeRecentEvents,
   getFrictionNodeEventVolume,
   getRelatedFrictionNodes,
+  getCentroidLookup,
 } from '@/lib/friction-nodes';
+import type { CentroidLookupEntry } from '@/lib/friction-nodes-shared';
 import FrictionNodeNarrativeBricks from '@/components/friction-nodes/FrictionNodeNarrativeBricks';
 import FrictionNodeNarrativeCards from '@/components/friction-nodes/FrictionNodeNarrativeCards';
 import FrictionNodeActivityChart from '@/components/friction-nodes/FrictionNodeActivityChart';
 import FrictionNodeRecentEvents from '@/components/friction-nodes/FrictionNodeRecentEvents';
-import FrictionNodeEventVolumeStrip from '@/components/friction-nodes/FrictionNodeEventVolumeStrip';
 import FrictionNodeRelated from '@/components/friction-nodes/FrictionNodeRelated';
+import CoalitionPills from '@/components/friction-nodes/CoalitionPills';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!view) return { title: 'Not Found' };
   return {
     title: `${view.fn.name} — Friction Node | WorldBrief`,
-    description: view.fn.description ?? view.fn.name,
-    robots: { index: false, follow: false }, // shadow route
+    description: view.fn.editorial_summary ?? view.fn.description ?? view.fn.name,
+    robots: { index: false, follow: false },
   };
 }
 
@@ -48,15 +50,24 @@ export default async function FrictionNodePage({ params }: Props) {
   ]);
   if (!view) return notFound();
 
-  const isDe = intlLocale === 'de';
+  // Resolve all centroid IDs touched by the FN or its narratives so we can
+  // render country pills (flag + label) instead of raw IDs.
+  const allCentroidIds = new Set<string>(view.fn.centroid_ids);
+  for (const n of view.narratives) for (const c of n.actor_centroids) allCentroidIds.add(c);
+  const centroidEntries = await getCentroidLookup(Array.from(allCentroidIds));
+  const centroidLookup = new Map<string, CentroidLookupEntry>(
+    centroidEntries.map((e) => [e.id, e]),
+  );
 
-  // Locale-aware label bundles (kept inline since the shadow route doesn't
-  // own its own messages namespace yet).
+  const isDe = intlLocale === 'de';
+  const totalAttributed = view.narratives.reduce((acc, n) => acc + n.match_count, 0);
+
+  // Locale-aware label bundles.
   const brickLabels = {
     sectionTitle: isDe ? 'Konkurrierende Narrative' : 'Competing narratives',
     sectionDescription: isDe
-      ? 'Jede Karte unten ist eine Koalition mit ihrem eigenen Rahmen fuer dasselbe umstrittene Phaenomen. Klicken zum Springen zu Details.'
-      : 'Each card below is one coalition with its own frame on the same contested phenomenon. Click to jump to detail.',
+      ? 'Jede Karte unten ist eine Koalition mit ihrem eigenen Rahmen fuer dasselbe umstrittene Phaenomen.'
+      : 'Each card below is one coalition with its own frame on the same contested phenomenon.',
     titles: isDe ? 'Schlagzeilen' : 'titles',
     typeAllIn: isDe ? 'voll engagiert' : 'all in',
     typeStandBy: isDe ? 'allgemein' : 'stand by',
@@ -64,51 +75,43 @@ export default async function FrictionNodePage({ params }: Props) {
   const cardLabels = {
     sectionTitle: isDe ? 'Narrative im Detail' : 'Narratives in detail',
     sectionDescription: isDe
-      ? 'Geladenes Vokabular pro Koalition + juengste Schlagzeilen unter jedem Rahmen. Dieselbe Realitaet, unvereinbare Lesarten.'
-      : 'Loaded vocabulary per coalition + recent headlines under each frame. The same reality, incompatible readings.',
+      ? 'Geladenes Vokabular pro Koalition und juengste Schlagzeilen unter jedem Rahmen.'
+      : 'Loaded vocabulary per coalition and recent headlines under each frame.',
     titles: brickLabels.titles,
     coalition: isDe ? 'Koalition' : 'Coalition',
     loadedVocabulary: isDe ? 'Geladenes Vokabular' : 'Loaded vocabulary',
     headlinesUnderFrame: isDe ? 'Schlagzeilen unter diesem Rahmen' : 'Headlines under this frame',
     noSamples: isDe ? 'noch keine Beispiele' : 'no samples yet',
-    typeAllIn: brickLabels.typeAllIn,
-    typeStandBy: brickLabels.typeStandBy,
-    tier: isDe ? 'Ebene' : 'tier',
     claim: isDe ? 'Vollstaendige Behauptung' : 'Full claim',
     coveredBy: isDe ? 'Gedeckt von' : 'Covered by',
-  };
-  const eventsLabels = {
-    sectionTitle: isDe ? 'Juengste Ereignisse' : 'Recent events',
-    sectionDescription: isDe
-      ? 'Promotete Ereignisse auf dieser Friction Node, sortiert nach Bedeutung. Dies ist die FAKTEN-Ebene unter den Narrativ-Rahmen oben.'
-      : 'Promoted events on this friction node, sorted by importance. This is the FACTUAL layer under the narrative frames above.',
-    sources: isDe ? 'Quellen' : 'sources',
-    importance: isDe ? 'Bedeutung' : 'importance',
-    none: isDe ? 'noch keine verknuepften Ereignisse' : 'no linked events yet',
-  };
-  const volumeLabels = {
-    title: isDe ? 'Ereignisvolumen pro Woche' : 'Event volume per week',
-    description: isDe ? 'Faktische Aktivitaet (vor Rahmensetzung)' : 'Factual activity (before framing)',
-    events: isDe ? 'Ereignisse' : 'events',
-    none: isDe ? 'keine Ereignisdaten' : 'no event data',
-  };
-  const relatedLabels = {
-    sectionTitle: isDe ? 'Verwandte Friction Nodes' : 'Related friction nodes',
-    sectionDescription: isDe
-      ? 'Andere Friction Nodes, die mindestens zwei Narrative mit dieser teilen — bilden zusammen ein Theater (gemeinsame Koalitionen, gemeinsame Konflikte).'
-      : 'Other friction nodes sharing at least two narratives with this one — together they form a theater (overlapping coalitions, overlapping contests).',
-    sharedNarratives: isDe ? 'gemeinsame Narrative' : 'shared narratives',
-    none: isDe
-      ? 'Noch keine verwandten Friction Nodes — weitere Friction Nodes muessen hinzugefuegt werden, um diese Sicht zu fuellen.'
-      : 'No related friction nodes yet — more friction nodes need to be added to populate this view.',
   };
   const chartLabels = {
     sectionTitle: isDe ? 'Aktivitaet ueber die Zeit' : 'Activity over time',
     sectionDescription: isDe
-      ? 'Woechentliche Schlagzeilenzahl pro Narrativ. Visuelle Asymmetrie ist Signal: einige Koalitionen dominieren das Vokabular, andere bleiben sporadisch.'
-      : 'Weekly headline count per narrative. Visual asymmetry is signal: some coalitions dominate the vocabulary, others stay sporadic.',
+      ? 'Graue Balken zeigen das Ereignisvolumen pro Woche (Fakten-Ebene). Farbige Flaechen zeigen die Anzahl zugeordneter Schlagzeilen pro Narrativ (Interpretations-Ebene).'
+      : 'Gray bars show event volume per week (factual layer). Colored areas show attributed headlines per narrative (interpretive layer).',
     titles: brickLabels.titles,
+    events: isDe ? 'Ereignisse' : 'events',
     noData: isDe ? 'Noch keine Aktivitaetsdaten.' : 'No activity data yet.',
+  };
+  const eventsLabels = {
+    sectionTitle: isDe ? 'Juengste Ereignisse' : 'Recent events',
+    sectionDescription: isDe
+      ? 'Promotete Ereignisse auf dieser Friction Node, sortiert nach Schlagzeilenanzahl.'
+      : 'Promoted events on this friction node, sorted by headline volume.',
+    sources: isDe ? 'Quellen' : 'sources',
+    importance: isDe ? 'Bedeutung' : 'importance',
+    none: isDe ? 'noch keine verknuepften Ereignisse' : 'no linked events yet',
+  };
+  const relatedLabels = {
+    sectionTitle: isDe ? 'Verwandte Friction Nodes' : 'Related friction nodes',
+    sectionDescription: isDe
+      ? 'Andere Friction Nodes, die mindestens zwei Narrative mit dieser teilen.'
+      : 'Other friction nodes sharing at least two narratives with this one.',
+    sharedNarratives: isDe ? 'gemeinsame Narrative' : 'shared narratives',
+    none: isDe
+      ? 'Noch keine verwandten Friction Nodes; weitere Friction Nodes muessen hinzugefuegt werden.'
+      : 'No related friction nodes yet. More friction nodes need to be added.',
   };
 
   return (
@@ -116,8 +119,8 @@ export default async function FrictionNodePage({ params }: Props) {
       {/* Shadow-route notice */}
       <div className="mb-6 px-3 py-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs text-amber-400">
         {isDe
-          ? 'Schatten-Route — experimentelle Friction-Node-Architektur. Noch nicht in der Hauptnavigation.'
-          : 'Shadow route — experimental friction-node architecture. Not yet in main navigation.'}
+          ? 'Schatten-Route. Experimentelle Friction-Node-Architektur, noch nicht in der Hauptnavigation.'
+          : 'Shadow route. Experimental friction-node architecture, not yet in main navigation.'}
       </div>
 
       {/* Breadcrumb */}
@@ -131,128 +134,138 @@ export default async function FrictionNodePage({ params }: Props) {
         <span>{view.fn.name}</span>
       </nav>
 
-      {/* Header */}
-      <header className="mb-8 pb-6 border-b border-dashboard-border">
-        <div className="flex flex-wrap items-baseline gap-3 mb-3">
-          <h1 className="text-3xl md:text-4xl font-bold text-dashboard-text">
-            {view.fn.name}
-          </h1>
-          <span className="text-xs text-dashboard-text-muted font-mono">
-            {view.fn.id}
-          </span>
-        </div>
-
-        {/* Editorial summary — paragraph that puts the FN in strategic
-            context (what's at stake, recent shifts). Sits above the
-            mechanical description. */}
-        {view.fn.editorial_summary && (
-          <p className="text-base text-dashboard-text leading-relaxed max-w-4xl mb-4">
-            {view.fn.editorial_summary}
-          </p>
-        )}
-
-        {view.fn.description && (
-          <details className="text-sm text-dashboard-text-muted leading-relaxed max-w-4xl group">
-            <summary className="cursor-pointer text-[11px] uppercase tracking-wider hover:text-dashboard-text transition select-none">
-              {isDe ? 'Was ist umstritten' : 'What is contested'}
-            </summary>
-            <p className="mt-2">{view.fn.description}</p>
-          </details>
-        )}
-
-        {/* Counts strip — three different metrics in a small funnel from
-            FN-relevant down to narrative-attributed. */}
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-dashboard-text-muted">
-          <div>
-            <span className="uppercase tracking-wider mr-1">
-              {isDe ? 'Schauplaetze' : 'Manifests in'}:
+      {/* HEADER (2-column) */}
+      <header className="mb-8 pb-6 border-b border-dashboard-border grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        {/* LEFT 2/3 — title, editorial summary, counts */}
+        <div className="lg:col-span-2 min-w-0">
+          <div className="flex flex-wrap items-baseline gap-3 mb-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-dashboard-text">
+              {view.fn.name}
+            </h1>
+            <span className="text-xs text-dashboard-text-muted font-mono">
+              {view.fn.id}
             </span>
-            <span className="font-mono">{view.fn.centroid_ids.join(', ')}</span>
           </div>
-          <div>
-            <span className="uppercase tracking-wider mr-1">
-              {isDe ? 'Konkurrierende Narrative' : 'Competing narratives'}:
-            </span>
-            <span>{view.narratives.length}</span>
-          </div>
-          <div title={isDe ? 'Ereignisse, die das Phaenomen dieser FN beruehren' : 'Events that touch this FN\'s phenomenon'}>
-            <span className="uppercase tracking-wider mr-1">
-              {isDe ? 'Ereignisse' : 'Events'}:
-            </span>
-            <span>{view.event_count}</span>
-          </div>
-          <div title={isDe ? 'Schlagzeilen, die einer Narrativ-Koalition zugeordnet sind' : 'Headlines bucketed into a narrative coalition'}>
-            <span className="uppercase tracking-wider mr-1">
-              {isDe ? 'Zugeordnete Schlagzeilen' : 'Attributed headlines'}:
-            </span>
-            <span>
-              {view.narratives.reduce((acc, n) => acc + n.match_count, 0)}
-            </span>
+
+          {view.fn.editorial_summary && (
+            <p className="text-base text-dashboard-text leading-relaxed mb-4">
+              {view.fn.editorial_summary}
+            </p>
+          )}
+
+          {/* Counts strip */}
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-dashboard-text-muted">
+            <div>
+              <span className="uppercase tracking-wider mr-1">
+                {isDe ? 'Konkurrierende Narrative' : 'Competing narratives'}:
+              </span>
+              <span className="text-dashboard-text">{view.narratives.length}</span>
+            </div>
+            <div title={isDe ? 'Promotete Ereignisse, die das Phaenomen dieser FN beruehren' : 'Promoted events that touch this FN\'s phenomenon'}>
+              <span className="uppercase tracking-wider mr-1">
+                {isDe ? 'Ereignisse' : 'Events'}:
+              </span>
+              <span className="text-dashboard-text">{view.event_count}</span>
+            </div>
+            <div title={isDe ? 'Schlagzeilen, die einer Narrativ-Koalition zugeordnet sind' : 'Headlines bucketed into a narrative coalition'}>
+              <span className="uppercase tracking-wider mr-1">
+                {isDe ? 'Zugeordnete Schlagzeilen' : 'Attributed headlines'}:
+              </span>
+              <span className="text-dashboard-text">{totalAttributed}</span>
+            </div>
           </div>
         </div>
 
-        {view.fn.topic_keywords && view.fn.topic_keywords.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {view.fn.topic_keywords.slice(0, 12).map((kw) => (
-              <span
-                key={kw}
-                className="text-[11px] text-dashboard-text-muted bg-dashboard-surface border border-dashboard-border px-2 py-0.5 rounded"
-              >
-                {kw}
-              </span>
-            ))}
-            {view.fn.topic_keywords.length > 12 && (
-              <span className="text-[11px] text-dashboard-text-muted">
-                +{view.fn.topic_keywords.length - 12}
-              </span>
-            )}
-          </div>
-        )}
+        {/* RIGHT 1/3 — sidebar with countries + topic tags + what-is-contested */}
+        <aside className="space-y-5 min-w-0">
+          {/* Manifests in (countries) */}
+          {view.fn.centroid_ids.length > 0 && (
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
+                {isDe ? 'Schauplaetze' : 'Manifests in'}
+              </div>
+              <CoalitionPills centroidIds={view.fn.centroid_ids} lookup={centroidLookup} />
+            </div>
+          )}
+
+          {/* Topic tags */}
+          {view.fn.topic_keywords && view.fn.topic_keywords.length > 0 && (
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
+                {isDe ? 'Themenmarker' : 'Topic markers'}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {view.fn.topic_keywords.slice(0, 14).map((kw) => (
+                  <span
+                    key={kw}
+                    className="text-[11px] text-dashboard-text-muted bg-dashboard-bg border border-dashboard-border/60 px-2 py-0.5 rounded"
+                  >
+                    {kw}
+                  </span>
+                ))}
+                {view.fn.topic_keywords.length > 14 && (
+                  <span className="text-[11px] text-dashboard-text-muted">
+                    +{view.fn.topic_keywords.length - 14}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* What is contested (description) — collapsed by default */}
+          {view.fn.description && (
+            <details className="group">
+              <summary className="text-[11px] uppercase tracking-wider text-dashboard-text-muted cursor-pointer hover:text-dashboard-text transition select-none">
+                {isDe ? 'Was ist umstritten' : 'What is contested'}
+              </summary>
+              <p className="mt-2 text-sm text-dashboard-text-muted leading-relaxed">
+                {view.fn.description}
+              </p>
+            </details>
+          )}
+        </aside>
       </header>
 
-      {/* 1. Brick row — colour-coded narrative pills */}
+      {/* 1. Brick row */}
       <FrictionNodeNarrativeBricks
         narratives={view.narratives}
         locale={intlLocale}
         labels={brickLabels}
       />
 
-      {/* 2. Two-layer chart: event volume (factual) above narrative stack (interpretive) */}
+      {/* 2. Combined chart: events (bars) + narrative attribution (stacked areas) */}
       <section className="mb-10">
-        <h2 className="text-2xl font-bold mb-2">{chartLabels.sectionTitle}</h2>
-        <p className="text-sm text-dashboard-text-muted mb-4 max-w-3xl leading-snug">
-          {chartLabels.sectionDescription}
-        </p>
-        <FrictionNodeEventVolumeStrip data={eventVolume} labels={volumeLabels} />
         <FrictionNodeActivityChart
           narratives={view.narratives}
           weekly={weekly}
-          labels={{ ...chartLabels, sectionTitle: '' }}
+          eventVolume={eventVolume}
+          labels={chartLabels}
         />
       </section>
 
-      {/* 3. Detailed narrative cards — 2-col grid with full vocabulary + headlines */}
+      {/* 3. Detailed narrative cards */}
       <FrictionNodeNarrativeCards
         narratives={view.narratives}
+        centroidLookup={centroidLookup}
         locale={intlLocale}
         labels={cardLabels}
       />
 
-      {/* 4. Recent events — the factual layer beneath the narrative cards */}
+      {/* 4. Recent events */}
       <FrictionNodeRecentEvents
         events={recentEvents}
         locale={intlLocale}
         labels={eventsLabels}
       />
 
-      {/* 5. Related friction nodes — theater grouping */}
+      {/* 5. Related friction nodes */}
       <FrictionNodeRelated related={related} locale={intlLocale} labels={relatedLabels} />
 
-      {/* Page-level methodology note (separate from the site Footer) */}
+      {/* Methodology note */}
       <div className="mt-12 pt-6 border-t border-dashboard-border text-xs text-dashboard-text-muted">
         {isDe
-          ? 'Die Verknuepfung zwischen Schlagzeilen und Narrativen erfolgt derzeit ueber einen mechanischen Schluesselwortabgleich (topic UND framing muessen treffen). Die Pipeline-Integration ist noch nicht aktiv.'
-          : 'Title-to-narrative attribution is currently via mechanical keyword match (topic AND framing must both hit). Pipeline integration not yet active.'}
+          ? 'Die Verknuepfung zwischen Schlagzeilen und Narrativen erfolgt derzeit ueber Publisher-Stance-Bucketing plus FN-Themenabgleich. Pipeline-Integration noch nicht aktiv.'
+          : 'Title-to-narrative attribution currently uses publisher-stance bucketing plus FN topic match. Pipeline integration not yet active.'}
       </div>
     </DashboardLayout>
   );

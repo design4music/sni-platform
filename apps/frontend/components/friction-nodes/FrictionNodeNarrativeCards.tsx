@@ -1,8 +1,10 @@
-import type { NarrativeOnFn, SampleTitle } from '@/lib/friction-nodes-shared';
+import type { NarrativeOnFn, SampleTitle, CentroidLookupEntry } from '@/lib/friction-nodes-shared';
 import { colorForNarrative } from '@/lib/friction-nodes-shared';
+import CoalitionPills from './CoalitionPills';
 
 interface Props {
   narratives: NarrativeOnFn[];
+  centroidLookup: Map<string, CentroidLookupEntry>;
   locale: string;
   labels: {
     sectionTitle: string;
@@ -12,9 +14,6 @@ interface Props {
     loadedVocabulary: string;
     headlinesUnderFrame: string;
     noSamples: string;
-    typeAllIn: string;
-    typeStandBy: string;
-    tier: string;
     claim: string;
     coveredBy: string;
   };
@@ -30,15 +29,16 @@ function formatDate(dateStr: string, locale: string): string {
 
 function NarrativeCard({
   n,
+  centroidLookup,
   locale,
   labels,
 }: {
   n: NarrativeOnFn;
+  centroidLookup: Map<string, CentroidLookupEntry>;
   locale: string;
   labels: Props['labels'];
 }) {
   const hue = colorForNarrative(n.display_order);
-  const typeLabel = n.narrative_type === 'all_in' ? labels.typeAllIn : labels.typeStandBy;
   const anchorId = `narrative-${n.narrative_id}`;
 
   return (
@@ -46,18 +46,16 @@ function NarrativeCard({
       id={anchorId}
       className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg scroll-mt-20 relative"
     >
-      {/* Coloured accent bar — top of the card matches the brick colour */}
+      {/* Coloured accent bar */}
       <div
         aria-hidden
         className="absolute top-0 left-0 right-0 h-1 rounded-t-lg"
         style={{ backgroundColor: hue, opacity: 0.85 }}
       />
 
-      {/* Header: stance label + count badge */}
-      <header className="flex items-start gap-3 mb-3 flex-wrap pt-1">
-        <h3
-          className="text-xl font-bold leading-tight text-dashboard-text flex-1 min-w-0"
-        >
+      {/* Header: stance label + count */}
+      <header className="flex items-start gap-3 mb-4 flex-wrap pt-1">
+        <h3 className="text-xl font-bold leading-tight text-dashboard-text flex-1 min-w-0">
           <span
             aria-hidden
             className="inline-block w-2.5 h-2.5 rounded-sm mr-2 align-middle"
@@ -66,60 +64,29 @@ function NarrativeCard({
           {n.stance_label}
         </h3>
         <span
-          className="ml-auto inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-xs font-medium bg-dashboard-border/50 border-dashboard-border text-dashboard-text-muted tabular-nums shrink-0"
+          className="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium bg-dashboard-border/50 border-dashboard-border text-dashboard-text-muted tabular-nums shrink-0"
           title={`${n.match_count} ${labels.titles}`}
         >
           {n.match_count} {labels.titles}
         </span>
       </header>
 
-      {/* Type + tier pills */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-4">
-        <span
-          className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border"
-          style={{
-            backgroundColor: hue + '22',
-            color: hue,
-            borderColor: hue + '55',
-          }}
-        >
-          {typeLabel}
-        </span>
-        {n.tier && (
-          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border bg-purple-500/10 text-purple-400 border-purple-500/30">
-            {n.tier}
-          </span>
-        )}
-        <span className="text-[10px] font-mono text-dashboard-text-muted">
-          {n.narrative_id}
-        </span>
-      </div>
-
-      {/* Coalition (centroid IDs) */}
+      {/* Coalition — country pills with flag + name */}
       <div className="mb-4">
         <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5">
           {labels.coalition}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {n.actor_centroids.map((c) => (
-            <span
-              key={c}
-              className="inline-flex items-center px-2 py-0.5 rounded-full border border-dashboard-border bg-dashboard-border/30 text-xs font-mono text-dashboard-text"
-            >
-              {c}
-            </span>
-          ))}
-        </div>
+        <CoalitionPills centroidIds={n.actor_centroids} lookup={centroidLookup} />
       </div>
 
-      {/* Loaded vocabulary */}
+      {/* Loaded vocabulary — collapsed default to 8, expand on click via details */}
       {n.framing_keywords && n.framing_keywords.length > 0 && (
         <div className="mb-4">
           <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5">
             {labels.loadedVocabulary}
           </div>
           <div className="flex flex-wrap gap-1">
-            {n.framing_keywords.slice(0, 12).map((kw) => (
+            {n.framing_keywords.slice(0, 8).map((kw) => (
               <span
                 key={kw}
                 className="text-[11px] italic text-dashboard-text bg-dashboard-bg border border-dashboard-border/60 px-1.5 py-0.5 rounded"
@@ -127,16 +94,16 @@ function NarrativeCard({
                 &ldquo;{kw}&rdquo;
               </span>
             ))}
-            {n.framing_keywords.length > 12 && (
+            {n.framing_keywords.length > 8 && (
               <span className="text-[11px] text-dashboard-text-muted">
-                +{n.framing_keywords.length - 12}
+                +{n.framing_keywords.length - 8}
               </span>
             )}
           </div>
         </div>
       )}
 
-      {/* Claim text — collapsed to 2 lines via line-clamp; full text on hover via title attr */}
+      {/* Full claim — collapsible */}
       {n.narrative_claim && (
         <details className="mb-4 group">
           <summary className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5 cursor-pointer select-none hover:text-dashboard-text transition">
@@ -148,8 +115,7 @@ function NarrativeCard({
         </details>
       )}
 
-      {/* Publishers carrying this stance — small line above headlines so the
-          editorial basis is visible to the reader. */}
+      {/* Publishers — small line above headlines so editorial basis is visible */}
       {n.publishers && n.publishers.length > 0 && (
         <div className="mb-3 text-[11px] text-dashboard-text-muted leading-snug">
           <span className="uppercase tracking-wider mr-1">{labels.coveredBy}:</span>
@@ -187,11 +153,7 @@ function NarrativeCard({
   );
 }
 
-/**
- * 2-column grid of detailed narrative cards on a friction-node page.
- * Mirrors the layout convention of OutletStanceSection cards.
- */
-export default function FrictionNodeNarrativeCards({ narratives, locale, labels }: Props) {
+export default function FrictionNodeNarrativeCards({ narratives, centroidLookup, locale, labels }: Props) {
   if (narratives.length === 0) return null;
   return (
     <section className="mb-10">
@@ -201,7 +163,13 @@ export default function FrictionNodeNarrativeCards({ narratives, locale, labels 
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {narratives.map((n) => (
-          <NarrativeCard key={n.narrative_id} n={n} locale={locale} labels={labels} />
+          <NarrativeCard
+            key={n.narrative_id}
+            n={n}
+            centroidLookup={centroidLookup}
+            locale={locale}
+            labels={labels}
+          />
         ))}
       </div>
     </section>

@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r9-events)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r10-polish)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //
@@ -28,6 +28,7 @@ export type {
   FnRecentEvent,
   FnEventVolumePoint,
   RelatedFn,
+  CentroidLookupEntry,
 } from './friction-nodes-shared';
 export { NARRATIVE_COLORS, colorForNarrative } from './friction-nodes-shared';
 
@@ -40,6 +41,7 @@ import type {
   FnRecentEvent,
   FnEventVolumePoint,
   RelatedFn,
+  CentroidLookupEntry,
 } from './friction-nodes-shared';
 
 // ============================================================
@@ -267,9 +269,10 @@ export async function getFrictionNodeWeeklyActivity(
 }
 
 /**
- * Recent events on this FN, ordered by importance DESC then date DESC.
- * Filters to promoted events and resolves merged_into to the canonical row.
- * Locale-aware on title.
+ * Recent events on this FN. Source count comes from the actual title-event
+ * link table (event_v3_titles), not events_v3.summary_source_count which
+ * is NULL on events that haven't been through the LLM describe step.
+ * Ordered by source count (proxy for importance) then date.
  */
 export async function getFrictionNodeRecentEvents(
   slug: string,
@@ -282,14 +285,18 @@ export async function getFrictionNodeRecentEvents(
       `SELECT e.id::text,
               e.date::text,
               ${loc === 'de' ? 'COALESCE(e.title_de, e.title)' : 'e.title'} AS title,
-              COALESCE(e.summary_source_count, 0)::int AS source_count,
+              (SELECT COUNT(DISTINCT t.publisher_name)
+                 FROM event_v3_titles et
+                 JOIN titles_v3 t ON t.id = et.title_id
+                 WHERE et.event_id = e.id)::int AS source_count,
               e.importance_score AS importance
        FROM event_friction_nodes efn
        JOIN events_v3 e ON e.id = efn.event_id
        WHERE efn.fn_id = $1
          AND e.is_promoted = true
          AND e.merged_into IS NULL
-       ORDER BY COALESCE(e.importance_score, 0) DESC, e.date DESC
+       ORDER BY (SELECT COUNT(*) FROM event_v3_titles et WHERE et.event_id = e.id) DESC,
+                e.date DESC
        LIMIT $2`,
       [slug, limit],
     );
@@ -352,6 +359,24 @@ export async function getRelatedFrictionNodes(
       [slug],
     );
   });
+}
+
+/**
+ * Resolve a list of centroid IDs to display label + first iso2 code so we
+ * can render country pills with flags + names instead of raw centroid IDs.
+ */
+export async function getCentroidLookup(ids: string[]): Promise<CentroidLookupEntry[]> {
+  if (!ids.length) return [];
+  return query<{ id: string; label: string; iso_codes: string[] | null }>(
+    `SELECT id, label, iso_codes FROM centroids_v3 WHERE id = ANY($1)`,
+    [ids],
+  ).then((rows) =>
+    rows.map((r) => ({
+      id: r.id,
+      label: r.label,
+      iso2: r.iso_codes && r.iso_codes.length > 0 ? r.iso_codes[0] : null,
+    })),
+  );
 }
 
 export async function getActiveFrictionNodes(
