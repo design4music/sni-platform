@@ -47,20 +47,24 @@ ON CONFLICT (event_id, fn_id) DO NOTHING;
 -- ============================================================
 -- Step 2: title_narratives for the 5 narratives on FN2
 -- ============================================================
--- Architecture (post-publisher-stance refactor):
+-- Architecture (post-publisher-stance + per-type strictness):
 --   1. FN-topic gate: title contains >=1 of FN.topic_keywords
---      (tight: only Iran-nuclear-specific terms; excludes generic
---       "uranium enrichment" / "centrifuge" / NK headlines)
 --   2. Publisher-stance bucket: title's publisher is in narrative.publishers
---      (editorially curated per-narrative list)
+--   3. Framing gate (CONDITIONAL): for narrative_type='stand_by' narratives
+--      ONLY, title must also contain >=1 of narrative.framing_keywords.
 --
--- The framing_keywords no longer gate membership — they're repurposed as
--- a SAMPLE-QUALITY RANKER in the page query so cards display headlines
--- with the strongest visible framing within their bucket.
+-- Why the conditional: ALL_IN narratives have publisher lists that are
+-- ideological organs (Press TV, IRNA, Jerusalem Post, Times of Israel)
+-- — every headline they publish on this FN frames from their stance,
+-- so publisher alone is sufficient. STAND_BY narratives have publisher
+-- lists that include news-aggregator outlets (BBC, Le Monde, Al Arabiya,
+-- Al-Ahram, Gulf News) which cover the FN broadly without consistent
+-- frame; those need framing-keyword evidence to confirm the stand-by
+-- frame is actually present in the headline.
 --
--- A title from a publisher in zero narratives (wire services, neutral
--- regional outlets) is left unattributed. A title from a publisher in
--- multiple narratives (rare) attaches to all of them.
+-- This is what stops "UAE air defences intercept Iranian missiles" from
+-- being attributed to gulf_regional_de_escalation just because Gulf News
+-- is a Gulf-hedging publisher.
 
 DELETE FROM title_narratives WHERE narrative_id IN (
     'west_iran_nuclear_threat',
@@ -84,6 +88,33 @@ JOIN titles_v3 t
         SELECT 1 FROM unnest(fn_topic.topic_keywords) kw
         WHERE t.title_display ILIKE '%' || kw || '%'
     )
+   AND (
+        -- ALL_IN: publisher stance is sufficient.
+        n.narrative_type = 'all_in'
+        OR
+        -- STAND_BY editorial-organ exception: state-media publishers
+        -- are intrinsically on-frame regardless of headline (RT/TASS
+        -- always anti-Western; Xinhua/CGTN always Chinese-multipolar;
+        -- Press TV always Iran POV — though that one only appears in
+        -- all_in lists). Letting these through without framing match
+        -- preserves their coverage.
+        t.publisher_name = ANY(ARRAY[
+            'RT', 'RT News',
+            'TASS', 'TASS (EN)',
+            'Sputnik', 'RIA Novosti',
+            'Xinhua', 'CGTN', 'China Daily', 'Global Times'
+        ])
+        OR
+        -- STAND_BY non-editorial: require framing-keyword evidence.
+        -- For aggregator publishers (BBC, Le Monde, Al Arabiya, Gulf News,
+        -- Al Jazeera, Anadolu, etc.), the publisher covers broadly so we
+        -- need the framing language as confirmation that THIS specific
+        -- headline carries the narrative's frame.
+        EXISTS (
+            SELECT 1 FROM unnest(n.framing_keywords) kw
+            WHERE t.title_display ILIKE '%' || kw || '%'
+        )
+   )
 WHERE n.id IN (
     'west_iran_nuclear_threat',
     'iran_nuclear_sovereign_right',
