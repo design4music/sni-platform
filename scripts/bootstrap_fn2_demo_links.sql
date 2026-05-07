@@ -49,8 +49,24 @@ ON CONFLICT (event_id, fn_id) DO NOTHING;
 -- ============================================================
 -- Step 2: title_narratives for the 5 narratives on FN2
 -- ============================================================
--- For each narrative, find titles matching >=1 framing_keyword (case-insensitive substring).
+-- Per architecture: title must match BOTH a topic_keyword (FN-relevance,
+-- doubles as coalition gate when topic_keywords include coalition
+-- identifiers like Khamenei, Borrell, etc.) AND a framing_keyword
+-- (frame-relevance, the loaded vocabulary diagnostic). The earlier draft
+-- used framing only and produced false positives like "US-Israeli aggression
+-- killed civilians" matching iran_nuclear_sovereign_right because "Israeli
+-- aggression" appears as a framing keyword without any nuclear topic.
 -- Cap at 12 titles per narrative for the demo.
+
+-- First wipe existing demo links for these 5 narratives so the re-run
+-- produces a clean set under the corrected logic.
+DELETE FROM title_narratives WHERE narrative_id IN (
+    'west_iran_nuclear_threat',
+    'iran_nuclear_sovereign_right',
+    'eu_diplomatic_preservation_norm',
+    'multipolar_systemic_alternative',
+    'gulf_regional_de_escalation'
+);
 
 INSERT INTO title_narratives (title_id, narrative_id)
 SELECT title_id, narrative_id FROM (
@@ -59,10 +75,15 @@ SELECT title_id, narrative_id FROM (
         n.id AS narrative_id,
         ROW_NUMBER() OVER (PARTITION BY n.id ORDER BY t.pubdate_utc DESC) AS rn
     FROM narratives_v2 n
-    JOIN titles_v3 t ON EXISTS (
-        SELECT 1 FROM unnest(n.framing_keywords) kw
-        WHERE t.title_display ILIKE '%' || kw || '%'
-    )
+    JOIN titles_v3 t
+        ON EXISTS (
+            SELECT 1 FROM unnest(n.topic_keywords) kw
+            WHERE t.title_display ILIKE '%' || kw || '%'
+        )
+       AND EXISTS (
+            SELECT 1 FROM unnest(n.framing_keywords) kw
+            WHERE t.title_display ILIKE '%' || kw || '%'
+        )
     WHERE n.id IN (
         'west_iran_nuclear_threat',
         'iran_nuclear_sovereign_right',
