@@ -1,8 +1,10 @@
 # WorldBrief — Narratives & Friction Nodes Architecture (v2 Concept)
 
-**Date**: 2026-05-06
-**Status**: Working concept. Supersedes the April `FRICTION_NODES_VISION.md` framing.
-**Companion**: `out/narrative_consolidation_pass1_v2.md` (the framing-explicit narrative draft this rests on).
+**Date**: 2026-05-07 (sections 1-10 written 2026-05-06; section 12 "Production lessons" added 2026-05-07 after FN2-FN4 deployed live).
+**Status**: Live in production at `/friction-nodes/[slug]` as a shadow route.
+**Companions**:
+- [`out/narrative_consolidation_pass1_v2.md`](narrative_consolidation_pass1_v2.md) — the framing-explicit narrative draft this rests on
+- [`docs/context/FRICTION_NODES_RUNBOOK.md`](../docs/context/FRICTION_NODES_RUNBOOK.md) — operational "how to add a new FN" runbook
 
 ---
 
@@ -305,7 +307,159 @@ The FN seed list is the *test*, not just the next deliverable. Both directions m
 
 ---
 
-## 11. The user-facing summary (for whenever the front page rewrite happens)
+## 11. Production lessons (2026-05-07, after FN2-FN4 went live)
+
+The first three FNs shipped to production today: `iran_nuclear_program`,
+`iran_proxy_network`, `iran_regime_legitimacy_contest`. Several
+architectural choices that were theoretical when sections 1-10 were
+written are now empirically validated, and a few new patterns surfaced.
+
+### 11.1 Publisher-stance bucketing > pure text matching
+
+The original v2 worksheet treated framing-keyword vocabulary as the
+primary attribution signal. In practice, **publisher editorial stance
+is the more reliable primary signal**, with framing keywords serving as
+the gate for stand-by narratives whose publishers are aggregators.
+
+A title from Press TV is intrinsically the Iranian frame, regardless of
+which words it uses. A title from BBC needs framing-keyword evidence
+because BBC covers everything from many angles. The clean rule:
+
+  - **all_in narratives**: publisher + topic match is sufficient.
+  - **stand_by narratives**: publisher + topic + framing keyword,
+    UNLESS publisher is in `editorial_organ_publishers` (state media
+    or ideologically-aligned outlet) — those bypass framing.
+
+This sits in the bootstrap (`scripts/bootstrap_friction_node.py`) and
+in the schema (`narratives_v2.editorial_organ_publishers TEXT[]`).
+Replaces the original framing-only matching from May 6 drafts.
+
+### 11.2 Topic_keywords need to be specific or false positives explode
+
+Lesson surfaced when FN4 (`iran_regime_legitimacy_contest`) initially
+included generic words like *crackdown*, *topple*, *overthrow*, *the
+regime* alone in topic_keywords. These caught BBC's *"Google
+crackdown"*, FT's *"Hungary delivers regime change"*, Guardian's *"Trump
+fraud crackdown"*, Guardian's *"North Korea regime serves only itself"*.
+Topic-match counts inflated to 545; actual on-FN coverage was much
+smaller.
+
+Rule: topic_keywords must be either multi-word phrases (*"Iranian
+regime"*, *"regime change in Iran"*) or genuinely-distinctive proper
+nouns (*Khamenei*, *Pahlavi*, *MEK*, *Mahsa Amini*). Single common
+words alone (*regime*, *crackdown*, *opposition*) over-trigger.
+
+Same lesson applies to event-title gates (the `event_actor_markers` /
+`event_topic_markers` / `event_title_anchors` tuple on `friction_nodes`).
+
+### 11.3 Multi-language framing keywords are non-negotiable
+
+European mainstream media (BBC English, Le Monde French, Der Spiegel
+German, La Repubblica Italian, El País Spanish) covers a single
+phenomenon in its native language. The diplomatic-preservation frame on
+the Iran war shows up as:
+
+  - English: *ceasefire / fragile ceasefire / mediation / Macron urges /
+    Pope appeals / deal can be done*
+  - French: *cessez-le-feu / dialogue avec / négociation / diplomatie*
+  - German: *Waffenruhe / Verhandlung / Diplomatie / Friedensgespraech*
+  - Italian: *tregua / cessate il fuoco / negoziato / mediazione*
+  - Spanish: *alto el fuego / negociación / mediación*
+
+An English-only framing keyword set would have dropped the EU diplomacy
+narrative on FN4 from a real ~164 matches to ~50. Always calibrate
+against the publisher's native-language headlines.
+
+### 11.4 Calibration is iterative, not one-shot
+
+The calibration helper (`scripts/calibrate_narrative_keywords.py`)
+should be run multiple times per narrative as it touches new FNs.
+Each FN brings its own headline corpus; the framing language that
+proves useful is FN-specific. Example: EU diplomacy on Iran nuclear
+uses *Vienna talks / snapback / JCPOA-plus*; on Iran regime legitimacy
+uses *ceasefire / Macron urges / Pope Leo*. Same narrative, different
+recurring vocabulary by FN.
+
+Workflow: when a new FN is added and a stand-by narrative attaches with
+visibly low match count, re-run calibration for that narrative against
+that FN's publisher subset. Add the new keywords. Re-bootstrap.
+
+### 11.5 Recurrence != loadedness
+
+Calibration produces RECURRING phrases. Not all of them are loaded
+(diagnostic). Common phrases like *"uranium enrichment"* or *"nuclear
+talks"* recur in everyone's coverage of Iran nuclear, regardless of
+frame. Including them in framing_keywords means everyone's coverage
+attaches to whatever narrative carries the keyword.
+
+The analyst's job in the calibration loop is to filter the recurring
+phrases for genuinely-loaded ones. *"preemptive strike"* is loaded
+(diagnostic of Israeli/US threat doctrine). *"nuclear talks"* is not
+(everyone uses it). The helper surfaces candidates; the human
+distinguishes.
+
+### 11.6 Fat-FN consolidation works
+
+The early concept-doc draft (sections 1-10) was unsure whether the Iran
+cluster should be 5-6 thin FNs (regime, war, decapitation, sanctions,
+sanctions enforcement, diaspora opposition) or 3 fat ones. Production
+validated 3 fat FNs:
+
+  - `iran_nuclear_program` — the program itself
+  - `iran_proxy_network` — Iran's regional armed-group network
+  - `iran_regime_legitimacy_contest` — the right of Iran to exist as
+     a state, spanning diplomatic / sanctions / soft-power / kinetic
+     phases
+
+The Khamenei killing, Larijani killing, Mahsa Amini protests, Pahlavi
+diaspora rallies, MEK activity, and the 2025-2026 war all live in FN3
+(regime legitimacy) as different phases of the same contest. Smaller
+FNs would have artificially split connected events.
+
+Rule: a fat FN spans many phenomena IF they share an underlying
+contested question. Three thin FNs would each have 4-5 narratives that
+mostly overlap; one fat FN has 4 narratives that each meaningfully
+distinguish.
+
+### 11.7 Related-FN linkage activates with the second FN
+
+The "theater grouping" view from section 3 was empty for FN2 alone
+(no other FNs to link to). It activated automatically when FN3 landed:
+both FNs share `eu_diplomatic_preservation_norm` +
+`multipolar_systemic_alternative` (≥2 shared narratives = qualifies as
+related). With FN4 each Iran FN points at the other two.
+
+No code added for this — it's a query over `friction_node_narratives`.
+The architecture pays off as the FN library grows. The first FN is
+expensive (full schema + bootstrap); subsequent FNs are mostly data.
+
+### 11.8 Production-readiness checklist (validated)
+
+For a new FN to be production-ready:
+
+  1. friction_nodes row with: name, description, editorial_summary,
+     centroid_ids, topic_keywords, event_actor_markers,
+     event_topic_markers, event_title_anchors (all bilingual where
+     applicable)
+  2. New narratives drafted with FN-specific framing_keywords +
+     calibration pass against actual publisher headlines (multi-language)
+  3. Existing stand-by narratives' framing_keywords expanded if they
+     attach to this FN (run calibration helper against this FN's
+     publisher subset)
+  4. friction_node_narratives links with stance_label per (FN, narrative)
+     pair
+  5. Run `python scripts/bootstrap_friction_node.py --fn-id <slug>` —
+     verify volumes are credible (not 5 when you'd expect 100; not 5000
+     from generic-keyword false positives)
+  6. Sanity-sample 10 headlines per narrative — they should be
+     visibly on-frame
+  7. Apply on Render, run bootstrap on Render, bust frontend cache
+
+The runbook at `docs/context/FRICTION_NODES_RUNBOOK.md` codifies this.
+
+---
+
+## 12. The user-facing summary (for whenever the front page rewrite happens)
 
 > WorldBrief tracks global news through 75 country lenses.
 > Headlines cluster into events.

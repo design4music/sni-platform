@@ -1,10 +1,15 @@
 # Session Start
 
-**Last refreshed**: 2026-05-06 (daemon resilience hardened — D-073:
-TCP keepalives + pool-reset-on-error + per-slot `daemon_state` health
-metrics, after the 2026-05-04 half-open-connection outage. Frontend
-cache-bust admin endpoint shipped — D-074. See PIPELINE_STATUS.md for
-the operational change.)
+**Last refreshed**: 2026-05-07 (Friction Nodes architecture shipped:
+3 Iran-cluster FNs live as a shadow route at `/friction-nodes/[slug]`
+with publisher-stance bucketing, calibration discipline, and a generic
+bootstrap that reads all per-FN config from the database. See the
+"Friction Nodes (NEW)" section below.)
+
+Earlier 2026-05-06: daemon resilience hardened (D-073: TCP keepalives +
+pool-reset-on-error + per-slot `daemon_state` health metrics, after
+the 2026-05-04 half-open-connection outage); frontend cache-bust admin
+endpoint shipped (D-074). See PIPELINE_STATUS.md.
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -14,9 +19,14 @@ first, then branch out.
 WorldBrief is live at https://www.worldbrief.info with four months of
 fully-processed 2026 data (Jan, Feb, Mar, Apr) on Render. Pipeline v4.0
 is running continuously on the Render worker. Frontend ships the
-day-centric calendar view, cross-track centroid hero, and (as of this
-session) a reworked `/c/*/t/*` that folds the calendar view inline, a
-full SEO layer, and a `/trending/v2` prototype ready for review.
+day-centric calendar view, cross-track centroid hero, and a reworked
+`/c/*/t/*` that folds the calendar view inline, full SEO layer, and a
+`/trending/v2` prototype.
+
+**As of 2026-05-07**: the Friction Nodes shadow architecture is live
+with 3 FNs in the Iran cluster. New analytical layer above events and
+narratives. See [Friction Nodes section below](#friction-nodes-new) for
+links to the concept doc + runbook.
 
 For the complete snapshot: [`PIPELINE_STATUS.md`](PIPELINE_STATUS.md).
 
@@ -78,8 +88,57 @@ meta → strategic → event). Substrate is current title_labels; matching
 is mechanical for operational narratives + LLM-as-judge for ideological
 ones. Spec: [`docs/Narrative_map_spec.md`](../Narrative_map_spec.md).
 Taxonomy draft v2 at [`docs/narrative_taxonomy.yaml`](../narrative_taxonomy.yaml)
-(9 meta + 59 strategic narratives). Code does not start until taxonomy
-is reviewed and stable.
+(9 meta + 59 strategic narratives).
+
+#### Friction Nodes (NEW — shipped 2026-05-07)
+
+The structural-layer view above narratives. A friction node is a
+contested phenomenon (Iran nuclear program, Iran proxy network,
+Iran regime legitimacy) where multiple narratives apply with
+incompatible prescriptions. Three FNs live in the Iran cluster on
+a shadow route `/friction-nodes/[slug]` (footer link only, noindex).
+
+**Read for context**:
+- [`out/concept_friction_nodes_and_narratives_v2.md`](../../out/concept_friction_nodes_and_narratives_v2.md)
+  — full architecture: three-layer model, friction-node definition,
+  unity rule, all-in / stand-by rule, calibration discipline,
+  publisher-stance bucketing, and production lessons from the FN2-FN4
+  rollout. The canonical reference.
+- [`FRICTION_NODES_RUNBOOK.md`](FRICTION_NODES_RUNBOOK.md) —
+  operational runbook: how to add a new FN end-to-end (curate →
+  draft narratives → calibrate keywords → bootstrap → deploy).
+
+**Live data on Render** (2026-05-07):
+
+| FN | Events | Top-2 narrative attributions |
+|---|---|---|
+| `iran_nuclear_program` | 665 | west_iran_nuclear_threat (140), iran_nuclear_sovereign_right (24) |
+| `iran_proxy_network` | 1,386 | west_iran_proxy_network_threat (1,642), iran_axis_of_resistance (353) |
+| `iran_regime_legitimacy_contest` | 1,681 | west_iran_regime_change_doctrine (2,588), iran_sovereign_existence (220) |
+
+**Architectural constants codified by the rollout**:
+- All per-FN config (event-title gate, topic_keywords, narrative
+  links, stance labels) lives in DB. No FN-specific code paths.
+- Generic bootstrap: `python scripts/bootstrap_friction_node.py
+   --fn-id <slug>` populates `event_friction_nodes` +
+  `title_narratives` from any FN's curated config.
+- Publisher-stance bucketing > pure text matching for stand-by
+  narratives. Editorial-organ exception (RT/TASS/Press TV always
+  pass) handles intrinsic-stance outlets.
+- Multi-language framing keywords are non-negotiable; calibrate
+  against publisher's native-language headlines.
+- Topic_keywords must be specific (multi-word phrases or
+  distinctive proper nouns). Single common words like *"crackdown"*
+  or *"the regime"* admit massive false positives.
+
+**Open / next**:
+- Israel-Palestine cluster next (israel_palestine_status with the
+  cross-FN `palestine_genocide_solidarity_frame` stand-by narrative)
+- Israel-Hezbollah / Lebanon front
+- Bab el-Mandeb / Red Sea, Strait of Hormuz
+- Promote out of shadow once architecture is stable enough to expose:
+  flip `IS_SHADOW = false` in `apps/frontend/app/[locale]/friction-nodes/[slug]/page.tsx`,
+  add main-nav link, build `/friction-nodes` index page
 
 ### Phase 3 — lighthouse
 
