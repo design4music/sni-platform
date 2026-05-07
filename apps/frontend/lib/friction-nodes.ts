@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r5-tighten)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r6-pubstance)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //
@@ -125,7 +125,11 @@ export async function getFrictionNodeView(
       for (const r of countRows2) countByNarrative.set(r.narrative_id, r.n);
     }
 
-    // Sample titles per narrative — most recent SAMPLE_TITLES_PER_NARRATIVE.
+    // Sample titles per narrative — RANKED by framing-keyword strength
+    // (count of narrative.framing_keywords present in the title), then by
+    // recency. This surfaces headlines with the strongest visible framing
+    // language as representative of the narrative bucket, even though
+    // membership itself is decided by publisher stance + FN topic match.
     const titlesByNarrative = new Map<string, SampleTitle[]>();
     if (narrativeIds.length) {
       const titleRows = await query<{
@@ -135,19 +139,30 @@ export async function getFrictionNodeView(
         publisher_name: string | null;
         pubdate_utc: string;
       }>(
-        `SELECT * FROM (
+        `SELECT narrative_id, id, title, publisher_name, pubdate_utc FROM (
             SELECT tn.narrative_id,
                    t.id,
                    t.title_display AS title,
                    t.publisher_name,
-                   t.pubdate_utc::text,
-                   ROW_NUMBER() OVER (PARTITION BY tn.narrative_id ORDER BY t.pubdate_utc DESC) AS rn
+                   t.pubdate_utc::text AS pubdate_utc,
+                   (
+                     SELECT COUNT(*) FROM unnest(n.framing_keywords) kw
+                     WHERE t.title_display ILIKE '%' || kw || '%'
+                   ) AS framing_strength,
+                   ROW_NUMBER() OVER (
+                     PARTITION BY tn.narrative_id
+                     ORDER BY (
+                       SELECT COUNT(*) FROM unnest(n.framing_keywords) kw
+                       WHERE t.title_display ILIKE '%' || kw || '%'
+                     ) DESC, t.pubdate_utc DESC
+                   ) AS rn
             FROM title_narratives tn
             JOIN titles_v3 t ON t.id = tn.title_id
+            JOIN narratives_v2 n ON n.id = tn.narrative_id
             WHERE tn.narrative_id = ANY($1)
          ) ranked
          WHERE rn <= $2
-         ORDER BY narrative_id, pubdate_utc DESC`,
+         ORDER BY narrative_id, framing_strength DESC, pubdate_utc DESC`,
         [narrativeIds, SAMPLE_TITLES_PER_NARRATIVE],
       );
       for (const row of titleRows) {
