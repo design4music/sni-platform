@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r7-calibrated)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r8-drop-gulf)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //

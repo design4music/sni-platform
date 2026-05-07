@@ -70,8 +70,7 @@ DELETE FROM title_narratives WHERE narrative_id IN (
     'west_iran_nuclear_threat',
     'iran_nuclear_sovereign_right',
     'eu_diplomatic_preservation_norm',
-    'multipolar_systemic_alternative',
-    'gulf_regional_de_escalation'
+    'multipolar_systemic_alternative'
 );
 
 WITH fn_topic AS (
@@ -119,8 +118,7 @@ WHERE n.id IN (
     'west_iran_nuclear_threat',
     'iran_nuclear_sovereign_right',
     'eu_diplomatic_preservation_norm',
-    'multipolar_systemic_alternative',
-    'gulf_regional_de_escalation'
+    'multipolar_systemic_alternative'
 )
 AND t.pubdate_utc > NOW() - INTERVAL '180 days'
 ON CONFLICT (title_id, narrative_id) DO NOTHING;
