@@ -50,6 +50,13 @@ export interface FnEventVolumePoint {
   count: number;
 }
 
+/** Per-week bucket: total event count + top N events for that week. */
+export interface FnWeekBucket {
+  week: string;        // ISO Monday-of-week, YYYY-MM-DD
+  total: number;       // total events that week (full count, not capped)
+  events: FnRecentEvent[]; // top N events that week, ordered by importance proxy
+}
+
 /** Compact lookup for resolving a centroid_id to a display label + flag. */
 export interface CentroidLookupEntry {
   id: string;

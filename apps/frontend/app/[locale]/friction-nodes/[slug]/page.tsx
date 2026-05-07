@@ -6,8 +6,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import {
   getFrictionNodeView,
   getFrictionNodeWeeklyActivity,
-  getFrictionNodeRecentEvents,
-  getFrictionNodeEventVolume,
+  getFrictionNodeEventsByWeek,
   getRelatedFrictionNodes,
   getCentroidLookup,
 } from '@/lib/friction-nodes';
@@ -15,7 +14,7 @@ import type { CentroidLookupEntry } from '@/lib/friction-nodes-shared';
 import FrictionNodeNarrativeBricks from '@/components/friction-nodes/FrictionNodeNarrativeBricks';
 import FrictionNodeNarrativeCards from '@/components/friction-nodes/FrictionNodeNarrativeCards';
 import FrictionNodeActivityChart from '@/components/friction-nodes/FrictionNodeActivityChart';
-import FrictionNodeRecentEvents from '@/components/friction-nodes/FrictionNodeRecentEvents';
+import FrictionNodeEventsByWeek from '@/components/friction-nodes/FrictionNodeEventsByWeek';
 import FrictionNodeRelated from '@/components/friction-nodes/FrictionNodeRelated';
 import CoalitionPills from '@/components/friction-nodes/CoalitionPills';
 
@@ -41,11 +40,10 @@ export default async function FrictionNodePage({ params }: Props) {
   setRequestLocale(locale);
   const intlLocale = await getLocale();
 
-  const [view, weekly, recentEvents, eventVolume, related] = await Promise.all([
+  const [view, weekly, weeklyEvents, related] = await Promise.all([
     getFrictionNodeView(slug, locale),
     getFrictionNodeWeeklyActivity(slug),
-    getFrictionNodeRecentEvents(slug, locale, 12),
-    getFrictionNodeEventVolume(slug),
+    getFrictionNodeEventsByWeek(slug, locale, 10),
     getRelatedFrictionNodes(slug, locale),
   ]);
   if (!view) return notFound();
@@ -86,22 +84,29 @@ export default async function FrictionNodePage({ params }: Props) {
     coveredBy: isDe ? 'Gedeckt von' : 'Covered by',
   };
   const chartLabels = {
-    sectionTitle: isDe ? 'Aktivitaet ueber die Zeit' : 'Activity over time',
+    sectionTitle: isDe ? 'Narrativ-Verteilung ueber die Zeit' : 'Narrative distribution over time',
     sectionDescription: isDe
-      ? 'Graue Balken zeigen das Ereignisvolumen pro Woche (Fakten-Ebene). Farbige Flaechen zeigen die Anzahl zugeordneter Schlagzeilen pro Narrativ (Interpretations-Ebene).'
-      : 'Gray bars show event volume per week (factual layer). Colored areas show attributed headlines per narrative (interpretive layer).',
+      ? 'Woechentliche Anzahl zugeordneter Schlagzeilen pro Narrativ. Visuelle Asymmetrie ist Signal: einige Koalitionen dominieren das Vokabular, andere bleiben sporadisch.'
+      : 'Weekly attributed-headline count per narrative. Visual asymmetry is signal: some coalitions dominate the vocabulary, others stay sporadic.',
     titles: brickLabels.titles,
-    events: isDe ? 'Ereignisse' : 'events',
     noData: isDe ? 'Noch keine Aktivitaetsdaten.' : 'No activity data yet.',
   };
   const eventsLabels = {
-    sectionTitle: isDe ? 'Juengste Ereignisse' : 'Recent events',
+    sectionTitle: isDe ? 'Ereignisse pro Woche' : 'Events per week',
     sectionDescription: isDe
-      ? 'Promotete Ereignisse auf dieser Friction Node, sortiert nach Schlagzeilenanzahl.'
-      : 'Promoted events on this friction node, sorted by headline volume.',
+      ? 'Wochenweise Verteilung der Ereignisse auf dieser Friction Node. Klick auf einen Balken zeigt die Top-Ereignisse dieser Woche.'
+      : 'Per-week distribution of events on this friction node. Click a bar to see that week\'s top events.',
+    chartHelpText: isDe
+      ? 'Klick auf einen Wochenbalken zur Auswahl. Hellblau = aktive Woche.'
+      : 'Click a week bar to select. Light blue = active week.',
+    weekOf: isDe ? 'Woche vom' : 'Week of',
+    eventsThisWeek: isDe ? 'Ereignisse' : 'events',
+    moreThisWeek: isDe ? '+{n} weitere diese Woche' : '+{n} more this week',
     sources: isDe ? 'Quellen' : 'sources',
     importance: isDe ? 'Bedeutung' : 'importance',
-    none: isDe ? 'noch keine verknuepften Ereignisse' : 'no linked events yet',
+    none: isDe ? 'keine Ereignisse' : 'no events',
+    selectAWeek: isDe ? '(Top-Ereignisse aller Wochen)' : '(top events across all weeks)',
+    showAll: isDe ? 'Alle Wochen' : 'All weeks',
   };
   const relatedLabels = {
     sectionTitle: isDe ? 'Verwandte Friction Nodes' : 'Related friction nodes',
@@ -233,12 +238,11 @@ export default async function FrictionNodePage({ params }: Props) {
         labels={brickLabels}
       />
 
-      {/* 2. Combined chart: events (bars) + narrative attribution (stacked areas) */}
+      {/* 2. Narrative distribution chart (interpretive layer only) */}
       <section className="mb-10">
         <FrictionNodeActivityChart
           narratives={view.narratives}
           weekly={weekly}
-          eventVolume={eventVolume}
           labels={chartLabels}
         />
       </section>
@@ -251,12 +255,8 @@ export default async function FrictionNodePage({ params }: Props) {
         labels={cardLabels}
       />
 
-      {/* 4. Recent events */}
-      <FrictionNodeRecentEvents
-        events={recentEvents}
-        locale={intlLocale}
-        labels={eventsLabels}
-      />
+      {/* 4. Events per week — clickable bars + per-week list */}
+      <FrictionNodeEventsByWeek weeks={weeklyEvents} labels={eventsLabels} />
 
       {/* 5. Related friction nodes */}
       <FrictionNodeRelated related={related} locale={intlLocale} labels={relatedLabels} />

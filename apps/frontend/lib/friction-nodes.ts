@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r11-events-strict)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r13-events-byweek)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //
@@ -27,6 +27,7 @@ export type {
   NarrativeWeeklyPoint,
   FnRecentEvent,
   FnEventVolumePoint,
+  FnWeekBucket,
   RelatedFn,
   CentroidLookupEntry,
 } from './friction-nodes-shared';
@@ -40,6 +41,7 @@ import type {
   NarrativeWeeklyPoint,
   FnRecentEvent,
   FnEventVolumePoint,
+  FnWeekBucket,
   RelatedFn,
   CentroidLookupEntry,
 } from './friction-nodes-shared';
@@ -321,9 +323,9 @@ export async function getFrictionNodeRecentEvents(
 
 /**
  * Weekly event volume on this FN. Buckets by ISO week (Monday).
- * Used by an event-volume strip displayed alongside the narrative
- * stack chart — shows the FACTUAL layer (when stuff happened) next
- * to the INTERPRETIVE layer (how it was framed).
+ * Currently unused on the page (replaced by getFrictionNodeEventsByWeek
+ * which returns total + events together) but kept for any caller that
+ * just wants counts.
  */
 export async function getFrictionNodeEventVolume(
   slug: string,
@@ -339,6 +341,73 @@ export async function getFrictionNodeEventVolume(
        ORDER BY 1`,
       [slug],
     );
+  });
+}
+
+/**
+ * Per-week event buckets for the FN: each week carries its TOTAL event
+ * count + the top-N events for that week (ordered by member-title
+ * count, our importance proxy). Used by the combined volume-bars +
+ * per-week events component.
+ *
+ * Implementation: pulls all events for the FN (date / title / source
+ * count), buckets server-side by ISO week, sorts within each bucket by
+ * member-title count DESC, caps at perWeek.
+ */
+export async function getFrictionNodeEventsByWeek(
+  slug: string,
+  locale?: string,
+  perWeek = 10,
+): Promise<FnWeekBucket[]> {
+  const loc = locale2(locale);
+  return cached(`fn_events_by_week:${slug}:${loc}:${perWeek}`, TTL, async () => {
+    const rows = await query<{
+      id: string;
+      date: string;
+      week: string;
+      title: string;
+      source_count: number;
+      title_count: number;
+      importance: number | null;
+    }>(
+      `SELECT e.id::text,
+              e.date::text,
+              to_char(date_trunc('week', e.date::timestamp), 'YYYY-MM-DD') AS week,
+              ${loc === 'de' ? 'COALESCE(e.title_de, e.title)' : 'e.title'} AS title,
+              (SELECT COUNT(DISTINCT t.publisher_name)
+                 FROM event_v3_titles et
+                 JOIN titles_v3 t ON t.id = et.title_id
+                 WHERE et.event_id = e.id)::int AS source_count,
+              (SELECT COUNT(*) FROM event_v3_titles et WHERE et.event_id = e.id)::int AS title_count,
+              e.importance_score AS importance
+       FROM event_friction_nodes efn
+       JOIN events_v3 e ON e.id = efn.event_id
+       WHERE efn.fn_id = $1
+         AND e.is_promoted = true
+         AND e.merged_into IS NULL
+       ORDER BY week, title_count DESC, e.date DESC`,
+      [slug],
+    );
+
+    const byWeek = new Map<string, FnWeekBucket>();
+    for (const r of rows) {
+      let bucket = byWeek.get(r.week);
+      if (!bucket) {
+        bucket = { week: r.week, total: 0, events: [] };
+        byWeek.set(r.week, bucket);
+      }
+      bucket.total += 1;
+      if (bucket.events.length < perWeek) {
+        bucket.events.push({
+          id: r.id,
+          date: r.date,
+          title: r.title,
+          source_count: r.source_count,
+          importance: r.importance,
+        });
+      }
+    }
+    return Array.from(byWeek.values()).sort((a, b) => a.week.localeCompare(b.week));
   });
 }
 

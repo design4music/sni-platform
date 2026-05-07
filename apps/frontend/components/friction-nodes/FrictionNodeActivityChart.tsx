@@ -2,70 +2,45 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useLocale } from 'next-intl';
-import {
-  ComposedChart,
-  Area,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import type {
-  NarrativeOnFn,
-  NarrativeWeeklyPoint,
-  FnEventVolumePoint,
-} from '@/lib/friction-nodes-shared';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import type { NarrativeOnFn, NarrativeWeeklyPoint } from '@/lib/friction-nodes-shared';
 import { colorForNarrative } from '@/lib/friction-nodes-shared';
 
 interface Props {
   narratives: NarrativeOnFn[];
   weekly: NarrativeWeeklyPoint[];
-  eventVolume: FnEventVolumePoint[];
   heightClass?: string;
   labels: {
     sectionTitle?: string;
     sectionDescription?: string;
     titles: string;
-    events: string;
     noData: string;
   };
 }
 
 /**
- * Combined activity chart: weekly events as background bars (FACTUAL layer)
- * + per-narrative attributed-headline counts as stacked colored areas
- * (INTERPRETIVE layer). Shared x-axis. Two y-axes (bars on the right
- * because event totals are typically larger than per-narrative title totals).
+ * Stacked weekly area chart of per-narrative attributed-headline counts.
+ * Pure interpretive layer — events live in a sibling component below
+ * (FrictionNodeEventsByWeek) where they have their own bars + per-week
+ * list and don't compete visually with the narrative colours.
  */
 export default function FrictionNodeActivityChart({
   narratives,
   weekly,
-  eventVolume,
-  heightClass = 'h-72',
+  heightClass = 'h-64',
   labels,
 }: Props) {
   const locale = useLocale();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Merge per-week data: union of weeks across both sources, with
-  // narrative counts and event_volume keyed onto each point.
   const data = useMemo(() => {
-    const eventMap = new Map(eventVolume.map((p) => [p.week, p.count]));
-    const narrativeMap = new Map(weekly.map((p) => [p.week, p.counts]));
-    const allWeeks = new Set<string>([...eventMap.keys(), ...narrativeMap.keys()]);
-    const sorted = Array.from(allWeeks).sort();
-    return sorted.map((week) => {
-      const counts = narrativeMap.get(week) ?? {};
-      const point: Record<string, string | number> = {
-        x: week,
-        __events: eventMap.get(week) ?? 0,
-      };
-      for (const n of narratives) point[n.narrative_id] = counts[n.narrative_id] ?? 0;
+    return weekly.map((p) => {
+      const point: Record<string, string | number> = { x: p.week };
+      for (const n of narratives) point[n.narrative_id] = p.counts[n.narrative_id] ?? 0;
       return point;
     });
-  }, [eventVolume, weekly, narratives]);
+  }, [weekly, narratives]);
 
   const labelByNarrative = useMemo(
     () => new Map(narratives.map((n) => [n.narrative_id, n.stance_label])),
@@ -112,7 +87,7 @@ export default function FrictionNodeActivityChart({
       <div className={`w-full ${heightClass}`}>
         {mounted && (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 8, right: 36, bottom: 0, left: -20 }}>
+            <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
               <XAxis
                 dataKey="x"
                 tickFormatter={formatWeek}
@@ -122,23 +97,11 @@ export default function FrictionNodeActivityChart({
                 interval="preserveStartEnd"
                 minTickGap={28}
               />
-              {/* LEFT axis — narrative attribution counts (smaller scale) */}
               <YAxis
-                yAxisId="left"
                 tick={{ fill: '#94a3b8', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 allowDecimals={false}
-              />
-              {/* RIGHT axis — event volume (larger scale) */}
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                tick={{ fill: '#64748b', fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-                allowDecimals={false}
-                width={28}
               />
               <Tooltip
                 contentStyle={{
@@ -148,29 +111,14 @@ export default function FrictionNodeActivityChart({
                   fontSize: 12,
                 }}
                 labelFormatter={(raw) => formatWeekFull(String(raw))}
-                formatter={(value, name) => {
-                  if (name === '__events') {
-                    return [value as number, labels.events];
-                  }
-                  return [
-                    value as number,
-                    labelByNarrative.get(String(name)) ?? String(name),
-                  ];
-                }}
+                formatter={(value, name) => [
+                  value as number,
+                  labelByNarrative.get(String(name)) ?? String(name),
+                ]}
               />
-              {/* Background bars — events per week */}
-              <Bar
-                yAxisId="right"
-                dataKey="__events"
-                fill="#475569"
-                fillOpacity={0.35}
-                radius={[2, 2, 0, 0]}
-              />
-              {/* Foreground stacked areas — narrative attribution */}
               {narratives.map((n) => (
                 <Area
                   key={n.narrative_id}
-                  yAxisId="left"
                   type="monotone"
                   dataKey={n.narrative_id}
                   stackId="1"
@@ -179,12 +127,12 @@ export default function FrictionNodeActivityChart({
                   fillOpacity={0.75}
                 />
               ))}
-            </ComposedChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
 
-      {/* Legend — narratives + the event-volume swatch */}
+      {/* Legend — narratives only (events live in a sibling component below) */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs">
         {narratives.map((n) => (
           <span key={n.narrative_id} className="inline-flex items-center gap-1.5">
@@ -196,14 +144,6 @@ export default function FrictionNodeActivityChart({
             <span className="text-dashboard-text-muted tabular-nums">({n.match_count})</span>
           </span>
         ))}
-        <span className="inline-flex items-center gap-1.5 ml-auto">
-          <span
-            aria-hidden
-            className="w-3 h-3 rounded flex-shrink-0"
-            style={{ backgroundColor: '#475569', opacity: 0.55 }}
-          />
-          <span className="text-dashboard-text-muted">{labels.events}</span>
-        </span>
       </div>
     </div>
   );
