@@ -1,0 +1,114 @@
+# Calibration: `west_iran_nuclear_threat`
+
+**Narrative**: Western coalition: Iran nuclear as existential threat
+**Coalition (actor_centroids)**: `AMERICAS-USA, MIDEAST-ISRAEL, MIDEAST-SAUDI`
+**Publishers scanned**: Times of Israel, Jerusalem Post, Haaretz, Arab News, Al Arabiya, Fox News
+**Window**: last 180 days
+**Topic-matched titles**: 295
+**Existing framing_keywords**: 11
+**Existing topic_keywords**: 9
+
+## Phrase candidates (30 above min-recur=2)
+
+These are 2-3 word recurring phrases not already in the keyword set. Review and add the ones that carry the framing (the coalition's loaded vocabulary). Skip phrases that could appear in neutral coverage.
+
+| count | phrase | sample headlines |
+|---|---|---|
+| 21 | `iran's irgc` | "Iran's IRGC: Only one-ton warhead missiles from now" — Jerusalem Post (2026-03-09)<br>"Iran's IRGC threatens 'most ferocious offensive operation in history' against Israel, US after Khamenei killed" — Times of Israel (2026-03-01) |
+| 16 | `strait of hormuz` | "Report: Majority of small vessels used by IRGC to man Strait of Hormuz still operational after weeks of war" — Times of Israel (2026-04-12)<br>"IRGC says will deal ‘severely’ with military ships transiting Strait of Hormuz" — Al Arabiya (2026-04-12) |
+| 15 | `mossad chief` | "Secret IDF Report Contradicts Incoming Mossad Chief on Teen Agent's Arrest" — Haaretz (2026-04-15)<br>"Mossad chief Barnea: Iran mission incomplete until it results in regime change" — Jerusalem Post (2026-04-14) |
+| 13 | `uranium enrichment` | "Iranian nuclear chief says uranium enrichment cannot be stopped by any law" — Jerusalem Post (2026-04-09)<br>"Iran 10-point plan says US must accept uranium enrichment, lift all sanctions" — Al Arabiya (2026-04-08) |
+| 13 | `nuclear talks` | "Iran nuclear talks 'didn't pass the smell test' before Trump launched strikes, says Vance" — Fox News (2026-03-03)<br>"US-Iran nuclear talks pause, Omani FM says, hailing ‘creative and positive ideas’" — Times of Israel (2026-02-26) |
+| 9 | `us-iran nuclear` | "US-Iran nuclear negotiations: Red lines, risks, and what’s at stake in Geneva talks - explainer" — Jerusalem Post (2026-02-26)<br>"US-Iran nuclear talks pause, Omani FM says, hailing ‘creative and positive ideas’" — Times of Israel (2026-02-26) |
+| 8 | `us-iran nuclear talks` | "US-Iran nuclear talks pause, Omani FM says, hailing ‘creative and positive ideas’" — Times of Israel (2026-02-26)<br>"Pivotal third round of US-Iran nuclear talks reportedly kicks off in Geneva" — Times of Israel (2026-02-26) |
+| 7 | `irgc threatens` | "April 11: IRGC threatens to ‘deal severely’ with warships in Strait of Hormuz" — Times of Israel (2026-04-10)<br>"IRGC threatens to deprive the US and its allies of oil ‘for years’ if US crosses ‘red lines’" — Times of Israel (2026-04-07) |
+| 7 | `intel chief` | "IRGC vows ‘major retaliatory strike’ over killing of intel chief" — Times of Israel (2026-04-06)<br>"IDF confirms IRGC intel chief killed; Quds Force commander also eliminated in strike" — Fox News (2026-04-06) |
+| 7 | `irgc chief` | "Diplomatic Source: IRGC Chief Calling Shots on Iran War, Believes Tehran Is Winning" — Haaretz (2026-04-06)<br>"Diplomatic Source: IRGC Chief Calling Shots on Iran War, Believes Tehran Is Winning - Middle East News" — Haaretz (2026-04-06) |
+| 7 | `irgc navy` | "Iran confirms death of IRGC Navy chief Alireza Tangsiri" — Times of Israel (2026-03-30)<br>"Strike kills IRGC Navy chief Tangsiri in Strait of Hormuz" — Jerusalem Post (2026-03-26) |
+| 6 | `quds force` | "IDF confirms IRGC intel chief killed; Quds Force commander also eliminated in strike" — Fox News (2026-04-06)<br>"Top engineering officer in IRGC's Quds Force was killed in Israeli strike in Iran yesterday, IDF says" — Times of Israel (2026-04-01) |
+| 6 | `natanz nuclear` | "IDF denies Iranian claim Natanz nuclear facility struck by Israel" — Jerusalem Post (2026-03-21)<br>"UN atomic watchdog calls for ‘military restraint’ after Iran reports attack on Natanz nuclear site" — Arab News (2026-03-21) |
+| 5 | `regime change` | "Mossad chief Barnea: Iran mission incomplete until it results in regime change" — Jerusalem Post (2026-04-14)<br>"Chinese tanker passes through Strait, Mossad chief vows Iran regime change" — Jerusalem Post (2026-04-14) |
+| 5 | `nuclear chief` | "Iran nuclear chief says enrichment cannot be stopped, calls US-Israel actions ineffective" — Jerusalem Post (2026-04-09)<br>"Iran rules out restrictions on enrichment program: Nuclear chief" — Al Arabiya (2026-04-09) |
+| 5 | `iranian irgc` | "CIA 'diversion' campaign outsmarts Iranian IRGC in daring mountain rescue" — Fox News (2026-04-05)<br>"US confirms death of Iranian IRGC naval commander" — Al Arabiya (2026-03-26) |
+| 5 | `mossad agent` | "West Bank man indicted for extortion, impersonation of IAF pilot, Mossad agent, illegal entry" — Jerusalem Post (2026-04-05)<br>"Iranian Mossad agent details role in internal attacks on regime during 12-day war" — Times of Israel (2026-01-29) |
+| 5 | `navy chief` | "Iran confirms death of IRGC Navy chief Alireza Tangsiri" — Times of Israel (2026-03-30)<br>"Strike kills IRGC Navy chief Tangsiri in Strait of Hormuz" — Jerusalem Post (2026-03-26) |
+| 5 | `irgc navy chief` | "Iran confirms death of IRGC Navy chief Alireza Tangsiri" — Times of Israel (2026-03-30)<br>"Strike kills IRGC Navy chief Tangsiri in Strait of Hormuz" — Jerusalem Post (2026-03-26) |
+| 4 | `chief barnea` | "Mossad chief Barnea: Iran mission incomplete until it results in regime change" — Jerusalem Post (2026-04-14)<br>"Mossad chief Barnea: Our mission in Iran is not over until regime falls" — Times of Israel (2026-04-14) |
+| 4 | `mossad chief barnea` | "Mossad chief Barnea: Iran mission incomplete until it results in regime change" — Jerusalem Post (2026-04-14)<br>"Mossad chief Barnea: Our mission in Iran is not over until regime falls" — Times of Israel (2026-04-14) |
+| 4 | `irgc hezbollah` | — |
+| 4 | `irgc intelligence` | "IDF assassinated IRGC Intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06)<br>"Katz, IDF: We assassinated IRGC intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06) |
+| 4 | `intelligence chief` | "IDF assassinated IRGC Intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06)<br>"Katz, IDF: We assassinated IRGC intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06) |
+| 4 | `irgc intelligence chief` | "IDF assassinated IRGC Intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06)<br>"Katz, IDF: We assassinated IRGC intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06) |
+| 4 | `middle east` | "Diplomatic Source: IRGC Chief Calling Shots on Iran War, Believes Tehran Is Winning - Middle East News" — Haaretz (2026-04-06)<br>"IRGC threatens universities across Middle East" — Jerusalem Post (2026-03-29) |
+| 4 | `irgc intel` | "IDF assassinated IRGC Intelligence chief Majid Khademi" — Jerusalem Post (2026-04-06)<br>"IDF confirms IRGC intel chief killed; Quds Force commander also eliminated in strike" — Fox News (2026-04-06) |
+| 4 | `irgc intel chief` | "IDF confirms IRGC intel chief killed; Quds Force commander also eliminated in strike" — Fox News (2026-04-06)<br>"Netanyahu hails killing of IRGC intel chief, vows to continue war ‘with full force’" — Times of Israel (2026-04-06) |
+| 4 | `us-israeli strikes` | "US-Israeli strikes kill Iran IRGC intelligence chief: Guards" — Al Arabiya (2026-04-06)<br>"US-Israeli strikes kill five IRGC members in northwest Iran: State media" — Al Arabiya (2026-04-05) |
+| 4 | `killed in strike` | "Intelligence head of Iran’s IRGC killed in strike" — Al Arabiya (2026-04-06)<br>"Israeli official: IRGC Navy chief killed in strike, was responsible for Hormuz chokehold" — Times of Israel (2026-03-26) |
+
+## Named-entity candidates (20 above min-recur=2)
+
+Capitalised tokens not already in topic_keywords. Add officials, programs, sites, or organisations that identify this coalition or its key infrastructure.
+
+| count | entity |
+|---|---|
+| 149 | `Iran` |
+| 31 | `Israel` |
+| 23 | `Hormuz` |
+| 21 | `Iranian` |
+| 19 | `Strait` |
+| 16 | `Israeli` |
+| 14 | `Khamenei` |
+| 13 | `Trump` |
+| 13 | `Hezbollah` |
+| 11 | `Tehran` |
+| 10 | `Netanyahu` |
+| 9 | `Report` |
+| 9 | `Navy` |
+| 8 | `Chief` |
+| 8 | `Iranians` |
+| 7 | `Quds` |
+| 7 | `Force` |
+| 6 | `Gulf` |
+| 6 | `Former` |
+| 6 | `Beirut` |
+
+## SQL UPDATE template (review before running)
+
+Edit the arrays below to keep ONLY the keywords you've reviewed and approved. Then run on local + Render.
+
+```sql
+UPDATE narratives_v2 SET
+  framing_keywords = framing_keywords || ARRAY[
+    'iran's irgc',  -- review
+    'strait of hormuz',  -- review
+    'mossad chief',  -- review
+    'uranium enrichment',  -- review
+    'nuclear talks',  -- review
+    'us-iran nuclear',  -- review
+    'us-iran nuclear talks',  -- review
+    'irgc threatens',  -- review
+    'intel chief',  -- review
+    'irgc chief',  -- review
+    'irgc navy',  -- review
+    'quds force',  -- review
+    'natanz nuclear',  -- review
+    'regime change',  -- review
+    'nuclear chief',  -- review
+  ]::text[],
+  topic_keywords = topic_keywords || ARRAY[
+    'Iran',  -- review
+    'Israel',  -- review
+    'Hormuz',  -- review
+    'Iranian',  -- review
+    'Strait',  -- review
+    'Israeli',  -- review
+    'Khamenei',  -- review
+    'Trump',  -- review
+    'Hezbollah',  -- review
+    'Tehran',  -- review
+  ]::text[],
+  updated_at = now()
+WHERE id = 'west_iran_nuclear_threat';
+```
+
+After UPDATE: re-run `scripts/bootstrap_fn2_demo_links.sql` (or the equivalent for the FN this narrative belongs to) and verify the new match counts via the perspectives view.

@@ -212,6 +212,44 @@ Missing narratives surfaced by FN unpacking are mostly all-in (Iran self-frame o
 
 ---
 
+## 7.5. Calibrating framing_keywords against primary-source headlines
+
+A practical extension of the all-in / stand-by rule. When you draft a narrative's framing_keywords from your own knowledge of the coalition's loaded vocabulary, those keywords are often *correct in spirit but absent in headline language* — primary sources use different phrasing than the abstract framing language an analyst writes down. Result: the matcher under-catches real coverage, and the narrative looks empty even when there's plenty of on-frame material.
+
+The fix is mechanical: **after drafting a narrative, scan the actual headline corpus from that coalition's primary sources, extract recurring 2-3-word phrases, and add the strong ones to framing_keywords**. Same goes for topic_keywords (named officials, venues, programs that surface in primary coverage).
+
+### The calibration loop
+
+For each new narrative:
+
+1. **Identify the coalition's primary sources** — the outlets that actually carry that coalition's framing (not Western reportage about them). For Iran on its nuclear program: Press TV, IRNA, Fars News, Tasnim. For Israel on the same FN: Times of Israel, Jerusalem Post, Haaretz, JNS, Israel Hayom. For E3 diplomacy: ANSA (Italy), Le Monde, FAZ, BBC, EU statements.
+
+2. **Filter that subset to the FN's topic** — `WHERE publisher_name IN (...) AND title_display ILIKE ANY (topic_keyword_set)`. ~50-150 titles is enough to see patterns.
+
+3. **Extract recurring loaded vocabulary** — phrases that appear repeatedly and carry the framing (not generic verbs). Rule of thumb: if the phrase makes you say "yes, that's how they talk about it", add it. If it could appear in any neutral coverage, skip it.
+
+4. **Add to framing_keywords + topic_keywords** — UPDATE narratives_v2.
+
+5. **Re-bootstrap and verify** — count and sample what's now matched.
+
+### Worked example: iran_nuclear_sovereign_right
+
+Original framing_keywords (drafted from analyst knowledge): 14 keywords including *NPT Article IV*, *Khamenei fatwa*, *we honored the deal*, *deterrence hedge*. Result on local: **1 matching headline**.
+
+After calibration against Press TV / IRNA / Fars / Tasnim coverage: added *peaceful nuclear*, *right to enrich*, *enrichment rights*, *inalienable right*, *rights enshrined in NPT*, *language of force*, *big lie*, *civilian atomic*, *Israeli sabotage*, *attacks on Iran*, *fair nuclear deal*, *religious beliefs*, plus Iranian official names (*Larijani*, *Baqaei*, *Gharibabadi*, *Eslami*) to topic_keywords.
+
+Result on local: **12 matching headlines**, all on-frame. Sample: "Iran will not compromise on enrichment rights" (IRNA), "Russia backs Iran's 'inalienable right' to uranium enrichment" (Press TV), "Pezeshkian: nation rejects language of force".
+
+The 12-fold increase came not from loosening (lower-quality matches) but from learning what loaded language actually *is* in the corpus. The narrative was correctly scoped; the analyst's keyword list just didn't intersect what publishers wrote.
+
+### Why this is a discipline, not a one-off
+
+Every newly created narrative should pass through this calibration step before going live. It's a 10-15 minute job per narrative with the helper script (`scripts/calibrate_narrative_keywords.py`). It's not a pipeline component — it's curation infrastructure, run interactively when narratives are added or when coverage shifts noticeably.
+
+It also produces a useful artifact: a record of *which loaded phrases the coalition actually uses* in the current period. That's its own intelligence product.
+
+---
+
 ## 8. How narratives and FNs are drafted (the hybrid approach)
 
 Two pure approaches and why neither alone works:
