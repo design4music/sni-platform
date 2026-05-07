@@ -16,8 +16,10 @@ BEGIN;
 -- Step 1: event_friction_nodes for FN2
 -- ============================================================
 -- Match titles_v3 against FN2 topic_keywords (case-insensitive substring).
--- Then link each event whose member titles include >=1 matching title.
--- Cap at 60 events for the demo.
+-- Then link every event whose member titles include >=1 matching title.
+-- UNCAPPED — the chart needs full coverage to show realistic activity.
+
+DELETE FROM event_friction_nodes WHERE fn_id = 'iran_nuclear_program';
 
 WITH fn AS (
     SELECT id AS fn_id, topic_keywords
@@ -33,13 +35,9 @@ matching_titles AS (
     AND t.pubdate_utc > NOW() - INTERVAL '180 days'
 ),
 candidate_events AS (
-    SELECT DISTINCT et.event_id, MAX(t.pubdate_utc) AS recency
+    SELECT DISTINCT et.event_id
     FROM event_v3_titles et
     JOIN matching_titles mt ON mt.title_id = et.title_id
-    JOIN titles_v3 t ON t.id = et.title_id
-    GROUP BY et.event_id
-    ORDER BY recency DESC
-    LIMIT 60
 )
 INSERT INTO event_friction_nodes (event_id, fn_id)
 SELECT ce.event_id, 'iran_nuclear_program'
@@ -68,32 +66,28 @@ DELETE FROM title_narratives WHERE narrative_id IN (
     'gulf_regional_de_escalation'
 );
 
+-- UNCAPPED — chart needs full match population per narrative. The page
+-- query slices to N most-recent for the headline samples in each card.
 INSERT INTO title_narratives (title_id, narrative_id)
-SELECT title_id, narrative_id FROM (
-    SELECT
-        t.id AS title_id,
-        n.id AS narrative_id,
-        ROW_NUMBER() OVER (PARTITION BY n.id ORDER BY t.pubdate_utc DESC) AS rn
-    FROM narratives_v2 n
-    JOIN titles_v3 t
-        ON EXISTS (
-            SELECT 1 FROM unnest(n.topic_keywords) kw
-            WHERE t.title_display ILIKE '%' || kw || '%'
-        )
-       AND EXISTS (
-            SELECT 1 FROM unnest(n.framing_keywords) kw
-            WHERE t.title_display ILIKE '%' || kw || '%'
-        )
-    WHERE n.id IN (
-        'west_iran_nuclear_threat',
-        'iran_nuclear_sovereign_right',
-        'eu_diplomatic_preservation_norm',
-        'multipolar_systemic_alternative',
-        'gulf_regional_de_escalation'
+SELECT t.id AS title_id, n.id AS narrative_id
+FROM narratives_v2 n
+JOIN titles_v3 t
+    ON EXISTS (
+        SELECT 1 FROM unnest(n.topic_keywords) kw
+        WHERE t.title_display ILIKE '%' || kw || '%'
     )
-    AND t.pubdate_utc > NOW() - INTERVAL '180 days'
-) ranked
-WHERE rn <= 12
+   AND EXISTS (
+        SELECT 1 FROM unnest(n.framing_keywords) kw
+        WHERE t.title_display ILIKE '%' || kw || '%'
+    )
+WHERE n.id IN (
+    'west_iran_nuclear_threat',
+    'iran_nuclear_sovereign_right',
+    'eu_diplomatic_preservation_norm',
+    'multipolar_systemic_alternative',
+    'gulf_regional_de_escalation'
+)
+AND t.pubdate_utc > NOW() - INTERVAL '180 days'
 ON CONFLICT (title_id, narrative_id) DO NOTHING;
 
 COMMIT;

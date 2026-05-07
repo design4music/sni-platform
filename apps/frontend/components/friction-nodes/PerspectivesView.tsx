@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { NarrativeOnFn, SampleTitle } from '@/lib/friction-nodes';
+import type { NarrativeOnFn, SampleTitle } from '@/lib/friction-nodes-shared';
 
 interface Props {
   narratives: NarrativeOnFn[];

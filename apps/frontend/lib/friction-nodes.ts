@@ -1,4 +1,4 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r3)
+// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r4-redesign)
 // Separate module from queries.ts to keep the shadow concerns isolated until
 // the wider rollout decides on naming and integration.
 //
@@ -15,53 +15,33 @@
 import { query } from './db';
 import { cached } from './cache';
 
-// ============================================================
-// Types
-// ============================================================
+// Re-export client-safe types and the colour palette so existing
+// server-side imports of NARRATIVE_COLORS / FrictionNode etc. keep
+// working. Client components MUST import from './friction-nodes-shared'
+// directly to avoid pulling pg into the browser bundle.
+export type {
+  FrictionNode,
+  SampleTitle,
+  NarrativeOnFn,
+  FrictionNodeView,
+  NarrativeWeeklyPoint,
+} from './friction-nodes-shared';
+export { NARRATIVE_COLORS, colorForNarrative } from './friction-nodes-shared';
 
-export interface FrictionNode {
-  id: string;
-  name: string;            // resolved by locale
-  description: string | null;
-  centroid_ids: string[];
-  topic_keywords: string[];
-}
-
-export interface NarrativeOnFn {
-  // From narratives_v2
-  narrative_id: string;
-  narrative_name: string;       // resolved by locale
-  narrative_claim: string;      // resolved by locale
-  actor_centroids: string[];
-  tier: 'operational' | 'ideological' | null;
-  narrative_type: 'all_in' | 'stand_by' | null;
-  framing_keywords: string[];
-  // From friction_node_narratives
-  stance_label: string;         // resolved by locale
-  display_order: number;
-  // Joined sample titles
-  sample_titles: SampleTitle[];
-}
-
-export interface SampleTitle {
-  id: string;
-  title: string;
-  publisher_name: string | null;
-  pubdate_utc: string;
-}
-
-export interface FrictionNodeView {
-  fn: FrictionNode;
-  narratives: NarrativeOnFn[];
-  event_count: number;
-}
+import type {
+  FrictionNode,
+  SampleTitle,
+  NarrativeOnFn,
+  FrictionNodeView,
+  NarrativeWeeklyPoint,
+} from './friction-nodes-shared';
 
 // ============================================================
 // Queries
 // ============================================================
 
 const TTL = 12 * 3600;
-const SAMPLE_TITLES_PER_NARRATIVE = 5;
+const SAMPLE_TITLES_PER_NARRATIVE = 6;
 
 function locale2(locale?: string): 'en' | 'de' {
   return locale === 'de' ? 'de' : 'en';
@@ -130,8 +110,22 @@ export async function getFrictionNodeView(
       [slug],
     );
 
-    // Sample titles per narrative — most recent SAMPLE_TITLES_PER_NARRATIVE.
     const narrativeIds = narrativeRows.map((r) => r.narrative_id);
+
+    // Aggregate match counts per narrative (uncapped).
+    const countByNarrative = new Map<string, number>();
+    if (narrativeIds.length) {
+      const countRows2 = await query<{ narrative_id: string; n: number }>(
+        `SELECT narrative_id, COUNT(*)::int AS n
+         FROM title_narratives
+         WHERE narrative_id = ANY($1)
+         GROUP BY narrative_id`,
+        [narrativeIds],
+      );
+      for (const r of countRows2) countByNarrative.set(r.narrative_id, r.n);
+    }
+
+    // Sample titles per narrative — most recent SAMPLE_TITLES_PER_NARRATIVE.
     const titlesByNarrative = new Map<string, SampleTitle[]>();
     if (narrativeIds.length) {
       const titleRows = await query<{
@@ -180,10 +174,69 @@ export async function getFrictionNodeView(
       fn,
       narratives: narrativeRows.map((r) => ({
         ...r,
+        match_count: countByNarrative.get(r.narrative_id) ?? 0,
         sample_titles: titlesByNarrative.get(r.narrative_id) ?? [],
       })),
       event_count,
     };
+  });
+}
+
+/**
+ * Weekly per-narrative title counts for the FN's linked narratives.
+ * Used by the stacked-area activity chart. Buckets by ISO week (Monday).
+ * Returns a flat list ordered by week ascending; counts are present for
+ * every narrative on every week (zeros included) so Recharts can stack.
+ */
+export async function getFrictionNodeWeeklyActivity(
+  slug: string,
+): Promise<NarrativeWeeklyPoint[]> {
+  return cached(`fn_weekly:${slug}`, TTL, async () => {
+    // First find the narrative_ids on this FN.
+    const narrativeIdRows = await query<{ narrative_id: string }>(
+      `SELECT narrative_id FROM friction_node_narratives
+       WHERE fn_id = $1 ORDER BY display_order`,
+      [slug],
+    );
+    const narrativeIds = narrativeIdRows.map((r) => r.narrative_id);
+    if (!narrativeIds.length) return [];
+
+    // Weekly buckets per narrative.
+    const rows = await query<{
+      week: string;
+      narrative_id: string;
+      n: number;
+    }>(
+      `SELECT
+          to_char(date_trunc('week', t.pubdate_utc), 'YYYY-MM-DD') AS week,
+          tn.narrative_id,
+          COUNT(*)::int AS n
+       FROM title_narratives tn
+       JOIN titles_v3 t ON t.id = tn.title_id
+       WHERE tn.narrative_id = ANY($1)
+       GROUP BY 1, 2
+       ORDER BY 1`,
+      [narrativeIds],
+    );
+
+    // Pivot into one point per week with all narratives keyed.
+    const byWeek = new Map<string, Record<string, number>>();
+    for (const r of rows) {
+      const slot = byWeek.get(r.week) ?? {};
+      slot[r.narrative_id] = r.n;
+      byWeek.set(r.week, slot);
+    }
+    const weeks = Array.from(byWeek.keys()).sort();
+    return weeks.map((week) => {
+      const counts: Record<string, number> = {};
+      let total = 0;
+      for (const id of narrativeIds) {
+        const c = byWeek.get(week)?.[id] ?? 0;
+        counts[id] = c;
+        total += c;
+      }
+      return { week, counts, total };
+    });
   });
 }
 
