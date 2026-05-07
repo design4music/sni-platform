@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { setRequestLocale, getLocale } from 'next-intl/server';
+import DashboardLayout from '@/components/DashboardLayout';
 import {
   getFrictionNodeView,
   getFrictionNodeWeeklyActivity,
@@ -76,7 +77,7 @@ export default async function FrictionNodePage({ params }: Props) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <DashboardLayout>
       {/* Shadow-route notice */}
       <div className="mb-6 px-3 py-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs text-amber-400">
         {isDe
@@ -165,12 +166,12 @@ export default async function FrictionNodePage({ params }: Props) {
         labels={cardLabels}
       />
 
-      {/* Footer note */}
-      <footer className="mt-12 pt-6 border-t border-dashboard-border text-xs text-dashboard-text-muted">
+      {/* Page-level methodology note (separate from the site Footer) */}
+      <div className="mt-12 pt-6 border-t border-dashboard-border text-xs text-dashboard-text-muted">
         {isDe
           ? 'Die Verknuepfung zwischen Schlagzeilen und Narrativen erfolgt derzeit ueber einen mechanischen Schluesselwortabgleich (topic UND framing muessen treffen). Die Pipeline-Integration ist noch nicht aktiv.'
           : 'Title-to-narrative attribution is currently via mechanical keyword match (topic AND framing must both hit). Pipeline integration not yet active.'}
-      </footer>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
