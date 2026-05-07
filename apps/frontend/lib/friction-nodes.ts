@@ -1,7 +1,7 @@
 // Friction nodes + narratives_v2 — shadow architecture for the new
 // narrative-mapping platform. Module is kept isolated from queries.ts
 // until the wider rollout decides on naming and integration.
-// (HMR-bust 2026-05-07: FN3 iran_proxy_network seeded.)
+// (HMR-bust 2026-05-07: FN4 iran_regime_legitimacy_contest seeded.)
 //
 // Tables (see db/migrations/20260507_friction_nodes_v2.sql plus
 // follow-on migrations dated 20260507):
