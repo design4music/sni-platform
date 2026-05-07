@@ -249,7 +249,8 @@
     "privacy": "Privacy Policy",
     "cookieSettings": "Cookie Settings",
     "allRights": "All rights reserved.",
-    "sources": "Sources"
+    "sources": "Sources",
+    "frictionNodesPreview": "Friction Nodes (preview)"
   },
   "cookie": {
     "message": "We use essential cookies for authentication and optional analytics cookies (Google Analytics) to understand usage.",

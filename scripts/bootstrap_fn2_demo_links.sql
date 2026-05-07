@@ -1,0 +1,89 @@
+-- Bootstrap demo data for FN2 (Iran nuclear program).
+-- 2026-05-07
+-- One-off mechanical-keyword script. NOT pipeline-integrated.
+-- Idempotent via ON CONFLICT DO NOTHING.
+--
+-- Strategy:
+--   Step 1 (event_friction_nodes): events whose member titles match any FN
+--   topic_keyword, ranked by recency, capped per FN.
+--   Step 2 (title_narratives): titles matching any narrative framing_keyword,
+--   ranked by recency, capped per narrative. One title can attach to multiple
+--   narratives (article quotes both frames).
+
+BEGIN;
+
+-- ============================================================
+-- Step 1: event_friction_nodes for FN2
+-- ============================================================
+-- Match titles_v3 against FN2 topic_keywords (case-insensitive substring).
+-- Then link each event whose member titles include >=1 matching title.
+-- Cap at 60 events for the demo.
+
+WITH fn AS (
+    SELECT id AS fn_id, topic_keywords
+    FROM friction_nodes WHERE id = 'iran_nuclear_program'
+),
+matching_titles AS (
+    SELECT t.id AS title_id
+    FROM titles_v3 t, fn
+    WHERE EXISTS (
+        SELECT 1 FROM unnest(fn.topic_keywords) kw
+        WHERE t.title_display ILIKE '%' || kw || '%'
+    )
+    AND t.pubdate_utc > NOW() - INTERVAL '180 days'
+),
+candidate_events AS (
+    SELECT DISTINCT et.event_id, MAX(t.pubdate_utc) AS recency
+    FROM event_v3_titles et
+    JOIN matching_titles mt ON mt.title_id = et.title_id
+    JOIN titles_v3 t ON t.id = et.title_id
+    GROUP BY et.event_id
+    ORDER BY recency DESC
+    LIMIT 60
+)
+INSERT INTO event_friction_nodes (event_id, fn_id)
+SELECT ce.event_id, 'iran_nuclear_program'
+FROM candidate_events ce
+ON CONFLICT (event_id, fn_id) DO NOTHING;
+
+-- ============================================================
+-- Step 2: title_narratives for the 5 narratives on FN2
+-- ============================================================
+-- For each narrative, find titles matching >=1 framing_keyword (case-insensitive substring).
+-- Cap at 12 titles per narrative for the demo.
+
+INSERT INTO title_narratives (title_id, narrative_id)
+SELECT title_id, narrative_id FROM (
+    SELECT
+        t.id AS title_id,
+        n.id AS narrative_id,
+        ROW_NUMBER() OVER (PARTITION BY n.id ORDER BY t.pubdate_utc DESC) AS rn
+    FROM narratives_v2 n
+    JOIN titles_v3 t ON EXISTS (
+        SELECT 1 FROM unnest(n.framing_keywords) kw
+        WHERE t.title_display ILIKE '%' || kw || '%'
+    )
+    WHERE n.id IN (
+        'west_iran_nuclear_threat',
+        'iran_nuclear_sovereign_right',
+        'eu_diplomatic_preservation_norm',
+        'multipolar_systemic_alternative',
+        'gulf_regional_de_escalation'
+    )
+    AND t.pubdate_utc > NOW() - INTERVAL '180 days'
+) ranked
+WHERE rn <= 12
+ON CONFLICT (title_id, narrative_id) DO NOTHING;
+
+COMMIT;
+
+-- ============================================================
+-- Verification
+-- ============================================================
+SELECT 'event_friction_nodes count for FN2' AS metric, COUNT(*)::text AS value
+FROM event_friction_nodes WHERE fn_id = 'iran_nuclear_program'
+UNION ALL
+SELECT 'title_narratives count by narrative: ' || narrative_id, COUNT(*)::text
+FROM title_narratives
+WHERE narrative_id IN (SELECT narrative_id FROM friction_node_narratives WHERE fn_id = 'iran_nuclear_program')
+GROUP BY narrative_id;

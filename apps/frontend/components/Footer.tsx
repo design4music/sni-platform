@@ -49,6 +49,11 @@ export default function Footer() {
                   {t('sources')}
                 </Link>
               </li>
+              <li>
+                <Link href="/friction-nodes/iran_nuclear_program" className="text-dashboard-text-muted hover:text-dashboard-text transition">
+                  {t('frictionNodesPreview')}
+                </Link>
+              </li>
             </ul>
           </div>
 
