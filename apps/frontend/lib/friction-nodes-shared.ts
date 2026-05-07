@@ -12,6 +12,10 @@ export interface FrictionNode {
   editorial_summary: string | null;
   centroid_ids: string[];
   topic_keywords: string[];
+  /** Event-FN gate: title must match (any actor) AND (any topic), OR (any anchor). */
+  event_actor_markers: string[];
+  event_topic_markers: string[];
+  event_title_anchors: string[];
 }
 
 export interface SampleTitle {

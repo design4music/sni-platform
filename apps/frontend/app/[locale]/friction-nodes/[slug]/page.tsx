@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { setRequestLocale, getLocale } from 'next-intl/server';
 import DashboardLayout from '@/components/DashboardLayout';
+import JsonLd from '@/components/JsonLd';
+import { buildPageMetadata, breadcrumbList, type Locale as SeoLocale } from '@/lib/seo';
 import {
   getFrictionNodeView,
   getFrictionNodeWeeklyActivity,
@@ -18,7 +20,14 @@ import FrictionNodeEventsByWeek from '@/components/friction-nodes/FrictionNodeEv
 import FrictionNodeRelated from '@/components/friction-nodes/FrictionNodeRelated';
 import CoalitionPills from '@/components/friction-nodes/CoalitionPills';
 
+// Shadow route. Force-dynamic + lib/cache.ts query memoization (per
+// project convention — see lib/cache.ts and the ISR-cache-sizing memory).
 export const dynamic = 'force-dynamic';
+
+// SHADOW: noindex while not in main navigation. Flip to remove the
+// robots override (and remove the in-page amber notice) when ready
+// to promote.
+const IS_SHADOW = true;
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
@@ -28,11 +37,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
   const view = await getFrictionNodeView(slug, locale);
   if (!view) return { title: 'Not Found' };
-  return {
-    title: `${view.fn.name} — Friction Node | WorldBrief`,
+  const meta = buildPageMetadata({
+    title: `${view.fn.name} | Friction Node`,
     description: view.fn.editorial_summary ?? view.fn.description ?? view.fn.name,
-    robots: { index: false, follow: false },
-  };
+    path: `/friction-nodes/${slug}`,
+    locale: locale as SeoLocale,
+    ogType: 'article',
+  });
+  if (IS_SHADOW) meta.robots = { index: false, follow: false };
+  return meta;
 }
 
 export default async function FrictionNodePage({ params }: Props) {
@@ -119,14 +132,24 @@ export default async function FrictionNodePage({ params }: Props) {
       : 'No related friction nodes yet. More friction nodes need to be added.',
   };
 
+  // BreadcrumbList JSON-LD for SEO.
+  const breadcrumbJson = breadcrumbList([
+    { name: 'WorldBrief', path: '/' },
+    { name: isDe ? 'Friction Nodes' : 'Friction Nodes', path: '/friction-nodes' },
+    { name: view.fn.name, path: `/friction-nodes/${slug}` },
+  ]);
+
   return (
     <DashboardLayout>
-      {/* Shadow-route notice */}
-      <div className="mb-6 px-3 py-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs text-amber-400">
-        {isDe
-          ? 'Schatten-Route. Experimentelle Friction-Node-Architektur, noch nicht in der Hauptnavigation.'
-          : 'Shadow route. Experimental friction-node architecture, not yet in main navigation.'}
-      </div>
+      <JsonLd data={breadcrumbJson} />
+
+      {IS_SHADOW && (
+        <div className="mb-6 px-3 py-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs text-amber-400">
+          {isDe
+            ? 'Schatten-Route. Experimentelle Friction-Node-Architektur, noch nicht in der Hauptnavigation.'
+            : 'Shadow route. Experimental friction-node architecture, not yet in main navigation.'}
+        </div>
+      )}
 
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="text-sm text-dashboard-text-muted mb-3">

@@ -1,16 +1,25 @@
-// Shadow architecture: friction nodes + narratives_v2. (cache-bust 2026-05-07-r13-events-byweek)
-// Separate module from queries.ts to keep the shadow concerns isolated until
-// the wider rollout decides on naming and integration.
+// Friction nodes + narratives_v2 — shadow architecture for the new
+// narrative-mapping platform. Module is kept isolated from queries.ts
+// until the wider rollout decides on naming and integration.
 //
-// Tables (see db/migrations/20260507_friction_nodes_v2.sql):
-//   friction_nodes            — contested phenomena
+// Tables (see db/migrations/20260507_friction_nodes_v2.sql plus
+// follow-on migrations dated 20260507):
+//   friction_nodes            — contested phenomena (curated)
 //   narratives_v2             — framing-explicit narrative library
 //   friction_node_narratives  — which narratives apply, with stance label
-//   event_friction_nodes      — events about a phenomenon (topic match)
+//   event_friction_nodes      — events substantively about a phenomenon
 //   title_narratives          — titles framed through a narrative's lens
 //
-// No matcher integration: title_narratives + event_friction_nodes are
-// populated by scripts/bootstrap_fn2_demo_links.sql for the demo.
+// Attribution is curation-driven (no LLM matcher in this slice):
+//   - Event-FN: bootstrap script applies the per-FN
+//     (event_actor_markers, event_topic_markers, event_title_anchors)
+//     gate stored on friction_nodes.
+//   - Title-narrative: bootstrap maps publishers to narratives via
+//     narratives_v2.publishers + topic match + (for stand-by narratives)
+//     framing-keyword evidence, with editorial_organ_publishers as the
+//     intrinsic-stance exception.
+//
+// To add a new FN, see docs/context/FRICTION_NODES_RUNBOOK.md.
 
 import { query } from './db';
 import { cached } from './cache';
@@ -26,7 +35,6 @@ export type {
   FrictionNodeView,
   NarrativeWeeklyPoint,
   FnRecentEvent,
-  FnEventVolumePoint,
   FnWeekBucket,
   RelatedFn,
   CentroidLookupEntry,
@@ -40,7 +48,6 @@ import type {
   FrictionNodeView,
   NarrativeWeeklyPoint,
   FnRecentEvent,
-  FnEventVolumePoint,
   FnWeekBucket,
   RelatedFn,
   CentroidLookupEntry,
@@ -70,18 +77,31 @@ export async function getFrictionNodeBySlug(
       editorial_summary: string | null;
       centroid_ids: string[];
       topic_keywords: string[];
+      event_actor_markers: string[] | null;
+      event_topic_markers: string[] | null;
+      event_title_anchors: string[] | null;
     }>(
       `SELECT id,
               ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
               ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
               centroid_ids,
-              topic_keywords
+              topic_keywords,
+              event_actor_markers,
+              event_topic_markers,
+              event_title_anchors
        FROM friction_nodes
        WHERE id = $1 AND is_active = true`,
       [slug],
     );
-    return rows[0] || null;
+    const r = rows[0];
+    if (!r) return null;
+    return {
+      ...r,
+      event_actor_markers: r.event_actor_markers ?? [],
+      event_topic_markers: r.event_topic_markers ?? [],
+      event_title_anchors: r.event_title_anchors ?? [],
+    };
   });
 }
 
@@ -267,80 +287,6 @@ export async function getFrictionNodeWeeklyActivity(
       }
       return { week, counts, total };
     });
-  });
-}
-
-/**
- * Recent events on this FN.
- *
- * Tightened filter: the EVENT'S OWN canonical title must be substantively
- * about the FN, not just contain some member title that mentions it.
- * For Iran nuclear specifically: title must have an Iran-marker
- * (Iran/Tehran/Iranian) AND a nuclear-domain word (nuclear/enrichment/
- * uranium/atomic/centrifuge), OR a site/program name that's Iran-specific
- * (Natanz/Fordow/Bushehr/Arak/JCPOA).
- *
- * The hardcoded predicate is FN2-specific. When more FNs land we'll
- * want this to be configurable per-FN (e.g. via a JSONB column on
- * friction_nodes carrying a "title-match grammar"). For now a single
- * branch keyed off the slug.
- *
- * source_count comes from event_v3_titles (events_v3.summary_source_count
- * is NULL on events that haven't been through the LLM describe step).
- */
-export async function getFrictionNodeRecentEvents(
-  slug: string,
-  locale?: string,
-  limit = 12,
-): Promise<FnRecentEvent[]> {
-  const loc = locale2(locale);
-  return cached(`fn_recent_events:${slug}:${loc}:${limit}`, TTL, async () => {
-    // FN-specific event-title gate (hardcoded for now — see docstring).
-    // event_friction_nodes is now itself the strict set (bootstrap applies
-    // the FN-specific title gate at link time), so no extra title filter
-    // needed in the page query.
-    return query<FnRecentEvent>(
-      `SELECT e.id::text,
-              e.date::text,
-              ${loc === 'de' ? 'COALESCE(e.title_de, e.title)' : 'e.title'} AS title,
-              (SELECT COUNT(DISTINCT t.publisher_name)
-                 FROM event_v3_titles et
-                 JOIN titles_v3 t ON t.id = et.title_id
-                 WHERE et.event_id = e.id)::int AS source_count,
-              e.importance_score AS importance
-       FROM event_friction_nodes efn
-       JOIN events_v3 e ON e.id = efn.event_id
-       WHERE efn.fn_id = $1
-         AND e.is_promoted = true
-         AND e.merged_into IS NULL
-       ORDER BY (SELECT COUNT(*) FROM event_v3_titles et WHERE et.event_id = e.id) DESC,
-                e.date DESC
-       LIMIT $2`,
-      [slug, limit],
-    );
-  });
-}
-
-/**
- * Weekly event volume on this FN. Buckets by ISO week (Monday).
- * Currently unused on the page (replaced by getFrictionNodeEventsByWeek
- * which returns total + events together) but kept for any caller that
- * just wants counts.
- */
-export async function getFrictionNodeEventVolume(
-  slug: string,
-): Promise<FnEventVolumePoint[]> {
-  return cached(`fn_event_volume:${slug}`, TTL, async () => {
-    return query<FnEventVolumePoint>(
-      `SELECT to_char(date_trunc('week', e.date::timestamp), 'YYYY-MM-DD') AS week,
-              COUNT(*)::int AS count
-       FROM event_friction_nodes efn
-       JOIN events_v3 e ON e.id = efn.event_id
-       WHERE efn.fn_id = $1
-       GROUP BY 1
-       ORDER BY 1`,
-      [slug],
-    );
   });
 }
 
