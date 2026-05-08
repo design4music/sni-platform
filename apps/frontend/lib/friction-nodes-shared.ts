@@ -16,6 +16,30 @@ export interface FrictionNode {
   event_actor_markers: string[];
   event_topic_markers: string[];
   event_title_anchors: string[];
+  fn_type: 'atomic' | 'theater';
+  member_fn_ids: string[];
+}
+
+/** Compact pointer to a parent theater (for atomic-FN page header pill). */
+export interface TheaterPointer {
+  id: string;
+  name: string;
+}
+
+/** Brick row for a constituent atomic FN, used on theater landing pages. */
+export interface TheaterMemberFn {
+  id: string;
+  name: string;
+  description: string | null;
+  editorial_summary: string | null;
+  event_count: number;
+  /** Stance bricks: ordered, colored. */
+  stances: {
+    narrative_id: string;
+    label: string;
+    display_order: number;
+    match_count: number;
+  }[];
 }
 
 export interface SampleTitle {

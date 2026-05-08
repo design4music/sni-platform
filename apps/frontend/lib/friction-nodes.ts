@@ -39,6 +39,8 @@ export type {
   FnWeekBucket,
   RelatedFn,
   CentroidLookupEntry,
+  TheaterPointer,
+  TheaterMemberFn,
 } from './friction-nodes-shared';
 export { NARRATIVE_COLORS, colorForNarrative } from './friction-nodes-shared';
 
@@ -52,6 +54,8 @@ import type {
   FnWeekBucket,
   RelatedFn,
   CentroidLookupEntry,
+  TheaterPointer,
+  TheaterMemberFn,
 } from './friction-nodes-shared';
 
 // ============================================================
@@ -77,10 +81,12 @@ export async function getFrictionNodeBySlug(
       description: string | null;
       editorial_summary: string | null;
       centroid_ids: string[];
-      topic_keywords: string[];
+      topic_keywords: string[] | null;
       event_actor_markers: string[] | null;
       event_topic_markers: string[] | null;
       event_title_anchors: string[] | null;
+      fn_type: 'atomic' | 'theater';
+      member_fn_ids: string[] | null;
     }>(
       `SELECT id,
               ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
@@ -90,7 +96,9 @@ export async function getFrictionNodeBySlug(
               topic_keywords,
               event_actor_markers,
               event_topic_markers,
-              event_title_anchors
+              event_title_anchors,
+              fn_type,
+              member_fn_ids
        FROM friction_nodes
        WHERE id = $1 AND is_active = true`,
       [slug],
@@ -99,10 +107,137 @@ export async function getFrictionNodeBySlug(
     if (!r) return null;
     return {
       ...r,
+      topic_keywords: r.topic_keywords ?? [],
       event_actor_markers: r.event_actor_markers ?? [],
       event_topic_markers: r.event_topic_markers ?? [],
       event_title_anchors: r.event_title_anchors ?? [],
+      member_fn_ids: r.member_fn_ids ?? [],
     };
+  });
+}
+
+/**
+ * If this atomic FN is bundled inside a theater (a friction_node row with
+ * fn_type='theater' whose member_fn_ids contains this FN's id), return a
+ * compact pointer for the "Part of: X" pill. NULL if no theater bundles it.
+ */
+export async function getTheaterForAtomicFn(
+  fnId: string,
+  locale?: string,
+): Promise<TheaterPointer | null> {
+  const loc = locale2(locale);
+  return cached(`fn_theater:${fnId}:${loc}`, TTL, async () => {
+    const rows = await query<{ id: string; name: string }>(
+      `SELECT id,
+              ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name
+       FROM friction_nodes
+       WHERE fn_type = 'theater'
+         AND is_active = true
+         AND $1 = ANY(member_fn_ids)
+       LIMIT 1`,
+      [fnId],
+    );
+    return rows[0] ?? null;
+  });
+}
+
+/**
+ * For a theater FN: return constituent atomic FNs with their stance bricks
+ * (narrative_id + stance_label + display_order + match_count). Used by the
+ * theater landing page to render one row per atomic FN with a colored
+ * stance-brick preview underneath.
+ */
+export async function getTheaterMembers(
+  theaterId: string,
+  locale?: string,
+): Promise<TheaterMemberFn[]> {
+  const loc = locale2(locale);
+  return cached(`fn_theater_members:${theaterId}:${loc}`, TTL, async () => {
+    // Resolve the member_fn_ids list.
+    const tRows = await query<{ member_fn_ids: string[] | null }>(
+      `SELECT member_fn_ids FROM friction_nodes WHERE id = $1`,
+      [theaterId],
+    );
+    const memberIds = tRows[0]?.member_fn_ids ?? [];
+    if (!memberIds.length) return [];
+
+    const fnRows = await query<{
+      id: string;
+      name: string;
+      description: string | null;
+      editorial_summary: string | null;
+    }>(
+      `SELECT id,
+              ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
+              ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
+              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary
+       FROM friction_nodes WHERE id = ANY($1) AND is_active = true`,
+      [memberIds],
+    );
+
+    const stanceRows = await query<{
+      fn_id: string;
+      narrative_id: string;
+      label: string;
+      display_order: number;
+    }>(
+      `SELECT fn_id, narrative_id,
+              ${loc === 'de' ? 'COALESCE(stance_label_de, stance_label_en)' : 'stance_label_en'} AS label,
+              display_order
+       FROM friction_node_narratives
+       WHERE fn_id = ANY($1)
+       ORDER BY fn_id, display_order`,
+      [memberIds],
+    );
+
+    const eventCountRows = await query<{ fn_id: string; n: number }>(
+      `SELECT fn_id, COUNT(*)::int AS n
+       FROM event_friction_nodes WHERE fn_id = ANY($1)
+       GROUP BY fn_id`,
+      [memberIds],
+    );
+
+    const allNarrativeIds = Array.from(new Set(stanceRows.map((r) => r.narrative_id)));
+    const matchCountByNarrative = new Map<string, number>();
+    if (allNarrativeIds.length) {
+      const mRows = await query<{ narrative_id: string; n: number }>(
+        `SELECT narrative_id, COUNT(*)::int AS n
+         FROM title_narratives
+         WHERE narrative_id = ANY($1)
+         GROUP BY narrative_id`,
+        [allNarrativeIds],
+      );
+      for (const r of mRows) matchCountByNarrative.set(r.narrative_id, r.n);
+    }
+
+    const eventCountByFn = new Map<string, number>();
+    for (const r of eventCountRows) eventCountByFn.set(r.fn_id, r.n);
+
+    const stancesByFn = new Map<string, TheaterMemberFn['stances']>();
+    for (const r of stanceRows) {
+      const arr = stancesByFn.get(r.fn_id) ?? [];
+      arr.push({
+        narrative_id: r.narrative_id,
+        label: r.label,
+        display_order: r.display_order,
+        match_count: matchCountByNarrative.get(r.narrative_id) ?? 0,
+      });
+      stancesByFn.set(r.fn_id, arr);
+    }
+
+    // Preserve member_fn_ids order.
+    const byId = new Map(fnRows.map((r) => [r.id, r]));
+    return memberIds
+      .map((id) => byId.get(id))
+      .filter((r): r is NonNullable<typeof r> => Boolean(r))
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        editorial_summary: r.editorial_summary,
+        event_count: eventCountByFn.get(r.id) ?? 0,
+        stances: stancesByFn.get(r.id) ?? [],
+      }));
   });
 }
 
@@ -416,16 +551,35 @@ export async function getActiveFrictionNodes(
 ): Promise<FrictionNode[]> {
   const loc = locale2(locale);
   return cached(`fn:list:${loc}`, TTL, async () => {
-    return query<FrictionNode>(
+    const rows = await query<{
+      id: string;
+      name: string;
+      description: string | null;
+      editorial_summary: string | null;
+      centroid_ids: string[];
+      topic_keywords: string[] | null;
+      fn_type: 'atomic' | 'theater';
+      member_fn_ids: string[] | null;
+    }>(
       `SELECT id,
               ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
               ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
               centroid_ids,
-              topic_keywords
+              topic_keywords,
+              fn_type,
+              member_fn_ids
        FROM friction_nodes
        WHERE is_active = true
        ORDER BY display_order NULLS LAST, name_en`,
     );
+    return rows.map((r) => ({
+      ...r,
+      topic_keywords: r.topic_keywords ?? [],
+      event_actor_markers: [],
+      event_topic_markers: [],
+      event_title_anchors: [],
+      member_fn_ids: r.member_fn_ids ?? [],
+    }));
   });
 }
