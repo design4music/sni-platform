@@ -39,6 +39,7 @@ export interface TheaterMemberFn {
     label: string;
     display_order: number;
     match_count: number;
+    narrative_type: 'all_in' | 'stand_by' | null;
   }[];
 }
 
@@ -115,6 +116,13 @@ export interface NarrativeWeeklyPoint {
  * FN-narrative link's display_order (1..N). Five distinguishable vivid
  * colours that avoid the existing blue-track palette and the stance
  * red/green semantics on the outlet pages.
+ *
+ * Two parallel palettes:
+ *   ALL_IN  — vibrant; the strategic, FN-specific contest. White text legible.
+ *   STAND_BY — desaturated mid-tones ("milky"); cross-FN backdrop frames.
+ *              Same hue family as the all-in slot so the visual link is
+ *              preserved, but sat ~30% / luminance set so white text still
+ *              passes WCAG AA against this background.
  */
 export const NARRATIVE_COLORS = [
   '#ef4444', // red-500     — slot 1 (typical: hostile/existential frame)
@@ -126,7 +134,20 @@ export const NARRATIVE_COLORS = [
   '#22d3ee', // cyan-400    — slot 7 fallback
 ] as const;
 
-export function colorForNarrative(displayOrder: number): string {
+export const NARRATIVE_COLORS_MUTED = [
+  '#9a6868', // muted red
+  '#9a7a3f', // muted amber
+  '#5f8b9a', // muted sky
+  '#7d72a3', // muted violet
+  '#5e9580', // muted emerald
+  '#9a6873', // muted rose
+  '#5b8e96', // muted cyan
+] as const;
+
+export function colorForNarrative(
+  displayOrder: number,
+  isStandBy = false,
+): string {
   const idx = Math.max(0, (displayOrder - 1) % NARRATIVE_COLORS.length);
-  return NARRATIVE_COLORS[idx];
+  return isStandBy ? NARRATIVE_COLORS_MUTED[idx] : NARRATIVE_COLORS[idx];
 }

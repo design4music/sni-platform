@@ -180,13 +180,16 @@ export async function getTheaterMembers(
       narrative_id: string;
       label: string;
       display_order: number;
+      narrative_type: 'all_in' | 'stand_by' | null;
     }>(
-      `SELECT fn_id, narrative_id,
-              ${loc === 'de' ? 'COALESCE(stance_label_de, stance_label_en)' : 'stance_label_en'} AS label,
-              display_order
-       FROM friction_node_narratives
-       WHERE fn_id = ANY($1)
-       ORDER BY fn_id, display_order`,
+      `SELECT fnn.fn_id, fnn.narrative_id,
+              ${loc === 'de' ? 'COALESCE(fnn.stance_label_de, fnn.stance_label_en)' : 'fnn.stance_label_en'} AS label,
+              fnn.display_order,
+              n.narrative_type
+       FROM friction_node_narratives fnn
+       JOIN narratives_v2 n ON n.id = fnn.narrative_id
+       WHERE fnn.fn_id = ANY($1)
+       ORDER BY fnn.fn_id, fnn.display_order`,
       [memberIds],
     );
 
@@ -221,6 +224,7 @@ export async function getTheaterMembers(
         label: r.label,
         display_order: r.display_order,
         match_count: matchCountByNarrative.get(r.narrative_id) ?? 0,
+        narrative_type: r.narrative_type,
       });
       stancesByFn.set(r.fn_id, arr);
     }

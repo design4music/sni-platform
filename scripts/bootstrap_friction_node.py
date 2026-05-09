@@ -147,7 +147,10 @@ def link_titles(
 
     Each narrative's titles must:
       - come from a publisher in narrative.publishers
-      - mention an FN topic_keyword (FN.topic_keywords)
+      - mention a topic_keyword from ANY FN this narrative is linked to
+        (union, not just the FN being bootstrapped — otherwise re-running
+        bootstrap on FN_X clobbers attributions earned through FN_Y for
+        cross-FN narratives like multipolar / EU diplomacy / proxy axis).
       - either: narrative is all_in, OR publisher is in
         editorial_organ_publishers, OR title matches a framing keyword.
     """
@@ -160,6 +163,24 @@ def link_titles(
     narrative_ids = [n["id"] for n in narratives]
     if not narrative_ids:
         return {}
+
+    # Union of topic_keywords across every FN each narrative is linked to.
+    # One query — fetch all FNs that link these narratives, then aggregate.
+    cur.execute(
+        """SELECT fnn.narrative_id, fn.topic_keywords
+           FROM friction_node_narratives fnn
+           JOIN friction_nodes fn ON fn.id = fnn.fn_id
+           WHERE fnn.narrative_id = ANY(%s)
+             AND fn.is_active = true
+             AND fn.topic_keywords IS NOT NULL""",
+        (narrative_ids,),
+    )
+    union_by_narrative: dict[str, set[str]] = {nid: set() for nid in narrative_ids}
+    for row in cur.fetchall():
+        nid = row["narrative_id"]
+        for kw in row["topic_keywords"] or []:
+            union_by_narrative[nid].add(kw)
+
     cur.execute(
         "DELETE FROM title_narratives WHERE narrative_id = ANY(%s)",
         (narrative_ids,),
@@ -171,6 +192,7 @@ def link_titles(
         framing = n["framing_keywords"] or []
         organs = n["editorial_organ_publishers"] or []
         is_all_in = n["narrative_type"] == "all_in"
+        topic_union = sorted(union_by_narrative.get(n["id"], set())) or fn_topic
 
         if not publishers:
             counts[n["id"]] = 0
@@ -200,7 +222,7 @@ def link_titles(
                 "narrative_id": n["id"],
                 "publishers": publishers,
                 "window": str(window_days),
-                "fn_topic": fn_topic,
+                "fn_topic": topic_union,
                 "is_all_in": is_all_in,
                 "organs": organs,
                 "framing": framing,

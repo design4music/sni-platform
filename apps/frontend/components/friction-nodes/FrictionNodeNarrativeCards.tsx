@@ -38,13 +38,16 @@ function NarrativeCard({
   locale: string;
   labels: Props['labels'];
 }) {
-  const hue = colorForNarrative(n.display_order);
+  const isStandBy = n.narrative_type === 'stand_by';
+  const hue = colorForNarrative(n.display_order, isStandBy);
   const anchorId = `narrative-${n.narrative_id}`;
 
   return (
     <article
       id={anchorId}
-      className="p-6 border border-dashboard-border bg-dashboard-surface rounded-lg scroll-mt-20 relative"
+      className={`p-6 border bg-dashboard-surface rounded-lg scroll-mt-20 relative ${
+        isStandBy ? 'border-dashboard-border/40' : 'border-dashboard-border'
+      }`}
     >
       {/* Coloured accent bar */}
       <div

@@ -28,8 +28,10 @@ export default function FrictionNodeNarrativeBricks({
 }: Props) {
   if (narratives.length === 0) return null;
 
-  // Background opacity scales with match volume so heavily-covered
-  // narratives pop visually. Floor of 0.55 keeps small ones readable.
+  // Background opacity scales with match volume — only for all-in bricks,
+  // so heavily-covered coalitions pop. Stand-by bricks use the muted
+  // palette at full opacity (no further dimming — opacity on dark bg
+  // makes them muddy).
   const max = Math.max(...narratives.map((n) => n.match_count), 1);
   const opacityFor = (n: number) => {
     if (n <= 0) return 0.55;
@@ -46,11 +48,14 @@ export default function FrictionNodeNarrativeBricks({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {narratives.map((n) => {
-          const hue = colorForNarrative(n.display_order);
-          const op = opacityFor(n.match_count);
+          const isStandBy = n.narrative_type === 'stand_by';
+          const hue = colorForNarrative(n.display_order, isStandBy);
+          // Only all-in bricks get volume-scaled opacity; stand-by uses
+          // the muted-palette colour at full opacity so they read as
+          // creamy/secondary against the dark background.
+          const op = isStandBy ? 1 : opacityFor(n.match_count);
           const anchorId = `narrative-${n.narrative_id}`;
-          const typeLabel =
-            n.narrative_type === 'all_in' ? labels.typeAllIn : labels.typeStandBy;
+          const typeLabel = isStandBy ? labels.typeStandBy : labels.typeAllIn;
           return (
             <a
               key={n.narrative_id}
