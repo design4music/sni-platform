@@ -1,4 +1,11 @@
-"""Insert CANADA taxonomy items"""
+"""Insert CANADA taxonomy items.
+
+DEPRECATED 2026-05-11. Schema mismatch: references taxonomy_v3.item_type
+column which was dropped in an earlier migration. Zero callers in the
+codebase. Kept for reference; do not run as-is. If reviving, also add
+taxonomy_function='centroid_anchor' to the INSERT and update the column
+list to match the current schema (see db/migrations/20260511_taxonomy_v3_*).
+"""
 
 import sys
 from pathlib import Path

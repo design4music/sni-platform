@@ -78,10 +78,19 @@ def restore_taxonomy(snapshot, dry_run=True):
             cur.execute("SELECT id FROM taxonomy_v3 WHERE id = %s", (item["id"],))
             exists = cur.fetchone()
 
+            # Resolve taxonomy_function + linked_id with snapshot-version compatibility.
+            # Pre-2026-05-11 snapshots lack these fields; derive them from is_stop_word + centroid_id.
+            centroid_id = item["centroid_ids"][0] if item["centroid_ids"] else None
+            taxonomy_function = item.get("taxonomy_function")
+            linked_id = item.get("linked_id")
+            if taxonomy_function is None:
+                taxonomy_function = (
+                    "stop_word" if item["is_stop_word"] else "centroid_anchor"
+                )
+            if linked_id is None and taxonomy_function == "centroid_anchor":
+                linked_id = centroid_id
+
             if exists:
-                # Update existing item
-                # Extract first element from centroid_ids array (snapshots have array format)
-                centroid_id = item["centroid_ids"][0] if item["centroid_ids"] else None
                 cur.execute(
                     """
                     UPDATE taxonomy_v3
@@ -90,6 +99,8 @@ def restore_taxonomy(snapshot, dry_run=True):
                         aliases = %s,
                         is_active = %s,
                         is_stop_word = %s,
+                        taxonomy_function = %s,
+                        linked_id = %s,
                         updated_at = NOW()
                     WHERE id = %s
                     """,
@@ -99,19 +110,19 @@ def restore_taxonomy(snapshot, dry_run=True):
                         json.dumps(item["aliases"]),
                         item["is_active"],
                         item["is_stop_word"],
+                        taxonomy_function,
+                        linked_id,
                         item["id"],
                     ),
                 )
                 updated_count += 1
             else:
-                # Insert new item (shouldn't happen in rollback, but handle it)
-                # Extract first element from centroid_ids array (snapshots have array format)
-                centroid_id = item["centroid_ids"][0] if item["centroid_ids"] else None
                 cur.execute(
                     """
                     INSERT INTO taxonomy_v3
-                    (id, item_raw, centroid_id, aliases, is_active, is_stop_word, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                    (id, item_raw, centroid_id, aliases, is_active, is_stop_word,
+                     taxonomy_function, linked_id, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
                     """,
                     (
                         item["id"],
@@ -120,6 +131,8 @@ def restore_taxonomy(snapshot, dry_run=True):
                         json.dumps(item["aliases"]),
                         item["is_active"],
                         item["is_stop_word"],
+                        taxonomy_function,
+                        linked_id,
                         item.get("created_at"),
                     ),
                 )

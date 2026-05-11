@@ -18,8 +18,13 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from common import (SUPPORTED_LANGUAGES, get_db_connection, normalize_alias,
-                    normalize_title, title_matches_alias)
+from common import (
+    SUPPORTED_LANGUAGES,
+    get_db_connection,
+    normalize_alias,
+    normalize_title,
+    title_matches_alias,
+)
 
 
 def load_titles_for_centroid(centroid_id, title_status, limit_titles):
@@ -89,7 +94,7 @@ def load_aliases_for_centroid(centroid_id, language_filter):
                 SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
-                  AND is_stop_word = false
+                  AND taxonomy_function = 'centroid_anchor'
                   AND centroid_id = %s
                 """,
                 (centroid_id,),
@@ -101,7 +106,7 @@ def load_aliases_for_centroid(centroid_id, language_filter):
                 SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
-                  AND is_stop_word = false
+                  AND taxonomy_function = 'centroid_anchor'
                 """
             )
 

@@ -37,16 +37,16 @@ def load_known_aliases(conn) -> set:
         """
         SELECT UPPER(alias) FROM (
             SELECT jsonb_array_elements_text(aliases->'en') as alias
-            FROM taxonomy_v3 WHERE aliases->'en' IS NOT NULL
+            FROM taxonomy_v3 WHERE taxonomy_function = 'centroid_anchor' AND aliases->'en' IS NOT NULL
             UNION
             SELECT jsonb_array_elements_text(aliases->'de') as alias
-            FROM taxonomy_v3 WHERE aliases->'de' IS NOT NULL
+            FROM taxonomy_v3 WHERE taxonomy_function = 'centroid_anchor' AND aliases->'de' IS NOT NULL
             UNION
             SELECT jsonb_array_elements_text(aliases->'es') as alias
-            FROM taxonomy_v3 WHERE aliases->'es' IS NOT NULL
+            FROM taxonomy_v3 WHERE taxonomy_function = 'centroid_anchor' AND aliases->'es' IS NOT NULL
             UNION
             SELECT jsonb_array_elements_text(aliases->'fr') as alias
-            FROM taxonomy_v3 WHERE aliases->'fr' IS NOT NULL
+            FROM taxonomy_v3 WHERE taxonomy_function = 'centroid_anchor' AND aliases->'fr' IS NOT NULL
         ) x
     """
     )

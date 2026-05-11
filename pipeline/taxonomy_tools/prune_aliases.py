@@ -34,8 +34,12 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-from common import (SUPPORTED_LANGUAGES, get_db_connection, normalize_alias,
-                    tokenize_text)
+from common import (
+    SUPPORTED_LANGUAGES,
+    get_db_connection,
+    normalize_alias,
+    tokenize_text,
+)
 
 
 def load_aliases_grouped(centroid_filter=None, language_filter=None):
@@ -54,7 +58,7 @@ def load_aliases_grouped(centroid_filter=None, language_filter=None):
                 SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
-                  AND is_stop_word = false
+                  AND taxonomy_function = 'centroid_anchor'
                   AND centroid_id = %s
                 """,
                 (centroid_filter,),
@@ -65,7 +69,7 @@ def load_aliases_grouped(centroid_filter=None, language_filter=None):
                 SELECT id, centroid_id, aliases
                 FROM taxonomy_v3
                 WHERE is_active = true
-                  AND is_stop_word = false
+                  AND taxonomy_function = 'centroid_anchor'
                 """
             )
 

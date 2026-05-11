@@ -35,7 +35,7 @@ def export_taxonomy(centroid_id=None):
             cur.execute(
                 """
                 SELECT id, item_raw, centroid_id, aliases, is_active, is_stop_word,
-                       created_at, updated_at
+                       taxonomy_function, linked_id, created_at, updated_at
                 FROM taxonomy_v3
                 WHERE is_active = true
                   AND centroid_id = %s
@@ -48,7 +48,7 @@ def export_taxonomy(centroid_id=None):
             cur.execute(
                 """
                 SELECT id, item_raw, centroid_id, aliases, is_active, is_stop_word,
-                       created_at, updated_at
+                       taxonomy_function, linked_id, created_at, updated_at
                 FROM taxonomy_v3
                 WHERE is_active = true
                 ORDER BY item_raw
@@ -68,6 +68,8 @@ def export_taxonomy(centroid_id=None):
         aliases,
         is_active,
         is_stop_word,
+        taxonomy_function,
+        linked_id,
         created_at,
         updated_at,
     ) in taxonomy_items:
@@ -81,6 +83,8 @@ def export_taxonomy(centroid_id=None):
                 "aliases": aliases if aliases else {},
                 "is_active": is_active,
                 "is_stop_word": is_stop_word,
+                "taxonomy_function": taxonomy_function,
+                "linked_id": linked_id,
                 "created_at": created_at.isoformat() if created_at else None,
                 "updated_at": updated_at.isoformat() if updated_at else None,
             }

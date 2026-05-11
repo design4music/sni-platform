@@ -212,6 +212,7 @@ def load_taxonomy_aliases(languages):
             SELECT aliases
             FROM taxonomy_v3
             WHERE is_active = true
+              AND taxonomy_function = 'centroid_anchor'
             """
         )
         taxonomy_items = cur.fetchall()

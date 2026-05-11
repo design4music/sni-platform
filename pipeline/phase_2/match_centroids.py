@@ -223,12 +223,16 @@ def load_taxonomy():
     )
 
     with conn.cursor() as cur:
-        # Load all taxonomy items (label is display-only, not used for matching)
+        # Load all taxonomy items (label is display-only, not used for matching).
+        # taxonomy_function filter keeps fn_anchor / narrative_anchor rows out
+        # of centroid attribution. stop_word rows must still be loaded so the
+        # in-Python logic below can populate stop_words_set / stop_phrase_patterns.
         cur.execute(
             """
             SELECT id, is_stop_word, centroid_id, aliases
             FROM taxonomy_v3
             WHERE is_active = true
+              AND taxonomy_function IN ('centroid_anchor', 'stop_word')
         """
         )
         taxonomy_results = cur.fetchall()
