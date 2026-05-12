@@ -34,7 +34,8 @@ export interface TheaterMemberFn {
     label: string;
     display_order: number;
     match_count: number;
-    stance: 'support' | 'criticism' | 'neutral' | null;
+    /** Reader-facing stance: -2..+2 (mirrors outlet_entity_stance.stance). */
+    stance: number | null;
   }[];
 }
 
@@ -53,8 +54,8 @@ export interface NarrativeOnFn {
   framing_keywords: string[];
   publishers: string[];          // editorial outlets carrying this stance (curated)
   stance_label: string;
-  /** Reader-facing stance: support / criticism / neutral (drives colour). */
-  stance: 'support' | 'criticism' | 'neutral' | null;
+  /** Reader-facing stance: -2..+2 (mirrors outlet_entity_stance.stance). */
+  stance: number | null;
   display_order: number;
   match_count: number;
   sample_titles: SampleTitle[];
@@ -107,22 +108,18 @@ export interface NarrativeWeeklyPoint {
 }
 
 /**
- * Stance-based narrative colours.
- *
- *   support  = #10b981 (emerald, pro-actor framing)
- *   criticism = #ef4444 (red, anti-actor framing)
- *   neutral  = #b76f84 (dusty rose, diplomatic / not-aligned)
- *
- * Pending swap to the 5-step media-stance palette (-2 .. +2).
+ * 5-step stance palette, mirrors OutletStanceBricks.stanceHue.
+ *   -2 = #b91c1c  red-700      strong criticism
+ *   -1 = #ef4444  red-500      criticism
+ *    0 = #71717a  zinc-500     neutral / mixed
+ *   +1 = #10b981  emerald-500  support
+ *   +2 = #15803d  green-700    strong support
  */
-export const STANCE_COLORS = {
-  support: '#10b981',
-  criticism: '#ef4444',
-  neutral: '#b76f84',
-} as const;
-
-export function colorForNarrative(
-  stance: 'support' | 'criticism' | 'neutral' | null,
-): string {
-  return STANCE_COLORS[stance ?? 'neutral'];
+export function colorForNarrative(stance: number | null): string {
+  if (stance == null) return '#71717a';
+  if (stance <= -2) return '#b91c1c';
+  if (stance === -1) return '#ef4444';
+  if (stance === 0) return '#71717a';
+  if (stance === 1) return '#10b981';
+  return '#15803d';
 }

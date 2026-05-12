@@ -32,7 +32,7 @@ export type {
   TheaterPointer,
   TheaterMemberFn,
 } from './friction-nodes-shared';
-export { STANCE_COLORS, colorForNarrative } from './friction-nodes-shared';
+export { colorForNarrative } from './friction-nodes-shared';
 
 import type {
   FrictionNode,
@@ -158,7 +158,7 @@ export async function getTheaterMembers(
       narrative_id: string;
       label: string;
       display_order: number;
-      stance: 'support' | 'criticism' | 'neutral' | null;
+      stance: number | null;
     }>(
       `SELECT n.fn_id, n.id AS narrative_id,
               ${loc === 'de' ? 'COALESCE(n.stance_label_de, n.stance_label_en)' : 'n.stance_label_en'} AS label,
@@ -240,7 +240,7 @@ export async function getFrictionNodeView(
       framing_keywords: string[];
       publishers: string[] | null;
       stance_label: string;
-      stance: 'support' | 'criticism' | 'neutral' | null;
+      stance: number | null;
       display_order: number;
     }>(
       `SELECT n.id AS narrative_id,
