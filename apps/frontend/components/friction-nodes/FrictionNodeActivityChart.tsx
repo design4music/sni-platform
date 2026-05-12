@@ -122,8 +122,8 @@ export default function FrictionNodeActivityChart({
                   type="monotone"
                   dataKey={n.narrative_id}
                   stackId="1"
-                  stroke={colorForNarrative(n.display_order)}
-                  fill={colorForNarrative(n.display_order)}
+                  stroke={colorForNarrative(n.stance)}
+                  fill={colorForNarrative(n.stance)}
                   fillOpacity={0.75}
                 />
               ))}
@@ -138,7 +138,7 @@ export default function FrictionNodeActivityChart({
           <span key={n.narrative_id} className="inline-flex items-center gap-1.5">
             <span
               className="w-3 h-3 rounded flex-shrink-0"
-              style={{ backgroundColor: colorForNarrative(n.display_order), opacity: 0.85 }}
+              style={{ backgroundColor: colorForNarrative(n.stance), opacity: 0.85 }}
             />
             <span className="text-dashboard-text">{n.stance_label}</span>
             <span className="text-dashboard-text-muted tabular-nums">({n.match_count})</span>

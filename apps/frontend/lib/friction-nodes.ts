@@ -42,7 +42,7 @@ export type {
   TheaterPointer,
   TheaterMemberFn,
 } from './friction-nodes-shared';
-export { NARRATIVE_COLORS, colorForNarrative } from './friction-nodes-shared';
+export { STANCE_COLORS, colorForNarrative } from './friction-nodes-shared';
 
 import type {
   FrictionNode,
@@ -81,10 +81,6 @@ export async function getFrictionNodeBySlug(
       description: string | null;
       editorial_summary: string | null;
       centroid_ids: string[];
-      topic_keywords: string[] | null;
-      event_actor_markers: string[] | null;
-      event_topic_markers: string[] | null;
-      event_title_anchors: string[] | null;
       fn_type: 'atomic' | 'theater';
       member_fn_ids: string[] | null;
     }>(
@@ -93,10 +89,6 @@ export async function getFrictionNodeBySlug(
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
               ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
               centroid_ids,
-              topic_keywords,
-              event_actor_markers,
-              event_topic_markers,
-              event_title_anchors,
               fn_type,
               member_fn_ids
        FROM friction_nodes
@@ -107,10 +99,6 @@ export async function getFrictionNodeBySlug(
     if (!r) return null;
     return {
       ...r,
-      topic_keywords: r.topic_keywords ?? [],
-      event_actor_markers: r.event_actor_markers ?? [],
-      event_topic_markers: r.event_topic_markers ?? [],
-      event_title_anchors: r.event_title_anchors ?? [],
       member_fn_ids: r.member_fn_ids ?? [],
     };
   });
@@ -181,11 +169,13 @@ export async function getTheaterMembers(
       label: string;
       display_order: number;
       narrative_type: 'all_in' | 'stand_by' | null;
+      stance: 'support' | 'criticism' | 'neutral' | null;
     }>(
       `SELECT fnn.fn_id, fnn.narrative_id,
               ${loc === 'de' ? 'COALESCE(fnn.stance_label_de, fnn.stance_label_en)' : 'fnn.stance_label_en'} AS label,
               fnn.display_order,
-              n.narrative_type
+              n.narrative_type,
+              n.stance
        FROM friction_node_narratives fnn
        JOIN narratives_v2 n ON n.id = fnn.narrative_id
        WHERE fnn.fn_id = ANY($1)
@@ -225,6 +215,7 @@ export async function getTheaterMembers(
         display_order: r.display_order,
         match_count: matchCountByNarrative.get(r.narrative_id) ?? 0,
         narrative_type: r.narrative_type,
+        stance: r.stance,
       });
       stancesByFn.set(r.fn_id, arr);
     }
@@ -265,6 +256,7 @@ export async function getFrictionNodeView(
       framing_keywords: string[];
       publishers: string[] | null;
       stance_label: string;
+      stance: 'support' | 'criticism' | 'neutral' | null;
       display_order: number;
     }>(
       `SELECT n.id AS narrative_id,
@@ -275,6 +267,7 @@ export async function getFrictionNodeView(
               n.narrative_type,
               n.framing_keywords,
               n.publishers,
+              n.stance,
               ${loc === 'de' ? 'COALESCE(fnn.stance_label_de, fnn.stance_label_en)' : 'fnn.stance_label_en'} AS stance_label,
               fnn.display_order
        FROM friction_node_narratives fnn
@@ -498,35 +491,33 @@ export async function getFrictionNodeEventsByWeek(
 }
 
 /**
- * Other friction nodes that share >=2 narratives with this FN.
- * The "theater grouping" concept from the concept doc — when several
- * FNs are contested by the same narrative coalitions, they form a
- * cluster worth navigating across.
- *
- * With only one FN in the system this returns []. Empty state on the
- * page is fine; the function exposes the structure for when more FNs land.
+ * Other atomic conflicts in the same theater (siblings under the same
+ * fn_type='theater' row whose member_fn_ids contains this slug).
+ * Returns empty for theater rows themselves.
  */
-export async function getRelatedFrictionNodes(
+export async function getSiblingFrictionNodes(
   slug: string,
   locale?: string,
 ): Promise<RelatedFn[]> {
   const loc = locale2(locale);
-  return cached(`fn_related:${slug}:${loc}`, TTL, async () => {
+  return cached(`fn_siblings:${slug}:${loc}`, TTL, async () => {
     return query<RelatedFn>(
-      `WITH this_narratives AS (
-         SELECT narrative_id FROM friction_node_narratives WHERE fn_id = $1
+      `WITH theater AS (
+         SELECT member_fn_ids
+         FROM friction_nodes
+         WHERE fn_type = 'theater'
+           AND is_active = true
+           AND $1 = ANY(member_fn_ids)
+         LIMIT 1
        )
        SELECT fn.id,
               ${loc === 'de' ? 'COALESCE(fn.name_de, fn.name_en)' : 'fn.name_en'} AS name,
-              COUNT(fnn.narrative_id)::int AS shared_narratives
-       FROM friction_node_narratives fnn
-       JOIN friction_nodes fn ON fn.id = fnn.fn_id
-       WHERE fnn.narrative_id IN (SELECT narrative_id FROM this_narratives)
-         AND fnn.fn_id != $1
+              0::int AS shared_narratives
+       FROM friction_nodes fn, theater
+       WHERE fn.id = ANY(theater.member_fn_ids)
+         AND fn.id != $1
          AND fn.is_active = true
-       GROUP BY fn.id, fn.name_en, fn.name_de
-       HAVING COUNT(fnn.narrative_id) >= 2
-       ORDER BY shared_narratives DESC, name`,
+       ORDER BY fn.name_en`,
       [slug],
     );
   });
@@ -561,7 +552,6 @@ export async function getActiveFrictionNodes(
       description: string | null;
       editorial_summary: string | null;
       centroid_ids: string[];
-      topic_keywords: string[] | null;
       fn_type: 'atomic' | 'theater';
       member_fn_ids: string[] | null;
     }>(
@@ -570,7 +560,6 @@ export async function getActiveFrictionNodes(
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
               ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
               centroid_ids,
-              topic_keywords,
               fn_type,
               member_fn_ids
        FROM friction_nodes
@@ -579,10 +568,6 @@ export async function getActiveFrictionNodes(
     );
     return rows.map((r) => ({
       ...r,
-      topic_keywords: r.topic_keywords ?? [],
-      event_actor_markers: [],
-      event_topic_markers: [],
-      event_title_anchors: [],
       member_fn_ids: r.member_fn_ids ?? [],
     }));
   });

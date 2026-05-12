@@ -7,19 +7,13 @@ interface Props {
   labels: {
     sectionTitle: string;
     sectionDescription: string;
-    sharedNarratives: string;
     none: string;
   };
 }
 
 /**
- * Other FNs sharing >=2 narratives with this FN. The "theater grouping"
- * concept: when several FNs are contested by overlapping narrative
- * coalitions, they form a navigable cluster (e.g. Iran nuclear + Bab el-Mandeb
- * + Israel-Palestine all hosting the multipolar + existential-threat coalitions).
- *
- * With one FN in the system this is empty; structure stays so the feature
- * lights up as more FNs land.
+ * Sibling atomic conflicts in the same theater. Provides lateral navigation
+ * between atomic conflicts under one umbrella theater.
  */
 export default function FrictionNodeRelated({ related, locale, labels }: Props) {
   return (
@@ -37,14 +31,11 @@ export default function FrictionNodeRelated({ related, locale, labels }: Props) 
           {related.map((r) => (
             <li key={r.id}>
               <Link
-                href={`/friction-nodes/${r.id}`}
-                className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border hover:border-blue-500/40 transition"
+                href={`/${locale}/friction-nodes/${r.id}`}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border hover:border-blue-500/40 transition"
               >
                 <span className="text-sm font-medium text-dashboard-text truncate">
                   {r.name}
-                </span>
-                <span className="text-[11px] text-dashboard-text-muted tabular-nums shrink-0">
-                  {r.shared_narratives} {labels.sharedNarratives}
                 </span>
               </Link>
             </li>

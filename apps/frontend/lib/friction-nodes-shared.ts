@@ -11,11 +11,6 @@ export interface FrictionNode {
   description: string | null;
   editorial_summary: string | null;
   centroid_ids: string[];
-  topic_keywords: string[];
-  /** Event-FN gate: title must match (any actor) AND (any topic), OR (any anchor). */
-  event_actor_markers: string[];
-  event_topic_markers: string[];
-  event_title_anchors: string[];
   fn_type: 'atomic' | 'theater';
   member_fn_ids: string[];
 }
@@ -40,6 +35,7 @@ export interface TheaterMemberFn {
     display_order: number;
     match_count: number;
     narrative_type: 'all_in' | 'stand_by' | null;
+    stance: 'support' | 'criticism' | 'neutral' | null;
   }[];
 }
 
@@ -60,6 +56,8 @@ export interface NarrativeOnFn {
   framing_keywords: string[];
   publishers: string[];          // editorial outlets carrying this stance (curated)
   stance_label: string;
+  /** Reader-facing stance: support / criticism / neutral (drives colour). */
+  stance: 'support' | 'criticism' | 'neutral' | null;
   display_order: number;
   match_count: number;
   sample_titles: SampleTitle[];
@@ -112,42 +110,31 @@ export interface NarrativeWeeklyPoint {
 }
 
 /**
- * Stable colour palette for narratives on a single FN. Indexed by the
- * FN-narrative link's display_order (1..N). Five distinguishable vivid
- * colours that avoid the existing blue-track palette and the stance
- * red/green semantics on the outlet pages.
+ * Stance-based narrative colours.
  *
- * Two parallel palettes:
- *   ALL_IN  — vibrant; the strategic, FN-specific contest. White text legible.
- *   STAND_BY — desaturated mid-tones ("milky"); cross-FN backdrop frames.
- *              Same hue family as the all-in slot so the visual link is
- *              preserved, but sat ~30% / luminance set so white text still
- *              passes WCAG AA against this background.
+ * support  = #10b981 (emerald, pro-actor framing)
+ * criticism = #ef4444 (red, anti-actor framing)
+ * neutral  = #71717a (zinc, diplomatic / not-aligned)
+ *
+ * Stand-by narratives use desaturated variants so cross-cluster bridges
+ * read as backdrop framing against the dark UI.
  */
-export const NARRATIVE_COLORS = [
-  '#ef4444', // red-500     — slot 1 (typical: hostile/existential frame)
-  '#f59e0b', // amber-500   — slot 2 (typical: actor's own self-frame)
-  '#38bdf8', // sky-400     — slot 3 (typical: diplomatic/preservation frame)
-  '#a78bfa', // violet-400  — slot 4 (typical: systemic/multipolar frame)
-  '#34d399', // emerald-400 — slot 5 (typical: hedging/regional frame)
-  '#fb7185', // rose-400    — slot 6 fallback
-  '#22d3ee', // cyan-400    — slot 7 fallback
-] as const;
+export const STANCE_COLORS = {
+  support: '#10b981',
+  criticism: '#ef4444',
+  neutral: '#b76f84', // dusty rose (RGB 183,111,132) — diplomatic / not-aligned bridges
+} as const;
 
-export const NARRATIVE_COLORS_MUTED = [
-  '#9a6868', // muted red
-  '#9a7a3f', // muted amber
-  '#5f8b9a', // muted sky
-  '#7d72a3', // muted violet
-  '#5e9580', // muted emerald
-  '#9a6873', // muted rose
-  '#5b8e96', // muted cyan
-] as const;
+export const STANCE_COLORS_MUTED = {
+  support: '#5e9580',
+  criticism: '#9a6868',
+  neutral: '#a66878',
+} as const;
 
 export function colorForNarrative(
-  displayOrder: number,
+  stance: 'support' | 'criticism' | 'neutral' | null,
   isStandBy = false,
 ): string {
-  const idx = Math.max(0, (displayOrder - 1) % NARRATIVE_COLORS.length);
-  return isStandBy ? NARRATIVE_COLORS_MUTED[idx] : NARRATIVE_COLORS[idx];
+  const key = stance ?? 'neutral';
+  return isStandBy ? STANCE_COLORS_MUTED[key] : STANCE_COLORS[key];
 }

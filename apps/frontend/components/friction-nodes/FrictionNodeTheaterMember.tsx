@@ -41,7 +41,7 @@ export default function FrictionNodeTheaterMember({ member, locale, isDe }: Prop
                 key={s.narrative_id}
                 className="rounded text-white text-[11px] px-2 py-1.5 leading-tight flex items-baseline justify-between gap-2"
                 style={{
-                  backgroundColor: colorForNarrative(s.display_order, isStandBy),
+                  backgroundColor: colorForNarrative(s.stance, isStandBy),
                   opacity: isStandBy ? 1 : 0.85,
                 }}
                 title={`${s.label} — ${s.match_count} ${isDe ? 'Schlagzeilen' : 'titles'}`}

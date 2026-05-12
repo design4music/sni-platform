@@ -49,7 +49,7 @@ export default function FrictionNodeNarrativeBricks({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {narratives.map((n) => {
           const isStandBy = n.narrative_type === 'stand_by';
-          const hue = colorForNarrative(n.display_order, isStandBy);
+          const hue = colorForNarrative(n.stance, isStandBy);
           // Only all-in bricks get volume-scaled opacity; stand-by uses
           // the muted-palette colour at full opacity so they read as
           // creamy/secondary against the dark background.

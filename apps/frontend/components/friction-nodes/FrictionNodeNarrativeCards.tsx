@@ -39,7 +39,7 @@ function NarrativeCard({
   labels: Props['labels'];
 }) {
   const isStandBy = n.narrative_type === 'stand_by';
-  const hue = colorForNarrative(n.display_order, isStandBy);
+  const hue = colorForNarrative(n.stance, isStandBy);
   const anchorId = `narrative-${n.narrative_id}`;
 
   return (

@@ -66,9 +66,7 @@ def parse_args() -> argparse.Namespace:
 
 def fetch_fn(cur, fn_id: str) -> dict:
     cur.execute(
-        """SELECT id, name_en,
-                  topic_keywords,
-                  event_actor_markers, event_topic_markers, event_title_anchors
+        """SELECT id, name_en, fn_type, centroid_ids
              FROM friction_nodes
             WHERE id = %s AND is_active = true""",
         (fn_id,),
@@ -94,16 +92,37 @@ def fetch_narratives(cur, fn_id: str) -> list[dict]:
 
 
 def link_events(cur, fn: dict, window_days: int) -> int:
-    """Apply the FN's event-title gate to populate event_friction_nodes."""
-    actor_markers = fn["event_actor_markers"] or []
-    topic_markers = fn["event_topic_markers"] or []
-    title_anchors = fn["event_title_anchors"] or []
+    """Apply the FN's event gate to populate event_friction_nodes.
 
-    if not (actor_markers or topic_markers or title_anchors):
+    Uses the same shape as title attribution:
+      - centroid scope: ANY member title of the event must overlap fn.centroid_ids
+      - topic gate: event canonical title matches any fn_anchor bundle alias
+    """
+    fn_centroid_ids = fn["centroid_ids"] or []
+    if not fn_centroid_ids:
         raise SystemExit(
-            f"FN {fn['id']} has no event-title gate configured "
-            "(event_actor_markers / event_topic_markers / event_title_anchors all empty)"
+            f"FN {fn['id']} has no centroid_ids configured; cannot scope event attribution"
         )
+
+    # Fetch the fn_anchor bundle aliases (flattened across all 10 languages).
+    cur.execute(
+        """SELECT aliases FROM taxonomy_v3
+           WHERE taxonomy_function = 'fn_anchor'
+             AND linked_id = %s
+             AND is_active = true""",
+        (fn["id"],),
+    )
+    row = cur.fetchone()
+    aliases: list[str] = []
+    seen: set[str] = set()
+    if row and row["aliases"]:
+        for lang_aliases in row["aliases"].values():
+            for a in lang_aliases or []:
+                if a and a not in seen:
+                    seen.add(a)
+                    aliases.append(a)
+    if not aliases:
+        raise SystemExit(f"FN {fn['id']} has no fn_anchor bundle in taxonomy_v3")
 
     cur.execute(
         "DELETE FROM event_friction_nodes WHERE fn_id = %s",
@@ -117,24 +136,22 @@ def link_events(cur, fn: dict, window_days: int) -> int:
             WHERE e.is_promoted = true
               AND e.merged_into IS NULL
               AND e.date > (CURRENT_DATE - (%(window)s || ' days')::interval)
-              AND (
-                (
-                  EXISTS (SELECT 1 FROM unnest(%(actor)s::text[]) kw
-                           WHERE e.title ILIKE '%%' || kw || '%%')
-                  AND
-                  EXISTS (SELECT 1 FROM unnest(%(topic)s::text[]) kw
-                           WHERE e.title ILIKE '%%' || kw || '%%')
-                )
-                OR EXISTS (SELECT 1 FROM unnest(%(anchor)s::text[]) kw
-                            WHERE e.title ILIKE '%%' || kw || '%%')
+              AND EXISTS (
+                SELECT 1 FROM event_v3_titles et
+                JOIN titles_v3 t ON t.id = et.title_id
+                WHERE et.event_id = e.id
+                  AND t.centroid_ids && %(centroids)s::text[]
+              )
+              AND EXISTS (
+                SELECT 1 FROM unnest(%(aliases)s::text[]) kw
+                WHERE e.title ILIKE '%%' || kw || '%%'
               )
            ON CONFLICT (event_id, fn_id) DO NOTHING""",
         {
             "fn_id": fn["id"],
             "window": str(window_days),
-            "actor": actor_markers,
-            "topic": topic_markers,
-            "anchor": title_anchors,
+            "centroids": fn_centroid_ids,
+            "aliases": aliases,
         },
     )
     return cur.rowcount
@@ -147,39 +164,49 @@ def link_titles(
 
     Each narrative's titles must:
       - come from a publisher in narrative.publishers
-      - mention a topic_keyword from ANY FN this narrative is linked to
-        (union, not just the FN being bootstrapped — otherwise re-running
-        bootstrap on FN_X clobbers attributions earned through FN_Y for
-        cross-FN narratives like multipolar / EU diplomacy / proxy axis).
+      - mention any alias from the fn_anchor bundles of EVERY FN linking
+        this narrative (union — preserves cross-FN attribution when the
+        narrative is linked to multiple FNs)
+      - have centroid_ids overlapping the union of those FNs' centroid_ids
+        (actor-scope gate — taxonomy is country-neutral; centroid filter
+        scopes attribution by who's in the story)
       - either: narrative is all_in, OR publisher is in
         editorial_organ_publishers, OR title matches a framing keyword.
     """
-    fn_topic = fn["topic_keywords"] or []
-    if not fn_topic:
-        raise SystemExit(
-            f"FN {fn['id']} has no topic_keywords; cannot scope title attribution"
-        )
-
     narrative_ids = [n["id"] for n in narratives]
     if not narrative_ids:
         return {}
 
-    # Union of topic_keywords across every FN each narrative is linked to.
-    # One query — fetch all FNs that link these narratives, then aggregate.
+    # For each narrative: gather the union of fn_anchor aliases (flattened
+    # across 10 languages) + the union of actor-scope centroid_ids across
+    # every FN linking the narrative.
+    # Scope uses the per-link override (friction_node_narratives.scope_centroid_ids)
+    # if set, else falls back to the FN's centroid_ids.
     cur.execute(
-        """SELECT fnn.narrative_id, fn.topic_keywords
+        """SELECT fnn.narrative_id,
+                  ta.aliases AS bundle,
+                  COALESCE(fnn.scope_centroid_ids, fn.centroid_ids) AS scope
            FROM friction_node_narratives fnn
            JOIN friction_nodes fn ON fn.id = fnn.fn_id
+           LEFT JOIN taxonomy_v3 ta
+                  ON ta.taxonomy_function = 'fn_anchor'
+                 AND ta.linked_id = fn.id
+                 AND ta.is_active = true
            WHERE fnn.narrative_id = ANY(%s)
-             AND fn.is_active = true
-             AND fn.topic_keywords IS NOT NULL""",
+             AND fn.is_active = true""",
         (narrative_ids,),
     )
-    union_by_narrative: dict[str, set[str]] = {nid: set() for nid in narrative_ids}
+    alias_union: dict[str, set[str]] = {nid: set() for nid in narrative_ids}
+    scope_union: dict[str, set[str]] = {nid: set() for nid in narrative_ids}
     for row in cur.fetchall():
         nid = row["narrative_id"]
-        for kw in row["topic_keywords"] or []:
-            union_by_narrative[nid].add(kw)
+        bundle = row["bundle"] or {}
+        for lang_aliases in bundle.values():
+            for a in lang_aliases or []:
+                if a:
+                    alias_union[nid].add(a)
+        for c in row["scope"] or []:
+            scope_union[nid].add(c)
 
     cur.execute(
         "DELETE FROM title_narratives WHERE narrative_id = ANY(%s)",
@@ -192,24 +219,27 @@ def link_titles(
         framing = n["framing_keywords"] or []
         organs = n["editorial_organ_publishers"] or []
         is_all_in = n["narrative_type"] == "all_in"
-        topic_union = sorted(union_by_narrative.get(n["id"], set())) or fn_topic
+        aliases = sorted(alias_union.get(n["id"], set()))
+        centroids = sorted(scope_union.get(n["id"], set()))
 
-        if not publishers:
+        if not publishers or not aliases or not centroids:
+            # Missing any of the three required inputs — no attribution.
             counts[n["id"]] = 0
             continue
 
-        # Build the per-narrative INSERT.
-        # Stand_by narratives that have NO framing keywords but DO have
-        # editorial organs would only attach via the organ exception.
-        # Stand_by with no organs and no framing = effectively zero matches
-        # (publisher gates exist but framing always fails).
+        # fn_type='theater' = catch-all FN. Exclude titles already attributed
+        # to any narrative on any atomic FN — the specific FNs claim their
+        # content first, the theater catches everything else.
+        is_theater = fn.get("fn_type") == "theater"
+
         cur.execute(
             """INSERT INTO title_narratives (title_id, narrative_id)
                SELECT t.id, %(narrative_id)s
                  FROM titles_v3 t
                 WHERE t.publisher_name = ANY(%(publishers)s)
                   AND t.pubdate_utc > NOW() - (%(window)s || ' days')::interval
-                  AND EXISTS (SELECT 1 FROM unnest(%(fn_topic)s::text[]) kw
+                  AND t.centroid_ids && %(centroids)s::text[]
+                  AND EXISTS (SELECT 1 FROM unnest(%(aliases)s::text[]) kw
                                WHERE t.title_display ILIKE '%%' || kw || '%%')
                   AND (
                        %(is_all_in)s
@@ -217,15 +247,25 @@ def link_titles(
                     OR EXISTS (SELECT 1 FROM unnest(%(framing)s::text[]) kw
                                 WHERE t.title_display ILIKE '%%' || kw || '%%')
                   )
+                  AND (NOT %(is_theater)s OR NOT EXISTS (
+                      SELECT 1
+                        FROM title_narratives tn2
+                        JOIN friction_node_narratives fnn2 ON fnn2.narrative_id = tn2.narrative_id
+                        JOIN friction_nodes fn2 ON fn2.id = fnn2.fn_id
+                       WHERE tn2.title_id = t.id
+                         AND fn2.fn_type = 'atomic'
+                  ))
                ON CONFLICT (title_id, narrative_id) DO NOTHING""",
             {
                 "narrative_id": n["id"],
                 "publishers": publishers,
                 "window": str(window_days),
-                "fn_topic": topic_union,
+                "centroids": centroids,
+                "aliases": aliases,
                 "is_all_in": is_all_in,
                 "organs": organs,
                 "framing": framing,
+                "is_theater": is_theater,
             },
         )
         counts[n["id"]] = cur.rowcount
@@ -253,8 +293,14 @@ def main() -> None:
                     f"pubs={pubs} organs={organs} framing={framing}"
                 )
 
-            n_events = link_events(cur, fn, args.window_days)
-            print(f"\nevent_friction_nodes inserted: {n_events}")
+            if fn.get("fn_type") == "theater":
+                # Theaters have no event markers (events live on the atomic FNs
+                # they group). Title attribution still happens via the theater's
+                # narratives + bundle.
+                print("\nfn_type=theater — skipping event_friction_nodes step.")
+            else:
+                n_events = link_events(cur, fn, args.window_days)
+                print(f"\nevent_friction_nodes inserted: {n_events}")
 
             counts = link_titles(cur, fn, narratives, args.window_days)
             print("title_narratives inserted:")

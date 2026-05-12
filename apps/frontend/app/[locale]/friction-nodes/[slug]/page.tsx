@@ -9,7 +9,7 @@ import {
   getFrictionNodeView,
   getFrictionNodeWeeklyActivity,
   getFrictionNodeEventsByWeek,
-  getRelatedFrictionNodes,
+  getSiblingFrictionNodes,
   getCentroidLookup,
   getTheaterForAtomicFn,
   getTheaterMembers,
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const view = await getFrictionNodeView(slug, locale);
   if (!view) return { title: 'Not Found' };
   const meta = buildPageMetadata({
-    title: `${view.fn.name} | Friction Node`,
+    title: `${view.fn.name} | Conflict`,
     description: view.fn.editorial_summary ?? view.fn.description ?? view.fn.name,
     path: `/friction-nodes/${slug}`,
     locale: locale as SeoLocale,
@@ -70,7 +70,7 @@ export default async function FrictionNodePage({ params }: Props) {
     getFrictionNodeView(slug, locale),
     getFrictionNodeWeeklyActivity(slug),
     getFrictionNodeEventsByWeek(slug, locale, 10),
-    getRelatedFrictionNodes(slug, locale),
+    getSiblingFrictionNodes(slug, locale),
     getTheaterForAtomicFn(slug, locale),
   ]);
   if (!view) return notFound();
@@ -121,7 +121,7 @@ export default async function FrictionNodePage({ params }: Props) {
   const eventsLabels = {
     sectionTitle: isDe ? 'Ereignisse pro Woche' : 'Events per week',
     sectionDescription: isDe
-      ? 'Wochenweise Verteilung der Ereignisse auf dieser Friction Node. Klick auf einen Balken zeigt die Top-Ereignisse dieser Woche.'
+      ? 'Wochenweise Verteilung der Ereignisse zu diesem Konflikt. Klick auf einen Balken zeigt die Top-Ereignisse dieser Woche.'
       : 'Per-week distribution of events on this friction node. Click a bar to see that week\'s top events.',
     chartHelpText: isDe
       ? 'Klick auf einen Wochenbalken zur Auswahl. Hellblau = aktive Woche.'
@@ -136,20 +136,19 @@ export default async function FrictionNodePage({ params }: Props) {
     showAll: isDe ? 'Alle Wochen' : 'All weeks',
   };
   const relatedLabels = {
-    sectionTitle: isDe ? 'Verwandte Friction Nodes' : 'Related friction nodes',
+    sectionTitle: isDe ? 'Andere Konflikte in dieser Zone' : 'Other conflicts in this zone',
     sectionDescription: isDe
-      ? 'Andere Friction Nodes, die mindestens zwei Narrative mit dieser teilen.'
-      : 'Other friction nodes sharing at least two narratives with this one.',
-    sharedNarratives: isDe ? 'gemeinsame Narrative' : 'shared narratives',
+      ? 'Weitere spezifische Konflikte unter derselben uebergreifenden Konfliktzone.'
+      : 'Other specific conflicts under the same umbrella conflict zone.',
     none: isDe
-      ? 'Noch keine verwandten Friction Nodes; weitere Friction Nodes muessen hinzugefuegt werden.'
-      : 'No related friction nodes yet. More friction nodes need to be added.',
+      ? 'Keine anderen Konflikte in dieser Zone.'
+      : 'No other conflicts in this zone.',
   };
 
   // BreadcrumbList JSON-LD for SEO.
   const breadcrumbJson = breadcrumbList([
     { name: 'WorldBrief', path: '/' },
-    { name: isDe ? 'Friction Nodes' : 'Friction Nodes', path: '/friction-nodes' },
+    { name: isDe ? 'Konflikte' : 'Conflicts', path: '/friction-nodes' },
     { name: view.fn.name, path: `/friction-nodes/${slug}` },
   ]);
 
@@ -157,21 +156,13 @@ export default async function FrictionNodePage({ params }: Props) {
     <DashboardLayout>
       <JsonLd data={breadcrumbJson} />
 
-      {IS_SHADOW && (
-        <div className="mb-6 px-3 py-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs text-amber-400">
-          {isDe
-            ? 'Schatten-Route. Experimentelle Friction-Node-Architektur, noch nicht in der Hauptnavigation.'
-            : 'Shadow route. Experimental friction-node architecture, not yet in main navigation.'}
-        </div>
-      )}
-
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" className="text-sm text-dashboard-text-muted mb-3">
         <Link href="/" className="text-blue-400 hover:text-blue-300">
           WorldBrief
         </Link>
         <span className="mx-2">/</span>
-        <span>Friction Nodes</span>
+        <span>{isDe ? 'Konflikte' : 'Conflicts'}</span>
         <span className="mx-2">/</span>
         <span>{view.fn.name}</span>
       </nav>
@@ -192,14 +183,9 @@ export default async function FrictionNodePage({ params }: Props) {
               </Link>
             </div>
           )}
-          <div className="flex flex-wrap items-baseline gap-3 mb-3">
-            <h1 className="text-3xl md:text-4xl font-bold text-dashboard-text">
-              {view.fn.name}
-            </h1>
-            <span className="text-xs text-dashboard-text-muted font-mono">
-              {view.fn.id}
-            </span>
-          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-dashboard-text mb-3">
+            {view.fn.name}
+          </h1>
 
           {view.fn.editorial_summary && (
             <p className="text-base text-dashboard-text leading-relaxed mb-4">
@@ -230,52 +216,25 @@ export default async function FrictionNodePage({ params }: Props) {
           </div>
         </div>
 
-        {/* RIGHT 1/3 — sidebar with countries + topic tags + what-is-contested */}
+        {/* RIGHT 1/3 — sidebar with topic tags + what-is-contested.
+            "Manifests in" removed 2026-05-11: friction_nodes.centroid_ids
+            now stores the narrow actor-scope for attribution, not the
+            broader "all involved parties" set. Coverage by country is
+            implicit in the narratives' actor_centroids. */}
         <aside className="space-y-5 min-w-0">
-          {/* Manifests in (countries) */}
-          {view.fn.centroid_ids.length > 0 && (
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
-                {isDe ? 'Schauplaetze' : 'Manifests in'}
-              </div>
-              <CoalitionPills centroidIds={view.fn.centroid_ids} lookup={centroidLookup} />
-            </div>
-          )}
+          {/* Topic markers section removed 2026-05-12: friction_nodes.topic_keywords
+              dropped. Vocab now lives in taxonomy_v3 fn_anchor bundle. */}
 
-          {/* Topic tags */}
-          {view.fn.topic_keywords && view.fn.topic_keywords.length > 0 && (
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
-                {isDe ? 'Themenmarker' : 'Topic markers'}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {view.fn.topic_keywords.slice(0, 14).map((kw) => (
-                  <span
-                    key={kw}
-                    className="text-[11px] text-dashboard-text-muted bg-dashboard-bg border border-dashboard-border/60 px-2 py-0.5 rounded"
-                  >
-                    {kw}
-                  </span>
-                ))}
-                {view.fn.topic_keywords.length > 14 && (
-                  <span className="text-[11px] text-dashboard-text-muted">
-                    +{view.fn.topic_keywords.length - 14}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* What is contested (description) — collapsed by default */}
+          {/* What is contested — always visible */}
           {view.fn.description && (
-            <details className="group">
-              <summary className="text-[11px] uppercase tracking-wider text-dashboard-text-muted cursor-pointer hover:text-dashboard-text transition select-none">
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
                 {isDe ? 'Was ist umstritten' : 'What is contested'}
-              </summary>
-              <p className="mt-2 text-sm text-dashboard-text-muted leading-relaxed">
+              </div>
+              <p className="text-sm text-dashboard-text-muted leading-relaxed">
                 {view.fn.description}
               </p>
-            </details>
+            </div>
           )}
         </aside>
       </header>
@@ -333,17 +292,29 @@ async function renderTheaterPage(
   intlLocale: string,
 ) {
   const isDe = intlLocale === 'de';
-  const [members, centroidEntries] = await Promise.all([
+  // Theater is the umbrella catch-all FN. fn_type='theater' carries both
+  // the navigation grouping (member_fn_ids) AND catch-all attribution
+  // semantics. It hosts the broad-cluster narratives (war coalitions,
+  // diplomatic/multipolar bridges).
+  const [members, view] = await Promise.all([
     getTheaterMembers(slug, intlLocale),
-    getCentroidLookup(fn.centroid_ids ?? []),
+    getFrictionNodeView(slug, intlLocale),
   ]);
+  const theaterNarratives = view?.narratives ?? [];
+  // Resolve every centroid touched by the theater itself or by any of its
+  // narratives, so narrative-card country pills find their flag/label.
+  const allCentroidIds = new Set<string>(fn.centroid_ids ?? []);
+  for (const n of theaterNarratives) {
+    for (const c of n.actor_centroids) allCentroidIds.add(c);
+  }
+  const centroidEntries = await getCentroidLookup(Array.from(allCentroidIds));
   const centroidLookup = new Map<string, CentroidLookupEntry>(
     centroidEntries.map((e) => [e.id, e]),
   );
 
   const breadcrumbJson = breadcrumbList([
     { name: 'WorldBrief', path: '/' },
-    { name: 'Friction Nodes', path: '/friction-nodes' },
+    { name: 'Conflicts', path: '/friction-nodes' },
     { name: fn.name, path: `/friction-nodes/${slug}` },
   ]);
 
@@ -357,20 +328,12 @@ async function renderTheaterPage(
     <DashboardLayout>
       <JsonLd data={breadcrumbJson} />
 
-      {IS_SHADOW && (
-        <div className="mb-6 px-3 py-2 rounded border border-amber-500/30 bg-amber-500/5 text-xs text-amber-400">
-          {isDe
-            ? 'Schatten-Route. Experimentelle Friction-Node-Architektur, noch nicht in der Hauptnavigation.'
-            : 'Shadow route. Experimental friction-node architecture, not yet in main navigation.'}
-        </div>
-      )}
-
       <nav aria-label="Breadcrumb" className="text-sm text-dashboard-text-muted mb-3">
         <Link href="/" className="text-blue-400 hover:text-blue-300">
           WorldBrief
         </Link>
         <span className="mx-2">/</span>
-        <span>Friction Nodes</span>
+        <span>{isDe ? 'Konflikte' : 'Conflicts'}</span>
         <span className="mx-2">/</span>
         <span>{fn.name}</span>
       </nav>
@@ -379,13 +342,10 @@ async function renderTheaterPage(
         <div className="lg:col-span-2 min-w-0">
           <div className="mb-3">
             <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-violet-400 bg-violet-500/5 border border-violet-500/30 px-2.5 py-1 rounded">
-              {isDe ? 'Theater' : 'Theater'}
+              {isDe ? 'Konfliktzone' : 'Conflict zone'}
             </span>
           </div>
-          <div className="flex flex-wrap items-baseline gap-3 mb-3">
-            <h1 className="text-3xl md:text-4xl font-bold text-dashboard-text">{fn.name}</h1>
-            <span className="text-xs text-dashboard-text-muted font-mono">{fn.id}</span>
-          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-dashboard-text mb-3">{fn.name}</h1>
           {fn.editorial_summary && (
             <p className="text-base text-dashboard-text leading-relaxed mb-4">
               {fn.editorial_summary}
@@ -394,7 +354,7 @@ async function renderTheaterPage(
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-dashboard-text-muted">
             <div>
               <span className="uppercase tracking-wider mr-1">
-                {isDe ? 'Atomare Friction Nodes' : 'Atomic friction nodes'}:
+                {isDe ? 'Konflikte in dieser Zone' : 'Conflicts in this zone'}:
               </span>
               <span className="text-dashboard-text">{members.length}</span>
             </div>
@@ -413,36 +373,65 @@ async function renderTheaterPage(
           </div>
         </div>
         <aside className="space-y-5 min-w-0">
-          {fn.centroid_ids.length > 0 && (
+          {fn.description && (
             <div>
               <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
-                {isDe ? 'Schauplaetze' : 'Manifests in'}
+                {isDe ? 'Was diese Konflikte verbindet' : 'What ties these conflicts together'}
               </div>
-              <CoalitionPills centroidIds={fn.centroid_ids} lookup={centroidLookup} />
-            </div>
-          )}
-          {fn.description && (
-            <details className="group">
-              <summary className="text-[11px] uppercase tracking-wider text-dashboard-text-muted cursor-pointer hover:text-dashboard-text transition select-none">
-                {isDe ? 'Was bindet diese FNs zusammen' : 'What ties these FNs together'}
-              </summary>
-              <p className="mt-2 text-sm text-dashboard-text-muted leading-relaxed">
+              <p className="text-sm text-dashboard-text-muted leading-relaxed">
                 {fn.description}
               </p>
-            </details>
+            </div>
           )}
         </aside>
       </header>
 
+      {/* Theater narratives — umbrella coalitions (war + diplomatic bridges) */}
+      {theaterNarratives.length > 0 && (
+        <>
+          <FrictionNodeNarrativeBricks
+            narratives={theaterNarratives}
+            locale={intlLocale}
+            labels={{
+              sectionTitle: isDe ? 'Konkurrierende Narrative' : 'Competing narratives',
+              sectionDescription: isDe
+                ? 'Koalitionen mit eigenen Rahmen fuer den uebergreifenden Konflikt.'
+                : 'Coalitions with their own frame on the umbrella conflict.',
+              titles: isDe ? 'Schlagzeilen' : 'titles',
+              typeAllIn: isDe ? 'voll engagiert' : 'all in',
+              typeStandBy: isDe ? 'allgemein' : 'stand by',
+            }}
+          />
+          <FrictionNodeNarrativeCards
+            narratives={theaterNarratives}
+            centroidLookup={centroidLookup}
+            locale={intlLocale}
+            labels={{
+              sectionTitle: isDe ? 'Narrative im Detail' : 'Narratives in detail',
+              sectionDescription: isDe
+                ? 'Geladenes Vokabular pro Koalition und juengste Schlagzeilen.'
+                : 'Loaded vocabulary per coalition and recent headlines.',
+              titles: isDe ? 'Schlagzeilen' : 'titles',
+              coalition: isDe ? 'Koalition' : 'Coalition',
+              loadedVocabulary: isDe ? 'Geladenes Vokabular' : 'Loaded vocabulary',
+              headlinesUnderFrame: isDe ? 'Schlagzeilen unter diesem Rahmen' : 'Headlines under this frame',
+              noSamples: isDe ? 'noch keine Beispiele' : 'no samples yet',
+              claim: isDe ? 'Vollstaendige Behauptung' : 'Full claim',
+              coveredBy: isDe ? 'Gedeckt von' : 'Covered by',
+            }}
+          />
+        </>
+      )}
+
       <section className="mb-10">
         <div className="mb-4">
           <h2 className="text-xl font-semibold text-dashboard-text mb-1">
-            {isDe ? 'Atomare Friction Nodes in diesem Theater' : 'Atomic friction nodes in this theater'}
+            {isDe ? 'Spezifische Konflikte in dieser Zone' : 'Specific conflicts in this zone'}
           </h2>
           <p className="text-sm text-dashboard-text-muted">
             {isDe
-              ? 'Jeder ist ein eigenstaendiges umstrittenes Phaenomen mit eigenen Koalitionen. Klick auf eine Karte zur Detailansicht.'
-              : 'Each is a distinct contested phenomenon with its own coalitions. Click any card to drill in.'}
+              ? 'Eigenstaendige Konflikte mit eigenen Koalitionen. Schlagzeilen, die hierher gehoeren, erscheinen nicht oben.'
+              : 'Distinct conflicts with their own coalitions. Headlines that fit here do not show in the umbrella above.'}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -458,8 +447,8 @@ async function renderTheaterPage(
         {!members.length && (
           <div className="text-sm text-dashboard-text-muted">
             {isDe
-              ? 'Noch keine atomaren Friction Nodes diesem Theater zugeordnet.'
-              : 'No atomic friction nodes assigned to this theater yet.'}
+              ? 'Noch keine Konflikte dieser Zone zugeordnet.'
+              : 'No conflicts assigned to this zone yet.'}
           </div>
         )}
       </section>
