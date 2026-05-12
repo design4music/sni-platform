@@ -1,7 +1,19 @@
 # Friction Nodes: From News Noise to Geopolitical Reality
 
 **Date**: 2026-04-01
-**Status**: Vision / future milestone. Depends on Layer 2 narrative topics + narrative matching.
+**Status**: Original vision. **Implementation diverged on several specifics — see
+[`FRICTION_NODES_RUNBOOK.md`](FRICTION_NODES_RUNBOOK.md) for the current architecture (2026-05-12).**
+
+Key differences from this vision:
+- Friction nodes are **curated**, not auto-detected from narrative co-occurrence.
+- A **theater** layer (umbrella catch-all FN) was added to bundle related atomic FNs.
+- Narratives are **1-to-1 with FNs** (the strategic-narrative library was retired).
+- Stance is a 5-step smallint scale (-2..+2), not a polarity label.
+- The fn_anchor topic gate lives in `taxonomy_v3` (multi-lingual aliases), not on
+  `friction_nodes` itself.
+
+This document is preserved as the conceptual seed; refer to the runbook for
+what actually shipped.
 
 ---
 

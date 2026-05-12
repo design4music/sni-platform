@@ -1183,3 +1183,133 @@ decisions:
       - "New route POST /api/admin/revalidate-cache. Auth via header x-revalidate-token (matches REVALIDATE_API_KEY env, same pattern as existing revalidate-outlets endpoint). Optional JSON body {prefix} for scoped clears; empty body clears all."
       - Replaces "restart Render frontend service" workaround for MV refreshes.
       - "Commit — 410059b."
+
+  - id: D-075
+    date: 2026-05-08
+    type: data-model
+    status: accepted
+    title: Theater pattern (atomic vs theater friction nodes)
+    rationale:
+      - Iran-cluster narratives split into clean sub-FNs (nuclear,
+        proxy, hormuz, gulf attacks), but several narratives (EU
+        diplomatic engagement, multipolar backing) span all of them
+        and don't belong to a single atomic FN.
+      - Need an umbrella row that bundles the atomic FNs AND carries
+        catch-all narratives, without duplicating attribution.
+    consequences:
+      - friction_nodes.fn_type discriminator ('atomic' | 'theater').
+      - friction_nodes.member_fn_ids text[] on theater rows lists the
+        bundled atomic FN ids.
+      - Theater title attribution uses NOT EXISTS to exclude titles
+        already attributed to any atomic FN's narrative (atomic claims
+        win first; theater catches the rest).
+      - Frontend renders a different layout for theater (lists member
+        atomic FNs as "Specific conflicts in this zone").
+      - Migration 20260508_friction_nodes_v2_fn_type_theater.sql.
+
+  - id: D-076
+    date: 2026-05-11
+    type: data-model
+    status: accepted
+    title: taxonomy_v3 unification (taxonomy_function + linked_id)
+    rationale:
+      - Pre-2026-05-11, FN topic gate lived on friction_nodes itself
+        (event_actor_markers / event_topic_markers / event_title_anchors
+        — English-only, no language coverage). Narrative framing
+        keywords were also English-only on narratives_v2.
+      - taxonomy_v3 already had multi-lingual aliases jsonb for centroid
+        anchors (live production, 4 months of attribution depend on it).
+        Reuse the same shape for FN anchors and (eventually) narrative
+        anchors instead of inventing a parallel table.
+    consequences:
+      - taxonomy_v3.taxonomy_function text discriminator
+        ('stop_word' | 'centroid_anchor' | 'fn_anchor' | 'narrative_anchor').
+      - taxonomy_v3.linked_id text — polymorphic FK target
+        (centroid_id, friction_nodes.id, or narratives_v2.id).
+      - UNIQUE partial indexes enforce one-bundle-per-FN /
+        one-bundle-per-narrative.
+      - pipeline/phase_2/match_centroids.py reads linked_id (Phase 2
+        cleanup; Phase 1 added the column with a centroid_id mirror).
+      - centroid_id column scheduled to drop after worker redeploy
+        validates linked_id query.
+      - Migration 20260511_taxonomy_v3_add_taxonomy_function_and_linked_id.sql.
+
+  - id: D-077
+    date: 2026-05-12
+    type: data-model
+    status: accepted
+    title: 1-to-1 narrative<->FN collapse, retire strategic-narrative library
+    rationale:
+      - Pre-collapse, narratives_v2 was a shared library reused across
+        FNs via friction_node_narratives join (1 narrative could attach
+        to multiple FNs with per-link stance label + scope override).
+      - Reuse forced generic prose; an "EU diplomatic" narrative had
+        to cover Iran, Ukraine, Taiwan, Israel-Palestine all at once.
+        FN-specific prose reads better and gives the analyst per-FN
+        control.
+      - Disambiguation between FNs no longer needs framing-keyword gating
+        — publisher cohort + per-FN anchor bundle is enough.
+      - Meta-narrative reconnection across FNs (if/when needed) belongs
+        at a higher abstraction layer, not via narrative reuse.
+    consequences:
+      - narratives_v2.fn_id text FK -> friction_nodes.id (NOT NULL).
+      - narratives_v2 absorbs display_order, stance_label_en/de from
+        the join table.
+      - friction_node_narratives table dropped.
+      - Retired columns on narratives_v2 — narrative_type, tier,
+        topic_keywords, editorial_organ_publishers, notes_*,
+        scope_centroid_ids — all no longer load-bearing under 1-to-1.
+      - Split iran_axis_of_resistance into iran_axis_of_resistance
+        (iran_proxy_network) + iran_gulf_resistance_solidarity
+        (gulf_attacks_on_arab_states).
+      - Migration 20260512_narratives_v2_collapse_join_table.sql,
+        20260512_narratives_v2_drop_notes_and_scope_override.sql.
+
+  - id: D-078
+    date: 2026-05-12
+    type: data-model
+    status: accepted
+    title: 5-step stance palette on narratives_v2
+    rationale:
+      - Pre-2026-05-12, narratives_v2.stance was text
+        ('support' | 'criticism' | 'neutral'). 3 grades is too coarse
+        — regime-change framing and freedom-of-navigation framing both
+        register as "criticism" despite different intensity.
+      - outlet_entity_stance.stance is already smallint -2..+2 with a
+        live frontend palette (OutletStanceBricks.stanceHue).
+        Mirroring it gives narrative bricks the same colour vocabulary
+        as outlet stance bricks.
+    consequences:
+      - narratives_v2.stance smallint with CHECK (-2..+2).
+      - apps/frontend/lib/friction-nodes-shared.ts:colorForNarrative
+        becomes a 5-step function mirroring OutletStanceBricks
+        (-2 #b91c1c, -1 #ef4444, 0 #71717a, +1 #10b981, +2 #15803d).
+      - All 5 grades populated on the 12 Iran-cluster narratives;
+        no artificial bunching at one polarity.
+      - Migration 20260512_narratives_v2_stance_5step_and_iran_theater_prose.sql.
+
+  - id: D-079
+    date: 2026-05-12
+    type: pipeline
+    status: accepted
+    title: Drop framing-keyword gate from title attribution
+    rationale:
+      - Under the old narrative_type='all_in'/'stand_by' split, all_in
+        narratives skipped the framing check (publisher alone) while
+        stand_by required it (to disambiguate cross-FN reuse).
+      - Post 1-to-1 collapse, narrative_type is retired. A naïve port
+        applied the framing gate to all narratives — observed 6x-15x
+        undercount on first Render bootstrap.
+      - Under 1-to-1, framing-keyword gating is redundant: pro/con
+        narratives on one FN have disjoint publisher lists, and the
+        fn_anchor alias gate already enforces "is this title about
+        this FN".
+    consequences:
+      - bootstrap_friction_node.py:link_titles drops the framing
+        gate — publisher + alias + centroid overlap is sufficient.
+      - framing_keywords stays on narratives_v2 for sample-title
+        ranking (lib/friction-nodes.ts framing_strength) and the
+        "Loaded vocabulary" UI chip.
+      - On Render after re-bootstrap: ~27k title_narratives (was 1.3k
+        with the gate; 8.7k on the old pre-collapse schema).
+      - Commit e318389.

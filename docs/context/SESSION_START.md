@@ -1,15 +1,17 @@
 # Session Start
 
-**Last refreshed**: 2026-05-07 (Friction Nodes architecture shipped:
-3 Iran-cluster FNs live as a shadow route at `/friction-nodes/[slug]`
-with publisher-stance bucketing, calibration discipline, and a generic
-bootstrap that reads all per-FN config from the database. See the
-"Friction Nodes (NEW)" section below.)
+**Last refreshed**: 2026-05-12 (Friction Nodes rearchitected:
+theater pattern + 1-to-1 narrative<->FN collapse + 5-step stance
+palette + taxonomy_v3 fn_anchor unification. Iran cluster now =
+1 theater + 4 atomic FNs + 12 narratives on Render. See D-075..D-079
+and the "Friction Nodes" section below.)
 
-Earlier 2026-05-06: daemon resilience hardened (D-073: TCP keepalives +
-pool-reset-on-error + per-slot `daemon_state` health metrics, after
-the 2026-05-04 half-open-connection outage); frontend cache-bust admin
-endpoint shipped (D-074). See PIPELINE_STATUS.md.
+Earlier 2026-05-07: initial FN architecture shipped (3 Iran-cluster
+FNs with publisher-stance bucketing). Earlier 2026-05-06: daemon
+resilience hardened (D-073: TCP keepalives + pool-reset-on-error +
+per-slot `daemon_state` health metrics, after the 2026-05-04
+half-open-connection outage); frontend cache-bust admin endpoint
+shipped (D-074). See PIPELINE_STATUS.md.
 
 If you are picking up work cold, this is the landing page. Read this
 first, then branch out.
@@ -90,55 +92,73 @@ ones. Spec: [`docs/Narrative_map_spec.md`](../Narrative_map_spec.md).
 Taxonomy draft v2 at [`docs/narrative_taxonomy.yaml`](../narrative_taxonomy.yaml)
 (9 meta + 59 strategic narratives).
 
-#### Friction Nodes (NEW — shipped 2026-05-07)
+#### Friction Nodes (shipped 2026-05-07, rearchitected 2026-05-12)
 
 The structural-layer view above narratives. A friction node is a
-contested phenomenon (Iran nuclear program, Iran proxy network,
-Iran regime legitimacy) where multiple narratives apply with
-incompatible prescriptions. Three FNs live in the Iran cluster on
-a shadow route `/friction-nodes/[slug]` (footer link only, noindex).
+contested phenomenon where multiple narratives apply with incompatible
+prescriptions. Iran cluster is live as a shadow route at
+`/friction-nodes/[slug]` (footer link only, noindex).
 
 **Read for context**:
-- [`out/concept_friction_nodes_and_narratives_v2.md`](../../out/concept_friction_nodes_and_narratives_v2.md)
-  — full architecture: three-layer model, friction-node definition,
-  unity rule, all-in / stand-by rule, calibration discipline,
-  publisher-stance bucketing, and production lessons from the FN2-FN4
-  rollout. The canonical reference.
 - [`FRICTION_NODES_RUNBOOK.md`](FRICTION_NODES_RUNBOOK.md) —
-  operational runbook: how to add a new FN end-to-end (curate →
-  draft narratives → calibrate keywords → bootstrap → deploy).
+  current architecture + how to add a new theater/FN/narrative
+  end-to-end. **Reflects the 2026-05-12 rearchitecture.**
+- The legacy concept doc
+  `out/concept_friction_nodes_and_narratives_v2.md` describes the
+  initial publisher-stance bucketing rollout (FN2-FN4) but is
+  outdated on schema specifics (join table, narrative_type,
+  topic_keywords, etc. — all retired).
 
-**Live data on Render** (2026-05-07):
+**Live structure on Render** (2026-05-12):
 
-| FN | Events | Top-2 narrative attributions |
-|---|---|---|
-| `iran_nuclear_program` | 665 | west_iran_nuclear_threat (140), iran_nuclear_sovereign_right (24) |
-| `iran_proxy_network` | 1,386 | west_iran_proxy_network_threat (1,642), iran_axis_of_resistance (353) |
-| `iran_regime_legitimacy_contest` | 1,681 | west_iran_regime_change_doctrine (2,588), iran_sovereign_existence (220) |
+Theater + 4 atomic FNs in the Iran cluster:
 
-**Architectural constants codified by the rollout**:
-- All per-FN config (event-title gate, topic_keywords, narrative
-  links, stance labels) lives in DB. No FN-specific code paths.
-- Generic bootstrap: `python scripts/bootstrap_friction_node.py
-   --fn-id <slug>` populates `event_friction_nodes` +
-  `title_narratives` from any FN's curated config.
-- Publisher-stance bucketing > pure text matching for stand-by
-  narratives. Editorial-organ exception (RT/TASS/Press TV always
-  pass) handles intrinsic-stance outlets.
-- Multi-language framing keywords are non-negotiable; calibrate
-  against publisher's native-language headlines.
-- Topic_keywords must be specific (multi-word phrases or
-  distinctive proper nouns). Single common words like *"crackdown"*
-  or *"the regime"* admit massive false positives.
+| FN | Type | Events | Narratives |
+|---|---|---|---|
+| `iran_theater` | theater | (catch-all) | 4: regime-change (-2), sovereign-existence (+2), EU diplomatic (0), multipolar (+1) |
+| `iran_nuclear_program` | atomic | 1,036 | 2 |
+| `iran_proxy_network` | atomic | 1,349 | 2 |
+| `gulf_attacks_on_arab_states` | atomic | 521 | 2 |
+| `strait_of_hormuz_sovereignty` | atomic | 2,581 | 2 |
+
+Total: ~5,500 event_friction_nodes + ~27,000 title_narratives on Render.
+
+**Architectural shifts since 2026-05-07**:
+- **Theater pattern**: `friction_nodes.fn_type` discriminator with
+  `atomic` (specific phenomenon) and `theater` (catch-all umbrella
+  bundling member atomic FNs). Atomic FNs claim titles first; theater
+  catches the rest via NOT EXISTS subquery.
+- **1-to-1 narrative<->FN**: `friction_node_narratives` join dropped;
+  `narratives_v2.fn_id` is the direct link. Strategic-narrative library
+  retired. Each narrative carries FN-specific prose.
+- **5-step stance**: `narratives_v2.stance` is smallint -2..+2 (mirrors
+  `outlet_entity_stance.stance`). Frontend palette uses the same colour
+  function as OutletStanceBricks.
+- **taxonomy_v3 unification (Phase 1+2)**: `taxonomy_function`
+  discriminator + `linked_id` polymorphic FK. FN topic gate is now an
+  `fn_anchor` row in taxonomy_v3 (multi-lingual aliases jsonb).
+  `centroid_id` column scheduled to drop after worker redeploy
+  picks up the `linked_id` query in `match_centroids.py`.
+- **Bootstrap simplified**: 1-to-1 means publisher cohort + fn_anchor
+  alias + centroid overlap is enough; framing-keyword filter retired
+  from attribution (still ranks sample titles + populates the UI
+  vocabulary chip).
+- **Retired columns**: `narratives_v2.narrative_type`, `.tier`,
+  `.topic_keywords`, `.editorial_organ_publishers`, `.notes_*`,
+  `.scope_centroid_ids`; `friction_nodes.event_actor_markers`,
+  `.event_topic_markers`, `.event_title_anchors`, `.topic_keywords`.
 
 **Open / next**:
-- Israel-Palestine cluster next (israel_palestine_status with the
-  cross-FN `palestine_genocide_solidarity_frame` stand-by narrative)
-- Israel-Hezbollah / Lebanon front
-- Bab el-Mandeb / Red Sea, Strait of Hormuz
-- Promote out of shadow once architecture is stable enough to expose:
-  flip `IS_SHADOW = false` in `apps/frontend/app/[locale]/friction-nodes/[slug]/page.tsx`,
-  add main-nav link, build `/friction-nodes` index page
+- Map out remaining theaters (in planning):
+  - Israel-Gaza / Lebanon theater
+  - Russia-Ukraine theater
+  - China theater (Taiwan, South China Sea, trade)
+  - US-Venezuela / Cuba
+  - US-EU / NATO (Greenland, burden-sharing)
+- Drop `taxonomy_v3.centroid_id` after worker redeploy verifies
+  linked_id query is clean (2-3 daemon cycles).
+- Promote out of shadow once theater/FN coverage spans the active
+  geopolitical surface.
 
 ### Phase 3 — lighthouse
 

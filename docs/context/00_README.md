@@ -19,7 +19,8 @@ page: current state, active roadmap, open tickets, recent commits.
 ## Forward-looking
 
 - `BEATS_DIRECTION.md` — day-centric event philosophy (supersedes old family/cluster thinking)
-- `FRICTION_NODES_VISION.md` — next lighthouse feature (designed, not built)
+- `FRICTION_NODES_RUNBOOK.md` — current FN architecture (theaters + atomic FNs + 1-to-1 narratives, shipped)
+- `FRICTION_NODES_VISION.md` — original vision doc (predates the 2026-05-12 rearchitecture; see runbook for current state)
 - `40_OpenQuestions.yml` — unresolved questions
 
 ## Quick orientation
