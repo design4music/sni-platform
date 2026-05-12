@@ -157,6 +157,11 @@ def link_titles(
       - mention any alias from the FN's fn_anchor bundle in taxonomy_v3
       - have centroid_ids overlapping fn.centroid_ids
 
+    framing_keywords are NOT a hard attribution filter under the 1-to-1
+    model. Pro/con narratives on one FN have disjoint publisher lists,
+    so publisher alone disambiguates. framing_keywords stay on the
+    narrative for sample-title ranking + the "Loaded vocabulary" UI.
+
     For fn_type='theater' (catch-all), titles already attributed to any
     atomic FN are excluded — atomic FNs claim their content first.
     """
@@ -192,7 +197,6 @@ def link_titles(
     counts: dict[str, int] = {}
     for n in narratives:
         publishers = n["publishers"] or []
-        framing = n["framing_keywords"] or []
 
         if not publishers or not aliases or not centroids:
             counts[n["id"]] = 0
@@ -207,11 +211,6 @@ def link_titles(
                   AND t.centroid_ids && %(centroids)s::text[]
                   AND EXISTS (SELECT 1 FROM unnest(%(aliases)s::text[]) kw
                                WHERE t.title_display ILIKE '%%' || kw || '%%')
-                  AND (
-                       cardinality(%(framing)s::text[]) = 0
-                    OR EXISTS (SELECT 1 FROM unnest(%(framing)s::text[]) kw
-                                WHERE t.title_display ILIKE '%%' || kw || '%%')
-                  )
                   AND (NOT %(is_theater)s OR NOT EXISTS (
                       SELECT 1
                         FROM title_narratives tn2
@@ -227,7 +226,6 @@ def link_titles(
                 "window": str(window_days),
                 "centroids": list(centroids),
                 "aliases": aliases,
-                "framing": framing,
                 "is_theater": is_theater,
             },
         )
