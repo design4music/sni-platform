@@ -1,5 +1,15 @@
-// In-memory cache store (per server process).
-const store = new Map<string, { value: unknown; expires: number }>();
+// In-memory cache store. Pinned to globalThis so dev-mode module reloads
+// (Turbopack reloads lib/cache.ts separately for /api/* vs page routes,
+// giving each instance its own Map otherwise — bust calls then look at a
+// different Map than the page populated). Production single-process node
+// behaves the same either way.
+const g = globalThis as unknown as {
+  __wb_cache_store?: Map<string, { value: unknown; expires: number }>;
+};
+const store = (g.__wb_cache_store ??= new Map<
+  string,
+  { value: unknown; expires: number }
+>());
 
 export async function cached<T>(
   key: string,
