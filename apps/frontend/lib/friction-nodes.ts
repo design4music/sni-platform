@@ -1,26 +1,16 @@
-// Friction nodes + narratives_v2 — shadow architecture for the new
-// narrative-mapping platform. Module is kept isolated from queries.ts
-// until the wider rollout decides on naming and integration.
-// (HMR-bust 2026-05-07: FN4 iran_regime_legitimacy_contest seeded.)
+// Friction nodes + narratives_v2 (1-to-1 collapsed model).
 //
-// Tables (see db/migrations/20260507_friction_nodes_v2.sql plus
-// follow-on migrations dated 20260507):
-//   friction_nodes            — contested phenomena (curated)
-//   narratives_v2             — framing-explicit narrative library
-//   friction_node_narratives  — which narratives apply, with stance label
-//   event_friction_nodes      — events substantively about a phenomenon
-//   title_narratives          — titles framed through a narrative's lens
+// Tables:
+//   friction_nodes         — contested phenomena (curated)
+//   narratives_v2          — FN-specific narratives (one per FN, ordered)
+//   event_friction_nodes   — events substantively about an FN
+//   title_narratives       — titles framed through a narrative's lens
 //
-// Attribution is curation-driven (no LLM matcher in this slice):
-//   - Event-FN: bootstrap script applies the per-FN
-//     (event_actor_markers, event_topic_markers, event_title_anchors)
-//     gate stored on friction_nodes.
-//   - Title-narrative: bootstrap maps publishers to narratives via
-//     narratives_v2.publishers + topic match + (for stand-by narratives)
-//     framing-keyword evidence, with editorial_organ_publishers as the
-//     intrinsic-stance exception.
-//
-// To add a new FN, see docs/context/FRICTION_NODES_RUNBOOK.md.
+// Narratives carry fn_id directly (the legacy friction_node_narratives
+// join table was retired 2026-05-12 when we committed to FN-specific
+// prose). Per-narrative attribution scope override lives in
+// narratives_v2.scope_centroid_ids; if NULL the parent FN's
+// centroid_ids applies.
 
 import { query } from './db';
 import { cached } from './cache';
@@ -168,18 +158,15 @@ export async function getTheaterMembers(
       narrative_id: string;
       label: string;
       display_order: number;
-      narrative_type: 'all_in' | 'stand_by' | null;
       stance: 'support' | 'criticism' | 'neutral' | null;
     }>(
-      `SELECT fnn.fn_id, fnn.narrative_id,
-              ${loc === 'de' ? 'COALESCE(fnn.stance_label_de, fnn.stance_label_en)' : 'fnn.stance_label_en'} AS label,
-              fnn.display_order,
-              n.narrative_type,
+      `SELECT n.fn_id, n.id AS narrative_id,
+              ${loc === 'de' ? 'COALESCE(n.stance_label_de, n.stance_label_en)' : 'n.stance_label_en'} AS label,
+              n.display_order,
               n.stance
-       FROM friction_node_narratives fnn
-       JOIN narratives_v2 n ON n.id = fnn.narrative_id
-       WHERE fnn.fn_id = ANY($1)
-       ORDER BY fnn.fn_id, fnn.display_order`,
+       FROM narratives_v2 n
+       WHERE n.fn_id = ANY($1) AND n.is_active = true
+       ORDER BY n.fn_id, n.display_order`,
       [memberIds],
     );
 
@@ -214,7 +201,6 @@ export async function getTheaterMembers(
         label: r.label,
         display_order: r.display_order,
         match_count: matchCountByNarrative.get(r.narrative_id) ?? 0,
-        narrative_type: r.narrative_type,
         stance: r.stance,
       });
       stancesByFn.set(r.fn_id, arr);
@@ -251,8 +237,6 @@ export async function getFrictionNodeView(
       narrative_name: string;
       narrative_claim: string;
       actor_centroids: string[];
-      tier: 'operational' | 'ideological' | null;
-      narrative_type: 'all_in' | 'stand_by' | null;
       framing_keywords: string[];
       publishers: string[] | null;
       stance_label: string;
@@ -263,17 +247,14 @@ export async function getFrictionNodeView(
               ${loc === 'de' ? 'COALESCE(n.name_de, n.name_en)' : 'n.name_en'} AS narrative_name,
               ${loc === 'de' ? 'COALESCE(n.claim_de, n.claim_en)' : 'n.claim_en'} AS narrative_claim,
               n.actor_centroids,
-              n.tier,
-              n.narrative_type,
               n.framing_keywords,
               n.publishers,
               n.stance,
-              ${loc === 'de' ? 'COALESCE(fnn.stance_label_de, fnn.stance_label_en)' : 'fnn.stance_label_en'} AS stance_label,
-              fnn.display_order
-       FROM friction_node_narratives fnn
-       JOIN narratives_v2 n ON n.id = fnn.narrative_id
-       WHERE fnn.fn_id = $1 AND n.is_active = true
-       ORDER BY fnn.display_order`,
+              ${loc === 'de' ? 'COALESCE(n.stance_label_de, n.stance_label_en)' : 'n.stance_label_en'} AS stance_label,
+              n.display_order
+       FROM narratives_v2 n
+       WHERE n.fn_id = $1 AND n.is_active = true
+       ORDER BY n.display_order`,
       [slug],
     );
 
@@ -377,8 +358,9 @@ export async function getFrictionNodeWeeklyActivity(
   return cached(`fn_weekly:${slug}`, TTL, async () => {
     // First find the narrative_ids on this FN.
     const narrativeIdRows = await query<{ narrative_id: string }>(
-      `SELECT narrative_id FROM friction_node_narratives
-       WHERE fn_id = $1 ORDER BY display_order`,
+      `SELECT id AS narrative_id FROM narratives_v2
+       WHERE fn_id = $1 AND is_active = true
+       ORDER BY display_order`,
       [slug],
     );
     const narrativeIds = narrativeIdRows.map((r) => r.narrative_id);

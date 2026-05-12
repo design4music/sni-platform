@@ -34,23 +34,20 @@ export default function FrictionNodeTheaterMember({ member, locale, isDe }: Prop
       {/* Stance bricks (mini) */}
       {member.stances.length > 0 && (
         <div className="grid grid-cols-2 gap-1.5 mb-3">
-          {member.stances.map((s) => {
-            const isStandBy = s.narrative_type === 'stand_by';
-            return (
-              <div
-                key={s.narrative_id}
-                className="rounded text-white text-[11px] px-2 py-1.5 leading-tight flex items-baseline justify-between gap-2"
-                style={{
-                  backgroundColor: colorForNarrative(s.stance, isStandBy),
-                  opacity: isStandBy ? 1 : 0.85,
-                }}
-                title={`${s.label} — ${s.match_count} ${isDe ? 'Schlagzeilen' : 'titles'}`}
-              >
-                <span className="line-clamp-1 font-medium">{s.label}</span>
-                <span className="tabular-nums opacity-90">{s.match_count}</span>
-              </div>
-            );
-          })}
+          {member.stances.map((s) => (
+            <div
+              key={s.narrative_id}
+              className="rounded text-white text-[11px] px-2 py-1.5 leading-tight flex items-baseline justify-between gap-2"
+              style={{
+                backgroundColor: colorForNarrative(s.stance),
+                opacity: 0.85,
+              }}
+              title={`${s.label} — ${s.match_count} ${isDe ? 'Schlagzeilen' : 'titles'}`}
+            >
+              <span className="line-clamp-1 font-medium">{s.label}</span>
+              <span className="tabular-nums opacity-90">{s.match_count}</span>
+            </div>
+          ))}
         </div>
       )}
 

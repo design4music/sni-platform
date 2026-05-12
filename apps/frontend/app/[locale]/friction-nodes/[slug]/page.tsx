@@ -94,8 +94,6 @@ export default async function FrictionNodePage({ params }: Props) {
       ? 'Jede Karte unten ist eine Koalition mit ihrem eigenen Rahmen fuer dasselbe umstrittene Phaenomen.'
       : 'Each card below is one coalition with its own frame on the same contested phenomenon.',
     titles: isDe ? 'Schlagzeilen' : 'titles',
-    typeAllIn: isDe ? 'voll engagiert' : 'all in',
-    typeStandBy: isDe ? 'allgemein' : 'stand by',
   };
   const cardLabels = {
     sectionTitle: isDe ? 'Narrative im Detail' : 'Narratives in detail',
@@ -398,8 +396,6 @@ async function renderTheaterPage(
                 ? 'Koalitionen mit eigenen Rahmen fuer den uebergreifenden Konflikt.'
                 : 'Coalitions with their own frame on the umbrella conflict.',
               titles: isDe ? 'Schlagzeilen' : 'titles',
-              typeAllIn: isDe ? 'voll engagiert' : 'all in',
-              typeStandBy: isDe ? 'allgemein' : 'stand by',
             }}
           />
           <FrictionNodeNarrativeCards

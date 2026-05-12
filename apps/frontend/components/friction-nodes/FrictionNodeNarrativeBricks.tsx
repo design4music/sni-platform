@@ -9,8 +9,6 @@ interface Props {
     sectionTitle: string;
     sectionDescription: string;
     titles: string;
-    typeAllIn: string;
-    typeStandBy: string;
   };
 }
 
@@ -28,10 +26,8 @@ export default function FrictionNodeNarrativeBricks({
 }: Props) {
   if (narratives.length === 0) return null;
 
-  // Background opacity scales with match volume — only for all-in bricks,
-  // so heavily-covered coalitions pop. Stand-by bricks use the muted
-  // palette at full opacity (no further dimming — opacity on dark bg
-  // makes them muddy).
+  // Background opacity scales with match volume so heavily-covered
+  // coalitions pop against lighter ones.
   const max = Math.max(...narratives.map((n) => n.match_count), 1);
   const opacityFor = (n: number) => {
     if (n <= 0) return 0.55;
@@ -48,25 +44,16 @@ export default function FrictionNodeNarrativeBricks({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {narratives.map((n) => {
-          const isStandBy = n.narrative_type === 'stand_by';
-          const hue = colorForNarrative(n.stance, isStandBy);
-          // Only all-in bricks get volume-scaled opacity; stand-by uses
-          // the muted-palette colour at full opacity so they read as
-          // creamy/secondary against the dark background.
-          const op = isStandBy ? 1 : opacityFor(n.match_count);
+          const hue = colorForNarrative(n.stance);
           const anchorId = `narrative-${n.narrative_id}`;
-          const typeLabel = isStandBy ? labels.typeStandBy : labels.typeAllIn;
           return (
             <a
               key={n.narrative_id}
               href={`#${anchorId}`}
               className="block rounded-lg p-3 transition hover:ring-2 hover:ring-blue-400/60 text-white relative overflow-hidden min-h-[6.5rem] flex flex-col"
-              style={{ backgroundColor: hue, opacity: op }}
+              style={{ backgroundColor: hue, opacity: opacityFor(n.match_count) }}
               title={`${n.stance_label} — ${n.match_count} ${labels.titles}`}
             >
-              <div className="text-[10px] uppercase tracking-wider mb-1 opacity-90">
-                {typeLabel}
-              </div>
               <div className="text-base font-semibold leading-tight mb-2 line-clamp-2">
                 {n.stance_label}
               </div>

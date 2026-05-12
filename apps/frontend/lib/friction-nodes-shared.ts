@@ -34,7 +34,6 @@ export interface TheaterMemberFn {
     label: string;
     display_order: number;
     match_count: number;
-    narrative_type: 'all_in' | 'stand_by' | null;
     stance: 'support' | 'criticism' | 'neutral' | null;
   }[];
 }
@@ -51,8 +50,6 @@ export interface NarrativeOnFn {
   narrative_name: string;
   narrative_claim: string;
   actor_centroids: string[];
-  tier: 'operational' | 'ideological' | null;
-  narrative_type: 'all_in' | 'stand_by' | null;
   framing_keywords: string[];
   publishers: string[];          // editorial outlets carrying this stance (curated)
   stance_label: string;
@@ -112,29 +109,20 @@ export interface NarrativeWeeklyPoint {
 /**
  * Stance-based narrative colours.
  *
- * support  = #10b981 (emerald, pro-actor framing)
- * criticism = #ef4444 (red, anti-actor framing)
- * neutral  = #71717a (zinc, diplomatic / not-aligned)
+ *   support  = #10b981 (emerald, pro-actor framing)
+ *   criticism = #ef4444 (red, anti-actor framing)
+ *   neutral  = #b76f84 (dusty rose, diplomatic / not-aligned)
  *
- * Stand-by narratives use desaturated variants so cross-cluster bridges
- * read as backdrop framing against the dark UI.
+ * Pending swap to the 5-step media-stance palette (-2 .. +2).
  */
 export const STANCE_COLORS = {
   support: '#10b981',
   criticism: '#ef4444',
-  neutral: '#b76f84', // dusty rose (RGB 183,111,132) — diplomatic / not-aligned bridges
-} as const;
-
-export const STANCE_COLORS_MUTED = {
-  support: '#5e9580',
-  criticism: '#9a6868',
-  neutral: '#a66878',
+  neutral: '#b76f84',
 } as const;
 
 export function colorForNarrative(
   stance: 'support' | 'criticism' | 'neutral' | null,
-  isStandBy = false,
 ): string {
-  const key = stance ?? 'neutral';
-  return isStandBy ? STANCE_COLORS_MUTED[key] : STANCE_COLORS[key];
+  return STANCE_COLORS[stance ?? 'neutral'];
 }
