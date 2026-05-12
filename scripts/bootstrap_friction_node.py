@@ -19,8 +19,8 @@ Inputs read from DB:
     Multi-lingual alias bundle used as the topic gate.
 
   narratives_v2  (1-to-1 with friction_nodes via fn_id)
-    Per-narrative attribution rule: publisher cohort, framing-keyword
-    fingerprint, and optional scope_centroid_ids override.
+    Per-narrative attribution rule: publisher cohort + framing-keyword
+    fingerprint. Attribution scope inherits the parent FN's centroid_ids.
 
 Side effects:
   - DELETEs all existing event_friction_nodes rows for the FN
@@ -72,7 +72,7 @@ def fetch_fn(cur, fn_id: str) -> dict:
 
 def fetch_narratives(cur, fn_id: str) -> list[dict]:
     cur.execute(
-        """SELECT id, name_en, publishers, framing_keywords, scope_centroid_ids
+        """SELECT id, name_en, publishers, framing_keywords
              FROM narratives_v2
             WHERE fn_id = %s AND is_active = true
             ORDER BY display_order""",
@@ -155,8 +155,7 @@ def link_titles(
     Each narrative's titles must:
       - come from a publisher in narrative.publishers
       - mention any alias from the FN's fn_anchor bundle in taxonomy_v3
-      - have centroid_ids overlapping narrative.scope_centroid_ids
-        (or fn.centroid_ids when the narrative has no override)
+      - have centroid_ids overlapping fn.centroid_ids
 
     For fn_type='theater' (catch-all), titles already attributed to any
     atomic FN are excluded — atomic FNs claim their content first.
@@ -189,11 +188,11 @@ def link_titles(
     )
 
     is_theater = fn.get("fn_type") == "theater"
+    centroids = fn["centroid_ids"] or []
     counts: dict[str, int] = {}
     for n in narratives:
         publishers = n["publishers"] or []
         framing = n["framing_keywords"] or []
-        centroids = n["scope_centroid_ids"] or fn["centroid_ids"] or []
 
         if not publishers or not aliases or not centroids:
             counts[n["id"]] = 0
@@ -251,8 +250,7 @@ def main() -> None:
             for n in narratives:
                 pubs = len(n["publishers"] or [])
                 framing = len(n["framing_keywords"] or [])
-                scope = "scoped" if n["scope_centroid_ids"] else "inherits-fn"
-                print(f"  - {n['id']} pubs={pubs} framing={framing} [{scope}]")
+                print(f"  - {n['id']} pubs={pubs} framing={framing}")
 
             if fn.get("fn_type") == "theater":
                 # Theaters have no event markers (events live on the atomic FNs
