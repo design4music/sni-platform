@@ -1313,3 +1313,39 @@ decisions:
       - On Render after re-bootstrap: ~27k title_narratives (was 1.3k
         with the gate; 8.7k on the old pre-collapse schema).
       - Commit e318389.
+
+  - id: D-080
+    date: 2026-05-12
+    type: data-model
+    status: accepted
+    title: friction_nodes.centroid_ids is the theater gate — keep it tight
+    rationale:
+      - Bootstrap title attribution requires t.centroid_ids && fn.centroid_ids.
+        This overlap filter is the implicit "is this title about the theater"
+        gate.
+      - The israel_theater seed initially set centroid_ids to a 10-centroid
+        wide net (mirroring the post-D-076 iran_theater widening). Pure-Iran
+        titles with centroid_ids={MIDEAST-IRAN, AMERICAS-USA, ASIA-CHINA}
+        overlapped via AMERICAS-USA and bled into israel_theater narratives,
+        forcing manual alias surgery.
+      - Phase 2.1 reliably tags every title whose text mentions a theater's
+        actor with the corresponding centroid. So fn.centroid_ids only needs
+        to enumerate the theater's identity centroids; broader actor+adjacent
+        sets defeat the gate.
+    consequences:
+      - iran_theater centroid_ids tightened 10 -> 1 ({MIDEAST-IRAN}).
+        Reverts the widening from the scope_centroid_ids promotion (no longer
+        needed under 1-to-1 with no per-link scope overrides).
+      - israel_theater centroid_ids 10 -> 3 ({MIDEAST-ISRAEL, MIDEAST-PALESTINE,
+        MIDEAST-LEVANT}).
+      - Atomic FNs each narrowed to their identity centroids (gaza_war ->
+        Israel+Palestine; israel_lebanon_border -> Israel+Levant;
+        west_bank_settlements -> Israel+Palestine; israel_iran_strikes keeps
+        Israel+Iran+USA since the FN is genuinely about both sides).
+      - iran_theater narrative attribution drops 21-32% per narrative —
+        previously-bleeding non-Iran titles fall out.
+      - israel_theater pre-bleed had been masked by anchor tightening; with
+        centroid gate doing the work, future theater seeds can keep their
+        alias bundles rich without manual surgery.
+      - "Rule for future theaters: friction_nodes.centroid_ids = the theater's identity centroids only. Phase 2.1 reliability is the contract."
+      - Migration 20260512_tighten_friction_node_centroid_ids.sql.
