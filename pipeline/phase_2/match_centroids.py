@@ -227,9 +227,10 @@ def load_taxonomy():
         # taxonomy_function filter keeps fn_anchor / narrative_anchor rows out
         # of centroid attribution. stop_word rows must still be loaded so the
         # in-Python logic below can populate stop_words_set / stop_phrase_patterns.
+        # linked_id replaces the legacy centroid_id column (Phase 2 cleanup).
         cur.execute(
             """
-            SELECT id, is_stop_word, centroid_id, aliases
+            SELECT id, is_stop_word, linked_id, aliases
             FROM taxonomy_v3
             WHERE is_active = true
               AND taxonomy_function IN ('centroid_anchor', 'stop_word')
@@ -249,6 +250,8 @@ def load_taxonomy():
     phrase_substrings = []  # (substring, centroid_id) for non-ASCII multi-word
     substring_patterns = []  # (substring, centroid_id) for CJK
 
+    # NB: linked_id column from DB; local variable kept as centroid_id since
+    # the value semantically IS a centroid id (taxonomy_function='centroid_anchor').
     for id, is_stop_word, centroid_id, aliases in taxonomy_results:
         # Build searchable terms from aliases only (item_raw/label is display-only)
         terms = set()
