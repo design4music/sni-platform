@@ -1,10 +1,16 @@
 # Session Start
 
-**Last refreshed**: 2026-05-12 (Friction Nodes rearchitected:
-theater pattern + 1-to-1 narrative<->FN collapse + 5-step stance
-palette + taxonomy_v3 fn_anchor unification. Iran cluster now =
-1 theater + 4 atomic FNs + 12 narratives on Render. See D-075..D-079
-and the "Friction Nodes" section below.)
+**Last refreshed**: 2026-05-13 (Middle East FN expansion: Syria + Sudan +
+Turkey + Yemen/Red Sea theaters seeded locally. 6 ME theaters total now
+on local DB. Sample-titles ranking rewritten on narrative cards
+(composite tier with loaded-vocabulary priority). Narrative Discovery
+Plan drafted for review. See D-081..D-085 below. **All new work is
+local only — Render sync pending.**)
+
+**Pre-2026-05-13 history**: Friction Nodes rearchitected 2026-05-12
+(theater pattern + 1-to-1 narrative<->FN collapse + 5-step stance
+palette + taxonomy_v3 fn_anchor unification). Iran cluster = 1 theater
++ 4 atomic FNs + 12 narratives on Render. See D-075..D-079.
 
 Earlier 2026-05-07: initial FN architecture shipped (3 Iran-cluster
 FNs with publisher-stance bucketing). Earlier 2026-05-06: daemon
@@ -91,6 +97,35 @@ is mechanical for operational narratives + LLM-as-judge for ideological
 ones. Spec: [`docs/Narrative_map_spec.md`](../Narrative_map_spec.md).
 Taxonomy draft v2 at [`docs/narrative_taxonomy.yaml`](../narrative_taxonomy.yaml)
 (9 meta + 59 strategic narratives).
+
+#### Middle East FN expansion (2026-05-13, local only)
+
+Theater coverage now spans Iran + Israel + Syria + Turkey + Yemen/Red Sea
++ Sudan (standalone atomic). Numbers below are local DB; Render still
+on the 2026-05-12 state (Iran + Israel only).
+
+| Theater | Atomic FNs | Narratives | Atomic events (local) |
+|---|---|---:|---:|
+| iran_theater (live on Render) | 4 | 12 | ~3.6k (Render) |
+| israel_theater (live on Render) | 4 | 12 | ~3.3k (Render) |
+| **syria_theater** (local) | 4 | 10 | ~605 |
+| **sudan_civil_war** (standalone, local) | — | 3 | 385 |
+| **turkey_theater** (local) | 4 | 11 | ~402 |
+| **yemen_red_sea_theater** (local) | 3 | 9 | ~658 |
+
+Open work:
+- Render sync of the 4 new theaters
+- Narrative tuning per ongoing review (russia_iran_loss_lament dropped
+  2026-05-13; other narratives may need cohort/anchor refinement)
+- Pre-curate missing Turkey FNs: Turkey-Russia frenemy, Turkey-Greece
+  East Med, Turkey-Caucasus (candidates for sleeping-FN treatment)
+
+Specs:
+- [`SYRIA_THEATER_SPEC.md`](SYRIA_THEATER_SPEC.md)
+- [`TURKEY_THEATER_SPEC.md`](TURKEY_THEATER_SPEC.md)
+- [`YEMEN_RED_SEA_THEATER_SPEC.md`](YEMEN_RED_SEA_THEATER_SPEC.md)
+- [`SUDAN_FN_SPEC.md`](SUDAN_FN_SPEC.md)
+- [`NARRATIVE_DISCOVERY_PLAN.md`](NARRATIVE_DISCOVERY_PLAN.md) — for review
 
 #### Friction Nodes (shipped 2026-05-07, rearchitected 2026-05-12)
 

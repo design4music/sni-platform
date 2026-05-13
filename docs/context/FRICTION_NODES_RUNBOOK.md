@@ -314,6 +314,7 @@ When the FN architecture is stable enough to expose:
 | Bootstrap | `scripts/bootstrap_friction_node.py` |
 | Calibration helper | `scripts/calibrate_narrative_keywords.py` |
 | Anchor extractor | `scripts/extract_fn_anchor_via_deepseek.py` |
+| **fn_anchor drafting rules** | [`FN_ANCHOR_VOCABULARY_SPEC.md`](FN_ANCHOR_VOCABULARY_SPEC.md) — read before hand-editing any bundle |
 | Frontend page | `apps/frontend/app/[locale]/friction-nodes/[slug]/page.tsx` |
 | Server queries | `apps/frontend/lib/friction-nodes.ts` |
 | Client-safe types + palette | `apps/frontend/lib/friction-nodes-shared.ts` |

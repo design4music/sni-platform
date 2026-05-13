@@ -1349,3 +1349,153 @@ decisions:
         alias bundles rich without manual surgery.
       - "Rule for future theaters: friction_nodes.centroid_ids = the theater's identity centroids only. Phase 2.1 reliability is the contract."
       - Migration 20260512_tighten_friction_node_centroid_ids.sql.
+
+  - id: D-081
+    date: 2026-05-13
+    type: data-model
+    status: accepted
+    title: Seed Middle East theaters (Syria + Turkey + Yemen/Red Sea) and Sudan FN
+    rationale:
+      - The MENA strategic surface beyond the Iran/Israel theaters had ~10
+        unattributed centroids (Levant=Syria slice, Turkey, Yemen, Gulf,
+        Saudi, Egypt, Iraq, Sudan, Maghreb). Highest-volume unattributed
+        pockets were Syria-post-Assad (~3.7k unattributed Levant titles),
+        Turkey (3.2k), Yemen (571), Sudan (518).
+      - Specs drafted in parallel by sub-agents using FN_ANCHOR_VOCABULARY_SPEC
+        rules; reviewed and applied as 4 SQL seed migrations + 1 tightening
+        migration after first-iteration over-attribution was diagnosed.
+    scope:
+      - friction_nodes: syria_theater + 4 atomic (kurdish_question,
+        israeli_strikes, counter_terror, recognition_and_normalisation);
+        sudan_civil_war (1 atomic standalone); turkey_theater + 4 atomic
+        (mediator_role, democratic_backsliding, kurdish_question,
+        iran_war_spillover); yemen_red_sea_theater + 3 atomic
+        (red_sea_shipping_security, houthi_strikes_on_israel,
+        saudi_houthi_war).
+      - narratives_v2: 33 narratives across the 15 new FNs.
+      - taxonomy_v3: 14 fn_anchor bundles (10 languages with Latin-script
+        collapse).
+    consequences:
+      - Middle East coverage expands from 2 theaters/8 atomic FNs to 6 theaters/
+        20 atomic FNs (Iran, Israel, Syria, Turkey, Yemen+Red Sea theaters;
+        Sudan standalone atomic).
+      - Migrations 20260513_friction_node_syria_theater_seed.sql,
+        _syria_theater_tighten.sql, _syria_iteration_2.sql,
+        _syria_iteration_3.sql, _syria_iteration_4.sql,
+        _sudan_civil_war_seed.sql, _turkey_theater_seed.sql,
+        _yemen_red_sea_theater_seed.sql.
+      - Local-only as of 2026-05-13; pending Render sync.
+      - Specs preserved at docs/context/SYRIA_THEATER_SPEC.md,
+        TURKEY_THEATER_SPEC.md, YEMEN_RED_SEA_THEATER_SPEC.md,
+        SUDAN_FN_SPEC.md.
+
+  - id: D-082
+    date: 2026-05-13
+    type: process
+    status: accepted
+    title: Formalise FN anchor vocabulary spec (4 pillars + hard rules)
+    rationale:
+      - The fn_anchor drafting rules had been re-derived from scratch five
+        times across sessions, producing the same five mistakes each time:
+        third-party leader names in anchors, country-name repetition,
+        phrase-form variants instead of atoms, long-form name variants,
+        Latin-script blanket translation.
+      - Verified the matching code uses ILIKE '%alias%' substring; the
+        shortest-form rule ("Sharaa" catches "al-Sharaa") is safe and was
+        previously not articulated.
+      - Surfaced substring-collision class: Assad in ambassador, HTS in
+        flights, ISIS in crisis, 2-char Latin tokens (de:"IS" in Israeli).
+    consequences:
+      - docs/context/FN_ANCHOR_VOCABULARY_SPEC.md ships as the evergreen
+        reference. Linked from 00_README, FRICTION_NODES_RUNBOOK, every
+        theater spec.
+      - Memory entry feedback_fn_anchor_rules.md created so future sessions
+        open with the rule set.
+      - Asana evergreen ticket created (1214763644818654) so the rules
+        are discoverable from outside the repo.
+
+  - id: D-083
+    date: 2026-05-13
+    type: frontend
+    status: accepted
+    title: Sample-titles ranking rewrite — composite tier-based selector
+    rationale:
+      - Old ranking on narrative cards used only framing_keyword-count desc,
+        then recency desc. Resulted in single-publisher domination (Anadolu
+        spamming 4 near-identical Quneitra titles), repeated near-duplicate
+        event titles, and no preference for promoted vs non-promoted events.
+      - User-reported review: cards often felt like 6 weak picks rather than
+        6 strong representatives of the narrative.
+    consequences:
+      - apps/frontend/lib/friction-nodes.ts:276-353 rewritten with a CTE
+        chain: titles_with_event (DISTINCT ON per (narrative, title) to
+        collapse multi-event attachments) -> deduped (one title per event)
+        -> publisher_ranked (max 2 per publisher in preferred tier) ->
+        ranked (composite ORDER BY).
+      - Final ORDER BY tiers:
+        (1) loaded-vocabulary tier (framing_keywords match > 0 first),
+        (2) publisher diversity (pub_rn <= 2 first),
+        (3) is_promoted DESC,
+        (4) source_batch_count DESC,
+        (5) framing_strength DESC,
+        (6) pubdate_utc DESC.
+      - Brick counts / activity charts / "Covered by" publisher lists remain
+        sourced from title_narratives directly — only the displayed sample-
+        title selection changed. Counts and samples can diverge as a design
+        feature.
+
+  - id: D-084
+    date: 2026-05-13
+    type: architectural
+    status: accepted
+    title: Narrative polarity model — publisher-cohort attribution stays as-is
+    rationale:
+      - Architectural question raised whether title-level framing_keywords
+        should be a hard attribution filter (in addition to publisher cohort
+        + centroid + FN anchor). Currently framing_keywords is rank-only.
+      - Considered three options: (A) accept current model and surface
+        publishers more prominently; (B) make framing_keywords a hard filter
+        — narratives become headline-readable but lose recall and depend on
+        keyword curation quality; (C) hybrid — keep cohort attribution for
+        counts, use framing_keywords as priority selector for sample titles.
+      - Decision: option (C). Counts (brick width, activity chart, publisher
+        list) come from cohort attribution; sample titles prioritised by
+        loaded-vocabulary tier (D-083 implements this).
+    consequences:
+      - Stance lives in publisher cohort, not title content. Narrative cards
+        will not always show stance-carrying headlines on small narratives
+        where framing_keywords yield zero matches; fall back to recency +
+        source-consensus.
+      - Curators are responsible for keeping publisher cohorts editorially
+        coherent. A publisher whose Turkey coverage is broad but whose
+        editorial line on NATO-Turkey isn't reliably hawkish doesn't belong
+        in turkey_unreliable_ally_warning cohort.
+      - Narratives that resist headline evidence entirely (e.g. dropped
+        russia_iran_loss_lament — abstract framing not visible in any
+        single title) should be deactivated rather than left attributed.
+
+  - id: D-085
+    date: 2026-05-13
+    type: planning
+    status: parked
+    title: Narrative discovery + sleeping FNs architectural plan
+    rationale:
+      - Current architecture is top-down: curators draft narratives, system
+        fills them. Doesn't auto-detect emergent framings, publisher cohort
+        drift, or new contested phenomena.
+      - Turkey theater discussion 2026-05-13 surfaced concrete gaps (Turkey-
+        Russia frenemy, Turkey-Greece East Med, Turkey-Caucasus FNs missing
+        because corpus volume is currently too thin to justify, but the
+        contested phenomena are real).
+      - User proposed "sleeping FNs" — pre-curated FNs displayed in mini-UI
+        mode when below volume threshold. Auto-wake on volume crossing.
+      - Three layers of evolution work outlined: (1) curator maintenance
+        habit; (2) discovery prompts digest; (3) bottom-up narrative
+        discovery. Layers stack rather than replace.
+    consequences:
+      - docs/context/NARRATIVE_DISCOVERY_PLAN.md drafted; Asana ticket
+        linked.
+      - No code or schema changes yet. Decision deferred.
+      - Decision items captured: adopt Layer 1 habit? Build sleeping FNs?
+        Scope Layer 2 digest? Pre-curate Turkey-Russia/Greece/Caucasus FNs
+        as sleeping?

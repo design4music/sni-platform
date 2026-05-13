@@ -273,11 +273,18 @@ export async function getFrictionNodeView(
       for (const r of countRows2) countByNarrative.set(r.narrative_id, r.n);
     }
 
-    // Sample titles per narrative — RANKED by framing-keyword strength
-    // (count of narrative.framing_keywords present in the title), then by
-    // recency. This surfaces headlines with the strongest visible framing
-    // language as representative of the narrative bucket, even though
-    // membership itself is decided by publisher stance + FN topic match.
+    // Sample titles per narrative — composite ranking:
+    //   1. Publisher diversity tier (max 2 per publisher in the preferred
+    //      tier; undersized narratives fall through to fill remaining slots)
+    //   2. Promoted-event preference (titles attached to is_promoted events
+    //      rank first, but unpromoted still eligible — no hard filter)
+    //   3. Source consensus (events_v3.source_batch_count desc)
+    //   4. Framing-keyword strength (count of narrative.framing_keywords
+    //      present in the title — original signal, now a tiebreaker)
+    //   5. Recency
+    //
+    // Event-level deduplication picks one title per event so near-duplicate
+    // headlines from the same clustered story don't dominate the top 6.
     const titlesByNarrative = new Map<string, SampleTitle[]>();
     if (narrativeIds.length) {
       const titleRows = await query<{
@@ -287,30 +294,72 @@ export async function getFrictionNodeView(
         publisher_name: string | null;
         pubdate_utc: string;
       }>(
-        `SELECT narrative_id, id, title, publisher_name, pubdate_utc FROM (
-            SELECT tn.narrative_id,
-                   t.id,
-                   t.title_display AS title,
-                   t.publisher_name,
-                   t.pubdate_utc::text AS pubdate_utc,
-                   (
-                     SELECT COUNT(*) FROM unnest(n.framing_keywords) kw
-                     WHERE t.title_display ILIKE '%' || kw || '%'
-                   ) AS framing_strength,
-                   ROW_NUMBER() OVER (
-                     PARTITION BY tn.narrative_id
-                     ORDER BY (
-                       SELECT COUNT(*) FROM unnest(n.framing_keywords) kw
-                       WHERE t.title_display ILIKE '%' || kw || '%'
-                     ) DESC, t.pubdate_utc DESC
-                   ) AS rn
+        `WITH titles_with_event AS (
+            -- One row per (narrative, title). Pick the best event when a
+            -- title is attached to multiple events (e.g. Phase 3.2 sibling
+            -- reconciliation keeps pre- and post-merge attachments).
+            SELECT DISTINCT ON (tn.narrative_id, t.id)
+              tn.narrative_id,
+              t.id AS title_id,
+              t.title_display,
+              t.publisher_name,
+              t.pubdate_utc::text AS pubdate_utc,
+              COALESCE(e.id::text, t.id::text) AS dedup_key,
+              COALESCE(e.source_batch_count, 1) AS sbc,
+              CASE WHEN e.is_promoted = true THEN 1 ELSE 0 END AS promoted_int,
+              (SELECT COUNT(*) FROM unnest(n.framing_keywords) kw
+               WHERE t.title_display ILIKE '%' || kw || '%') AS framing_strength
             FROM title_narratives tn
             JOIN titles_v3 t ON t.id = tn.title_id
             JOIN narratives_v2 n ON n.id = tn.narrative_id
+            LEFT JOIN event_v3_titles et ON et.title_id = t.id
+            LEFT JOIN events_v3 e ON e.id = et.event_id AND e.merged_into IS NULL
             WHERE tn.narrative_id = ANY($1)
-         ) ranked
+            ORDER BY tn.narrative_id, t.id,
+              CASE WHEN e.is_promoted = true THEN 0 ELSE 1 END,
+              COALESCE(e.source_batch_count, 0) DESC NULLS LAST
+         ),
+         deduped AS (
+            SELECT *,
+              ROW_NUMBER() OVER (
+                PARTITION BY narrative_id, dedup_key
+                ORDER BY framing_strength DESC, pubdate_utc DESC
+              ) AS event_rn
+            FROM titles_with_event
+         ),
+         publisher_ranked AS (
+            SELECT *,
+              ROW_NUMBER() OVER (
+                PARTITION BY narrative_id, publisher_name
+                ORDER BY promoted_int DESC, sbc DESC, framing_strength DESC, pubdate_utc DESC
+              ) AS pub_rn
+            FROM deduped
+            WHERE event_rn = 1
+         ),
+         ranked AS (
+            -- Tier priority: titles whose own text matches narrative
+            -- framing_keywords come first (loaded-vocabulary tier). Within
+            -- each tier, publisher diversity, then quality signals.
+            -- Counts (brick row, activity chart, publisher list) come from
+            -- title_narratives directly and are NOT affected by this sort.
+            SELECT *,
+              ROW_NUMBER() OVER (
+                PARTITION BY narrative_id
+                ORDER BY
+                  CASE WHEN framing_strength > 0 THEN 0 ELSE 1 END,
+                  CASE WHEN pub_rn <= 2 THEN 0 ELSE 1 END,
+                  promoted_int DESC,
+                  sbc DESC,
+                  framing_strength DESC,
+                  pubdate_utc DESC
+              ) AS rn
+            FROM publisher_ranked
+         )
+         SELECT narrative_id, title_id AS id, title_display AS title,
+                publisher_name, pubdate_utc, framing_strength
+         FROM ranked
          WHERE rn <= $2
-         ORDER BY narrative_id, framing_strength DESC, pubdate_utc DESC`,
+         ORDER BY narrative_id, rn`,
         [narrativeIds, SAMPLE_TITLES_PER_NARRATIVE],
       );
       for (const row of titleRows) {
