@@ -2,11 +2,13 @@
 CTM Monthly Freeze Script
 
 Freezes all CTMs for a given month:
-1. Generates LLM summaries for large CTMs (>=30 titles) without summaries
-2. Assigns canned text for small CTMs (<30 titles) without summaries
-3. Generates monthly centroid_summaries snapshots (tier 0 + per-track)
-4. Purges rejected titles to tombstone table (prevents re-ingestion)
-5. Sets is_frozen=true for all CTMs of the target month
+1. [DEPRECATED] Generates centroid-level monthly summaries (replaced by Phase 5)
+2. Purges rejected titles to tombstone table (prevents re-ingestion)
+3. Sets is_frozen=true for all CTMs of the target month
+
+NOTE: Legacy CTM-level summaries (ctm.summary_text generation) removed.
+These are no longer used by the frontend (replaced by centroid_summaries in D-065).
+If needed in future, restore from git history.
 
 Usage:
     # Manual freeze for specific month
@@ -565,42 +567,30 @@ async def main():
         conn.close()
         return
 
-    # Step 1: Generate LLM summaries for large CTMs
-    print("\nStep 1: LLM summaries for large CTMs")
-    if args.skip_llm:
-        print("  Skipped (--skip-llm)")
-    else:
-        await generate_large_summaries(conn, target_month, dry_run)
-
-    # Step 2: Apply canned summaries to small CTMs
-    print("\nStep 2: Canned summaries for small CTMs")
-    apply_canned_summaries(conn, target_month, dry_run)
+    # Step 1 & 2: [DEPRECATED] Legacy CTM-level summary generation
+    # Removed as of 2026-06-18. These summaries are no longer used by the frontend
+    # (replaced by centroid_summaries in Phase 5, D-065).
 
     # Step 3: Generate centroid-level cross-track summaries
-    print("\nStep 3: Centroid cross-track summaries")
+    print("\nStep 1: Centroid cross-track summaries")
     if args.skip_llm:
         print("  Skipped (--skip-llm)")
     else:
         await generate_centroid_summaries(conn, target_month, dry_run)
 
-    # Step 3.5: Translate epic fields to German
-    print("\nStep 3.5: Epic DE translations")
+    # Step 2: Translate epic fields to German
+    print("\nStep 2: Epic DE translations")
     if args.skip_llm:
         print("  Skipped (--skip-llm)")
     else:
         await translate_epic_fields_de(conn, target_month, dry_run)
 
-    # Step 4: (retired, D-071) — per-title/per-publisher LLM stance scoring
-    # replaced by per-outlet/per-entity/per-month aggregation; see D-071.
-    # The score_publisher_stance.py module is retained for historical
-    # read-only access to legacy `publisher_stance` rows.
-
-    # Step 5: Purge rejected titles to tombstone
-    print("\nStep 5: Purge rejected titles")
+    # Step 3: Purge rejected titles to tombstone
+    print("\nStep 3: Purge rejected titles")
     purge_rejected_titles(conn, target_month, dry_run)
 
-    # Step 6: Freeze all CTMs
-    print("\nStep 6: Freeze all CTMs")
+    # Step 4: Freeze all CTMs
+    print("\nStep 4: Freeze all CTMs")
     freeze_month(conn, target_month, dry_run)
 
     # Final stats
