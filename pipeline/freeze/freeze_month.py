@@ -571,26 +571,44 @@ async def main():
     # Removed as of 2026-06-18. These summaries are no longer used by the frontend
     # (replaced by centroid_summaries in Phase 5, D-065).
 
-    # Step 3: Generate centroid-level cross-track summaries
-    print("\nStep 1: Centroid cross-track summaries")
+    # Step 1: Score outlet entity stance for the month
+    print("\nStep 1: Outlet entity stance scoring (D-072)")
+    if args.skip_llm:
+        print("  Skipped (--skip-llm)")
+    else:
+        from pipeline.phase_5.score_outlet_stance import run as score_stance
+
+        await score_stance(
+            outlet=None,  # All outlets
+            month=target_month,
+            top_n=15,
+            min_per_bundle=15,
+            sample=25,
+            dry_run=dry_run,
+            report=False,
+            concurrency=5,
+        )
+
+    # Step 2: Generate centroid-level cross-track summaries
+    print("\nStep 2: Centroid cross-track summaries")
     if args.skip_llm:
         print("  Skipped (--skip-llm)")
     else:
         await generate_centroid_summaries(conn, target_month, dry_run)
 
-    # Step 2: Translate epic fields to German
-    print("\nStep 2: Epic DE translations")
+    # Step 3: Translate epic fields to German
+    print("\nStep 3: Epic DE translations")
     if args.skip_llm:
         print("  Skipped (--skip-llm)")
     else:
         await translate_epic_fields_de(conn, target_month, dry_run)
 
-    # Step 3: Purge rejected titles to tombstone
-    print("\nStep 3: Purge rejected titles")
+    # Step 4: Purge rejected titles to tombstone
+    print("\nStep 4: Purge rejected titles")
     purge_rejected_titles(conn, target_month, dry_run)
 
-    # Step 4: Freeze all CTMs
-    print("\nStep 4: Freeze all CTMs")
+    # Step 5: Freeze all CTMs
+    print("\nStep 5: Freeze all CTMs")
     freeze_month(conn, target_month, dry_run)
 
     # Final stats
