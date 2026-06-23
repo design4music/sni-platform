@@ -59,7 +59,7 @@ def parse_args() -> argparse.Namespace:
 
 def fetch_fn(cur, fn_id: str) -> dict:
     cur.execute(
-        """SELECT id, name_en, fn_type, centroid_ids
+        """SELECT id, name_en, fn_type, centroid_ids, primary_target
              FROM friction_nodes
             WHERE id = %s AND is_active = true""",
         (fn_id,),
@@ -86,6 +86,7 @@ def link_events(cur, fn: dict, window_days: int) -> int:
 
     Uses the same shape as title attribution:
       - centroid scope: ANY member title of the event must overlap fn.centroid_ids
+      - primary target scope: at least one title must contain primary_target centroid (if set)
       - topic gate: event canonical title matches any fn_anchor bundle alias
     """
     fn_centroid_ids = fn["centroid_ids"] or []
@@ -119,7 +120,20 @@ def link_events(cur, fn: dict, window_days: int) -> int:
         (fn["id"],),
     )
 
-    cur.execute(
+    # Build primary_target filter: if set, require at least one title contains it.
+    primary_target_filter = ""
+    primary_target = fn.get("primary_target")
+    if primary_target:
+        primary_target_filter = """
+              AND EXISTS (
+                SELECT 1 FROM event_v3_titles et
+                JOIN titles_v3 t ON t.id = et.title_id
+                WHERE et.event_id = e.id
+                  AND t.centroid_ids @> ARRAY[%(primary_target)s::text]
+              )
+        """
+
+    sql = (
         """INSERT INTO event_friction_nodes (event_id, fn_id)
            SELECT e.id, %(fn_id)s
              FROM events_v3 e
@@ -131,16 +145,23 @@ def link_events(cur, fn: dict, window_days: int) -> int:
                 JOIN titles_v3 t ON t.id = et.title_id
                 WHERE et.event_id = e.id
                   AND t.centroid_ids && %(centroids)s::text[]
-              )
+              )"""
+        + primary_target_filter
+        + """
               AND EXISTS (
                 SELECT 1 FROM unnest(%(aliases)s::text[]) kw
                 WHERE e.title ILIKE '%%' || kw || '%%'
               )
-           ON CONFLICT (event_id, fn_id) DO NOTHING""",
+           ON CONFLICT (event_id, fn_id) DO NOTHING"""
+    )
+
+    cur.execute(
+        sql,
         {
             "fn_id": fn["id"],
             "window": str(window_days),
             "centroids": fn_centroid_ids,
+            "primary_target": primary_target,
             "aliases": aliases,
         },
     )
