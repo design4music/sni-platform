@@ -120,13 +120,19 @@ def link_events(cur, fn: dict, window_days: int) -> int:
         (fn["id"],),
     )
 
-    # Build primary_target filter: if set, require the title has primary_target centroid.
-    # For multi-clause titles (with semicolon), check that keyword appears in same clause.
+    # Build primary_target filter: if set, require at least 50% of event titles
+    # contain the primary_target centroid (semantic check that event is really about that region).
     primary_target_filter = ""
     primary_target = fn.get("primary_target")
     if primary_target:
         primary_target_filter = """
-              AND t.centroid_ids @> ARRAY[%(primary_target)s::text]
+              AND (
+                SELECT COUNT(*) FILTER (WHERE t2.centroid_ids @> ARRAY[%(primary_target)s::text])::float
+                / NULLIF(COUNT(*), 0)
+                FROM event_v3_titles et2
+                JOIN titles_v3 t2 ON t2.id = et2.title_id
+                WHERE et2.event_id = e.id
+              ) >= 0.5
         """
 
     sql = (
@@ -148,17 +154,11 @@ def link_events(cur, fn: dict, window_days: int) -> int:
                 WHERE et.event_id = e.id
                   AND EXISTS (
                     SELECT 1 FROM unnest(%(aliases)s::text[]) kw
-                    WHERE (
-                      CASE
-                        WHEN position(';' in t.title_display) > 0
-                        THEN substring(t.title_display FROM 1 FOR position(';' in t.title_display)) ILIKE '%%' || kw || '%%'
-                        ELSE t.title_display ILIKE '%%' || kw || '%%'
-                      END
-                    )
-                  )"""
+                    WHERE t.title_display ILIKE '%%' || kw || '%%'
+                  )
+              )"""
         + primary_target_filter
         + """
-              )
            ON CONFLICT (event_id, fn_id) DO NOTHING"""
     )
 
