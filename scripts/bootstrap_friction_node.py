@@ -120,17 +120,13 @@ def link_events(cur, fn: dict, window_days: int) -> int:
         (fn["id"],),
     )
 
-    # Build primary_target filter: if set, require at least one title contains it.
+    # Build primary_target filter: if set, require the title has primary_target centroid.
+    # For multi-clause titles (with semicolon), check that keyword appears in same clause.
     primary_target_filter = ""
     primary_target = fn.get("primary_target")
     if primary_target:
         primary_target_filter = """
-              AND EXISTS (
-                SELECT 1 FROM event_v3_titles et
-                JOIN titles_v3 t ON t.id = et.title_id
-                WHERE et.event_id = e.id
-                  AND t.centroid_ids @> ARRAY[%(primary_target)s::text]
-              )
+              AND t.centroid_ids @> ARRAY[%(primary_target)s::text]
         """
 
     sql = (
@@ -145,12 +141,23 @@ def link_events(cur, fn: dict, window_days: int) -> int:
                 JOIN titles_v3 t ON t.id = et.title_id
                 WHERE et.event_id = e.id
                   AND t.centroid_ids && %(centroids)s::text[]
-              )"""
+              )
+              AND EXISTS (
+                SELECT 1 FROM event_v3_titles et
+                JOIN titles_v3 t ON t.id = et.title_id
+                WHERE et.event_id = e.id
+                  AND EXISTS (
+                    SELECT 1 FROM unnest(%(aliases)s::text[]) kw
+                    WHERE (
+                      CASE
+                        WHEN position(';' in t.title_display) > 0
+                        THEN substring(t.title_display FROM 1 FOR position(';' in t.title_display)) ILIKE '%%' || kw || '%%'
+                        ELSE t.title_display ILIKE '%%' || kw || '%%'
+                      END
+                    )
+                  )"""
         + primary_target_filter
         + """
-              AND EXISTS (
-                SELECT 1 FROM unnest(%(aliases)s::text[]) kw
-                WHERE e.title ILIKE '%%' || kw || '%%'
               )
            ON CONFLICT (event_id, fn_id) DO NOTHING"""
     )
