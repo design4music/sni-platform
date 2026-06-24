@@ -687,7 +687,7 @@ export async function getAllFrictionNodesByRegion(
       fn_id: string;
       last_date: string;
     }>(
-      `SELECT fn_id, MAX(e.published_at)::text AS last_date
+      `SELECT fn_id, MAX(e.pubdate_utc)::text AS last_date
        FROM event_friction_nodes efn
        JOIN events_v3 e ON efn.event_id = e.id
        GROUP BY fn_id`,
