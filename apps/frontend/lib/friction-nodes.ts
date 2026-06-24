@@ -603,3 +603,181 @@ export async function getActiveFrictionNodes(
     }));
   });
 }
+
+export interface FrictionNodeWithActivity {
+  id: string;
+  name: string;
+  description: string | null;
+  editorial_summary: string | null;
+  fn_type: 'atomic' | 'theater';
+  event_count: number;
+  last_activity_date: string | null;
+}
+
+export interface TheaterWithMembers {
+  id: string;
+  name: string;
+  description: string | null;
+  editorial_summary: string | null;
+  event_count: number;
+  last_activity_date: string | null;
+  members: FrictionNodeWithActivity[];
+}
+
+export interface FnByRegion {
+  region: string;
+  theaters: TheaterWithMembers[];
+}
+
+/**
+ * Get all active FNs organized by region, with theaters and their atomic members.
+ * Includes event counts and last activity dates for each FN.
+ */
+export async function getAllFrictionNodesByRegion(
+  locale?: string,
+): Promise<FnByRegion[]> {
+  const loc = locale2(locale);
+  return cached(`fn:by_region:${loc}`, TTL, async () => {
+    // Get all active theaters
+    const theaterRows = await query<{
+      id: string;
+      name: string;
+      description: string | null;
+      editorial_summary: string | null;
+      centroid_ids: string[];
+      member_fn_ids: string[] | null;
+    }>(
+      `SELECT id,
+              ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
+              ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
+              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
+              centroid_ids,
+              member_fn_ids
+       FROM friction_nodes
+       WHERE is_active = true AND fn_type = 'theater'
+       ORDER BY display_order NULLS LAST, name_en`,
+    );
+
+    // Get all atomic FNs
+    const atomicRows = await query<{
+      id: string;
+      name: string;
+      description: string | null;
+      editorial_summary: string | null;
+    }>(
+      `SELECT id,
+              ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
+              ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
+              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary
+       FROM friction_nodes
+       WHERE is_active = true AND fn_type = 'atomic'`,
+    );
+
+    // Get event counts for atomic FNs only (theaters don't have direct events)
+    const eventCountRows = await query<{ fn_id: string; n: number }>(
+      `SELECT fn_id, COUNT(*)::int AS n
+       FROM event_friction_nodes
+       GROUP BY fn_id`,
+    );
+    const eventCountByFn = new Map<string, number>();
+    for (const r of eventCountRows) eventCountByFn.set(r.fn_id, r.n);
+
+    // Get last activity date for atomic FNs only
+    const lastActivityRows = await query<{
+      fn_id: string;
+      last_date: string;
+    }>(
+      `SELECT fn_id, MAX(e.published_at)::text AS last_date
+       FROM event_friction_nodes efn
+       JOIN events_v3 e ON efn.event_id = e.id
+       GROUP BY fn_id`,
+    );
+    const lastActivityByFn = new Map<string, string>();
+    for (const r of lastActivityRows) lastActivityByFn.set(r.fn_id, r.last_date);
+
+    // Build atomic FN map
+    const atomicById = new Map<string, FrictionNodeWithActivity>();
+    for (const r of atomicRows) {
+      atomicById.set(r.id, {
+        id: r.id,
+        name: r.name,
+        description: r.description,
+        editorial_summary: r.editorial_summary,
+        fn_type: 'atomic',
+        event_count: eventCountByFn.get(r.id) ?? 0,
+        last_activity_date: lastActivityByFn.get(r.id) ?? null,
+      });
+    }
+
+    // Build theaters with members, aggregating event counts and dates from members
+    const byRegion = new Map<string, TheaterWithMembers[]>();
+    for (const theater of theaterRows) {
+      const region = extractRegion(theater.centroid_ids);
+      const memberIds = theater.member_fn_ids ?? [];
+      const members: FrictionNodeWithActivity[] = memberIds
+        .map((id) => atomicById.get(id))
+        .filter((m): m is FrictionNodeWithActivity => Boolean(m));
+
+      // Theater's event count is sum of its members' event counts
+      const theaterEventCount = members.reduce((sum, m) => sum + m.event_count, 0);
+
+      // Theater's last activity is the latest of all its members
+      const allMemberDates = members
+        .map((m) => m.last_activity_date)
+        .filter((d): d is string => Boolean(d));
+      const lastDate = allMemberDates.length
+        ? allMemberDates.sort().reverse()[0]
+        : null;
+
+      const theaterRecord: TheaterWithMembers = {
+        id: theater.id,
+        name: theater.name,
+        description: theater.description,
+        editorial_summary: theater.editorial_summary,
+        event_count: theaterEventCount,
+        last_activity_date: lastDate,
+        members,
+      };
+
+      if (!byRegion.has(region)) byRegion.set(region, []);
+      byRegion.get(region)!.push(theaterRecord);
+    }
+
+    // Sort regions in display order, sort theaters within region
+    const regionOrder = [
+      'EUROPE',
+      'MIDEAST',
+      'AFRICA',
+      'ASIA',
+      'AMERICAS',
+      'OCEANIA',
+      'NON-STATE',
+    ];
+    const result: FnByRegion[] = [];
+    for (const region of regionOrder) {
+      const theaters = byRegion.get(region);
+      if (theaters && theaters.length > 0) {
+        result.push({
+          region,
+          theaters: theaters.sort((a, b) => a.name.localeCompare(b.name)),
+        });
+      }
+    }
+
+    return result;
+  });
+}
+
+function extractRegion(centroidIds: string[]): string {
+  if (!centroidIds.length) return 'OTHER';
+  const prefix = centroidIds[0].split('-')[0];
+  const regionMap: Record<string, string> = {
+    EUROPE: 'EUROPE',
+    MIDEAST: 'MIDEAST',
+    AFRICA: 'AFRICA',
+    ASIA: 'ASIA',
+    AMERICAS: 'AMERICAS',
+    OCEANIA: 'OCEANIA',
+  };
+  return regionMap[prefix] || 'NON-STATE';
+}

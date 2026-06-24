@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import DashboardLayout from '@/components/DashboardLayout';
 import NarrativeCard from '@/components/narratives/NarrativeCard';
 import NarrativeFilterBar from '@/components/narratives/NarrativeFilterBar';
+import FrictionNodesBrowser from '@/components/FrictionNodesBrowser';
 import { getAllMetaNarratives, getStrategicNarratives, getNarrativeSparklines } from '@/lib/queries';
+import { getAllFrictionNodesByRegion } from '@/lib/friction-nodes';
 import { buildAlternates } from '@/lib/seo';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getCentroidLabel } from '@/lib/types';
@@ -34,10 +36,11 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
   const tCentroids = await getTranslations('centroids');
   const sp = await searchParams;
 
-  const [metaNarratives, allNarratives, sparklines] = await Promise.all([
+  const [metaNarratives, allNarratives, sparklines, fnByRegion] = await Promise.all([
     getAllMetaNarratives(locale),
     getStrategicNarratives(locale),
     getNarrativeSparklines(),
+    getAllFrictionNodesByRegion(locale),
   ]);
 
   // Build unique actors list for filter (with translated labels)
@@ -90,9 +93,9 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
         </Link>
       </div>
 
-      {/* Experimental Friction Node theaters quick links (2026-05-13) */}
-      <div className="mb-6 rounded-lg border border-amber-700/40 bg-amber-950/20 p-4">
-        <div className="mb-2 flex items-center gap-2">
+      {/* Friction Nodes Browser */}
+      <div className="mb-10 rounded-lg border border-amber-700/40 bg-amber-950/20 p-6">
+        <div className="mb-6 flex items-center gap-2">
           <span className="rounded bg-amber-600/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
             Experimental
           </span>
@@ -100,26 +103,7 @@ export default async function NarrativesPage({ params, searchParams }: Props) {
             Friction Nodes — contested phenomena with pro/con narrative split
           </span>
         </div>
-        <div className="flex flex-wrap gap-2 text-sm">
-          <Link href="/friction-nodes/iran_theater" className="rounded bg-dashboard-card hover:bg-dashboard-card-hover px-3 py-1.5 transition">
-            Iran theater
-          </Link>
-          <Link href="/friction-nodes/israel_theater" className="rounded bg-dashboard-card hover:bg-dashboard-card-hover px-3 py-1.5 transition">
-            Israel theater
-          </Link>
-          <Link href="/friction-nodes/syria_theater" className="rounded bg-dashboard-card hover:bg-dashboard-card-hover px-3 py-1.5 transition">
-            Syria theater
-          </Link>
-          <Link href="/friction-nodes/turkey_theater" className="rounded bg-dashboard-card hover:bg-dashboard-card-hover px-3 py-1.5 transition">
-            Turkey theater
-          </Link>
-          <Link href="/friction-nodes/yemen_red_sea_theater" className="rounded bg-dashboard-card hover:bg-dashboard-card-hover px-3 py-1.5 transition">
-            Yemen / Red Sea
-          </Link>
-          <Link href="/friction-nodes/sudan_civil_war" className="rounded bg-dashboard-card hover:bg-dashboard-card-hover px-3 py-1.5 transition">
-            Sudan civil war
-          </Link>
-        </div>
+        <FrictionNodesBrowser data={fnByRegion} locale={locale} />
       </div>
 
       <NarrativeFilterBar
