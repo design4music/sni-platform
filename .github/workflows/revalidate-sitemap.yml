@@ -24,9 +24,15 @@ jobs:
           curl --fail --silent --show-error \
                -X POST https://www.worldbrief.info/api/cron/revalidate-sitemap \
                -H "x-revalidate-token: ${{ secrets.REVALIDATE_API_KEY }}"
-      - name: Warm up sitemaps
+      - name: Verify sitemaps
         run: |
-          curl --fail --silent --show-error --max-time 120 \
-               https://www.worldbrief.info/sitemap.xml > /dev/null
-          curl --fail --silent --show-error --max-time 120 \
-               https://www.worldbrief.info/sitemap-days.xml > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+               https://www.worldbrief.info/sitemap-index.xml > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+               https://www.worldbrief.info/sitemap-geo.xml > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+               https://www.worldbrief.info/sitemap-daily.xml > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+               https://www.worldbrief.info/sitemap-sources.xml > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
+               https://www.worldbrief.info/sitemap-static.xml > /dev/null
