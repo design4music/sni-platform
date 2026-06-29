@@ -1043,6 +1043,21 @@ export async function getOutletProfile(feedName: string): Promise<OutletProfile 
   });
 }
 
+export async function getOutletDescription(
+  feedName: string,
+  locale: string,
+): Promise<string | null> {
+  return cached(`outletDesc:${feedName}:${locale}`, 24 * 3600, async () => {
+    const rows = await query<{ description: string | null; description_de: string | null }>(
+      `SELECT description, description_de FROM feeds WHERE name = $1`,
+      [feedName],
+    );
+    if (!rows.length) return null;
+    const r = rows[0];
+    return (locale === 'de' ? r.description_de : r.description) ?? null;
+  });
+}
+
 // D-071: getOutletNarrativeFrames retired. Replacement is the per-outlet/
 // per-entity/per-month stance matrix below (outlet_entity_stance).
 
