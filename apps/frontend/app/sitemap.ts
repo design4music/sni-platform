@@ -152,12 +152,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // each active day in those months becomes its own indexable URL. Source
   // is mv_global_month_view (one row per past month with activity_stripe
   // already pre-aggregated, so no extra heavy joins here).
-  const trendingMonthRows = await query<{
-    month_str: string;
-    stripe: Array<{ date: string; total_sources: number }> | null;
-  }>(
-    `SELECT TO_CHAR(month, 'YYYY-MM') AS month_str,
-            view->'activity_stripe' AS stripe
+  const trendingMonthRows = await query<{ month_str: string }>(
+    `SELECT TO_CHAR(month, 'YYYY-MM') AS month_str
        FROM mv_global_month_view
       WHERE locale = 'en'
       ORDER BY month DESC
@@ -171,18 +167,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
       alternates: alt(monthPath),
     });
-    if (Array.isArray(m.stripe)) {
-      for (const day of m.stripe) {
-        if (day.total_sources <= 0) continue;
-        const dayPath = `/trending?month=${m.month_str}&day=${day.date}`;
-        entries.push({
-          url: `${SITE_URL}${dayPath}`,
-          changeFrequency: 'monthly',
-          priority: 0.6,
-          alternates: alt(dayPath),
-        });
-      }
-    }
+    // Day-level URLs (/trending?month=...&day=...) omitted: the & in the query
+    // string is not XML-escaped by Next.js's alternates serializer, causing
+    // "EntityRef: expecting ';'" parse errors in Google's sitemap parser.
+    // Month-level entries are sufficient for Googlebot to discover day pages
+    // via on-page navigation.
   }
 
   // Signal category index pages
