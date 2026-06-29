@@ -2,10 +2,17 @@ import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+// Daily brief sitemaps are split by month to keep each file under ~3 MB.
+// ?month=YYYY-MM selects the cache entry; omitting month returns 503.
+export async function GET(request: Request) {
+  const month = new URL(request.url).searchParams.get('month');
+  if (!month) {
+    return new Response('Pass ?month=YYYY-MM', { status: 400 });
+  }
+
   const rows = await query<{ content: string }>(
     `SELECT content FROM sitemap_cache WHERE name = $1`,
-    ['daily'],
+    [`daily-${month}`],
   );
   if (!rows.length) {
     return new Response('Sitemap not yet generated — run the revalidate-sitemap cron.', {

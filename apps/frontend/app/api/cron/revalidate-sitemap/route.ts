@@ -72,17 +72,21 @@ async function generateGeo(): Promise<{ xml: string; count: number }> {
   return { xml: wrapUrlset(parts.join('\n')), count };
 }
 
-async function generateDaily(): Promise<{ xml: string; count: number }> {
+// Generates one cache entry per month (key: daily-YYYY-MM) so each file is
+// ~2-3 MB rather than one 15 MB blob that Google refuses to parse.
+async function generateDaily(): Promise<{ entries: Array<{ name: string; xml: string }>; count: number }> {
   const rows = await query<{
     centroid_id: string;
     track: string;
     date: string;
     generated_at: string;
+    month: string;
   }>(
     `SELECT c.id AS centroid_id,
             ctm.track,
             db.date::text,
-            db.generated_at::text
+            db.generated_at::text,
+            TO_CHAR(DATE_TRUNC('month', db.date), 'YYYY-MM') AS month
        FROM daily_briefs db
        JOIN ctm ON ctm.id = db.ctm_id
        JOIN centroids_v3 c ON c.id = ctm.centroid_id
@@ -91,15 +95,25 @@ async function generateDaily(): Promise<{ xml: string; count: number }> {
       LIMIT 50000`,
   );
 
-  const parts = rows.map(r => {
-    const path = `/c/${r.centroid_id}/t/${r.track}/${r.date}`;
-    const lastmod = r.generated_at
-      ? new Date(r.generated_at).toISOString()
-      : `${r.date}T00:00:00.000Z`;
-    return urlBlock(path, { lastmod, freq: 'monthly', prio: 0.7 });
-  });
+  const byMonth = new Map<string, typeof rows>();
+  for (const row of rows) {
+    if (!byMonth.has(row.month)) byMonth.set(row.month, []);
+    byMonth.get(row.month)!.push(row);
+  }
 
-  return { xml: wrapUrlset(parts.join('\n')), count: rows.length * 2 };
+  const entries: Array<{ name: string; xml: string }> = [];
+  for (const [month, monthRows] of byMonth) {
+    const parts = monthRows.map(r => {
+      const path = `/c/${r.centroid_id}/t/${r.track}/${r.date}`;
+      const lastmod = r.generated_at
+        ? new Date(r.generated_at).toISOString()
+        : `${r.date}T00:00:00.000Z`;
+      return urlBlock(path, { lastmod, freq: 'monthly', prio: 0.7 });
+    });
+    entries.push({ name: `daily-${month}`, xml: wrapUrlset(parts.join('\n')) });
+  }
+
+  return { entries, count: rows.length * 2 };
 }
 
 async function generateSources(): Promise<{ xml: string; count: number }> {
@@ -175,7 +189,7 @@ export async function POST(req: NextRequest) {
 
   await Promise.all([
     upsertCache('geo', geo.xml),
-    upsertCache('daily', daily.xml),
+    ...daily.entries.map(e => upsertCache(e.name, e.xml)),
     upsertCache('sources', sources.xml),
     upsertCache('static', staticSitemap.xml),
   ]);
@@ -186,6 +200,7 @@ export async function POST(req: NextRequest) {
     counts: {
       geo: geo.count,
       daily: daily.count,
+      daily_months: daily.entries.length,
       sources: sources.count,
       static: staticSitemap.count,
     },
