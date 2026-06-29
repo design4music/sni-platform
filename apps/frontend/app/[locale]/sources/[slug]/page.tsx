@@ -25,6 +25,7 @@ import FlagImg from '@/components/FlagImg';
 import InfoTip from '@/components/InfoTip';
 import {
   getOutletProfile,
+  getOutletDescription,
   getPublisherStats,
   getOutletStanceMonths,
   getOutletStanceTimeline,
@@ -85,15 +86,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = (localeRaw || 'en') as SeoLocale;
   const feedName = await resolveSlug(decodeURIComponent(slug).toLowerCase());
   if (!feedName) return { title: 'Not Found' };
+  const generatedDesc = await getOutletDescription(feedName, locale);
+  const fallbackDesc = locale === 'de'
+    ? `Redaktionelles Profil von ${feedName}: Haltung gegenueber Laendern und Personen, Themenverteilung und Berichterstattungsmuster.`
+    : `Editorial profile of ${feedName}: stance toward countries and persons, topic distribution and coverage patterns.`;
   return buildPageMetadata({
     title:
       locale === 'de'
-        ? `${feedName} — Redaktionelles Profil | WorldBrief`
-        : `${feedName} — Editorial Profile | WorldBrief`,
-    description:
-      locale === 'de'
-        ? `Monatsuebergreifendes Redaktionsprofil von ${feedName}: Haltung gegenueber Laendern und Personen, Themenverteilung, Berichterstattungsmuster.`
-        : `Cross-month editorial profile of ${feedName}: stance toward countries and persons, topic distribution, coverage patterns.`,
+        ? `${feedName} — Redaktionelles Profil`
+        : `${feedName} — Editorial Profile`,
+    description: generatedDesc || fallbackDesc,
     path: `/sources/${slug}`,
     locale,
   });
@@ -120,6 +122,7 @@ export default async function OutletLandingPage({ params }: Props) {
 
   const [
     profile,
+    outletDescription,
     lifetimeStats,
     stanceMonths,
     stanceTimeline,
@@ -128,6 +131,7 @@ export default async function OutletLandingPage({ params }: Props) {
     minorEntities,
   ] = await Promise.all([
     getOutletProfile(feedName),
+    getOutletDescription(feedName, locale),
     getPublisherStats(feedName),
     getOutletStanceMonths(feedName),
     getOutletStanceTimeline(feedName),
@@ -378,14 +382,20 @@ export default async function OutletLandingPage({ params }: Props) {
             </div>
           </div>
 
-          <p className="mt-4 text-sm text-dashboard-text-muted max-w-3xl leading-snug">
-            {hasMonthlyContent
-              ? tSources('landingIntro', { name: profile.feed_name })
-              : tSources('landingIntroLowCoverage', {
-                  name: profile.feed_name,
-                  n: lifetimeStats?.title_count ?? 0,
-                })}
-          </p>
+          {outletDescription ? (
+            <p className="mt-4 text-sm text-dashboard-text-muted max-w-3xl leading-relaxed">
+              {outletDescription}
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-dashboard-text-muted max-w-3xl leading-snug">
+              {hasMonthlyContent
+                ? tSources('landingIntro', { name: profile.feed_name })
+                : tSources('landingIntroLowCoverage', {
+                    name: profile.feed_name,
+                    n: lifetimeStats?.title_count ?? 0,
+                  })}
+            </p>
+          )}
         </div>
 
         {/* ---------------- Stance content (only outlets with stance data) ---------------- */}
