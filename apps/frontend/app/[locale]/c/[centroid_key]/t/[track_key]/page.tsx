@@ -1,4 +1,5 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { query } from '@/lib/db';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -152,6 +153,29 @@ export default async function TrackPage({ params, searchParams }: TrackPageProps
   const centroid = await getCentroidById(centroid_key, locale);
   if (!centroid) notFound();
   if (!isLiveTrack(track_key)) notFound();
+
+  // Redirect to the most recent day with a daily brief. The track overview page
+  // (calendar without a date) is retired since daily briefs were introduced.
+  // Falls through only if no briefs exist at all for this centroid+track.
+  const briefResult = await query<{ date: string }>(
+    month
+      ? `SELECT db.date::text AS date
+           FROM daily_briefs db
+           JOIN ctm ON ctm.id = db.ctm_id
+          WHERE ctm.centroid_id = $1 AND ctm.track = $2
+            AND DATE_TRUNC('month', db.date) = DATE_TRUNC('month', $3::date)
+          ORDER BY db.date DESC LIMIT 1`
+      : `SELECT db.date::text AS date
+           FROM daily_briefs db
+           JOIN ctm ON ctm.id = db.ctm_id
+          WHERE ctm.centroid_id = $1 AND ctm.track = $2
+          ORDER BY db.date DESC LIMIT 1`,
+    month ? [centroid.id, track_key, `${month}-01`] : [centroid.id, track_key],
+  );
+  if (briefResult.length > 0) {
+    const prefix = locale === 'de' ? '/de' : '';
+    redirect(`${prefix}/c/${centroid_key}/t/${track_key}/${briefResult[0].date}`);
+  }
 
   const months = await getCTMMonths(centroid_key, track_key);
   if (months.length === 0) {
