@@ -31,6 +31,8 @@ jobs:
           curl --fail --silent --show-error --max-time 30 \
                https://www.worldbrief.info/sitemap-geo.xml > /dev/null
           curl --fail --silent --show-error --max-time 30 \
+               https://www.worldbrief.info/sitemap-daily.xml > /dev/null
+          curl --fail --silent --show-error --max-time 30 \
                https://www.worldbrief.info/sitemap-sources.xml > /dev/null
           curl --fail --silent --show-error --max-time 30 \
                https://www.worldbrief.info/sitemap-static.xml > /dev/null

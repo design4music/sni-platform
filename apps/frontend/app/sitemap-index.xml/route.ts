@@ -15,11 +15,17 @@ export async function GET() {
   ]);
 
   const dailySitemaps = dailyRows
-    .map(r => `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/${r.name}.xml</loc>\n  </sitemap>`)
+    .map(r => {
+      const month = r.name.slice('daily-'.length);
+      return `  <sitemap>\n    <loc>${SITE_URL}/sitemap-daily.xml?month=${month}</loc>\n  </sitemap>`;
+    })
     .join('\n');
 
   const eventSitemaps = eventRows
-    .map(r => `  <sitemap>\n    <loc>${SITE_URL}/sitemaps/${r.name}.xml</loc>\n  </sitemap>`)
+    .map(r => {
+      const month = r.name.slice('events-'.length);
+      return `  <sitemap>\n    <loc>${SITE_URL}/sitemap-events.xml?month=${month}</loc>\n  </sitemap>`;
+    })
     .join('\n');
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
