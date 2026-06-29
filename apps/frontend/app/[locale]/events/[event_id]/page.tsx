@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? truncateDescription(summary + dateline)
     : truncateDescription(t('metaDescription', { title }) + dateline);
 
-  return buildPageMetadata({
+  const base = buildPageMetadata({
     title,
     description,
     path: `/events/${event_id}`,
@@ -50,6 +50,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ogType: 'article',
     publishedTime: event.date ? `${event.date}T00:00:00Z` : undefined,
   });
+  // Events without a generated prose summary are thin-content pages.
+  // Exclude from Google's index but keep follow so link equity passes through.
+  return summary ? base : { ...base, robots: { index: false, follow: true } };
 }
 
 interface Props {

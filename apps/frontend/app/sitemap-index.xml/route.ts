@@ -9,14 +9,22 @@ export const dynamic = 'force-dynamic';
 const SITE_URL = 'https://www.worldbrief.info';
 
 export async function GET() {
-  const monthRows = await query<{ name: string }>(
-    `SELECT name FROM sitemap_cache WHERE name LIKE 'daily-%' ORDER BY name DESC`,
-  );
+  const [dailyRows, eventRows] = await Promise.all([
+    query<{ name: string }>(`SELECT name FROM sitemap_cache WHERE name LIKE 'daily-%' ORDER BY name DESC`),
+    query<{ name: string }>(`SELECT name FROM sitemap_cache WHERE name LIKE 'events-%' ORDER BY name DESC`),
+  ]);
 
-  const dailySitemaps = monthRows
+  const dailySitemaps = dailyRows
     .map(r => {
       const month = r.name.slice('daily-'.length);
       return `  <sitemap>\n    <loc>${SITE_URL}/sitemap-daily.xml?month=${month}</loc>\n  </sitemap>`;
+    })
+    .join('\n');
+
+  const eventSitemaps = eventRows
+    .map(r => {
+      const month = r.name.slice('events-'.length);
+      return `  <sitemap>\n    <loc>${SITE_URL}/sitemap-events.xml?month=${month}</loc>\n  </sitemap>`;
     })
     .join('\n');
 
@@ -32,6 +40,7 @@ export async function GET() {
     <loc>${SITE_URL}/sitemap-static.xml</loc>
   </sitemap>
 ${dailySitemaps}
+${eventSitemaps}
 </sitemapindex>
 `;
 

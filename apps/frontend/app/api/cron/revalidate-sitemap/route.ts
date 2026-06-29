@@ -116,6 +116,46 @@ async function generateDaily(): Promise<{ entries: Array<{ name: string; xml: st
   return { entries, count: rows.length * 2 };
 }
 
+async function generateEvents(): Promise<{ entries: Array<{ name: string; xml: string }>; count: number }> {
+  const rows = await query<{
+    id: string;
+    date: string;
+    last_active: string;
+    month: string;
+  }>(
+    `SELECT e.id::text,
+            e.date::text,
+            COALESCE(e.last_active, e.date)::text AS last_active,
+            TO_CHAR(DATE_TRUNC('month', e.date), 'YYYY-MM') AS month
+       FROM events_v3 e
+      WHERE e.is_promoted = true
+        AND e.merged_into IS NULL
+        AND e.is_catchall = false
+        AND e.summary IS NOT NULL
+      ORDER BY e.date DESC, e.id`,
+  );
+
+  const byMonth = new Map<string, typeof rows>();
+  for (const row of rows) {
+    if (!byMonth.has(row.month)) byMonth.set(row.month, []);
+    byMonth.get(row.month)!.push(row);
+  }
+
+  const entries: Array<{ name: string; xml: string }> = [];
+  for (const [month, monthRows] of byMonth) {
+    const parts = monthRows.map(r =>
+      urlBlock(`/events/${r.id}`, {
+        lastmod: `${r.last_active}T00:00:00.000Z`,
+        freq: 'monthly',
+        prio: 0.7,
+      }),
+    );
+    entries.push({ name: `events-${month}`, xml: wrapUrlset(parts.join('\n')) });
+  }
+
+  return { entries, count: rows.length * 2 };
+}
+
 async function generateSources(): Promise<{ xml: string; count: number }> {
   const [feeds, months] = await Promise.all([
     query<{ slug: string }>(
@@ -180,9 +220,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const [geo, daily, sources] = await Promise.all([
+  const [geo, daily, events, sources] = await Promise.all([
     generateGeo(),
     generateDaily(),
+    generateEvents(),
     generateSources(),
   ]);
   const staticSitemap = generateStatic();
@@ -190,6 +231,7 @@ export async function POST(req: NextRequest) {
   await Promise.all([
     upsertCache('geo', geo.xml),
     ...daily.entries.map(e => upsertCache(e.name, e.xml)),
+    ...events.entries.map(e => upsertCache(e.name, e.xml)),
     upsertCache('sources', sources.xml),
     upsertCache('static', staticSitemap.xml),
   ]);
@@ -201,6 +243,8 @@ export async function POST(req: NextRequest) {
       geo: geo.count,
       daily: daily.count,
       daily_months: daily.entries.length,
+      events: events.count,
+      events_months: events.entries.length,
       sources: sources.count,
       static: staticSitemap.count,
     },
