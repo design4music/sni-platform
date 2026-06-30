@@ -1384,7 +1384,9 @@ decisions:
         _syria_iteration_3.sql, _syria_iteration_4.sql,
         _sudan_civil_war_seed.sql, _turkey_theater_seed.sql,
         _yemen_red_sea_theater_seed.sql.
-      - Local-only as of 2026-05-13; pending Render sync.
+      - Synced to Render; verified live 2026-05-19 (all 25 FN rows,
+        narratives, fn_anchor bundles, and bootstrap attribution counts
+        non-zero on every new FN).
       - Specs preserved at docs/context/SYRIA_THEATER_SPEC.md,
         TURKEY_THEATER_SPEC.md, YEMEN_RED_SEA_THEATER_SPEC.md,
         SUDAN_FN_SPEC.md.

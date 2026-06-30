@@ -85,8 +85,8 @@ export default async function AboutPage() {
           <div className="mt-12 pt-8 border-t border-dashboard-border">
             <p className="text-sm text-dashboard-text-muted">
               {t('contactPrompt')}{' '}
-              <a href="mailto:contact@worldbrief.org" className="text-blue-400 hover:underline">
-                contact@worldbrief.org
+              <a href="mailto:max.micheliov@gmail.com" className="text-blue-400 hover:underline">
+                max.micheliov@gmail.com
               </a>
             </p>
           </div>

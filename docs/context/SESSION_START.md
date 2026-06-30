@@ -1,11 +1,12 @@
 # Session Start
 
-**Last refreshed**: 2026-05-13 (Middle East FN expansion: Syria + Sudan +
-Turkey + Yemen/Red Sea theaters seeded locally. 6 ME theaters total now
-on local DB. Sample-titles ranking rewritten on narrative cards
-(composite tier with loaded-vocabulary priority). Narrative Discovery
-Plan drafted for review. See D-081..D-085 below. **All new work is
-local only — Render sync pending.**)
+**Last refreshed**: 2026-05-19 (Middle East FN expansion now live on
+Render: Syria + Sudan + Turkey + Yemen/Red Sea theaters synced and
+bootstrapped — 5 theaters + 20 atomic FNs on Render with non-zero
+attribution everywhere. Sample-titles ranking rewritten on narrative
+cards (composite tier with loaded-vocabulary priority). Narrative
+Discovery Plan drafted for review. See D-081..D-085 below. **Next:
+Russia-Ukraine + EU + USA theaters, then FN-first homepage view.**)
 
 **Pre-2026-05-13 history**: Friction Nodes rearchitected 2026-05-12
 (theater pattern + 1-to-1 narrative<->FN collapse + 5-step stance
@@ -31,10 +32,14 @@ day-centric calendar view, cross-track centroid hero, and a reworked
 `/c/*/t/*` that folds the calendar view inline, full SEO layer, and a
 `/trending/v2` prototype.
 
-**As of 2026-05-07**: the Friction Nodes shadow architecture is live
-with 3 FNs in the Iran cluster. New analytical layer above events and
-narratives. See [Friction Nodes section below](#friction-nodes-new) for
-links to the concept doc + runbook.
+**As of 2026-05-19**: the Friction Nodes shadow architecture has
+expanded to 5 theaters + 20 atomic FNs spanning the Middle East
+(Iran, Israel, Syria, Turkey, Yemen/Red Sea) plus Sudan as a
+standalone atomic FN. All live on Render with bootstrap attribution
+populated. Originally shipped 2026-05-07 (3 Iran-cluster FNs) and
+rearchitected 2026-05-12 (theater pattern + 1-to-1 narrative<->FN
+collapse + 5-step stance palette). See [Friction Nodes section
+below](#friction-nodes-new) for links to the concept doc + runbook.
 
 For the complete snapshot: [`PIPELINE_STATUS.md`](PIPELINE_STATUS.md).
 
@@ -98,25 +103,30 @@ ones. Spec: [`docs/Narrative_map_spec.md`](../Narrative_map_spec.md).
 Taxonomy draft v2 at [`docs/narrative_taxonomy.yaml`](../narrative_taxonomy.yaml)
 (9 meta + 59 strategic narratives).
 
-#### Middle East FN expansion (2026-05-13, local only)
+#### Middle East FN expansion (live on Render as of 2026-05-19)
 
-Theater coverage now spans Iran + Israel + Syria + Turkey + Yemen/Red Sea
-+ Sudan (standalone atomic). Numbers below are local DB; Render still
-on the 2026-05-12 state (Iran + Israel only).
+Theater coverage spans Iran + Israel + Syria + Turkey + Yemen/Red Sea
++ Sudan (standalone atomic). All FN rows, narratives, fn_anchor
+bundles and bootstrap attribution verified live on Render
+2026-05-19.
 
-| Theater | Atomic FNs | Narratives | Atomic events (local) |
+| Theater | Atomic FNs | Theater narratives | Atomic events (Render) |
 |---|---|---:|---:|
-| iran_theater (live on Render) | 4 | 12 | ~3.6k (Render) |
-| israel_theater (live on Render) | 4 | 12 | ~3.3k (Render) |
-| **syria_theater** (local) | 4 | 10 | ~605 |
-| **sudan_civil_war** (standalone, local) | — | 3 | 385 |
-| **turkey_theater** (local) | 4 | 11 | ~402 |
-| **yemen_red_sea_theater** (local) | 3 | 9 | ~658 |
+| iran_theater | 4 | 4 | ~3.5k across atomic |
+| israel_theater | 4 | 4 | ~4.5k across atomic |
+| syria_theater | 4 | 3 | ~633 across atomic |
+| sudan_civil_war (standalone) | — | 3 | 498 |
+| turkey_theater | 4 | 3 | ~456 across atomic |
+| yemen_red_sea_theater | 3 | 3 | ~897 across atomic |
 
 Open work:
-- Render sync of the 4 new theaters
-- Narrative tuning per ongoing review (russia_iran_loss_lament dropped
-  2026-05-13; other narratives may need cohort/anchor refinement)
+- Russia-Ukraine + EU + USA theaters (next curatorial sprint)
+- FN-first homepage view (card grid → map)
+- Narrative tuning for thin FNs (syria_israeli_strikes 13 events,
+  turkey_iran_war_spillover 16, turkey_democratic_backsliding 24,
+  saudi_houthi_war 49 — widen cohorts/anchors or accept low-volume)
+- Periodic FN re-bootstrap in daemon (currently one-shot — counts
+  freeze between bootstrap runs)
 - Pre-curate missing Turkey FNs: Turkey-Russia frenemy, Turkey-Greece
   East Med, Turkey-Caucasus (candidates for sleeping-FN treatment)
 
