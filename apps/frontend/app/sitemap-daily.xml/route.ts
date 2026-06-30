@@ -1,29 +1,12 @@
-import { query } from '@/lib/db';
-
 export const dynamic = 'force-dynamic';
 
-// Daily brief sitemaps are split by month to keep each file under ~3 MB.
-// ?month=YYYY-MM selects the cache entry; omitting month returns 503.
+const SITE_URL = 'https://www.worldbrief.info';
+
+// Legacy query-param URLs — redirect to path-based equivalents.
 export async function GET(request: Request) {
   const month = new URL(request.url).searchParams.get('month');
-  if (!month) {
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     return new Response('Pass ?month=YYYY-MM', { status: 400 });
   }
-
-  const rows = await query<{ content: string }>(
-    `SELECT content FROM sitemap_cache WHERE name = $1`,
-    [`daily-${month}`],
-  );
-  if (!rows.length) {
-    return new Response('Sitemap not yet generated — run the revalidate-sitemap cron.', {
-      status: 503,
-      headers: { 'Retry-After': '3600' },
-    });
-  }
-  return new Response(rows[0].content, {
-    headers: {
-      'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400',
-    },
-  });
+  return Response.redirect(`${SITE_URL}/sitemaps/daily-${month}.xml`, 301);
 }
