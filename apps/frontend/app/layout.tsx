@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import SessionWrapper from '@/components/SessionWrapper';
 import Analytics from '@/components/Analytics';
 import JsonLd from '@/components/JsonLd';
-import { websiteJsonLd } from '@/lib/seo';
+import { websiteJsonLd, personJsonLd } from '@/lib/seo';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -45,6 +45,7 @@ export default async function RootLayout({
     <html lang={lang}>
       <head>
         <JsonLd data={websiteJsonLd()} />
+        <JsonLd data={personJsonLd()} />
       </head>
       <body className={inter.className}>
         <SessionWrapper>{children}</SessionWrapper>

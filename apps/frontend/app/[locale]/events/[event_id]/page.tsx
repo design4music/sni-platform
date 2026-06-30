@@ -239,6 +239,10 @@ export default async function EventDetailPage({ params }: Props) {
           <span className="text-xs px-2 py-0.5 rounded bg-dashboard-border">
             {tCommon('sourcesCount', { count: event.source_batch_count })}
           </span>
+          <span className="text-xs">
+            <Link href="/about" className="text-blue-400 hover:underline">Maksim Micheliov</Link>
+            {' · WorldBrief'}
+          </span>
         </div>
         {event.tags && event.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
