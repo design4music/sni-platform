@@ -383,6 +383,11 @@ export function CalendarDayPanel({ view, defaultDay, centroidKey, trackKey }: Da
           <div className="text-[15px] leading-relaxed text-dashboard-text whitespace-pre-wrap">
             {day.daily_brief}
           </div>
+          <p className="text-[11px] text-dashboard-text-muted mt-3 pt-3 border-t border-dashboard-border">
+            by WorldBrief &amp;{' '}
+            <Link href="/about" className="text-blue-400 hover:underline">Maksim Micheliov</Link>
+            {' | AI-generated summary'}
+          </p>
         </article>
       )}
 

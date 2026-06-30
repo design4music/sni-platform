@@ -237,12 +237,6 @@ export default async function DayPage({ params }: DayPageProps) {
           ]),
         ]}
       />
-      {day.daily_brief && (
-        <p className="text-xs text-dashboard-text-muted mb-4">
-          <Link href="/about" className="text-blue-400 hover:underline">Maksim Micheliov</Link>
-          {' · WorldBrief'}
-        </p>
-      )}
       <CalendarDayPanel
         view={view}
         defaultDay={date}
