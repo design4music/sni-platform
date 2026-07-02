@@ -5,13 +5,10 @@
 // ringed and glowing by stress. Linear assets (pipelines, corridors)
 // render as smoothed lines — see StrategicAssetLayer.
 
-// Stress → color. Calm assets stay visible but quiet (slate); stress moves
-// through amber to red. Bands, not gradients — legibility over precision.
+// Asset color language: slate when calm, amber when under pressure.
+// Red is reserved exclusively for conflicts — assets never turn red.
 export function stressColor(stress: number): string {
-  if (stress <= 0)   return 'rgba(148,163,184,0.6)'; // slate — calm
-  if (stress < 0.35) return '#f59e0b';               // amber
-  if (stress < 0.65) return '#f97316';               // orange
-  return '#dc2626';                                  // red
+  return stress > 0 ? '#f59e0b' : 'rgba(148,163,184,0.6)';
 }
 
 // Stroke-based glyphs (24x24 viewBox, drawn with stroke=currentColor).
@@ -85,7 +82,8 @@ export function buildConflictBadge(
   c: { intensity: number; is_ghost: boolean },
   selected: boolean,
 ): { html: string; size: number } {
-  const size = 20 + c.intensity * 10; // 20-30px by intensity
+  // Conflicts are the headline layer: 2-3x the (uniform) asset badge size.
+  const size = c.is_ghost ? 30 : 40 + c.intensity * 14; // 40-54px live, 30px dormant
   const color = c.is_ghost ? 'rgba(148,163,184,0.6)' : '#ef4444';
   const border = selected ? '#ffffff' : color;
   const glow = c.is_ghost ? '' : `box-shadow: 0 0 ${8 + c.intensity * 12}px rgba(239,68,68,${0.4 + c.intensity * 0.4});`;
@@ -104,23 +102,33 @@ export function buildConflictBadge(
   };
 }
 
+// All asset badges are the same size — hierarchy comes from color
+// (calm/pressured) and the double ring on systemic chokepoints, not size.
+// Conflicts are the only large markers on the map.
+const ASSET_BADGE_SIZE = 22;
+
 // Full HTML for a Leaflet divIcon. Size returned so the caller can center
 // the icon anchor.
 export function buildBadge(asset: BadgeAsset, selected: boolean): { html: string; size: number } {
-  const size = 16 + asset.criticality * 2.5; // crit 3 → 23.5px, crit 5 → 28.5px
+  const size = ASSET_BADGE_SIZE;
   const color = stressColor(asset.stress);
   const border = selected ? '#ffffff' : color;
-  const glow = asset.stress > 0
-    ? `box-shadow: 0 0 ${6 + asset.stress * 10}px ${color};`
+  // Criticality-5 assets are systemic chokepoints (strait, canal, or a
+  // single fab) — they carry a second outer ring regardless of type.
+  const chokepointRing = asset.criticality >= 5
+    ? `0 0 0 3.5px rgba(10,18,32,0.9), 0 0 0 5px ${selected ? '#ffffff' : color}`
     : '';
-  const iconColor = asset.stress > 0 ? '#fed7aa' : 'rgba(203,213,225,0.85)';
+  const glow = asset.stress > 0 ? `0 0 ${8 + asset.stress * 8}px ${color}` : '';
+  const shadow = [chokepointRing, glow].filter(Boolean).join(', ');
+  const iconColor = asset.stress > 0 ? '#fde68a' : 'rgba(203,213,225,0.85)';
   const glyph = GLYPHS[glyphKeyFor(asset.asset_type, asset.commodities)];
 
   return {
     size,
     html:
       `<div style="width:${size}px;height:${size}px;border-radius:50%;` +
-      `background:rgba(10,18,32,0.92);border:2px solid ${border};${glow}` +
+      `background:rgba(10,18,32,0.92);border:2px solid ${border};` +
+      (shadow ? `box-shadow:${shadow};` : '') +
       `display:flex;align-items:center;justify-content:center;` +
       `transition:transform 0.1s;cursor:pointer;">` +
       `<svg viewBox="0 0 24 24" width="${size - 9}" height="${size - 9}" ` +

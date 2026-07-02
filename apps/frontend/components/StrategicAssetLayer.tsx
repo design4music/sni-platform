@@ -8,11 +8,41 @@ import { buildBadge, buildConflictBadge, stressColor } from './assetIcons';
 
 type Asset = AssetMapData['assets'][0];
 type Conflict = AssetMapData['conflicts'][0];
+type Competition = AssetMapData['competitions'][0];
 
 interface Props {
   data: AssetMapData;
   onSelect: (selection: MapSelection | null) => void;
   selectedId: string | null;
+}
+
+// Quadratic arc between two capitals ([lat, lon]), bowed toward the pole —
+// reads as a long-range relationship, not a border-hugging route.
+function arcPoints(a: [number, number], b: [number, number], steps = 40): [number, number][] {
+  const dist = Math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2);
+  const ctrl: [number, number] = [(a[0] + b[0]) / 2 + dist * 0.22, (a[1] + b[1]) / 2];
+  const out: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const s = 1 - t;
+    out.push([
+      s * s * a[0] + 2 * s * t * ctrl[0] + t * t * b[0],
+      s * s * a[1] + 2 * s * t * ctrl[1] + t * t * b[1],
+    ]);
+  }
+  return out;
+}
+
+function arcStyle(c: Competition, selected: boolean, hover = false): L.PathOptions {
+  if (c.is_ghost) {
+    return { color: 'rgba(148,163,184,0.3)', weight: 1.5, dashArray: '4 8', opacity: 1 };
+  }
+  return {
+    color: selected ? '#ffffff' : hover ? 'rgba(248,113,113,0.9)' : 'rgba(239,68,68,0.45)',
+    weight: selected ? 2.5 : 1.8,
+    dashArray: '7 9',
+    opacity: 1,
+  };
 }
 
 // ---------------------------------------------------------------------
@@ -106,13 +136,17 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
   const markersRef = useRef<Map<string, { marker: L.Marker; asset: Asset }>>(new Map());
   const linesRef = useRef<Map<string, { line: L.Polyline; asset: Asset }>>(new Map());
   const conflictsRef = useRef<Map<string, { marker: L.Marker; conflict: Conflict }>>(new Map());
+  const arcsRef = useRef<Map<string, { arcs: L.Polyline[]; competition: Competition }>>(new Map());
+  const spokesRef = useRef<L.LayerGroup | null>(null);
   const selectedRef = useRef<string | null>(selectedId);
   const onSelectRef = useRef(onSelect);
 
   useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
 
-  // Restyle on selection change.
+  // Restyle on selection change; draw participant spokes for the selected
+  // conflict (Moscow, Washington, Brussels... always one click away, never
+  // permanent spaghetti).
   useEffect(() => {
     for (const [id, { marker, asset }] of markersRef.current) {
       const { html, size } = buildBadge(asset, id === selectedId);
@@ -125,7 +159,31 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
       const { html, size } = buildConflictBadge(conflict, id === selectedId);
       marker.setIcon(L.divIcon({ html, className: 'asset-marker', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }));
     }
-  }, [selectedId]);
+    for (const [id, { arcs, competition }] of arcsRef.current) {
+      for (const arc of arcs) arc.setStyle(arcStyle(competition, id === selectedId));
+    }
+
+    spokesRef.current?.remove();
+    spokesRef.current = null;
+    const sel = selectedId ? conflictsRef.current.get(selectedId) : undefined;
+    if (sel && sel.conflict.participants.length) {
+      const anchor = sel.conflict.anchor as { type: string; coordinates: number[] };
+      if (anchor?.type === 'Point') {
+        const from = toLatLng(anchor.coordinates);
+        const group = L.layerGroup();
+        const spokeColor = sel.conflict.is_ghost ? 'rgba(148,163,184,0.5)' : 'rgba(239,68,68,0.55)';
+        for (const p of sel.conflict.participants) {
+          L.polyline([from, [p.lat, p.lon]], { color: spokeColor, weight: 1.2, dashArray: '3 6', interactive: false })
+            .addTo(group);
+          L.circleMarker([p.lat, p.lon], { radius: 3, color: '#e2e8f0', fillColor: '#e2e8f0', fillOpacity: 0.9, weight: 0 })
+            .bindTooltip(p.label, { direction: 'top', className: 'map-tooltip' })
+            .addTo(group);
+        }
+        group.addTo(map);
+        spokesRef.current = group;
+      }
+    }
+  }, [selectedId, map]);
 
   useEffect(() => {
     const allLayers: L.Layer[] = [];
@@ -221,6 +279,38 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
       allLayers.push(marker);
     }
 
+    // Strategic competitions: capital-to-capital arcs (Washington-Beijing,
+    // Washington-Moscow...). Hub = first participant; arcs to the rest.
+    for (const competition of data.competitions) {
+      if (competition.participants.length < 2) continue;
+      const [hub, ...rest] = competition.participants;
+      const arcs: L.Polyline[] = [];
+      for (const p of rest) {
+        const arc = L.polyline(arcPoints([hub.lat, hub.lon], [p.lat, p.lon]), {
+          ...arcStyle(competition, false),
+          interactive: true,
+        });
+        arc.bindTooltip(
+          `<strong>${competition.name_en}</strong><br/><span style="opacity:0.7">strategic competition${competition.is_ghost ? ' &middot; dormant' : ''}</span>`,
+          { direction: 'top', className: 'map-tooltip', sticky: true },
+        );
+        arc.on('mouseover', () => {
+          if (competition.id !== selectedRef.current) arc.setStyle(arcStyle(competition, false, true));
+        });
+        arc.on('mouseout', () => {
+          if (competition.id !== selectedRef.current) arc.setStyle(arcStyle(competition, false));
+        });
+        arc.on('click', () => {
+          justClicked = true;
+          onSelectRef.current({ kind: 'competition', competition });
+        });
+        arc.addTo(map);
+        arcs.push(arc);
+        allLayers.push(arc);
+      }
+      arcsRef.current.set(competition.id, { arcs, competition });
+    }
+
     // Zoom-dependent visibility for markers (lines are few; always shown).
     const applyZoomFilter = () => {
       const zoom = map.getZoom();
@@ -238,9 +328,12 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
       map.off('click', mapClickHandler);
       map.off('zoomend', applyZoomFilter);
       allLayers.forEach(l => { try { map.removeLayer(l); } catch { /* gone */ } });
+      spokesRef.current?.remove();
+      spokesRef.current = null;
       markersRef.current.clear();
       linesRef.current.clear();
       conflictsRef.current.clear();
+      arcsRef.current.clear();
     };
   }, [map, data]);
 

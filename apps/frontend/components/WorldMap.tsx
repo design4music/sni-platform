@@ -34,6 +34,7 @@ export interface AssetMapData {
     name_en: string;
     anchor: unknown; // GeoJSON Point
     affected_asset_ids: string[];
+    participants: Array<{ id: string; label: string; lon: number; lat: number }>;
     total_events: number;
     last_active: string | null;
     is_ghost: boolean;
@@ -42,6 +43,7 @@ export interface AssetMapData {
   competitions: Array<{
     id: string;
     name_en: string;
+    participants: Array<{ id: string; label: string; lon: number; lat: number }>;
     total_events: number;
     last_active: string | null;
     is_ghost: boolean;
@@ -51,10 +53,12 @@ export interface AssetMapData {
 
 type Asset = AssetMapData['assets'][0];
 type Conflict = AssetMapData['conflicts'][0];
+type Competition = AssetMapData['competitions'][0];
 
 export type MapSelection =
   | { kind: 'asset'; asset: Asset }
-  | { kind: 'conflict'; conflict: Conflict };
+  | { kind: 'conflict'; conflict: Conflict }
+  | { kind: 'competition'; competition: Competition };
 
 interface WorldMapProps {
   centroids: Array<{
@@ -448,6 +452,20 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
                 ? 'No tracked events in the last 90 days.'
                 : `${c.total_events.toLocaleString()} events tracked.`}
             </div>
+            {c.participants.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                  Participants
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {c.participants.map(p => (
+                    <span key={p.id} className="text-[10px] text-gray-300 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 leading-none">
+                      {p.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
                 {pressured.length ? 'Assets under pressure' : 'No strategic assets linked'}
@@ -455,7 +473,7 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
               <div className="space-y-0.5">
                 {pressured.map(a => (
                   <div key={a.id} className="flex items-start gap-2 py-1.5 text-xs border-b border-white/5 last:border-0 leading-snug text-gray-300">
-                    <span className="mt-0.5 flex-shrink-0 text-orange-500">&#9670;</span>
+                    <span className="mt-0.5 flex-shrink-0 text-amber-500">&#9670;</span>
                     <span className="flex-1">
                       {a.name_en}
                       <span className="block text-[10px] text-gray-600 mt-0.5">
@@ -466,6 +484,69 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+        );
+      })()}
+
+      {/* FN mode: strategic competition panel (capital-to-capital arcs) */}
+      {fnMode && selected?.kind === 'competition' && (() => {
+        const c = selected.competition;
+        return (
+        <div className={`absolute right-3 top-3 bottom-3 w-64 z-[1000] flex flex-col border rounded-lg overflow-hidden ${
+          c.is_ghost ? 'bg-[#0d0f14]/95 border-gray-600/30' : 'bg-[#160a0a]/95 border-red-500/30'
+        }`}>
+          <div className={`flex items-start justify-between p-4 pb-2 border-b ${
+            c.is_ghost ? 'border-gray-600/15' : 'border-red-500/15'
+          }`}>
+            <div className="flex-1 pr-3">
+              <Link
+                href={`/friction-nodes/${c.id}`}
+                className={`font-semibold text-sm leading-snug ${
+                  c.is_ghost ? 'text-gray-400 hover:text-gray-200' : 'text-red-400 hover:text-red-300'
+                }`}
+              >
+                {c.name_en} &rarr;
+              </Link>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10 uppercase tracking-wider">
+                  Strategic competition
+                </span>
+                {c.is_ghost && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-400">
+                    dormant
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setSelected(null)}
+              className="text-gray-600 hover:text-gray-300 text-lg leading-none flex-shrink-0 mt-0.5"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1 p-4 space-y-4">
+            <div className="text-xs text-gray-400">
+              {c.is_ghost
+                ? 'No tracked events in the last 90 days.'
+                : `${c.total_events.toLocaleString()} events tracked.`}
+            </div>
+            {c.participants.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                  Between
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {c.participants.map(p => (
+                    <span key={p.id} className="text-[10px] text-gray-300 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 leading-none">
+                      {p.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         );
@@ -497,6 +578,7 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
             selectedId={
               selected?.kind === 'asset' ? selected.asset.id
               : selected?.kind === 'conflict' ? selected.conflict.id
+              : selected?.kind === 'competition' ? selected.competition.id
               : null
             }
           />

@@ -29,9 +29,16 @@ interface TheaterRow {
   name_en: string;
   scope: string;
   affected_asset_ids: string[];
+  centroid_ids: string[];
   anchor_point: unknown | null; // GeoJSON Point — conflict epicenter
   total_events: string; // pg bigint
   last_active: string | null;
+}
+
+interface CentroidRow {
+  id: string;
+  label: string;
+  map_point: { coordinates: [number, number] } | null;
 }
 
 export const revalidate = 3600;
@@ -48,7 +55,7 @@ export async function GET() {
     `),
     // Events link only to atomic FNs; theaters aggregate through member_fn_ids.
     query<TheaterRow>(`
-      SELECT t.id, t.name_en, t.scope, t.affected_asset_ids, t.anchor_point,
+      SELECT t.id, t.name_en, t.scope, t.affected_asset_ids, t.centroid_ids, t.anchor_point,
              COUNT(efn.event_id) AS total_events,
              MAX(e.last_active)::text AS last_active
       FROM friction_nodes t
@@ -58,6 +65,28 @@ export async function GET() {
       GROUP BY t.id
     `),
   ]);
+
+  // Participant capitals for conflict spokes and rivalry arcs.
+  const allCentroidIds = Array.from(new Set(theaterRows.flatMap(t => t.centroid_ids ?? [])));
+  const centroidRows = allCentroidIds.length
+    ? await query<CentroidRow>(
+        `SELECT id, label, map_point FROM centroids_v3 WHERE id = ANY($1) AND map_point IS NOT NULL`,
+        [allCentroidIds],
+      )
+    : [];
+  const centroidById = new Map(centroidRows.map(c => [c.id, c]));
+
+  function participantsFor(centroidIds: string[]) {
+    return (centroidIds ?? [])
+      .map(id => centroidById.get(id))
+      .filter((c): c is CentroidRow & { map_point: { coordinates: [number, number] } } => Boolean(c?.map_point))
+      .map(c => ({
+        id: c.id,
+        label: c.label,
+        lon: c.map_point.coordinates[0],
+        lat: c.map_point.coordinates[1],
+      }));
+  }
 
   const now = Date.now();
   const maxEvents = Math.max(...theaterRows.map(t => parseInt(t.total_events, 10)), 1);
@@ -72,6 +101,7 @@ export async function GET() {
       name_en: t.name_en,
       scope: t.scope,
       affected_asset_ids: t.affected_asset_ids ?? [],
+      centroid_ids: t.centroid_ids ?? [],
       anchor_point: t.anchor_point,
       total_events: totalEvents,
       last_active: t.last_active,
@@ -119,6 +149,7 @@ export async function GET() {
       name_en: t.name_en,
       anchor: t.anchor_point,
       affected_asset_ids: t.affected_asset_ids,
+      participants: participantsFor(t.centroid_ids),
       total_events: t.total_events,
       last_active: t.last_active,
       is_ghost: t.is_ghost,
@@ -131,6 +162,7 @@ export async function GET() {
     .map(t => ({
       id: t.id,
       name_en: t.name_en,
+      participants: participantsFor(t.centroid_ids),
       total_events: t.total_events,
       last_active: t.last_active,
       is_ghost: t.is_ghost,
