@@ -13,7 +13,8 @@ interface Props {
   selectedTheaterId: string | null;
 }
 
-const THEATER_COORDS: Record<string, [number, number]> = {
+// Fallback hardcoded coords for theaters without country data
+const THEATER_COORDS_FALLBACK: Record<string, [number, number]> = {
   iran_theater:          [32.0, 53.0],
   israel_theater:        [31.7, 35.2],
   syria_theater:         [33.5, 37.5],
@@ -21,6 +22,26 @@ const THEATER_COORDS: Record<string, [number, number]> = {
   turkey_theater:        [39.0, 35.5],
   yemen_red_sea_theater: [15.0, 44.5],
 };
+
+// Calculate theater center from its countries' lat/lon
+function getTheaterCenter(theater: Theater): [number, number] | null {
+  if (theater.countries.length === 0) {
+    // Fallback to hardcoded if no countries
+    return THEATER_COORDS_FALLBACK[theater.id] || null;
+  }
+
+  // Average the centroids' positions
+  let lat = 0, lon = 0, count = 0;
+  for (const country of theater.countries) {
+    if (country.lat !== null && country.lon !== null) {
+      lat += country.lat;
+      lon += country.lon;
+      count++;
+    }
+  }
+
+  return count > 0 ? [lat / count, lon / count] : THEATER_COORDS_FALLBACK[theater.id] || null;
+}
 
 // Circle radius scales with coverage intensity: 500km (quiet) → 950km (peak).
 // Range chosen so Ukraine/Israel are visibly larger than Yemen/Turkey without
@@ -140,7 +161,7 @@ export default function FrictionNodeLayer({ data, onSelect, selectedTheaterId }:
     map.on('click', mapClickHandler);
 
     for (const theater of data.theaters) {
-      const center = THEATER_COORDS[theater.id];
+      const center = getTheaterCenter(theater);
       if (!center) continue;
 
       const spokeLayers: Array<L.Polyline | L.CircleMarker> = [];
