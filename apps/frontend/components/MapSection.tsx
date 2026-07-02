@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import type { FnMapData } from './WorldMap';
+import type { AssetMapData } from './WorldMap';
 
 const WorldMap = dynamic(() => import('./WorldMap'), { ssr: false });
 
@@ -18,7 +19,7 @@ interface MapSectionProps {
 export default function MapSection({ centroids }: MapSectionProps) {
   const t = useTranslations('map');
   const [fnMode, setFnMode] = useState(false);
-  const [fnData, setFnData] = useState<FnMapData | null>(null);
+  const [fnData, setFnData] = useState<AssetMapData | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleToggle() {
@@ -26,10 +27,10 @@ export default function MapSection({ centroids }: MapSectionProps) {
       setLoading(true);
       try {
         const res = await fetch('/api/friction-nodes-map');
-        const data: FnMapData = await res.json();
+        const data: AssetMapData = await res.json();
         setFnData(data);
       } catch (err) {
-        console.error('Failed to load friction nodes:', err);
+        console.error('Failed to load strategic assets:', err);
         setLoading(false);
         return;
       }
@@ -58,6 +59,50 @@ export default function MapSection({ centroids }: MapSectionProps) {
         </button>
       </div>
       <WorldMap centroids={centroids} fnMode={fnMode} fnData={fnData} />
+
+      {/* Strategic competitions: global rivalries are relationships, not
+          places — they get a strip below the map, never map geometry. */}
+      {fnMode && fnData && fnData.competitions.length > 0 && (
+        <div className="mt-4">
+          <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-2">
+            Strategic competitions (not mappable to a single region)
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {fnData.competitions.map(c => (
+              <Link
+                key={c.id}
+                href={`/friction-nodes/${c.id}`}
+                className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm transition ${
+                  c.is_ghost
+                    ? 'bg-dashboard-surface border-dashboard-border text-dashboard-text-muted hover:text-dashboard-text'
+                    : 'bg-orange-950/30 border-orange-700/40 text-dashboard-text hover:border-orange-500/60'
+                }`}
+              >
+                <span>{c.name_en}</span>
+                {c.is_ghost ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-500">
+                    dormant
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1" title={`${c.total_events.toLocaleString()} events tracked`}>
+                    {[1, 2, 3, 4, 5].map(pip => (
+                      <span
+                        key={pip}
+                        className="w-1 h-1 rounded-full"
+                        style={{
+                          backgroundColor: c.intensity * 5 >= pip
+                            ? 'rgba(251,146,60,0.9)'
+                            : 'rgba(251,146,60,0.2)',
+                        }}
+                      />
+                    ))}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

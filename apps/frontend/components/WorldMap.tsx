@@ -7,34 +7,39 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import FrictionNodeLayer from './FrictionNodeLayer';
+import StrategicAssetLayer from './StrategicAssetLayer';
 
-export interface FnMapData {
-  theaters: Array<{
+export interface AssetMapData {
+  assets: Array<{
     id: string;
     name_en: string;
-    intensity: number;
-    is_ghost: boolean;
-    last_active_date: string | null;
+    name_de: string | null;
+    asset_type: string;
+    geometry: unknown; // GeoJSON Point | LineString | Polygon
+    commodities: string[];
+    criticality: number;
+    description_en: string | null;
+    description_de: string | null;
+    stress: number; // 0-1
+    fns: Array<{
+      id: string;
+      name_en: string;
+      total_events: number;
+      last_active: string | null;
+      is_ghost: boolean;
+    }>;
+  }>;
+  competitions: Array<{
+    id: string;
+    name_en: string;
     total_events: number;
-    atomicFNs: Array<{ id: string; name_en: string }>;
-    countries: Array<{
-      id: string;
-      label: string;
-      flag_iso2: string | null;
-      lat: number | null;
-      lon: number | null;
-    }>;
-    radialTargets: Array<{
-      id: string;
-      label: string;
-      lat: number;
-      lon: number;
-    }>;
+    last_active: string | null;
+    is_ghost: boolean;
+    intensity: number;
   }>;
 }
 
-type Theater = FnMapData['theaters'][0];
+type Asset = AssetMapData['assets'][0];
 
 interface WorldMapProps {
   centroids: Array<{
@@ -48,7 +53,7 @@ interface WorldMapProps {
     n_headlines?: number;
   }>;
   fnMode?: boolean;
-  fnData?: FnMapData | null;
+  fnData?: AssetMapData | null;
 }
 
 function getHeatmapColor(sourceCount: number, maxCount: number): string {
@@ -89,14 +94,14 @@ function MapController() {
 export default function WorldMap({ centroids, fnMode = false, fnData = null }: WorldMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
-  const [selectedTheater, setSelectedTheater] = useState<Theater | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const mapInitialized = useRef(false);
   const fnModeRef = useRef(fnMode);
   const router = useRouter();
   const t = useTranslations('map');
 
   useEffect(() => { fnModeRef.current = fnMode; }, [fnMode]);
-  useEffect(() => { if (!fnMode) setSelectedTheater(null); }, [fnMode]);
+  useEffect(() => { if (!fnMode) setSelectedAsset(null); }, [fnMode]);
   useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
@@ -266,40 +271,34 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
         )
       )}
 
-      {/* FN mode: info panel (fixed right side) */}
-      {fnMode && selectedTheater && (
+      {/* FN mode: asset info panel (fixed right side) */}
+      {fnMode && selectedAsset && (
         <div className={`absolute right-3 top-3 bottom-3 w-64 z-[1000] flex flex-col border rounded-lg overflow-hidden ${
-          selectedTheater.is_ghost
-            ? 'bg-[#0d0f14]/95 border-gray-600/30'
-            : 'bg-[#0a1220]/95 border-orange-500/30'
+          selectedAsset.stress > 0
+            ? 'bg-[#0a1220]/95 border-orange-500/30'
+            : 'bg-[#0d0f14]/95 border-gray-600/30'
         }`}>
           <div className={`flex items-start justify-between p-4 pb-2 border-b ${
-            selectedTheater.is_ghost ? 'border-gray-600/15' : 'border-orange-500/15'
+            selectedAsset.stress > 0 ? 'border-orange-500/15' : 'border-gray-600/15'
           }`}>
             <div className="flex-1 pr-3">
-              <Link
-                href={`/friction-nodes/${selectedTheater.id}`}
-                className={`font-semibold text-sm leading-snug ${
-                  selectedTheater.is_ghost
-                    ? 'text-gray-400 hover:text-gray-200'
-                    : 'text-orange-400 hover:text-orange-300'
-                }`}
-              >
-                {selectedTheater.name_en} &rarr;
-              </Link>
+              <div className={`font-semibold text-sm leading-snug ${
+                selectedAsset.stress > 0 ? 'text-orange-400' : 'text-gray-300'
+              }`}>
+                {selectedAsset.name_en}
+              </div>
               <div className="flex items-center gap-2 mt-1.5">
-                {selectedTheater.is_ghost ? (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-400 border border-gray-600/40">
-                    Dormant
-                  </span>
-                ) : (
-                  <div className="flex items-center gap-1" title={`${selectedTheater.total_events} events tracked`}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10 uppercase tracking-wider">
+                  {selectedAsset.asset_type.replace(/_/g, ' ')}
+                </span>
+                {selectedAsset.stress > 0 && (
+                  <div className="flex items-center gap-1" title="Pressure level">
                     {[1, 2, 3, 4, 5].map(pip => (
                       <div
                         key={pip}
                         className="w-1.5 h-1.5 rounded-full"
                         style={{
-                          backgroundColor: selectedTheater.intensity * 5 >= pip
+                          backgroundColor: selectedAsset.stress * 5 >= pip
                             ? 'rgba(251,146,60,0.9)'
                             : 'rgba(251,146,60,0.15)',
                         }}
@@ -307,15 +306,10 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
                     ))}
                   </div>
                 )}
-                {selectedTheater.last_active_date && (
-                  <span className="text-[10px] text-gray-600">
-                    {new Date(selectedTheater.last_active_date).toLocaleDateString('en', { month: 'short', year: 'numeric' })}
-                  </span>
-                )}
               </div>
             </div>
             <button
-              onClick={() => setSelectedTheater(null)}
+              onClick={() => setSelectedAsset(null)}
               className="text-gray-600 hover:text-gray-300 text-lg leading-none flex-shrink-0 mt-0.5"
               aria-label="Close"
             >
@@ -323,57 +317,53 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
             </button>
           </div>
           <div className="overflow-y-auto flex-1 p-4 space-y-4">
+            {selectedAsset.description_en && (
+              <p className="text-xs text-gray-400 leading-relaxed">
+                {selectedAsset.description_en}
+              </p>
+            )}
+            {selectedAsset.commodities.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                  Commodities
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {selectedAsset.commodities.map(c => (
+                    <span
+                      key={c}
+                      className="text-[10px] text-gray-300 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 leading-none"
+                    >
+                      {c.replace(/_/g, ' ')}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
-                Conflicts in this zone
+                {selectedAsset.fns.length ? 'Pressure from' : 'No active pressure'}
               </div>
               <div className="space-y-0.5">
-                {selectedTheater.atomicFNs.map(fn => (
+                {selectedAsset.fns.map(fn => (
                   <Link
                     key={fn.id}
                     href={`/friction-nodes/${fn.id}`}
                     className={`flex items-start gap-2 py-1.5 text-xs border-b border-white/5 last:border-0 leading-snug ${
-                      selectedTheater.is_ghost
+                      fn.is_ghost
                         ? 'text-gray-500 hover:text-gray-300'
                         : 'text-gray-300 hover:text-orange-400'
                     }`}
                   >
-                    <span className={`mt-0.5 flex-shrink-0 ${selectedTheater.is_ghost ? 'text-gray-600' : 'text-orange-500'}`}>
+                    <span className={`mt-0.5 flex-shrink-0 ${fn.is_ghost ? 'text-gray-600' : 'text-orange-500'}`}>
                       &#9654;
                     </span>
-                    {fn.name_en}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
-                Key actors
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {selectedTheater.countries.map(c => (
-                  c.flag_iso2 ? (
-                    // Flagged country: flag icon only with tooltip via title.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={c.id}
-                      src={`https://flagcdn.com/20x15/${c.flag_iso2.toLowerCase()}.png`}
-                      width={20}
-                      height={15}
-                      alt={c.label}
-                      title={c.label}
-                      className="rounded-sm opacity-70 hover:opacity-100 transition-opacity"
-                    />
-                  ) : (
-                    // Non-country centroid (EU, NATO, Levant…): compact text pill.
-                    <span
-                      key={c.id}
-                      title={c.label}
-                      className="text-[9px] text-gray-500 bg-white/5 rounded px-1 py-0.5 leading-none"
-                    >
-                      {c.label.slice(0, 3).toUpperCase()}
+                    <span className="flex-1">
+                      {fn.name_en}
+                      <span className="block text-[10px] text-gray-600 mt-0.5">
+                        {fn.is_ghost ? 'dormant' : `${fn.total_events.toLocaleString()} events`}
+                      </span>
                     </span>
-                  )
+                  </Link>
                 ))}
               </div>
             </div>
@@ -401,10 +391,10 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
           onEachFeature={onEachFeature}
         />
         {fnMode && fnData && (
-          <FrictionNodeLayer
+          <StrategicAssetLayer
             data={fnData}
-            onSelect={setSelectedTheater}
-            selectedTheaterId={selectedTheater?.id ?? null}
+            onSelect={setSelectedAsset}
+            selectedAssetId={selectedAsset?.id ?? null}
           />
         )}
       </MapContainer>
