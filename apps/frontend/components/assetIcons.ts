@@ -75,6 +75,35 @@ export interface BadgeAsset {
   stress: number;
 }
 
+// Conflict markers: crossed swords in a red badge. Visually distinct from
+// assets — conflicts are the dynamic layer (why), assets the static one
+// (what's at risk).
+const SWORDS_GLYPH =
+  '<path d="M5 4l14 14"/><path d="M19 4L5 18"/><path d="M4 17l3 3"/><path d="M20 17l-3 3"/>';
+
+export function buildConflictBadge(
+  c: { intensity: number; is_ghost: boolean },
+  selected: boolean,
+): { html: string; size: number } {
+  const size = 20 + c.intensity * 10; // 20-30px by intensity
+  const color = c.is_ghost ? 'rgba(148,163,184,0.6)' : '#ef4444';
+  const border = selected ? '#ffffff' : color;
+  const glow = c.is_ghost ? '' : `box-shadow: 0 0 ${8 + c.intensity * 12}px rgba(239,68,68,${0.4 + c.intensity * 0.4});`;
+  const iconColor = c.is_ghost ? 'rgba(203,213,225,0.7)' : '#fecaca';
+
+  return {
+    size,
+    html:
+      `<div style="width:${size}px;height:${size}px;border-radius:50%;` +
+      `background:rgba(26,10,10,0.92);border:2px solid ${border};${glow}` +
+      `display:flex;align-items:center;justify-content:center;` +
+      `transition:transform 0.1s;cursor:pointer;">` +
+      `<svg viewBox="0 0 24 24" width="${size - 9}" height="${size - 9}" ` +
+      `fill="none" stroke="${iconColor}" stroke-width="2" ` +
+      `stroke-linecap="round" stroke-linejoin="round">${SWORDS_GLYPH}</svg></div>`,
+  };
+}
+
 // Full HTML for a Leaflet divIcon. Size returned so the caller can center
 // the icon anchor.
 export function buildBadge(asset: BadgeAsset, selected: boolean): { html: string; size: number } {

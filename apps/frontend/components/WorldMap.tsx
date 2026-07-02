@@ -29,6 +29,16 @@ export interface AssetMapData {
       is_ghost: boolean;
     }>;
   }>;
+  conflicts: Array<{
+    id: string;
+    name_en: string;
+    anchor: unknown; // GeoJSON Point
+    affected_asset_ids: string[];
+    total_events: number;
+    last_active: string | null;
+    is_ghost: boolean;
+    intensity: number;
+  }>;
   competitions: Array<{
     id: string;
     name_en: string;
@@ -40,6 +50,11 @@ export interface AssetMapData {
 }
 
 type Asset = AssetMapData['assets'][0];
+type Conflict = AssetMapData['conflicts'][0];
+
+export type MapSelection =
+  | { kind: 'asset'; asset: Asset }
+  | { kind: 'conflict'; conflict: Conflict };
 
 interface WorldMapProps {
   centroids: Array<{
@@ -94,14 +109,14 @@ function MapController() {
 export default function WorldMap({ centroids, fnMode = false, fnData = null }: WorldMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selected, setSelected] = useState<MapSelection | null>(null);
   const mapInitialized = useRef(false);
   const fnModeRef = useRef(fnMode);
   const router = useRouter();
   const t = useTranslations('map');
 
   useEffect(() => { fnModeRef.current = fnMode; }, [fnMode]);
-  useEffect(() => { if (!fnMode) setSelectedAsset(null); }, [fnMode]);
+  useEffect(() => { if (!fnMode) setSelected(null); }, [fnMode]);
   useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
@@ -272,33 +287,35 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
       )}
 
       {/* FN mode: asset info panel (fixed right side) */}
-      {fnMode && selectedAsset && (
+      {fnMode && selected?.kind === 'asset' && (() => {
+        const a = selected.asset;
+        return (
         <div className={`absolute right-3 top-3 bottom-3 w-64 z-[1000] flex flex-col border rounded-lg overflow-hidden ${
-          selectedAsset.stress > 0
+          a.stress > 0
             ? 'bg-[#0a1220]/95 border-orange-500/30'
             : 'bg-[#0d0f14]/95 border-gray-600/30'
         }`}>
           <div className={`flex items-start justify-between p-4 pb-2 border-b ${
-            selectedAsset.stress > 0 ? 'border-orange-500/15' : 'border-gray-600/15'
+            a.stress > 0 ? 'border-orange-500/15' : 'border-gray-600/15'
           }`}>
             <div className="flex-1 pr-3">
               <div className={`font-semibold text-sm leading-snug ${
-                selectedAsset.stress > 0 ? 'text-orange-400' : 'text-gray-300'
+                a.stress > 0 ? 'text-orange-400' : 'text-gray-300'
               }`}>
-                {selectedAsset.name_en}
+                {a.name_en}
               </div>
               <div className="flex items-center gap-2 mt-1.5">
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10 uppercase tracking-wider">
-                  {selectedAsset.asset_type.replace(/_/g, ' ')}
+                  {a.asset_type.replace(/_/g, ' ')}
                 </span>
-                {selectedAsset.stress > 0 && (
+                {a.stress > 0 && (
                   <div className="flex items-center gap-1" title="Pressure level">
                     {[1, 2, 3, 4, 5].map(pip => (
                       <div
                         key={pip}
                         className="w-1.5 h-1.5 rounded-full"
                         style={{
-                          backgroundColor: selectedAsset.stress * 5 >= pip
+                          backgroundColor: a.stress * 5 >= pip
                             ? 'rgba(251,146,60,0.9)'
                             : 'rgba(251,146,60,0.15)',
                         }}
@@ -309,7 +326,7 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
               </div>
             </div>
             <button
-              onClick={() => setSelectedAsset(null)}
+              onClick={() => setSelected(null)}
               className="text-gray-600 hover:text-gray-300 text-lg leading-none flex-shrink-0 mt-0.5"
               aria-label="Close"
             >
@@ -317,18 +334,18 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
             </button>
           </div>
           <div className="overflow-y-auto flex-1 p-4 space-y-4">
-            {selectedAsset.description_en && (
+            {a.description_en && (
               <p className="text-xs text-gray-400 leading-relaxed">
-                {selectedAsset.description_en}
+                {a.description_en}
               </p>
             )}
-            {selectedAsset.commodities.length > 0 && (
+            {a.commodities.length > 0 && (
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
                   Commodities
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {selectedAsset.commodities.map(c => (
+                  {a.commodities.map(c => (
                     <span
                       key={c}
                       className="text-[10px] text-gray-300 bg-white/5 border border-white/10 rounded px-1.5 py-0.5 leading-none"
@@ -341,10 +358,10 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
             )}
             <div>
               <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
-                {selectedAsset.fns.length ? 'Pressure from' : 'No active pressure'}
+                {a.fns.length ? 'Pressure from' : 'No active pressure'}
               </div>
               <div className="space-y-0.5">
-                {selectedAsset.fns.map(fn => (
+                {a.fns.map(fn => (
                   <Link
                     key={fn.id}
                     href={`/friction-nodes/${fn.id}`}
@@ -369,7 +386,90 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
+
+      {/* FN mode: conflict info panel */}
+      {fnMode && selected?.kind === 'conflict' && (() => {
+        const c = selected.conflict;
+        const pressured = fnData?.assets.filter(a => c.affected_asset_ids.includes(a.id)) ?? [];
+        return (
+        <div className={`absolute right-3 top-3 bottom-3 w-64 z-[1000] flex flex-col border rounded-lg overflow-hidden ${
+          c.is_ghost ? 'bg-[#0d0f14]/95 border-gray-600/30' : 'bg-[#160a0a]/95 border-red-500/30'
+        }`}>
+          <div className={`flex items-start justify-between p-4 pb-2 border-b ${
+            c.is_ghost ? 'border-gray-600/15' : 'border-red-500/15'
+          }`}>
+            <div className="flex-1 pr-3">
+              <Link
+                href={`/friction-nodes/${c.id}`}
+                className={`font-semibold text-sm leading-snug ${
+                  c.is_ghost ? 'text-gray-400 hover:text-gray-200' : 'text-red-400 hover:text-red-300'
+                }`}
+              >
+                {c.name_en} &rarr;
+              </Link>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400 border border-white/10 uppercase tracking-wider">
+                  Conflict zone
+                </span>
+                {c.is_ghost ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-400">
+                    dormant
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-1" title={`${c.total_events.toLocaleString()} events tracked`}>
+                    {[1, 2, 3, 4, 5].map(pip => (
+                      <div
+                        key={pip}
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{
+                          backgroundColor: c.intensity * 5 >= pip
+                            ? 'rgba(239,68,68,0.9)'
+                            : 'rgba(239,68,68,0.15)',
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setSelected(null)}
+              className="text-gray-600 hover:text-gray-300 text-lg leading-none flex-shrink-0 mt-0.5"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1 p-4 space-y-4">
+            <div className="text-xs text-gray-400">
+              {c.is_ghost
+                ? 'No tracked events in the last 90 days.'
+                : `${c.total_events.toLocaleString()} events tracked.`}
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                {pressured.length ? 'Assets under pressure' : 'No strategic assets linked'}
+              </div>
+              <div className="space-y-0.5">
+                {pressured.map(a => (
+                  <div key={a.id} className="flex items-start gap-2 py-1.5 text-xs border-b border-white/5 last:border-0 leading-snug text-gray-300">
+                    <span className="mt-0.5 flex-shrink-0 text-orange-500">&#9670;</span>
+                    <span className="flex-1">
+                      {a.name_en}
+                      <span className="block text-[10px] text-gray-600 mt-0.5">
+                        {a.asset_type.replace(/_/g, ' ')}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        );
+      })()}
 
       <MapContainer
         key="world-map"
@@ -393,8 +493,12 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
         {fnMode && fnData && (
           <StrategicAssetLayer
             data={fnData}
-            onSelect={setSelectedAsset}
-            selectedAssetId={selectedAsset?.id ?? null}
+            onSelect={setSelected}
+            selectedId={
+              selected?.kind === 'asset' ? selected.asset.id
+              : selected?.kind === 'conflict' ? selected.conflict.id
+              : null
+            }
           />
         )}
       </MapContainer>

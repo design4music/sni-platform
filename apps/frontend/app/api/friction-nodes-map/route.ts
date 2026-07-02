@@ -29,6 +29,7 @@ interface TheaterRow {
   name_en: string;
   scope: string;
   affected_asset_ids: string[];
+  anchor_point: unknown | null; // GeoJSON Point — conflict epicenter
   total_events: string; // pg bigint
   last_active: string | null;
 }
@@ -47,7 +48,7 @@ export async function GET() {
     `),
     // Events link only to atomic FNs; theaters aggregate through member_fn_ids.
     query<TheaterRow>(`
-      SELECT t.id, t.name_en, t.scope, t.affected_asset_ids,
+      SELECT t.id, t.name_en, t.scope, t.affected_asset_ids, t.anchor_point,
              COUNT(efn.event_id) AS total_events,
              MAX(e.last_active)::text AS last_active
       FROM friction_nodes t
@@ -71,6 +72,7 @@ export async function GET() {
       name_en: t.name_en,
       scope: t.scope,
       affected_asset_ids: t.affected_asset_ids ?? [],
+      anchor_point: t.anchor_point,
       total_events: totalEvents,
       last_active: t.last_active,
       is_ghost: daysSinceLast > GHOST_DAYS,
@@ -107,6 +109,22 @@ export async function GET() {
     };
   });
 
+  // Conflict markers: regional theaters with an anchor point. A conflict
+  // is a place too — Gaza spins no commodities but must be on the map.
+  const conflicts = theaters
+    .filter(t => t.scope === 'regional' && t.anchor_point)
+    .sort((x, y) => y.total_events - x.total_events)
+    .map(t => ({
+      id: t.id,
+      name_en: t.name_en,
+      anchor: t.anchor_point,
+      affected_asset_ids: t.affected_asset_ids,
+      total_events: t.total_events,
+      last_active: t.last_active,
+      is_ghost: t.is_ghost,
+      intensity: t.intensity,
+    }));
+
   const competitions = theaters
     .filter(t => t.scope === 'global')
     .sort((x, y) => y.total_events - x.total_events)
@@ -119,5 +137,5 @@ export async function GET() {
       intensity: t.intensity,
     }));
 
-  return NextResponse.json({ assets, competitions });
+  return NextResponse.json({ assets, conflicts, competitions });
 }

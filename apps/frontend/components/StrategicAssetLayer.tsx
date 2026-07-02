@@ -3,15 +3,16 @@
 import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import type { AssetMapData } from './WorldMap';
-import { buildBadge, stressColor } from './assetIcons';
+import type { AssetMapData, MapSelection } from './WorldMap';
+import { buildBadge, buildConflictBadge, stressColor } from './assetIcons';
 
 type Asset = AssetMapData['assets'][0];
+type Conflict = AssetMapData['conflicts'][0];
 
 interface Props {
   data: AssetMapData;
-  onSelect: (asset: Asset | null) => void;
-  selectedAssetId: string | null;
+  onSelect: (selection: MapSelection | null) => void;
+  selectedId: string | null;
 }
 
 // ---------------------------------------------------------------------
@@ -100,26 +101,31 @@ function tooltipHtml(asset: Asset): string {
 
 // ---------------------------------------------------------------------
 
-export default function StrategicAssetLayer({ data, onSelect, selectedAssetId }: Props) {
+export default function StrategicAssetLayer({ data, onSelect, selectedId }: Props) {
   const map = useMap();
   const markersRef = useRef<Map<string, { marker: L.Marker; asset: Asset }>>(new Map());
   const linesRef = useRef<Map<string, { line: L.Polyline; asset: Asset }>>(new Map());
-  const selectedRef = useRef<string | null>(selectedAssetId);
+  const conflictsRef = useRef<Map<string, { marker: L.Marker; conflict: Conflict }>>(new Map());
+  const selectedRef = useRef<string | null>(selectedId);
   const onSelectRef = useRef(onSelect);
 
-  useEffect(() => { selectedRef.current = selectedAssetId; }, [selectedAssetId]);
+  useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
 
   // Restyle on selection change.
   useEffect(() => {
     for (const [id, { marker, asset }] of markersRef.current) {
-      const { html, size } = buildBadge(asset, id === selectedAssetId);
+      const { html, size } = buildBadge(asset, id === selectedId);
       marker.setIcon(L.divIcon({ html, className: 'asset-marker', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }));
     }
     for (const [id, { line, asset }] of linesRef.current) {
-      line.setStyle(lineStyle(asset, id === selectedAssetId));
+      line.setStyle(lineStyle(asset, id === selectedId));
     }
-  }, [selectedAssetId]);
+    for (const [id, { marker, conflict }] of conflictsRef.current) {
+      const { html, size } = buildConflictBadge(conflict, id === selectedId);
+      marker.setIcon(L.divIcon({ html, className: 'asset-marker', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }));
+    }
+  }, [selectedId]);
 
   useEffect(() => {
     const allLayers: L.Layer[] = [];
@@ -149,7 +155,7 @@ export default function StrategicAssetLayer({ data, onSelect, selectedAssetId }:
         });
         line.on('click', () => {
           justClicked = true;
-          onSelectRef.current(asset);
+          onSelectRef.current({ kind: 'asset', asset });
         });
         line.addTo(map);
         allLayers.push(line);
@@ -176,9 +182,42 @@ export default function StrategicAssetLayer({ data, onSelect, selectedAssetId }:
       });
       marker.on('click', () => {
         justClicked = true;
-        onSelectRef.current(asset);
+        onSelectRef.current({ kind: 'asset', asset });
       });
       markersRef.current.set(asset.id, { marker, asset });
+      allLayers.push(marker);
+    }
+
+    // Conflict markers: the dynamic layer. Always visible — a conflict
+    // that spins no commodities (Gaza) must still be on the map.
+    for (const conflict of data.conflicts) {
+      const geom = conflict.anchor as { type: string; coordinates: number[] };
+      if (geom?.type !== 'Point' || !geom.coordinates) continue;
+
+      const { html, size } = buildConflictBadge(conflict, false);
+      const marker = L.marker(toLatLng(geom.coordinates), {
+        icon: L.divIcon({ html, className: 'asset-marker', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }),
+        interactive: true,
+        zIndexOffset: 500, // conflicts sit above asset badges
+      });
+      marker.bindTooltip(
+        `<strong>${conflict.name_en}</strong><br/><span style="opacity:0.7">conflict zone${conflict.is_ghost ? ' &middot; dormant' : ''}</span>`,
+        { direction: 'top', className: 'map-tooltip' },
+      );
+      marker.on('mouseover', () => {
+        const badge = marker.getElement()?.firstElementChild as HTMLElement | null;
+        if (badge) badge.style.transform = 'scale(1.2)';
+      });
+      marker.on('mouseout', () => {
+        const badge = marker.getElement()?.firstElementChild as HTMLElement | null;
+        if (badge) badge.style.transform = '';
+      });
+      marker.on('click', () => {
+        justClicked = true;
+        onSelectRef.current({ kind: 'conflict', conflict });
+      });
+      marker.addTo(map);
+      conflictsRef.current.set(conflict.id, { marker, conflict });
       allLayers.push(marker);
     }
 
@@ -201,6 +240,7 @@ export default function StrategicAssetLayer({ data, onSelect, selectedAssetId }:
       allLayers.forEach(l => { try { map.removeLayer(l); } catch { /* gone */ } });
       markersRef.current.clear();
       linesRef.current.clear();
+      conflictsRef.current.clear();
     };
   }, [map, data]);
 
