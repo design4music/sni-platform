@@ -28,14 +28,17 @@ function isLinear(asset: Asset): boolean {
   return asset.asset_type === 'corridor' || asset.asset_type === 'pipeline';
 }
 
-// Route/pipeline styling: thin solid lines in the centroid-border tone —
-// quiet against the dark ocean until an FN puts pressure on them.
-const LINE_CALM = '#3d5166';
+// Line styling: sea corridors in the centroid-border tone (reads against
+// the dark ocean); pipelines in white (distinct from landmass, borders,
+// and trade routes when crossing water). Red when pressed.
+const CORRIDOR_CALM = '#3d5166';
+const PIPELINE_CALM = 'rgba(226,232,240,0.75)';
 const LINE_PRESSED = '#ef4444';
 
-function routeStyle(pressed: boolean, hover = false): L.PathOptions {
+function routeStyle(assetType: string, pressed: boolean, hover = false): L.PathOptions {
+  const calm = assetType === 'pipeline' ? PIPELINE_CALM : CORRIDOR_CALM;
   return {
-    color: pressed ? LINE_PRESSED : LINE_CALM,
+    color: pressed ? LINE_PRESSED : calm,
     weight: pressed ? 1.8 : hover ? 1.8 : 1.1,
     opacity: pressed ? 0.95 : hover ? 1 : 0.85,
   };
@@ -154,7 +157,7 @@ export default function StrategicAssetLayer({
       marker.setZIndexOffset(pressed ? 400 : 0);
     }
     for (const [, { lines, asset }] of linesRef.current) {
-      const style = routeStyle(affected.size > 0 && isPressed(asset, affected));
+      const style = routeStyle(asset.asset_type, affected.size > 0 && isPressed(asset, affected));
       for (const line of lines) line.setStyle(style);
     }
     for (const [id, { marker, conflict }] of conflictsRef.current) {
@@ -241,10 +244,10 @@ export default function StrategicAssetLayer({
 
       const lines: L.Polyline[] = [];
       for (const pts of copies) {
-        const line = L.polyline(pts, { ...routeStyle(false), interactive: true });
+        const line = L.polyline(pts, { ...routeStyle(asset.asset_type, false), interactive: true });
         line.bindTooltip(assetTooltipHtml(asset), { direction: 'top', className: 'map-tooltip', sticky: true });
-        line.on('mouseover', () => lines.forEach(l => l.setStyle(routeStyle(isPressed(asset, affectedRef.current), true))));
-        line.on('mouseout', () => lines.forEach(l => l.setStyle(routeStyle(isPressed(asset, affectedRef.current)))));
+        line.on('mouseover', () => lines.forEach(l => l.setStyle(routeStyle(asset.asset_type, isPressed(asset, affectedRef.current), true))));
+        line.on('mouseout', () => lines.forEach(l => l.setStyle(routeStyle(asset.asset_type, isPressed(asset, affectedRef.current)))));
         line.on('click', () => {
           justClicked = true;
           onSelectRef.current({ kind: 'asset', asset });

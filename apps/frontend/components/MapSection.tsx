@@ -116,7 +116,7 @@ export default function MapSection({ centroids }: MapSectionProps) {
               title={showPipelines ? 'Hide pipelines' : 'Show pipelines'}
               className={`flex items-center gap-1.5 transition ${showPipelines ? 'hover:text-dashboard-text' : 'opacity-35'}`}
             >
-              <span className="inline-block w-4 h-0.5" style={{ backgroundColor: '#3d5166' }} />
+              <span className="inline-block w-4 h-0.5" style={{ backgroundColor: 'rgba(226,232,240,0.75)' }} />
               Pipelines
             </button>
             <span className="flex items-center gap-1.5">
