@@ -38,6 +38,7 @@ interface TheaterRow {
 interface CentroidRow {
   id: string;
   label: string;
+  iso_codes: string[] | null;
   map_point: { coordinates: [number, number] } | null;
 }
 
@@ -70,7 +71,7 @@ export async function GET() {
   const allCentroidIds = Array.from(new Set(theaterRows.flatMap(t => t.centroid_ids ?? [])));
   const centroidRows = allCentroidIds.length
     ? await query<CentroidRow>(
-        `SELECT id, label, map_point FROM centroids_v3 WHERE id = ANY($1) AND map_point IS NOT NULL`,
+        `SELECT id, label, iso_codes, map_point FROM centroids_v3 WHERE id = ANY($1) AND map_point IS NOT NULL`,
         [allCentroidIds],
       )
     : [];
@@ -83,6 +84,7 @@ export async function GET() {
       .map(c => ({
         id: c.id,
         label: c.label,
+        iso_codes: c.iso_codes ?? [],
         lon: c.map_point.coordinates[0],
         lat: c.map_point.coordinates[1],
       }));
@@ -163,6 +165,7 @@ export async function GET() {
       id: t.id,
       name_en: t.name_en,
       participants: participantsFor(t.centroid_ids),
+      affected_asset_ids: t.affected_asset_ids,
       total_events: t.total_events,
       last_active: t.last_active,
       is_ghost: t.is_ghost,

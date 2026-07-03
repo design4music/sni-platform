@@ -34,7 +34,7 @@ export interface AssetMapData {
     name_en: string;
     anchor: unknown; // GeoJSON Point
     affected_asset_ids: string[];
-    participants: Array<{ id: string; label: string; lon: number; lat: number }>;
+    participants: Array<{ id: string; label: string; iso_codes: string[]; lon: number; lat: number }>;
     total_events: number;
     last_active: string | null;
     is_ghost: boolean;
@@ -43,7 +43,8 @@ export interface AssetMapData {
   competitions: Array<{
     id: string;
     name_en: string;
-    participants: Array<{ id: string; label: string; lon: number; lat: number }>;
+    participants: Array<{ id: string; label: string; iso_codes: string[]; lon: number; lat: number }>;
+    affected_asset_ids: string[];
     total_events: number;
     last_active: string | null;
     is_ghost: boolean;
@@ -73,6 +74,10 @@ interface WorldMapProps {
   }>;
   fnMode?: boolean;
   fnData?: AssetMapData | null;
+  // Selection is controlled by the parent (MapSection) so the strategic-
+  // competitions strip below the map can drive it too.
+  selected?: MapSelection | null;
+  onSelectChange?: (selection: MapSelection | null) => void;
 }
 
 function getHeatmapColor(sourceCount: number, maxCount: number): string {
@@ -110,17 +115,32 @@ function MapController() {
 }
 
 
-export default function WorldMap({ centroids, fnMode = false, fnData = null }: WorldMapProps) {
+export default function WorldMap({
+  centroids,
+  fnMode = false,
+  fnData = null,
+  selected = null,
+  onSelectChange,
+}: WorldMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
-  const [selected, setSelected] = useState<MapSelection | null>(null);
+  const setSelected = onSelectChange ?? (() => {});
   const mapInitialized = useRef(false);
   const fnModeRef = useRef(fnMode);
   const router = useRouter();
   const t = useTranslations('map');
 
   useEffect(() => { fnModeRef.current = fnMode; }, [fnMode]);
-  useEffect(() => { if (!fnMode) setSelected(null); }, [fnMode]);
+
+  // Country highlight: selecting an FN "switches on" the involved actors'
+  // land mass with a lighter tone.
+  const highlightedIsos = new Set<string>();
+  if (fnMode && selected && selected.kind !== 'asset') {
+    const participants = selected.kind === 'conflict'
+      ? selected.conflict.participants
+      : selected.competition.participants;
+    for (const p of participants) for (const iso of p.iso_codes) highlightedIsos.add(iso.toUpperCase());
+  }
   useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
@@ -228,6 +248,16 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
 
   const style = (feature: any) => {
     if (fnMode) {
+      let iso2 = feature.properties['ISO3166-1-Alpha-2'];
+      const name = feature.properties.name;
+      if (name === 'France') iso2 = 'FR';
+      if (name === 'Norway') iso2 = 'NO';
+      if (name === 'Kosovo') iso2 = 'XK';
+      if (iso2 === 'CN-TW') iso2 = 'TW';
+      // Involved actors light up when an FN is selected.
+      if (iso2 && highlightedIsos.has(String(iso2).toUpperCase())) {
+        return { fillColor: '#44586e', fillOpacity: 0.9, color: '#5b7186', weight: 0.8 };
+      }
       return { fillColor: '#243447', fillOpacity: 0.72, color: '#3d5166', weight: 0.6 };
     }
 
@@ -566,7 +596,9 @@ export default function WorldMap({ centroids, fnMode = false, fnData = null }: W
       >
         <MapController />
         <GeoJSON
-          key={`geojson-${fnMode ? 'fn' : 'normal'}`}
+          key={`geojson-${fnMode ? 'fn' : 'normal'}-${fnMode && selected && selected.kind !== 'asset'
+            ? (selected.kind === 'conflict' ? selected.conflict.id : selected.competition.id)
+            : 'none'}`}
           data={geoData}
           style={style}
           onEachFeature={onEachFeature}
