@@ -71,7 +71,34 @@ their capitals, and reddens every pressed asset and route.
   confidently located stays off the map.
 - **Principle:** a wrong line is worse than no line.
 
-### 5. Event pressure (stress, intensity, dormancy)
+### 5. Asset flows (approved concept, oil pilot next)
+- **What:** directed supply relationships between assets — "Jamnagar
+  receives crude from Ras Tanura / Basra / Russian Baltic terminals via
+  Hormuz / Suez." Rendered ON SELECTION only (click an asset to see its
+  supply web); never permanently drawn.
+- **Schema (planned):**
+  `asset_flows(id, commodity, from_asset, to_asset, via_asset_ids[],`
+  `geometry jsonb, magnitude_class, status, as_of date, source,`
+  `confidence, notes)` — status in (active, suspended, historical);
+  no flow renders without as_of + source.
+- **Sources:** EIA country analyses, JODI, UN Comtrade (official,
+  quarterly, laggy), reputable tanker-tracking reporting (Kpler/Vortexa
+  as cited in press). Sector-level only — company-level supply chains are
+  out of scope by design.
+- **Geometry:** precomputed offline via searoute (sea legs) or existing
+  pipeline routes (land legs); stored in the row. No runtime computation.
+- **Precision honesty:** magnitude is a coarse class (major/secondary),
+  never an invented percentage. A flow is a *reported structural
+  relationship*, not a measured volume.
+- **Update mechanism (three tiers):**
+  1. Manual: structural changes (embargo, resumption) are one UPDATE of
+     status + as_of. Volume wobble requires no edit by design.
+  2. Pipeline-assisted (later): WorldBrief's own event stream is matched
+     against active flows; contradicting events queue a suggested status
+     change for human review. The dynamic layer audits the static layer.
+  3. Quarterly recalibration against official trade statistics.
+
+### 6. Event pressure (stress, intensity, dormancy)
 - **Source:** WorldBrief's own pipeline — `event_friction_nodes` counts
   aggregated per theater, sqrt-normalized; dormant = no events for 90 days.
 - **Precision:** as good as the news pipeline's FN matching (keyword +
@@ -101,3 +128,30 @@ their capitals, and reddens every pressed asset and route.
 5. Event counts measure media attention, not casualty/severity ground
    truth.
 6. Dot positions near dense clusters are nudged for legibility.
+7. Flows are reported structural relationships with an as-of date; they
+   can lag reality by weeks when trade patterns shift abruptly.
+
+## Risk register (flows layer)
+
+| Risk | Mitigation |
+|---|---|
+| Stale flow misleads (e.g. suspended trade still shown active) | status + as_of on every flow, shown in UI; pipeline-assisted review queue; quarterly stats recalibration |
+| Politically loaded flows (sanctions evasion, shadow fleet) | show only *reported* flows with named sources; platform asserts the report, not the fact |
+| False precision | coarse magnitude classes; no percentages; disclaimer |
+| Scope creep to company-level detail | hard scope: sector-level structural flows only |
+| Payload/compute growth | geometry precomputed offline, stored in DB, API cached; escape hatch: lazy per-asset flow endpoint |
+
+## Public disclaimer (draft for the Sources & Methods page)
+
+> The strategic map is an editorial intelligence product, not an
+> operational dataset. Asset locations are schematic; conflict markers are
+> symbolic epicenters; supply flows are structural relationships reported
+> by the cited sources as of the indicated date, not measured shipments.
+> Coverage is curated and intentionally incomplete: the absence of an
+> asset, conflict, or flow carries no meaning. Route pressure indicates
+> topological exposure (a route transits a stressed chokepoint), not an
+> observed disruption. Sources: Global Energy Monitor (CC BY 4.0),
+> Eurostat searoute / Oak Ridge Global Shipping Lane Network, national and
+> multilateral statistical agencies as cited per item, and WorldBrief's
+> own news-event pipeline. Nothing on this page constitutes investment
+> advice.
