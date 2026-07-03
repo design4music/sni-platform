@@ -125,7 +125,8 @@ export default function StrategicAssetLayer({
 }: Props) {
   const map = useMap();
   const dotsRef = useRef<Map<string, { marker: L.Marker; asset: Asset }>>(new Map());
-  const linesRef = useRef<Map<string, { line: L.Polyline; asset: Asset }>>(new Map());
+  // Dateline-crossing routes render as two shifted copies, hence lines[].
+  const linesRef = useRef<Map<string, { lines: L.Polyline[]; asset: Asset }>>(new Map());
   const conflictsRef = useRef<Map<string, { marker: L.Marker; conflict: Conflict }>>(new Map());
   const competitionsRef = useRef<Map<string, Competition>>(new Map());
   const overlayRef = useRef<L.LayerGroup | null>(null); // selection spokes / arcs
@@ -152,8 +153,9 @@ export default function StrategicAssetLayer({
       marker.setIcon(divIconFor(html, size));
       marker.setZIndexOffset(pressed ? 400 : 0);
     }
-    for (const [, { line, asset }] of linesRef.current) {
-      line.setStyle(routeStyle(affected.size > 0 && isPressed(asset, affected)));
+    for (const [, { lines, asset }] of linesRef.current) {
+      const style = routeStyle(affected.size > 0 && isPressed(asset, affected));
+      for (const line of lines) line.setStyle(style);
     }
     for (const [id, { marker, conflict }] of conflictsRef.current) {
       const { html, size } = buildConflictBadge(conflict, id === selectedId);
@@ -229,17 +231,29 @@ export default function StrategicAssetLayer({
       const geom = asset.geometry as { type: string; coordinates: number[][] };
       if (geom?.type !== 'LineString') continue;
 
-      const line = L.polyline(geom.coordinates.map(toLatLng), { ...routeStyle(false), interactive: true });
-      line.bindTooltip(assetTooltipHtml(asset), { direction: 'top', className: 'map-tooltip', sticky: true });
-      line.on('mouseover', () => line.setStyle(routeStyle(isPressed(asset, affectedRef.current), true)));
-      line.on('mouseout', () => line.setStyle(routeStyle(isPressed(asset, affectedRef.current))));
-      line.on('click', () => {
-        justClicked = true;
-        onSelectRef.current({ kind: 'asset', asset });
-      });
-      line.addTo(map);
-      linesRef.current.set(asset.id, { line, asset });
-      allLayers.push(line);
+      // searoute emits unwrapped longitudes (>180) for dateline-crossing
+      // routes; render a second copy shifted 360 deg so both halves show.
+      const latlngs = geom.coordinates.map(toLatLng);
+      const lons = geom.coordinates.map(c => c[0]);
+      const copies: [number, number][][] = [latlngs];
+      if (Math.max(...lons) > 180) copies.push(latlngs.map(([lat, lon]) => [lat, lon - 360]));
+      if (Math.min(...lons) < -180) copies.push(latlngs.map(([lat, lon]) => [lat, lon + 360]));
+
+      const lines: L.Polyline[] = [];
+      for (const pts of copies) {
+        const line = L.polyline(pts, { ...routeStyle(false), interactive: true });
+        line.bindTooltip(assetTooltipHtml(asset), { direction: 'top', className: 'map-tooltip', sticky: true });
+        line.on('mouseover', () => lines.forEach(l => l.setStyle(routeStyle(isPressed(asset, affectedRef.current), true))));
+        line.on('mouseout', () => lines.forEach(l => l.setStyle(routeStyle(isPressed(asset, affectedRef.current)))));
+        line.on('click', () => {
+          justClicked = true;
+          onSelectRef.current({ kind: 'asset', asset });
+        });
+        line.addTo(map);
+        lines.push(line);
+        allLayers.push(line);
+      }
+      linesRef.current.set(asset.id, { lines, asset });
     }
 
     for (const asset of pointAssets) {
