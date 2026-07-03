@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { AssetMapData, MapSelection } from './WorldMap';
-import { buildDot, buildConflictBadge, assetTooltipHtml } from './assetIcons';
+import { buildDot, buildConflictBadge, assetTooltipHtml, categoryFor } from './assetIcons';
 
 type Asset = AssetMapData['assets'][0];
 type Conflict = AssetMapData['conflicts'][0];
@@ -14,6 +14,9 @@ interface Props {
   data: AssetMapData;
   onSelect: (selection: MapSelection | null) => void;
   selectedId: string | null;
+  hiddenCategories: string[];
+  showRoutes: boolean;
+  showPipelines: boolean;
 }
 
 // GeoJSON is [lon, lat]; Leaflet wants [lat, lon].
@@ -21,7 +24,24 @@ function toLatLng(pos: number[]): [number, number] {
   return [pos[1], pos[0]];
 }
 
-// Every asset collapses to a dot at its representative point.
+function isLinear(asset: Asset): boolean {
+  return asset.asset_type === 'corridor' || asset.asset_type === 'pipeline';
+}
+
+// Route/pipeline styling: thin solid lines in the centroid-border tone —
+// quiet against the dark ocean until an FN puts pressure on them.
+const LINE_CALM = '#3d5166';
+const LINE_PRESSED = '#ef4444';
+
+function routeStyle(pressed: boolean, hover = false): L.PathOptions {
+  return {
+    color: pressed ? LINE_PRESSED : LINE_CALM,
+    weight: pressed ? 1.8 : hover ? 1.8 : 1.1,
+    opacity: pressed ? 0.95 : hover ? 1 : 0.85,
+  };
+}
+
+// Every point-like asset collapses to a dot at its representative point.
 function representativePoint(asset: Asset): [number, number] | null {
   const geom = asset.geometry as { type: string; coordinates: unknown };
   if (!geom?.type || !geom.coordinates) return null;
@@ -45,9 +65,7 @@ function representativePoint(asset: Asset): [number, number] | null {
 }
 
 // Declutter: co-located assets (Benelux port cluster, Gulf terminals) get
-// spread on a small ring around their shared location so dots never fully
-// stack. The ~0.5 degree displacement is invisible at world zoom and an
-// acceptable approximation when zoomed in — these are area markers.
+// spread on a small ring so dots never fully stack.
 function declutter(assets: Asset[]): Map<string, [number, number]> {
   const CELL = 1.1; // degrees
   const cells = new Map<string, Array<{ id: string; pos: [number, number] }>>();
@@ -95,30 +113,47 @@ function divIconFor(html: string, size: number): L.DivIcon {
   return L.divIcon({ html, className: 'asset-marker', iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
-export default function StrategicAssetLayer({ data, onSelect, selectedId }: Props) {
+// A route is pressed by the selected FN if the FN lists it directly OR
+// presses any chokepoint the route transits (via_asset_ids).
+function isPressed(asset: Asset, affected: Set<string>): boolean {
+  if (affected.has(asset.id)) return true;
+  return asset.via_asset_ids.some(id => affected.has(id));
+}
+
+export default function StrategicAssetLayer({
+  data, onSelect, selectedId, hiddenCategories, showRoutes, showPipelines,
+}: Props) {
   const map = useMap();
   const dotsRef = useRef<Map<string, { marker: L.Marker; asset: Asset }>>(new Map());
+  const linesRef = useRef<Map<string, { line: L.Polyline; asset: Asset }>>(new Map());
   const conflictsRef = useRef<Map<string, { marker: L.Marker; conflict: Conflict }>>(new Map());
   const competitionsRef = useRef<Map<string, Competition>>(new Map());
   const overlayRef = useRef<L.LayerGroup | null>(null); // selection spokes / arcs
+  const affectedRef = useRef<Set<string>>(new Set()); // assets pressed by current selection
   const selectedRef = useRef<string | null>(selectedId);
   const onSelectRef = useRef(onSelect);
 
   useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
 
-  // Selection change: restyle badges, light up related assets, and draw
-  // the connector lines (conflict spokes / competition arcs) to capitals.
-  // Connectors exist ONLY while a selection is active.
+  const hiddenKey = [...hiddenCategories].sort().join(',');
+
+  // Selection change: restyle markers, light up pressed assets/routes, and
+  // draw connector lines to capitals. Connectors exist only while selected.
   useEffect(() => {
     const selConflict = selectedId ? conflictsRef.current.get(selectedId)?.conflict : undefined;
     const selCompetition = selectedId ? competitionsRef.current.get(selectedId) : undefined;
-    const related = new Set(selConflict?.affected_asset_ids ?? selCompetition?.affected_asset_ids ?? []);
+    const affected = new Set(selConflict?.affected_asset_ids ?? selCompetition?.affected_asset_ids ?? []);
+    affectedRef.current = affected;
 
     for (const [id, { marker, asset }] of dotsRef.current) {
-      const { html, size } = buildDot(asset, related.has(id));
+      const pressed = affected.size > 0 && isPressed(asset, affected);
+      const { html, size } = buildDot(asset, pressed);
       marker.setIcon(divIconFor(html, size));
-      marker.setZIndexOffset(related.has(id) ? 400 : 0);
+      marker.setZIndexOffset(pressed ? 400 : 0);
+    }
+    for (const [, { line, asset }] of linesRef.current) {
+      line.setStyle(routeStyle(affected.size > 0 && isPressed(asset, affected)));
     }
     for (const [id, { marker, conflict }] of conflictsRef.current) {
       const { html, size } = buildConflictBadge(conflict, id === selectedId);
@@ -169,10 +204,12 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
     }
   }, [selectedId, map]);
 
-  // Build all markers. Everything is visible at every zoom level —
-  // predictability over declutter-by-hiding.
+  // Build all layers. Point assets are visible at every zoom level
+  // (predictability); categories and route/pipeline lines are filtered by
+  // the legend toggles.
   useEffect(() => {
     const allLayers: L.Layer[] = [];
+    const hidden = new Set(hiddenKey ? hiddenKey.split(',') : []);
 
     let justClicked = false;
     const mapClickHandler = () => {
@@ -181,9 +218,32 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
     };
     map.on('click', mapClickHandler);
 
-    const positions = declutter(data.assets);
+    const pointAssets = data.assets.filter(a => !isLinear(a));
+    const lineAssets = data.assets.filter(isLinear);
+    const positions = declutter(pointAssets);
 
-    for (const asset of data.assets) {
+    // Lines first so dots and badges stay clickable above them.
+    for (const asset of lineAssets) {
+      if (asset.asset_type === 'corridor' && !showRoutes) continue;
+      if (asset.asset_type === 'pipeline' && !showPipelines) continue;
+      const geom = asset.geometry as { type: string; coordinates: number[][] };
+      if (geom?.type !== 'LineString') continue;
+
+      const line = L.polyline(geom.coordinates.map(toLatLng), { ...routeStyle(false), interactive: true });
+      line.bindTooltip(assetTooltipHtml(asset), { direction: 'top', className: 'map-tooltip', sticky: true });
+      line.on('mouseover', () => line.setStyle(routeStyle(isPressed(asset, affectedRef.current), true)));
+      line.on('mouseout', () => line.setStyle(routeStyle(isPressed(asset, affectedRef.current))));
+      line.on('click', () => {
+        justClicked = true;
+        onSelectRef.current({ kind: 'asset', asset });
+      });
+      line.addTo(map);
+      linesRef.current.set(asset.id, { line, asset });
+      allLayers.push(line);
+    }
+
+    for (const asset of pointAssets) {
+      if (hidden.has(categoryFor(asset.asset_type, asset.commodities))) continue;
       const pos = positions.get(asset.id);
       if (!pos) continue;
 
@@ -238,8 +298,8 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
       allLayers.push(marker);
     }
 
-    // Competitions have no map marker of their own — they're selected from
-    // the strip below the map; their arcs draw via the selection effect.
+    // Competitions have no map marker — selected from the strip below the
+    // map; their arcs draw via the selection effect.
     competitionsRef.current = new Map(data.competitions.map(c => [c.id, c]));
 
     return () => {
@@ -248,10 +308,11 @@ export default function StrategicAssetLayer({ data, onSelect, selectedId }: Prop
       overlayRef.current?.remove();
       overlayRef.current = null;
       dotsRef.current.clear();
+      linesRef.current.clear();
       conflictsRef.current.clear();
       competitionsRef.current.clear();
     };
-  }, [map, data]);
+  }, [map, data, hiddenKey, showRoutes, showPipelines]);
 
   return null;
 }

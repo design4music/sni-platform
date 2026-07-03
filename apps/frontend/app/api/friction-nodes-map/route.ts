@@ -22,6 +22,7 @@ interface AssetRow {
   criticality: number;
   description_en: string | null;
   description_de: string | null;
+  meta: { via_asset_ids?: string[] } | null;
 }
 
 interface TheaterRow {
@@ -50,7 +51,7 @@ export async function GET() {
   const [assetRows, theaterRows] = await Promise.all([
     query<AssetRow>(`
       SELECT id, name_en, name_de, asset_type, geometry, commodities,
-             criticality, description_en, description_de
+             criticality, description_en, description_de, meta
       FROM strategic_assets
       WHERE is_active = true
     `),
@@ -128,6 +129,9 @@ export async function GET() {
       criticality: a.criticality,
       description_en: a.description_en,
       description_de: a.description_de,
+      // Chokepoints this asset transits (corridors/pipelines) — a route
+      // inherits pressure from any FN pressing on one of its passages.
+      via_asset_ids: a.meta?.via_asset_ids ?? [],
       stress,
       fns: pressing
         .sort((x, y) => y.total_events - x.total_events)

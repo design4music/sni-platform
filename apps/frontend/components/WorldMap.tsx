@@ -20,6 +20,7 @@ export interface AssetMapData {
     criticality: number;
     description_en: string | null;
     description_de: string | null;
+    via_asset_ids: string[]; // chokepoints this route transits
     stress: number; // 0-1
     fns: Array<{
       id: string;
@@ -78,6 +79,10 @@ interface WorldMapProps {
   // competitions strip below the map can drive it too.
   selected?: MapSelection | null;
   onSelectChange?: (selection: MapSelection | null) => void;
+  // Legend-driven visibility filters.
+  hiddenCategories?: string[];
+  showRoutes?: boolean;
+  showPipelines?: boolean;
 }
 
 function getHeatmapColor(sourceCount: number, maxCount: number): string {
@@ -121,6 +126,9 @@ export default function WorldMap({
   fnData = null,
   selected = null,
   onSelectChange,
+  hiddenCategories = [],
+  showRoutes = false,
+  showPipelines = false,
 }: WorldMapProps) {
   const [geoData, setGeoData] = useState<any>(null);
   const [isClient, setIsClient] = useState(false);
@@ -613,6 +621,9 @@ export default function WorldMap({
               : selected?.kind === 'competition' ? selected.competition.id
               : null
             }
+            hiddenCategories={hiddenCategories}
+            showRoutes={showRoutes}
+            showPipelines={showPipelines}
           />
         )}
       </MapContainer>

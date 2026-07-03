@@ -21,7 +21,16 @@ export default function MapSection({ centroids }: MapSectionProps) {
   const [fnMode, setFnMode] = useState(false);
   const [fnData, setFnData] = useState<AssetMapData | null>(null);
   const [selected, setSelected] = useState<MapSelection | null>(null);
+  const [hiddenCategories, setHiddenCategories] = useState<string[]>([]);
+  const [showRoutes, setShowRoutes] = useState(false);
+  const [showPipelines, setShowPipelines] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  function toggleCategory(key: string) {
+    setHiddenCategories(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key],
+    );
+  }
 
   async function handleToggle() {
     if (!fnMode && !fnData) {
@@ -66,22 +75,50 @@ export default function MapSection({ centroids }: MapSectionProps) {
         fnData={fnData}
         selected={selected}
         onSelectChange={setSelected}
+        hiddenCategories={hiddenCategories}
+        showRoutes={showRoutes}
+        showPipelines={showPipelines}
       />
 
       {fnMode && fnData && (
         <>
-          {/* Legend: asset category colors + marker classes */}
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-dashboard-text-muted">
+          {/* Legend doubles as the visibility filter: click a category to
+              hide/show its dots; routes and pipelines are off by default. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-dashboard-text-muted">
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-4 h-4 rounded-full border border-red-500 bg-[#1a0a0a]" />
               Conflict zone
             </span>
-            {Object.entries(ASSET_CATEGORIES).map(([key, { label, color }]) => (
-              <span key={key} className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                {label}
-              </span>
-            ))}
+            {Object.entries(ASSET_CATEGORIES).map(([key, { label, color }]) => {
+              const hidden = hiddenCategories.includes(key);
+              return (
+                <button
+                  key={key}
+                  onClick={() => toggleCategory(key)}
+                  title={hidden ? `Show ${label}` : `Hide ${label}`}
+                  className={`flex items-center gap-1.5 transition ${hidden ? 'opacity-35' : 'hover:text-dashboard-text'}`}
+                >
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
+                  {label}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setShowRoutes(v => !v)}
+              title={showRoutes ? 'Hide trade routes' : 'Show trade routes'}
+              className={`flex items-center gap-1.5 transition ${showRoutes ? 'hover:text-dashboard-text' : 'opacity-35'}`}
+            >
+              <span className="inline-block w-4 h-0.5" style={{ backgroundColor: '#3d5166' }} />
+              Trade routes
+            </button>
+            <button
+              onClick={() => setShowPipelines(v => !v)}
+              title={showPipelines ? 'Hide pipelines' : 'Show pipelines'}
+              className={`flex items-center gap-1.5 transition ${showPipelines ? 'hover:text-dashboard-text' : 'opacity-35'}`}
+            >
+              <span className="inline-block w-4 h-0.5" style={{ backgroundColor: '#3d5166' }} />
+              Pipelines
+            </button>
             <span className="flex items-center gap-1.5">
               <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-500 ring-2 ring-red-500/90" />
               Pressed by selected conflict
