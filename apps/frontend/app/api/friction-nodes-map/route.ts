@@ -43,12 +43,27 @@ interface CentroidRow {
   map_point: { coordinates: [number, number] } | null;
 }
 
+interface FlowRow {
+  id: string;
+  commodity: string;
+  from_asset: string;
+  to_asset: string;
+  via_asset_ids: string[];
+  geometry: unknown;
+  magnitude_class: string;
+  status: string;
+  as_of: string;
+  source: string;
+  confidence: string;
+  notes: string | null;
+}
+
 export const revalidate = 3600;
 
 const GHOST_DAYS = 90;
 
 export async function GET() {
-  const [assetRows, theaterRows] = await Promise.all([
+  const [assetRows, theaterRows, flowRows] = await Promise.all([
     query<AssetRow>(`
       SELECT id, name_en, name_de, asset_type, geometry, commodities,
              criticality, description_en, description_de, meta
@@ -65,6 +80,11 @@ export async function GET() {
       LEFT JOIN events_v3 e ON e.id = efn.event_id
       WHERE t.fn_type = 'theater' AND t.is_active = true
       GROUP BY t.id
+    `),
+    query<FlowRow>(`
+      SELECT id, commodity, from_asset, to_asset, via_asset_ids, geometry,
+             magnitude_class, status, as_of::text, source, confidence, notes
+      FROM asset_flows
     `),
   ]);
 
@@ -176,5 +196,5 @@ export async function GET() {
       intensity: t.intensity,
     }));
 
-  return NextResponse.json({ assets, conflicts, competitions });
+  return NextResponse.json({ assets, conflicts, competitions, flows: flowRows });
 }

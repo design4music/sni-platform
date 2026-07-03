@@ -51,6 +51,20 @@ export interface AssetMapData {
     is_ghost: boolean;
     intensity: number;
   }>;
+  flows: Array<{
+    id: string;
+    commodity: string;
+    from_asset: string;
+    to_asset: string;
+    via_asset_ids: string[];
+    geometry: unknown; // LineString
+    magnitude_class: string; // major | secondary
+    status: string; // active | suspended | historical
+    as_of: string;
+    source: string;
+    confidence: string;
+    notes: string | null;
+  }>;
 }
 
 type Asset = AssetMapData['assets'][0];
@@ -331,6 +345,23 @@ export default function WorldMap({
       {/* FN mode: asset info panel (fixed right side) */}
       {fnMode && selected?.kind === 'asset' && (() => {
         const a = selected.asset;
+        const allFlows = fnData?.flows ?? [];
+        const nameOf = (id: string) => fnData?.assets.find(x => x.id === id)?.name_en ?? id;
+        const inbound = allFlows.filter(f => f.to_asset === a.id);
+        const outbound = allFlows.filter(f => f.from_asset === a.id);
+        const transiting = allFlows.filter(f => f.via_asset_ids.includes(a.id));
+        const flowRow = (f: (typeof allFlows)[0], label: string) => (
+          <div key={f.id} className="flex items-start gap-2 py-1.5 text-xs border-b border-white/5 last:border-0 leading-snug text-gray-300">
+            <span className={`mt-0.5 flex-shrink-0 ${f.status === 'active' ? 'text-amber-500' : 'text-gray-600'}`}>&#8594;</span>
+            <span className="flex-1">
+              {label}
+              <span className="block text-[10px] text-gray-600 mt-0.5">
+                {f.commodity.replace(/_/g, ' ')} &middot; {f.magnitude_class}
+                {f.status !== 'active' && <span className="text-gray-500"> &middot; {f.status}</span>}
+              </span>
+            </span>
+          </div>
+        );
         return (
         <div className={`absolute right-3 top-3 bottom-3 w-64 z-[1000] flex flex-col border rounded-lg overflow-hidden ${
           a.stress > 0
@@ -396,6 +427,33 @@ export default function WorldMap({
                     </span>
                   ))}
                 </div>
+              </div>
+            )}
+            {inbound.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Receives from</div>
+                <div className="space-y-0.5">{inbound.map(f => flowRow(f, nameOf(f.from_asset)))}</div>
+              </div>
+            )}
+            {outbound.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Supplies to</div>
+                <div className="space-y-0.5">{outbound.map(f => flowRow(f, nameOf(f.to_asset)))}</div>
+              </div>
+            )}
+            {transiting.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">
+                  Flows through here ({transiting.length})
+                </div>
+                <div className="space-y-0.5">
+                  {transiting.map(f => flowRow(f, `${nameOf(f.from_asset)} → ${nameOf(f.to_asset)}`))}
+                </div>
+              </div>
+            )}
+            {(inbound.length > 0 || outbound.length > 0 || transiting.length > 0) && (
+              <div className="text-[10px] text-gray-600">
+                Reported structural flows; see tooltip for source and date.
               </div>
             )}
             <div>

@@ -9,6 +9,7 @@ import { buildDot, buildConflictBadge, assetTooltipHtml, categoryFor } from './a
 type Asset = AssetMapData['assets'][0];
 type Conflict = AssetMapData['conflicts'][0];
 type Competition = AssetMapData['competitions'][0];
+type Flow = AssetMapData['flows'][0];
 
 interface Props {
   data: AssetMapData;
@@ -116,6 +117,19 @@ function divIconFor(html: string, size: number): L.DivIcon {
   return L.divIcon({ html, className: 'asset-marker', iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
+// Supply-flow styling: amber (informational), suspended flows gray dashed.
+function flowStyle(f: Flow): L.PathOptions {
+  if (f.status !== 'active') {
+    return { color: 'rgba(148,163,184,0.65)', weight: 1.4, dashArray: '4 6', opacity: 1, interactive: true };
+  }
+  return {
+    color: '#f59e0b',
+    weight: f.magnitude_class === 'major' ? 2.2 : 1.3,
+    opacity: f.magnitude_class === 'major' ? 0.9 : 0.7,
+    interactive: true,
+  };
+}
+
 // A route is pressed by the selected FN if the FN lists it directly OR
 // presses any chokepoint the route transits (via_asset_ids).
 function isPressed(asset: Asset, affected: Set<string>): boolean {
@@ -132,6 +146,8 @@ export default function StrategicAssetLayer({
   const linesRef = useRef<Map<string, { lines: L.Polyline[]; asset: Asset }>>(new Map());
   const conflictsRef = useRef<Map<string, { marker: L.Marker; conflict: Conflict }>>(new Map());
   const competitionsRef = useRef<Map<string, Competition>>(new Map());
+  const flowsRef = useRef<Flow[]>([]);
+  const assetNameRef = useRef<Map<string, string>>(new Map());
   const overlayRef = useRef<L.LayerGroup | null>(null); // selection spokes / arcs
   const affectedRef = useRef<Set<string>>(new Set()); // assets pressed by current selection
   const selectedRef = useRef<string | null>(selectedId);
@@ -185,6 +201,31 @@ export default function StrategicAssetLayer({
         }
         hasOverlay = true;
       }
+    }
+
+    // Supply flows: when an asset is selected, draw every flow that starts
+    // here, ends here, or transits here. Selecting Hormuz answers "what
+    // dies if this closes"; selecting Jamnagar shows where its crude
+    // comes from and where its products go.
+    if (selectedId && !selConflict && !selCompetition) {
+      const touching = flowsRef.current.filter(f =>
+        f.from_asset === selectedId || f.to_asset === selectedId || f.via_asset_ids.includes(selectedId),
+      );
+      for (const f of touching) {
+        const geom = f.geometry as { type: string; coordinates: number[][] };
+        if (geom?.type !== 'LineString') continue;
+        const nameOf = (id: string) => assetNameRef.current.get(id) ?? id;
+        const line = L.polyline(geom.coordinates.map(toLatLng), flowStyle(f));
+        line.bindTooltip(
+          `<strong>${f.commodity.replace(/_/g, ' ')}</strong>: ${nameOf(f.from_asset)} &rarr; ${nameOf(f.to_asset)}` +
+          `<br/><span style="opacity:0.7">${f.magnitude_class}${f.status !== 'active' ? ` &middot; ${f.status}` : ''}` +
+          ` &middot; as of ${f.as_of.slice(0, 10)}</span>` +
+          `<br/><span style="opacity:0.55">${f.source}</span>`,
+          { direction: 'top', className: 'map-tooltip', sticky: true },
+        );
+        line.addTo(group);
+      }
+      if (touching.length) hasOverlay = true;
     }
 
     if (selCompetition && selCompetition.participants.length >= 2) {
@@ -318,6 +359,8 @@ export default function StrategicAssetLayer({
     // Competitions have no map marker — selected from the strip below the
     // map; their arcs draw via the selection effect.
     competitionsRef.current = new Map(data.competitions.map(c => [c.id, c]));
+    flowsRef.current = data.flows ?? [];
+    assetNameRef.current = new Map(data.assets.map(a => [a.id, a.name_en]));
 
     return () => {
       map.off('click', mapClickHandler);
