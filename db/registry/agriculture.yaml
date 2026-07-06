@@ -1,0 +1,736 @@
+# Agriculture -- crops, fisheries, and fertilizer feedstocks (potash/phosphate).
+# Authority: FAO / USDA PSD (production + export share per crop), FAO capture-
+# fisheries statistics (fisheries), IFA / USGS Mineral Commodity Summaries
+# (potash, phosphate). Fertilizer feedstocks live here, not in minerals, since
+# they are agronomic inputs consumed by the food system.
+# Reconciled rows below omit geometry (existing DB hulls/points preserved);
+# new rows carry a schematic 4-6 vertex hull (fisheries offshore) or lon/lat.
+
+# --- WHEAT ---
+
+- id: ukrainian_grain_belt
+  name_en: Ukrainian Grain Belt
+  name_de: Ukrainischer Getreideguertel
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat, corn]
+  centroid_ids: [EUROPE-UKRAINE]
+  criticality: 4
+  ranking_source: "USDA PSD (Ukraine wheat/corn export ranks); FAO"
+  rank_note: "Pre-war top-5 global wheat exporter and top-4 corn exporter; Black Sea Grain Initiative collapse and war disruption repeatedly moved world food prices."
+  description_en: >-
+    The fertile black-soil heartland that made Ukraine a top global grain
+    exporter; war disruption to planting, ports, and rail has repeatedly
+    moved world wheat and corn prices and strained food-import-dependent states.
+  description_de: >-
+    Das fruchtbare Schwarzerde-Kernland, das die Ukraine zu einem der
+    weltweit fuehrenden Getreideexporteure machte; kriegsbedingte Stoerungen
+    bei Aussaat, Haefen und Bahn haben wiederholt die Weltweizenpreise bewegt.
+
+- id: south_russia_grain_belt
+  name_en: South Russia Grain Belt
+  name_de: Suedrussischer Getreideguertel
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "USDA PSD (Russia is the world's largest wheat exporter)"
+  rank_note: "Krasnodar/Rostov/Stavropol region; source of the world's largest single-country wheat export flow, chiefly via Novorossiysk."
+  description_en: >-
+    Russia's Black Earth wheat belt underpins the world's largest wheat
+    export flow; export-tax policy and sanctions exposure here move global
+    bread-grain prices for import-dependent Middle East and African states.
+  description_de: >-
+    Russlands Schwarzerde-Weizenguertel traegt den groessten Weizenexport
+    der Welt; Exportsteuerpolitik und Sanktionsrisiken hier bewegen die
+    globalen Brotgetreidepreise fuer importabhaengige Staaten in Nahost und Afrika.
+
+- id: canadian_prairies_wheat
+  name_en: Canadian Prairies Wheat Belt
+  name_de: Kanadischer Praerie-Weizenguertel
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat]
+  centroid_ids: [AMERICAS-CANADA]
+  criticality: 3
+  ranking_source: "USDA PSD (Canada top-5 wheat exporter)"
+  rank_note: "Core of Canada's wheat production; consistently a top-five global wheat exporter."
+  description_en: >-
+    Canada's prairie wheat belt is a top-five global wheat exporter, giving
+    Ottawa outsized leverage in world grain markets whenever Black Sea
+    supply is disrupted.
+  description_de: >-
+    Kanadas Praerie-Weizenguertel gehoert zu den fuenf groessten
+    Weizenexporteuren der Welt und verschafft Ottawa erheblichen Einfluss
+    auf die Weltgetreidemaerkte, sobald die Schwarzmeer-Versorgung gestoert ist.
+
+- id: australian_wheat_belt
+  name_en: Australian Wheat Belt (WA-NSW)
+  name_de: Australischer Weizenguertel (WA-NSW)
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 3
+  ranking_source: "USDA PSD (Australia top-5 wheat exporter)"
+  rank_note: "Spans Western Australia to New South Wales; top-five global wheat exporter with output swinging sharply on El Nino drought cycles."
+  description_en: >-
+    Australia's dryland wheat belt, spanning Western Australia to New
+    South Wales, is a top global wheat exporter whose output swings
+    sharply with El Nino drought cycles.
+  description_de: >-
+    Australiens Trockenland-Weizenguertel von Westaustralien bis New South
+    Wales ist ein fuehrender Weizenexporteur, dessen Ertrag stark mit
+    El-Nino-Duerrezyklen schwankt.
+
+- id: kansas_oklahoma_winter_wheat
+  name_en: Kansas-Oklahoma Winter Wheat Belt
+  name_de: Kansas-Oklahoma Winterweizenguertel
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "USDA PSD (US hard red winter wheat production)"
+  rank_note: "Historic core of US hard red winter wheat, the benchmark grade for global wheat futures pricing."
+  description_en: >-
+    The traditional heart of US hard red winter wheat, a benchmark grade
+    for global wheat pricing and a bellwether for Great Plains drought stress.
+  description_de: >-
+    Das traditionelle Kernland des US-amerikanischen Hartweizens (Hard Red
+    Winter Wheat), eine Referenzsorte fuer die globale Weizenpreisbildung
+    und ein Fruehindikator fuer Duerrestress in den Great Plains.
+
+- id: punjab_haryana_wheat_rice_belt
+  name_en: Punjab-Haryana Wheat-Rice Belt
+  name_de: Punjab-Haryana Weizen-Reis-Guertel
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat, rice]
+  centroid_ids: [ASIA-INDIA, ASIA-PAKISTAN]
+  criticality: 4
+  ranking_source: "FAO/USDA PSD (India top-2 wheat and rice producer)"
+  rank_note: "Green Revolution heartland straddling the India-Pakistan border; feeds both nations' state food-grain reserves and public distribution systems."
+  description_en: >-
+    The irrigated breadbasket that anchors food security for roughly 1.5
+    billion people across South Asia, now straining under falling
+    groundwater tables and India's periodic export restrictions.
+  description_de: >-
+    Die bewaesserte Kornkammer, die die Ernaehrungssicherheit fuer rund 1,5
+    Milliarden Menschen in Suedasien sichert, nun unter sinkenden
+    Grundwasserspiegeln und Indiens zeitweiligen Exportbeschraenkungen leidend.
+
+- id: north_china_plain
+  name_en: North China Plain
+  name_de: Nordchinesische Tiefebene
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat, corn]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 4
+  ranking_source: "USDA PSD (China wheat/corn production)"
+  rank_note: "Produces the majority of China's wheat and a large share of its corn."
+  description_en: >-
+    China's largest wheat and corn producing region; any shortfall here
+    forces Beijing onto world grain markets, moving global prices.
+  description_de: >-
+    Chinas groesste Weizen- und Maisanbauregion; jeder Ernteausfall zwingt
+    Peking auf die Weltgetreidemaerkte und bewegt die globalen Preise.
+
+- id: eu_wheat_belt
+  name_en: EU Wheat Belt (France-Germany-Poland)
+  name_de: EU-Weizenguertel (Frankreich-Deutschland-Polen)
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  hull: [[-1.5, 49.5], [8.0, 51.0], [19.0, 52.5], [19.0, 47.5], [7.0, 46.5], [-1.5, 46.0], [-1.5, 49.5]]
+  commodities: [wheat]
+  centroid_ids: [EUROPE-FRANCE]
+  criticality: 3
+  ranking_source: "USDA PSD (France top-5 wheat exporter; EU top-3 wheat bloc)"
+  rank_note: "France alone is a top-five global wheat exporter; the EU bloc (France-Germany-Poland core) ranks among the top-three wheat export blocs, chiefly to North Africa and the Middle East."
+  description_en: >-
+    The Paris Basin-North European Plain grain belt makes the EU a top
+    wheat exporter, with France's surplus a key stabilizer for North
+    African and Middle Eastern bread-grain importers.
+  description_de: >-
+    Der Getreideguertel des Pariser Beckens und der Norddeutschen Tiefebene
+    macht die EU zu einem fuehrenden Weizenexporteur; Frankreichs Ueberschuss
+    stabilisiert die Brotgetreideversorgung Nordafrikas und des Nahen Ostens.
+
+# --- RICE ---
+
+- id: mekong_delta_rice
+  name_en: Mekong Delta Rice Belt
+  name_de: Mekong-Delta-Reisguertel
+  category: agriculture
+  subcategory: rice
+  asset_type: production_cluster
+  commodities: [rice]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 4
+  ranking_source: "USDA PSD (Vietnam top-3 rice exporter)"
+  rank_note: "Vietnam's principal rice-growing region and one of the world's top rice export sources."
+  description_en: >-
+    Vietnam's rice export engine, increasingly threatened by saltwater
+    intrusion and upstream Mekong dam operations that starve the delta of
+    sediment and fresh water.
+  description_de: >-
+    Vietnams Reisexport-Motor, zunehmend bedroht durch Versalzung und
+    stromaufwaerts gelegene Mekong-Staudaemme, die dem Delta Sediment und
+    Suesswasser entziehen.
+
+- id: chao_phraya_rice_basin
+  name_en: Chao Phraya Rice Basin
+  name_de: Chao-Phraya-Reisbecken
+  category: agriculture
+  subcategory: rice
+  asset_type: production_cluster
+  commodities: [rice]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "USDA PSD (Thailand top-3 rice exporter)"
+  rank_note: "Thailand's central rice bowl and a major global rice export base."
+  description_en: >-
+    Thailand's central river-basin rice bowl, historically one of the
+    world's largest rice exporters and a swing supplier when other
+    exporters restrict shipments.
+  description_de: >-
+    Thailands zentrales Flussbecken-Reisgebiet, historisch einer der
+    groessten Reisexporteure der Welt und Ersatzlieferant, wenn andere
+    Exporteure Lieferungen einschraenken.
+
+- id: india_rice_belt
+  name_en: India Rice Belt (Indo-Gangetic Plain)
+  name_de: Indischer Reisguertel (Indo-Gangetische Ebene)
+  category: agriculture
+  subcategory: rice
+  asset_type: production_cluster
+  hull: [[77.0, 30.5], [88.5, 26.5], [88.0, 22.0], [80.0, 21.5], [76.5, 26.0], [77.0, 30.5]]
+  commodities: [rice]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 4
+  ranking_source: "USDA PSD / FAO (India is the world's largest rice exporter)"
+  rank_note: "India is the world's largest rice exporter by volume, accounting for roughly two-fifths of global rice trade; 2023 export-ban episode moved world prices sharply."
+  description_en: >-
+    The Ganges plain rice belt makes India the world's largest rice
+    exporter; sudden export curbs here, as in 2023, ripple through prices
+    for import-dependent Africa and the Middle East.
+  description_de: >-
+    Der Reisguertel der Gangesebene macht Indien zum weltweit groessten
+    Reisexporteur; ploetzliche Exportbeschraenkungen wie 2023 wirken sich
+    auf die Preise fuer importabhaengige Staaten in Afrika und Nahost aus.
+
+# --- CORN & SOY ---
+
+- id: us_corn_soy_belt
+  name_en: US Corn-Soy Belt (Iowa/Illinois Core)
+  name_de: US-Mais-Soja-Guertel (Kernzone Iowa/Illinois)
+  category: agriculture
+  subcategory: corn
+  asset_type: production_cluster
+  commodities: [corn, soy]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "USDA PSD (US is the world's largest corn producer/exporter)"
+  rank_note: "Core of the world's largest corn producing region and a top-2 soybean exporter; benchmark for global feed-grain prices."
+  description_en: >-
+    The heart of US grain production, whose harvest and export volumes are
+    a primary driver of global corn and soybean prices and livestock feed costs.
+  description_de: >-
+    Das Herz der US-Getreideproduktion, deren Ernte- und Exportvolumen ein
+    Hauptfaktor fuer die globalen Mais- und Sojapreise sowie Futtermittelkosten sind.
+
+- id: mato_grosso_soy_belt
+  name_en: Mato Grosso Soy Belt
+  name_de: Mato-Grosso-Sojaguertel
+  category: agriculture
+  subcategory: soy
+  asset_type: production_cluster
+  commodities: [soy, corn]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 4
+  ranking_source: "USDA PSD (Brazil is the world's largest soybean exporter)"
+  rank_note: "Brazil's largest soybean-producing state; Brazil is the world's leading soy exporter, overwhelmingly to China."
+  description_en: >-
+    Brazil's largest soybean-producing state, whose expansion has made the
+    country the world's leading soy exporter, largely to China.
+  description_de: >-
+    Brasiliens groesster sojaproduzierender Bundesstaat, dessen Expansion
+    das Land zum weltweit fuehrenden Sojaexporteur gemacht hat, vor allem
+    nach China.
+
+- id: cerrado_expansion_zone
+  name_en: Cerrado Expansion Zone (MATOPIBA)
+  name_de: Cerrado-Expansionszone (MATOPIBA)
+  category: agriculture
+  subcategory: soy
+  asset_type: production_cluster
+  commodities: [soy, corn]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 3
+  ranking_source: "USDA PSD / FAO (Brazil soy expansion frontier)"
+  rank_note: "Maranhao-Tocantins-Piaui-Bahia frontier, Brazil's fastest-growing soy and corn frontier beyond Mato Grosso."
+  description_en: >-
+    Brazil's newest agricultural frontier beyond Mato Grosso, converting
+    savanna into soy and corn cropland at a pace that draws mounting
+    deforestation and land-rights scrutiny.
+  description_de: >-
+    Brasiliens neueste Agrarfront jenseits von Mato Grosso, die Savanne in
+    rasantem Tempo in Soja- und Maisanbauflaeche umwandelt und zunehmend
+    wegen Entwaldung und Landrechten kritisiert wird.
+
+- id: pampas_grain_belt
+  name_en: Pampas Grain Belt
+  name_de: Pampas-Getreideguertel
+  category: agriculture
+  subcategory: corn
+  asset_type: production_cluster
+  commodities: [corn, soy, wheat]
+  centroid_ids: [AMERICAS-ARGENTINA]
+  criticality: 3
+  ranking_source: "USDA PSD (Argentina top-3 corn exporter, top-3 soy exporter)"
+  rank_note: "Argentina's fertile core, producing the bulk of its wheat, corn and soybean exports; Argentina ranks among the top global exporters of all three."
+  description_en: >-
+    Argentina's fertile agricultural core, producing the bulk of the
+    country's wheat, corn and soybean exports and highly sensitive to
+    export-tax policy shifts.
+  description_de: >-
+    Argentiniens fruchtbarer landwirtschaftlicher Kern, produziert den
+    Grossteil der Weizen-, Mais- und Sojaexporte des Landes und ist stark
+    sensibel gegenueber Aenderungen der Exportsteuerpolitik.
+
+# --- PALM OIL ---
+
+- id: indonesia_malaysia_palm_oil_belt
+  name_en: Indonesian-Malaysian Palm Oil Belt
+  name_de: Indonesisch-malaysischer Palmoelguertel
+  category: agriculture
+  subcategory: palm_oil
+  asset_type: production_cluster
+  commodities: [palm_oil]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "USDA PSD / FAO (Indonesia + Malaysia supply large majority of world palm oil)"
+  rank_note: "Sumatra-Borneo-Peninsular Malaysia belt; the two countries together supply the large majority of the world's palm oil."
+  description_en: >-
+    The Sumatra-Borneo-Peninsular Malaysia plantation belt supplying most
+    of the world's palm oil, a key vegetable-oil and biodiesel feedstock
+    whose export curbs move global edible-oil prices.
+  description_de: >-
+    Der Plantagenguertel Sumatra-Borneo-Malaiische Halbinsel liefert den
+    Grossteil des weltweiten Palmoels, ein wichtiger Rohstoff fuer
+    Pflanzenoel und Biodiesel, dessen Exportbeschraenkungen die globalen
+    Speiseoelpreise bewegen.
+
+# --- SUGAR ---
+
+- id: brazil_center_south_sugar_belt
+  name_en: Brazil Center-South Sugar-Ethanol Belt
+  name_de: Brasilianischer Zucker-Ethanol-Guertel (Center-South)
+  category: agriculture
+  subcategory: sugar
+  asset_type: production_cluster
+  hull: [[-52.0, -19.0], [-47.0, -19.0], [-44.5, -22.5], [-48.5, -25.5], [-53.5, -23.0], [-52.0, -19.0]]
+  commodities: [sugar]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 4
+  ranking_source: "USDA Sugar Annual (Brazil); Sugar: World Markets and Trade (FAS)"
+  rank_note: "Sao Paulo-Minas Gerais-Parana cane belt; Brazil supplies roughly 59 percent of world sugar exports (CY2025), making it the dominant swing supplier."
+  description_en: >-
+    The Center-South cane belt that makes Brazil the world's dominant
+    sugar exporter; mills can swing output between sugar and ethanol,
+    so Brazilian fuel-blend policy itself moves global sugar prices.
+  description_de: >-
+    Der Zuckerrohrguertel im brasilianischen Center-South, der Brasilien
+    zum weltweit dominierenden Zuckerexporteur macht; Muehlen koennen
+    zwischen Zucker- und Ethanolproduktion wechseln, sodass Brasiliens
+    Kraftstoffbeimischungspolitik selbst die globalen Zuckerpreise bewegt.
+
+- id: india_sugar_belt
+  name_en: India Sugar Belt (Uttar Pradesh-Maharashtra)
+  name_de: Indischer Zuckerguertel (Uttar Pradesh-Maharashtra)
+  category: agriculture
+  subcategory: sugar
+  asset_type: production_cluster
+  hull: [[73.5, 21.5], [77.0, 20.0], [80.5, 24.5], [80.0, 28.5], [77.5, 29.0], [73.5, 21.5]]
+  commodities: [sugar]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 3
+  ranking_source: "USDA Sugar Annual (India); FAS Sugar: World Markets and Trade"
+  rank_note: "Uttar Pradesh and Maharashtra cane belts; India is the world's largest sugar producer and typically a top-3 exporter (about 7 percent of global exports)."
+  description_en: >-
+    India's cane belt makes it the world's largest sugar producer;
+    New Delhi's export-quota decisions, often tied to domestic ethanol-
+    blending targets, are a recurring swing factor in world sugar supply.
+  description_de: >-
+    Indiens Zuckerrohrguertel macht das Land zum weltweit groessten
+    Zuckerproduzenten; Neu-Delhis Exportquotenentscheidungen, oft an
+    heimische Ethanol-Beimischungsziele gekoppelt, sind ein wiederkehrender
+    Schwankungsfaktor fuer das globale Zuckerangebot.
+
+# --- COFFEE ---
+
+- id: brazil_coffee_belt
+  name_en: Brazil Coffee Belt (Minas Gerais-Sao Paulo-Parana)
+  name_de: Brasilianischer Kaffeeguertel (Minas Gerais-Sao Paulo-Parana)
+  category: agriculture
+  subcategory: coffee
+  asset_type: production_cluster
+  hull: [[-47.5, -18.0], [-44.0, -19.5], [-45.5, -24.0], [-51.0, -25.5], [-49.5, -20.5], [-47.5, -18.0]]
+  commodities: [coffee]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 4
+  ranking_source: "USDA PSD / ICO (Brazil ~31% of world green coffee production, 2023)"
+  rank_note: "Minas Gerais alone produces nearly half of Brazil's crop; Brazil is the world's largest coffee producer and exporter, with Vietnam and Colombia together making up over 55% of global exports."
+  description_en: >-
+    Led by Minas Gerais, Brazil's coffee belt makes it the world's largest
+    producer and exporter; frost or drought here is the single biggest
+    swing factor in global arabica prices.
+  description_de: >-
+    Angefuehrt von Minas Gerais macht Brasiliens Kaffeeguertel das Land zum
+    weltweit groessten Produzenten und Exporteur; Frost oder Duerre hier
+    sind der groesste Schwankungsfaktor fuer die globalen Arabica-Preise.
+
+- id: vietnam_central_highlands_coffee
+  name_en: Vietnam Central Highlands Coffee (Dak Lak)
+  name_de: Vietnamesisches Zentrales Hochland Kaffee (Dak Lak)
+  category: agriculture
+  subcategory: coffee
+  asset_type: production_cluster
+  hull: [[107.3, 13.2], [108.6, 13.2], [108.6, 11.5], [107.3, 11.5], [107.3, 13.2]]
+  commodities: [coffee]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "USDA PSD / ICO (Vietnam ~18% of world coffee production, world's top robusta exporter)"
+  rank_note: "Dak Lak-Gia Lai-Kon Tum provinces; Vietnam is the world's second-largest coffee producer and top robusta exporter, critical to global instant-coffee supply."
+  description_en: >-
+    The Dak Lak-centered highlands that make Vietnam the world's largest
+    robusta producer, feeding the global instant-coffee and espresso-blend
+    market; drought years here tighten robusta supply worldwide.
+  description_de: >-
+    Das um Dak Lak zentrierte Hochland macht Vietnam zum weltweit groessten
+    Robusta-Produzenten und versorgt den globalen Instantkaffee- und
+    Espresso-Mischungsmarkt; Duerrejahre hier verknappen das weltweite
+    Robusta-Angebot.
+
+- id: colombia_eje_cafetero
+  name_en: Colombia Coffee Axis (Eje Cafetero)
+  name_de: Kolumbianische Kaffeeachse (Eje Cafetero)
+  category: agriculture
+  subcategory: coffee
+  asset_type: production_cluster
+  hull: [[-76.2, 5.7], [-75.0, 5.5], [-75.2, 4.3], [-76.3, 4.5], [-76.2, 5.7]]
+  commodities: [coffee]
+  centroid_ids: [AMERICAS-COLOMBIA]
+  criticality: 3
+  ranking_source: "USDA PSD / ICO (Colombia top-3 coffee exporter, largest washed-arabica supplier)"
+  rank_note: "Caldas-Risaralda-Quindio departments, UNESCO-listed coffee cultural landscape; Colombia is the world's top exporter of washed (mild) arabica."
+  description_en: >-
+    The Caldas-Risaralda-Quindio coffee axis makes Colombia the world's
+    leading supplier of washed arabica, the premium grade underpinning
+    specialty-coffee pricing worldwide.
+  description_de: >-
+    Die Kaffeeachse Caldas-Risaralda-Quindio macht Kolumbien zum weltweit
+    fuehrenden Anbieter von gewaschenem Arabica, der Premiumsorte, die die
+    Preisbildung fuer Spezialitaetenkaffee weltweit praegt.
+
+# --- COCOA ---
+
+- id: ivory_coast_cocoa_belt
+  name_en: Ivory Coast Cocoa Belt
+  name_de: Elfenbeinkuestischer Kakaoguertel
+  category: agriculture
+  subcategory: cocoa
+  asset_type: production_cluster
+  hull: [[-8.0, 7.5], [-3.0, 7.5], [-3.0, 4.8], [-8.0, 4.8], [-8.0, 7.5]]
+  commodities: [cocoa]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 4
+  ranking_source: "USDA PSD / Statista / ICCO (Ivory Coast ~40% of world cocoa production)"
+  rank_note: "World's largest cocoa producer at roughly 40 percent of global supply; 2023-24 crop failures drove global chocolate prices to record highs."
+  description_en: >-
+    The world's largest cocoa-growing region, supplying about two-fifths
+    of global output; aging trees, disease, and smuggling-driven farmgate
+    price distortions here have already sent world chocolate prices to
+    record highs.
+  description_de: >-
+    Die weltweit groesste Kakaoanbauregion mit rund zwei Fuenfteln der
+    globalen Produktion; alternde Baeume, Krankheiten und schmuggelbedingte
+    Verzerrungen der Erzeugerpreise haben die Weltschokoladenpreise bereits
+    auf Rekordhoehen getrieben.
+
+- id: ghana_cocoa_belt
+  name_en: Ghana Cocoa Belt
+  name_de: Ghanaischer Kakaoguertel
+  category: agriculture
+  subcategory: cocoa
+  asset_type: production_cluster
+  hull: [[-3.2, 7.2], [-0.2, 7.2], [-0.2, 5.0], [-3.2, 5.0], [-3.2, 7.2]]
+  commodities: [cocoa]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 3
+  ranking_source: "USDA PSD / Statista / ICCO (Ghana ~20% of world cocoa production)"
+  rank_note: "World's second-largest cocoa producer at roughly one-fifth of global supply; together with Ivory Coast, West Africa supplies about two-thirds of world cocoa."
+  description_en: >-
+    Ghana's cocoa belt makes it the world's second-largest producer;
+    the state cocoa board's fixed farmgate price makes it especially
+    exposed to smuggling when world prices spike far above it.
+  description_de: >-
+    Ghanas Kakaoguertel macht das Land zum weltweit zweitgroessten
+    Produzenten; der von der staatlichen Kakaobehoerde festgelegte
+    Erzeugerpreis macht das Land besonders anfaellig fuer Schmuggel, wenn
+    die Weltmarktpreise weit darueber steigen.
+
+# --- FISHERIES ---
+
+- id: peruvian_anchoveta_grounds
+  name_en: Peruvian Anchoveta Grounds
+  name_de: Peruanische Sardellen-Fanggruende
+  category: agriculture
+  subcategory: fisheries
+  asset_type: production_cluster
+  commodities: [fish]
+  centroid_ids: [AMERICAS-PERU]
+  criticality: 3
+  ranking_source: "FAO capture-fisheries statistics (single largest species fishery by tonnage)"
+  rank_note: "World's largest single-species fishery by tonnage, feeding the global fishmeal and fish oil market."
+  description_en: >-
+    The world's biggest single-species fishery, feeding global aquaculture
+    and livestock feed through fishmeal exports, and one that collapses
+    almost completely in strong El Nino years.
+  description_de: >-
+    Die weltweit groesste Einzelart-Fischerei, die ueber Fischmehlexporte
+    die globale Aquakultur und Tierfutterproduktion versorgt und in
+    starken El-Nino-Jahren fast vollstaendig zusammenbricht.
+
+- id: west_african_fishing_grounds
+  name_en: West African Fishing Grounds
+  name_de: Westafrikanische Fanggruende
+  category: agriculture
+  subcategory: fisheries
+  asset_type: production_cluster
+  commodities: [fish]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 3
+  ranking_source: "FAO capture-fisheries statistics (Senegal-Mauritania upwelling zone)"
+  rank_note: "Senegal-Mauritania upwelling zone, a key protein source under heavy pressure from foreign industrial fleets."
+  description_en: >-
+    A rich upwelling fishery off Senegal and Mauritania that feeds local
+    food security, now depleted by foreign industrial trawlers operating
+    under opaque licensing deals.
+  description_de: >-
+    Eine ergiebige Auftriebsfischerei vor Senegal und Mauretanien, die die
+    lokale Ernaehrungssicherung stuetzt, nun durch auslaendische
+    Industrietrawler unter undurchsichtigen Lizenzvereinbarungen dezimiert.
+
+- id: south_pacific_tuna_belt
+  name_en: South Pacific Tuna Belt
+  name_de: Suedpazifischer Thunfischguertel
+  category: agriculture
+  subcategory: fisheries
+  asset_type: production_cluster
+  commodities: [fish]
+  centroid_ids: []
+  criticality: 2
+  ranking_source: "FAO capture-fisheries statistics; Parties to the Nauru Agreement"
+  rank_note: "One of the last large healthy tuna stocks, managed by Pacific Island states through the Nauru Agreement vessel-day scheme."
+  description_en: >-
+    A vast tuna fishery that Pacific Island nations license through a
+    shared vessel-day scheme, giving small states rare leverage over
+    distant-water fishing fleets from China, the US and the EU.
+  description_de: >-
+    Eine riesige Thunfischfischerei, die pazifische Inselstaaten ueber ein
+    gemeinsames Schiffstage-System lizenzieren, was kleinen Staaten
+    seltenen Einfluss auf Fernfischereiflotten aus China, den USA und der
+    EU verschafft.
+
+- id: northwest_pacific_fishing_grounds
+  name_en: Northwest Pacific Fishing Grounds
+  name_de: Nordwestpazifische Fanggruende
+  category: agriculture
+  subcategory: fisheries
+  asset_type: production_cluster
+  hull: [[130.0, 46.0], [145.0, 50.0], [155.0, 44.0], [142.0, 33.0], [128.0, 33.0], [130.0, 46.0]]
+  commodities: [fish]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "FAO SOFIA 2024 (Area 61 ~23% of global marine capture)"
+  rank_note: "Sea of Japan-Sea of Okhotsk-Yellow Sea complex (FAO Area 61); the single largest marine-capture zone at roughly 23 percent of world catch, driven by China, Japan and Russia."
+  description_en: >-
+    The world's largest marine fishing zone by catch volume, spanning the
+    Yellow Sea, Sea of Japan and Sea of Okhotsk; overlapping China-Japan-
+    Russia-Korea claims make stock management and IUU enforcement a
+    recurring flashpoint.
+  description_de: >-
+    Die weltweit groesste Meeresfangzone nach Fangmenge, die das Gelbe
+    Meer, das Japanische Meer und das Ochotskische Meer umfasst;
+    ueberlappende Anspruche Chinas, Japans, Russlands und Koreas machen
+    Bestandsmanagement und Bekaempfung illegaler Fischerei zu einem
+    wiederkehrenden Konfliktpunkt.
+
+# --- FERTILIZER: POTASH ---
+
+- id: saskatchewan_potash_belt
+  name_en: Saskatchewan Potash Belt
+  name_de: Saskatchewan-Kaliguertel
+  category: agriculture
+  subcategory: fertilizer
+  asset_type: production_cluster
+  commodities: [potash]
+  centroid_ids: [AMERICAS-CANADA]
+  criticality: 3
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (Canada >30% of world potash supply)"
+  rank_note: "All 11 of Canada's active potash mines sit in Saskatchewan; Canada supplies over 30 percent of world potash and is the largest exporter."
+  description_en: >-
+    The world's largest potash mining region, a critical fertilizer input
+    whose supply security shapes global food-price stability; new capacity
+    (BHP's Jansen mine, 2026) will extend Canada's lead further.
+  description_de: >-
+    Die weltweit groesste Kali-Abbauregion, ein kritischer
+    Duengemittel-Rohstoff, dessen Versorgungssicherheit die globale
+    Preisstabilitaet bei Lebensmitteln mitbestimmt; neue Kapazitaet
+    (BHPs Jansen-Mine, 2026) baut Kanadas Vorsprung weiter aus.
+
+- id: belarus_potash_soligorsk
+  name_en: Belarus Potash (Soligorsk)
+  name_de: Belarus-Kali (Salihorsk)
+  category: agriculture
+  subcategory: fertilizer
+  asset_type: facility
+  commodities: [potash]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "USGS Mineral Commodity Summaries; IFA (historically top-3 potash exporter)"
+  rank_note: "Belaruskali Soligorsk complex, historically one of the world's top three potash exporters; under EU/US sanctions since 2021-2022, rerouting exports through Russian ports."
+  description_en: >-
+    The Belaruskali potash complex at Soligorsk was a top global
+    fertilizer exporter until Western sanctions over the Lukashenko regime
+    forced a costly rerouting of trade through Russia.
+  description_de: >-
+    Der Belaruskali-Kalikomplex in Salihorsk war ein weltweit fuehrender
+    Duengemittelexporteur, bis westliche Sanktionen gegen das
+    Lukaschenko-Regime eine kostspielige Umleitung des Handels ueber
+    Russland erzwangen.
+
+- id: urals_potash_berezniki_solikamsk
+  name_en: Urals Potash (Berezniki-Solikamsk)
+  name_de: Ural-Kali (Beresniki-Solikamsk)
+  category: agriculture
+  subcategory: fertilizer
+  asset_type: facility
+  commodities: [potash]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "USGS Mineral Commodity Summaries; IFA (Uralkali top-5 global potash producer)"
+  rank_note: "Uralkali Berezniki-Solikamsk mines, one of the largest potash basins in the world."
+  description_en: >-
+    Uralkali's potash mines feed a large share of world fertilizer supply;
+    sinkhole collapses over old workings and sanctions exposure both
+    threaten continuity of exports that Latin American and Asian farmers
+    depend on.
+  description_de: >-
+    Uralkalis Kaliminen versorgen einen Grossteil der weltweiten
+    Duengemittelnachfrage; Erdeinbrueche ueber alten Abbaufeldern und
+    Sanktionsrisiken gefaehrden gleichermassen die Exporte, auf die
+    Landwirte in Lateinamerika und Asien angewiesen sind.
+
+# --- FERTILIZER: PHOSPHATE ---
+
+- id: moroccan_phosphate_plateau
+  name_en: Moroccan Phosphate Plateau (Khouribga)
+  name_de: Marokkanisches Phosphatplateau (Khouribga)
+  category: agriculture
+  subcategory: fertilizer
+  asset_type: production_cluster
+  commodities: [phosphate]
+  centroid_ids: []
+  criticality: 4
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (Morocco holds ~68% of world phosphate reserves)"
+  rank_note: "Holds roughly 68 percent of world phosphate rock reserves and is the world's #2 producer (~36 Mt, 2025), making it the long-run swing supplier as other deposits deplete."
+  description_en: >-
+    Morocco holds most of the world's known phosphate reserves, the
+    essential input for phosphate fertilizer underpinning global food
+    production; OCP's near-monopoly on long-run reserves gives Rabat
+    unmatched leverage as other producers deplete.
+  description_de: >-
+    Marokko haelt den Grossteil der weltweit bekannten Phosphatreserven,
+    den essenziellen Rohstoff fuer Phosphatduenger, der die globale
+    Nahrungsmittelproduktion stuetzt; OCPs Quasi-Monopol bei den
+    langfristigen Reserven verschafft Rabat unerreichten Einfluss, waehrend
+    andere Produzenten ihre Vorkommen erschoepfen.
+
+- id: china_phosphate_belt
+  name_en: China Phosphate Belt (Yunnan-Guizhou-Hubei)
+  name_de: Chinesischer Phosphatguertel (Yunnan-Guizhou-Hubei)
+  category: agriculture
+  subcategory: fertilizer
+  asset_type: production_cluster
+  hull: [[102.0, 27.5], [111.5, 31.5], [112.0, 28.0], [104.0, 23.5], [102.0, 27.5]]
+  commodities: [phosphate]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 4
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (China ~44% of world phosphate rock production)"
+  rank_note: "China produced an estimated 110 Mt of phosphate rock in 2025, 44 percent of world output and more than its next four competitors combined; export quotas here move global fertilizer prices."
+  description_en: >-
+    China's Yunnan-Guizhou-Hubei phosphate belt makes it the world's
+    dominant producer by far; periodic export restrictions to secure
+    domestic fertilizer supply have repeatedly tightened world phosphate
+    availability for farmers elsewhere.
+  description_de: >-
+    Chinas Phosphatguertel in Yunnan-Guizhou-Hubei macht das Land mit
+    Abstand zum weltweit dominierenden Produzenten; zeitweilige
+    Exportbeschraenkungen zur Sicherung der heimischen Duengemittelversorgung
+    haben wiederholt das weltweite Phosphatangebot fuer Landwirte anderswo
+    verknappt.
+
+- id: maaden_phosphate_ras_al_khair
+  name_en: Maaden Phosphate Complex (Ras Al Khair)
+  name_de: Maaden-Phosphatkomplex (Ras Al Khair)
+  category: agriculture
+  subcategory: fertilizer
+  asset_type: facility
+  commodities: [phosphate]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 2
+  ranking_source: "USGS Mineral Commodity Summaries; company disclosures (Maaden integrated phosphate-ammonia hub)"
+  rank_note: "Saudi Arabia's integrated phosphate and ammonia export hub, part of the state Maaden mining group; Saudi output is a rising mid-tier global source alongside Jordan."
+  description_en: >-
+    Saudi Arabia's Ras Al Khair complex processes phosphate rock into
+    fertilizer for export, positioning the kingdom as a rising alternative
+    to Moroccan and Chinese phosphate supply.
+  description_de: >-
+    Saudi-Arabiens Komplex in Ras Al Khair verarbeitet Phosphatgestein zu
+    Duengemitteln fuer den Export und positioniert das Koenigreich als
+    aufstrebende Alternative zur marokkanischen und chinesischen
+    Phosphatversorgung.
+
+# --- OTHER FOOD-SECURITY CLUSTER (water-constrained) ---
+
+- id: nile_delta_agriculture
+  name_en: Nile Delta Agriculture
+  name_de: Nildelta-Landwirtschaft
+  category: agriculture
+  subcategory: wheat
+  asset_type: production_cluster
+  commodities: [wheat, rice]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 3
+  ranking_source: "FAO / USDA PSD (Egypt is the world's largest wheat importer, dependent on Nile Delta domestic output plus imports)"
+  rank_note: "Egypt's most fertile and densely farmed region, almost entirely dependent on Nile floodwater and irrigation; GERD-sensitive water supply directly threatens domestic wheat and rice output."
+  description_en: >-
+    Egypt's food-producing heartland, wholly dependent on Nile flow,
+    making it acutely exposed to any reduction in upstream water from the
+    Grand Ethiopian Renaissance Dam.
+  description_de: >-
+    Aegyptens landwirtschaftliches Kernland, vollstaendig abhaengig vom
+    Nilwasser, und daher besonders anfaellig fuer jede Verringerung der
+    Wasserzufuhr durch den Grand-Ethiopian-Renaissance-Staudamm.
