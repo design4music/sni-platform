@@ -1,0 +1,1393 @@
+# Ports -- container gateways, energy export terminals, and bulk/dry-cargo
+# hubs that render on the map as asset_type=port. Authority: World Shipping
+# Council "Top 50 Container Ports" (TEU) and Lloyd's List "One Hundred Ports"
+# for container ranks; EIA/national port-authority data for energy and bulk
+# terminals. Sub-classes: container, energy, bulk, multipurpose.
+# Existing rows below are RECONCILED (enriched with subcategory/ranking_source/
+# rank_note) -- geometry omitted to preserve current DB coordinates. New
+# additions close the top-30 container gap and provide lon/lat.
+
+# =========================================================================
+# RECONCILED -- existing container ports (top global TEU tier)
+# =========================================================================
+
+- id: port_of_shanghai
+  name_en: Port of Shanghai
+  name_de: Hafen von Shanghai
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports; Lloyd's List One Hundred Ports 2025"
+  rank_note: "World's #1 container port, ~51.5M TEU (2024), rising to ~55M TEU (2025)."
+  description_en: >-
+    The world's busiest container port by a wide margin; disruption here
+    ripples through global manufacturing supply chains within days.
+  description_de: >-
+    Der mit Abstand verkehrsreichste Containerhafen der Welt; Stoerungen
+    hier wirken sich innerhalb weniger Tage auf globale Lieferketten aus.
+
+- id: port_of_singapore
+  name_en: Port of Singapore
+  name_de: Hafen von Singapur
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [oil, containers]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports; MPA Singapore"
+  rank_note: "World's #2 container port (~41-45M TEU) and the largest transshipment/bunkering hub."
+  description_en: >-
+    The premier transshipment and bunkering hub guarding the eastern end of
+    the Strait of Malacca.
+  description_de: >-
+    Der wichtigste Umschlag- und Bunkerhafen am oestlichen Ende der Strasse
+    von Malakka.
+
+- id: ningbo_zhoushan_port
+  name_en: Port of Ningbo-Zhoushan
+  name_de: Hafen Ningbo-Zhoushan
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #3 container port (~39-40M TEU) and #1 port globally by total cargo tonnage."
+  description_en: >-
+    The world's busiest port by cargo tonnage; a critical node for Chinese
+    export manufacturing and bulk commodity imports.
+  description_de: >-
+    Der nach Frachttonnage verkehrsreichste Hafen der Welt; ein zentraler
+    Knotenpunkt fuer chinesische Exportfertigung und Massengutimporte.
+
+- id: shenzhen_port
+  name_en: Port of Shenzhen
+  name_de: Hafen Shenzhen
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #4 container port, ~33.4M TEU (2024); anchors the Pearl River Delta."
+  description_en: >-
+    The maritime gateway for the Pearl River Delta manufacturing belt,
+    among the busiest container ports on earth.
+  description_de: >-
+    Das maritime Tor fuer den Fertigungsguertel des Perlflussdeltas, einer
+    der verkehrsreichsten Containerhaefen der Welt.
+
+- id: qingdao_port
+  name_en: Port of Qingdao
+  name_de: Hafen Qingdao
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #5 container port, ~30.9M TEU (2024); also a top Chinese crude-import terminal."
+  description_en: >-
+    A major northern Chinese port combining crude oil import terminals with
+    large-scale container throughput.
+  description_de: >-
+    Ein bedeutender nordchinesischer Hafen, der Rohoel-Importterminals mit
+    hohem Containerumschlag verbindet.
+
+- id: busan_port
+  name_en: Port of Busan
+  name_de: Hafen Busan
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #7 container port, ~24.4M TEU (2024); South Korea's largest port."
+  description_en: >-
+    South Korea's principal container port and a key transshipment hub
+    linking Northeast Asia to global shipping lanes.
+  description_de: >-
+    Suedkoreas wichtigster Containerhafen und ein zentraler Umschlag-
+    knotenpunkt zwischen Nordostasien und den globalen Schifffahrtsrouten.
+
+- id: tianjin_port
+  name_en: Port of Tianjin
+  name_de: Hafen Tianjin
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #8 container port, ~23.3M TEU (2024); main seaport for Beijing/Bohai Bay."
+  description_en: >-
+    The principal seaport serving Beijing and the Bohai Bay industrial
+    region.
+  description_de: >-
+    Der wichtigste Seehafen fuer Peking und die Industrieregion Bohai-Bucht.
+
+- id: jebel_ali_port
+  name_en: Jebel Ali Port (Dubai)
+  name_de: Hafen Jebel Ali (Dubai)
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #9 container port, ~15.5M TEU (2024); largest man-made harbour and Gulf transshipment hub."
+  description_en: >-
+    The Gulf's premier logistics and re-export hub, positioned to absorb
+    trade diverted around Hormuz-related disruptions.
+  description_de: >-
+    Der fuehrende Logistik- und Re-Export-Knotenpunkt am Golf, gut
+    positioniert, um durch Hormus-bedingte Stoerungen umgeleiteten Handel
+    aufzunehmen.
+
+- id: port_klang
+  name_en: Port Klang
+  name_de: Hafen Klang
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #10 container port, ~14.6M TEU (2024); Malaysia's busiest port, on the Strait of Malacca."
+  description_en: >-
+    Malaysia's principal port, positioned along the Strait of Malacca and
+    competing with Singapore for regional transshipment.
+  description_de: >-
+    Malaysias wichtigster Hafen an der Strasse von Malakka, im Wettbewerb
+    mit Singapur um den regionalen Umschlag.
+
+- id: port_of_rotterdam
+  name_en: Port of Rotterdam
+  name_de: Hafen von Rotterdam
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [oil, containers, chemicals]
+  centroid_ids: [EUROPE-BENELUX]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #11 container port, ~13.8M TEU (2024); largest port in Europe by total cargo volume."
+  description_en: >-
+    Europe's largest port and the main entry point for energy and
+    manufactured goods reaching the continental interior.
+  description_de: >-
+    Europas groesster Hafen und der wichtigste Eingangspunkt fuer Energie
+    und Fertigwaren ins kontinentale Hinterland.
+
+- id: hong_kong_port
+  name_en: Port of Hong Kong (Kwai Tsing)
+  name_de: Hafen Hongkong (Kwai Tsing)
+  category: port
+  subcategory: container
+  asset_type: port
+  lon: 114.1215
+  lat: 22.3382
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports; Lloyd's List One Hundred Ports"
+  rank_note: "World's #12 container port, ~13.7M TEU (2024), down from 22.2M a decade ago as mainland ports absorb transshipment share."
+  description_en: >-
+    Once the world's busiest port, now in structural decline as Shanghai,
+    Shenzhen and Ningbo capture direct mainland shipping links that used to
+    transship through here.
+  description_de: >-
+    Einst der verkehrsreichste Hafen der Welt, heute in strukturellem
+    Rueckgang, da Shanghai, Shenzhen und Ningbo direkte Festland-Schiff-
+    fahrtsverbindungen aufbauen, die frueher hier umgeschlagen wurden.
+
+- id: antwerp_bruges_port
+  name_en: Port of Antwerp-Bruges
+  name_de: Hafen Antwerpen-Bruegge
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, chemicals, oil]
+  centroid_ids: [EUROPE-BENELUX]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #13 container port, ~13.5M TEU (2024); Europe's largest integrated chemical hub."
+  description_en: >-
+    Europe's second-largest port by tonnage and the continent's largest
+    integrated chemical cluster, tightly coupled with Rotterdam.
+  description_de: >-
+    Europas nach Tonnage zweitgroesster Hafen und der groesste integrierte
+    Chemiecluster des Kontinents, eng verflochten mit Rotterdam.
+
+# =========================================================================
+# RECONCILED -- container ports (mid tier, top 15-30)
+# =========================================================================
+
+- id: laem_chabang_port
+  name_en: Laem Chabang Port
+  name_de: Hafen Laem Chabang
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, autos]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #20 container port, ~9.6M TEU (2024); Thailand's largest port and a major auto-export hub."
+  description_en: >-
+    Thailand's largest deep-sea port and a major automobile export hub
+    anchoring the country's Eastern Economic Corridor.
+  description_de: >-
+    Thailands groesster Tiefseehafen und ein bedeutender Autoexport-
+    Knotenpunkt, Ankerpunkt des oestlichen Wirtschaftskorridors des Landes.
+
+- id: kaohsiung_port
+  name_en: Port of Kaohsiung
+  name_de: Hafen Kaohsiung
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers, semiconductors]
+  centroid_ids: [ASIA-TAIWAN]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #21 container port, ~9.2M TEU (2024); Taiwan's largest port."
+  description_en: >-
+    Taiwan's largest port, handling the bulk of the island's container
+    trade including semiconductor-linked cargo.
+  description_de: >-
+    Taiwans groesster Hafen, wickelt den Grossteil des Containerhandels der
+    Insel ab, einschliesslich halbleiterbezogener Fracht.
+
+- id: new_york_nj_port
+  name_en: Port of New York-New Jersey
+  name_de: Hafen New York-New Jersey
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #24 container port, ~8.7M TEU (2024); busiest US East Coast gateway."
+  description_en: >-
+    The busiest container gateway on the US East Coast, critical for
+    transatlantic trade and northeastern US supply chains.
+  description_de: >-
+    Das verkehrsreichste Container-Tor an der US-Ostkueste, entscheidend
+    fuer den transatlantischen Handel und die Lieferketten im Nordosten
+    der USA.
+
+- id: mundra_port
+  name_en: Port of Mundra
+  name_de: Hafen Mundra
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, coal, oil]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #25 container port, ~8.2M TEU (2024); India's largest private port."
+  description_en: >-
+    India's largest private port, a fast-growing Gujarat coast gateway
+    handling containers, coal and crude for the country's west-coast
+    industry.
+  description_de: >-
+    Indiens groesster privater Hafen, ein schnell wachsendes Tor an der
+    Kueste Gujarats fuer Container, Kohle und Rohoel fuer die Industrie an
+    der Westkueste des Landes.
+
+- id: jawaharlal_nehru_port
+  name_en: Jawaharlal Nehru Port (Mumbai)
+  name_de: Jawaharlal-Nehru-Hafen (Mumbai)
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 3
+  ranking_source: "Jawaharlal Nehru Port Authority statistics"
+  rank_note: "India's largest container port."
+  description_en: >-
+    India's largest container port, handling a large share of the
+    country's containerized trade with the rest of the world.
+  description_de: >-
+    Indiens groesster Containerhafen, wickelt einen Grossteil des
+    containerisierten Handels des Landes mit der restlichen Welt ab.
+
+- id: tanjung_priok_port
+  name_en: Tanjung Priok Port (Jakarta)
+  name_de: Hafen Tanjung Priok (Jakarta)
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #26 container port, ~7.8M TEU (2024); Indonesia's busiest port."
+  description_en: >-
+    Indonesia's busiest port, the principal maritime gateway for the
+    greater Jakarta metropolitan region and national consumer imports.
+  description_de: >-
+    Indonesiens verkehrsreichster Hafen, das wichtigste maritime Tor fuer
+    den Grossraum Jakarta und nationale Konsumgueterimporte.
+
+- id: hamburg_port
+  name_en: Port of Hamburg
+  name_de: Hafen Hamburg
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [EUROPE-GERMANY]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #27 container port, ~7.8M TEU (2024); Germany's largest seaport."
+  description_en: >-
+    Germany's largest seaport and a critical hub feeding trade into
+    Central and Eastern Europe.
+  description_de: >-
+    Deutschlands groesster Seehafen und ein kritischer Knotenpunkt fuer den
+    Handel nach Mittel- und Osteuropa.
+
+- id: colombo_port
+  name_en: Port of Colombo
+  name_de: Hafen Colombo
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #28 container port, ~7.8M TEU (2024); key Indian Ocean transshipment hub with Chinese-financed terminal."
+  description_en: >-
+    A central Indian Ocean transshipment hub whose Chinese-financed
+    terminal has been a recurring flashpoint in Sri Lanka's debt and
+    strategic alignment debates.
+  description_de: >-
+    Ein zentraler Umschlagknotenpunkt im Indischen Ozean, dessen chinesisch
+    finanziertes Terminal wiederholt Streitpunkt in Sri Lankas Schulden-
+    und Ausrichtungsdebatten war.
+
+- id: cai_mep_port
+  name_en: Cai Mep Port
+  name_de: Hafen Cai Mep
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #30 container port, ~7.1M TEU (2024); Vietnam's principal deep-water container port."
+  description_en: >-
+    Vietnam's principal deep-water container port near Ho Chi Minh City, a
+    key outlet for the country's expanding manufacturing exports.
+  description_de: >-
+    Vietnams wichtigster Tiefwasser-Containerhafen nahe Ho-Chi-Minh-Stadt,
+    ein zentraler Ausgang fuer die wachsenden Fertigungsexporte des Landes.
+
+# =========================================================================
+# RECONCILED -- other container/multipurpose ports (regional majors)
+# =========================================================================
+
+- id: port_of_la_long_beach
+  name_en: Port of Los Angeles/Long Beach
+  name_de: Hafen Los Angeles/Long Beach
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #16 container port, ~10.3M TEU (2024); busiest container gateway in the United States."
+  description_en: >-
+    The largest US container gateway, handling a substantial share of
+    trans-Pacific trade with Asia.
+  description_de: >-
+    Das groesste US-Container-Tor, das einen erheblichen Teil des
+    transpazifischen Handels mit Asien abwickelt.
+
+- id: houston_port
+  name_en: Port of Houston
+  name_de: Hafen Houston
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil, lng, chemicals]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "US Army Corps of Engineers waterborne commerce statistics"
+  rank_note: "Largest US port by foreign waterborne tonnage; heart of the Gulf Coast refining/petrochemical complex."
+  description_en: >-
+    The hub of the US Gulf Coast refining and petrochemical complex, and
+    the country's leading energy-export port.
+  description_de: >-
+    Das Zentrum des US-Golfkuesten-Raffinerie- und Petrochemiekomplexes
+    und der fuehrende Energie-Exporthafen des Landes.
+
+- id: gdansk_port
+  name_en: Port of Gdansk
+  name_de: Hafen Danzig
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil, grain]
+  centroid_ids: [EUROPE-BALTIC]
+  criticality: 3
+  ranking_source: "Baltic Port List; national port authority statistics"
+  rank_note: "Poland's largest deepwater port; growing LNG-import and grain-export gateway."
+  description_en: >-
+    Poland's principal deepwater port, increasingly important as a
+    non-Russian energy import gateway and grain export outlet for the
+    region.
+  description_de: >-
+    Polens wichtigster Tiefwasserhafen, zunehmend bedeutsam als
+    nicht-russisches Energie-Importtor und Getreideexport-Ausgang fuer die
+    Region.
+
+- id: constanta_port
+  name_en: Port of Constanta
+  name_de: Hafen Konstanza
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [grain, containers]
+  centroid_ids: []
+  criticality: 4
+  ranking_source: "Editorial (Black Sea grain-corridor role, widely reported since 2022)"
+  rank_note: "Largest Black Sea port; primary alternate route for Ukrainian grain exports since the Odesa blockade."
+  description_en: >-
+    Romania's Black Sea port that became the primary overland-and-sea
+    alternate route for Ukrainian grain exports after the Odesa blockade.
+  description_de: >-
+    Rumaeniens Schwarzmeerhafen, der nach der Blockade Odessas zur
+    wichtigsten Land-See-Alternativroute fuer ukrainische Getreideexporte
+    wurde.
+
+- id: piraeus_port
+  name_en: Port of Piraeus
+  name_de: Hafen Piraeus
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "Editorial (COSCO ownership, Mediterranean gateway role)"
+  rank_note: "China's largest port investment in Europe; a Mediterranean transshipment gateway."
+  description_en: >-
+    Mediterranean gateway port majority-owned by China's COSCO, central to
+    Chinese trade access into Southeastern Europe.
+  description_de: >-
+    Mittelmeer-Hafen mehrheitlich im Besitz von Chinas COSCO, zentral fuer
+    den chinesischen Handelszugang nach Suedosteuropa.
+
+- id: santos_port
+  name_en: Port of Santos
+  name_de: Hafen Santos
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [grain, containers]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 3
+  ranking_source: "Editorial (ANTAQ port-authority statistics; Latin America's busiest port)"
+  rank_note: "Latin America's busiest port; Brazil's main soy and grain export outlet."
+  description_en: >-
+    Latin America's busiest port and the primary export outlet for
+    Brazilian soybeans, sugar and grain.
+  description_de: >-
+    Lateinamerikas verkehrsreichster Hafen und das wichtigste Exporttor
+    fuer brasilianische Sojabohnen, Zucker und Getreide.
+
+- id: le_havre_port
+  name_en: Port of Le Havre
+  name_de: Hafen Le Havre
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [EUROPE-FRANCE]
+  criticality: 3
+  ranking_source: "French port authority statistics (HAROPA)"
+  rank_note: "France's largest container port."
+  description_en: >-
+    France's largest container port, the maritime gateway for the greater
+    Paris region and northern French industry.
+  description_de: >-
+    Frankreichs groesster Containerhafen, das maritime Tor fuer den
+    Grossraum Paris und die nordfranzoesische Industrie.
+
+- id: felixstowe_port
+  name_en: Port of Felixstowe
+  name_de: Hafen Felixstowe
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [EUROPE-UK]
+  criticality: 3
+  ranking_source: "UK Department for Transport port statistics"
+  rank_note: "The United Kingdom's busiest container port."
+  description_en: >-
+    The UK's busiest container port, handling a large share of the
+    country's containerized trade with continental Europe and Asia.
+  description_de: >-
+    Grossbritanniens verkehrsreichster Containerhafen, wickelt einen
+    Grossteil des containerisierten Handels des Landes mit
+    Kontinentaleuropa und Asien ab.
+
+- id: marseille_fos_port
+  name_en: Port of Marseille-Fos
+  name_de: Hafen Marseille-Fos
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil, lng]
+  centroid_ids: [EUROPE-FRANCE]
+  criticality: 3
+  ranking_source: "French port authority statistics"
+  rank_note: "France's largest port by tonnage, combining container, oil and LNG terminals."
+  description_en: >-
+    France's largest port, combining container terminals with major oil
+    refining and LNG import capacity on the Mediterranean coast.
+  description_de: >-
+    Frankreichs groesster Hafen, verbindet Containerterminals mit
+    bedeutender Oelraffinerie- und LNG-Importkapazitaet an der
+    Mittelmeerkueste.
+
+- id: genoa_port
+  name_en: Port of Genoa
+  name_de: Hafen Genua
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "Italian port authority (Assoporti) statistics"
+  rank_note: "Italy's busiest port by cargo throughput."
+  description_en: >-
+    Italy's busiest seaport, the principal gateway for containerized trade
+    into northern Italy and the Po valley industrial belt.
+  description_de: >-
+    Italiens verkehrsreichster Seehafen, das wichtigste Tor fuer
+    containerisierten Handel nach Norditalien und den industriellen
+    Po-Guertel.
+
+- id: trieste_port
+  name_en: Port of Trieste
+  name_de: Hafen Triest
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "Editorial (Adriatic depth record; TAL pipeline terminal role)"
+  rank_note: "Deepest port in the Adriatic; TAL pipeline oil terminal supplies central European refineries."
+  description_en: >-
+    The Adriatic's deepest port, combining a growing container business
+    with the TAL pipeline oil terminal supplying refineries across central
+    Europe.
+  description_de: >-
+    Der tiefste Hafen der Adria, verbindet ein wachsendes Containergeschaeft
+    mit dem TAL-Pipeline-Oelterminal, das Raffinerien in ganz Mitteleuropa
+    versorgt.
+
+- id: durban_port
+  name_en: Port of Durban
+  name_de: Hafen Durban
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [AFRICA-SOUTHAFRICA]
+  criticality: 3
+  ranking_source: "Transnet National Ports Authority statistics"
+  rank_note: "Busiest container port in Sub-Saharan Africa."
+  description_en: >-
+    Sub-Saharan Africa's busiest container port, the principal maritime
+    gateway for South Africa's industrial heartland.
+  description_de: >-
+    Der verkehrsreichste Containerhafen im subsaharischen Afrika, das
+    wichtigste maritime Tor fuer Suedafrikas industrielles Kernland.
+
+- id: lagos_lekki_port
+  name_en: Lagos-Lekki Deep Sea Port
+  name_de: Tiefwasserhafen Lagos-Lekki
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 3
+  ranking_source: "Editorial (Nigerian Ports Authority; new deep-water capacity)"
+  rank_note: "Nigeria's newest deep-water port, built to relieve chronic Lagos port congestion."
+  description_en: >-
+    A new deep-water port east of Lagos built to relieve chronic congestion
+    and give Nigeria, Africa's largest crude producer, greater container
+    capacity.
+  description_de: >-
+    Ein neuer Tiefwasserhafen oestlich von Lagos, gebaut zur Entlastung
+    chronischer Staus und zur Staerkung der Containerkapazitaet Nigerias,
+    Afrikas groesstem Rohoelproduzenten.
+
+- id: mombasa_port
+  name_en: Port of Mombasa
+  name_de: Hafen Mombasa
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [AFRICA-EAST]
+  criticality: 3
+  ranking_source: "Kenya Ports Authority statistics"
+  rank_note: "East Africa's primary gateway port serving Kenya and landlocked neighbors via the Northern Corridor."
+  description_en: >-
+    East Africa's primary gateway port, serving Kenya, Uganda, Rwanda and
+    South Sudan through the Northern Corridor trade route.
+  description_de: >-
+    Ostafrikas wichtigster Tor-Hafen, versorgt Kenia, Uganda, Ruanda und
+    Suedsudan ueber die Handelsroute des Northern Corridor.
+
+- id: jeddah_port
+  name_en: Jeddah Islamic Port
+  name_de: Islamischer Hafen Jeddah
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 4
+  ranking_source: "Saudi Ports Authority (Mawani) statistics"
+  rank_note: "Saudi Arabia's main Red Sea port and container gateway."
+  description_en: >-
+    Saudi Arabia's principal Red Sea port, the kingdom's main container
+    gateway and a logistics hub for Hajj and Umrah traffic.
+  description_de: >-
+    Saudi-Arabiens wichtigster Rotmeer-Hafen, das Haupttor des Koenigreichs
+    fuer Container und ein Logistikknotenpunkt fuer Hadsch- und
+    Umrah-Verkehr.
+
+- id: haifa_port
+  name_en: Port of Haifa
+  name_de: Hafen Haifa
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "Israel Ports Company statistics"
+  rank_note: "Israel's largest port."
+  description_en: >-
+    Israel's largest port, central to the country's Mediterranean trade
+    and a strategic node in evolving regional shipping partnerships.
+  description_de: >-
+    Israels groesster Hafen, zentral fuer den Mittelmeerhandel des Landes
+    und ein strategischer Knotenpunkt in sich entwickelnden regionalen
+    Schifffahrtspartnerschaften.
+
+- id: port_said_east
+  name_en: Port Said East Port
+  name_de: Osthafen Port Said
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 4
+  ranking_source: "Suez Canal Authority / Egyptian port statistics"
+  rank_note: "Main container transshipment hub at the Mediterranean entrance to the Suez Canal."
+  description_en: >-
+    Egypt's main transshipment port at the Mediterranean mouth of the
+    Suez Canal, capturing container traffic feeding the canal corridor.
+  description_de: >-
+    Aegyptens wichtigster Umschlaghafen am Mittelmeer-Eingang des
+    Suezkanals, erfasst Containerverkehr, der den Kanalkorridor speist.
+
+- id: karachi_port
+  name_en: Port of Karachi
+  name_de: Hafen Karatschi
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [ASIA-PAKISTAN]
+  criticality: 3
+  ranking_source: "Karachi Port Trust statistics"
+  rank_note: "Pakistan's largest and busiest port."
+  description_en: >-
+    Pakistan's largest and busiest seaport, handling the majority of the
+    country's foreign trade and energy imports.
+  description_de: >-
+    Pakistans groesster und verkehrsreichster Seehafen, wickelt den
+    Grossteil des Aussenhandels und der Energieimporte des Landes ab.
+
+- id: chittagong_port
+  name_en: Port of Chittagong
+  name_de: Hafen Chittagong
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "Chittagong Port Authority statistics"
+  rank_note: "Bangladesh's primary seaport, handling the large majority of its foreign trade."
+  description_en: >-
+    Bangladesh's primary seaport, the entry and exit point for the large
+    majority of the country's garment-export-driven trade.
+  description_de: >-
+    Bangladeschs wichtigster Seehafen, Ein- und Ausgangspunkt fuer den
+    Grossteil des von Bekleidungsexporten getriebenen Handels des Landes.
+
+- id: manila_port
+  name_en: Port of Manila
+  name_de: Hafen Manila
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "Philippine Ports Authority statistics"
+  rank_note: "The Philippines' busiest port and premier international gateway."
+  description_en: >-
+    The Philippines' busiest seaport, the primary international gateway
+    for the country's imports and manufacturing exports.
+  description_de: >-
+    Der verkehrsreichste Seehafen der Philippinen, das wichtigste
+    internationale Tor fuer die Importe und Fertigungsexporte des Landes.
+
+- id: callao_port
+  name_en: Port of Callao
+  name_de: Hafen Callao
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, copper]
+  centroid_ids: [AMERICAS-PERU]
+  criticality: 3
+  ranking_source: "Editorial (APN Peru port authority statistics)"
+  rank_note: "Peru's principal port, handling most of the country's copper and container trade."
+  description_en: >-
+    Peru's principal port, the main export outlet for the country's
+    copper mining sector and its largest container gateway.
+  description_de: >-
+    Perus wichtigster Hafen, der Haupt-Exportausgang fuer den
+    Kupferbergbausektor des Landes und sein groesstes Container-Tor.
+
+- id: manzanillo_mx_port
+  name_en: Port of Manzanillo
+  name_de: Hafen Manzanillo
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [AMERICAS-MEXICO]
+  criticality: 3
+  ranking_source: "Mexican Secretaria de Marina port statistics"
+  rank_note: "Mexico's busiest port and principal Pacific gateway."
+  description_en: >-
+    Mexico's busiest seaport, the principal Pacific coast gateway for
+    trade with Asia and a key node in North American supply chains.
+  description_de: >-
+    Mexikos verkehrsreichster Seehafen, das wichtigste Pazifik-Tor fuer den
+    Handel mit Asien und ein zentraler Knotenpunkt in nordamerikanischen
+    Lieferketten.
+
+- id: cartagena_co_port
+  name_en: Port of Cartagena
+  name_de: Hafen Cartagena
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [AMERICAS-COLOMBIA]
+  criticality: 3
+  ranking_source: "Editorial (Latin America and Caribbean transshipment ranking, Seatrade Maritime 2025)"
+  rank_note: "Colombia's leading Caribbean container port; a top-5 Latin America/Caribbean transshipment hub (~2.15M TEU, 2024)."
+  description_en: >-
+    Colombia's leading Caribbean container port, a key regional
+    transshipment point linking the country to North American and
+    European trade.
+  description_de: >-
+    Kolumbiens fuehrender Karibik-Containerhafen, ein wichtiger regionaler
+    Umschlagpunkt, der das Land mit dem nordamerikanischen und
+    europaeischen Handel verbindet.
+
+- id: tanger_med_port
+  name_en: Tanger Med Port
+  name_de: Hafen Tanger Med
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: []
+  criticality: 4
+  ranking_source: "World Shipping Council Top 50 Container Ports"
+  rank_note: "World's #17 container port, ~10.2M TEU (2024); largest port in Africa and the Mediterranean by container throughput."
+  description_en: >-
+    Africa's largest port by container throughput, positioned directly
+    opposite Gibraltar and a fast-growing transshipment rival to Spanish
+    ports.
+  description_de: >-
+    Afrikas nach Containerumschlag groesster Hafen, direkt gegenueber
+    Gibraltar gelegen und ein schnell wachsender Umschlag-Rivale zu
+    spanischen Haefen.
+
+- id: algeciras_port
+  name_en: Port of Algeciras
+  name_de: Hafen Algeciras
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "Puertos del Estado (Spanish port authority) statistics"
+  rank_note: "Spain's busiest port; major Strait of Gibraltar transshipment and bunkering hub."
+  description_en: >-
+    Spain's busiest port, a major bunkering and transshipment hub sitting
+    directly on the Strait of Gibraltar shipping lane.
+  description_de: >-
+    Spaniens verkehrsreichster Hafen, ein bedeutender Bunker- und
+    Umschlagknotenpunkt direkt an der Schifffahrtsroute der Strasse von
+    Gibraltar.
+
+- id: valencia_port
+  name_en: Port of Valencia
+  name_de: Hafen Valencia
+  category: port
+  subcategory: container
+  asset_type: port
+  commodities: [containers]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "Puertos del Estado (Spanish port authority) statistics"
+  rank_note: "Spain's largest container port on the Mediterranean."
+  description_en: >-
+    Spain's largest Mediterranean container port, a key gateway for
+    Iberian trade with Asia and the Americas.
+  description_de: >-
+    Spaniens groesster Mittelmeer-Containerhafen, ein wichtiges Tor fuer
+    den iberischen Handel mit Asien und Amerika.
+
+- id: salalah_port
+  name_en: Port of Salalah
+  name_de: Hafen Salalah
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 3
+  ranking_source: "Editorial (Indian Ocean transshipment role, outside Hormuz)"
+  rank_note: "Major Indian Ocean transshipment hub deliberately positioned outside the Strait of Hormuz."
+  description_en: >-
+    Oman's deep-water transshipment hub on the Arabian Sea, valued as a
+    major container port that lies outside the Strait of Hormuz
+    chokepoint.
+  description_de: >-
+    Omans Tiefwasser-Umschlaghafen am Arabischen Meer, geschaetzt als
+    bedeutender Containerhafen ausserhalb des Engpasses der Strasse von
+    Hormus.
+
+- id: yokohama_tokyo_bay_port
+  name_en: Yokohama-Tokyo Bay Port
+  name_de: Hafen Yokohama-Tokio-Bucht
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, autos]
+  centroid_ids: [ASIA-JAPAN]
+  criticality: 4
+  ranking_source: "Japan Ministry of Land, Infrastructure, Transport and Tourism port statistics"
+  rank_note: "Core port complex of the Tokyo Bay megaregion; Japan's busiest container and auto-export gateway."
+  description_en: >-
+    The core port complex of the Tokyo Bay megaregion, Japan's busiest
+    gateway for containerized trade and auto exports.
+  description_de: >-
+    Der zentrale Hafenkomplex der Tokio-Bucht-Megaregion, Japans
+    verkehrsreichstes Tor fuer containerisierten Handel und Autoexporte.
+
+- id: nagoya_port
+  name_en: Port of Nagoya
+  name_de: Hafen Nagoya
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [autos, containers]
+  centroid_ids: [ASIA-JAPAN]
+  criticality: 3
+  ranking_source: "Japan Ministry of Land, Infrastructure, Transport and Tourism port statistics"
+  rank_note: "Japan's largest port by trade value, dominated by automobile exports."
+  description_en: >-
+    Japan's largest port by trade value, the principal export outlet for
+    the Toyota-centered Chubu region automobile industry.
+  description_de: >-
+    Japans nach Handelswert groesster Hafen, der wichtigste Exportausgang
+    fuer die auf Toyota zentrierte Automobilindustrie der Region Chubu.
+
+# =========================================================================
+# RECONCILED -- bulk commodity export ports
+# =========================================================================
+
+- id: port_hedland
+  name_en: Port Hedland
+  name_de: Hafen Hedland
+  category: port
+  subcategory: bulk
+  asset_type: port
+  commodities: [iron_ore]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 4
+  ranking_source: "Pilbara Ports Authority statistics; USGS iron ore trade data"
+  rank_note: "World's largest iron ore export port, moving the bulk of Australia's Pilbara output mostly to China."
+  description_en: >-
+    The world's largest iron ore export port, moving the bulk of
+    Australia's Pilbara output mostly to Chinese steelmakers.
+  description_de: >-
+    Der weltweit groesste Eisenerz-Exporthafen, transportiert den
+    Grossteil der Pilbara-Foerderung Australiens vor allem zu chinesischen
+    Stahlherstellern.
+
+- id: newcastle_au_port
+  name_en: Port of Newcastle
+  name_de: Hafen Newcastle
+  category: port
+  subcategory: bulk
+  asset_type: port
+  commodities: [coal]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 4
+  ranking_source: "Port of Newcastle statistics; IEA coal trade data"
+  rank_note: "World's largest coal export port by volume."
+  description_en: >-
+    The world's largest coal export port, a key supply line for thermal
+    coal into Asian power generation markets.
+  description_de: >-
+    Der weltweit groesste Kohle-Exporthafen, eine wichtige Versorgungslinie
+    fuer Kesselkohle in asiatische Stromerzeugungsmaerkte.
+
+- id: richards_bay_port
+  name_en: Richards Bay Coal Terminal
+  name_de: Kohleterminal Richards Bay
+  category: port
+  subcategory: bulk
+  asset_type: port
+  commodities: [coal]
+  centroid_ids: [AFRICA-SOUTHAFRICA]
+  criticality: 4
+  ranking_source: "Richards Bay Coal Terminal company statistics; Transnet"
+  rank_note: "One of the world's largest dedicated coal export terminals."
+  description_en: >-
+    South Africa's principal coal export terminal, a major thermal coal
+    supply route to Europe and Asia and a bellwether for the country's
+    rail-logistics troubles.
+  description_de: >-
+    Suedafrikas wichtigstes Kohle-Exportterminal, eine bedeutende
+    Kesselkohle-Lieferroute nach Europa und Asien und ein Fruehindikator
+    fuer die Eisenbahn-Logistikprobleme des Landes.
+
+- id: rosario_grain_hub
+  name_en: Rosario Grain Hub
+  name_de: Getreideknotenpunkt Rosario
+  category: port
+  subcategory: bulk
+  asset_type: port
+  commodities: [grain, soy]
+  centroid_ids: []
+  criticality: 4
+  ranking_source: "Bolsa de Comercio de Rosario grain-export statistics"
+  rank_note: "Handles the large majority of Argentina's grain and soy exports via the Parana river."
+  description_en: >-
+    The Parana river grain-export complex handling most of Argentina's
+    soybean and grain shipments, highly exposed to river water levels and
+    export-tax policy.
+  description_de: >-
+    Der Getreide-Exportkomplex am Parana-Fluss, wickelt den Grossteil der
+    argentinischen Soja- und Getreideexporte ab, stark abhaengig von
+    Flusswasserstaenden und Exportsteuerpolitik.
+
+- id: tubarao_vitoria_port
+  name_en: Tubarao Port (Vitoria)
+  name_de: Hafen Tubarao (Vitoria)
+  category: port
+  subcategory: bulk
+  asset_type: port
+  commodities: [iron_ore]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 4
+  ranking_source: "Vale S.A. port/logistics statistics"
+  rank_note: "One of the world's largest iron ore export terminals."
+  description_en: >-
+    One of the world's largest iron ore export terminals, the main outlet
+    for Vale shipments to Chinese and European steel mills.
+  description_de: >-
+    Eines der weltweit groessten Eisenerz-Exportterminals, der Hauptausgang
+    fuer Vale-Lieferungen an chinesische und europaeische Stahlwerke.
+
+- id: djibouti_port
+  name_en: Port of Djibouti
+  name_de: Hafen Dschibuti
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  commodities: [containers, oil]
+  centroid_ids: [AFRICA-HORN]
+  criticality: 4
+  ranking_source: "Editorial (Ethiopia trade-dependency and multi-power basing role, widely reported)"
+  rank_note: "Primary logistics gateway for landlocked Ethiopia; hosts multiple foreign military bases."
+  description_en: >-
+    The key Red Sea logistics hub serving landlocked Ethiopia and host to
+    competing Chinese, American, French and Japanese military bases at
+    the mouth of Bab el-Mandeb.
+  description_de: >-
+    Der zentrale Rotmeer-Logistikknotenpunkt fuer das Binnenland Aethiopien
+    und Standort konkurrierender chinesischer, amerikanischer,
+    franzoesischer und japanischer Militaerbasen am Bab al-Mandab.
+
+# =========================================================================
+# RECONCILED -- energy export terminals (asset_type=port)
+# =========================================================================
+
+- id: ras_tanura
+  name_en: Ras Tanura Oil Terminal
+  name_de: Oelterminal Ras Tanura
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 5
+  ranking_source: "Saudi Aramco corporate disclosures; EIA Saudi Arabia country analysis"
+  rank_note: "Saudi Aramco's largest crude oil export terminal."
+  description_en: >-
+    Saudi Aramco's largest crude export terminal, feeding a substantial
+    share of the oil that transits the Strait of Hormuz.
+  description_de: >-
+    Saudi Aramcos groesstes Rohoel-Exportterminal, das einen erheblichen
+    Teil des durch die Strasse von Hormus transportierten Oels speist.
+
+- id: novorossiysk_port
+  name_en: Port of Novorossiysk
+  name_de: Hafen Noworossijsk
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil, grain]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "EIA Russia country analysis; JODI oil export data"
+  rank_note: "Russia's main Black Sea oil and grain export terminal."
+  description_en: >-
+    Russia's primary Black Sea export terminal for crude oil and grain,
+    and a repeated target of Ukrainian long-range strikes.
+  description_de: >-
+    Russlands wichtigstes Export-Terminal am Schwarzen Meer fuer Rohoel und
+    Getreide, und wiederholtes Ziel ukrainischer Langstreckenangriffe.
+
+- id: odesa_port
+  name_en: Port of Odesa
+  name_de: Hafen Odessa
+  category: port
+  subcategory: bulk
+  asset_type: port
+  commodities: [grain]
+  centroid_ids: [EUROPE-UKRAINE]
+  criticality: 4
+  ranking_source: "UN/FAO grain-corridor reporting; Ukrainian port authority statistics"
+  rank_note: "Ukraine's principal grain export gateway to world markets."
+  description_en: >-
+    Ukraine's main grain export gateway; its blockade and repeated
+    shelling since 2022 have directly affected global food prices.
+  description_de: >-
+    Ukraines wichtigstes Tor fuer Getreideexporte; seine Blockade und
+    wiederholter Beschuss seit 2022 haben die globalen Lebensmittelpreise
+    direkt beeinflusst.
+
+- id: kharg_island_terminal
+  name_en: Kharg Island Terminal
+  name_de: Terminal Khark-Insel
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 4
+  ranking_source: "EIA Iran country analysis"
+  rank_note: "Loads the large majority of Iran's crude oil exports."
+  description_en: >-
+    Iran's principal crude export terminal in the northern Gulf, loading
+    nearly all of the country's oil exports and a recurring target in
+    escalation scenarios.
+  description_de: >-
+    Irans wichtigstes Rohoel-Exportterminal im noerdlichen Golf, verlaedt
+    fast alle Oelexporte des Landes und ein wiederkehrendes Ziel in
+    Eskalationsszenarien.
+
+- id: basra_oil_terminal
+  name_en: Basra Oil Terminal (Al Basrah)
+  name_de: Oelterminal Basra (Al-Basra)
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 4
+  ranking_source: "EIA Iraq country analysis"
+  rank_note: "Loads the large majority of Iraq's crude oil exports."
+  description_en: >-
+    Iraq's main offshore crude export terminal in the northern Gulf, the
+    loading point for most of Baghdad's oil revenue.
+  description_de: >-
+    Iraks wichtigstes Offshore-Rohoel-Exportterminal im noerdlichen Golf,
+    der Verladepunkt fuer den Grossteil der Oeleinnahmen Bagdads.
+
+- id: ceyhan_terminal
+  name_en: Ceyhan Terminal
+  name_de: Terminal Ceyhan
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [MIDEAST-TURKEY]
+  criticality: 3
+  ranking_source: "BTC Co. pipeline operator disclosures; EIA Turkey country analysis"
+  rank_note: "Mediterranean terminus of the BTC pipeline; a key non-Hormuz Caspian oil export point."
+  description_en: >-
+    The Mediterranean terminus of the Baku-Tbilisi-Ceyhan pipeline, giving
+    Caspian crude a route to world markets that bypasses both Russia and
+    the Strait of Hormuz.
+  description_de: >-
+    Der Mittelmeer-Endpunkt der Baku-Tiflis-Ceyhan-Pipeline, der
+    kaspischem Rohoel einen Weg zu den Weltmaerkten unter Umgehung sowohl
+    Russlands als auch der Strasse von Hormus verschafft.
+
+- id: fujairah_hub
+  name_en: Fujairah Bunkering-Export Hub
+  name_de: Bunker- und Exportzentrum Fudschaira
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 4
+  ranking_source: "EIA UAE country analysis; S&P Global Platts bunkering data"
+  rank_note: "Major bunkering hub; one of few UAE export points lying outside the Strait of Hormuz."
+  description_en: >-
+    A UAE export and bunkering hub on the Gulf of Oman coast, valued
+    precisely because it lies outside the Strait of Hormuz and can keep
+    loading if the strait is closed.
+  description_de: >-
+    Ein Export- und Bunkerzentrum der VAE an der Kueste des Golfs von Oman,
+    geschaetzt gerade weil es ausserhalb der Strasse von Hormus liegt und
+    bei einer Sperrung weiter beladen werden kann.
+
+- id: kozmino_terminal
+  name_en: Kozmino Terminal
+  name_de: Terminal Koszmino
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "EIA Russia country analysis; Transneft disclosures"
+  rank_note: "Pacific terminus of the ESPO pipeline; Russia's main oil export gateway to Asia."
+  description_en: >-
+    The Pacific terminus of the ESPO pipeline, Russia's main oil export
+    gateway to Asian buyers and a key outlet for crude that no longer
+    flows to Europe.
+  description_de: >-
+    Der pazifische Endpunkt der ESPO-Pipeline, Russlands wichtigstes
+    Oel-Exporttor zu asiatischen Abnehmern und ein zentraler Ausgang fuer
+    Rohoel, das nicht mehr nach Europa fliesst.
+
+- id: primorsk_ust_luga_terminals
+  name_en: Primorsk-Ust-Luga Terminals
+  name_de: Terminals Primorsk-Ust-Luga
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "EIA Russia country analysis; sanctions-monitoring press reporting (Reuters, Kpler-cited)"
+  rank_note: "Russia's main Baltic Sea crude export terminals; principal shadow-fleet departure point."
+  description_en: >-
+    Russia's primary Baltic Sea oil export terminals, the main departure
+    point for the aging shadow-fleet tankers used to move sanctioned crude
+    around the price cap.
+  description_de: >-
+    Russlands wichtigste Oel-Exportterminals an der Ostsee, der wichtigste
+    Abfahrtspunkt fuer die alternde Schattenflotte, die sanktioniertes
+    Rohoel am Preisdeckel vorbei transportiert.
+
+- id: corpus_christi_export_hub
+  name_en: Corpus Christi Export Hub
+  name_de: Exportzentrum Corpus Christi
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "EIA US petroleum export statistics"
+  rank_note: "Largest US crude oil export port by volume."
+  description_en: >-
+    The largest US crude export port, the main outlet through which
+    Permian Basin output reaches international tanker markets.
+  description_de: >-
+    Der groesste US-Rohoel-Exporthafen, der Hauptausgang, ueber den die
+    Foerderung des Perm-Beckens internationale Tankermaerkte erreicht.
+
+# =========================================================================
+# NEW -- top-30 container ports not yet in the registry
+# =========================================================================
+
+- id: guangzhou_port
+  name_en: Port of Guangzhou (Nansha)
+  name_de: Hafen Guangzhou (Nansha)
+  category: port
+  subcategory: container
+  asset_type: port
+  lon: 113.60
+  lat: 22.75
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports; Wikipedia List of busiest container ports (Lloyd's List + WSC 2024 figures)"
+  rank_note: "World's #6 container port, ~26.1M TEU (2024), up 4% year over year."
+  description_en: >-
+    A top-six global container port anchoring the Pearl River Delta at
+    its Nansha terminal, feeding southern China's export manufacturing
+    base.
+  description_de: >-
+    Einer der sechs weltweit groessten Containerhaefen, verankert das
+    Perlflussdelta ueber sein Nansha-Terminal und versorgt Suedchinas
+    Exportfertigungsbasis.
+
+- id: xiamen_port
+  name_en: Port of Xiamen
+  name_de: Hafen Xiamen
+  category: port
+  subcategory: container
+  asset_type: port
+  lon: 118.06
+  lat: 24.45
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "World Shipping Council Top 50 Container Ports; Wikipedia List of busiest container ports"
+  rank_note: "World's #14 container port, ~12.3M TEU (2024)."
+  description_en: >-
+    A fast-growing Fujian province container port and a rising rival to
+    Hong Kong for southern China transshipment volume.
+  description_de: >-
+    Ein schnell wachsender Containerhafen in der Provinz Fujian und ein
+    aufstrebender Rivale Hongkongs um Umschlagvolumen in Suedchina.
+
+- id: dalian_port
+  name_en: Port of Dalian
+  name_de: Hafen Dalian
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  lon: 121.6645
+  lat: 38.9375
+  commodities: [containers, oil]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "Editorial (China Ports Association statistics); Yiwuagent China ports throughput report"
+  rank_note: "~11.6M TEU (2024); mainland China's second-largest container transshipment hub and a major crude-import terminal."
+  description_en: >-
+    China's northernmost major ice-free port, combining a large container
+    transshipment business with crude oil import terminals serving
+    northeast China's refineries.
+  description_de: >-
+    Chinas noerdlichster bedeutender eisfreier Hafen, verbindet ein
+    grosses Container-Umschlaggeschaeft mit Rohoel-Importterminals fuer
+    die Raffinerien Nordostchinas.
+
+- id: vancouver_port
+  name_en: Port of Vancouver
+  name_de: Hafen Vancouver
+  category: port
+  subcategory: multipurpose
+  asset_type: port
+  lon: -123.0833
+  lat: 49.2900
+  commodities: [containers, grain, coal]
+  centroid_ids: [AMERICAS-CANADA]
+  criticality: 3
+  ranking_source: "Vancouver Fraser Port Authority annual statistics"
+  rank_note: "Canada's largest port by tonnage; ~3.5M TEU (2024), the 4th-largest container gateway in North America."
+  description_en: >-
+    Canada's largest port and its principal Pacific gateway, combining
+    container trade with major grain and coal export terminals.
+  description_de: >-
+    Kanadas groesster Hafen und sein wichtigstes Pazifik-Tor, verbindet
+    Containerhandel mit bedeutenden Getreide- und Kohle-Exportterminals.
+
+- id: melbourne_port
+  name_en: Port of Melbourne
+  name_de: Hafen Melbourne
+  category: port
+  subcategory: container
+  asset_type: port
+  lon: 144.9166
+  lat: -37.8240
+  commodities: [containers]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 3
+  ranking_source: "Port of Melbourne corporate trade statistics"
+  rank_note: "Australia's largest container and general cargo port; record ~3.4M TEU (2024), over a third of national container trade."
+  description_en: >-
+    Australia's largest container port, handling more than a third of
+    the nation's container trade and the largest in Australasia.
+  description_de: >-
+    Australiens groesster Containerhafen, wickelt mehr als ein Drittel des
+    nationalen Containerhandels ab und ist der groesste in Australasien.
+
+- id: colon_port
+  name_en: Colon Port Complex
+  name_de: Hafenkomplex Colon
+  category: port
+  subcategory: container
+  asset_type: port
+  lon: -79.8812
+  lat: 9.3726
+  commodities: [containers]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "Seatrade Maritime Latin America/Caribbean container ranking 2025; Panama port statistics"
+  rank_note: "Largest transshipment hub in the Caribbean/Latin America, ~3.7M TEU (2024) across Colon Container Terminal, MIT and Cristobal."
+  description_en: >-
+    The Atlantic-entrance transshipment complex at the Panama Canal,
+    the busiest container hub in the Caribbean and a key node for
+    Far East cargo reaching the Americas.
+  description_de: >-
+    Der Umschlagkomplex am atlantischen Eingang des Panamakanals, der
+    verkehrsreichste Container-Knotenpunkt der Karibik und ein zentraler
+    Knotenpunkt fuer Fernost-Fracht, die Amerika erreicht.
