@@ -1,0 +1,123 @@
+# Pipelines -- fixed overland/subsea energy infrastructure.
+# Authority: Global Energy Monitor (GOIT/GGIT route trackers, CC BY 4.0).
+# Geometry omitted: existing GEM-researched routes are preserved. A pipeline
+# whose real route cannot be confidently located stays off the map (a wrong
+# line is worse than no line), so this set grows only with sourced routes.
+
+- id: btc_pipeline
+  name_en: Baku-Tbilisi-Ceyhan Pipeline
+  name_de: Baku-Tiflis-Ceyhan-Pipeline
+  category: pipeline
+  subcategory: oil_pipeline
+  asset_type: pipeline
+  commodities: [oil]
+  centroid_ids: [EUROPE-AZERBAIJAN, MIDEAST-TURKEY]
+  criticality: 3
+  ranking_source: "Global Energy Monitor GOIT route tracker"
+  rank_note: "~1 Mb/d Caspian crude to the Mediterranean, bypassing both Russia and Hormuz -- a strategic diversification route."
+  description_en: >-
+    Carries Azerbaijani Caspian oil to the Mediterranean while bypassing
+    both Russian territory and the Strait of Hormuz, making it a strategic
+    diversification route.
+  description_de: >-
+    Transportiert aserbaidschanisches Kaspi-Oel zum Mittelmeer unter
+    Umgehung sowohl russischen Territoriums als auch der Strasse von Hormus,
+    eine strategische Diversifizierungsroute.
+
+- id: druzhba_pipeline_west
+  name_en: Druzhba Pipeline (Western Segment)
+  name_de: Druschba-Pipeline (Westabschnitt)
+  category: pipeline
+  subcategory: oil_pipeline
+  asset_type: pipeline
+  commodities: [oil]
+  centroid_ids: [EUROPE-RUSSIA, EUROPE-VISEGRAD, EUROPE-UKRAINE]
+  criticality: 3
+  ranking_source: "Global Energy Monitor GOIT route tracker"
+  rank_note: "Soviet-era crude line to central Europe; northern branch halted post-2022, southern branch to Hungary/Slovakia continues."
+  description_en: >-
+    Soviet-era pipeline still carrying Russian crude to select central
+    European refineries; its western segment through Ukraine has been
+    repeatedly disrupted since 2022.
+  description_de: >-
+    Pipeline aus Sowjetzeiten, die weiterhin russisches Rohoel zu
+    ausgewaehlten mitteleuropaeischen Raffinerien transportiert; ihr
+    Westabschnitt durch die Ukraine wurde seit 2022 wiederholt gestoert.
+
+- id: sumed_pipeline
+  name_en: SUMED Pipeline
+  name_de: SUMED-Pipeline
+  category: pipeline
+  subcategory: oil_pipeline
+  asset_type: pipeline
+  commodities: [oil]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 4
+  ranking_source: "Global Energy Monitor GOIT route tracker; EIA"
+  rank_note: "Ain Sukhna-Sidi Kerir crude bypass for tankers too large for Suez; critical redundancy for the canal chokepoint."
+  description_en: >-
+    The overland crude pipeline from Ain Sukhna to Sidi Kerir that lets
+    tankers too large for the Suez Canal move oil between the Red Sea and
+    Mediterranean, making it a critical redundancy for the canal chokepoint.
+  description_de: >-
+    Die Ueberland-Rohoelpipeline von Ain Sukhna nach Sidi Kerir, die es fuer
+    den Suezkanal zu grossen Tankern erlaubt, Oel zwischen Rotem Meer und
+    Mittelmeer zu transportieren, eine kritische Redundanz zum Engpass des Kanals.
+
+- id: nord_stream_pipeline
+  name_en: Nord Stream Pipeline
+  name_de: Nord-Stream-Pipeline
+  category: pipeline
+  subcategory: gas_pipeline
+  asset_type: pipeline
+  commodities: [gas]
+  centroid_ids: [EUROPE-RUSSIA, EUROPE-GERMANY]
+  criticality: 2
+  ranking_source: "Global Energy Monitor GGIT route tracker"
+  rank_note: "Baltic subsea gas line Vyborg-Greifswald, sabotaged Sept 2022; largely inoperative but strategically live."
+  description_en: >-
+    The Baltic seabed gas pipeline linking Vyborg to Greifswald, sabotaged
+    in September 2022; though largely inoperative, its fate remains a live
+    strategic and diplomatic question over any future Russia-Germany gas relationship.
+  description_de: >-
+    Die Ostsee-Gaspipeline von Wyborg nach Greifswald, im September 2022
+    sabotiert; obwohl weitgehend ausser Betrieb, bleibt ihr Schicksal eine
+    offene strategische und diplomatische Frage fuer jede kuenftige
+    Gasbeziehung zwischen Russland und Deutschland.
+
+- id: power_of_siberia
+  name_en: Power of Siberia Pipeline
+  name_de: Pipeline Kraft Sibiriens
+  category: pipeline
+  subcategory: gas_pipeline
+  asset_type: pipeline
+  commodities: [gas]
+  centroid_ids: [EUROPE-RUSSIA, ASIA-CHINA]
+  criticality: 3
+  ranking_source: "Global Energy Monitor GGIT route tracker"
+  rank_note: "Russia's main eastward gas line to China; central to Moscow's pivot from European markets after 2022."
+  description_en: >-
+    Russia main eastward gas pipeline to China, central to Moscow pivot away
+    from European markets after 2022 sanctions.
+  description_de: >-
+    Russlands wichtigste Gaspipeline nach China, zentral fuer Moskaus Abkehr
+    von europaeischen Maerkten nach den Sanktionen von 2022.
+
+- id: turkstream
+  name_en: TurkStream Pipeline
+  name_de: TurkStream-Pipeline
+  category: pipeline
+  subcategory: gas_pipeline
+  asset_type: pipeline
+  commodities: [gas]
+  centroid_ids: [EUROPE-RUSSIA, MIDEAST-TURKEY]
+  criticality: 3
+  ranking_source: "Global Energy Monitor GGIT route tracker"
+  rank_note: "Black Sea subsea line; one of Russia's few remaining gas export routes into Europe after 2022."
+  description_en: >-
+    A subsea gas pipeline under the Black Sea that became one of Russia few
+    remaining gas export routes into Europe after other lines were cut or sabotaged.
+  description_de: >-
+    Eine Unterwasser-Gaspipeline unter dem Schwarzen Meer, die zu einer von
+    Russlands wenigen verbliebenen Gasexportrouten nach Europa wurde, nachdem
+    andere Leitungen gekappt oder sabotiert wurden.

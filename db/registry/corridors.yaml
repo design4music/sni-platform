@@ -1,0 +1,254 @@
+# Trade corridors -- major seaborne lanes between strategic ports.
+# Authority: Eurostat searoute over the Oak Ridge Global Shipping Lane
+# Network (AIS-enriched). Geometry omitted: existing searoute-generated
+# lane geometry (water-only, passage-aware) is preserved. Lane SELECTION is
+# editorial; geometry is algorithmic.
+
+- id: lane_asia_europe
+  name_en: Asia-Europe container lane
+  name_de: Containerroute Asien-Europa
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA, EUROPE-GERMANY]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "World's busiest long-haul container corridor; transits Malacca, Suez, Bab, Gibraltar."
+  description_en: >-
+    The world's busiest long-haul container corridor, linking Chinese export
+    hubs to Northern Europe.
+  description_de: >-
+    Der verkehrsreichste Langstrecken-Containerkorridor der Welt zwischen
+    chinesischen Exporthaefen und Nordeuropa.
+
+- id: lane_asia_gulf
+  name_en: Asia-Gulf lane
+  name_de: Route Asien-Golf
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [containers]
+  centroid_ids: [ASIA-SOUTHEAST, MIDEAST-GULF]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Container and transshipment corridor between Southeast Asia and the Gulf."
+  description_en: >-
+    Container and transshipment corridor between Southeast Asia and the Gulf.
+  description_de: >-
+    Container- und Umschlagkorridor zwischen Suedostasien und dem Golf.
+
+- id: lane_australia_korea_coal
+  name_en: Australia-Northeast Asia coal lane
+  name_de: Kohleroute Australien-Nordostasien
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [coal]
+  centroid_ids: [OCEANIA-AUSTRALIA, ASIA-SOUTHKOREA]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Australian coal to Northeast Asian power and steel producers."
+  description_en: >-
+    Australian coal exports to Northeast Asian power and steel producers.
+  description_de: >-
+    Australische Kohleexporte an Strom- und Stahlerzeuger in Nordostasien.
+
+- id: lane_blacksea_grain
+  name_en: Black Sea grain lane
+  name_de: Schwarzmeer-Getreideroute
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [grain]
+  centroid_ids: [EUROPE-UKRAINE, MIDEAST-TURKEY]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Ukrainian/Russian grain through the Bosphorus to MENA; food-security artery."
+  description_en: >-
+    Ukrainian grain export route through the Bosphorus to MENA markets.
+  description_de: >-
+    Ukrainische Getreideexportroute durch den Bosporus zu MENA-Maerkten.
+
+- id: lane_brazil_china_iron
+  name_en: Brazil-China iron ore lane
+  name_de: Eisenerzroute Brasilien-China
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [iron_ore]
+  centroid_ids: [AMERICAS-BRAZIL, ASIA-CHINA]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Brazilian iron ore to China via the Cape; complements the Pilbara lane."
+  description_en: >-
+    Brazilian iron ore to China around the Cape of Good Hope.
+  description_de: >-
+    Brasilianisches Eisenerz nach China um das Kap der Guten Hoffnung.
+
+- id: lane_gulf_asia_oil
+  name_en: Gulf-Asia crude lane
+  name_de: Rohoelroute Golf-Asien
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [oil]
+  centroid_ids: [MIDEAST-GULF, ASIA-CHINA]
+  criticality: 4
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Main artery of seaborne crude; transits Hormuz then Malacca -- two systemic chokepoints."
+  description_en: >-
+    The main artery of seaborne crude: Gulf exports to East Asian refineries.
+  description_de: >-
+    Die Hauptader des seewaertigen Rohoelhandels: Golfexporte zu
+    ostasiatischen Raffinerien.
+
+- id: lane_gulf_japan_lng
+  name_en: Gulf-Japan LNG lane
+  name_de: LNG-Route Golf-Japan
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [lng]
+  centroid_ids: [MIDEAST-GULF, ASIA-JAPAN]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Qatari LNG lifeline to Japan and Northeast Asia via Hormuz and Malacca."
+  description_en: >-
+    Qatari LNG lifeline to Japan and Northeast Asia.
+  description_de: >-
+    Katarische LNG-Lebensader nach Japan und Nordostasien.
+
+- id: lane_laplata_grain
+  name_en: La Plata grain lane
+  name_de: Getreideroute La Plata
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [grain, soy]
+  centroid_ids: [AMERICAS-ARGENTINA, MIDEAST-EGYPT]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Argentine grain and soy from the Parana-La Plata system to Mediterranean/MENA buyers."
+  description_en: >-
+    Argentine grain and soy to Mediterranean and MENA buyers.
+  description_de: >-
+    Argentinisches Getreide und Soja an Abnehmer im Mittelmeerraum und MENA.
+
+- id: lane_pilbara_china_iron
+  name_en: Pilbara-China iron ore lane
+  name_de: Eisenerzroute Pilbara-China
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [iron_ore]
+  centroid_ids: [OCEANIA-AUSTRALIA, ASIA-CHINA]
+  criticality: 4
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Highest-volume dry-bulk trade on earth; Australian iron ore to Chinese steel mills."
+  description_en: >-
+    Australian iron ore to Chinese steel mills; the highest-volume dry bulk
+    trade on earth.
+  description_de: >-
+    Australisches Eisenerz zu chinesischen Stahlwerken; der volumenstaerkste
+    Massengutverkehr der Welt.
+
+- id: lane_southamerica_europe
+  name_en: South America-Europe lane
+  name_de: Route Suedamerika-Europa
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [containers, soy]
+  centroid_ids: [AMERICAS-BRAZIL, EUROPE-GERMANY]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Containers and agricultural bulk from Brazil to Northern Europe."
+  description_en: >-
+    Containers and agricultural bulk from Brazil to Northern Europe.
+  description_de: >-
+    Container und Agrargueter aus Brasilien nach Nordeuropa.
+
+- id: lane_transatlantic
+  name_en: Transatlantic container lane
+  name_de: Transatlantische Containerroute
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [containers]
+  centroid_ids: [AMERICAS-USA, EUROPE-GERMANY]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Container corridor between the US East Coast and Northern Europe."
+  description_en: >-
+    Container corridor between the US East Coast and Northern Europe.
+  description_de: >-
+    Containerkorridor zwischen der US-Ostkueste und Nordeuropa.
+
+- id: lane_transpacific
+  name_en: Transpacific container lane
+  name_de: Transpazifische Containerroute
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [containers]
+  centroid_ids: [ASIA-CHINA, AMERICAS-USA]
+  criticality: 4
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Primary corridor for Asian exports to the US West Coast; open-ocean, no chokepoint."
+  description_en: >-
+    Primary corridor for Asian exports to the US West Coast.
+  description_de: >-
+    Hauptkorridor fuer asiatische Exporte an die US-Westkueste.
+
+- id: lane_us_europe_energy
+  name_en: US Gulf-Europe energy lane
+  name_de: Energieroute US-Golf-Europa
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [oil, refined_products]
+  centroid_ids: [AMERICAS-USA, EUROPE-GERMANY]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "US Gulf crude and products to European refining centers."
+  description_en: >-
+    US Gulf crude and products to European refining centers.
+  description_de: >-
+    Rohoel und Produkte vom US-Golf zu europaeischen Raffineriezentren.
+
+- id: lane_us_europe_lng
+  name_en: US-Europe LNG lane
+  name_de: LNG-Route USA-Europa
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA, EUROPE-GERMANY]
+  criticality: 4
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "US LNG to Europe; the corridor that replaced Russian pipeline gas after 2022."
+  description_en: >-
+    US LNG to Europe; the corridor that replaced Russian pipeline gas after 2022.
+  description_de: >-
+    US-LNG nach Europa; der Korridor, der russisches Pipelinegas nach 2022 ersetzte.
+
+- id: northern_sea_route
+  name_en: Northern Sea Route
+  name_de: Nordostpassage
+  category: corridor
+  subcategory: sea_lane
+  asset_type: corridor
+  commodities: [oil, lng]
+  centroid_ids: [EUROPE-RUSSIA, ASIA-CHINA]
+  criticality: 3
+  ranking_source: "Eurostat searoute / Oak Ridge GSLN"
+  rank_note: "Russia-controlled Arctic passage; shortens Europe-Asia transit, growing viability reshapes Arctic competition."
+  description_en: >-
+    Russia-controlled Arctic passage that shortens Europe-Asia transit time;
+    its growing viability under warming conditions is reshaping Arctic
+    strategic competition.
+  description_de: >-
+    Von Russland kontrollierte arktische Passage, die die Transitzeit
+    zwischen Europa und Asien verkuerzt; ihre wachsende Nutzbarkeit unter
+    Erwaermungsbedingungen veraendert den strategischen Wettbewerb in der Arktis.
