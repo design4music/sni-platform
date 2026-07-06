@@ -1,0 +1,821 @@
+# Gas fields, LNG export/import terminals, processing. Authority: GIIGNL
+# (LNG terminal capacity rankings), EIA/IGU for gas field production/reserves.
+# Import terminals are dependency endpoints (Europe/Asia regas), included
+# alongside export terminals and top fields. Geometry omitted for reconciled
+# existing rows (preserved); new rows carry verified lon/lat or hull.
+
+# =========================================================================
+# LNG IMPORT / REGAS TERMINALS
+# =========================================================================
+
+- id: futtsu_sodegaura_lng
+  name_en: Futtsu-Sodegaura LNG Terminals (Tokyo Bay)
+  name_de: Futtsu-Sodegaura LNG-Terminals (Tokio-Bucht)
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [ASIA-JAPAN]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Japan receiving terminal capacity)"
+  rank_note: "Among the largest LNG receiving terminal clusters in the world, feeding the Tokyo metropolitan grid."
+  description_en: >-
+    The Tokyo Bay LNG terminal cluster that keeps Japan's power-starved
+    capital region running, a legacy of the post-Fukushima shift from nuclear.
+  description_de: >-
+    Der LNG-Terminalcluster in der Tokio-Bucht, der die energiehungrige
+    japanische Hauptstadtregion versorgt, ein Erbe der Abkehr von der
+    Kernkraft nach Fukushima.
+
+- id: incheon_pyeongtaek_lng
+  name_en: Incheon-Pyeongtaek LNG Terminals
+  name_de: Incheon-Pyeongtaek LNG-Terminals
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (South Korea receiving terminal capacity)"
+  rank_note: "The two largest LNG import terminals feeding the South Korean grid."
+  description_en: >-
+    South Korea's main LNG import gateway near Seoul, critical because the
+    country has no pipeline gas option and depends entirely on seaborne cargoes.
+  description_de: >-
+    Suedkoreas wichtigstes LNG-Einfuhrtor nahe Seoul, entscheidend, weil das
+    Land keine Pipeline-Option hat und vollstaendig auf Schiffsladungen
+    angewiesen ist.
+
+- id: yancheng_binhai_lng
+  name_en: Yancheng-Binhai LNG Terminal
+  name_de: Yancheng-Binhai LNG-Terminal
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (China receiving terminal list)"
+  rank_note: "One of China's fast-expanding coastal LNG receiving terminals."
+  description_en: >-
+    A coastal receiving terminal feeding gas into the Jiangsu grid, part of
+    China's buildout of LNG import capacity to diversify from pipeline
+    dependence on Russia and Central Asia.
+  description_de: >-
+    Ein Kuestenterminal, das Gas in das Jiangsu-Netz einspeist, Teil von
+    Chinas Ausbau der LNG-Importkapazitaet zur Diversifizierung weg von der
+    Pipeline-Abhaengigkeit von Russland und Zentralasien.
+
+- id: zeebrugge_lng
+  name_en: Zeebrugge LNG Terminal
+  name_de: LNG-Terminal Zeebrugge
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-BENELUX]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Belgium receiving terminal capacity)"
+  rank_note: "One of the largest LNG import and reloading hubs on the European continent."
+  description_en: >-
+    A major Belgian LNG import and reloading hub that re-exports cargoes
+    onward into the wider European pipeline network.
+  description_de: >-
+    Ein bedeutendes belgisches LNG-Einfuhr- und Umschlagzentrum, das Ladungen
+    weiter in das europaeische Pipelinenetz re-exportiert.
+
+- id: gate_rotterdam_lng
+  name_en: Gate Terminal Rotterdam
+  name_de: Gate-Terminal Rotterdam
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-BENELUX]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Netherlands receiving terminal capacity)"
+  rank_note: "The Netherlands' largest LNG import terminal and a key Northwest European entry point."
+  description_en: >-
+    The Netherlands' main LNG gateway, a critical Northwest European entry
+    point since the loss of Russian pipeline gas.
+  description_de: >-
+    Die Niederlande wichtigstes LNG-Tor, ein entscheidender nordwesteuropaeischer
+    Einfuhrpunkt seit dem Wegfall russischen Pipelinegases.
+
+- id: wilhelmshaven_fsru
+  name_en: Wilhelmshaven FSRU
+  name_de: FSRU Wilhelmshaven
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-GERMANY]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report; German federal government (BMWK) FSRU program"
+  rank_note: "Germany's first LNG import terminal, built in under a year after the loss of Russian pipeline gas -- post-Nord-Stream lifeline."
+  description_en: >-
+    The floating terminal Germany rushed into service after Nord Stream went
+    dark, now a lifeline import point for a country that had almost no LNG
+    capacity before 2022.
+  description_de: >-
+    Das schwimmende Terminal, das Deutschland nach dem Ausfall von Nord
+    Stream im Eiltempo in Betrieb nahm, heute ein lebenswichtiger Einfuhrpunkt
+    fuer ein Land, das vor 2022 kaum LNG-Kapazitaet besass.
+
+- id: swinoujscie_lng
+  name_en: Swinoujscie LNG Terminal
+  name_de: LNG-Terminal Swinemuende
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-VISEGRAD]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Poland receiving terminal capacity)"
+  rank_note: "Poland's first LNG terminal and a cornerstone of its pivot away from Russian gas."
+  description_en: >-
+    Poland's original LNG import terminal on the Baltic coast, central to
+    Warsaw's long campaign to end dependence on Russian pipeline supply.
+  description_de: >-
+    Polens urspruengliches LNG-Einfuhrterminal an der Ostseekueste, zentral
+    fuer Warschaus langjaehrige Kampagne zur Beendigung der Abhaengigkeit von
+    russischen Pipelinelieferungen.
+
+- id: klaipeda_fsru
+  name_en: Klaipeda FSRU
+  name_de: FSRU Klaipeda
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-BALTIC]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Lithuania receiving terminal capacity)"
+  rank_note: "The terminal that ended the Baltic states' single-supplier dependence on Russian gas."
+  description_en: >-
+    The floating terminal Lithuania nicknamed "Independence," which broke the
+    Baltic states' former total reliance on Gazprom pipeline gas.
+  description_de: >-
+    Das schwimmende Terminal, das Litauen "Unabhaengigkeit" nannte und die
+    frueher vollstaendige Abhaengigkeit der baltischen Staaten von
+    Gazprom-Pipelinegas beendete.
+
+- id: revithoussa_lng
+  name_en: Revithoussa LNG Terminal
+  name_de: LNG-Terminal Revithoussa
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Greece receiving terminal capacity)"
+  rank_note: "Greece's main LNG import terminal and a growing corridor for gas into the Balkans."
+  description_en: >-
+    Greece's primary LNG entry point near Athens, increasingly used as a
+    re-supply corridor for Balkan and Southeastern European buyers cutting
+    Russian pipeline ties.
+  description_de: >-
+    Griechenlands wichtigstes LNG-Einfuhrterminal nahe Athen, zunehmend als
+    Nachschubkorridor fuer Balkan- und suedosteuropaeische Abnehmer genutzt,
+    die russische Pipelineverbindungen kappen.
+
+- id: barcelona_sagunto_lng
+  name_en: Barcelona-Sagunto LNG Terminals
+  name_de: LNG-Terminals Barcelona-Sagunto
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-SOUTH]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Spain receiving terminal capacity)"
+  rank_note: "Part of Spain's outsized LNG import capacity, the largest regasification base in Europe."
+  description_en: >-
+    Two of the Spanish terminals that give the country Europe's largest LNG
+    regasification capacity, though poor interconnection limits how much can
+    reach France and beyond.
+  description_de: >-
+    Zwei der spanischen Terminals, die dem Land Europas groesste
+    LNG-Regasifizierungskapazitaet verleihen, wobei schwache
+    Verbindungsleitungen begrenzen, wie viel Gas nach Frankreich und darueber
+    hinaus gelangt.
+
+- id: dahej_lng
+  name_en: Dahej LNG Terminal
+  name_de: LNG-Terminal Dahej
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (India receiving terminal capacity)"
+  rank_note: "India's largest LNG import terminal by capacity."
+  description_en: >-
+    India's single largest LNG import terminal, a critical feed point for a
+    gas market growing faster than domestic production can supply.
+  description_de: >-
+    Indiens groesstes LNG-Einfuhrterminal, ein entscheidender Einspeisepunkt
+    fuer einen Gasmarkt, der schneller waechst, als die heimische Foerderung
+    liefern kann.
+
+- id: egegaz_aliaga_lng
+  name_en: EgeGaz Aliaga LNG Terminal
+  name_de: EgeGaz-Aliaga-LNG-Terminal
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  lon: 26.9195
+  lat: 38.8213
+  commodities: [lng]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "GEM/GIIGNL; AA (Turkey's largest onshore LNG import terminal, ~10.7 mtpa)"
+  rank_note: "Turkey's largest single LNG import terminal, part of a national FSRU+onshore fleet that made Turkey the second-largest LNG importer in Europe."
+  description_en: >-
+    Turkey's largest LNG import terminal near Izmir, anchoring a rapidly
+    built import fleet that turned Turkey into Europe's second-largest LNG buyer.
+  description_de: >-
+    Die Tuerkei groesstes LNG-Einfuhrterminal nahe Izmir, Ankerpunkt einer
+    rasch aufgebauten Importflotte, die die Tuerkei zum zweitgroessten
+    LNG-Kaeufer Europas machte.
+
+- id: dalian_lng
+  name_en: Dalian LNG Terminal
+  name_de: LNG-Terminal Dalian
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  lon: 121.884
+  lat: 38.960
+  commodities: [lng]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report; Statista (largest operational LNG terminal in China)"
+  rank_note: "China's largest operational LNG receiving terminal by capacity, feeding the Liaoning/Northeast China grid."
+  description_en: >-
+    China's largest LNG import terminal, a key northeastern entry point
+    diversifying supply for a region historically reliant on coal and
+    Russian pipeline gas.
+  description_de: >-
+    Chinas groesstes LNG-Einfuhrterminal, ein zentraler nordoestlicher
+    Einfuhrpunkt, der die Versorgung fuer eine traditionell auf Kohle und
+    russisches Pipelinegas angewiesene Region diversifiziert.
+
+- id: tianjin_lng
+  name_en: Tianjin LNG Terminal
+  name_de: LNG-Terminal Tianjin
+  category: gas
+  subcategory: lng_import
+  asset_type: facility
+  lon: 117.715
+  lat: 38.751
+  commodities: [lng]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report; Lloyd's List (Tianjin tops China's LNG import ports)"
+  rank_note: "Reported by Lloyd's List as China's top LNG import port by volume, serving the Beijing-Tianjin-Hebei industrial region."
+  description_en: >-
+    China's busiest LNG import port, piping gas directly into the
+    Beijing-Tianjin-Hebei industrial and heating grid.
+  description_de: >-
+    Chinas meistfrequentierter LNG-Einfuhrhafen, der Gas direkt in das
+    Industrie- und Heiznetz der Region Peking-Tianjin-Hebei einspeist.
+
+# =========================================================================
+# LNG EXPORT TERMINALS
+# =========================================================================
+
+- id: plaquemines_lng
+  name_en: Plaquemines LNG
+  name_de: Plaquemines LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  lon: -89.886
+  lat: 29.600
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "EIA (8th US LNG export terminal, first cargo Dec 2024); Venture Global"
+  rank_note: "The 8th US LNG export terminal, ramping toward 27+ mtpa peak capacity; core of the post-2024 US LNG export wave."
+  description_en: >-
+    A new Louisiana Gulf Coast export terminal that started shipping in late
+    2024, part of the wave of US capacity underpinning America's rise as the
+    world's largest LNG exporter.
+  description_de: >-
+    Ein neues Exportterminal an der Golfkueste von Louisiana, das Ende 2024
+    den Betrieb aufnahm, Teil der US-Kapazitaetswelle, die Amerikas Aufstieg
+    zum groessten LNG-Exporteur der Welt untermauert.
+
+- id: calcasieu_pass_lng
+  name_en: Calcasieu Pass LNG
+  name_de: Calcasieu Pass LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  lon: -93.34
+  lat: 29.85
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 2
+  ranking_source: "EIA; Venture Global (>11 mtpa export capacity)"
+  rank_note: "A >11 mtpa Louisiana mid-scale LNG export plant, part of the Venture Global Gulf Coast cluster."
+  description_en: >-
+    A mid-scale Louisiana LNG export plant whose fast-track construction
+    model became a template for the current US Gulf Coast build-out.
+  description_de: >-
+    Eine Louisiana-LNG-Exportanlage im Mid-Scale-Format, deren beschleunigtes
+    Baumodell zur Vorlage fuer den aktuellen Ausbau an der US-Golfkueste wurde.
+
+- id: freeport_lng
+  name_en: Freeport LNG
+  name_de: Freeport LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (US liquefaction capacity)"
+  rank_note: "One of the largest US LNG export terminals on the Texas Gulf Coast."
+  description_en: >-
+    A major US Gulf Coast export terminal whose 2022 fire and prolonged
+    outage showed how a single facility can tighten global LNG supply.
+  description_de: >-
+    Ein bedeutendes US-Exportterminal an der texanischen Golfkueste, dessen
+    Brand 2022 und laengerer Ausfall zeigten, wie eine einzelne Anlage das
+    globale LNG-Angebot verknappen kann.
+
+- id: cameron_lng
+  name_en: Cameron LNG
+  name_de: Cameron LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (US liquefaction capacity)"
+  rank_note: "A major Louisiana Gulf Coast LNG export terminal."
+  description_en: >-
+    A Louisiana export terminal that ships US shale gas to Asian and
+    European buyers under long-term offtake contracts.
+  description_de: >-
+    Ein Exportterminal in Louisiana, das US-Schiefergas im Rahmen
+    langfristiger Abnahmevertraege an asiatische und europaeische Kaeufer
+    verschifft.
+
+- id: corpus_christi_lng
+  name_en: Corpus Christi LNG
+  name_de: Corpus Christi LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (US liquefaction capacity)"
+  rank_note: "One of the largest LNG export terminals in the United States."
+  description_en: >-
+    A top-tier US LNG export terminal that became a core supply source for
+    Europe after 2022, distinct from the crude-oil export hub of the same city.
+  description_de: >-
+    Ein erstklassiges US-LNG-Exportterminal, das nach 2022 zu einer zentralen
+    Versorgungsquelle fuer Europa wurde, zu unterscheiden vom
+    Rohoel-Exportknoten derselben Stadt.
+
+- id: sabine_pass_lng
+  name_en: Sabine Pass LNG Cluster
+  name_de: Sabine-Pass-LNG-Cluster
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (largest US liquefaction complex)"
+  rank_note: "One of the largest LNG export terminals in the United States."
+  description_en: >-
+    A flagship US Gulf Coast LNG export terminal underpinning America's rise
+    as a swing gas supplier to Europe and Asia.
+  description_de: >-
+    Ein Flaggschiff-LNG-Exportterminal an der US-Golfkueste, Grundlage fuer
+    Amerikas Aufstieg als Swing-Gaslieferant fuer Europa und Asien.
+
+- id: hammerfest_melkoya_lng
+  name_en: Hammerfest LNG (Melkoya)
+  name_de: Hammerfest LNG (Melkoya)
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [EUROPE-NORDIC]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Norway liquefaction capacity)"
+  rank_note: "Europe's northernmost LNG export plant, fed by the Snohvit field in the Barents Sea."
+  description_en: >-
+    Norway's Arctic LNG export plant on Melkoya island, a niche but
+    symbolically important non-Russian gas source in the high north.
+  description_de: >-
+    Norwegens arktische LNG-Exportanlage auf der Insel Melkoya, eine kleine,
+    aber symbolisch wichtige nicht-russische Gasquelle im hohen Norden.
+
+- id: bintulu_lng
+  name_en: Bintulu LNG Complex
+  name_de: LNG-Komplex Bintulu
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Malaysia liquefaction capacity)"
+  rank_note: "One of the largest single-site LNG export complexes in the world."
+  description_en: >-
+    Malaysia's flagship LNG export complex on Borneo, a long-running,
+    reliable supplier to Northeast Asian buyers.
+  description_de: >-
+    Malaysias fuehrender LNG-Exportkomplex auf Borneo, ein langjaehriger,
+    verlaesslicher Lieferant fuer nordostasiatische Abnehmer.
+
+- id: idku_damietta_lng
+  name_en: Idku-Damietta LNG Terminals
+  name_de: LNG-Terminals Idku-Damietta
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Egypt liquefaction capacity)"
+  rank_note: "Egypt's two Mediterranean LNG export plants."
+  description_en: >-
+    Egypt's Mediterranean coast export terminals, which have swung between
+    exporting surplus gas and being idled during domestic shortages
+    depending on the year.
+  description_de: >-
+    Aegyptens Exportterminals an der Mittelmeerkueste, die je nach Jahr
+    zwischen Exportueberschuss und Stilllegung wegen innerstaatlicher
+    Engpaesse schwankten.
+
+- id: arzew_skikda_lng
+  name_en: Arzew-Skikda LNG Complex
+  name_de: LNG-Komplex Arzew-Skikda
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Algeria liquefaction capacity)"
+  rank_note: "Algeria's core Mediterranean LNG and pipeline gas export base."
+  description_en: >-
+    Algeria's main gas export complex, a critical southern supply route for
+    Italy and Spain as Europe worked to replace Russian pipeline volumes.
+  description_de: >-
+    Algeriens wichtigster Gasexportkomplex, eine kritische suedliche
+    Versorgungsroute fuer Italien und Spanien, waehrend Europa daran
+    arbeitete, russische Pipelinemengen zu ersetzen.
+
+- id: coral_south_fsru
+  name_en: Coral South FLNG
+  name_de: Coral South FLNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [AFRICA-SOUTHERN]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Mozambique floating liquefaction)"
+  rank_note: "Africa's first deepwater floating LNG facility, offshore Mozambique."
+  description_en: >-
+    A floating liquefaction vessel moored off Mozambique that opened one of
+    the newest frontiers in global LNG supply, though onshore expansion
+    nearby has been slowed by insurgent violence.
+  description_de: >-
+    Ein schwimmendes Verfluessigungsschiff vor Mosambik, das eine der
+    neuesten Grenzen der globalen LNG-Versorgung eroeffnete, waehrend der
+    geplante Ausbau an Land durch Aufstaendische verzoegert wurde.
+
+- id: png_lng
+  name_en: PNG LNG
+  name_de: PNG LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: []
+  criticality: 2
+  ranking_source: "GIIGNL Annual Report (Papua New Guinea liquefaction capacity)"
+  rank_note: "Papua New Guinea's sole large-scale LNG export project."
+  description_en: >-
+    A single-project gas economy for Papua New Guinea, shipping almost
+    entirely to long-term Japanese and Chinese buyers.
+  description_de: >-
+    Eine auf ein einziges Projekt gestuetzte Gaswirtschaft fuer
+    Papua-Neuguinea, die fast ausschliesslich an langfristige japanische und
+    chinesische Abnehmer liefert.
+
+- id: gladstone_lng
+  name_en: Gladstone LNG Cluster
+  name_de: LNG-Cluster Gladstone
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 3
+  ranking_source: "GIIGNL Annual Report (Australia liquefaction capacity)"
+  rank_note: "Three coal-seam-gas-fed LNG export plants on Australia's east coast."
+  description_en: >-
+    Australia's east coast LNG export hub, whose demand for feed gas has
+    repeatedly collided with domestic east-coast gas shortages and price spikes.
+  description_de: >-
+    Australiens LNG-Exportzentrum an der Ostkueste, dessen Bedarf an
+    Einsatzgas wiederholt mit innerstaatlichen Gasengpaessen und
+    Preisspitzen an der Ostkueste kollidierte.
+
+- id: yamal_lng
+  name_en: Yamal LNG (Sabetta)
+  name_de: Yamal-LNG (Sabetta)
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng, gas]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Russia liquefaction capacity)"
+  rank_note: "Russia's flagship Arctic LNG export project."
+  description_en: >-
+    Russia's flagship Arctic LNG terminal, exporting via the Northern Sea
+    Route and remaining a target of Western sanctions debate.
+  description_de: >-
+    Russlands arktisches Vorzeige-LNG-Terminal, exportiert ueber die
+    Nordostpassage und bleibt Gegenstand westlicher Sanktionsdebatten.
+
+- id: ras_laffan_lng
+  name_en: Ras Laffan LNG Terminal
+  name_de: Ras-Laffan-LNG-Terminal
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng, gas]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 5
+  ranking_source: "GIIGNL Annual Report (world's largest single LNG export complex)"
+  rank_note: "The world's largest single LNG export complex."
+  description_en: >-
+    Qatar's principal LNG export complex and one of the largest in the
+    world, a critical alternative gas supplier for both Europe and Asia.
+  description_de: >-
+    Katars wichtigster LNG-Exportkomplex und einer der groessten der Welt,
+    ein kritischer alternativer Gaslieferant sowohl fuer Europa als auch Asien.
+
+- id: pluto_wheatstone_lng
+  name_en: Pluto-Wheatstone LNG Complex
+  name_de: Pluto-Wheatstone-LNG-Komplex
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  lon: 116.766
+  lat: -20.613
+  commodities: [lng, gas]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 3
+  ranking_source: "EIA; Woodside/Chevron (Pilbara Northwest Australia LNG export cluster)"
+  rank_note: "Two of the seven Pilbara LNG export projects (combined ~14 mtpa) that make Northwest Australia one of the world's top LNG-exporting regions."
+  description_en: >-
+    Two Pilbara LNG export plants on the Burrup Peninsula that, together
+    with Gorgon and North West Shelf nearby, anchor Australia's position as
+    a top-tier global gas exporter.
+  description_de: >-
+    Zwei LNG-Exportanlagen in der Pilbara-Region auf der Burrup-Halbinsel,
+    die zusammen mit Gorgon und North West Shelf in der Naehe Australiens
+    Stellung als erstklassiger globaler Gasexporteur festigen.
+
+- id: gorgon_nws_lng
+  name_en: Gorgon-North West Shelf LNG
+  name_de: Gorgon-North-West-Shelf-LNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  commodities: [lng, gas]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 4
+  ranking_source: "GIIGNL Annual Report (Australia liquefaction capacity)"
+  rank_note: "Anchors Australia's position as a top global LNG exporter."
+  description_en: >-
+    Australia's largest LNG export complex, supplying long-term contracted
+    gas to Japan, South Korea and China.
+  description_de: >-
+    Australiens groesster LNG-Exportkomplex, beliefert Japan, Suedkorea und
+    China mit langfristig kontrahiertem Gas.
+
+# =========================================================================
+# GAS FIELDS
+# =========================================================================
+
+- id: qatar_north_field
+  name_en: Qatari North Field LNG
+  name_de: Katarisches Nordfeld LNG
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [lng, gas]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 4
+  ranking_source: "EIA/IGU (world's largest natural gas field, shared with Iran)"
+  rank_note: "Part of the largest natural gas field in the world, shared with Iran."
+  description_en: >-
+    Qatar's share of the world's largest gas field and the base of its LNG
+    export capacity, a critical alternative supply for Europe and Asia.
+  description_de: >-
+    Katars Anteil am groessten Gasfeld der Welt und Grundlage seiner
+    LNG-Exportkapazitaet, eine kritische alternative Versorgungsquelle fuer
+    Europa und Asien.
+
+- id: south_pars_field
+  name_en: South Pars Field (Iran)
+  name_de: Suedpars-Feld (Iran)
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [gas]
+  centroid_ids: [MIDEAST-IRAN]
+  criticality: 4
+  ranking_source: "EIA/IGU (Iran share of world's largest gas field, shared with Qatar)"
+  rank_note: "Iran's share of the world's largest natural gas field, shared with Qatar."
+  description_en: >-
+    Iran's side of the giant offshore gas field it shares with Qatar, held
+    back from its full potential by sanctions that have blocked the foreign
+    capital needed to develop it.
+  description_de: >-
+    Irans Anteil am riesigen Offshore-Gasfeld, das es sich mit Katar teilt,
+    weit unter seinem vollen Potenzial gehalten durch Sanktionen, die das zur
+    Erschliessung noetige auslaendische Kapital blockieren.
+
+- id: shah_deniz_field
+  name_en: Shah Deniz Field
+  name_de: Shah-Deniz-Feld
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [gas]
+  centroid_ids: [EUROPE-AZERBAIJAN]
+  criticality: 3
+  ranking_source: "EIA/IGU (Azerbaijan's flagship Caspian gas field)"
+  rank_note: "Azerbaijan's flagship Caspian gas field feeding the Southern Gas Corridor to Europe."
+  description_en: >-
+    Azerbaijan's largest gas field, whose output feeds the Southern Gas
+    Corridor and has made the country a small but valued non-Russian
+    supplier to Southeastern Europe.
+  description_de: >-
+    Aserbaidschans groesstes Gasfeld, dessen Foerderung den Suedlichen
+    Gaskorridor speist und das Land zu einem kleinen, aber geschaetzten
+    nicht-russischen Lieferanten fuer Suedosteuropa gemacht hat.
+
+- id: hassi_rmel_field
+  name_en: Hassi R'Mel Field
+  name_de: Hassi-R-Mel-Feld
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [gas]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 4
+  ranking_source: "EIA/IGU (Algeria's largest gas field)"
+  rank_note: "Algeria's largest gas field and the hub feeding its export pipeline network."
+  description_en: >-
+    Algeria's largest gas field and the central hub feeding both its
+    pipeline exports to Europe and its Mediterranean LNG plants.
+  description_de: >-
+    Algeriens groesstes Gasfeld und der zentrale Knotenpunkt, der sowohl
+    seine Pipeline-Exporte nach Europa als auch seine LNG-Anlagen am
+    Mittelmeer speist.
+
+- id: norwegian_shelf_gas
+  name_en: Norwegian Continental Shelf Gas Fields
+  name_de: Gasfelder auf dem norwegischen Festlandsockel
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [gas]
+  centroid_ids: [EUROPE-NORDIC]
+  criticality: 5
+  ranking_source: "EIA/IGU; Norwegian Offshore Directorate (became Europe's top pipeline gas source post-2022)"
+  rank_note: "Became Europe's largest single source of pipeline gas after the loss of Russian supply."
+  description_en: >-
+    The North Sea gas fields that became Europe's single most important gas
+    source after Russian pipeline supply collapsed in 2022.
+  description_de: >-
+    Die Nordsee-Gasfelder, die nach dem Zusammenbruch der russischen
+    Pipelinelieferungen 2022 zu Europas wichtigster einzelner Gasquelle wurden.
+
+- id: urengoy_yamburg_fields
+  name_en: Urengoy-Yamburg Gas Fields
+  name_de: Gasfelder Urengoi-Jamburg
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[75.5,67.3],[77.5,67.3],[77.5,66.0],[75.5,66.0],[75.5,67.3]]
+  commodities: [gas]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "EIA/IGU (world's 2nd- and 3rd-largest gas fields by reserves, per Britannica/NS Energy)"
+  rank_note: "World's second- and third-largest gas fields by reserves; the historic core of Gazprom's West Siberian production and the source of Soviet-era export pipelines to Europe."
+  description_en: >-
+    The giant West Siberian fields that built the Soviet and Russian gas
+    export system to Europe; still Gazprom's core production base even as
+    European pipeline volumes have collapsed since 2022.
+  description_de: >-
+    Die riesigen westsibirischen Felder, die das sowjetische und russische
+    Gasexportsystem nach Europa begruendeten; weiterhin Gazproms zentrale
+    Produktionsbasis, auch nachdem die Pipelinemengen nach Europa seit 2022
+    eingebrochen sind.
+
+- id: groningen_field
+  name_en: Groningen Field
+  name_de: Groningen-Feld
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[6.4,53.35],[7.1,53.35],[7.1,52.95],[6.4,52.95],[6.4,53.35]]
+  commodities: [gas]
+  centroid_ids: [EUROPE-BENELUX]
+  criticality: 2
+  ranking_source: "EIA/IGU; Dutch government closure law 2024 (largest gas field in Europe's history)"
+  rank_note: "Largest gas field in European history; permanently closed October 2024 after earthquake damage claims, now a structural symbol of Europe's lost domestic supply."
+  description_en: >-
+    The Dutch field that once anchored continental European gas supply for
+    six decades; permanently shut in 2024 over earthquake damage, its
+    closure is now structural, not a supply swing.
+  description_de: >-
+    Das niederlaendische Feld, das sechs Jahrzehnte lang die kontinentaleuropaeische
+    Gasversorgung stuetzte; 2024 wegen Erdbebenschaeden dauerhaft
+    stillgelegt, seine Schliessung ist nun strukturell, kein Angebotsschwanken.
+
+- id: leviathan_field
+  name_en: Leviathan Field
+  name_de: Leviathan-Feld
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[33.4,33.15],[33.9,33.15],[33.9,32.85],[33.4,32.85],[33.4,33.15]]
+  commodities: [gas]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 3
+  ranking_source: "EIA/IGU; offshore-technology.com, Chevron (Israel's largest gas field, 22 Tcf recoverable)"
+  rank_note: "Israel's largest gas reservoir; supplies Israel, Egypt and Jordan, with a 2026 FID to expand output for regional energy security."
+  description_en: >-
+    Israel's largest offshore gas field, feeding domestic power plants and
+    piped exports to Egypt and Jordan, making it a load-bearing piece of
+    Eastern Mediterranean energy security.
+  description_de: >-
+    Israels groesstes Offshore-Gasfeld, das heimische Kraftwerke versorgt und
+    per Pipeline nach Aegypten und Jordanien exportiert, ein tragendes Element
+    der Energiesicherheit im oestlichen Mittelmeer.
+
+- id: karachaganak_field
+  name_en: Karachaganak Field
+  name_de: Karatschaganak-Feld
+  category: gas
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[52.7,51.0],[53.3,51.0],[53.3,50.6],[52.7,50.6],[52.7,51.0]]
+  commodities: [gas]
+  centroid_ids: []
+  criticality: 2
+  ranking_source: "EIA/IGU; offshore-technology.com (one of the world's largest gas condensate fields)"
+  rank_note: "One of the world's largest gas condensate fields; gas is currently piped to Russia's Orenburg plant for processing under a long-term deal, with Kazakhstan now building its own processing plant to reduce that dependence."
+  description_en: >-
+    A giant Kazakh gas condensate field whose output has long been processed
+    across the border in Russia, a dependency Kazakhstan is now building
+    domestic capacity to break.
+  description_de: >-
+    Ein gigantisches kasachisches Gaskondensatfeld, dessen Foerderung lange
+    jenseits der Grenze in Russland verarbeitet wurde, eine Abhaengigkeit,
+    die Kasachstan nun durch den Aufbau eigener Kapazitaet beenden will.
+
+- id: greater_tortue_flng
+  name_en: Greater Tortue Ahmeyim FLNG
+  name_de: Greater Tortue Ahmeyim FLNG
+  category: gas
+  subcategory: lng_export
+  asset_type: facility
+  lon: -16.6
+  lat: 16.45
+  commodities: [lng, gas]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 2
+  ranking_source: "BP/Kosmos Energy; nsenergybusiness.com (Africa's deepest offshore gas project, first cargo 2025)"
+  rank_note: "Africa's deepest offshore LNG project (2,850m water depth); first cross-border Mauritania-Senegal gas development, first cargo April 2025."
+  description_en: >-
+    A cross-border deepwater gas project on the Mauritania-Senegal maritime
+    line, opening a new West African LNG export frontier for two states with
+    no prior hydrocarbon export base.
+  description_de: >-
+    Ein grenzueberschreitendes Tiefsee-Gasprojekt an der Meeresgrenze
+    Mauretanien-Senegal, das eine neue westafrikanische LNG-Exportfront fuer
+    zwei Staaten ohne vorherige Kohlenwasserstoff-Exportbasis eroeffnet.
