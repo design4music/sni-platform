@@ -1,0 +1,228 @@
+# Chokepoints -- maritime passages whose closure disrupts global trade.
+# Authority: EIA "World Oil Transit Chokepoints" (canonical set), extended
+# with strategically decisive straits for non-oil trade (Taiwan, Kerch).
+# Naturally bounded category: ~12 passages carry the overwhelming majority
+# of seaborne choke risk. Geometry omitted for existing rows (preserved).
+
+- id: strait_of_hormuz
+  name_en: Strait of Hormuz
+  name_de: Strasse von Hormus
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [oil, lng, fertilizer, petrochemicals]
+  centroid_ids: [MIDEAST-GULF, MIDEAST-IRAN]
+  criticality: 5
+  ranking_source: "EIA/IEA chokepoint data; IFPRI + Rystad for fertilizer share"
+  rank_note: "~27% of traded oil, ~20% of LNG, ~30% of global fertilizer (Qatar QAFCO alone ~14% of urea), ~1/3 of seaborne methanol, plus most Gulf helium/aluminium. No bypass at scale."
+  description_en: >-
+    The world's most critical chokepoint; Gulf crude, Qatari LNG, and about
+    a third of global fertilizer and methanol transit here. Because LNG is
+    also a fertilizer feedstock, a closure hits energy and food security at once.
+  description_de: >-
+    Das kritischste Nadeloehr der Welt; Golf-Rohoel, katarisches LNG und rund
+    ein Drittel des globalen Duenger- und Methanolhandels passieren hier. Da
+    LNG zugleich Duenger-Rohstoff ist, trifft eine Sperrung Energie und
+    Ernaehrungssicherheit zugleich.
+
+- id: strait_of_malacca
+  name_en: Strait of Malacca
+  name_de: Strasse von Malakka
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [oil, lng, containers]
+  centroid_ids: [ASIA-SOUTHEAST, ASIA-CHINA]
+  criticality: 5
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "~2nd-busiest oil chokepoint (~critical Asia lifeline); primary China/Japan/Korea import artery."
+  description_en: >-
+    The shortest sea route between Gulf/African suppliers and East Asia;
+    China's 'Malacca dilemma' -- most of its oil imports pass through here.
+  description_de: >-
+    Der kuerzeste Seeweg zwischen Golf-/Afrika-Lieferanten und Ostasien;
+    Chinas 'Malakka-Dilemma' -- der Grossteil seiner Oelimporte laeuft hier.
+
+- id: suez_canal
+  name_en: Suez Canal
+  name_de: Sueskanal
+  category: chokepoint
+  subcategory: canal
+  asset_type: chokepoint
+  commodities: [oil, lng, containers]
+  centroid_ids: [MIDEAST-EGYPT, AFRICA-SAHEL]
+  criticality: 5
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "~10% of global seaborne trade; Asia-Europe container spine. 2021 blockage + Red Sea attacks show fragility."
+  description_en: >-
+    The Asia-Europe shortcut; container and energy flows reroute around the
+    Cape of Good Hope when Red Sea security fails, adding ~10 days.
+  description_de: >-
+    Die Abkuerzung Asien-Europa; Container- und Energiefluesse weichen bei
+    Unsicherheit im Roten Meer um das Kap der Guten Hoffnung aus (~10 Tage).
+
+- id: bab_el_mandeb
+  name_en: Bab el-Mandeb
+  name_de: Bab al-Mandab
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [oil, lng, containers]
+  centroid_ids: [MIDEAST-EGYPT, AFRICA-HORN]
+  criticality: 5
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "Gateway between Suez and the Indian Ocean; Houthi attacks (2023-) diverted most container traffic."
+  description_en: >-
+    The southern lock on the Suez route; when it closes, Suez itself loses
+    most of its traffic to the Cape detour.
+  description_de: >-
+    Das suedliche Schloss der Suez-Route; bei Sperrung verliert der Suez
+    selbst den Grossteil seines Verkehrs an die Kap-Umleitung.
+
+- id: turkish_straits
+  name_en: Turkish Straits (Bosphorus)
+  name_de: Tuerkische Meerengen (Bosporus)
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [oil, grain]
+  centroid_ids: [MIDEAST-TURKEY, EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "Sole outlet for Black Sea oil and Russian/Ukrainian grain; Montreux Convention governs transit."
+  description_en: >-
+    The only sea route out of the Black Sea; Russian and Kazakh crude and
+    Black Sea grain exports all funnel through Istanbul.
+  description_de: >-
+    Der einzige Seeweg aus dem Schwarzen Meer; russisches und kasachisches
+    Rohoel sowie Getreideexporte laufen alle durch Istanbul.
+
+- id: panama_canal
+  name_en: Panama Canal
+  name_de: Panamakanal
+  category: chokepoint
+  subcategory: canal
+  asset_type: chokepoint
+  commodities: [containers, lng, grain]
+  centroid_ids: [AMERICAS-CENTRAL-AMERICA, AMERICAS-USA]
+  criticality: 4
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "US East Coast-Asia link; 2023-24 drought cut transits, exposing climate fragility."
+  description_en: >-
+    Links the US East Coast and Gulf to the Pacific; drought-driven draft
+    limits now periodically throttle LNG and container throughput.
+  description_de: >-
+    Verbindet US-Ostkueste und Golf mit dem Pazifik; duerrebedingte
+    Tiefgangsgrenzen drosseln nun zeitweise LNG- und Containerdurchsatz.
+
+- id: strait_of_gibraltar
+  name_en: Strait of Gibraltar
+  name_de: Strasse von Gibraltar
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [oil, containers]
+  centroid_ids: [EUROPE-SOUTH, AFRICA-WEST]
+  criticality: 3
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "Mediterranean-Atlantic gate; all Med energy and container trade to the Americas passes here."
+  description_en: >-
+    The Mediterranean's only Atlantic outlet; refined products, LNG and
+    container ships to the Americas all transit this 14 km narrows.
+  description_de: >-
+    Der einzige Atlantikausgang des Mittelmeers; Produkte, LNG und
+    Containerschiffe nach Amerika passieren diese 14 km enge Passage.
+
+- id: danish_straits
+  name_en: Danish Straits
+  name_de: Daenische Meerengen
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [oil, gas]
+  centroid_ids: [EUROPE-RUSSIA, EUROPE-NORDIC]
+  criticality: 3
+  ranking_source: "EIA World Oil Transit Chokepoints"
+  rank_note: "Baltic outlet for Russian crude exports (Primorsk/Ust-Luga); shadow-fleet monitoring focus."
+  description_en: >-
+    The Baltic's exit to the North Sea; Russia's western crude exports and
+    much of the sanctioned shadow fleet pass through here.
+  description_de: >-
+    Der Ostsee-Ausgang zur Nordsee; Russlands westliche Rohoelexporte und
+    ein Grossteil der sanktionierten Schattenflotte passieren hier.
+
+- id: taiwan_strait
+  name_en: Taiwan Strait
+  name_de: Taiwanstrasse
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  commodities: [containers, semiconductors]
+  centroid_ids: [ASIA-TAIWAN, ASIA-CHINA]
+  criticality: 5
+  ranking_source: "Editorial (geopolitical); ~sea trade share via Taiwan Strait"
+  rank_note: "~1/5 of global seaborne trade transits; blockade scenario is the top systemic-risk case."
+  description_en: >-
+    A large share of global container traffic transits here; a blockade
+    would simultaneously hit trade flows and the world's advanced-chip supply.
+  description_de: >-
+    Ein grosser Teil des globalen Containerverkehrs passiert hier; eine
+    Blockade traefe zugleich Handelsstroeme und die Chip-Versorgung der Welt.
+
+- id: cape_of_good_hope_route
+  name_en: Cape of Good Hope Route
+  name_de: Kap-der-Guten-Hoffnung-Route
+  category: chokepoint
+  subcategory: sea_route
+  asset_type: chokepoint
+  commodities: [oil, containers]
+  centroid_ids: [AFRICA-SOUTHAFRICA]
+  criticality: 3
+  ranking_source: "EIA World Oil Transit Chokepoints (as Suez alternative)"
+  rank_note: "Not a chokepoint but the default Suez/Bab bypass; absorbs diverted Asia-Europe traffic during Red Sea crises."
+  description_en: >-
+    The fallback when Suez and Bab el-Mandeb are unsafe; not a chokepoint
+    itself but the pressure-relief valve for the entire Asia-Europe artery.
+  description_de: >-
+    Der Ausweichweg, wenn Suez und Bab al-Mandab unsicher sind; selbst kein
+    Nadeloehr, aber das Ueberdruckventil der gesamten Achse Asien-Europa.
+
+# --- NEW additions (comprehensive tier) ---
+
+- id: lombok_strait
+  name_en: Lombok Strait
+  name_de: Lombok-Strasse
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  line: [[115.72, -8.40], [115.88, -8.80]]
+  commodities: [oil, containers]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 3
+  ranking_source: "EIA World Oil Transit Chokepoints (Malacca alternative)"
+  rank_note: "Deep-draft alternative to Malacca for the largest VLCCs; primary reroute if Malacca closes."
+  description_en: >-
+    The deep-water bypass to Malacca; fully-laden VLCCs too large for the
+    Malacca shallows take this Indonesian passage to East Asia.
+  description_de: >-
+    Die Tiefwasser-Umgehung von Malakka; voll beladene VLCCs, die fuer die
+    Malakka-Untiefen zu gross sind, nehmen diese indonesische Passage.
+
+- id: kerch_strait
+  name_en: Kerch Strait
+  name_de: Strasse von Kertsch
+  category: chokepoint
+  subcategory: strait
+  asset_type: chokepoint
+  line: [[36.45, 45.15], [36.65, 45.40]]
+  commodities: [grain, oil]
+  centroid_ids: [EUROPE-UKRAINE, EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "Editorial (geopolitical)"
+  rank_note: "Sole access to the Sea of Azov; controls Mariupol/Berdiansk grain and steel exports, contested since 2018/2022."
+  description_en: >-
+    The gate to the Sea of Azov; a flashpoint controlling access to
+    Ukrainian and Russian Azov ports for grain, steel and coal.
+  description_de: >-
+    Das Tor zum Asowschen Meer; ein Brennpunkt, der den Zugang zu
+    ukrainischen und russischen Asow-Haefen fuer Getreide, Stahl und Kohle steuert.

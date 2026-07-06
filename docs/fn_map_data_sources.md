@@ -115,6 +115,57 @@ their capitals, and reddens every pressed asset and route.
 - **Freshness ceiling:** ingestion runs every 12h; the map's `revalidate`
   is 3600s but underlying data moves at most twice a day.
 
+## Attribute validation protocol
+
+Two separate guarantees keep the dataset honest. **Inclusion** is anchored
+to ranked authorities (per-category table below) so nothing important is
+omitted. **Attributes** (commodity tags, capacity/production ranks,
+criticality, descriptions) are anchored to independent sources so nothing
+stated is wrong. This section governs the second.
+
+There is no human expert team and no confidence score. The sourcing bar
+*is* the filter: an attribute that cannot clear it is not encoded, rather
+than encoded-and-flagged. This keeps the burden at authoring time, where
+it belongs, and keeps the data free of false-precision certainty numbers.
+
+**Worked example (the standard, from a real correction).** The Strait of
+Hormuz carried `commodities: [oil, lng]`. A claim that it is also critical
+for fertilizer was checked by:
+1. **Decomposing** into checkable sub-claims: do Gulf states produce a
+   material share of world fertilizer (yes, ~30%); is Hormuz their only
+   deep-water outlet (yes, geography); is the share material not trace
+   (yes, Qatar's QAFCO alone ~14% of global urea).
+2. **Triangulating** across independent tiers that share no incentive to
+   agree — WEF, Rystad, IFPRI, PolitiFact all converged on ~30%.
+3. **Cross-checking** from independent angles — production geography,
+   logistics chokehold, and trade-share statistics all pointed the same way.
+4. **Separating durable from dated** — "Hormuz is the Gulf's only outlet"
+   is geography (permanent); "~30% of fertilizer" is a volume share, recorded
+   with an `as_of`, and treated as a snapshot (several sources framed it
+   around a 2026 crisis). Result: `[oil, lng, fertilizer, petrochemicals]`.
+
+**Evidence tiers.**
+
+| Tier | Examples | Use |
+|---|---|---|
+| T1 authoritative | EIA, IEA, USGS, IFA/IFPRI, UN Comtrade, WTO, FAO/USDA, IAEA PRIS, GIIGNL | Can stand as basis |
+| T2 reputable analyst/press | Rystad, BCG, Argus/ICIS, Reuters, Lloyd's List | Corroborates; 2 independent T2 ~= 1 T1 |
+| T3 tertiary | Wikipedia, generic web | Leads only, never sole basis |
+
+**Rules.**
+1. Every non-obvious attribute needs >= 2 independent T1/T2 sources that
+   agree, ideally from different angles. Cannot clear the bar -> omit the
+   attribute (do not invent, do not flag-and-keep).
+2. Structural/geographic claims are durable (no expiry). Volume/share
+   claims are snapshots — record `as_of`, never a permanent constant.
+3. Materiality gate: tag a commodity only if its share is material. Coarse
+   classes only; never an invented percentage in the data itself.
+4. Record provenance on every row: `ranking_source` + `rank_note`
+   (+ `as_of` where a figure is time-sensitive). No unsourced attributes.
+
+This protocol is binding on the research agents that build the registry:
+each must satisfy rule 1 for any non-obvious attribute or omit it.
+
 ## License obligations for the public page
 
 | Data | License | Obligation |
