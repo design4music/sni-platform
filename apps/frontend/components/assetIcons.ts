@@ -15,7 +15,8 @@ export const ASSET_CATEGORIES: Record<string, { label: string; color: string }> 
   oil:         { label: 'Oil',                 color: '#f59e0b' },
   gas:         { label: 'Gas & LNG',           color: '#22d3ee' },
   minerals:    { label: 'Mining & minerals',   color: '#f472b6' },
-  agriculture: { label: 'Agriculture',         color: '#34d399' },
+  agriculture: { label: 'Agriculture & food',  color: '#34d399' },
+  power:       { label: 'Power generation',    color: '#a3e635' },
   industry:    { label: 'Industry & tech',     color: '#e5e7eb' },
 };
 
@@ -24,10 +25,13 @@ const MINERAL_RE = /ore|copper|cobalt|nickel|bauxite|uranium|rare|platinum|palla
 export function categoryFor(assetType: string, commodities: string[]): string {
   if (assetType === 'port') return 'port';
   if (assetType === 'chokepoint') return 'chokepoint';
+  // Power plants carry {'electricity', <generation type>} — checked before
+  // the commodity loop so a coal plant lands in power, not minerals.
+  if (commodities.includes('electricity')) return 'power';
   for (const c of commodities) {
     if (c === 'oil' || c === 'refined_products') return 'oil';
     if (c === 'gas' || c === 'lng') return 'gas';
-    if (/grain|corn|soy|palm_oil|wheat/.test(c)) return 'agriculture';
+    if (/grain|corn|soy|palm_oil|wheat|rice|fish/.test(c)) return 'agriculture';
     if (MINERAL_RE.test(c)) return 'minerals';
     if (c === 'semiconductors' || c === 'chemicals' || c === 'autos') return 'industry';
   }
@@ -50,6 +54,8 @@ const GLYPHS: Record<string, string> = {
     '<path d="M8 4h8l4 6-8 10L4 10l4-6z"/><path d="M4 10h16"/><path d="M12 20L9 10l3-6 3 6-3 10"/>',
   factory:
     '<path d="M3.5 20V9.5l5 3.5V9.5l5 3.5V6H20v14H3.5z"/>',
+  bolt:
+    '<path d="M13 2.5L5 13.5h5.5L10 21.5l8-11h-5.5l.5-8z"/>',
 };
 
 const CATEGORY_GLYPH: Record<string, string> = {
@@ -59,6 +65,7 @@ const CATEGORY_GLYPH: Record<string, string> = {
   gas: 'flame',
   minerals: 'gem',
   agriculture: 'wheat',
+  power: 'bolt',
   industry: 'factory',
 };
 

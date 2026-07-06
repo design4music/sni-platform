@@ -30,11 +30,20 @@ their capitals, and reddens every pressed asset and route.
   documented as such.
 
 ### 2. Strategic assets (points & polygons)
-- **Source:** hand-curated in three batches
-  (`20260703_seed_strategic_assets.sql`, `..._batch2.sql`, `..._batch3.sql`),
-  drafted by LLM research against public knowledge (USGS/EIA/port
-  authorities), reviewed in-repo.
-- **What:** 9 chokepoints, 58 ports, 28 production clusters, 6 facilities.
+- **Source:** hand-curated, drafted by LLM research against public
+  knowledge (USGS/EIA/port authorities, GEM, WRI), reviewed in-repo.
+  Initial three batches (`20260703_seed_strategic_assets.sql`,
+  `..._batch2.sql`, `..._batch3.sql`); full-population batches
+  2026-07-04 (`20260704_seed_{gas_everything,power_plants,mining_deep,`
+  `agri_food,tech_infra}.sql`) added 90 assets across all commodity types.
+- **What (240 total):** 9 chokepoints, 65 ports, 61 production clusters,
+  83 facilities, 16 corridors, 6 pipelines. Covers oil, gas/LNG, power
+  generation (nuclear/hydro/coal/wind), critical minerals, agriculture &
+  food, fertilizer, fisheries, semiconductors, and digital infrastructure.
+- **Power-generation convention:** power plants carry
+  `commodities = {'electricity', <generation-type>}`; the frontend keys
+  the new "Power generation" map category off the `electricity` tag so a
+  coal-fired plant reads as power, not coal.
 - **Precision:** ports are point-accurate to the harbor; production
   clusters are coarse 4-6 vertex hulls around the region (Pilbara,
   Katanga, corn belt) — deliberately schematic.
