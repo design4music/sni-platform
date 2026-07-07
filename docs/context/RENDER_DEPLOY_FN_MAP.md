@@ -1,6 +1,17 @@
 # fn-map Render Deploy Runbook
 
-Status: prepared 2026-07-07. Step 1 (DB) can run independently of Step 2
+Status: **Step 1 EXECUTED 2026-07-07 ~21:30-22:15 CET** -- all 39
+migrations rc=0 (skipped: sudan + ukraine main seeds and ukraine
+iteration_3, already applied to Render in May; australia anchor bundle,
+known ON CONFLICT failure). Scripts run: registry generator (340 assets),
+7 anchor bundles, 7 bootstraps, evidence compute (33 links). Verified:
+efn grew 15,945 -> 17,279 (the 1,334 new-theater events), narratives 72
+and title_narratives 48,395 UNCHANGED, iran 3,388 member events, mexico
+1,284, panama 21, haiti 29, iran->kharg evidence link present, zero old
+generic ids. Pre-deploy backup: render_predeploy_20260707.dump in the
+render_sync_vol docker volume. **Step 2 (code) still pending.**
+
+Step 1 (DB) can run independently of Step 2
 (code); the live site is unaffected by Step 1 because main-branch code
 never queries the new tables.
 
