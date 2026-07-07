@@ -20,7 +20,10 @@ export const ASSET_CATEGORIES: Record<string, { label: string; color: string }> 
   industry:    { label: 'Industry & tech',     color: '#e5e7eb' },
 };
 
-const MINERAL_RE = /ore|copper|cobalt|nickel|bauxite|uranium|rare|platinum|palladium|potash|phosphate|gold|coal|iron|lithium/;
+const MINERAL_RE = /ore|copper|cobalt|nickel|bauxite|uranium|rare|platinum|palladium|gold|coal|iron|lithium|tin|graphite|zinc|pgm/;
+// Fertilizer feedstocks (potash/phosphate) and food crops read as agriculture,
+// matching the registry's food-security framing rather than mining.
+const AGRICULTURE_RE = /grain|corn|soy|palm_oil|wheat|rice|fish|sugar|coffee|cocoa|potash|phosphate/;
 
 export function categoryFor(assetType: string, commodities: string[]): string {
   if (assetType === 'port') return 'port';
@@ -31,7 +34,7 @@ export function categoryFor(assetType: string, commodities: string[]): string {
   for (const c of commodities) {
     if (c === 'oil' || c === 'refined_products') return 'oil';
     if (c === 'gas' || c === 'lng') return 'gas';
-    if (/grain|corn|soy|palm_oil|wheat|rice|fish/.test(c)) return 'agriculture';
+    if (AGRICULTURE_RE.test(c)) return 'agriculture';
     if (MINERAL_RE.test(c)) return 'minerals';
     if (c === 'semiconductors' || c === 'chemicals' || c === 'autos') return 'industry';
   }
