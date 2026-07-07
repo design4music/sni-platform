@@ -98,13 +98,14 @@
     Rohoel sowie Getreideexporte laufen alle durch Istanbul.
 
 - id: panama_canal
+  aliases: ["Panama Canal"]
   name_en: Panama Canal
   name_de: Panamakanal
   category: chokepoint
   subcategory: canal
   asset_type: chokepoint
   commodities: [containers, lng, grain]
-  centroid_ids: [AMERICAS-CENTRAL-AMERICA, AMERICAS-USA]
+  centroid_ids: [AMERICAS-CENTRAL, AMERICAS-USA]
   criticality: 4
   ranking_source: "EIA World Oil Transit Chokepoints"
   rank_note: "US East Coast-Asia link; 2023-24 drought cut transits, exposing climate fragility."

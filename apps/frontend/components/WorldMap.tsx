@@ -28,6 +28,12 @@ export interface AssetMapData {
       total_events: number;
       last_active: string | null;
       is_ghost: boolean;
+      // 'structural' = curated link (home territory / economic lever);
+      // 'evidence' = headlines tie the asset to the theater; 'both'.
+      link: 'structural' | 'evidence' | 'both';
+      evidence_titles_90d: number;
+      evidence_titles_30d: number;
+      evidence_last_seen: string | null;
     }>;
   }>;
   conflicts: Array<{
@@ -478,6 +484,12 @@ export default function WorldMap({
                       {fn.name_en}
                       <span className="block text-[10px] text-gray-600 mt-0.5">
                         {fn.is_ghost ? 'dormant' : `${fn.total_events.toLocaleString()} events`}
+                        {fn.evidence_titles_90d > 0 && (
+                          <span className="text-amber-600/90">
+                            {' '}&middot; {fn.evidence_titles_90d} headline{fn.evidence_titles_90d === 1 ? '' : 's'}/90d tie this asset here
+                          </span>
+                        )}
+                        {fn.link === 'structural' && ' · structural link'}
                       </span>
                     </span>
                   </Link>

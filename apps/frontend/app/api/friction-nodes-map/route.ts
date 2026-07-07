@@ -58,12 +58,20 @@ interface FlowRow {
   notes: string | null;
 }
 
+interface EvidenceRow {
+  fn_id: string;
+  asset_id: string;
+  n_titles_30d: number;
+  n_titles_90d: number;
+  last_seen: string | null;
+}
+
 export const revalidate = 3600;
 
 const GHOST_DAYS = 90;
 
 export async function GET() {
-  const [assetRows, theaterRows, flowRows] = await Promise.all([
+  const [assetRows, theaterRows, flowRows, evidenceRows] = await Promise.all([
     query<AssetRow>(`
       SELECT id, name_en, name_de, asset_type, geometry, commodities,
              criticality, description_en, description_de, meta
@@ -85,6 +93,13 @@ export async function GET() {
       SELECT id, commodity, from_asset, to_asset, via_asset_ids, geometry,
              magnitude_class, status, as_of::text, source, confidence, notes
       FROM asset_flows
+    `),
+    // News-evidence links (fn_asset_evidence): headlines matching the
+    // asset's alias AND overlapping the theater's centroids. The dynamic
+    // counterpart to the curated affected_asset_ids.
+    query<EvidenceRow>(`
+      SELECT fn_id, asset_id, n_titles_30d, n_titles_90d, last_seen::text
+      FROM fn_asset_evidence
     `),
   ]);
 
@@ -133,10 +148,26 @@ export async function GET() {
     };
   });
 
-  // Asset stress = max intensity over live (non-ghost) FNs pressing on it.
-  // Ghost FNs still appear in the asset's fn list, flagged dormant.
+  // Evidence links per asset: fn_id -> counts (dynamic layer, cited).
+  const theaterById = new Map(theaters.map(t => [t.id, t]));
+  const evidenceByAsset = new Map<string, EvidenceRow[]>();
+  for (const e of evidenceRows) {
+    if (!theaterById.has(e.fn_id)) continue;
+    const list = evidenceByAsset.get(e.asset_id) ?? [];
+    list.push(e);
+    evidenceByAsset.set(e.asset_id, list);
+  }
+
+  // Asset stress = max intensity over live (non-ghost) FNs pressing on it,
+  // whether the link is curated (affected_asset_ids: home territory,
+  // economic levers) or news-evidence (fn_asset_evidence: headlines tying
+  // the asset to the theater). Ghost FNs still appear, flagged dormant.
   const assets = assetRows.map(a => {
-    const pressing = theaters.filter(t => t.affected_asset_ids.includes(a.id));
+    const evidence = evidenceByAsset.get(a.id) ?? [];
+    const evidenceByFn = new Map(evidence.map(e => [e.fn_id, e]));
+    const staticIds = new Set(theaters.filter(t => t.affected_asset_ids.includes(a.id)).map(t => t.id));
+    const pressingIds = new Set([...staticIds, ...evidenceByFn.keys()]);
+    const pressing = [...pressingIds].map(id => theaterById.get(id)!);
     const live = pressing.filter(t => !t.is_ghost);
     const stress = live.length ? Math.max(...live.map(t => t.intensity)) : 0;
     return {
@@ -155,13 +186,20 @@ export async function GET() {
       stress,
       fns: pressing
         .sort((x, y) => y.total_events - x.total_events)
-        .map(t => ({
-          id: t.id,
-          name_en: t.name_en,
-          total_events: t.total_events,
-          last_active: t.last_active,
-          is_ghost: t.is_ghost,
-        })),
+        .map(t => {
+          const ev = evidenceByFn.get(t.id);
+          return {
+            id: t.id,
+            name_en: t.name_en,
+            total_events: t.total_events,
+            last_active: t.last_active,
+            is_ghost: t.is_ghost,
+            link: staticIds.has(t.id) ? (ev ? 'both' : 'structural') : 'evidence',
+            evidence_titles_90d: ev?.n_titles_90d ?? 0,
+            evidence_titles_30d: ev?.n_titles_30d ?? 0,
+            evidence_last_seen: ev?.last_seen ?? null,
+          };
+        }),
     };
   });
 

@@ -122,7 +122,7 @@
   asset_type: facility
   criticality: 4
   commodities: [copper]
-  centroid_ids: [AMERICAS-CENTRAL-AMERICA]
+  centroid_ids: [AMERICAS-CENTRAL]
   ranking_source: "First Quantum Minerals disclosures; USGS Mineral Commodity Summaries"
   rank_note: "Was ~1.5% of world copper supply before its 2023 shutdown; one of the largest new mines built this century, still idle and contested in 2026."
   description_en: >-
@@ -600,6 +600,7 @@
     westliche Reaktoren verschafft.
 
 - id: olympic_dam_mine
+  aliases: ["Olympic Dam"]
   name_en: Olympic Dam Mine
   name_de: Olympic-Dam-Mine
   category: minerals

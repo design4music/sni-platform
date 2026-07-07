@@ -12,6 +12,7 @@
 # =========================================================================
 
 - id: port_of_shanghai
+  aliases: ["Port of Shanghai", "Shanghai port"]
   name_en: Port of Shanghai
   name_de: Hafen von Shanghai
   category: port
@@ -30,6 +31,7 @@
     hier wirken sich innerhalb weniger Tage auf globale Lieferketten aus.
 
 - id: port_of_singapore
+  aliases: ["Port of Singapore", "Singapore port"]
   name_en: Port of Singapore
   name_de: Hafen von Singapur
   category: port
@@ -66,6 +68,7 @@
     Knotenpunkt fuer chinesische Exportfertigung und Massengutimporte.
 
 - id: shenzhen_port
+  aliases: ["Port of Shenzhen", "Shenzhen port", "Yantian"]
   name_en: Port of Shenzhen
   name_de: Hafen Shenzhen
   category: port
@@ -102,6 +105,7 @@
     hohem Containerumschlag verbindet.
 
 - id: busan_port
+  aliases: ["Port of Busan", "Busan port"]
   name_en: Port of Busan
   name_de: Hafen Busan
   category: port
@@ -120,6 +124,7 @@
     knotenpunkt zwischen Nordostasien und den globalen Schifffahrtsrouten.
 
 - id: tianjin_port
+  aliases: ["Port of Tianjin", "Tianjin port"]
   name_en: Port of Tianjin
   name_de: Hafen Tianjin
   category: port
@@ -174,6 +179,7 @@
     mit Singapur um den regionalen Umschlag.
 
 - id: port_of_rotterdam
+  aliases: ["Port of Rotterdam", "Rotterdam port", "Rotterdamer Hafen"]
   name_en: Port of Rotterdam
   name_de: Hafen von Rotterdam
   category: port
@@ -192,6 +198,7 @@
     und Fertigwaren ins kontinentale Hinterland.
 
 - id: hong_kong_port
+  aliases: ["Hong Kong port", "Port of Hong Kong"]
   name_en: Port of Hong Kong (Kwai Tsing)
   name_de: Hafen Hongkong (Kwai Tsing)
   category: port
@@ -347,6 +354,7 @@
     den Grossraum Jakarta und nationale Konsumgueterimporte.
 
 - id: hamburg_port
+  aliases: ["Port of Hamburg", "Hamburg port", "Hamburger Hafen"]
   name_en: Port of Hamburg
   name_de: Hafen Hamburg
   category: port
@@ -365,6 +373,7 @@
     Handel nach Mittel- und Osteuropa.
 
 - id: colombo_port
+  aliases: ["Port of Colombo", "Colombo port"]
   name_en: Port of Colombo
   name_de: Hafen Colombo
   category: port
@@ -425,6 +434,7 @@
     transpazifischen Handels mit Asien abwickelt.
 
 - id: houston_port
+  aliases: ["Port of Houston", "Houston port", "Houston Ship Channel"]
   name_en: Port of Houston
   name_de: Hafen Houston
   category: port
@@ -500,6 +510,7 @@
     den chinesischen Handelszugang nach Suedosteuropa.
 
 - id: santos_port
+  aliases: ["Port of Santos", "Santos port"]
   name_en: Port of Santos
   name_de: Hafen Santos
   category: port
@@ -574,6 +585,7 @@
     Mittelmeerkueste.
 
 - id: genoa_port
+  aliases: ["Port of Genoa", "Genoa port"]
   name_en: Port of Genoa
   name_de: Hafen Genua
   category: port
@@ -613,6 +625,7 @@
     versorgt.
 
 - id: durban_port
+  aliases: ["Port of Durban", "Durban port"]
   name_en: Port of Durban
   name_de: Hafen Durban
   category: port
@@ -651,6 +664,7 @@
     Afrikas groesstem Rohoelproduzenten.
 
 - id: mombasa_port
+  aliases: ["Port of Mombasa", "Mombasa port"]
   name_en: Port of Mombasa
   name_de: Hafen Mombasa
   category: port
@@ -669,6 +683,7 @@
     Suedsudan ueber die Handelsroute des Northern Corridor.
 
 - id: jeddah_port
+  aliases: ["Port of Jeddah", "Jeddah port", "Jeddah Islamic Port"]
   name_en: Jeddah Islamic Port
   name_de: Islamischer Hafen Jeddah
   category: port
@@ -688,6 +703,7 @@
     Umrah-Verkehr.
 
 - id: haifa_port
+  aliases: ["Port of Haifa", "Haifa port"]
   name_en: Port of Haifa
   name_de: Hafen Haifa
   category: port
@@ -725,6 +741,7 @@
     Suezkanals, erfasst Containerverkehr, der den Kanalkorridor speist.
 
 - id: karachi_port
+  aliases: ["Port of Karachi", "Karachi port", "Port Qasim"]
   name_en: Port of Karachi
   name_de: Hafen Karatschi
   category: port
@@ -761,6 +778,7 @@
     Grossteil des von Bekleidungsexporten getriebenen Handels des Landes.
 
 - id: manila_port
+  aliases: ["Port of Manila", "Manila port"]
   name_en: Port of Manila
   name_de: Hafen Manila
   category: port
@@ -816,6 +834,7 @@
     Lieferketten.
 
 - id: cartagena_co_port
+  aliases: ["Port of Cartagena", "Cartagena port"]
   name_en: Port of Cartagena
   name_de: Hafen Cartagena
   category: port
@@ -875,6 +894,7 @@
     Gibraltar.
 
 - id: valencia_port
+  aliases: ["Port of Valencia", "Valencia port"]
   name_en: Port of Valencia
   name_de: Hafen Valencia
   category: port
@@ -972,6 +992,7 @@
     Stahlherstellern.
 
 - id: newcastle_au_port
+  aliases: ["Port of Newcastle", "Newcastle port", "Newcastle coal"]
   name_en: Port of Newcastle
   name_de: Hafen Newcastle
   category: port
@@ -1048,6 +1069,7 @@
     fuer Vale-Lieferungen an chinesische und europaeische Stahlwerke.
 
 - id: djibouti_port
+  aliases: ["Port of Djibouti", "Djibouti port", "Doraleh"]
   name_en: Port of Djibouti
   name_de: Hafen Dschibuti
   category: port
@@ -1331,6 +1353,7 @@
     die Raffinerien Nordostchinas.
 
 - id: vancouver_port
+  aliases: ["Port of Vancouver", "Vancouver port"]
   name_en: Port of Vancouver
   name_de: Hafen Vancouver
   category: port
@@ -1351,6 +1374,7 @@
     Containerhandel mit bedeutenden Getreide- und Kohle-Exportterminals.
 
 - id: melbourne_port
+  aliases: ["Port of Melbourne", "Melbourne port"]
   name_en: Port of Melbourne
   name_de: Hafen Melbourne
   category: port
@@ -1371,6 +1395,7 @@
     nationalen Containerhandels ab und ist der groesste in Australasien.
 
 - id: colon_port
+  aliases: ["Port of Colon", "Colon port", "Colon Container"]
   name_en: Colon Port Complex
   name_de: Hafenkomplex Colon
   category: port
