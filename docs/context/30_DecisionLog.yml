@@ -1782,3 +1782,56 @@ decisions:
       - In `FRICTION_NODES_RUNBOOK.md`, the "Deploy to Render" step 2 (raw
         `docker run ... psql -f`) needs updating to route through the
         wrapper — flagged, not yet edited in this pass.
+
+  - id: D-092
+    date: 2026-07-07
+    type: architectural
+    status: accepted
+    title: fn_asset_evidence -- news-derived asset pressure links (D-090 mechanism 2 made mechanical)
+    rationale:
+      - User review found Kharg Island Terminal showing no pressure from
+        iran_theater despite being one of the most-discussed strike targets
+        (342 headlines/180d in our own corpus). Root causes -- the asset's
+        centroid was mistagged MIDEAST-GULF (so home-territory wiring
+        missed it), and static hand-curation of demonstrated-reach links
+        cannot keep up with events (Ras Tanura's March-strike coverage had
+        already aged out silently). The pipeline knows what the map did
+        not show.
+      - The fix derives the dynamic layer mechanically -- a (theater,
+        asset) link exists when >=5 headlines in 90 days match the
+        asset's alias (ILIKE, same semantics as fn_anchor) AND pass the
+        theater gate. Links appear with coverage, decay as it ages, and
+        carry counts + sample title ids as citation.
+      - Gate design iterated against real output -- attribution-first
+        (title in the theater's own title_narratives coverage via fn_id /
+        member atomics), fallback to identity centroid (primary_target
+        else centroid_ids[1], never the full participant list which
+        linked Hormuz to nearly every theater), and ambient great-power
+        identities (US/China/Russia) require BOTH first two centroids on
+        the title or attribution only. Naive gate produced 233 links;
+        final gate 30, including uncurated true positives
+        (ukraine_war -> gdansk_port with all 6 headlines in the last 30
+        days; us_china -> panama_canal; iran -> kharg at 40).
+    consequences:
+      - New derived table fn_asset_evidence (rebuilt wholesale by
+        scripts/compute_fn_asset_evidence.py; two-stage SQL -- materialize
+        alias-title hits then aggregate -- after the single-statement form
+        ground the planner 20+ min). Not yet in the daemon; run manually
+        or via cron until cadence is decided.
+      - Assets get meta.aliases from the registry generator (derived from
+        name_en, optional per-row aliases override; --qc report drove 27
+        overrides de-ambiguating bare city names, Panama, Olympic).
+      - Registry generator now MERGES meta jsonb instead of replacing it
+        -- the replace had silently wiped corridors' via_asset_ids,
+        breaking route-pressure propagation (restored by replaying seeds).
+      - Map API/panel merge evidence into per-asset fns[] with link kind
+        (structural | evidence | both) and headline counts; static
+        affected_asset_ids remains for structural links only (home
+        territory, economic levers).
+      - Incident follow-up found during the build -- narratives_v2 (72
+        rows) and title_narratives (48,395 rows) were ALSO cascade
+        casualties of the D-091 incident and had never been restored;
+        recovered from the same dump with FK drop/re-add, zero orphans.
+      - Kharg/Basra asset centroids fixed in the registry
+        (MIDEAST-IRAN / MIDEAST-IRAQ); phantom AMERICAS-CENTRAL-AMERICA
+        replaced with AMERICAS-CENTRAL on remaining registry rows.
