@@ -1,0 +1,1076 @@
+# Minerals -- critical mineral mining districts and single-site mega-mines.
+# Authority: USGS Mineral Commodity Summaries (world production/reserves
+# share per commodity), cross-checked against producer/press reporting for
+# ownership and conflict angles. Excludes potash/phosphate (agriculture
+# file). Geometry omitted for reconciled existing rows (preserved in DB).
+
+# =========================================================================
+# COPPER
+# =========================================================================
+
+- id: chilean_copper_belt
+  name_en: Chilean Copper Belt (Escondida/Antofagasta)
+  name_de: Chilenischer Kupfergurtel (Escondida/Antofagasta)
+  category: minerals
+  subcategory: copper
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [copper]
+  centroid_ids: [AMERICAS-CHILE]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (copper)"
+  rank_note: "Chile is the world's #1 copper producer (~23% of mine output); Escondida (BHP/Rio Tinto) is the single largest copper mine on earth."
+  description_en: >-
+    The core of Chile's position as the world's largest copper producer,
+    anchored by Escondida; a supply base central to global electrification
+    and grid-buildout demand.
+  description_de: >-
+    Der Kern von Chiles Position als weltgroesster Kupferproduzent, verankert
+    durch Escondida; eine Versorgungsbasis, zentral fuer die globale
+    Elektrifizierung und den Netzausbau.
+
+- id: southern_peru_copper_belt
+  name_en: Southern Peru Copper Belt
+  name_de: Suedperuanischer Kupfergurtel
+  category: minerals
+  subcategory: copper
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [copper]
+  centroid_ids: [AMERICAS-PERU]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (copper)"
+  rank_note: "Peru is the #2 world copper producer (~10%); hosts Cerro Verde and Las Bambas, Peru's largest mines."
+  description_en: >-
+    The Arequipa-Apurimac mining corridor hosting Cerro Verde and Las Bambas,
+    Peru's top copper producers; chronic community blockades over water and
+    land rights have repeatedly halted output and transport.
+  description_de: >-
+    Der Bergbaukorridor Arequipa-Apurimac mit Cerro Verde und Las Bambas,
+    Perus fuehrenden Kupferproduzenten; chronische Blockaden lokaler
+    Gemeinden wegen Wasser- und Landrechten haben Foerderung und Transport
+    wiederholt lahmgelegt.
+
+- id: katanga_copper_belt
+  name_en: DRC Copper-Cobalt Belt (Katanga)
+  name_de: DRK Kupfer-Kobalt-Gurtel (Katanga)
+  category: minerals
+  subcategory: copper
+  asset_type: production_cluster
+  criticality: 3
+  commodities: [copper, cobalt]
+  centroid_ids: [AFRICA-DRC]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (copper, cobalt)"
+  rank_note: "DRC produces ~70% of world mined cobalt and is a top-5 copper producer (~12%); Chinese firms (CMOC, Zijin) control most major mines."
+  description_en: >-
+    The source of most of the world's cobalt and a major copper producer,
+    increasingly under Chinese corporate ownership, making it indispensable
+    to battery and EV supply chains despite chronic instability.
+  description_de: >-
+    Die Quelle des meisten weltweit geforderten Kobalts und ein bedeutender
+    Kupferproduzent, zunehmend unter chinesischer Unternehmenskontrolle,
+    unverzichtbar fuer Batterie- und Elektrofahrzeug-Lieferketten trotz
+    chronischer Instabilitaet.
+
+- id: oyu_tolgoi_copper_gold
+  name_en: Oyu Tolgoi Copper-Gold Complex
+  name_de: Oyu-Tolgoi-Kupfer-Gold-Komplex
+  category: minerals
+  subcategory: copper
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [copper, gold]
+  centroid_ids: [ASIA-MONGOLIA]
+  ranking_source: "Rio Tinto/Turquoise Hill disclosures; company reporting"
+  rank_note: "One of the largest new copper-gold deposits developed this century; expected to reach ~3% of world copper supply once at full underground output."
+  description_en: >-
+    A major new copper-gold mine in the Gobi Desert operated by Rio Tinto,
+    positioning Mongolia as an emerging supplier for the global
+    energy-transition copper market, wedged geopolitically between China
+    (sole export route) and Russia.
+  description_de: >-
+    Eine bedeutende neue Kupfer-Gold-Mine in der Wueste Gobi, betrieben von
+    Rio Tinto, positioniert die Mongolei als aufstrebenden Lieferanten fuer
+    den globalen Kupfermarkt der Energiewende, geopolitisch eingekeilt
+    zwischen China (einzige Exportroute) und Russland.
+
+- id: grasberg_mine
+  name_en: Grasberg Mine
+  name_de: Grasberg-Mine
+  category: minerals
+  subcategory: copper
+  asset_type: facility
+  criticality: 5
+  commodities: [copper, gold]
+  centroid_ids: [ASIA-SOUTHEAST]
+  ranking_source: "USGS Mineral Commodity Summaries 2026; Freeport-McMoRan reserve disclosures"
+  rank_note: "One of the world's largest copper mines and the largest single gold reserve; Freeport-McMoRan operates with Indonesian state (Inalum) majority stake since 2018."
+  description_en: >-
+    One of the largest copper and gold mines on earth, high in the Papuan
+    highlands; Freeport-McMoRan's operating rights and Jakarta's majority
+    ownership stake have repeatedly been renegotiated under political
+    pressure.
+  description_de: >-
+    Eine der groessten Kupfer- und Goldminen der Welt, hoch im papuanischen
+    Hochland; die Betriebsrechte von Freeport-McMoRan und Jakartas
+    Mehrheitsanteil wurden wiederholt unter politischem Druck neu
+    verhandelt.
+
+- id: cobre_panama
+  name_en: Cobre Panama Mine
+  name_de: Cobre-Panama-Mine
+  category: minerals
+  subcategory: copper
+  asset_type: facility
+  criticality: 4
+  commodities: [copper]
+  centroid_ids: [AMERICAS-CENTRAL-AMERICA]
+  ranking_source: "First Quantum Minerals disclosures; USGS Mineral Commodity Summaries"
+  rank_note: "Was ~1.5% of world copper supply before its 2023 shutdown; one of the largest new mines built this century, still idle and contested in 2026."
+  description_en: >-
+    A major First Quantum copper mine forced shut in late 2023 after
+    Panama's Supreme Court ruled its concession unconstitutional following
+    mass protests; the site remains idle and contested, removing
+    significant copper supply from the market.
+  description_de: >-
+    Eine bedeutende Kupfermine von First Quantum, die Ende 2023 nach einem
+    Urteil des panamaischen Obersten Gerichts zur Verfassungswidrigkeit
+    ihrer Konzession infolge Massenprotesten stillgelegt wurde; die Anlage
+    bleibt ungenutzt und umstritten und entzieht dem Markt eine erhebliche
+    Kupferversorgung.
+
+- id: arizona_copper_belt
+  name_en: Arizona Copper Belt
+  name_de: Arizona-Kupfergurtel
+  category: minerals
+  subcategory: copper
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[-110.2,33.6],[-109.2,33.6],[-109.2,32.6],[-110.2,32.6],[-110.2,33.6]]
+  commodities: [copper]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (copper); Arizona Geological Survey"
+  rank_note: "Arizona supplies over 60% of US copper output; hosts Morenci (largest US copper mine, Freeport-McMoRan)."
+  description_en: >-
+    Arizona's copper district, anchored by the Morenci mine, supplies the
+    large majority of US domestic copper; central to Washington's push for
+    a non-Chinese-processed copper supply chain for the energy transition.
+  description_de: >-
+    Arizonas Kupferrevier, verankert durch die Morenci-Mine, liefert den
+    Grossteil der US-Kupferproduktion; zentral fuer Washingtons Vorstoss
+    zu einer nicht-chinesisch verarbeiteten Kupfer-Lieferkette fuer die
+    Energiewende.
+
+- id: zambian_copper_belt
+  name_en: Zambian Copperbelt
+  name_de: Sambischer Copperbelt
+  category: minerals
+  subcategory: copper
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[27.3,-12.0],[28.7,-12.0],[28.7,-13.2],[27.3,-13.2],[27.3,-12.0]]
+  commodities: [copper]
+  centroid_ids: [AFRICA-SOUTHERN]
+  ranking_source: "Zambia Chamber of Mines 2025/26 production reports"
+  rank_note: "Africa's #2 copper producer (~890,000 t in 2025, targeting >1Mt in 2026); First Quantum alone supplies nearly half of national output."
+  description_en: >-
+    Zambia's historic mining heartland straddling the DRC border, now
+    rebounding toward record output on new investment; a key non-Chinese-
+    owned counterweight to neighboring Katanga's China-dominated cobalt-
+    copper complex.
+  description_de: >-
+    Sambias historisches Bergbauherz an der Grenze zur DRK, das durch neue
+    Investitionen auf Rekordniveau zusteuert; ein wichtiges Gegengewicht zum
+    chinesisch dominierten Kobalt-Kupfer-Komplex im benachbarten Katanga.
+
+# =========================================================================
+# IRON ORE
+# =========================================================================
+
+- id: pilbara_iron_belt
+  name_en: Pilbara Iron Ore Belt
+  name_de: Pilbara-Eisenerzgurtel
+  category: minerals
+  subcategory: iron_ore
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [iron_ore]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (iron ore)"
+  rank_note: "Australia is the world's #1 iron ore producer/exporter (~35-40% of global output); Pilbara is the source of nearly all of it."
+  description_en: >-
+    The world's premier iron ore mining region, whose exports feed Chinese
+    steelmaking and anchor the Australia-China trade relationship.
+  description_de: >-
+    Die weltweit fuehrende Eisenerz-Foerderregion, deren Exporte die
+    chinesische Stahlproduktion versorgen und die Handelsbeziehung zwischen
+    Australien und China verankern.
+
+- id: carajas_mine
+  name_en: Carajas Mine
+  name_de: Carajas-Mine
+  category: minerals
+  subcategory: iron_ore
+  asset_type: facility
+  criticality: 4
+  commodities: [iron_ore]
+  centroid_ids: [AMERICAS-BRAZIL]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (iron ore); Vale disclosures"
+  rank_note: "The single largest iron ore mine in the world by output; Brazil is the world's #2 iron ore exporter after Australia."
+  description_en: >-
+    The world's largest iron ore mine, operated by Vale in the Amazon
+    interior; its output underpins Brazil's position as the second-largest
+    seaborne iron ore exporter after Australia.
+  description_de: >-
+    Die groesste Eisenerzmine der Welt, betrieben von Vale im
+    Amazonas-Hinterland; ihre Foerderung untermauert Brasiliens Position
+    als zweitgroesster seewaertiger Eisenerzexporteur nach Australien.
+
+- id: simandou_iron_ore
+  name_en: Simandou Iron Ore
+  name_de: Simandou-Eisenerz
+  category: minerals
+  subcategory: iron_ore
+  asset_type: facility
+  criticality: 4
+  commodities: [iron_ore]
+  centroid_ids: [AFRICA-WEST]
+  ranking_source: "USGS Mineral Commodity Summaries 2026; Rio Tinto/Chinalco project disclosures"
+  rank_note: "The largest untapped high-grade iron ore deposit in the world; first exports (2025-26) financed and built with heavy Chinese state involvement."
+  description_en: >-
+    The largest untapped high-grade iron ore deposit on earth, developed
+    with heavy Chinese state financing and infrastructure; first exports
+    are set to reshape the seaborne iron ore trade long dominated by
+    Australia and Brazil.
+  description_de: >-
+    Die groesste unerschlossene hochgradige Eisenerzlagerstaette der Welt,
+    mit massiver chinesischer Staatsfinanzierung und Infrastruktur
+    entwickelt; erste Exporte duerften den seewaertigen Eisenerzhandel neu
+    ordnen, der bisher von Australien und Brasilien dominiert wird.
+
+- id: indian_iron_ore_belt
+  name_en: Indian Iron Ore Belt (Odisha-Chhattisgarh)
+  name_de: Indischer Eisenerzgurtel (Odisha-Chhattisgarh)
+  category: minerals
+  subcategory: iron_ore
+  asset_type: production_cluster
+  criticality: 3
+  hull: [[84.5,22.5],[86.5,22.5],[86.5,20.0],[84.5,20.0],[84.5,22.5]]
+  commodities: [iron_ore]
+  centroid_ids: []
+  ranking_source: "USGS Mineral Commodity Summaries 2026; Indian Ministry of Mines"
+  rank_note: "India is the world's #4 iron ore producer (~11% of global output); Odisha alone supplies over half of India's production."
+  description_en: >-
+    India's iron ore heartland spanning Odisha's Keonjhar-Sundargarh belt
+    and Chhattisgarh's high-grade Bailadila range; feeds India's own
+    steel-making boom rather than export markets, a structural difference
+    from Australia and Brazil.
+  description_de: >-
+    Indiens Eisenerz-Kernland mit dem Keonjhar-Sundargarh-Gurtel in Odisha
+    und dem hochgradigen Bailadila-Gebirge in Chhattisgarh; versorgt vor
+    allem Indiens eigenen Stahlboom statt Exportmaerkte, ein struktureller
+    Unterschied zu Australien und Brasilien.
+
+# =========================================================================
+# BAUXITE
+# =========================================================================
+
+- id: guinea_bauxite_belt
+  name_en: Guinea Bauxite Belt
+  name_de: Guineischer Bauxitgurtel
+  category: minerals
+  subcategory: bauxite
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [bauxite]
+  centroid_ids: [AFRICA-WEST]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (bauxite)"
+  rank_note: "Guinea is the world's #1 bauxite exporter (~73% of global bauxite exports) and holds ~26% of known world reserves; Chinese-backed SMB-Winning dominates the Boke belt."
+  description_en: >-
+    Guinea's vast Boke-belt bauxite deposits supply the large majority of
+    global alumina and aluminum production feedstock, mostly to China,
+    making the country pivotal to that supply chain and exposed to its own
+    licensing disputes with foreign (UAE, Chinese) operators.
+  description_de: >-
+    Guineas riesige Bauxitvorkommen im Boke-Gurtel versorgen den Grossteil
+    der weltweiten Aluminiumoxid- und Aluminiumproduktion, vor allem nach
+    China, was das Land zentral fuer diese Lieferkette macht und
+    Lizenzstreitigkeiten mit auslaendischen (VAE, chinesischen) Betreibern
+    aussetzt.
+
+- id: weipa_bauxite_mine
+  name_en: Weipa Bauxite Mine
+  name_de: Weipa-Bauxitmine
+  category: minerals
+  subcategory: bauxite
+  asset_type: facility
+  criticality: 4
+  commodities: [bauxite]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026; Rio Tinto Annual Report"
+  rank_note: "Roughly 20% of world bauxite production by itself, per Rio Tinto; Australia overall is the top bauxite-producing country (~27-28% of global output)."
+  description_en: >-
+    One of the largest bauxite mines on earth, operated by Rio Tinto on
+    Queensland's Cape York Peninsula, anchoring Australia's position as a
+    top global bauxite and alumina exporter.
+  description_de: >-
+    Eine der groessten Bauxitminen der Welt, betrieben von Rio Tinto auf
+    der Cape-York-Halbinsel in Queensland, und Grundlage von Australiens
+    Position als fuehrender weltweiter Bauxit- und Aluminiumoxid-Exporteur.
+
+- id: darling_range_bauxite
+  name_en: Darling Range Bauxite Belt
+  name_de: Darling-Range-Bauxitgurtel
+  category: minerals
+  subcategory: bauxite
+  asset_type: production_cluster
+  criticality: 3
+  hull: [[115.8,-31.6],[116.6,-31.6],[116.6,-33.4],[115.8,-33.4],[115.8,-31.6]]
+  commodities: [bauxite]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  ranking_source: "Geoscience Australia; industry reporting (Alcoa/South32)"
+  rank_note: "Lower-grade but easy-to-refine ore that alone accounts for roughly 23% of world alumina production, feeding Alcoa and South32 refineries near Perth."
+  description_en: >-
+    Western Australia's low-grade but highly refinable bauxite belt south
+    of Perth, feeding some of the world's largest alumina refineries and
+    supplying a major share of global alumina despite modest ore grade.
+  description_de: >-
+    Westaustraliens niedriggradiger, aber leicht raffinierbarer
+    Bauxitgurtel suedlich von Perth, der einige der groessten
+    Aluminiumoxid-Raffinerien der Welt versorgt und trotz bescheidenem
+    Erzgehalt einen bedeutenden Anteil am globalen Aluminiumoxid liefert.
+
+# =========================================================================
+# NICKEL
+# =========================================================================
+
+- id: indonesian_nickel_belt
+  name_en: Indonesian Nickel Belt (Morowali/Sulawesi)
+  name_de: Indonesischer Nickelgurtel (Morowali/Sulawesi)
+  category: minerals
+  subcategory: nickel
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [nickel, cobalt]
+  centroid_ids: [ASIA-SOUTHEAST]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (nickel, cobalt)"
+  rank_note: "Indonesia supplies over half of world mined nickel and is the #2 cobalt producer (~14%, mined as a nickel byproduct); an export-ore ban forced smelting onshore, mostly under Chinese capital."
+  description_en: >-
+    Indonesia's nickel mining and smelting belt, now the dominant global
+    source feeding battery and stainless-steel supply chains; Chinese
+    capital built most of the smelters after Jakarta's raw-ore export ban.
+  description_de: >-
+    Indonesiens Nickel-Abbau- und Schmelzgurtel, heute die dominante
+    globale Quelle fuer Batterie- und Edelstahl-Lieferketten; chinesisches
+    Kapital baute die meisten Schmelzanlagen nach Jakartas Exportverbot fuer
+    Rohererz.
+
+- id: new_caledonia_nickel_belt
+  name_en: New Caledonia Nickel Belt
+  name_de: Neukaledonischer Nickelgurtel
+  category: minerals
+  subcategory: nickel
+  asset_type: production_cluster
+  criticality: 3
+  commodities: [nickel]
+  centroid_ids: [EUROPE-FRANCE]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (nickel reserves)"
+  rank_note: "Holds roughly a tenth of world nickel reserves; French Pacific territory whose 2024 independence unrest shut down major smelting capacity."
+  description_en: >-
+    A French Pacific territory holding a major share of world nickel
+    reserves; the 2024 pro-independence unrest shut down much of the
+    smelting capacity and exposed how political instability in an overseas
+    territory can rattle a critical minerals market.
+  description_de: >-
+    Ein franzoesisches Pazifikterritorium mit einem bedeutenden Anteil der
+    weltweiten Nickelreserven; die Unruhen der Unabhaengigkeitsbewegung
+    2024 legten einen Grossteil der Schmelzkapazitaet still und zeigten,
+    wie politische Instabilitaet in einem Uebersee-Territorium einen
+    kritischen Rohstoffmarkt erschuettern kann.
+
+- id: norilsk_nickel_palladium
+  name_en: Norilsk Nickel-Palladium Complex
+  name_de: Norilsk-Nickel-Palladium-Komplex
+  category: minerals
+  subcategory: nickel
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [nickel, palladium]
+  centroid_ids: [EUROPE-RUSSIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (palladium, nickel)"
+  rank_note: "Russia is the world's #1 palladium producer, almost entirely from Norilsk; also a top-5 nickel source."
+  description_en: >-
+    The world's largest palladium producer and a major nickel source,
+    giving Russia outsized leverage over catalytic-converter and battery
+    supply chains.
+  description_de: >-
+    Der weltweit groesste Palladiumproduzent und eine bedeutende
+    Nickelquelle, verschafft Russland ueberproportionalen Einfluss auf
+    Lieferketten fuer Katalysatoren und Batterien.
+
+- id: philippine_nickel_belt
+  name_en: Philippine Nickel Belt (Surigao-Dinagat)
+  name_de: Philippinischer Nickelgurtel (Surigao-Dinagat)
+  category: minerals
+  subcategory: nickel
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[125.3,10.2],[125.9,10.2],[125.9,9.2],[125.3,9.2],[125.3,10.2]]
+  commodities: [nickel]
+  centroid_ids: [ASIA-SOUTHEAST]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (nickel)"
+  rank_note: "The Philippines is the world's #2 nickel producer and the top exporter of nickel ore, concentrated in Surigao del Norte, Surigao del Sur and Dinagat Islands."
+  description_en: >-
+    Mindanao's laterite nickel ore belt, the world's largest source of
+    exported (unprocessed) nickel ore, feeding Chinese nickel pig iron
+    smelters and increasingly courted by allied supply-chain diversification
+    efforts.
+  description_de: >-
+    Mindanaos Lateritnickel-Erzguertel, die weltweit groesste Quelle
+    exportierten (unverarbeiteten) Nickelerzes, das chinesische
+    Nickelroheisen-Schmelzanlagen versorgt und zunehmend von verbuendeten
+    Diversifizierungsbemuehungen umworben wird.
+
+# =========================================================================
+# COBALT
+# =========================================================================
+# Note: DRC's Katanga belt (~73% of world cobalt) and Indonesia's nickel
+# belt (~14%, byproduct of nickel laterite processing) together supply
+# ~87% of world cobalt; both listed under copper/nickel above with cobalt
+# tagged in commodities. No standalone cobalt-only entry needed.
+
+# =========================================================================
+# LITHIUM
+# =========================================================================
+
+- id: atacama_lithium_triangle
+  name_en: Chilean Lithium Triangle (Atacama)
+  name_de: Chilenisches Lithiumdreieck (Atacama)
+  category: minerals
+  subcategory: lithium
+  asset_type: production_cluster
+  criticality: 3
+  commodities: [lithium]
+  centroid_ids: [AMERICAS-CHILE]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (lithium)"
+  rank_note: "Chile is a top-3 world lithium producer from brine; part of the salt-flat region holding a large share of world identified lithium resources."
+  description_en: >-
+    The Chilean portion of the Andean salt-flat lithium triangle, a
+    resource base central to global battery supply chain diversification
+    away from China's processing dominance.
+  description_de: >-
+    Der chilenische Teil des andinen Salzsee-Lithiumdreiecks, eine
+    Rohstoffbasis, die zentral fuer die Diversifizierung der globalen
+    Batterie-Lieferkette weg von Chinas Verarbeitungsdominanz ist.
+
+- id: salar_de_uyuni_lithium
+  name_en: Salar de Uyuni Lithium Resource
+  name_de: Lithiumvorkommen Salar de Uyuni
+  category: minerals
+  subcategory: lithium
+  asset_type: facility
+  criticality: 4
+  commodities: [lithium]
+  centroid_ids: [AMERICAS-BOLIVIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (lithium resources)"
+  rank_note: "Holds the largest identified lithium resource in the world by USGS resource estimates, but remains barely developed decades after discovery."
+  description_en: >-
+    The world's largest identified lithium resource, but state control and
+    technical setbacks have left it barely developed decades after
+    discovery, making Bolivia the great unrealized wildcard in the global
+    lithium supply race.
+  description_de: >-
+    Das weltweit groesste identifizierte Lithiumvorkommen, doch staatliche
+    Kontrolle und technische Rueckschlaege haben es Jahrzehnte nach seiner
+    Entdeckung kaum erschlossen, was Bolivien zum grossen ungenutzten
+    Unsicherheitsfaktor im globalen Wettlauf um Lithium macht.
+
+- id: australian_lithium_belt
+  name_en: Australian Lithium Belt (WA)
+  name_de: Australischer Lithiumgurtel (WA)
+  category: minerals
+  subcategory: lithium
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [lithium]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (lithium)"
+  rank_note: "Australia is the world's #1 lithium producer (~40% of global mined lithium); hosts Greenbushes, the largest hard-rock lithium mine on earth (~40% of world spodumene concentrate alone)."
+  description_en: >-
+    Western Australia's hard-rock lithium mines, led by the giant
+    Greenbushes deposit, supply the majority of the world's mined lithium
+    feeding battery and EV supply chains, mostly under Chinese (Tianqi) and
+    US (Albemarle) joint ownership.
+  description_de: >-
+    Westaustraliens Hartgestein-Lithiumminen, angefuehrt von der riesigen
+    Greenbushes-Lagerstaette, liefern den Grossteil des weltweit
+    geforderten Lithiums fuer Batterie- und Elektrofahrzeug-Lieferketten,
+    meist in chinesisch-amerikanischem Gemeinschaftsbesitz (Tianqi,
+    Albemarle).
+
+- id: jiangxi_lithium_belt
+  name_en: Jiangxi-Sichuan Lithium Belt
+  name_de: Jiangxi-Sichuan-Lithiumgurtel
+  category: minerals
+  subcategory: lithium
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[113.5,26.0],[115.5,26.0],[115.5,29.0],[113.5,29.0],[113.5,26.0]]
+  commodities: [lithium]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (lithium); China Geological Survey exploration reports"
+  rank_note: "China is a top-3 world lithium miner and the leading refiner of lithium chemicals (Jiangxi + Qinghai ~80% of China's refined output); Jiangxi lepidolite and Sichuan spodumene are the two main domestic ore sources."
+  description_en: >-
+    China's domestic lithium ore heartland -- Jiangxi lepidolite clay and
+    Sichuan hard-rock spodumene -- feeding the refining capacity that makes
+    China the world's dominant lithium chemicals processor regardless of
+    where the raw ore is mined.
+  description_de: >-
+    Chinas heimisches Lithium-Erzkernland -- Jiangxi-Lepidolith-Ton und
+    Sichuan-Hartgestein-Spodumen -- versorgt die Raffineriekapazitaet, die
+    China zum weltweit dominanten Verarbeiter von Lithiumchemikalien macht,
+    unabhaengig davon, wo das Rohmaterial gefoerdert wird.
+
+# =========================================================================
+# URANIUM
+# =========================================================================
+
+- id: kazakh_uranium_belt
+  name_en: Kazakh Uranium Belt
+  name_de: Kasachischer Urangurtel
+  category: minerals
+  subcategory: uranium
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [uranium]
+  centroid_ids: [ASIA-CENTRAL]
+  ranking_source: "World Nuclear Association / USGS Mineral Commodity Summaries 2026 (uranium)"
+  rank_note: "Kazakhstan produces roughly 40% of world mined uranium, the largest single-country share, via in-situ leach mining."
+  description_en: >-
+    Kazakhstan's in-situ leach uranium mines supply the largest share of
+    the world's mined uranium, feeding nuclear fuel cycles worldwide;
+    Kazatomprom's joint ventures with Russian and Chinese state firms give
+    both leverage over Western reactor fuel security.
+  description_de: >-
+    Kasachstans In-situ-Auslaugungs-Uranminen liefern den groessten Anteil
+    des weltweit geforderten Urans und versorgen Kernbrennstoffkreislaeufe
+    weltweit; Kazatomproms Gemeinschaftsunternehmen mit russischen und
+    chinesischen Staatsfirmen verschaffen beiden Einfluss auf die
+    westliche Reaktorbrennstoffsicherheit.
+
+- id: athabasca_basin_uranium
+  name_en: Athabasca Basin Uranium District
+  name_de: Athabasca-Becken-Uranrevier
+  category: minerals
+  subcategory: uranium
+  asset_type: production_cluster
+  criticality: 3
+  commodities: [uranium]
+  centroid_ids: [AMERICAS-CANADA]
+  ranking_source: "World Nuclear Association / USGS Mineral Commodity Summaries 2026 (uranium)"
+  rank_note: "Canada is a top-2 world uranium producer; Athabasca hosts Cigar Lake and McArthur River, the world's highest-grade uranium mines."
+  description_en: >-
+    Home to Cigar Lake and McArthur River, the world's highest-grade
+    uranium mines, making Canada a top global producer and a critical
+    Western alternative to Kazakh and Russian-linked uranium supply.
+  description_de: >-
+    Heimat von Cigar Lake und McArthur River, den hochgradigsten Uranminen
+    der Welt; sie machen Kanada zu einem der weltweit fuehrenden
+    Produzenten und einer wichtigen westlichen Alternative zu
+    kasachischer und russisch verbundener Uranversorgung.
+
+- id: husab_rossing_uranium
+  name_en: Husab-Rossing Uranium District
+  name_de: Husab-Rossing-Uranrevier
+  category: minerals
+  subcategory: uranium
+  asset_type: facility
+  criticality: 3
+  commodities: [uranium]
+  centroid_ids: [AFRICA-SOUTHERN]
+  ranking_source: "World Nuclear Association (Namibia country profile); USGS Mineral Commodity Summaries 2026"
+  rank_note: "Namibia is a top-5 world uranium producer; Husab and Roessing are both majority Chinese state-owned."
+  description_en: >-
+    Namibia's desert uranium district hosting the Husab and Roessing mines,
+    both majority owned by Chinese state firms, giving Beijing direct
+    control over a significant share of Western-reactor-grade uranium
+    supply.
+  description_de: >-
+    Namibias Wuesten-Uranrevier mit den Minen Husab und Roessing, beide
+    mehrheitlich im Besitz chinesischer Staatsunternehmen, was Peking
+    direkte Kontrolle ueber einen erheblichen Teil der Uranversorgung fuer
+    westliche Reaktoren verschafft.
+
+- id: olympic_dam_mine
+  name_en: Olympic Dam Mine
+  name_de: Olympic-Dam-Mine
+  category: minerals
+  subcategory: uranium
+  asset_type: facility
+  criticality: 4
+  commodities: [uranium, copper]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  ranking_source: "Geoscience Australia; BHP disclosures; USGS Mineral Commodity Summaries 2026"
+  rank_note: "Holds the largest known single uranium deposit in the world by contained resource; also a major copper source."
+  description_en: >-
+    Home to the largest known single uranium deposit on the planet
+    alongside substantial copper reserves, operated by BHP; its scale
+    underpins Australia's role as a top uranium exporter to allied nuclear
+    power markets.
+  description_de: >-
+    Beheimatet die groesste bekannte einzelne Uranlagerstaette der Welt
+    neben erheblichen Kupferreserven, betrieben von BHP; ihre Groesse
+    untermauert Australiens Rolle als fuehrender Uranexporteur in
+    verbuendete Kernkraftmaerkte.
+
+- id: arlit_uranium_district
+  name_en: Arlit Uranium District
+  name_de: Arlit-Uranrevier
+  category: minerals
+  subcategory: uranium
+  asset_type: facility
+  criticality: 4
+  lon: 7.28
+  lat: 18.74
+  commodities: [uranium]
+  centroid_ids: [AFRICA-WEST]
+  ranking_source: "World Nuclear Association (Niger country profile)"
+  rank_note: "Niger supplies roughly 4-5% of world mined uranium; historically a top-5 producer and France's largest single external uranium source before 2024."
+  description_en: >-
+    Niger's Saharan uranium mines around Arlit, developed by France's
+    Orano since the 1970s, were nationalized by the post-coup military
+    government in 2025 after Orano lost operational control, a stark
+    reversal of a decades-old Western nuclear-fuel supply relationship.
+  description_de: >-
+    Nigers Sahara-Uranminen um Arlit, seit den 1970ern von Frankreichs
+    Orano entwickelt, wurden 2025 von der Militaerregierung nach dem
+    Putsch verstaatlicht, nachdem Orano die operative Kontrolle verloren
+    hatte -- eine scharfe Umkehr einer jahrzehntealten westlichen
+    Kernbrennstoff-Lieferbeziehung.
+
+# =========================================================================
+# RARE EARTHS
+# =========================================================================
+
+- id: bayan_obo_rare_earths
+  name_en: Bayan Obo Rare Earths Complex
+  name_de: Bayan-Obo-Seltene-Erden-Komplex
+  category: minerals
+  subcategory: rare_earths
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [rare_earths]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (rare earths)"
+  rank_note: "China supplies ~69% of world rare earth production; Bayan Obo is the largest single rare earth deposit and processing complex on earth (light rare earths)."
+  description_en: >-
+    The world's largest rare-earth mining and processing complex,
+    underpinning China's dominance over magnets and advanced electronics
+    supply chains.
+  description_de: >-
+    Der groesste Seltene-Erden-Abbau- und Verarbeitungskomplex der Welt,
+    Grundlage fuer Chinas Dominanz bei Magneten und Lieferketten fuer
+    moderne Elektronik.
+
+- id: jiangxi_heavy_rare_earths
+  name_en: Jiangxi-Guangdong Heavy Rare Earth Belt
+  name_de: Jiangxi-Guangdong-Schwere-Seltene-Erden-Gurtel
+  category: minerals
+  subcategory: rare_earths
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[113.5,26.8],[116.0,26.8],[116.0,24.5],[113.5,24.5],[113.5,26.8]]
+  commodities: [rare_earths]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "China Rare Earth Group corporate disclosures; industry/geological literature on ion-adsorption REE deposits"
+  rank_note: "Southern China's ion-adsorption clay deposits (Ganzhou/Jiangxi core) supply the overwhelming majority of world dysprosium and terbium, the heavy rare earths critical for permanent magnets."
+  description_en: >-
+    Ion-adsorption clay deposits across Jiangxi, Guangdong and Fujian,
+    consolidated under state-owned China Rare Earth Group, that supply
+    almost all of the world's heavy rare earths (dysprosium, terbium)
+    used in high-performance magnets -- the element China's 2025 export
+    controls targeted most precisely.
+  description_de: >-
+    Ionenadsorptions-Tonlagerstaetten in Jiangxi, Guangdong und Fujian,
+    konsolidiert unter dem Staatsunternehmen China Rare Earth Group, die
+    fast alle weltweit schweren Seltenen Erden (Dysprosium, Terbium) fuer
+    Hochleistungsmagnete liefern -- genau die Elemente, auf die Chinas
+    Exportkontrollen 2025 am praezisesten abzielten.
+
+- id: kachin_rare_earth_zone
+  name_en: Kachin Rare Earth Mining Zone
+  name_de: Kachin-Seltene-Erden-Abbauzone
+  category: minerals
+  subcategory: rare_earths
+  asset_type: production_cluster
+  criticality: 3
+  commodities: [rare_earths]
+  centroid_ids: []
+  ranking_source: "Global Witness / industry trade-flow reporting on Myanmar-China heavy rare earth trade"
+  rank_note: "An unregulated mining zone supplying the large majority of China's heavy rare earth ore imports; conflict-financed extraction in Myanmar's civil war."
+  description_en: >-
+    A largely unregulated heavy rare earth mining zone near the Chinese
+    border, controlled by armed groups and supplying most of China's heavy
+    rare earth ore imports; extraction revenue has become a direct source
+    of conflict financing in Myanmar's civil war.
+  description_de: >-
+    Eine weitgehend unregulierte Abbauzone fuer schwere Seltene Erden nahe
+    der chinesischen Grenze, kontrolliert von bewaffneten Gruppen und
+    Quelle des Grossteils der chinesischen Importe an schweren
+    Seltene-Erden-Erzen; die Foerdererloese sind zu einer direkten Quelle
+    der Konfliktfinanzierung im myanmarischen Buergerkrieg geworden.
+
+- id: mountain_pass_mine
+  name_en: Mountain Pass Mine
+  name_de: Mountain-Pass-Mine
+  category: minerals
+  subcategory: rare_earths
+  asset_type: facility
+  criticality: 5
+  commodities: [rare_earths]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (rare earths); MP Materials disclosures"
+  rank_note: "The only significant rare earth mining and processing site in the United States; the US supplies a share of the ~102,000t/yr non-China REO output alongside Australia and Myanmar."
+  description_en: >-
+    The only significant rare earth mine and processing site in the United
+    States, operated by MP Materials; it anchors Washington's push to
+    reduce dependence on Chinese-controlled rare earth supply chains.
+  description_de: >-
+    Die einzige bedeutende Seltene-Erden-Mine und Verarbeitungsanlage in
+    den Vereinigten Staaten, betrieben von MP Materials; sie ist die
+    Grundlage von Washingtons Bemuehen, die Abhaengigkeit von chinesisch
+    kontrollierten Seltene-Erden-Lieferketten zu verringern.
+
+- id: mount_weld_mine
+  name_en: Mount Weld Mine
+  name_de: Mount-Weld-Mine
+  category: minerals
+  subcategory: rare_earths
+  asset_type: facility
+  criticality: 4
+  commodities: [rare_earths]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (rare earths); Lynas Rare Earths disclosures"
+  rank_note: "One of the highest-grade rare earth deposits outside China, operated by Lynas, a leading non-Chinese rare earth producer."
+  description_en: >-
+    One of the highest-grade rare earth deposits outside China, operated
+    by Lynas and feeding processing capacity in Malaysia and a new plant
+    in Texas; a key node in allied efforts to build a non-Chinese rare
+    earth supply chain.
+  description_de: >-
+    Eine der hochgradigsten Seltene-Erden-Lagerstaetten ausserhalb Chinas,
+    betrieben von Lynas und Rohstoffquelle fuer Verarbeitungskapazitaeten
+    in Malaysia sowie eine neue Anlage in Texas; ein zentraler
+    Knotenpunkt in den Bemuehungen verbuendeter Staaten um eine
+    chinaunabhaengige Seltene-Erden-Lieferkette.
+
+# =========================================================================
+# GOLD
+# =========================================================================
+
+- id: muruntau_gold_mine
+  name_en: Muruntau Gold Mine
+  name_de: Muruntau-Goldmine
+  category: minerals
+  subcategory: gold
+  asset_type: facility
+  criticality: 5
+  commodities: [gold]
+  centroid_ids: [ASIA-CENTRAL]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (gold)"
+  rank_note: "The world's largest open-pit gold mine by reserves; state-owned Navoi Mining anchors Uzbekistan's export revenue."
+  description_en: >-
+    The world's largest open-pit gold mine, state-owned and central to
+    Uzbekistan's gold export earnings, which the government has
+    increasingly leaned on as a hard-currency buffer.
+  description_de: >-
+    Die groesste Tagebau-Goldmine der Welt, in Staatsbesitz und zentral
+    fuer Usbekistans Goldexporteinnahmen, auf die sich die Regierung
+    zunehmend als Devisenpuffer stuetzt.
+
+- id: witwatersrand_goldfields
+  name_en: Witwatersrand Goldfields
+  name_de: Witwatersrand-Goldfelder
+  category: minerals
+  subcategory: gold
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[26.5,-26.0],[28.5,-26.0],[28.5,-28.0],[26.5,-28.0],[26.5,-26.0]]
+  commodities: [gold]
+  centroid_ids: [AFRICA-SOUTHAFRICA]
+  ranking_source: "USGS/historical geological surveys; industry consensus on cumulative output"
+  rank_note: "An estimated 30-40% of all gold ever mined on earth has come from this single basin; still South Africa's core gold-mining region despite decades of output decline."
+  description_en: >-
+    The deepest and historically richest gold basin on earth, whose 1886
+    discovery built modern Johannesburg; still anchors South African gold
+    output even as ultra-deep mining costs and safety risks have driven
+    decades of production decline.
+  description_de: >-
+    Das tiefste und historisch reichste Goldbecken der Welt, dessen
+    Entdeckung 1886 das moderne Johannesburg begruendete; verankert
+    weiterhin die suedafrikanische Goldproduktion, auch wenn extreme
+    Tiefbaukosten und Sicherheitsrisiken jahrzehntelang zu Produktions-
+    rueckgaengen gefuehrt haben.
+
+- id: chinese_gold_belt
+  name_en: Chinese Gold Belt (Shandong-Henan)
+  name_de: Chinesischer Goldgurtel (Shandong-Henan)
+  category: minerals
+  subcategory: gold
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[116.5,35.5],[121.0,35.5],[121.0,37.5],[116.5,37.5],[116.5,35.5]]
+  commodities: [gold]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (gold)"
+  rank_note: "China is the world's #1 gold-producing country (~10% of global mine output, ~380 t in 2025), concentrated in Shandong, Henan and Jiangxi."
+  description_en: >-
+    China's leading gold-mining provinces, source of the world's largest
+    national gold output; state-linked miners feed both domestic reserves
+    and a central-bank gold-buying push tied to de-dollarization strategy.
+  description_de: >-
+    Chinas fuehrende Goldabbauprovinzen, Quelle der groessten nationalen
+    Goldproduktion der Welt; staatsnahe Bergbauunternehmen versorgen
+    sowohl heimische Reserven als auch einen Goldkauf-Kurs der
+    Zentralbank im Rahmen der Entdollarisierungsstrategie.
+
+- id: russian_gold_belt
+  name_en: Russian Gold Belt (Krasnoyarsk-Magadan)
+  name_de: Russischer Goldgurtel (Krasnojarsk-Magadan)
+  category: minerals
+  subcategory: gold
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[92.0,58.0],[152.0,58.0],[152.0,63.0],[92.0,63.0],[92.0,58.0]]
+  commodities: [gold]
+  centroid_ids: [EUROPE-RUSSIA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (gold)"
+  rank_note: "Russia is the world's #2 gold-producing country (~330 t in 2025); Siberian and Far East deposits are central to sanctions-era hard-currency earnings."
+  description_en: >-
+    Russia's Siberian and Far East gold belt, the country's #2 hard-currency
+    export earner after energy; gold sales have become a key sanctions-
+    evasion channel since 2022.
+  description_de: >-
+    Russlands sibirischer und fernoestlicher Goldgurtel, nach Energie die
+    zweitwichtigste Devisenquelle des Landes; Goldverkaeufe sind seit 2022
+    zu einem zentralen Kanal der Sanktionsumgehung geworden.
+
+# =========================================================================
+# TIN
+# =========================================================================
+
+- id: bangka_belitung_tin
+  name_en: Bangka-Belitung Tin Belt
+  name_de: Zinngurtel Bangka-Belitung
+  category: minerals
+  subcategory: tin
+  asset_type: production_cluster
+  criticality: 3
+  commodities: [tin]
+  centroid_ids: [ASIA-SOUTHEAST]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (tin)"
+  rank_note: "Indonesia is a top-2 world tin producer/exporter; Bangka-Belitung is the source of nearly all of it, much from small-scale and offshore dredging operations."
+  description_en: >-
+    The island source of most of Indonesia's tin output, making the
+    country one of the top global suppliers of solder used throughout
+    electronics manufacturing.
+  description_de: >-
+    Die Inselregion, aus der der Grossteil von Indonesiens Zinnfoerderung
+    stammt, was das Land zu einem der weltweit fuehrenden Lieferanten von
+    Lot fuer die Elektronikfertigung macht.
+
+- id: yunnan_tin_belt
+  name_en: Yunnan Tin Belt (Gejiu)
+  name_de: Yunnan-Zinngurtel (Gejiu)
+  category: minerals
+  subcategory: tin
+  asset_type: facility
+  criticality: 4
+  lon: 103.15
+  lat: 23.35
+  commodities: [tin]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (tin); Yunnan Tin Company disclosures"
+  rank_note: "China is the world's #1 tin producer and refiner; Yunnan Tin Company alone has supplied roughly half of world refined tin in some years."
+  description_en: >-
+    The Gejiu tin district, mined since Qing-dynasty times and now home to
+    Yunnan Tin Company, the world's largest tin producer and refiner,
+    giving China outsized pricing power over global solder and electronics
+    supply chains.
+  description_de: >-
+    Das Gejiu-Zinnrevier, seit der Qing-Dynastie abgebaut und heute Sitz
+    der Yunnan Tin Company, des weltgroessten Zinnproduzenten und
+    -raffineurs, was China erhebliche Preismacht ueber globale Lot- und
+    Elektronik-Lieferketten verschafft.
+
+- id: bisie_tin_mine
+  name_en: Bisie Tin Mine
+  name_de: Bisie-Zinnmine
+  category: minerals
+  subcategory: tin
+  asset_type: facility
+  criticality: 3
+  lon: 27.9
+  lat: -0.15
+  commodities: [tin]
+  centroid_ids: [AFRICA-DRC]
+  ranking_source: "Alphamin Resources disclosures; industry reporting"
+  rank_note: "Roughly 4% of world tin production from a single mine, formerly a militia-controlled artisanal site, now industrially operated by Canada's Alphamin Resources."
+  description_en: >-
+    A high-grade tin deposit in conflict-affected North Kivu, once
+    militia-controlled artisanal ground and now formalized under Alphamin
+    Resources; a rare case of a Dodd-Frank "conflict mineral" site
+    transitioning to industrial, traceable production.
+  description_de: >-
+    Eine hochgradige Zinnlagerstaette im konfliktbetroffenen Nord-Kivu,
+    einst von Milizen kontrolliertes artisanales Abbaugebiet, heute unter
+    Alphamin Resources formalisiert; ein seltener Fall eines Dodd-Frank-
+    "Konfliktmineral"-Standorts im Uebergang zu industrieller,
+    rueckverfolgbarer Produktion.
+
+# =========================================================================
+# GRAPHITE
+# =========================================================================
+
+- id: heilongjiang_graphite_belt
+  name_en: Heilongjiang Graphite Belt (Luobei-Jixi)
+  name_de: Heilongjiang-Graphitgurtel (Luobei-Jixi)
+  category: minerals
+  subcategory: graphite
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[129.5,46.5],[132.0,46.5],[132.0,48.5],[129.5,48.5],[129.5,46.5]]
+  commodities: [graphite]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (graphite)"
+  rank_note: "China supplies roughly 78% of world natural graphite; Heilongjiang alone holds over 40% of world graphite resources, anchored by the giant Luobei/Yunshan deposit."
+  description_en: >-
+    China's dominant natural graphite mining region, anchored by the
+    Luobei/Yunshan deposit, one of Asia's largest; underpins China's
+    near-monopoly on the battery anode material supply chain.
+  description_de: >-
+    Chinas dominante Naturgraphit-Abbauregion, verankert durch die
+    Lagerstaette Luobei/Yunshan, eine der groessten Asiens; Grundlage
+    fuer Chinas Quasi-Monopol auf die Lieferkette fuer Batterieanoden-
+    material.
+
+- id: balama_graphite_mine
+  name_en: Balama Graphite Mine
+  name_de: Balama-Graphitmine
+  category: minerals
+  subcategory: graphite
+  asset_type: facility
+  criticality: 4
+  commodities: [graphite]
+  centroid_ids: [AFRICA-SOUTHERN]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (graphite); Syrah Resources disclosures"
+  rank_note: "One of the largest single graphite mines outside China; restarted mid-2025 after a suspension, part of Mozambique's roughly 3% world share."
+  description_en: >-
+    One of the world's largest graphite mines, operated by Syrah
+    Resources, supplying natural graphite for battery anodes as
+    manufacturers seek alternatives to Chinese-dominated graphite
+    processing.
+  description_de: >-
+    Eine der groessten Graphitminen der Welt, betrieben von Syrah
+    Resources, die Naturgraphit fuer Batterieanoden liefert, waehrend
+    Hersteller nach Alternativen zur chinesisch dominierten
+    Graphitverarbeitung suchen.
+
+# =========================================================================
+# PGM (PLATINUM / PALLADIUM)
+# =========================================================================
+# Note: Norilsk (world's #1 palladium producer) is listed under NICKEL
+# above with palladium tagged in commodities, since it is fundamentally a
+# nickel-palladium co-product operation.
+
+- id: bushveld_platinum_complex
+  name_en: Bushveld Platinum Complex
+  name_de: Bushveld-Platin-Komplex
+  category: minerals
+  subcategory: pgm
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [platinum, palladium]
+  centroid_ids: [AFRICA-SOUTHAFRICA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (platinum, palladium)"
+  rank_note: "South Africa is the world's #1 platinum producer (~120,000 kg in 2025) and #2 palladium producer; the Bushveld Complex holds the large majority of world platinum-group-metal reserves."
+  description_en: >-
+    South Africa's vast platinum-group-metal reserves, essential to
+    catalytic converters and the emerging hydrogen fuel cell industry;
+    chronic power cuts and deep-level mining costs have repeatedly
+    threatened output.
+  description_de: >-
+    Suedafrikas riesige Platingruppenmetall-Reserven, unverzichtbar fuer
+    Katalysatoren und die aufstrebende Wasserstoff-Brennstoffzellen-
+    industrie; chronische Stromausfaelle und die Kosten des Tiefbaus
+    haben die Foerderung wiederholt bedroht.
+
+# =========================================================================
+# ZINC
+# =========================================================================
+
+- id: red_dog_mine
+  name_en: Red Dog Mine
+  name_de: Red-Dog-Mine
+  category: minerals
+  subcategory: zinc
+  asset_type: facility
+  criticality: 4
+  lon: -162.86
+  lat: 68.05
+  commodities: [zinc]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (zinc); Teck Resources disclosures"
+  rank_note: "The single largest zinc mine in the world, supplying roughly 10% of world mined zinc alone."
+  description_en: >-
+    A remote Arctic Alaska mine, the world's largest single source of
+    mined zinc, operated by Teck Resources on NANA Regional Corporation
+    (Inupiat) land under a landmark indigenous royalty-sharing agreement.
+  description_de: >-
+    Eine abgelegene arktische Mine in Alaska, die weltweit groesste
+    einzelne Quelle geforderten Zinks, betrieben von Teck Resources auf
+    Land der NANA Regional Corporation (Inupiat) im Rahmen einer
+    wegweisenden indigenen Tantiemen-Vereinbarung.
+
+- id: china_zinc_belt
+  name_en: China Zinc Belt (Inner Mongolia-Yunnan)
+  name_de: Chinesischer Zinkgurtel (Innere Mongolei-Yunnan)
+  category: minerals
+  subcategory: zinc
+  asset_type: production_cluster
+  criticality: 4
+  hull: [[110.0,41.0],[113.0,41.0],[113.0,43.0],[110.0,43.0],[110.0,41.0]]
+  commodities: [zinc]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "USGS Mineral Commodity Summaries 2026 (zinc)"
+  rank_note: "China is the world's #1 zinc producer (~33-35% of global mine output), concentrated in Inner Mongolia and Yunnan; Fankou (Guangdong) is China's single largest zinc mine."
+  description_en: >-
+    China's leading zinc mining provinces, source of roughly a third of
+    world mined zinc, feeding the galvanizing and die-casting industries
+    that underpin China's steel and automotive exports.
+  description_de: >-
+    Chinas fuehrende Zinkabbauprovinzen, Quelle von etwa einem Drittel des
+    weltweit geforderten Zinks, versorgen die Verzinkungs- und
+    Druckgussindustrien, die Chinas Stahl- und Automobilexporte
+    unterstuetzen.
+
+- id: rampura_agucha_mine
+  name_en: Rampura Agucha Mine
+  name_de: Rampura-Agucha-Mine
+  category: minerals
+  subcategory: zinc
+  asset_type: facility
+  criticality: 5
+  lon: 74.72
+  lat: 25.85
+  commodities: [zinc]
+  centroid_ids: []
+  ranking_source: "Hindustan Zinc Limited disclosures; industry reporting"
+  rank_note: "The world's largest zinc-lead ore deposit and largest underground zinc mining operation; anchors India's position as a top-5 world zinc producer."
+  description_en: >-
+    Hindustan Zinc's flagship Rajasthan mine, holding the world's largest
+    zinc-lead deposit; underpins India's position among the world's top
+    zinc producers and its push for critical-minerals self-sufficiency.
+  description_de: >-
+    Hindustan Zincs Vorzeigemine in Rajasthan mit der weltweit groessten
+    Zink-Blei-Lagerstaette; untermauert Indiens Position unter den
+    weltweit fuehrenden Zinkproduzenten und sein Streben nach
+    Selbstversorgung bei kritischen Rohstoffen.

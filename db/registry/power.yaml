@@ -1,0 +1,1044 @@
+# Power generation -- nuclear, hydro, coal, gas-fired, wind, solar stations
+# selected for capacity AND geopolitical weight. Authority: IAEA PRIS (nuclear,
+# net capacity) and Global Energy Monitor Global Integrated Power Tracker
+# (hydro/coal/gas/wind by capacity). Commodities are always
+# [electricity, <gen-type>] so the frontend can key a "Power generation" map
+# category off the electricity tag. Geometry omitted on reconciled rows
+# (existing DB geometry preserved); new rows carry verified lon/lat.
+
+# =========================================================================
+# RECONCILE -- existing assets, geometry preserved, enriched with
+# subcategory / ranking_source / rank_note
+# =========================================================================
+
+- id: zaporizhzhia_npp
+  name_en: Zaporizhzhia Nuclear Power Plant
+  name_de: Kernkraftwerk Saporischschja
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [EUROPE-UKRAINE, EUROPE-RUSSIA]
+  criticality: 5
+  ranking_source: "IAEA PRIS (6x950 MW net); Reuters/IAEA occupation reporting"
+  rank_note: "5700 MW net -- Europe's largest nuclear plant; under Russian military occupation since March 2022, front-line shelling risk under IAEA monitoring."
+  description_en: >-
+    Europe's largest nuclear power station, seized by Russian forces in 2022
+    and repeatedly caught in shelling near the front line, making it one of
+    the highest-stakes nuclear-safety flashpoints in the world.
+  description_de: >-
+    Europas groesstes Kernkraftwerk, 2022 von russischen Streitkraeften
+    besetzt und wiederholt in der Naehe der Frontlinie beschossen, damit
+    einer der brisantesten nuklearen Sicherheits-Brennpunkte weltweit.
+
+- id: akkuyu_npp
+  name_en: Akkuyu Nuclear Power Plant
+  name_de: Kernkraftwerk Akkuyu
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [MIDEAST-TURKEY]
+  criticality: 3
+  ranking_source: "IAEA PRIS (4x1114 MW planned); World Nuclear Association Turkey profile"
+  rank_note: "~4800 MW planned -- Turkey's first nuclear plant, built/owned/operated by Rosatom under a build-own-operate deal."
+  description_en: >-
+    Turkey's first nuclear plant, fully built and owned by Russia's Rosatom,
+    giving Moscow decades of built-in energy leverage over a NATO member.
+  description_de: >-
+    Die Tuerkeis erstes Kernkraftwerk, vollstaendig gebaut und im Besitz von
+    Russlands Rosatom, was Moskau jahrzehntelangen strukturellen
+    Energie-Einfluss auf ein NATO-Mitglied verschafft.
+
+- id: barakah_npp
+  name_en: Barakah Nuclear Power Plant
+  name_de: Kernkraftwerk Barakah
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 3
+  ranking_source: "IAEA PRIS (4x1345 MW net); World Nuclear Association UAE profile"
+  rank_note: "~5380 MW net -- the Arab world's first commercial nuclear plant, Korean (KEPCO) reactor technology."
+  description_en: >-
+    The Arab world's first operating nuclear plant, anchoring the UAE's push
+    to diversify its power mix away from gas ahead of a Gulf energy transition.
+  description_de: >-
+    Das erste laufende Kernkraftwerk der arabischen Welt, zentral fuer die
+    Bestrebungen der VAE, den Strommix vor einer Energiewende am Golf von
+    Gas zu diversifizieren.
+
+- id: kashiwazaki_kariwa_npp
+  name_en: Kashiwazaki-Kariwa Nuclear Power Plant
+  name_de: Kernkraftwerk Kashiwazaki-Kariwa
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [ASIA-JAPAN]
+  criticality: 3
+  ranking_source: "IAEA PRIS (7 units, 8212 MW net); TEPCO plant data"
+  rank_note: "8212 MW net -- world's largest nuclear plant by installed capacity; largely idled since Fukushima, restart bellwether."
+  description_en: >-
+    The world's largest nuclear plant by capacity, largely idled since
+    Fukushima and a bellwether for whether Japan restarts its nuclear fleet
+    amid energy security pressure.
+  description_de: >-
+    Das nach installierter Leistung groesste Kernkraftwerk der Welt, seit
+    Fukushima weitgehend stillgelegt und ein Fruehindikator dafuer, ob Japan
+    seine Atomflotte angesichts des Energiesicherheitsdrucks wieder hochfaehrt.
+
+- id: kori_saeul_npp
+  name_en: Kori-Saeul Nuclear Cluster
+  name_de: Kernkraftwerkscluster Kori-Saeul
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  criticality: 3
+  ranking_source: "IAEA PRIS (Kori + Saeul unit listings); KHNP fleet data"
+  rank_note: "~7500 MW combined -- South Korea's largest nuclear complex, underpins both domestic supply and KEPCO export ambitions."
+  description_en: >-
+    South Korea's largest concentration of nuclear capacity, underpinning
+    both domestic power supply and Seoul's export ambitions in the global
+    reactor market.
+  description_de: >-
+    Suedkoreas groesste Konzentration von Kernkraftkapazitaet, Grundlage
+    sowohl der heimischen Stromversorgung als auch Seouls Exportambitionen
+    auf dem globalen Reaktormarkt.
+
+- id: gravelines_npp
+  name_en: Gravelines Nuclear Power Plant
+  name_de: Kernkraftwerk Gravelines
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [EUROPE-FRANCE]
+  criticality: 3
+  ranking_source: "IAEA PRIS (6x910 MW net); EDF fleet data; Power Technology plant profile"
+  rank_note: "5460 MW net -- largest nuclear plant in Western Europe; France draws ~70% of its electricity from nuclear (IAEA/World Nuclear Association)."
+  description_en: >-
+    Western Europe's largest nuclear plant, a pillar of the low-carbon
+    baseload power that gives France an outsized role in EU electricity
+    export flows.
+  description_de: >-
+    Westeuropas groesstes Kernkraftwerk, eine Saeule der CO2-armen
+    Grundlastversorgung, die Frankreich eine ueberproportionale Rolle bei den
+    EU-Stromexportfluessen verschafft.
+
+- id: taishan_npp
+  name_en: Taishan Nuclear Power Plant
+  name_de: Kernkraftwerk Taishan
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "IAEA PRIS (2x1750 MW EPR units); World Nuclear Association China profile"
+  rank_note: "3500 MW net -- site of the world's first operating EPR reactors, a Franco-Chinese (EDF/CGN) joint project."
+  description_en: >-
+    Site of the world's first EPR reactors to enter commercial service, a
+    showcase for China's fast-expanding nuclear buildout and its technology
+    partnerships with France.
+  description_de: >-
+    Standort der weltweit ersten kommerziell betriebenen EPR-Reaktoren, ein
+    Aushaengeschild fuer Chinas rasch wachsenden Nuklearausbau und seine
+    Technologiepartnerschaften mit Frankreich.
+
+- id: kudankulam_npp
+  name_en: Kudankulam Nuclear Power Plant
+  name_de: Kernkraftwerk Kudankulam
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 3
+  ranking_source: "IAEA PRIS (2x1000 MW operating units); Rosatom/NPCIL project data"
+  rank_note: "2000 MW net operating (further units under construction) -- India's largest nuclear station, built with Rosatom reactors and financing."
+  description_en: >-
+    India's largest nuclear plant, built with Rosatom reactors and
+    financing, illustrating how Russia retains a strategic energy foothold
+    in India even as New Delhi diversifies its partnerships.
+  description_de: >-
+    Indiens groesstes Kernkraftwerk, gebaut mit Rosatom-Reaktoren und
+    russischer Finanzierung, ein Beleg dafuer, dass Russland trotz Neu-Delhis
+    Diversifizierung strategischen Energie-Einfluss in Indien behaelt.
+
+- id: vogtle_npp
+  name_en: Vogtle Nuclear Power Plant
+  name_de: Kernkraftwerk Vogtle
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "IAEA PRIS (4 units, 4536 MW net); EIA plant data"
+  rank_note: "4536 MW net -- site of the first newly built US reactors in over 30 years (Units 3-4, completed 2023-24), now the largest US nuclear plant."
+  description_en: >-
+    Home to the first newly built US reactors in over 30 years, a costly and
+    delayed project now cited as the test case for whether America can
+    revive large-scale nuclear construction.
+  description_de: >-
+    Standort der ersten seit ueber 30 Jahren neu gebauten US-Reaktoren, ein
+    teures und verzoegertes Projekt, das nun als Testfall dafuer gilt, ob die
+    USA den Bau von Grossreaktoren wiederbeleben koennen.
+
+- id: bruce_npp
+  name_en: Bruce Nuclear Generating Station
+  name_de: Kernkraftwerk Bruce
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [AMERICAS-CANADA]
+  criticality: 2
+  ranking_source: "IAEA PRIS (8 CANDU units, 6430 MW net); Bruce Power fleet data"
+  rank_note: "6430 MW net across 8 reactors -- world's largest operating nuclear site by reactor count."
+  description_en: >-
+    The world's largest operating nuclear site by reactor count, anchoring
+    Ontario's low-carbon grid and Canada's position as a major uranium and
+    reactor-technology supplier.
+  description_de: >-
+    Der nach Reaktoranzahl groesste in Betrieb befindliche Nuklearstandort
+    der Welt, Grundlage von Ontarios CO2-armem Stromnetz und Kanadas Rolle
+    als bedeutender Uran- und Reaktortechnologie-Lieferant.
+
+- id: leningrad_npp
+  name_en: Leningrad Nuclear Power Plant
+  name_de: Kernkraftwerk Leningrad
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  commodities: [electricity, nuclear]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "IAEA PRIS (Leningrad NPP unit listing); World Nuclear Association Russia profile"
+  rank_note: "One of Russia's largest nuclear stations; Russia is a top-four nuclear generator globally and Rosatom the dominant reactor exporter."
+  description_en: >-
+    One of Russia's largest nuclear stations, on the Gulf of Finland west of
+    St Petersburg; Russia is a top-four nuclear generator and Rosatom the
+    dominant global reactor exporter.
+  description_de: >-
+    Eines der groessten Kernkraftwerke Russlands am Finnischen Meerbusen
+    westlich von St. Petersburg; Russland zaehlt zu den vier groessten
+    Kernstromerzeugern und Rosatom ist der fuehrende Reaktorexporteur weltweit.
+
+- id: sayano_shushenskaya_dam
+  name_en: Sayano-Shushenskaya Dam
+  name_de: Talsperre Sajano-Schuschenskaja
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); RusHydro plant data"
+  rank_note: "6400 MW -- Russia's largest power plant by capacity; feeds Siberian aluminium smelting; site of the 2009 turbine-hall disaster."
+  description_en: >-
+    Russia's largest power station by capacity, on the Yenisei in Khakassia;
+    powers Siberian aluminium smelting and site of the 2009 turbine-hall
+    disaster.
+  description_de: >-
+    Groesstes Kraftwerk Russlands nach Kapazitaet am Jenissei in
+    Chakassien; versorgt die sibirische Aluminiumverhuettung und Schauplatz
+    der Turbinenhaus-Katastrophe von 2009.
+
+- id: three_gorges_dam
+  name_en: Three Gorges Dam
+  name_de: Drei-Schluchten-Damm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 4
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); China Three Gorges Corporation plant data"
+  rank_note: "22500 MW -- world's largest power station of any type by installed capacity."
+  description_en: >-
+    The world's largest power station by capacity, a centerpiece of Chinese
+    engineering that also controls flood flows on the Yangtze for hundreds
+    of millions of people downstream.
+  description_de: >-
+    Das nach installierter Leistung groesste Kraftwerk der Welt, ein
+    Aushaengeschild chinesischer Ingenieurskunst, das zugleich die
+    Hochwasserabfluesse des Jangtse fuer hunderte Millionen Menschen
+    flussabwaerts steuert.
+
+- id: itaipu_dam
+  name_en: Itaipu Dam
+  name_de: Itaipu-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 4
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Itaipu Binacional plant data"
+  rank_note: "14000 MW -- Brazil-Paraguay joint venture on the Parana; supplies a large share of Paraguay's total electricity."
+  description_en: >-
+    A Brazil-Paraguay joint venture on the Parana River supplying a large
+    share of Paraguay's total electricity and a significant share of
+    Brazil's, making the treaty governing its output a recurring bilateral
+    flashpoint.
+  description_de: >-
+    Ein brasilianisch-paraguayisches Gemeinschaftsprojekt am Parana, das
+    einen Grossteil von Paraguays gesamtem Strombedarf und einen bedeutenden
+    Anteil Brasiliens deckt, wodurch der zugrunde liegende Vertrag wiederholt
+    zum bilateralen Streitpunkt wird.
+
+- id: gerd_dam
+  name_en: Grand Ethiopian Renaissance Dam
+  name_de: Grosser Aethiopischer Renaissance-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: [AFRICA-ETHIOPIA, MIDEAST-EGYPT]
+  criticality: 4
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Reuters/AP Nile dispute reporting"
+  rank_note: "5150 MW -- Africa's largest hydropower dam on the Blue Nile; filled unilaterally by Ethiopia over Egyptian/Sudanese objections."
+  description_en: >-
+    Africa's largest hydropower dam on the Blue Nile, filled and operated
+    unilaterally by Ethiopia despite years of objections from downstream
+    Egypt and Sudan over Nile water shares, keeping it one of Africa's most
+    volatile transboundary disputes.
+  description_de: >-
+    Afrikas groesster Wasserkraftstaudamm am Blauen Nil, von Aethiopien
+    einseitig befuellt und betrieben trotz jahrelanger Einwaende der
+    Nil-Unterlieger Aegypten und Sudan bezueglich der Wasseranteile, damit
+    einer der instabilsten grenzueberschreitenden Konflikte Afrikas.
+
+- id: kariba_dam
+  name_en: Kariba Dam
+  name_de: Kariba-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: []
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Zambezi River Authority data"
+  rank_note: "2130 MW -- Zambia-Zimbabwe shared dam on the Zambezi; reservoir is the world's largest by volume, drought-driven rationing recurring since 2019."
+  description_en: >-
+    A Zambia-Zimbabwe shared dam on the Zambezi whose reservoir is the
+    world's largest by volume; recurring droughts have forced both countries
+    into severe power rationing.
+  description_de: >-
+    Ein von Sambia und Simbabwe gemeinsam betriebener Staudamm am Sambesi,
+    dessen Stausee der weltweit groesste nach Volumen ist; wiederkehrende
+    Duerren haben beide Laender zu schwerer Stromrationierung gezwungen.
+
+- id: aswan_high_dam
+  name_en: Aswan High Dam
+  name_de: Assuan-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Egyptian Ministry of Electricity data"
+  rank_note: "2100 MW -- regulates Nile flow and created Lake Nasser; central to Egypt's GERD dispute framing."
+  description_en: >-
+    The dam that gave Egypt control over Nile flooding and a strategic
+    power source, making downstream Nile flow security an existential
+    concern in its dispute with Ethiopia over the Renaissance Dam.
+  description_de: >-
+    Der Staudamm, der Aegypten die Kontrolle ueber die Nilueberschwemmungen
+    und eine strategische Stromquelle verschaffte, weshalb die Sicherung des
+    Nilabflusses fuer Aegypten im Streit um den aethiopischen
+    Renaissance-Staudamm existenziell ist.
+
+- id: belo_monte_dam
+  name_en: Belo Monte Dam
+  name_de: Belo-Monte-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  commodities: [electricity, hydro]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Norte Energia plant data"
+  rank_note: "11233 MW -- world's fourth-largest hydropower plant, on the Xingu River in the Amazon."
+  description_en: >-
+    A major Amazon hydropower project on the Xingu River whose construction
+    displaced indigenous communities and became a global symbol of the
+    tension between Brazil's clean-energy buildout and rainforest
+    protection.
+  description_de: >-
+    Ein bedeutendes Amazonas-Wasserkraftprojekt am Xingu, dessen Bau
+    indigene Gemeinschaften verdraengte und zu einem weltweiten Symbol fuer
+    den Zielkonflikt zwischen Brasiliens Ausbau sauberer Energie und dem
+    Schutz des Regenwalds wurde.
+
+- id: tuoketuo_power_station
+  name_en: Tuoketuo Power Station
+  name_de: Kraftwerk Tuoketuo
+  category: power
+  subcategory: coal
+  asset_type: facility
+  commodities: [electricity, coal]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); Global Energy Monitor plant profile"
+  rank_note: "6720 MW -- among the largest coal-fired power stations in the world."
+  description_en: >-
+    One of the largest coal-fired power stations on earth, illustrating the
+    scale of the coal fleet China continues to build even as it leads the
+    world in renewable capacity additions.
+  description_de: >-
+    Eines der groessten Kohlekraftwerke der Welt, ein Beleg fuer das Ausmass
+    der Kohleflotte, die China weiterhin ausbaut, obwohl es weltweit
+    fuehrend beim Zubau erneuerbarer Kapazitaeten ist.
+
+- id: medupi_kusile_power_stations
+  name_en: Medupi-Kusile Power Stations
+  name_de: Kraftwerke Medupi-Kusile
+  category: power
+  subcategory: coal
+  asset_type: facility
+  commodities: [electricity, coal]
+  centroid_ids: [AFRICA-SOUTHAFRICA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); Eskom plant data"
+  rank_note: "9564 MW combined -- Eskom's newest and largest coal plants, central to South Africa's rolling-blackout crisis."
+  description_en: >-
+    Eskom's newest and largest coal plants, whose chronic construction
+    delays and breakdowns have been central to the rolling blackouts that
+    have destabilized South Africa's economy for years.
+  description_de: >-
+    Eskoms neueste und groesste Kohlekraftwerke, deren chronische
+    Bauverzoegerungen und Ausfaelle massgeblich zu den rollierenden
+    Stromabschaltungen beigetragen haben, die Suedafrikas Wirtschaft seit
+    Jahren destabilisieren.
+
+- id: hornsea_dogger_wind
+  name_en: Hornsea-Dogger Bank Offshore Wind Cluster
+  name_de: Offshore-Windcluster Hornsea-Dogger-Bank
+  category: power
+  subcategory: wind
+  asset_type: facility
+  commodities: [electricity, wind]
+  centroid_ids: [EUROPE-UK]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (wind); Orsted/SSE project data"
+  rank_note: "~8000 MW combined -- world's largest offshore wind zone, combining the Hornsea and Dogger Bank projects in the North Sea."
+  description_en: >-
+    The world's largest offshore wind zone in the North Sea, central to the
+    UK's bet on offshore wind to replace gas generation and reduce exposure
+    to volatile import prices.
+  description_de: >-
+    Die weltweit groesste Offshore-Windzone in der Nordsee, zentral fuer
+    Grossbritanniens Strategie, Gaserzeugung durch Offshore-Wind zu ersetzen
+    und die Abhaengigkeit von volatilen Importpreisen zu verringern.
+
+- id: german_bight_wind
+  name_en: German Bight Offshore Wind Cluster
+  name_de: Offshore-Windcluster Deutsche Bucht
+  category: power
+  subcategory: wind
+  asset_type: facility
+  commodities: [electricity, wind]
+  centroid_ids: [EUROPE-GERMANY]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (wind); German federal offshore grid development plan"
+  rank_note: "~7700 MW -- Germany's principal offshore wind buildout zone in the North Sea."
+  description_en: >-
+    Germany's principal offshore wind buildout zone in the North Sea, a
+    linchpin of Berlin's plan to replace retiring nuclear and coal capacity
+    while cutting reliance on imported gas.
+  description_de: >-
+    Deutschlands zentrale Offshore-Wind-Ausbauzone in der Nordsee, ein
+    Schluesselelement von Berlins Plan, auslaufende Kernkraft- und
+    Kohlekapazitaeten zu ersetzen und die Abhaengigkeit von importiertem Gas
+    zu senken.
+
+# =========================================================================
+# NEW -- fills the US nuclear-fleet and France nuclear-fleet gap so both
+# top-tier nuclear powers are represented by more than one plant
+# =========================================================================
+
+- id: palo_verde_npp
+  name_en: Palo Verde Generating Station
+  name_de: Kernkraftwerk Palo Verde
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: -112.865
+  lat: 33.389
+  commodities: [electricity, nuclear]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "IAEA PRIS (3x1311 MW net); EIA plant data"
+  rank_note: "~3937 MW net -- the largest US nuclear plant by generation for most of the last three decades, the only major US reactor site with no adjacent water body (cooled by treated wastewater)."
+  description_en: >-
+    The largest US nuclear plant for most of the last three decades and the
+    country's single biggest power station of any type by output, uniquely
+    cooled entirely by treated municipal wastewater rather than a river or sea.
+  description_de: >-
+    Das groesste US-Kernkraftwerk ueber die meisten der letzten drei
+    Jahrzehnte und Amerikas insgesamt leistungsstaerkstes Kraftwerk jeder Art,
+    einzigartig vollstaendig mit aufbereitetem Kommunalabwasser statt Fluss-
+    oder Meerwasser gekuehlt.
+
+- id: browns_ferry_npp
+  name_en: Browns Ferry Nuclear Plant
+  name_de: Kernkraftwerk Browns Ferry
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: -87.119
+  lat: 34.704
+  commodities: [electricity, nuclear]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 2
+  ranking_source: "IAEA PRIS (3 BWR units, ~3.8 GW net); TVA fleet data"
+  rank_note: "~3800 MW net -- third-largest US nuclear plant, sole owner Tennessee Valley Authority, anchors the TVA public-power system."
+  description_en: >-
+    The Tennessee Valley Authority's largest nuclear plant, a linchpin of
+    America's biggest public-power utility and one of only three US sites
+    with three reactor units.
+  description_de: >-
+    Das groesste Kernkraftwerk der Tennessee Valley Authority, eine
+    Schluesselanlage des groessten oeffentlichen Energieversorgers der USA
+    und einer von nur drei US-Standorten mit drei Reaktoreinheiten.
+
+- id: cattenom_npp
+  name_en: Cattenom Nuclear Power Plant
+  name_de: Kernkraftwerk Cattenom
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: 6.217
+  lat: 49.416
+  commodities: [electricity, nuclear]
+  centroid_ids: [EUROPE-FRANCE]
+  criticality: 3
+  ranking_source: "IAEA PRIS (4x1300 MW net); EDF fleet data"
+  rank_note: "5200 MW net -- France's second-most-powerful nuclear plant; sits 22 km from Luxembourg, a recurring cross-border safety concern for Luxembourg and Germany."
+  description_en: >-
+    France's second-largest nuclear plant, close enough to Luxembourg and
+    Germany that its safety record is a recurring cross-border political
+    issue, underscoring how central nuclear power is to France's ~70%
+    nuclear electricity mix.
+  description_de: >-
+    Frankreichs zweitgroesstes Kernkraftwerk, so nah an Luxemburg und
+    Deutschland, dass seine Sicherheitsbilanz wiederholt zum
+    grenzueberschreitenden politischen Thema wird -- ein Beleg dafuer, wie
+    zentral Kernkraft fuer Frankreichs rund 70-prozentigen Nuklearstrommix ist.
+
+- id: paluel_npp
+  name_en: Paluel Nuclear Power Plant
+  name_de: Kernkraftwerk Paluel
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: 0.635
+  lat: 49.858
+  commodities: [electricity, nuclear]
+  centroid_ids: [EUROPE-FRANCE]
+  criticality: 2
+  ranking_source: "IAEA PRIS (4x1330 MW net); EDF fleet data"
+  rank_note: "5320 MW net -- among France's largest plants, on the English Channel coast, supplies power toward the UK interconnectors."
+  description_en: >-
+    One of France's largest nuclear stations, on the Channel coast, feeding
+    the cross-Channel interconnectors that let France export low-carbon
+    baseload power to Britain.
+  description_de: >-
+    Eines von Frankreichs groessten Kernkraftwerken an der Kanalkueste,
+    das die grenzueberschreitenden Interkonnektoren speist, ueber die
+    Frankreich CO2-armen Grundlaststrom nach Grossbritannien exportiert.
+
+# =========================================================================
+# NEW -- hydro, coal, gas-fired, solar to round out capacity + geographic
+# spread (US hydro, India coal, Russia gas, India solar)
+# =========================================================================
+
+- id: grand_coulee_dam
+  name_en: Grand Coulee Dam
+  name_de: Grand-Coulee-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  lon: -118.990
+  lat: 47.955
+  commodities: [electricity, hydro]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); US Bureau of Reclamation plant data"
+  rank_note: "6809 MW -- largest power station in the US by nameplate capacity, supplies ~35% of Pacific Northwest power per US Army Corps of Engineers."
+  description_en: >-
+    The largest power station in the United States by capacity, a Columbia
+    River complex that supplies roughly a third of the Pacific Northwest's
+    electricity and anchors the region's irrigation system.
+  description_de: >-
+    Das nach Kapazitaet groesste Kraftwerk der Vereinigten Staaten, ein
+    Komplex am Columbia River, der rund ein Drittel des Stroms im
+    pazifischen Nordwesten liefert und dessen Bewaesserungssystem traegt.
+
+- id: vindhyachal_power_station
+  name_en: Vindhyachal Thermal Power Station
+  name_de: Kraftwerk Vindhyachal
+  category: power
+  subcategory: coal
+  asset_type: facility
+  lon: 82.672
+  lat: 24.098
+  commodities: [electricity, coal]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); NTPC plant data; Power Technology plant profile"
+  rank_note: "4760 MW -- India's largest power station, operated by state utility NTPC in the Singrauli coal belt."
+  description_en: >-
+    India's largest power station, run by state utility NTPC in the
+    Singrauli coalfield belt, illustrating the scale of coal generation
+    that still underpins India's rapidly growing electricity demand.
+  description_de: >-
+    Indiens groesstes Kraftwerk, betrieben vom Staatsversorger NTPC im
+    Kohlerevier Singrauli, ein Beleg fuer das Ausmass der Kohleverstromung,
+    die Indiens rasch wachsenden Strombedarf weiterhin traegt.
+
+- id: surgut_2_power_station
+  name_en: Surgut-2 Power Station
+  name_de: Kraftwerk Surgut-2
+  category: power
+  subcategory: gas_fired
+  asset_type: facility
+  lon: 73.503
+  lat: 61.281
+  commodities: [electricity, gas_fired]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (gas); Power Technology plant profile"
+  rank_note: "~5600 MW -- world's largest gas-fired power station, burning associated gas from West Siberian oil/gas fields."
+  description_en: >-
+    The world's largest gas-fired power station, burning associated gas
+    from the West Siberian oil and gas fields that surround it, a marker of
+    how tightly Russia's power grid and hydrocarbon extraction are fused.
+  description_de: >-
+    Das weltweit groesste Gaskraftwerk, das Begleitgas aus den umliegenden
+    westsibirischen Oel- und Gasfeldern verbrennt -- ein Beleg dafuer, wie
+    eng Russlands Stromnetz und Kohlenwasserstoffgewinnung verflochten sind.
+
+- id: bhadla_solar_park
+  name_en: Bhadla Solar Park
+  name_de: Solarpark Bhadla
+  category: power
+  subcategory: solar
+  asset_type: facility
+  lon: 71.915
+  lat: 27.540
+  commodities: [electricity, solar]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (solar); Rajasthan state renewable energy corporation data"
+  rank_note: "2245 MW -- India's largest solar park and long the world's largest, in the Thar Desert, central to India's renewable buildout."
+  description_en: >-
+    India's largest solar park, built across the Thar Desert, a flagship of
+    India's push to scale renewable capacity fast enough to meet booming
+    electricity demand without matching fossil growth.
+  description_de: >-
+    Indiens groesster Solarpark in der Wueste Thar, ein Vorzeigeprojekt fuer
+    Indiens Bestreben, erneuerbare Kapazitaeten schnell genug auszubauen, um
+    den boomenden Strombedarf ohne entsprechendes Wachstum fossiler
+    Erzeugung zu decken.
+
+# =========================================================================
+# NEW -- additional hydro giants + coal for wider geographic spread
+# (China second dam, Canada, Venezuela, Pakistan, Poland)
+# =========================================================================
+
+- id: baihetan_dam
+  name_en: Baihetan Dam
+  name_de: Baihetan-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  lon: 102.903
+  lat: 27.223
+  commodities: [electricity, hydro]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); China Three Gorges Corporation plant data; Power Technology plant profile"
+  rank_note: "16000 MW -- world's second-largest hydropower plant after Three Gorges, on the Jinsha (upper Yangtze), completed 2022."
+  description_en: >-
+    The world's second-largest hydropower plant after Three Gorges, on the
+    Jinsha River in southwest China, part of Beijing's cascade of Yangtze
+    dams underpinning its clean-power and flood-control ambitions.
+  description_de: >-
+    Das nach den Drei Schluchten zweitgroesste Wasserkraftwerk der Welt am
+    Jinsha-Fluss im Suedwesten Chinas, Teil der Jangtse-Staudammkaskade
+    Pekings fuer saubere Energie und Hochwasserschutz.
+
+- id: robert_bourassa_dam
+  name_en: Robert-Bourassa Generating Station
+  name_de: Wasserkraftwerk Robert-Bourassa
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  lon: -77.532
+  lat: 53.784
+  commodities: [electricity, hydro]
+  centroid_ids: [AMERICAS-CANADA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Hydro-Quebec plant data"
+  rank_note: "5616 MW -- Canada's largest power station and the world's largest underground power station, core of the James Bay Project."
+  description_en: >-
+    Canada's largest power station and the world's largest underground
+    generating hall, the centerpiece of Quebec's James Bay hydro complex
+    that makes Hydro-Quebec a major cross-border electricity exporter to
+    the US Northeast.
+  description_de: >-
+    Kanadas groesstes Kraftwerk und die groesste unterirdische
+    Kraftwerkshalle der Welt, das Herzstueck von Quebecs James-Bay-
+    Wasserkraftkomplex, der Hydro-Quebec zu einem bedeutenden
+    grenzueberschreitenden Stromexporteur in den US-Nordosten macht.
+
+- id: guri_dam
+  name_en: Guri Dam
+  name_de: Guri-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  lon: -62.992
+  lat: 7.766
+  commodities: [electricity, hydro]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); Britannica/Power Technology plant profiles"
+  rank_note: "10200 MW -- one of the world's largest hydro plants, supplies most of Venezuela's electricity; 2019/2024 drought-driven failures caused nationwide blackouts."
+  description_en: >-
+    One of the world's largest hydropower plants, supplying the great
+    majority of Venezuela's electricity; drought-driven output drops have
+    repeatedly triggered nationwide blackouts, exposing the country's
+    single point of failure.
+  description_de: >-
+    Eines der weltweit groessten Wasserkraftwerke, das den Grossteil von
+    Venezuelas Strom liefert; duerrebedingte Leistungseinbrueche haben
+    wiederholt landesweite Stromausfaelle ausgeloest und die
+    Einzelabhaengigkeit des Landes offengelegt.
+
+- id: tarbela_dam
+  name_en: Tarbela Dam
+  name_de: Tarbela-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  lon: 72.698
+  lat: 34.090
+  commodities: [electricity, hydro]
+  centroid_ids: [ASIA-PAKISTAN]
+  criticality: 3
+  ranking_source: "GEM Global Integrated Power Tracker (hydro); WAPDA plant data"
+  rank_note: "4888 MW -- Pakistan's largest dam and the world's largest earth-filled dam, on the Indus, core of the Indus Waters Treaty system."
+  description_en: >-
+    Pakistan's largest power and irrigation dam and the world's largest
+    earth-filled dam, on the Indus River; central to the Indus Waters Treaty
+    system that governs water-sharing with upstream India.
+  description_de: >-
+    Pakistans groesster Strom- und Bewaesserungsdamm und der groesste
+    Erddamm der Welt am Indus; zentral fuer das Indus-Wasservertragssystem,
+    das die Wasserteilung mit dem Oberlieger Indien regelt.
+
+- id: belchatow_power_station
+  name_en: Belchatow Power Station
+  name_de: Kraftwerk Belchatow
+  category: power
+  subcategory: coal
+  asset_type: facility
+  lon: 19.325
+  lat: 51.268
+  commodities: [electricity, coal]
+  centroid_ids: [EUROPE-VISEGRAD]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); PGE plant data"
+  rank_note: "~5100 MW -- Europe's largest coal-fired (lignite) power station, single-handedly a major share of Poland's generation and EU carbon emissions."
+  description_en: >-
+    Europe's largest coal-fired power station, burning lignite from an
+    adjacent strip mine and supplying a large share of Poland's
+    electricity, making it a central target of EU decarbonization pressure.
+  description_de: >-
+    Europas groesstes Kohlekraftwerk, das Braunkohle aus einem angrenzenden
+    Tagebau verbrennt und einen grossen Teil von Polens Strom liefert,
+    damit ein zentrales Ziel des EU-Dekarbonisierungsdrucks.
+
+# =========================================================================
+# NEW -- Gulf gas-fired and solar, Australia coal, for geographic spread
+# =========================================================================
+
+- id: qurayyah_ipp
+  name_en: Qurayyah Independent Power Plant
+  name_de: Kraftwerk Qurayyah
+  category: power
+  subcategory: gas_fired
+  asset_type: facility
+  lon: 50.126
+  lat: 25.844
+  commodities: [electricity, gas_fired]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (gas); ACWA Power/Saudi Electricity Company project data"
+  rank_note: "~3927 MW -- one of the world's largest single gas-fired IPPs, on Saudi Arabia's Eastern Province coast."
+  description_en: >-
+    One of the world's largest gas-fired independent power plants, on
+    Saudi Arabia's Eastern Province coast, underpinning the kingdom's push
+    to free up more crude oil for export by burning gas domestically instead.
+  description_de: >-
+    Eines der weltweit groessten unabhaengigen Gaskraftwerke an der
+    Ostkueste Saudi-Arabiens, Grundlage des Bestrebens des Koenigreichs,
+    durch heimische Gasverstromung mehr Rohoel fuer den Export freizusetzen.
+
+- id: al_dhafra_solar
+  name_en: Al Dhafra Solar PV Plant
+  name_de: Solarkraftwerk Al Dhafra
+  category: power
+  subcategory: solar
+  asset_type: facility
+  lon: 54.500
+  lat: 24.185
+  commodities: [electricity, solar]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (solar); Masdar/EWEC project data; multiple 2023 inauguration press coverage"
+  rank_note: "2100 MW (2 GW) -- world's largest single-site solar plant, near Abu Dhabi."
+  description_en: >-
+    The world's largest single-site solar power plant, part of Abu Dhabi's
+    bid to diversify a hydrocarbon-dominated grid and position the UAE as a
+    renewable-energy exporter of expertise in the Gulf.
+  description_de: >-
+    Das weltweit groesste Solarkraftwerk an einem einzigen Standort, Teil
+    von Abu Dhabis Vorhaben, ein von Kohlenwasserstoffen dominiertes Netz zu
+    diversifizieren und die VAE als Exporteur erneuerbarer Energiekompetenz
+    am Golf zu positionieren.
+
+- id: eraring_power_station
+  name_en: Eraring Power Station
+  name_de: Kraftwerk Eraring
+  category: power
+  subcategory: coal
+  asset_type: facility
+  lon: 151.521
+  lat: -33.062
+  commodities: [electricity, coal]
+  centroid_ids: [OCEANIA-AUSTRALIA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); Origin Energy plant data"
+  rank_note: "~2880 MW -- Australia's largest power station; planned 2027 retirement delayed to 2029 over grid-reliability concerns."
+  description_en: >-
+    Australia's largest power station, whose repeatedly delayed retirement
+    (now pushed to 2029) has become the central test of whether the
+    National Electricity Market can replace coal baseload fast enough.
+  description_de: >-
+    Australiens groesstes Kraftwerk, dessen wiederholt verschobene
+    Stilllegung (nun auf 2029 verschoben) zum zentralen Testfall dafuer
+    geworden ist, ob der nationale Strommarkt Kohle-Grundlast schnell genug
+    ersetzen kann.
+
+# =========================================================================
+# NEW -- Iran nuclear (geopolitical flashpoint), Germany lignite, China
+# onshore wind, closing out geographic + generation-type spread
+# =========================================================================
+
+- id: bushehr_npp
+  name_en: Bushehr Nuclear Power Plant
+  name_de: Kernkraftwerk Buschehr
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: 50.887
+  lat: 28.829
+  commodities: [electricity, nuclear]
+  centroid_ids: [MIDEAST-IRAN]
+  criticality: 4
+  ranking_source: "IAEA PRIS (Bushehr-1, 1000 MWe VVER-1000); World Nuclear Association Iran profile"
+  rank_note: "1000 MWe operating (2 more Rosatom-built VVER units in progress) -- Iran's only nuclear power plant, built and fueled by Russia, at the center of nonproliferation negotiations."
+  description_en: >-
+    Iran's only operating nuclear power plant, built and fueled by Russia's
+    Rosatom, distinct from Iran's separate enrichment sites but central to
+    Tehran's argument that its nuclear program has a civilian purpose.
+  description_de: >-
+    Irans einziges in Betrieb befindliches Kernkraftwerk, gebaut und
+    betankt von Russlands Rosatom; getrennt von Irans separaten
+    Anreicherungsanlagen, aber zentral fuer Teherans Argument, sein
+    Nuklearprogramm diene zivilen Zwecken.
+
+- id: niederaussem_power_station
+  name_en: Niederaussem Power Station
+  name_de: Kraftwerk Niederaussem
+  category: power
+  subcategory: coal
+  asset_type: facility
+  lon: 6.667
+  lat: 50.992
+  commodities: [electricity, coal]
+  centroid_ids: [EUROPE-GERMANY]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); RWE plant data"
+  rank_note: "~2220 MW net -- Germany's largest operating lignite-fired power station, part of the Rhenish coal district RWE is phasing out."
+  description_en: >-
+    Germany's largest operating lignite plant, in the Rhenish coalfield
+    that anchors the country's coal-phaseout timeline and the political
+    fight over how fast RWE retires it.
+  description_de: >-
+    Deutschlands groesstes in Betrieb befindliches Braunkohlekraftwerk im
+    rheinischen Kohlerevier, das den nationalen Kohleausstiegsfahrplan und
+    den politischen Streit ueber das Tempo der RWE-Stilllegung praegt.
+
+- id: gansu_wind_farm
+  name_en: Gansu Wind Farm (Jiuquan)
+  name_de: Windpark Gansu (Jiuquan)
+  category: power
+  subcategory: wind
+  asset_type: facility
+  lon: 96.901
+  lat: 40.200
+  commodities: [electricity, wind]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (wind); Power Technology plant profile"
+  rank_note: "~8000 MW (phase 1) -- world's largest wind power base, in the Gobi Desert, part of China's planned 20 GW Jiuquan complex."
+  description_en: >-
+    The world's largest wind power complex, thousands of turbines across
+    the Gobi Desert, illustrating the scale of China's renewable buildout
+    even as grid curtailment limits how much of the output reaches demand
+    centers in the east.
+  description_de: >-
+    Der weltweit groesste Windkraftkomplex mit tausenden Turbinen in der
+    Wueste Gobi, ein Beleg fuer das Ausmass von Chinas Ausbau erneuerbarer
+    Energien, auch wenn Netzengpaesse begrenzen, wie viel der Erzeugung die
+    Nachfragezentren im Osten erreicht.
+
+# =========================================================================
+# NEW -- Egypt's next Rosatom plant (mirrors Akkuyu leverage pattern),
+# Ukraine's own largest operating plant (counterpoint to occupied
+# Zaporizhzhia), South Korea's largest coal plant
+# =========================================================================
+
+- id: el_dabaa_npp
+  name_en: El Dabaa Nuclear Power Plant
+  name_de: Kernkraftwerk El-Dabaa
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: 28.496
+  lat: 31.048
+  commodities: [electricity, nuclear]
+  centroid_ids: [MIDEAST-EGYPT]
+  criticality: 3
+  ranking_source: "World Nuclear Association Egypt profile; Rosatom project announcements; Power Technology plant profile"
+  rank_note: "4800 MW planned (4x VVER-1200) -- Egypt's first nuclear plant, under construction, financed and built by Rosatom on a Russian-loan model matching the Akkuyu pattern in Turkey."
+  description_en: >-
+    Egypt's first nuclear plant, under construction with Russian VVER-1200
+    reactors, Russian financing and fuel supply for its lifetime -- the same
+    build-finance-fuel model Rosatom used to lock in decades of leverage
+    over Turkey at Akkuyu.
+  description_de: >-
+    Aegyptens erstes Kernkraftwerk im Bau, mit russischen VVER-1200-
+    Reaktoren, russischer Finanzierung und lebenslanger Brennstoffversorgung
+    -- dasselbe Bau-Finanzierungs-Brennstoff-Modell, mit dem sich Rosatom in
+    der Tuerkei bei Akkuyu jahrzehntelangen Einfluss sicherte.
+
+- id: rivne_npp
+  name_en: Rivne Nuclear Power Plant
+  name_de: Kernkraftwerk Riwne
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: 25.897
+  lat: 51.325
+  commodities: [electricity, nuclear]
+  centroid_ids: [EUROPE-UKRAINE]
+  criticality: 3
+  ranking_source: "IAEA PRIS (4 units, ~2835 MWe); World Nuclear Association Ukraine profile"
+  rank_note: "~2835 MWe -- largest of Ukraine's three plants still under Ukrainian government control after Zaporizhzhia's occupation; Energoatom's western-Ukraine anchor."
+  description_en: >-
+    The largest nuclear plant still under Ukrainian government control,
+    far from the front line in the west of the country; with Zaporizhzhia
+    occupied, Rivne and its sister plants now carry a larger share of
+    Ukraine's wartime power supply.
+  description_de: >-
+    Das groesste noch unter ukrainischer Regierungskontrolle stehende
+    Kernkraftwerk, fernab der Frontlinie im Westen des Landes; seit der
+    Besetzung Saporischschjas tragen Riwne und die Schwesteranlagen einen
+    groesseren Anteil an der ukrainischen Kriegsstromversorgung.
+
+- id: taean_power_station
+  name_en: Taean Power Station
+  name_de: Kraftwerk Taean
+  category: power
+  subcategory: coal
+  asset_type: facility
+  lon: 126.233
+  lat: 36.904
+  commodities: [electricity, coal]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  criticality: 2
+  ranking_source: "GEM Global Integrated Power Tracker (coal); Power Technology plant profile"
+  rank_note: "~6466 MW -- South Korea's largest coal-fired power station and among the world's largest by capacity."
+  description_en: >-
+    South Korea's largest coal-fired power station, one of the world's
+    biggest by capacity, underscoring how much of the country's
+    manufacturing-heavy grid still runs on imported thermal coal.
+  description_de: >-
+    Suedkoreas groesstes Kohlekraftwerk und eines der weltweit
+    leistungsstaerksten, ein Beleg dafuer, wie stark das industrielastige
+    Stromnetz des Landes weiterhin auf importierter Steinkohle beruht.
+
+# =========================================================================
+# NEW -- Central Asia hydro dispute (Rogun) and Mexico's only nuclear
+# plant, closing remaining geographic gaps
+# =========================================================================
+
+- id: rogun_dam
+  name_en: Rogun Dam
+  name_de: Rogun-Staudamm
+  category: power
+  subcategory: hydro
+  asset_type: facility
+  lon: 69.773
+  lat: 38.683
+  commodities: [electricity, hydro]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "World Bank/Webuild project data; Reuters/AP Central Asia water-dispute reporting"
+  rank_note: "3600 MW planned, worlds tallest dam under construction (335 m) -- Tajikistan's flagship project on the Vakhsh, a longstanding flashpoint with downstream Uzbekistan over irrigation water."
+  description_en: >-
+    Tajikistan's flagship hydropower project and, on completion, the
+    world's tallest dam; its reservoir fill schedule has long been a
+    flashpoint with downstream Uzbekistan over Amu Darya irrigation water,
+    easing only after 2018 diplomatic thaw.
+  description_de: >-
+    Tadschikistans Vorzeigeprojekt der Wasserkraft und nach Fertigstellung
+    der hoechste Staudamm der Welt; der Zeitplan zur Befuellung des
+    Stausees war lange ein Streitpunkt mit dem Unterlieger Usbekistan
+    wegen der Bewaesserung am Amu-Darja, der sich erst nach der
+    diplomatischen Annaeherung von 2018 entspannte.
+
+- id: laguna_verde_npp
+  name_en: Laguna Verde Nuclear Power Plant
+  name_de: Kernkraftwerk Laguna Verde
+  category: power
+  subcategory: nuclear
+  asset_type: facility
+  lon: -96.406
+  lat: 19.721
+  commodities: [electricity, nuclear]
+  centroid_ids: [AMERICAS-MEXICO]
+  criticality: 2
+  ranking_source: "IAEA PRIS (2 units, ~1510 MW net); World Nuclear Association Mexico profile"
+  rank_note: "1510 MW net -- Mexico's only nuclear power plant, on the Gulf of Mexico coast in Veracruz."
+  description_en: >-
+    Mexico's only nuclear power plant, on the Gulf of Mexico coast,
+    supplying a small but steady share of the national grid as the
+    government weighs whether to expand nuclear as part of its energy mix.
+  description_de: >-
+    Mexikos einziges Kernkraftwerk an der Golfkueste, das einen kleinen,
+    aber verlaesslichen Anteil am nationalen Stromnetz liefert, waehrend
+    die Regierung einen moeglichen Ausbau der Kernkraft im Energiemix
+    abwaegt.

@@ -1,0 +1,619 @@
+# Tech -- semiconductor fabs, data-center hubs, submarine-cable landing
+# concentrations, and chemical clusters feeding chip/electronics supply.
+# Authority: SEMI / TrendForce (fab wafer capacity, leading-edge share) for
+# semiconductor_fab; TeleGeography (submarine cable / data-center transit
+# concentration) for data_center + cable_landing. Geometry omitted for
+# reconciled existing rows (preserved in DB); new rows carry verified lon/lat.
+
+# =========================================================================
+# SEMICONDUCTOR FABS
+# =========================================================================
+
+- id: tsmc_hsinchu
+  name_en: TSMC Hsinchu (HQ + Fabs 12/12A/13)
+  name_de: TSMC Hsinchu (Hauptsitz + Fabs 12/12A/13)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-TAIWAN]
+  ranking_source: "TSMC corporate disclosures; TrendForce foundry market share reporting"
+  rank_note: "TSMC headquarters and original GIGAFAB cluster; TSMC holds ~70% of global foundry revenue and the overwhelming majority of leading-edge (<=7nm) capacity, per TrendForce -- a single-company concentration risk for advanced logic worldwide."
+  description_en: >-
+    TSMC's headquarters and founding fab cluster; the nerve center of a
+    company that alone makes roughly 70% of the world's contract chips and
+    nearly all leading-edge logic, making Taiwan the single point of
+    failure for advanced semiconductors.
+  description_de: >-
+    TSMCs Hauptsitz und urspruenglicher Fab-Cluster; das Nervenzentrum eines
+    Unternehmens, das allein rund 70% der weltweiten Auftragschips und fast
+    alle fuehrenden Logikchips fertigt -- Taiwan ist damit der einzige
+    Ausfallpunkt fuer fortschrittliche Halbleiter.
+
+- id: tsmc_fab18_tainan
+  name_en: TSMC Fab 18 (Tainan)
+  name_de: TSMC Fab 18 (Tainan)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  lon: 120.2821
+  lat: 23.1013
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-TAIWAN]
+  ranking_source: "TSMC corporate disclosures (Southern Taiwan Science Park); TrendForce process-node capacity tracking"
+  rank_note: "TSMC's largest GIGAFAB, producing 5nm and 3nm; the single densest concentration of world leading-edge capacity feeding Apple, Nvidia and AMD."
+  description_en: >-
+    TSMC's biggest gigafab, running 3nm and 5nm volume production for
+    Apple, Nvidia and AMD; a single Taiwan Strait disruption here would
+    stall the world's most advanced chip supply.
+  description_de: >-
+    TSMCs groesste Gigafab mit 3nm- und 5nm-Serienproduktion fuer Apple,
+    Nvidia und AMD; eine Stoerung in der Taiwanstrasse wuerde hier die
+    fortschrittlichste Chipversorgung der Welt lahmlegen.
+
+- id: tsmc_arizona
+  name_en: TSMC Arizona (Phoenix)
+  name_de: TSMC Arizona (Phoenix)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  commodities: [semiconductors]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "TSMC corporate disclosures; US CHIPS Act program records"
+  rank_note: "First TSMC leading-edge fab outside Asia (4nm live, 2nm/A16 planned); anchor of US derisking from Taiwan concentration, though still <10% of TSMC's total capacity."
+  description_en: >-
+    TSMC's flagship US fab and the centerpiece of Washington's push to
+    onshore leading-edge chipmaking; still a small fraction of TSMC's
+    Taiwan-based capacity, so it eases but does not resolve concentration risk.
+  description_de: >-
+    TSMCs US-Vorzeigefab und Kernstueck von Washingtons Bestreben, die
+    Spitzenfertigung zurueckzuholen; bleibt ein kleiner Teil von TSMCs
+    taiwanbasierter Kapazitaet und entschaerft das Konzentrationsrisiko nur teilweise.
+
+- id: tsmc_kumamoto
+  name_en: TSMC Kumamoto (JASM)
+  name_de: TSMC Kumamoto (JASM)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-JAPAN]
+  ranking_source: "TSMC/Sony/Denso JASM joint-venture disclosures; Japan METI subsidy records"
+  rank_note: "TSMC's Japan foundry venture (with Sony, Denso); targets mature/specialty nodes (12-28nm) for automotive and image-sensor demand, backed by ~40% government subsidy."
+  description_en: >-
+    TSMC's Japan Advanced Semiconductor Manufacturing venture with Sony and
+    Denso; focused on mature-node automotive and sensor chips, a bet on
+    supply-chain diversification away from Taiwan.
+  description_de: >-
+    TSMCs japanisches Joint Venture Japan Advanced Semiconductor
+    Manufacturing mit Sony und Denso; auf reife Automotive- und
+    Sensorchips fokussiert -- eine Wette auf Diversifizierung weg von Taiwan.
+
+- id: tsmc_dresden
+  name_en: TSMC/ESMC Dresden
+  name_de: TSMC/ESMC Dresden
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 3
+  lon: 13.74
+  lat: 51.05
+  commodities: [semiconductors]
+  centroid_ids: [EUROPE-GERMANY]
+  ranking_source: "ESMC (TSMC/Bosch/Infineon/NXP joint venture) disclosures; European Commission state-aid approval"
+  rank_note: "The EU's first FinFET-capable pure-play foundry (28/22nm and 16/12nm); EUR10bn+ project backed by EUR5bn German state aid, targeting automotive-chip resilience."
+  description_en: >-
+    TSMC's first European fab, a joint venture with Bosch, Infineon and NXP
+    aimed at automotive chip supply; the EU's flagship bet against another
+    2021-style chip shortage crippling carmakers.
+  description_de: >-
+    TSMCs erste europaeische Fab, ein Gemeinschaftsunternehmen mit Bosch,
+    Infineon und NXP fuer die Automobil-Chipversorgung; die europaeische
+    Antwort auf eine erneute Chipkrise wie 2021.
+
+- id: samsung_pyeongtaek_hwaseong
+  name_en: Samsung Pyeongtaek-Hwaseong-Giheung Complex
+  name_de: Samsung Pyeongtaek-Hwaseong-Giheung-Komplex
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 5
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  ranking_source: "Samsung Semiconductor corporate disclosures; TrendForce memory/foundry share reporting"
+  rank_note: "World's largest semiconductor production complex by floor area; produces NAND, DRAM and 3nm-class foundry logic. Samsung is a top-3 global memory and foundry player alongside TSMC and SK Hynix."
+  description_en: >-
+    The world's largest chipmaking complex by floor area, spanning memory
+    and advanced logic; South Korea's other pillar of global semiconductor
+    supply alongside TSMC.
+  description_de: >-
+    Der weltweit groesste Chipfertigungskomplex nach Flaeche, mit Speicher-
+    und Spitzenlogikproduktion; Suedkoreas zweite Saeule der globalen
+    Halbleiterversorgung neben TSMC.
+
+- id: sk_hynix_icheon
+  name_en: SK Hynix Icheon
+  name_de: SK Hynix Icheon
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 3
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  ranking_source: "SK Hynix corporate disclosures; Counterpoint Research / TrendForce HBM market-share tracking"
+  rank_note: "SK Hynix's home fab and R&D base; SK Hynix holds ~55-62% of global HBM (high-bandwidth memory) shipments, the memory type that gates Nvidia AI-accelerator production."
+  description_en: >-
+    SK Hynix's flagship site and the origin of most of the world's HBM
+    supply; because HBM output gates Nvidia's AI-chip production, a
+    disruption here ripples straight into global AI hardware supply.
+  description_de: >-
+    SK Hynix' Stammwerk und Ursprung des groessten Teils der weltweiten
+    HBM-Versorgung; da der HBM-Ausstoss Nvidias KI-Chipproduktion begrenzt,
+    wirkt sich eine Stoerung hier direkt auf die globale KI-Hardware aus.
+
+- id: micron_boise
+  name_en: Micron Boise
+  name_de: Micron Boise
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 5
+  commodities: [semiconductors]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "Micron corporate disclosures; Counterpoint Research / TrendForce HBM market-share tracking"
+  rank_note: "Micron's HQ and lead R&D fab; Micron is the only major US-headquartered DRAM/HBM producer, holding roughly 18% of the HBM4 market versus Korean rivals."
+  description_en: >-
+    Micron's home base and the only leading-edge memory R&D fab
+    headquartered in the US; the sole domestic counterweight to Korean
+    dominance in DRAM and HBM.
+  description_de: >-
+    Microns Stammsitz und die einzige in den USA ansaessige
+    Spitzenspeicher-F&E-Fab; das einzige heimische Gegengewicht zur
+    koreanischen Dominanz bei DRAM und HBM.
+
+- id: intel_ocotillo
+  name_en: Intel Ocotillo (Chandler, Arizona)
+  name_de: Intel Ocotillo (Chandler, Arizona)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  commodities: [semiconductors]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "Intel corporate disclosures; US CHIPS Act program records"
+  rank_note: "Intel's largest US fab campus and lead site for its 18A process; central to the US bet on rebuilding a domestic leading-edge foundry to rival TSMC/Samsung."
+  description_en: >-
+    Intel's flagship US manufacturing campus and the proving ground for its
+    18A process; the linchpin of America's attempt to re-enter leading-edge
+    chipmaking after years of falling behind TSMC.
+  description_de: >-
+    Intels wichtigster US-Fertigungsstandort und Testfeld fuer den
+    18A-Prozess; der Dreh- und Angelpunkt des US-Versuchs, nach Jahren des
+    Rueckstands gegenueber TSMC wieder in die Spitzenfertigung einzusteigen.
+
+- id: smic_shanghai
+  name_en: SMIC Shanghai
+  name_de: SMIC Shanghai
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "SMIC corporate disclosures; CSIS / Congressional Research Service export-control analyses"
+  rank_note: "China's largest and most advanced foundry, piloting 5nm-class production for Huawei/Alibaba AI chips without EUV access; the focal point of US export controls on chipmaking equipment."
+  description_en: >-
+    China's national-champion foundry, pushing into 5nm-class production
+    for Huawei and Alibaba despite being cut off from ASML's EUV tools --
+    the central battleground of the US-China chip export-control fight.
+  description_de: >-
+    Chinas nationale Vorzeigefoundry, die trotz Ausschluss von ASMLs
+    EUV-Anlagen in die 5nm-Klasse fuer Huawei und Alibaba vorstoesst -- der
+    zentrale Schauplatz des US-chinesischen Exportkontrollstreits um Chips.
+
+- id: globalfoundries_malta
+  name_en: GlobalFoundries Malta (New York)
+  name_de: GlobalFoundries Malta (New York)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 5
+  lon: -73.82
+  lat: 42.98
+  commodities: [semiconductors]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "GlobalFoundries corporate disclosures; NIST CHIPS Act award records"
+  rank_note: "World's #3 foundry by capacity, specializing in the mature/specialty nodes that underpin >60% of all chip demand (automotive, RF, industrial); sole US-produced chip source for GM."
+  description_en: >-
+    The world's third-largest foundry and a specialty-node backbone for
+    automotive and industrial chips; its exclusive deal to supply GM's
+    US-made semiconductors makes it a Detroit supply-chain linchpin.
+  description_de: >-
+    Die weltweit drittgroesste Foundry und ein Rueckgrat fuer
+    Spezialknoten in Automotive- und Industriechips; der Exklusivvertrag
+    zur Belieferung von GM macht sie zum Schluesselglied der US-Autoindustrie.
+
+- id: kioxia_yokkaichi
+  name_en: Kioxia Yokkaichi
+  name_de: Kioxia Yokkaichi
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 5
+  lon: 136.60
+  lat: 34.92
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-JAPAN]
+  ranking_source: "Kioxia corporate disclosures; TrendForce NAND flash market-share reporting"
+  rank_note: "One of the world's largest flash-memory complexes (six integrated fabs); Kioxia holds ~18% of global NAND flash supply, the #3 producer behind Samsung and SK Hynix/Solidigm."
+  description_en: >-
+    A six-fab mega-complex responsible for a large share of the world's
+    NAND flash; Japan's remaining foothold in memory manufacturing after
+    ceding DRAM leadership to Korea.
+  description_de: >-
+    Ein Sechs-Fab-Megakomplex, verantwortlich fuer einen grossen Teil des
+    weltweiten NAND-Flash-Angebots; Japans verbliebener Stuetzpunkt in der
+    Speicherfertigung, nachdem die DRAM-Fuehrung an Korea ging.
+
+- id: rapidus_chitose
+  name_en: Rapidus Chitose (Hokkaido)
+  name_de: Rapidus Chitose (Hokkaido)
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 4
+  lon: 141.65
+  lat: 42.82
+  commodities: [semiconductors]
+  centroid_ids: [ASIA-JAPAN]
+  ranking_source: "Rapidus corporate disclosures; Japan METI semiconductor strategy funding records"
+  rank_note: "State-backed Japanese venture racing to mass-produce 2nm GAA logic by 2027, installing Japan's first EUV tools; a bet on re-entering leading-edge chipmaking after decades of absence."
+  description_en: >-
+    A government-backed startup fab racing to bring Japan back into
+    leading-edge logic with 2nm GAA chips by 2027 -- a high-risk attempt to
+    re-enter a field Japan exited decades ago.
+  description_de: >-
+    Eine staatlich gefoerderte Start-up-Fab, die Japan mit 2nm-GAA-Chips
+    bis 2027 in die Spitzenlogikfertigung zurueckbringen will -- ein
+    risikoreicher Versuch, in ein Feld zurueckzukehren, das Japan vor
+    Jahrzehnten verlassen hat.
+
+- id: asml_veldhoven
+  name_en: ASML Veldhoven
+  name_de: ASML Veldhoven
+  category: tech
+  subcategory: semiconductor_fab
+  asset_type: facility
+  criticality: 5
+  commodities: [semiconductors]
+  centroid_ids: [EUROPE-BENELUX]
+  ranking_source: "ASML corporate disclosures; CSET/industry analyses of EUV lithography market structure"
+  rank_note: "ASML is the sole global manufacturer of EUV lithography machines -- 100% of the tools required to print sub-10nm chip features -- making Veldhoven the single point of failure for the entire leading-edge chip industry."
+  description_en: >-
+    Headquarters of the sole company on Earth that builds EUV lithography
+    machines; every leading-edge chip made anywhere, by anyone, depends on
+    tools that come only from here.
+  description_de: >-
+    Hauptsitz des einzigen Unternehmens weltweit, das EUV-Lithografiemaschinen
+    baut; jeder Spitzenchip, egal wo und von wem gefertigt, haengt von
+    Werkzeugen ab, die ausschliesslich von hier stammen.
+
+# =========================================================================
+# DATA CENTERS
+# =========================================================================
+
+- id: data_center_alley_ashburn
+  name_en: Data Center Alley (Ashburn, Virginia)
+  name_de: Data Center Alley (Ashburn, Virginia)
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 4
+  commodities: [data]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "TeleGeography internet-capacity analysis; industry consensus (Data Center Alley traffic-share estimates)"
+  rank_note: "The world's densest data-center market; independent TeleGeography analysis puts 30-40% of global internet traffic passing through or originating here, a single-region concentration for US cloud and internet infrastructure."
+  description_en: >-
+    The densest cluster of data centers on Earth; a disproportionate share
+    of global internet traffic transits Loudoun County, making it a single
+    regional point of failure for US cloud infrastructure.
+  description_de: >-
+    Der dichteste Rechenzentrums-Cluster der Welt; ein unverhaeltnismaessig
+    grosser Teil des globalen Internetverkehrs laeuft durch Loudoun County
+    -- ein regionaler Single Point of Failure fuer die US-Cloud-Infrastruktur.
+
+- id: frankfurt_data_center_cluster
+  name_en: Frankfurt Data Center Cluster
+  name_de: Frankfurt Rechenzentrums-Cluster
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 3
+  commodities: [data]
+  centroid_ids: [EUROPE-GERMANY]
+  ranking_source: "TeleGeography internet-exchange analysis; DE-CIX traffic statistics"
+  rank_note: "Home to DE-CIX, the world's busiest internet exchange, and roughly 120 data centers; Europe's premier peering market and the default routing hub for the continent's internet traffic."
+  description_en: >-
+    Home to DE-CIX, the world's busiest internet exchange; the default
+    hub through which most of continental Europe's internet traffic
+    interconnects.
+  description_de: >-
+    Standort des DE-CIX, des verkehrsreichsten Internetknotens der Welt;
+    der zentrale Umschlagplatz, ueber den der Grossteil des
+    kontinentaleuropaeischen Internetverkehrs zusammenlaeuft.
+
+- id: singapore_data_center_cluster
+  name_en: Singapore Data Center Cluster
+  name_de: Singapur Rechenzentrums-Cluster
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 3
+  commodities: [data]
+  centroid_ids: [ASIA-SOUTHEAST]
+  ranking_source: "TeleGeography international bandwidth analysis"
+  rank_note: "Singapore holds more connected international internet capacity than any market outside Frankfurt/London/Amsterdam/Paris; the default digital gateway for Southeast Asia."
+  description_en: >-
+    Southeast Asia's digital gateway, holding more international internet
+    capacity than any market in the region; a moratorium on new builds
+    (2019-2022) already showed how tightly regional cloud capacity depends
+    on this one city-state.
+  description_de: >-
+    Suedostasiens digitales Tor mit mehr internationaler Internetkapazitaet
+    als jeder andere Markt der Region; ein Neubaumoratorium (2019-2022)
+    zeigte bereits, wie stark die regionale Cloud-Kapazitaet von diesem
+    einen Stadtstaat abhaengt.
+
+- id: tokyo_data_center_cluster
+  name_en: Greater Tokyo Data Center Cluster
+  name_de: Grossraum Tokio Rechenzentrums-Cluster
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 4
+  lon: 139.69
+  lat: 35.68
+  commodities: [data]
+  centroid_ids: [ASIA-JAPAN]
+  ranking_source: "CBRE / Cushman & Wakefield Asia-Pacific data-center market reports"
+  rank_note: "Largest operational data-center capacity in Asia-Pacific (~1.2GW), ahead of Singapore and Shanghai; Japan's principal cloud and internet hub."
+  description_en: >-
+    Asia-Pacific's largest operational data-center market by capacity;
+    the hub anchoring Japan's cloud infrastructure and a key node for
+    trans-Pacific traffic.
+  description_de: >-
+    Der groesste operative Rechenzentrumsmarkt im asiatisch-pazifischen
+    Raum nach Kapazitaet; der Knotenpunkt der japanischen Cloud-Infrastruktur
+    und ein Schluesselpunkt fuer den transpazifischen Datenverkehr.
+
+- id: mumbai_data_center_cluster
+  name_en: Mumbai Data Center Cluster
+  name_de: Mumbai Rechenzentrums-Cluster
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 4
+  lon: 72.88
+  lat: 19.08
+  commodities: [data]
+  centroid_ids: [ASIA-INDIA]
+  ranking_source: "Cushman & Wakefield / CBRE Asia-Pacific data-center market reports"
+  rank_note: "India's dominant data-center market, with operational IT load up 42% in 2025 alone; landing point for most of India's international submarine cables and the country's principal digital gateway."
+  description_en: >-
+    India's primary data-center and international-cable gateway, growing
+    faster than almost any other Asian market; increasingly the
+    chokepoint for India's cloud and connectivity buildout.
+  description_de: >-
+    Indiens wichtigstes Rechenzentrums- und internationales Kabel-Tor,
+    das schneller waechst als fast jeder andere asiatische Markt --
+    zunehmend der Engpass fuer Indiens Cloud- und Konnektivitaetsausbau.
+
+- id: dublin_data_center_cluster
+  name_en: Dublin Data Center Cluster
+  name_de: Dublin Rechenzentrums-Cluster
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 3
+  lon: -6.26
+  lat: 53.35
+  commodities: [data]
+  centroid_ids: [EUROPE-UK]
+  ranking_source: "ResearchAndMarkets FLAP-D Europe data-center market report"
+  rank_note: "One of Europe's FLAP-D data-center markets (Frankfurt/London/Amsterdam/Paris/Dublin); primary EU hosting location for major US cloud providers' EU-West regions."
+  description_en: >-
+    Ireland's data-center capital and the default EU-West hosting base for
+    major US cloud providers; a regulatory and tax-driven concentration
+    that makes Dublin outsized relative to the country's size.
+  description_de: >-
+    Irlands Rechenzentrums-Hauptstadt und die Standard-EU-West-Basis
+    grosser US-Cloud-Anbieter; eine regulatorisch und steuerlich
+    getriebene Konzentration, die Dublin ueberproportional zur
+    Landesgroesse macht.
+
+- id: amsterdam_data_center_cluster
+  name_en: Amsterdam Data Center Cluster
+  name_de: Amsterdam Rechenzentrums-Cluster
+  category: tech
+  subcategory: data_center
+  asset_type: facility
+  criticality: 5
+  lon: 4.90
+  lat: 52.37
+  commodities: [data]
+  centroid_ids: [EUROPE-BENELUX]
+  ranking_source: "ResearchAndMarkets FLAP-D Europe data-center market report"
+  rank_note: "Home to AMS-IX, one of the world's largest internet exchanges, and part of Europe's FLAP-D data-center core; a major digital gateway for continental Europe."
+  description_en: >-
+    Home to AMS-IX, one of the world's largest internet exchanges, and a
+    core pillar of Europe's FLAP-D data-center belt; the Netherlands'
+    digital gateway to the continent.
+  description_de: >-
+    Standort des AMS-IX, eines der groessten Internetknoten der Welt, und
+    eine tragende Saeule des europaeischen FLAP-D-Rechenzentrumsguertels;
+    Hollands digitales Tor zum Kontinent.
+
+# =========================================================================
+# CABLE LANDING HUBS
+# =========================================================================
+
+- id: egypt_red_sea_cable_corridor
+  name_en: Egypt Red Sea Cable Corridor
+  name_de: Aegyptischer Rotmeer-Kabelkorridor
+  category: tech
+  subcategory: cable_landing
+  asset_type: facility
+  criticality: 5
+  commodities: [data]
+  centroid_ids: [MIDEAST-EGYPT]
+  ranking_source: "CSIS Egypt subsea-cable case study; DataCenterDynamics analysis"
+  rank_note: "Over 90% of Europe-Asia internet traffic transits Egypt's five Mediterranean-to-Red-Sea landing stations (Port Said, Alexandria, Abu Talat x2, Sidi Kerir); no alternative land bridge exists at comparable capacity, making it the internet's most concentrated single chokepoint."
+  description_en: >-
+    Over 90% of Europe-Asia internet traffic funnels through Egypt's
+    narrow land bridge between the Mediterranean and the Red Sea; a single
+    cable-cut incident here can degrade connectivity across three continents.
+  description_de: >-
+    Ueber 90% des Europa-Asien-Internetverkehrs laufen durch Aegyptens
+    schmale Landbruecke zwischen Mittelmeer und Rotem Meer; ein einzelner
+    Kabelschaden hier kann die Konnektivitaet auf drei Kontinenten beeintraechtigen.
+
+- id: marseille_cable_landing_hub
+  name_en: Marseille Cable Landing Hub
+  name_de: Marseille Kabellandepunkt
+  category: tech
+  subcategory: cable_landing
+  asset_type: facility
+  criticality: 4
+  commodities: [data]
+  centroid_ids: [EUROPE-FRANCE]
+  ranking_source: "TeleGeography submarine cable map; Equinix Mediterranean connectivity analysis"
+  rank_note: "Europe's #1 cable-landing hub and 6th worldwide, with 16-17 intercontinental systems landing (2Africa, Blue, SeaMeWe-6, Medusa); the primary gateway linking Europe to Africa, the Middle East and Asia."
+  description_en: >-
+    Europe's top submarine-cable landing site, connecting the continent to
+    Africa, the Middle East and Asia via more than a dozen intercontinental
+    systems; a concentration point whose loss would fragment Europe's
+    southern and eastern connectivity.
+  description_de: >-
+    Europas wichtigster Kabellandepunkt, der den Kontinent ueber mehr als
+    ein Dutzend interkontinentale Systeme mit Afrika, dem Nahen Osten und
+    Asien verbindet; ein Konzentrationspunkt, dessen Ausfall Europas
+    suedliche und oestliche Konnektivitaet fragmentieren wuerde.
+
+- id: fortaleza_cable_landing_hub
+  name_en: Fortaleza Cable Landing Hub
+  name_de: Fortaleza Kabellandepunkt
+  category: tech
+  subcategory: cable_landing
+  asset_type: facility
+  criticality: 3
+  commodities: [data]
+  centroid_ids: [AMERICAS-BRAZIL]
+  ranking_source: "Submarine Networks / TeleGeography cable-system landing records"
+  rank_note: "Brazil's principal Atlantic gateway, landing EllaLink (Europe), SACS (Africa -- first-ever South Atlantic cable) and Monet (US); the main hub concentrating South America's transoceanic connectivity."
+  description_en: >-
+    Brazil's main transoceanic gateway, landing the only direct cables to
+    Europe (EllaLink) and Africa (SACS) from South America; the region's
+    connectivity to two continents runs through this single hub.
+  description_de: >-
+    Brasiliens wichtigstes transozeanisches Tor mit den einzigen
+    Direktkabeln von Suedamerika nach Europa (EllaLink) und Afrika (SACS);
+    die Konnektivitaet der Region zu zwei Kontinenten laeuft ueber diesen
+    einen Knotenpunkt.
+
+- id: hong_kong_cable_landing_hub
+  name_en: Hong Kong Cable Landing Hub
+  name_de: Hongkong Kabellandepunkt
+  category: tech
+  subcategory: cable_landing
+  asset_type: facility
+  criticality: 3
+  lon: 114.16
+  lat: 22.28
+  commodities: [data]
+  centroid_ids: [ASIA-CHINA]
+  ranking_source: "TeleGeography international bandwidth rankings; FCC Team Telecom PLCN ruling records"
+  rank_note: "One of Asia's top-3 cable hubs by used international bandwidth (~118 Tbps, 2020), with ten landing stations; the 2020 US denial of a direct Hong Kong-Los Angeles cable link (PLCN) over national-security concerns illustrates its status as a geopolitical fault line in the network."
+  description_en: >-
+    One of Asia's busiest cable hubs, but increasingly a fault line: US
+    regulators blocked a direct Hong Kong-to-US cable link in 2020 over
+    security concerns, splitting what used to be a single network into
+    competing US- and China-aligned routes.
+  description_de: >-
+    Einer der verkehrsreichsten Kabelknoten Asiens, zunehmend aber eine
+    Bruchlinie: US-Regulierer blockierten 2020 aus Sicherheitsgruenden
+    eine direkte Kabelverbindung Hongkong-USA und spalteten ein einst
+    einheitliches Netz in konkurrierende US- und chinaorientierte Routen.
+
+- id: los_angeles_cable_landing_hub
+  name_en: Los Angeles Trans-Pacific Cable Hub
+  name_de: Los Angeles Transpazifischer Kabelknoten
+  category: tech
+  subcategory: cable_landing
+  asset_type: facility
+  criticality: 3
+  lon: -118.41
+  lat: 33.86
+  commodities: [data]
+  centroid_ids: [AMERICAS-USA]
+  ranking_source: "City of Los Angeles Bureau of Engineering trans-Pacific cable hub project records; TeleGeography"
+  rank_note: "The primary US west-coast landing point for trans-Pacific cables (Hermosa Beach CLS alone hosts SEA-US, Jupiter, Southern Cross NEXT, HKA); concentrates nearly all US-Asia subsea capacity in a few beachside stations."
+  description_en: >-
+    The US west coast's trans-Pacific cable gateway, concentrating most
+    American connectivity to Asia in a handful of beachfront landing
+    stations; a narrow physical funnel for a huge share of Pacific data traffic.
+  description_de: >-
+    Das transpazifische Kabeltor der US-Westkueste, das den Grossteil der
+    amerikanischen Anbindung an Asien in wenigen Strand-Landestationen
+    buendelt; ein schmaler physischer Flaschenhals fuer einen riesigen
+    Anteil des pazifischen Datenverkehrs.
+
+# =========================================================================
+# CHEMICALS
+# =========================================================================
+
+- id: ara_chemical_cluster
+  name_en: ARA Chemical Cluster (Antwerp-Rotterdam-Amsterdam)
+  name_de: ARA-Chemiecluster (Antwerpen-Rotterdam-Amsterdam)
+  category: tech
+  subcategory: chemicals
+  asset_type: production_cluster
+  criticality: 4
+  commodities: [chemicals]
+  centroid_ids: [EUROPE-BENELUX]
+  ranking_source: "CHEManager / Business in Antwerp industry reporting; ScienceDirect ARRRA meta-cluster analysis"
+  rank_note: "Europe's largest integrated petrochemical/chemicals cluster and world #2 after Houston; Antwerp alone hosts BASF, TotalEnergies, ExxonMobil and INEOS, producing roughly half of Europe's platform chemicals feeding downstream electronics and plastics."
+  description_en: >-
+    Europe's largest chemicals hub and the world's second-largest after
+    Houston, supplying roughly half of the continent's platform chemicals;
+    a single-region concentration risk for European manufacturing feedstocks.
+  description_de: >-
+    Europas groesster Chemiestandort und weltweit zweitgroesster nach
+    Houston, der etwa die Haelfte der kontinentalen Basischemikalien
+    liefert; ein regionales Konzentrationsrisiko fuer europaeische
+    Fertigungs-Vorprodukte.
+
+- id: rhine_ruhr_industrial
+  name_en: Rhine-Ruhr Chemical Cluster
+  name_de: Rhein-Ruhr-Chemiecluster
+  category: tech
+  subcategory: chemicals
+  asset_type: production_cluster
+  criticality: 5
+  commodities: [chemicals]
+  centroid_ids: [EUROPE-GERMANY]
+  ranking_source: "chemicalparks.eu / Business Chemistry structural analysis of German petrochemical clusters"
+  rank_note: "North Rhine-Westphalia hosts 13 integrated chemical parks -- more than any other German state -- anchored by BASF Ludwigshafen (the world's largest integrated chemical site) and specialty producers Evonik and Covestro."
+  description_en: >-
+    Germany's densest concentration of chemical parks, anchored by BASF's
+    Ludwigshafen site, the world's largest integrated chemical complex;
+    a foundational supplier of specialty materials to Europe's electronics
+    and manufacturing base.
+  description_de: >-
+    Deutschlands dichteste Konzentration an Chemieparks, verankert durch
+    BASFs Standort Ludwigshafen, den weltgroessten integrierten
+    Chemiekomplex; ein grundlegender Lieferant von Spezialmaterialien fuer
+    Europas Elektronik- und Fertigungsbasis.

@@ -1,0 +1,793 @@
+# Oil -- upstream fields/basins and downstream refineries/storage.
+# Scope: crude/product EXPORT TERMINALS (Ras Tanura, Kharg, Ceyhan, etc.) are
+# handled by the PORTS file, not here. This file covers only producing
+# fields/basins and refining/storage facilities.
+# Authority: EIA / OPEC Annual Statistical Bulletin / Rystad for field
+# production (bpd); EIA / company filings for refinery capacity (bpd).
+# Geometry omitted on reconciled ids (existing DB hull/point preserved).
+
+# --- FIELDS (reconciled) ---
+
+- id: ghawar_field
+  name_en: Ghawar Field
+  name_de: Ghawar-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 5
+  ranking_source: "EIA; Saudi Aramco IPO prospectus (2019)"
+  rank_note: "World's largest conventional oil field; Aramco's 2019 prospectus discloses ~3.8 mmbpd maximum sustainable capacity."
+  description_en: >-
+    The world's largest conventional oil field, underpinning Saudi Arabia's
+    role as the systemically important global swing producer.
+  description_de: >-
+    Das groesste konventionelle Oelfeld der Welt, Grundlage von Saudi-Arabiens
+    Rolle als systemrelevanter globaler Swing-Produzent.
+
+- id: burgan_field
+  name_en: Burgan Field
+  name_de: Burgan-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 4
+  ranking_source: "EIA; OPEC Annual Statistical Bulletin"
+  rank_note: "World's second-largest conventional oil field; Greater Burgan produced ~1.66 mmbpd in 2023 (Kuwait Oil Co.)."
+  description_en: >-
+    The world's second-largest conventional oil field and the backbone of
+    Kuwaiti production and state revenue.
+  description_de: >-
+    Das zweitgroesste konventionelle Oelfeld der Welt und das Rueckgrat der
+    kuwaitischen Produktion und Staatseinnahmen.
+
+- id: safaniya_field
+  name_en: Safaniya Offshore Field
+  name_de: Safaniya-Offshore-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 4
+  ranking_source: "EIA; Saudi Aramco"
+  rank_note: "World's largest offshore oil field, ~1 mmbpd+ capacity, a pillar of Saudi Arabia's spare production capacity."
+  description_en: >-
+    The world's largest offshore oil field, a major pillar of Saudi Arabia's
+    spare production capacity in the northern Gulf.
+  description_de: >-
+    Das groesste Offshore-Oelfeld der Welt, eine wichtige Stuetze der freien
+    saudischen Produktionskapazitaet im noerdlichen Golf.
+
+- id: upper_zakum_field
+  name_en: Upper Zakum Field
+  name_de: Upper-Zakum-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 3
+  ranking_source: "EIA; ADNOC"
+  rank_note: "One of the world's largest offshore oil fields (~1 mmbpd capacity target); core UAE expansion asset."
+  description_en: >-
+    A major offshore field west of Abu Dhabi and a core source of UAE crude
+    output and expansion capacity.
+  description_de: >-
+    Ein bedeutendes Offshore-Feld westlich von Abu Dhabi und eine zentrale
+    Quelle der VAE-Rohoelfoerderung und -erweiterung.
+
+- id: rumaila_basra_fields
+  name_en: Rumaila-Basra Fields
+  name_de: Rumaila-Basra-Felder
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [MIDEAST-IRAQ]
+  criticality: 4
+  ranking_source: "EIA Iraq Country Analysis Brief; OPEC ASB"
+  rank_note: "Supergiant southern Iraq field cluster generating the large majority of Baghdad's oil export volume."
+  description_en: >-
+    The supergiant southern Iraq field cluster that generates the large
+    majority of Baghdad's oil revenue and export volume.
+  description_de: >-
+    Das riesige suedirakische Feldcluster, das den Grossteil der Oeleinnahmen
+    und Exportmenge Bagdads erzeugt.
+
+- id: daqing_field
+  name_en: Daqing Field
+  name_de: Daqing-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "EIA China Country Analysis Brief; CNPC"
+  rank_note: "China's largest and longest-producing onshore field, historic backbone of domestic crude output."
+  description_en: >-
+    China's largest and longest-producing onshore field, historically the
+    backbone of domestic crude output and a symbol of state industrial policy.
+  description_de: >-
+    Chinas groesstes und am laengsten foerderndes Onshore-Feld, historisch das
+    Rueckgrat der heimischen Rohoelfoerderung und Symbol staatlicher Industriepolitik.
+
+- id: athabasca_oil_sands
+  name_en: Athabasca Oil Sands
+  name_de: Athabasca-Oelsande
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [AMERICAS-CANADA]
+  criticality: 4
+  ranking_source: "EIA; Canada Energy Regulator (CER)"
+  rank_note: "Largest oil sands deposit in the world; core of Canada's ~4.3 mmbpd oil sands/heavy crude export base."
+  description_en: >-
+    The world's largest oil sands deposit, the source of the large majority
+    of Canadian crude exports, almost entirely to the United States.
+  description_de: >-
+    Das groesste Oelsand-Vorkommen der Welt, Quelle des Grossteils der
+    kanadischen Rohoelexporte, fast ausschliesslich in die USA.
+
+- id: bakken_shale
+  name_en: Bakken Shale
+  name_de: Bakken-Schieferformation
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil, gas]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "EIA Drilling Productivity Report"
+  rank_note: "One of the largest US shale oil plays outside the Permian, ~1.2-1.3 mmbpd North Dakota output."
+  description_en: >-
+    A major North Dakota shale play and one of the largest contributors to
+    US oil output outside the Permian Basin.
+  description_de: >-
+    Ein bedeutendes Schiefergebiet in North Dakota und einer der groessten
+    Beitraege zur US-Oelfoerderung ausserhalb des Perm-Beckens.
+
+- id: permian_basin
+  name_en: Permian Basin
+  name_de: Perm-Becken
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil, gas]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 4
+  ranking_source: "EIA Drilling Productivity Report"
+  rank_note: "Largest US shale oil and gas producing region, ~6.5 mmbpd+, the core of US status as top global producer."
+  description_en: >-
+    The largest US shale play, whose output has made the country a top
+    global oil and gas producer and swing exporter.
+  description_de: >-
+    Das groesste US-Schiefergebiet, dessen Foerderung die USA zu einem
+    fuehrenden globalen Oel- und Gasproduzenten und Swing-Exporteur gemacht hat.
+
+- id: west_siberian_basin
+  name_en: West Siberian Basin
+  name_de: Westsibirisches Becken
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil, gas]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 4
+  ranking_source: "EIA Russia Country Analysis Brief; USGS"
+  rank_note: "Source of the majority of Russia's oil and gas production; anchors state budget and export leverage."
+  description_en: >-
+    Russia's core hydrocarbon-producing region, funding the state budget and
+    underpinning its energy leverage over Europe and Asia.
+  description_de: >-
+    Russlands zentrale Kohlenwasserstoff-Foerderregion, finanziert den
+    Staatshaushalt und untermauert den Energiehebel gegenueber Europa und Asien.
+
+- id: orinoco_heavy_oil_belt
+  name_en: Orinoco Heavy Oil Belt
+  name_de: Orinoco-Schweroelguertel
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [AMERICAS-VENEZUELA]
+  criticality: 3
+  ranking_source: "EIA Venezuela Country Analysis Brief; OPEC ASB"
+  rank_note: "One of the largest heavy-crude reserves in the world, output throttled by sanctions and underinvestment."
+  description_en: >-
+    One of the world's largest heavy-crude reserves, its output throttled
+    for years by US sanctions and chronic underinvestment.
+  description_de: >-
+    Eines der groessten Schweroel-Vorkommen der Welt, dessen Foerderung seit
+    Jahren durch US-Sanktionen und chronische Unterinvestition gedrosselt wird.
+
+- id: niger_delta_basin
+  name_en: Niger Delta Basin
+  name_de: Niger-Delta-Becken
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil, gas]
+  centroid_ids: [AFRICA-NIGERIA]
+  criticality: 4
+  ranking_source: "EIA Nigeria Country Analysis Brief; OPEC ASB"
+  rank_note: "Source of nearly all Nigerian crude output, onshore and offshore; Africa's largest oil-producing region."
+  description_en: >-
+    Africa's largest oil-producing region, chronically exposed to pipeline
+    sabotage, artisanal theft and militant unrest that repeatedly cut
+    Nigerian output.
+  description_de: >-
+    Afrikas groesste Oelfoerderregion, chronisch anfaellig fuer
+    Pipeline-Sabotage, illegale Rohoelentnahme und Unruhen, die die
+    nigerianische Foerderung wiederholt unterbrochen haben.
+
+- id: sirte_basin
+  name_en: Sirte Basin
+  name_de: Sirte-Becken
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [AFRICA-WEST]
+  criticality: 3
+  ranking_source: "EIA Libya Country Analysis Brief; OPEC ASB"
+  rank_note: "Holds the large majority of Libya's proven oil reserves; repeatedly shut in amid civil conflict."
+  description_en: >-
+    Libya's principal oil-producing basin, where output has repeatedly been
+    shut in or fought over amid the country's ongoing civil conflict.
+  description_de: >-
+    Libyens wichtigstes Oelfoerderbecken, dessen Produktion im Zuge des
+    anhaltenden Buergerkriegs wiederholt stillgelegt oder umkaempft war.
+
+- id: stabroek_block
+  name_en: Stabroek Block
+  name_de: Stabroek-Block
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: [AMERICAS-GUYANA]
+  criticality: 3
+  ranking_source: "EIA; ExxonMobil investor disclosures"
+  rank_note: "Fastest-growing major offshore discovery of the last decade; Guyana output surpassed 650,000 bpd by 2025."
+  description_en: >-
+    The offshore discovery that turned Guyana into one of the fastest-growing
+    oil producers on earth within a single decade.
+  description_de: >-
+    Die Offshore-Entdeckung, die Guyana innerhalb eines einzigen Jahrzehnts zu
+    einem der am schnellsten wachsenden Oelproduzenten der Welt machte.
+
+- id: tengiz_kashagan_fields
+  name_en: Tengiz-Kashagan Fields
+  name_de: Tengiz-Kaschagan-Felder
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil]
+  centroid_ids: []
+  criticality: 4
+  ranking_source: "EIA Kazakhstan Country Analysis Brief; Chevron/NCOC disclosures"
+  rank_note: "Largest oil development in Kazakhstan and one of the largest globally developed in recent decades."
+  description_en: >-
+    Kazakhstan's two supergiant Caspian fields, whose output depends heavily
+    on the CPC pipeline route through Russian territory to reach world markets.
+  description_de: >-
+    Kasachstans zwei riesige Kaspi-Felder, deren Foerderung stark von der
+    CPC-Pipelineroute durch russisches Territorium abhaengt, um Weltmaerkte
+    zu erreichen.
+
+- id: santos_presalt_basin
+  name_en: Santos Pre-Salt Basin
+  name_de: Santos-Vorsalzbecken
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil, gas]
+  centroid_ids: [AMERICAS-BRAZIL]
+  criticality: 4
+  ranking_source: "EIA Brazil Country Analysis Brief; ANP (Brazil regulator)"
+  rank_note: "Deepwater discovery that made Brazil a top-five global oil producer; Petrobras' main growth engine."
+  description_en: >-
+    The offshore pre-salt fields that turned Brazil into a major oil
+    exporter, underpinning Petrobras' production growth for the next decade.
+  description_de: >-
+    Die Offshore-Vorsalzfelder, die Brasilien zu einem bedeutenden
+    Oelexporteur machten und das Foerderwachstum von Petrobras fuer das
+    naechste Jahrzehnt tragen.
+
+- id: sakhalin_projects
+  name_en: Sakhalin Oil and Gas Projects
+  name_de: Sachalin-Oel- und Gasprojekte
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  commodities: [oil, gas]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "EIA Russia Country Analysis Brief"
+  rank_note: "Russia's main Pacific-facing offshore oil and gas production and LNG export base."
+  description_en: >-
+    Russia's Far East offshore oil and gas hub, its LNG and crude exports to
+    Japan and China surviving despite Western sanctions on the Sakhalin
+    ventures.
+  description_de: >-
+    Russlands ostasiatischer Offshore-Oel- und Gas-Hub, dessen LNG- und
+    Rohoelexporte nach Japan und China trotz westlicher Sanktionen gegen die
+    Sachalin-Projekte fortbestehen.
+
+# --- FIELDS (new) ---
+
+- id: kirkuk_field
+  name_en: Kirkuk Field
+  name_de: Kirkuk-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[44.28,35.35],[44.48,35.35],[44.55,35.50],[44.35,35.55],[44.22,35.45]]
+  commodities: [oil]
+  centroid_ids: []
+  criticality: 3
+  ranking_source: "EIA Iraq Country Analysis Brief; Iraq Ministry of Oil / North Oil Co."
+  rank_note: "Historic northern Iraq supergiant, ~300-330 kbpd current output; BP's 2025 deal targets 420 kbpd."
+  description_en: >-
+    Iraq's historic northern supergiant field, contested for decades between
+    Baghdad and Kurdistan, now the anchor of a major BP redevelopment deal.
+  description_de: >-
+    Iraks historisches noerdliches Supergiant-Feld, jahrzehntelang zwischen
+    Bagdad und Kurdistan umstritten, jetzt Ankerpunkt eines grossen
+    BP-Neuerschliessungsvertrags.
+
+- id: ahvaz_marun_fields
+  name_en: Ahvaz-Marun Fields
+  name_de: Ahvaz-Marun-Felder
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[48.55,31.15],[48.85,31.20],[49.05,30.95],[48.90,30.70],[48.60,30.85]]
+  commodities: [oil]
+  centroid_ids: [MIDEAST-IRAN]
+  criticality: 3
+  ranking_source: "EIA Iran Country Analysis Brief; NIOC"
+  rank_note: "Ahvaz is Iran's largest field (~65 bn bbl reserves); Marun is Iran's #2-3 producer (~520 kbpd), world's 6th-largest onshore field by reserves."
+  description_en: >-
+    Iran's largest producing field cluster in Khuzestan province, the
+    backbone of NIOC's onshore output and a repeated target in regional
+    strikes on Iranian energy infrastructure.
+  description_de: >-
+    Irans groesstes Foerdercluster in der Provinz Chuzestan, das Rueckgrat
+    der Onshore-Foerderung der NIOC und wiederholtes Ziel regionaler
+    Angriffe auf iranische Energieinfrastruktur.
+
+- id: gachsaran_field
+  name_en: Gachsaran Field
+  name_de: Gachsaran-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[50.55,30.42],[50.80,30.45],[50.85,30.20],[50.60,30.15],[50.45,30.30]]
+  commodities: [oil]
+  centroid_ids: [MIDEAST-IRAN]
+  criticality: 2
+  ranking_source: "EIA Iran Country Analysis Brief; NIOC"
+  rank_note: "Iran's second-largest oil field by reserves (~52.9 bn bbl), ~560 kbpd; mature field past its 1976 production peak."
+  description_en: >-
+    Iran's second-largest oil field, a mature Zagros supergiant still
+    producing over half a million barrels a day decades past its 1970s peak.
+  description_de: >-
+    Irans zweitgroesstes Oelfeld, ein reifes Zagros-Supergiant-Feld, das
+    Jahrzehnte nach seinem Hoehepunkt in den 1970ern noch ueber eine halbe
+    Million Barrel taeglich foerdert.
+
+- id: cantarell_field
+  name_en: Cantarell Field
+  name_de: Cantarell-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[-92.30,19.55],[-92.05,19.60],[-91.95,19.40],[-92.15,19.30],[-92.35,19.40]]
+  commodities: [oil]
+  centroid_ids: [AMERICAS-MEXICO]
+  criticality: 2
+  ranking_source: "EIA Mexico Country Analysis Brief; Pemex"
+  rank_note: "Once the world's 2nd-most-productive field (~2.1 mmbpd peak, 2004); now ~150-160 kbpd, surpassed domestically by Ku-Maloob-Zaap since 2009."
+  description_en: >-
+    Mexico's legendary Gulf of Mexico field whose steep post-2004 decline
+    reshaped Pemex's production strategy toward newer offshore complexes.
+  description_de: >-
+    Mexikos legendaeres Golf-von-Mexiko-Feld, dessen steiler Rueckgang nach
+    2004 die Foerderstrategie von Pemex hin zu neueren Offshore-Komplexen
+    veraenderte.
+
+- id: ku_maloob_zaap_field
+  name_en: Ku-Maloob-Zaap Field
+  name_de: Ku-Maloob-Zaap-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[-92.05,19.35],[-91.85,19.40],[-91.75,19.20],[-91.95,19.10],[-92.10,19.20]]
+  commodities: [oil]
+  centroid_ids: [AMERICAS-MEXICO]
+  criticality: 3
+  ranking_source: "EIA Mexico Country Analysis Brief; Pemex"
+  rank_note: "Mexico's most productive field since 2009, ~580-700 kbpd, roughly a third of Pemex total output."
+  description_en: >-
+    Mexico's current top-producing offshore complex, now generating roughly
+    a third of Pemex's total crude output as Cantarell has declined.
+  description_de: >-
+    Mexikos derzeit foerderstaerkster Offshore-Komplex, der inzwischen etwa
+    ein Drittel der gesamten Rohoelfoerderung von Pemex liefert, waehrend
+    Cantarell zurueckgegangen ist.
+
+- id: samotlor_field
+  name_en: Samotlor Field
+  name_de: Samotlor-Feld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[76.20,61.05],[76.55,61.10],[76.65,60.90],[76.35,60.80],[76.10,60.90]]
+  commodities: [oil]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "EIA Russia Country Analysis Brief; Rosneft"
+  rank_note: "Russia's largest oil field and among the largest ever discovered; peaked at ~3.4 mmbpd in 1980, still ~700+ kbpd via enhanced recovery."
+  description_en: >-
+    Russia's largest oil field and the historic engine of Soviet-era output;
+    still a major Rosneft producer decades past its 1980 peak.
+  description_de: >-
+    Russlands groesstes Oelfeld und der historische Motor der sowjetischen
+    Foerderung; auch Jahrzehnte nach dem Hoehepunkt 1980 noch ein
+    bedeutender Rosneft-Produzent.
+
+- id: bolivar_coastal_field
+  name_en: Bolivar Coastal Field
+  name_de: Bolivar-Kuestenfeld
+  category: oil
+  subcategory: field
+  asset_type: production_cluster
+  hull: [[-71.55,10.55],[-71.35,10.60],[-71.20,10.20],[-71.35,9.95],[-71.60,10.20]]
+  commodities: [oil]
+  centroid_ids: [AMERICAS-VENEZUELA]
+  criticality: 2
+  ranking_source: "EIA Venezuela Country Analysis Brief; PDVSA"
+  rank_note: "Largest oil field in South America and largest outside the Middle East by cumulative production (~30-32 bn bbl); ~800-900 kbpd as of 2025."
+  description_en: >-
+    The largest oil field in South America, stretching along Lake
+    Maracaibo's coast, historically Exxon's most important global property
+    and now central to any Venezuelan production recovery.
+  description_de: >-
+    Das groesste Oelfeld Suedamerikas entlang der Kueste des Maracaibo-Sees,
+    historisch Exxons wichtigste globale Foerderstaette und heute zentral
+    fuer jedes Szenario einer venezolanischen Foerdererholung.
+
+# --- REFINERIES & STORAGE (reconciled) ---
+
+- id: jamnagar_refinery
+  name_en: Jamnagar Refining Complex
+  name_de: Jamnagar-Raffineriekomplex
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 4
+  ranking_source: "Reliance Industries; EIA"
+  rank_note: "World's largest single-site refinery, 1.24 mmbpd combined capacity across its domestic and export-oriented units."
+  description_en: >-
+    The world's largest refinery complex, processing discounted Russian and
+    Gulf crude into fuel exported worldwide, including to Europe.
+  description_de: >-
+    Der groesste Raffineriekomplex der Welt, verarbeitet verbilligtes
+    russisches und Golf-Rohoel zu weltweit exportiertem Treibstoff,
+    einschliesslich nach Europa.
+
+- id: jurong_island_refining
+  name_en: Jurong Island Refining-Petrochemical Complex
+  name_de: Jurong-Island-Raffinerie- und Petrochemiekomplex
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [ASIA-SOUTHEAST]
+  criticality: 4
+  ranking_source: "EIA; Singapore EMA"
+  rank_note: "One of the world's largest integrated refining and petrochemical hubs; ~1.5 mmbpd combined regional refining capacity."
+  description_en: >-
+    Singapore's reclaimed-island refining and petrochemical complex, a
+    pricing and supply hub for Asian refined product markets.
+  description_de: >-
+    Singapurs auf aufgeschuettetem Land errichteter Raffinerie- und
+    Petrochemiekomplex, ein Preis- und Versorgungs-Hub fuer asiatische
+    Produktmaerkte.
+
+- id: paraguana_refining_center
+  name_en: Paraguana Refining Center
+  name_de: Paraguana-Raffineriezentrum
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [AMERICAS-VENEZUELA]
+  criticality: 2
+  ranking_source: "EIA; PDVSA"
+  rank_note: "World's 2nd-largest refinery complex by nameplate capacity (~940 kbpd), running well below capacity."
+  description_en: >-
+    Once one of the world's largest refining complexes, now running far
+    below capacity after years of underinvestment and US sanctions, yet
+    still central to any Venezuelan oil recovery scenario.
+  description_de: >-
+    Einst einer der groessten Raffineriekomplexe der Welt, laeuft nach
+    Jahren der Unterinvestition und US-Sanktionen weit unter Kapazitaet,
+    bleibt aber zentral fuer jedes venezolanische Oel-Erholungsszenario.
+
+- id: ruwais_refinery
+  name_en: Ruwais Refinery
+  name_de: Ruwais-Raffinerie
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 3
+  ranking_source: "ADNOC; EIA"
+  rank_note: "World's 4th-largest single-site refinery, ~922 kbpd (Ruwais East + West combined ~1.14 mmbpd); largest in the Middle East."
+  description_en: >-
+    Abu Dhabi's flagship refining and petrochemical hub, central to the
+    UAE's downstream diversification strategy away from crude exports alone.
+  description_de: >-
+    Abu Dhabis Vorzeige-Raffinerie- und Petrochemie-Hub, zentral fuer die
+    Downstream-Diversifizierungsstrategie der VAE ueber reine
+    Rohoelexporte hinaus.
+
+- id: yanbu_refining_hub
+  name_en: Yanbu Refining Hub
+  name_de: Yanbu-Raffinerie-Hub
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [MIDEAST-SAUDI]
+  criticality: 3
+  ranking_source: "Saudi Aramco; EIA"
+  rank_note: "Saudi Arabia's principal Red Sea refining and petrochemical export hub, fed by the Petroline crude pipeline."
+  description_en: >-
+    Saudi Arabia's main Red Sea refining and export hub, fed by crude piped
+    overland from the Eastern Province, bypassing the Strait of Hormuz.
+  description_de: >-
+    Saudi-Arabiens wichtigster Raffinerie- und Export-Hub am Roten Meer,
+    versorgt mit Rohoel per Pipeline aus der Ostprovinz unter Umgehung der
+    Strasse von Hormus.
+
+- id: us_gulf_coast_refining_corridor
+  name_en: US Gulf Coast Refining Corridor
+  name_de: US-Golfkuesten-Raffineriekorridor
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 5
+  ranking_source: "EIA Refinery Capacity Report"
+  rank_note: "World's densest refining concentration; includes Motiva Port Arthur (654 kbpd, largest single US refinery) and ExxonMobil Baytown (~564 kbpd)."
+  description_en: >-
+    The Houston-Port Arthur-Lake Charles corridor, the world's densest
+    refining cluster and the backbone of US fuel supply and product exports.
+  description_de: >-
+    Der Korridor Houston-Port Arthur-Lake Charles, das dichteste
+    Raffineriecluster der Welt und das Rueckgrat der US-Treibstoffversorgung
+    und Produktexporte.
+
+- id: zhenhai_zhoushan_refining
+  name_en: Zhenhai-Zhoushan Refining Complex
+  name_de: Zhenhai-Zhoushan-Raffineriekomplex
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "Sinopec; EIA China Country Analysis Brief"
+  rank_note: "Sinopec's largest integrated refining-petrochemical base, ~40 mtpa (~800 kbpd) after its 2024-25 Phase 2 expansion."
+  description_en: >-
+    A major eastern China refining and strategic crude storage complex,
+    positioned to receive tanker imports feeding the Yangtze River Delta
+    economy.
+  description_de: >-
+    Ein bedeutender ostchinesischer Raffinerie- und strategischer
+    Rohoellagerkomplex, positioniert fuer Tankerimporte, die die
+    Wirtschaftsregion des Jangtse-Deltas versorgen.
+
+- id: ulsan_industrial
+  name_en: Ulsan Industrial-Refining Complex
+  name_de: Ulsan-Industrie- und Raffineriekomplex
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  commodities: [oil, refined_products, chemicals]
+  centroid_ids: [ASIA-SOUTHKOREA]
+  criticality: 3
+  ranking_source: "SK Energy; EIA"
+  rank_note: "South Korea's largest refining complex; SK Energy's Ulsan CDUs total 840 kbpd capacity."
+  description_en: >-
+    South Korea's largest industrial complex, combining refining,
+    petrochemicals and shipbuilding on the country's southeast coast.
+  description_de: >-
+    Suedkoreas groesster Industriekomplex, kombiniert Raffinerie,
+    Petrochemie und Schiffbau an der Suedostkueste des Landes.
+
+- id: cushing_storage_hub
+  name_en: Cushing Storage Hub
+  name_de: Cushing-Lagerzentrum
+  category: oil
+  subcategory: storage
+  asset_type: facility
+  commodities: [oil]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "EIA Petroleum Status Report"
+  rank_note: "The physical delivery point for the WTI crude oil futures contract; ~76 million barrels working storage capacity."
+  description_en: >-
+    The Oklahoma tank farm that serves as the physical delivery point for
+    WTI futures, making its storage levels a closely watched signal for
+    global oil pricing.
+  description_de: >-
+    Die Tanklageranlage in Oklahoma, die als physischer Lieferpunkt fuer
+    WTI-Futures dient und deren Fuellstaende ein genau beobachtetes Signal
+    fuer die globale Oelpreisbildung sind.
+
+# --- REFINERIES & STORAGE (new) ---
+
+- id: zhejiang_petrochemical_refinery
+  name_en: Zhejiang Petrochemical Refinery
+  name_de: Zhejiang-Petrochemie-Raffinerie
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  lon: 122.10
+  lat: 30.12
+  commodities: [oil, refined_products]
+  centroid_ids: [ASIA-CHINA]
+  criticality: 3
+  ranking_source: "Company disclosures (Zhejiang Petrochemical); Hydrocarbon Processing"
+  rank_note: "China's largest single refinery once fully ramped, 800 kbpd design capacity across four 200-kbpd trains on Dayushan Island."
+  description_en: >-
+    China's largest privately-controlled refining and petrochemical
+    integration project, positioned to become the world's biggest
+    crude-to-chemicals complex.
+  description_de: >-
+    Chinas groesstes privat kontrolliertes Raffinerie- und
+    Petrochemie-Integrationsprojekt, auf dem Weg zum weltweit groessten
+    Crude-to-Chemicals-Komplex.
+
+- id: port_arthur_refinery
+  name_en: Motiva Port Arthur Refinery
+  name_de: Motiva-Raffinerie Port Arthur
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  lon: -93.969
+  lat: 29.860
+  commodities: [oil, refined_products]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "Motiva Enterprises; EIA Refinery Capacity Report"
+  rank_note: "Largest single refinery in North America, 654 kbpd capacity after its 2025 expansion."
+  description_en: >-
+    The single largest refinery in North America, a Saudi Aramco-owned
+    Gulf Coast plant whose 2025 expansion cemented its lead over every
+    other US refinery.
+  description_de: >-
+    Die groesste einzelne Raffinerie Nordamerikas, eine Saudi-Aramco-eigene
+    Golfkuesten-Anlage, deren Erweiterung 2025 ihren Vorsprung vor allen
+    anderen US-Raffinerien festigte.
+
+- id: fujairah_storage_hub
+  name_en: Fujairah Storage Hub
+  name_de: Fujairah-Lagerzentrum
+  category: oil
+  subcategory: storage
+  asset_type: facility
+  lon: 56.326
+  lat: 25.155
+  commodities: [oil, refined_products]
+  centroid_ids: [MIDEAST-GULF]
+  criticality: 4
+  ranking_source: "Port of Fujairah; S&P Global"
+  rank_note: "Largest commercial refined-products storage capacity in the Middle East (~18 million cbm total); UAE's key Hormuz-bypass export point via ADCOP."
+  description_en: >-
+    The UAE's Indian Ocean storage and bunkering hub, letting Emirati crude
+    and refined products bypass the Strait of Hormuz entirely via the
+    overland ADCOP pipeline.
+  description_de: >-
+    Der Lager- und Bunker-Hub der VAE am Indischen Ozean, der es
+    emiratischem Rohoel und Produkten erlaubt, die Strasse von Hormus ueber
+    die Ueberland-Pipeline ADCOP vollstaendig zu umgehen.
+
+- id: ara_storage_hub
+  name_en: Amsterdam-Rotterdam-Antwerp Storage Hub
+  name_de: ARA-Lagerzentrum (Amsterdam-Rotterdam-Antwerpen)
+  category: oil
+  subcategory: storage
+  asset_type: facility
+  lon: 4.135
+  lat: 51.930
+  commodities: [oil, refined_products]
+  centroid_ids: [EUROPE-BENELUX]
+  criticality: 4
+  ranking_source: "Port of Rotterdam Authority; Wood Mackenzie"
+  rank_note: "Europe's largest oil storage and trading hub, over 100 million cbm capacity; ~95-100 million tonnes of crude enter Rotterdam annually."
+  description_en: >-
+    Northwest Europe's largest crude and product storage and trading node,
+    feeding refineries across the Netherlands, Belgium and Germany.
+  description_de: >-
+    Nordwesteuropas groesster Knotenpunkt fuer Rohoel- und Produktlagerung
+    und -handel, versorgt Raffinerien in den Niederlanden, Belgien und
+    Deutschland.
+
+- id: vadinar_refinery
+  name_en: Vadinar Refinery
+  name_de: Vadinar-Raffinerie
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  lon: 69.723
+  lat: 22.402
+  commodities: [oil, refined_products]
+  centroid_ids: [ASIA-INDIA]
+  criticality: 2
+  ranking_source: "Nayara Energy; EIA"
+  rank_note: "India's 2nd-largest single-location refinery, 405 kbpd (20 mtpa), a few km from Jamnagar."
+  description_en: >-
+    Nayara Energy's Gujarat refinery, India's second-largest single-site
+    plant, part-owned by Rosneft and a key outlet for discounted Russian crude.
+  description_de: >-
+    Nayara Energys Raffinerie in Gujarat, Indiens zweitgroesste Anlage an
+    einem einzelnen Standort, teilweise im Besitz von Rosneft und ein
+    wichtiger Absatzweg fuer verbilligtes russisches Rohoel.
+
+- id: galveston_bay_refinery
+  name_en: Galveston Bay Refinery
+  name_de: Galveston-Bay-Raffinerie
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  lon: -94.903
+  lat: 29.384
+  commodities: [oil, refined_products]
+  centroid_ids: [AMERICAS-USA]
+  criticality: 3
+  ranking_source: "Marathon Petroleum; EIA Refinery Capacity Report"
+  rank_note: "Largest single US refinery by EIA's January 2024 count, 631 kbpd calendar-day capacity."
+  description_en: >-
+    Marathon Petroleum's Texas City plant, the largest single refinery in
+    the United States by EIA's refinery capacity survey.
+  description_de: >-
+    Marathon Petroleums Anlage in Texas City, laut EIA-Raffineriekapazitaets-
+    erhebung die groesste Einzelraffinerie der Vereinigten Staaten.
+
+- id: omsk_refinery
+  name_en: Omsk Refinery
+  name_de: Omsk-Raffinerie
+  category: oil
+  subcategory: refinery
+  asset_type: facility
+  lon: 73.249
+  lat: 55.061
+  commodities: [oil, refined_products]
+  centroid_ids: [EUROPE-RUSSIA]
+  criticality: 3
+  ranking_source: "Gazprom Neft; EIA Russia Country Analysis Brief"
+  rank_note: "Russia's largest refinery by most industry counts, ~440 kbpd (22 mtpa); repeatedly struck by Ukrainian long-range drones in 2026."
+  description_en: >-
+    Gazprom Neft's Siberian refinery, Russia's largest by most industry
+    counts and a repeated target of Ukrainian deep-strike drone campaigns
+    in 2026 despite lying over 3,000 km from the front.
+  description_de: >-
+    Gazprom Nefts sibirische Raffinerie, nach den meisten Branchenzahlen
+    Russlands groesste, und trotz einer Entfernung von ueber 3.000 km zur
+    Front wiederholtes Ziel ukrainischer Weitstrecken-Drohnenangriffe 2026.
+
