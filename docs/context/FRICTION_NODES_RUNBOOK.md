@@ -2,7 +2,20 @@
 
 How to add a new friction node end-to-end. Reflects the architecture
 as of **2026-05-12** (1-to-1 narrative<->FN collapse, theater pattern,
-5-step stance scale).
+5-step stance scale), extended **2026-07-07** with the fn-map strategic
+asset layer (id naming convention, `affected_asset_ids` assignment,
+mandatory safe-migration tooling — see D-086 through D-091 in
+`30_DecisionLog.yml`).
+
+## fn-map: strategic assets above the narrative layer
+
+Since 2026-07, `friction_nodes` also carries `affected_asset_ids text[]`
+and (on theaters) `primary_target text` and `anchor_point jsonb` — the
+economic-exposure layer that sits on top of the narrative FN system
+described below. See `db/registry/README.md` for how `strategic_assets`
+itself is populated (source-anchored YAML, generated into the DB) and
+`docs/fn_map_data_sources.md` for the attribute-sourcing discipline.
+This runbook's steps 1-5 below are unchanged; two things are new:
 
 ## Mental model
 
@@ -134,8 +147,12 @@ event_friction_nodes (derived, bootstrap-populated)
 ### 1. Curate the FN row
 
 Decide:
-- `id` (slug — e.g. `taiwan_status` or, if it's an umbrella for several
-  atomic FNs, `taiwan_theater` with `fn_type='theater'`)
+- `id` — **follow `docs/context/FN_ID_NAMING.md`**: `<geo>_<phenomenon>`,
+  never a bare phenomenon slug (`regime_survival`, `trade_and_tariffs`).
+  Ids are permanent and referenced by four different tables plus live
+  URLs; ambiguity compounds the moment the same phenomenon shows up in a
+  second region. Theaters use e.g. `taiwan_theater` with
+  `fn_type='theater'`.
 - `name_en` / `name_de`
 - `description_en` / `description_de` — what's contested, 2-3 sentences
 - `editorial_summary_en` / `editorial_summary_de` — 1-2 paragraphs of
@@ -206,6 +223,29 @@ Optional but recommended:
    --narrative <id> --publishers "<comma-list>"` to discover vocabulary
   the analyst draft missed → add to `framing_keywords`.
 
+### 3b. Assign affected_asset_ids (mechanism, not membership)
+
+Do not populate `affected_asset_ids` by scanning "which strategic_assets
+sit in any of this FN's `centroid_ids`" — that over-includes for
+multi-participant theaters and under-includes for tightly-scoped ones.
+Per D-090, include an asset only if you can name a real mechanism:
+
+1. **Home territory** — asset physically sits in the FN's primary actor's
+   own country. Mechanical: every registry asset in that centroid
+   qualifies.
+2. **Demonstrated reach** — a named military/proxy capability has
+   actually struck or credibly threatened this specific asset. Requires a
+   dated, sourced incident (same >=2-source bar as the asset registry
+   itself) — not "the countries are both in this conflict."
+3. **Named economic lever** — a specific policy mechanism (sanctions on a
+   sector, a price cap, an export control) targets a specific asset
+   class. Include the assets that sector actually covers, not every asset
+   in the country.
+
+Chokepoint/pipeline transit exposure does not need a manual entry here —
+`asset_flows.via_asset_ids` already surfaces it dynamically when a user
+selects the chokepoint.
+
 ### 4. Run the bootstrap
 
 ```bash
@@ -244,12 +284,20 @@ Look for:
 ### 6. Deploy to Render
 
 1. `git push` your migration files.
-2. Apply the migration on Render:
+2. Apply the migration on Render — **do not** raw-pipe it. Take a
+   `pg_dump` backup of the Render DB first (same discipline as
+   `safe_db_migrate.py`, which is local-only by design — production
+   backup + apply is a manual, explicit step), then apply:
    ```bash
    docker run --rm -e PGPASSWORD=$RENDER_DB_PASSWORD postgres:18 psql \
      -h $RENDER_DB_HOST -U $RENDER_DB_USER -d sni_v2 \
      -f db/migrations/<date>_friction_node_<slug>.sql
    ```
+   Before running: check whether the migration contains any
+   DELETE/TRUNCATE/DROP, and if so, check `information_schema` on the
+   Render DB for `ON DELETE CASCADE` children and their row counts first
+   (see D-091). A migration written for an empty dev DB is not
+   automatically safe against a database with months of real data.
 3. Run the bootstrap against Render:
    ```bash
    DB_HOST=$RENDER_DB_HOST DB_USER=$RENDER_DB_USER \
@@ -263,6 +311,20 @@ Look for:
    ```
 
 ## Common diagnosis (low attribution)
+
+### Before running ANY .sql migration against real data
+
+**Never** apply a migration via raw `docker exec ... psql < file.sql`
+against a database with real pipeline data — local dev DB included, not
+just Render. Use `python scripts/safe_db_migrate.py <file>` instead. It
+takes a mandatory backup first, then scans for DELETE/TRUNCATE/DROP and
+prints the live row count of anything that would cascade-delete before
+refusing to proceed without `--yes-i-checked`. This exists because a
+months-old migration replayed without it silently wiped 15,945 real
+`event_friction_nodes` rows on 2026-07-07 — see D-091 and
+`docs/context/DB_SAFETY_INCIDENT_20260707.md`. The step 6 deploy
+commands below predate this tool and must be run through it, not as
+written, once Render deploy actually happens.
 
 If a narrative attributes 0 or far fewer titles than expected, walk the
 gate step-by-step in psql:
@@ -315,6 +377,9 @@ When the FN architecture is stable enough to expose:
 | Calibration helper | `scripts/calibrate_narrative_keywords.py` |
 | Anchor extractor | `scripts/extract_fn_anchor_via_deepseek.py` |
 | **fn_anchor drafting rules** | [`FN_ANCHOR_VOCABULARY_SPEC.md`](FN_ANCHOR_VOCABULARY_SPEC.md) — read before hand-editing any bundle |
+| **FN id naming convention** | [`FN_ID_NAMING.md`](FN_ID_NAMING.md) — read before creating any new FN id |
+| **DB migration safety** | `scripts/safe_db_migrate.py` — mandatory wrapper; see [`DB_SAFETY_INCIDENT_20260707.md`](DB_SAFETY_INCIDENT_20260707.md) |
+| Strategic asset registry | `db/registry/README.md` + `docs/fn_map_data_sources.md` |
 | Frontend page | `apps/frontend/app/[locale]/friction-nodes/[slug]/page.tsx` |
 | Server queries | `apps/frontend/lib/friction-nodes.ts` |
 | Client-safe types + palette | `apps/frontend/lib/friction-nodes-shared.ts` |

@@ -462,7 +462,7 @@ decisions:
     status: accepted
     title: Reserve "narrative" for strategic/meta level; event-level extraction renamed "media framing"
     rationale:
-      - "Narrative" was overloaded -- strategic geopolitical claims vs event-level stance clustering
+      - Narrative was overloaded -- strategic geopolitical claims vs event-level stance clustering
       - Users confused by seeing "Narrative Analysis" (media framing) alongside "Strategic Narratives" (geopolitical)
     consequences:
       - All event/CTM-level UI labels changed from "Narrative Frames" to "Media Framing"
@@ -1499,3 +1499,286 @@ decisions:
       - Decision items captured: adopt Layer 1 habit? Build sleeping FNs?
         Scope Layer 2 digest? Pre-curate Turkey-Russia/Greece/Caucasus FNs
         as sleeping?
+
+  - id: D-086
+    date: 2026-07-03
+    type: architectural
+    status: accepted
+    title: fn-map — asset-first map architecture replaces circle-based conflict markers
+    rationale:
+      - Original friction-node map rendered conflicts as circles sized by
+        intensity. At 28+ theaters this produced misplaced, overlapping
+        markers that blocked navigation (e.g. "Europe-US strategic
+        tension" as a circle in the mid-Atlantic conveyed nothing).
+      - Circles also had no natural connection to economic exposure —
+        the actual business question ("Hormuz closes — who doesn't get
+        what?") requires a static map of real infrastructure that
+        conflicts press on, not a bag of floating intensity blobs.
+      - Reframed the model -- strategic assets (ports, chokepoints, fields,
+        pipelines, production clusters, corridors) are static ground
+        truth, always visible as uniform small dots; friction nodes apply
+        dynamic pressure onto the assets they affect (color/glow), and
+        conflicts render as distinct badges only where they have a real
+        anchor point, not as circles floating over open ocean.
+    consequences:
+      - New `strategic_assets` table (id, asset_type, geometry jsonb,
+        commodities[], centroid_ids[], criticality, meta jsonb,
+        description_en/de). Point/Polygon/LineString geometry per type
+        (chokepoint/port/pipeline = Line; production_cluster = Polygon
+        hull; facility/port = Point).
+      - New `friction_nodes.affected_asset_ids` links conflicts to the assets
+        they press; asset "stress" = max intensity over live FNs
+        pressing on it (sqrt-normalized event counts).
+      - Trade corridors sourced algorithmically via `searoute` (water-only
+        real shipping lanes, MIT license); pipelines sourced from Global
+        Energy Monitor (CC BY 4.0, real researched routes) — hand-drawn
+        linear assets deactivated as untrustworthy (a wrong line is worse
+        than no line).
+      - Superseded by D-087 (registry-driven asset population) and D-088
+        (asset_flows supply-web layer) for the content; this decision is
+        the map's structural shape and remains current.
+      - Branch: fn-map (not yet merged to main).
+
+  - id: D-087
+    date: 2026-07-04
+    type: data-model
+    status: accepted
+    title: Strategic Asset Registry — source-anchored YAML as single source of truth, generated into DB
+    rationale:
+      - Early asset batches (ports, chokepoints, commodities) were
+        LLM-drafted per category with no shared inclusion standard.
+        A user spot-check found real gaps this way produced — e.g.
+        Russia (top-4 nuclear generator, world's-largest wheat exporter) was
+        completely absent from an early "power + grain" population pass
+        simply because the drafting prompts never named a Russian asset.
+      - The fix is architectural, not "try harder" -- anchor inclusion to a
+        named ranking authority per category (EIA, IAEA PRIS, USGS
+        Mineral Commodity Summaries, GIIGNL, World Shipping Council,
+        FAO/USDA, SEMI/TrendForce...) so an asset's presence is a citable
+        claim ("top-4 by IAEA PRIS"), not a memory recall.
+      - A parallel finding (Strait of Hormuz missing `fertilizer` from its
+        commodities — Gulf states are ~30% of world fertilizer trade)
+        showed the same discipline is needed at the attribute level, not
+        just inclusion -- every non-obvious attribute needs >=2 independent
+        T1/T2 sources that agree, or it is omitted (never invented, no
+        confidence-score theater, no human-review queue — the sourcing
+        bar is the filter).
+    consequences:
+      - The file `db/registry/*.yaml`, one file per category (chokepoints, ports,
+        oil, gas, power, minerals, agriculture, tech, pipelines,
+        corridors) is the single source of truth. The DB is *generated*,
+        never hand-edited. `scripts/generate_asset_registry.py` upserts
+        (preserves existing geometry unless the registry supplies new
+        lon/lat/hull/line) and has a separate `--retire` phase (dry-run
+        first, never retires an asset referenced by `asset_flows`).
+      - Every registry row carries `ranking_source` + `rank_note` (stored
+        in `strategic_assets.meta`) — the provenance travels with the data.
+      - New `subcategory` column (nuclear/hydro/coal/wind under power;
+        copper/rare_earths/lithium under minerals; etc.) — populated on
+        every row now, not yet wired to a frontend filter, but the future
+        "nuclear only" / "rare earths only" toggle is a pure data query
+        once it's wanted.
+      - Attribute validation protocol documented in
+        `docs/fn_map_data_sources.md` with the Hormuz fertilizer case as
+        the worked example.
+      - Comprehensive-tier population -- 340 active assets across 10
+        categories as of 2026-07-07 (up from ~150 in the initial
+        hand-curated batches).
+      - Full population required Russia-specific gap-filling after the
+        first pass again missed Leningrad NPP, Sayano-Shushenskaya (Russia's
+        largest power plant), and the South Russia grain belt — the same
+        class of miss the registry was built to prevent, confirming the
+        anchor-to-authority discipline needs to be enforced per research
+        agent, not assumed.
+
+  - id: D-088
+    date: 2026-07-04
+    type: data-model
+    status: accepted
+    title: asset_flows — directed, sourced supply relationships rendered on selection
+    rationale:
+      - Strategic assets alone answer "what exists"; the map needed to
+        answer "how does Jamnagar receive its crude" and "if Hormuz
+        closes, who doesn't get what" — which requires directed
+        relationships between assets, not just their static locations.
+      - A flow is a *reported structural relationship*, not a measured
+        shipment — the same "platform asserts the report, not the fact"
+        discipline as everything else on this map. Magnitude is a coarse
+        class (major/secondary), never an invented percentage.
+    consequences:
+      - New `asset_flows` table -- id, commodity, from_asset, to_asset,
+        via_asset_ids[] (chokepoints/pipelines transited — auto-detected
+        from searoute passage data for sea legs), geometry, magnitude_class,
+        status (active/suspended/historical), as_of date, source,
+        confidence, notes.
+      - Rendering is on-demand only -- selecting any asset draws every flow
+        that starts, ends, or transits there (not a permanent layer —
+        avoids permanent visual clutter). Selecting a chokepoint like
+        Hormuz shows every major flow that depends on it in one view.
+      - Update mechanism is tiered -- manual status/as_of edits for
+        structural changes (embargo, resumption); a pipeline-assisted
+        review queue (WorldBrief's own event stream flagging
+        contradicting-status flows for human review) and quarterly
+        recalibration against official trade statistics are designed but
+        not yet built.
+      - Oil pilot shipped first (23 flows, EIA/JODI/tanker-tracking
+        sourced); gas is the natural next commodity (Europe's LNG
+        dependency web is the strongest demo case) — not yet built.
+      - License/risk register and public disclaimer draft in
+        `docs/fn_map_data_sources.md`.
+
+  - id: D-089
+    date: 2026-07-07
+    type: data-model
+    status: accepted
+    title: FN id naming convention (<geo>_<phenomenon>) + LatAm theater split
+    rationale:
+      - User review of the FN list found geographically-abstract ids
+        (`culture_war_conflicts`, `nuclear_arms_control`,
+        `immigration_border_politics`, `regime_survival`,
+        `economic_coercion`) that are ambiguous the moment the same
+        phenomenon shows up in a second region — which every phenomenon
+        eventually does. Ids are permanent (referenced by
+        `event_friction_nodes.fn_id`, `narratives_v2.fn_id`,
+        `taxonomy_v3.linked_id` fn_anchor bundles, `member_fn_ids` arrays,
+        and live `/friction-nodes/<id>` URLs), so ambiguity compounds.
+      - Separately, `latam_theater` (a single continent-wide theater with
+        10 member atomics spanning Venezuela, Mexico, Cuba, Panama, and
+        hemispheric US-China competition) was flagged as too coarse
+        relative to peer theaters' granularity, and stale relative to
+        real 2026 events (US captured Maduro in January 2026; Mexico is
+        in a live standoff over direct US military action against
+        cartels; Panama seized CK Hutchison's canal ports in February
+        with China threatening retaliation).
+    consequences:
+      - Convention documented in `docs/context/FN_ID_NAMING.md` -- id =
+        `<geo>_<phenomenon>`, geo is a country token, an actor-first pair
+        (`us_china_`), or an established region/system token (`eu`,
+        `arctic`, `sahel`, `scs`...). Tests before creating an id -- the
+        second-region test, the grep test, no 2-char geo tokens, theaters
+        end in `_theater` and atomics never do.
+      - 45 legacy ids renamed via a single FK-safe migration (copy under
+        new id -> repoint `event_friction_nodes`/`narratives_v2`/
+        `taxonomy_v3` -> patch `member_fn_ids` arrays -> delete old row).
+      - Two hygiene fixes surfaced by the census -- `greenland_sovereignty`
+        deduped as a 0-event duplicate of `greenland_control`; the
+        1,803-event `russia_sanctions_regime` atomic was found to belong
+        to no theater at all and wired into `russia_europe_theater`.
+      - The `latam_theater` retired; replaced with six theaters at peer
+        granularity — `venezuela_theater` (post-intervention transition,
+        Essequibo), `mexico_theater` (cartel war, US military-pressure
+        standoff, tariffs — 3 new atomics), `panama_canal_theater`
+        (Hutchison ports dispute, transit security — 2 new atomics),
+        `cuba_theater`, `latam_hemispheric_theater` (US-China competition
+        for lithium/copper), `haiti_theater` (gang collapse, stabilisation
+        mission — 2 new atomics). 7 new atomics got fn_anchor bundles via
+        the existing extractor workflow + hand curation against
+        `FN_ANCHOR_VOCABULARY_SPEC.md`.
+      - Caught mid-build -- Panama-related FNs were wired to centroid
+        `AMERICAS-CENTRAL-AMERICA`, but the pipeline actually tags Panama
+        coverage under a pre-existing duplicate centroid,
+        `AMERICAS-CENTRAL` (same label, both active in `centroids_v3`) —
+        fixed by routing to the centroid the pipeline actually uses.
+
+  - id: D-090
+    date: 2026-07-07
+    type: data-model
+    status: accepted
+    title: affected_asset_ids assignment framework — mechanism over membership
+    rationale:
+      - The `iran_theater.affected_asset_ids` was found wired to Ras Tanura and
+        Ghawar Field — both Saudi assets, not Iranian — while every real
+        Iranian asset (Bushehr NPP, South Pars, Ahvaz-Marun, Gachsaran)
+        was absent. Root cause was treating "this country co-occurs in the
+        theater's centroid_ids" as sufficient grounds for inclusion.
+      - That same logic, applied naively, produces two failure modes at
+        the opposite ends of the same mistake -- (a) a single-actor theater
+        under-includes its own home territory (Iran's actual assets were
+        missing), and (b) a multi-participant theater over-includes
+        everything (a US-Russia theater listing "all Russian assets" as
+        pressed, when only a specific sanctioned sector actually is).
+      - Correct principle requires a named, evidenced mechanism per asset,
+        not geography lookup -- for any candidate you must be able to
+        finish "X is exposed to theater T because of [mechanism] —
+        evidenced by [incident/policy/precedent]."
+    consequences:
+      - Three mechanisms, decreasing geographic tightness -- (1) home
+        territory — asset physically sits in the primary actor's own
+        country, mechanical/objective; (2) demonstrated reach — a named
+        military/proxy capability has actually struck or credibly
+        threatened this specific asset (evidenced, dated; Ras Tanura
+        reinstated for Iran on this basis after verifying a
+        2026-03-02 Iran-attributed drone strike, continuing 2021 and 2019
+        precedent — Ghawar stays excluded, no equivalent evidence found);
+        (3) named economic lever — a specific policy mechanism (sanctions
+        on a sector, a price cap) targets a specific asset class (already
+        the basis for `us_russia_theater`'s Yamal LNG / West Siberian /
+        Samotlor wiring, which correctly excludes non-sanctioned Russian
+        assets like Norilsk nickel).
+      - Chokepoint/pipeline transit exposure is already handled correctly
+        and separately by `asset_flows.via_asset_ids` (dynamic, on
+        selection) and does not need duplicating into the static
+        per-theater array.
+      - This is inherently editorial for mechanisms 2 and 3 — a real
+        citation is required, matching the same sourcing discipline as
+        the asset registry (D-087). A `(theater_id, asset_id, mechanism,
+        evidence)` join table would let the rationale travel with the
+        data instead of living only in migration comments; noted as a
+        real option, not built.
+      - Systematic backfill of this framework across the ~27 theaters
+        that don't yet have it applied (only the 6 new LatAm theaters
+        have `primary_target` populated, the mechanical anchor for
+        mechanism 1) is the next planned pass.
+
+  - id: D-091
+    date: 2026-07-07
+    type: operational
+    status: accepted
+    title: Mandatory backup+scan wrapper for all DB migrations, post-incident
+    rationale:
+      - While refreshing local data from a fresh Render pull, replaying a
+        months-old migration (`20260621_seed_global_friction_nodes_corrected.sql`,
+        written for an empty dev DB) executed `DELETE FROM friction_nodes
+        WHERE is_active = true OR fn_type IN ('theater','atomic')`. This
+        cascaded via `ON DELETE CASCADE` on both
+        `event_friction_nodes.fn_id` and `narratives_v2.fn_id` and
+        silently wiped 15,945 real event-linkage rows — no error, no
+        warning. The subsequent `INSERT ... ON CONFLICT DO NOTHING` in the
+        same file re-created most `friction_nodes` rows, masking the
+        damage (the parent table looked fine; only the invisible child
+        data was gone).
+      - Pre-flight check had inspected `information_schema.
+        referential_constraints.update_rule` (NO ACTION) but not
+        `delete_rule` (CASCADE) — checking the wrong column of the same
+        view gave false confidence.
+      - Recovered because the original pull was still on disk minutes
+        later -- dropped the FK, `pg_restore --data-only` just that table
+        from the untouched dump, deleted the resulting handful of
+        genuinely-orphaned rows (two FNs whose seed migrations had
+        themselves never been deployed — a second, independent drift
+        finding), re-added the FK. Verified row count and `iran_theater`
+        event count matched the live production site exactly.
+      - Separately surfaced -- several migrations dated well before this
+        session (`20260621_add_primary_target_to_friction_nodes.sql` and
+        others) existed in the repo but had never actually been applied
+        to live Render — a real, pre-existing deployment-drift gap,
+        independent of anything in this session.
+    consequences:
+      - The `scripts/safe_db_migrate.py` wrapper is now mandatory for applying any
+        `.sql` migration to a database holding real data (local dev DB
+        included, not just Render). Before touching data it always takes
+        a full `pg_dump` backup (`db/backups/`, gitignored, timestamped),
+        then scans for DELETE/TRUNCATE/DROP; for any DELETE FROM <table>
+        found, it queries `information_schema` for ON DELETE CASCADE
+        children and prints their *live row count* — the number that
+        would silently vanish — before refusing to proceed without
+        `--yes-i-checked`. `--target render` is deliberately not wired
+        up; production deploys stay a separate, explicit, human-run step.
+      - The triggering migration itself is patched -- its DELETE now
+        excludes any row with live `event_friction_nodes`/`narratives_v2`
+        children, making it safe to replay (including during the
+        eventual Render deploy).
+      - Full incident account in `docs/context/DB_SAFETY_INCIDENT_20260707.md`.
+      - In `FRICTION_NODES_RUNBOOK.md`, the "Deploy to Render" step 2 (raw
+        `docker run ... psql -f`) needs updating to route through the
+        wrapper — flagged, not yet edited in this pass.

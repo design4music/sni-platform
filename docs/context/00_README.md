@@ -21,7 +21,16 @@ page: current state, active roadmap, open tickets, recent commits.
 - `BEATS_DIRECTION.md` — day-centric event philosophy (supersedes old family/cluster thinking)
 - `FRICTION_NODES_RUNBOOK.md` — current FN architecture (theaters + atomic FNs + 1-to-1 narratives, shipped)
 - `FN_ANCHOR_VOCABULARY_SPEC.md` — rules for drafting any `fn_anchor` bundle (read before hand-editing)
+- `FN_ID_NAMING.md` — id naming convention for any new friction node (read before creating any id)
+- `DB_SAFETY_INCIDENT_20260707.md` — why every `.sql` migration against real data goes through `scripts/safe_db_migrate.py`, no exceptions
 - `NARRATIVE_DISCOVERY_PLAN.md` — narrative evolution + sleeping FNs plan (parked for review)
+- **fn-map branch (unmerged, not deployed)** — strategic asset registry
+  + conflict map + supply flows. `../../db/registry/README.md` (asset
+  registry schema/conventions), `../fn_map_data_sources.md` (data
+  provenance + attribute validation protocol), `../intelligence_dashboards_concept.md`
+  and `../regulatory_layer_concept.md` (forward-looking, not started).
+  See `SESSION_START.md` for current state and D-086..D-091 in the
+  decision log.
 - Theater specs: `SYRIA_THEATER_SPEC.md`, `TURKEY_THEATER_SPEC.md`, `YEMEN_RED_SEA_THEATER_SPEC.md`, `SUDAN_FN_SPEC.md`
 - `FRICTION_NODES_VISION.md` — original vision doc (predates the 2026-05-12 rearchitecture; see runbook for current state)
 - `40_OpenQuestions.yml` — unresolved questions

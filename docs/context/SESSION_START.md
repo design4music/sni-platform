@@ -1,11 +1,22 @@
 # Session Start
 
-**Last refreshed**: 2026-05-13 (Middle East FN expansion: Syria + Sudan +
-Turkey + Yemen/Red Sea theaters seeded locally. 6 ME theaters total now
-on local DB. Sample-titles ranking rewritten on narrative cards
-(composite tier with loaded-vocabulary priority). Narrative Discovery
-Plan drafted for review. See D-081..D-085 below. **All new work is
-local only — Render sync pending.**)
+**Last refreshed**: 2026-07-07 (fn-map branch: strategic asset registry
+(340 assets, 10 categories, source-anchored YAML + generator), asset_flows
+supply-web layer, FN id naming convention + full LatAm/Mexico/Panama/Haiti
+theater rebuild, `affected_asset_ids` mechanism framework, and a DB
+migration safety incident + fix. See D-086..D-091 below and
+[`fn-map current state`](#fn-map-strategic-asset-registry--conflict-map-new)
+further down. **fn-map is a separate branch, not merged to main. Render
+has NOT received any fn-map content.** Additionally: a pre-existing
+deployment-drift gap was found independent of fn-map — several
+friction-node migrations dated 2026-05/06 were committed but never
+actually applied to live Render (see below); this affects the base
+Middle East FN state described in the next paragraph, which may describe
+the repo's intent more than Render's actual current rows.)
+
+**Pre-2026-07-07 history below is preserved as-written; verify against
+current DB state before relying on specific counts — see the
+deployment-drift note above.**
 
 **Pre-2026-05-13 history**: Friction Nodes rearchitected 2026-05-12
 (theater pattern + 1-to-1 narrative<->FN collapse + 5-step stance
@@ -37,6 +48,64 @@ narratives. See [Friction Nodes section below](#friction-nodes-new) for
 links to the concept doc + runbook.
 
 For the complete snapshot: [`PIPELINE_STATUS.md`](PIPELINE_STATUS.md).
+
+## fn-map: strategic asset registry + conflict map (new)
+
+Separate branch (`fn-map`), not merged to main, not deployed to Render.
+Started as a map-visualization redesign (D-086: asset-first architecture
+replacing circle-based conflict markers) and grew into a full economic-
+exposure layer sitting above the existing friction-node/narrative system.
+
+**What exists (local DB, verified 2026-07-07):**
+- **340 active `strategic_assets`** across 10 categories (chokepoints,
+  ports, oil, gas, power, minerals, agriculture, tech, pipelines,
+  corridors), each with `subcategory`, `ranking_source`, `rank_note`.
+  Source of truth is `db/registry/*.yaml`; the DB is generated via
+  `scripts/generate_asset_registry.py` (upsert, preserves existing
+  geometry). See `db/registry/README.md` and D-087.
+- **`asset_flows`** — 23 sourced oil-supply relationships, rendered on
+  asset selection (D-088). Gas is the natural next commodity, not yet built.
+- **FN id naming convention** (`docs/context/FN_ID_NAMING.md`, D-089):
+  45 legacy generic ids (`regime_survival`, `nuclear_arms_control`...)
+  renamed to `<geo>_<phenomenon>`. `latam_theater` retired and replaced
+  with 6 theaters at peer granularity (`venezuela_theater`,
+  `mexico_theater`, `panama_canal_theater`, `cuba_theater`,
+  `latam_hemispheric_theater`, `haiti_theater`), reflecting real 2026
+  events (US intervention in Venezuela, US-Mexico cartel-war military
+  standoff, Panama Canal ports dispute with China).
+- **`affected_asset_ids` mechanism framework** (D-090): home territory /
+  demonstrated reach / named economic lever, replacing "co-occurs in
+  centroid_ids" as the inclusion test. Applied fully to `iran_theater`;
+  systematic backfill across the other ~27 theaters is the next planned
+  pass (only the 6 new LatAm theaters have `primary_target` populated,
+  the mechanical anchor for mechanism 1).
+- **`scripts/safe_db_migrate.py`** (D-091): mandatory wrapper for any
+  `.sql` migration against a database with real data, after a replayed
+  migration silently cascade-deleted 15,945 `event_friction_nodes` rows
+  during this work. Full incident: `docs/context/DB_SAFETY_INCIDENT_20260707.md`.
+
+**Not yet done:**
+- Systematic `affected_asset_ids` backfill (D-090 follow-up).
+- Merge to main + Render deploy. Blocking items: the pre-existing
+  deployment-drift gap (below) must be resolved as part of the same
+  deploy plan, since fn-map migrations assume FN rows that may not exist
+  on live Render yet.
+- Regulatory data layer (BGBl/EUR-Lex feeds) — architecture designed
+  in `docs/regulatory_layer_concept.md`, deliberately sequenced *after*
+  fn-map ships to main.
+- Intelligence-dashboard product surfaces (Chokepoint Monitor, Exposure
+  Watchlist, Commodity Lens...) — concept in
+  `docs/intelligence_dashboards_concept.md`, not started.
+
+**Deployment-drift discovery (independent of fn-map, found while
+refreshing local from Render):** several friction-node migrations
+committed to the repo well before this session — e.g.
+`20260621_add_primary_target_to_friction_nodes.sql` and some of the
+2026-05/06 theater seed migrations — had never actually been applied to
+live Render. This means Render's current `friction_nodes` row count and
+schema may lag what's described elsewhere in this file and in
+`FRICTION_NODES_RUNBOOK.md`. Verify against live Render (or a fresh dump)
+before assuming any specific FN/theater is present on production.
 
 ## Active strategic roadmap
 

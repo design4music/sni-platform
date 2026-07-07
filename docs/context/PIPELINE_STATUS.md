@@ -1,12 +1,32 @@
 # WorldBrief Pipeline Status
 
-**Last updated**: 2026-05-06 (daemon resilience hardened — D-073;
-frontend cache bust endpoint shipped — D-074; same-day round 2
-incident exposed a slow `get_queue_stats` query + Render socket-leak
-on container kill, fixed in `7d00520`. See "Daemon resilience note"
-below.)
+**Last updated**: 2026-07-07 (see the fn-map note below; this file's
+main body below still reflects the 2026-05-06 daemon-hardening state
+and remains accurate for the core ingestion/labeling/clustering/
+enrichment pipeline, which fn-map does not touch.)
 **Live**: https://www.worldbrief.info
-**Branch**: `main` (synced with origin)
+**Branch**: `main` (synced with origin) — a separate, unmerged `fn-map`
+branch exists (see below); nothing on it is deployed.
+
+## fn-map branch (not on main, not deployed)
+
+Strategic asset registry (340 assets, 10 categories) + conflict map
+redesign + supply-flow layer, sitting above the friction-nodes system
+described in `FRICTION_NODES_RUNBOOK.md`. Full state in
+[`SESSION_START.md`](SESSION_START.md#fn-map-strategic-asset-registry--conflict-map-new)
+and decisions D-086 through D-091 in `30_DecisionLog.yml`.
+
+**Deployment-drift warning, found while working on fn-map (2026-07-07):**
+several committed friction-node migrations — including
+`20260621_add_primary_target_to_friction_nodes.sql` and some 2026-05/06
+theater seed migrations — were never actually applied to live Render.
+This is independent of fn-map and predates it. **Do not assume Render's
+`friction_nodes` table matches what the repo's migrations or docs
+describe** without verifying against a fresh dump or a live query first.
+Any future Render deploy (fn-map's or otherwise) needs to account for
+this gap explicitly, and must go through `scripts/safe_db_migrate.py`
+rather than raw `psql -f` (see D-091 — a replayed migration without this
+tool silently cascade-deleted 15,945 real rows during this discovery).
 
 Concise snapshot of what is running, what data exists, and where the
 seams currently are. For the design reference see
