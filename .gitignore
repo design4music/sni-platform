@@ -90,3 +90,4 @@ tmpclaude-*-cwd
 out/*.json
 out/taxonomy_*/
 !out/.gitkeep.mcp.json
+db/backups/
