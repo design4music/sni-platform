@@ -18,6 +18,7 @@ import argparse
 import glob
 import json
 import os
+import re
 
 import psycopg2
 import yaml
@@ -56,6 +57,70 @@ def load_registry():
     return rows
 
 
+# Aliases for headline matching (fn_asset_evidence layer). Derived from
+# name_en unless the registry row supplies an explicit `aliases:` list
+# (an empty list disables matching for that asset). Same substring-match
+# semantics as fn_anchor bundles: ILIKE '%alias%'.
+ALIAS_LEAD = ("port of ", "strait of ")
+ALIAS_TAIL = {
+    "terminal",
+    "terminals",
+    "port",
+    "complex",
+    "cluster",
+    "belt",
+    "basin",
+    "field",
+    "fields",
+    "refinery",
+    "refining",
+    "hub",
+    "mine",
+    "npp",
+    "dam",
+    "canal",
+    "corridor",
+    "industrial",
+    "zone",
+    "grounds",
+    "triangle",
+    "facility",
+    "station",
+    "plant",
+    "park",
+    "lng",
+    "fsru",
+    "lane",
+    "route",
+    "system",
+    "area",
+    "region",
+    "platform",
+    "project",
+    "projects",
+    "works",
+}
+
+
+def derive_aliases(name_en, override=None):
+    if override is not None:
+        return sorted({a for a in override if a})
+    base = re.sub(r"\s*\(.*?\)", "", name_en).strip()
+    out = {base}
+    short = base
+    for lead in ALIAS_LEAD:
+        if short.lower().startswith(lead):
+            short = short[len(lead) :]
+            break
+    words = short.split()
+    while len(words) > 1 and words[-1].lower() in ALIAS_TAIL:
+        words.pop()
+    short = " ".join(words)
+    if len(short) >= 5 and short.lower() != base.lower():
+        out.add(short)
+    return sorted(out)
+
+
 def geometry_for(a):
     """Return GeoJSON dict if the row supplies geometry, else None (preserve)."""
     if "lon" in a and "lat" in a:
@@ -87,10 +152,15 @@ def upsert(cur, reg):
     for aid, a in reg.items():
         geom = geometry_for(a)
         meta = {"ranking_source": a["ranking_source"], "rank_note": a["rank_note"]}
+        meta["aliases"] = derive_aliases(a["name_en"], a.get("aliases"))
         if a.get("as_of"):
             meta["as_of"] = str(a["as_of"])
         if aid in existing:
             # Update metadata; geometry only if the registry supplies new.
+            # meta MERGES over the existing jsonb (registry keys win) so
+            # non-registry keys like corridors' via_asset_ids survive --
+            # a full replace here silently broke route-pressure propagation
+            # once (caught 2026-07-07).
             fields = {
                 "name_en": a["name_en"],
                 "name_de": a["name_de"],
@@ -101,15 +171,16 @@ def upsert(cur, reg):
                 "criticality": a["criticality"],
                 "description_en": a["description_en"],
                 "description_de": a["description_de"],
-                "meta": json.dumps(meta),
                 "is_active": True,
             }
             if geom is not None:
                 fields["geometry"] = json.dumps(geom)
-            cols = ", ".join(f"{k}=%s" for k in fields)
+            sets = [f"{k}=%s" for k in fields]
             vals = [json.dumps(v) if k == "geometry" else v for k, v in fields.items()]
+            sets.append("meta = COALESCE(meta, '{}'::jsonb) || %s::jsonb")
+            vals.append(json.dumps(meta))
             cur.execute(
-                f"UPDATE strategic_assets SET {cols}, updated_at=now() WHERE id=%s",
+                f"UPDATE strategic_assets SET {', '.join(sets)}, updated_at=now() WHERE id=%s",
                 vals + [aid],
             )
             upd += 1
