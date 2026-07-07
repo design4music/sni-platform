@@ -1,0 +1,264 @@
+{
+  "metadata": {
+    "fn_id": "haiti_gang_control",
+    "centroid": "AMERICAS-CARIBBEAN",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 8,
+    "seeds": [
+      "Port-au-Prince",
+      "gang",
+      "Viv Ansanm",
+      "kidnapping",
+      "Cherizier"
+    ],
+    "timestamp": "2026-07-07T12:12:01.974697"
+  },
+  "bundle": [
+    {
+      "term": "anti-gang force",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "قوة مكافحة العصابات"
+        ],
+        "de": [
+          "Anti-Gang-Einheit"
+        ],
+        "en": [
+          "anti-gang force"
+        ],
+        "es": [
+          "fuerza antigangas"
+        ],
+        "fr": [
+          "force anti-gang"
+        ],
+        "hi": [
+          "गिरोह विरोधी बल"
+        ],
+        "it": [
+          "forza anti-gang"
+        ],
+        "ja": [
+          "反ギャング部隊"
+        ],
+        "ru": [
+          "силы по борьбе с бандами"
+        ],
+        "zh": [
+          "反帮派部队"
+        ]
+      },
+      "evidence": "France 24 (EN) / 2026-02-28"
+    },
+    {
+      "term": "sexual violence",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "العنف الجنسي"
+        ],
+        "de": [
+          "sexuelle Gewalt"
+        ],
+        "en": [
+          "sexual violence"
+        ],
+        "es": [
+          "violencia sexual"
+        ],
+        "fr": [
+          "violences sexuelles"
+        ],
+        "hi": [
+          "यौन हिंसा"
+        ],
+        "it": [
+          "violenza sessuale"
+        ],
+        "ja": [
+          "性的暴力"
+        ],
+        "ru": [
+          "сексуальное насилие"
+        ],
+        "zh": [
+          "性暴力"
+        ]
+      },
+      "evidence": "France 24 / 2026-01-29"
+    },
+    {
+      "term": "kamikaze drones",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "طائرات انتحارية بدون طيار"
+        ],
+        "de": [
+          "Kamikaze-Drohnen"
+        ],
+        "en": [
+          "kamikaze drones"
+        ],
+        "es": [
+          "drones kamikaze"
+        ],
+        "fr": [
+          "drones kamikazes"
+        ],
+        "hi": [
+          "कामिकाज़ ड्रोन"
+        ],
+        "it": [
+          "droni kamikaze"
+        ],
+        "ja": [
+          "神風ドローン"
+        ],
+        "ru": [
+          "дроны-камикадзе"
+        ],
+        "zh": [
+          "神风无人机"
+        ]
+      },
+      "evidence": "El País / 2026-03-10"
+    },
+    {
+      "term": "bounty",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "مكافأة"
+        ],
+        "de": [
+          "Kopfgeld"
+        ],
+        "en": [
+          "bounty"
+        ],
+        "es": [
+          "recompensa"
+        ],
+        "fr": [
+          "prime"
+        ],
+        "hi": [
+          "इनाम"
+        ],
+        "it": [
+          "taglia"
+        ],
+        "ja": [
+          "懸賞金"
+        ],
+        "ru": [
+          "вознаграждение"
+        ],
+        "zh": [
+          "赏金"
+        ]
+      },
+      "evidence": "Reuters / 2026-03-25"
+    },
+    {
+      "term": "Port-au-Prince",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بورت أو برنس"
+        ],
+        "de": [],
+        "en": [
+          "Port-au-Prince"
+        ],
+        "es": [
+          "Puerto Príncipe"
+        ],
+        "fr": [],
+        "hi": [
+          "पोर्ट-औ-प्रिंस"
+        ],
+        "it": [],
+        "ja": [
+          "ポルトープランス"
+        ],
+        "ru": [
+          "Порт-о-Пренс"
+        ],
+        "zh": [
+          "太子港"
+        ]
+      },
+      "evidence": "France 24 / 2026-01-29"
+    },
+    {
+      "term": "MSF",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "أطباء بلا حدود"
+        ],
+        "de": [
+          "Ärzte ohne Grenzen"
+        ],
+        "en": [
+          "MSF"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "एमएसएफ"
+        ],
+        "it": [],
+        "ja": [
+          "MSF"
+        ],
+        "ru": [
+          "MSF"
+        ],
+        "zh": [
+          "无国界医生"
+        ]
+      },
+      "evidence": "France 24 (EN) / 2026-01-29"
+    },
+    {
+      "term": "gang",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "عصابة"
+        ],
+        "de": [
+          "Bande"
+        ],
+        "en": [
+          "gang"
+        ],
+        "es": [
+          "pandilla"
+        ],
+        "fr": [],
+        "hi": [
+          "गिरोह"
+        ],
+        "it": [
+          "banda"
+        ],
+        "ja": [
+          "ギャング"
+        ],
+        "ru": [
+          "банда"
+        ],
+        "zh": [
+          "帮派"
+        ]
+      },
+      "evidence": "Reuters / 2026-03-25"
+    }
+  ]
+}

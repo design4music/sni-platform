@@ -1,0 +1,365 @@
+{
+  "metadata": {
+    "fn_id": "us_mexico_military_pressure",
+    "centroid": "AMERICAS-MEXICO",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 86,
+    "seeds": [
+      "Sheinbaum",
+      "AUMF",
+      "drone strike",
+      "terrorist designation",
+      "military raid",
+      "sovereignty",
+      "Rocha Moya"
+    ],
+    "timestamp": "2026-07-07T12:06:45.128913"
+  },
+  "bundle": [
+    {
+      "term": "CIA",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "وكالة المخابرات المركزية"
+        ],
+        "de": [],
+        "en": [
+          "CIA"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "सीआईए"
+        ],
+        "it": [],
+        "ja": [
+          "CIA"
+        ],
+        "ru": [
+          "ЦРУ"
+        ],
+        "zh": [
+          "中央情报局"
+        ]
+      },
+      "evidence": "Associated Press / 2026-05-13"
+    },
+    {
+      "term": "Rocha Moya",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "روتشا مويا"
+        ],
+        "de": [],
+        "en": [
+          "Rocha Moya"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "रोचा मोया"
+        ],
+        "it": [],
+        "ja": [
+          "ロチャ・モヤ"
+        ],
+        "ru": [
+          "Роча Мойя"
+        ],
+        "zh": [
+          "罗查·莫亚"
+        ]
+      },
+      "evidence": "New York Times / 2026-04-29"
+    },
+    {
+      "term": "sovereignty",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "سيادة"
+        ],
+        "de": [
+          "Souveränität"
+        ],
+        "en": [
+          "sovereignty"
+        ],
+        "es": [
+          "soberanía"
+        ],
+        "fr": [
+          "souveraineté"
+        ],
+        "hi": [
+          "संप्रभुता"
+        ],
+        "it": [
+          "sovranità"
+        ],
+        "ja": [
+          "主権"
+        ],
+        "ru": [
+          "суверенитет"
+        ],
+        "zh": [
+          "主权"
+        ]
+      },
+      "evidence": "CGTN / 2026-02-06"
+    },
+    {
+      "term": "military raid",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "غارة عسكرية"
+        ],
+        "de": [
+          "Militärrazzia"
+        ],
+        "en": [
+          "military raid"
+        ],
+        "es": [
+          "incursión militar"
+        ],
+        "fr": [
+          "raid militaire"
+        ],
+        "hi": [
+          "सैन्य छापा"
+        ],
+        "it": [
+          "incursione militare"
+        ],
+        "ja": [
+          "軍事襲撃"
+        ],
+        "ru": [
+          "военный рейд"
+        ],
+        "zh": [
+          "军事突袭"
+        ]
+      },
+      "evidence": "Reuters / 2026-02-23"
+    },
+    {
+      "term": "indictment",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "لائحة اتهام"
+        ],
+        "de": [
+          "Anklage"
+        ],
+        "en": [
+          "indictment"
+        ],
+        "es": [
+          "acusación"
+        ],
+        "fr": [
+          "acte d'accusation"
+        ],
+        "hi": [
+          "अभियोग"
+        ],
+        "it": [
+          "incriminazione"
+        ],
+        "ja": [
+          "起訴"
+        ],
+        "ru": [
+          "обвинительное заключение"
+        ],
+        "zh": [
+          "起诉"
+        ]
+      },
+      "evidence": "New York Times / 2026-04-29"
+    },
+    {
+      "term": "extradition",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تسليم"
+        ],
+        "de": [
+          "Auslieferung"
+        ],
+        "en": [
+          "extradition"
+        ],
+        "es": [
+          "extradición"
+        ],
+        "fr": [],
+        "hi": [
+          "प्रत्यर्पण"
+        ],
+        "it": [
+          "estradizione"
+        ],
+        "ja": [
+          "引き渡し"
+        ],
+        "ru": [
+          "экстрадиция"
+        ],
+        "zh": [
+          "引渡"
+        ]
+      },
+      "evidence": "El País / 2026-05-18"
+    },
+    {
+      "term": "arms trade",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تجارة الأسلحة"
+        ],
+        "de": [
+          "Waffenhandel"
+        ],
+        "en": [
+          "arms trade"
+        ],
+        "es": [
+          "tráfico de armas"
+        ],
+        "fr": [
+          "trafic d'armes"
+        ],
+        "hi": [
+          "हथियारों का व्यापार"
+        ],
+        "it": [
+          "commercio di armi"
+        ],
+        "ja": [
+          "武器取引"
+        ],
+        "ru": [
+          "торговля оружием"
+        ],
+        "zh": [
+          "武器贸易"
+        ]
+      },
+      "evidence": "The Guardian / 2026-03-09"
+    },
+    {
+      "term": "US military",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "الجيش الأمريكي"
+        ],
+        "de": [
+          "US-Militär"
+        ],
+        "en": [
+          "US military"
+        ],
+        "es": [
+          "ejército estadounidense"
+        ],
+        "fr": [
+          "armée américaine"
+        ],
+        "hi": [
+          "अमेरिकी सेना"
+        ],
+        "it": [
+          "esercito statunitense"
+        ],
+        "ja": [
+          "アメリカ軍"
+        ],
+        "ru": [
+          "вооруженные силы США"
+        ],
+        "zh": [
+          "美军"
+        ]
+      },
+      "evidence": "Associated Press / 2026-01-19"
+    },
+    {
+      "term": "ambassador",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "سفير"
+        ],
+        "de": [
+          "Botschafter"
+        ],
+        "en": [
+          "ambassador"
+        ],
+        "es": [
+          "embajador"
+        ],
+        "fr": [
+          "ambassadeur"
+        ],
+        "hi": [
+          "राजदूत"
+        ],
+        "it": [
+          "ambasciatore"
+        ],
+        "ja": [
+          "大使"
+        ],
+        "ru": [
+          "посол"
+        ],
+        "zh": [
+          "大使"
+        ]
+      },
+      "evidence": "The Guardian / 2026-06-02"
+    },
+    {
+      "term": "Ronald Johnson",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "رونالد جونسون"
+        ],
+        "de": [],
+        "en": [
+          "Ronald Johnson"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "रोनाल्ड जॉनसन"
+        ],
+        "it": [],
+        "ja": [
+          "ロナルド・ジョンソン"
+        ],
+        "ru": [
+          "Рональд Джонсон"
+        ],
+        "zh": [
+          "罗纳德·约翰逊"
+        ]
+      },
+      "evidence": "El País / 2026-06-03"
+    }
+  ]
+}

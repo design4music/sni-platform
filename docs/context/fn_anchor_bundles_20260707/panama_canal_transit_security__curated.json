@@ -1,0 +1,196 @@
+{
+  "metadata": {
+    "fn_id": "panama_canal_transit_security",
+    "centroid": "AMERICAS-CENTRAL",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 29,
+    "seeds": [
+      "canal",
+      "neutrality treaty",
+      "transit",
+      "drought",
+      "blockade",
+      "toll",
+      "vessel detention"
+    ],
+    "timestamp": "2026-07-07T12:11:12.291127"
+  },
+  "bundle": [
+    {
+      "term": "Panama Canal Authority",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "هيئة قناة بنما"
+        ],
+        "de": [
+          "Panama-Kanal-Behörde"
+        ],
+        "en": [
+          "Panama Canal Authority"
+        ],
+        "es": [
+          "Autoridad del Canal de Panamá"
+        ],
+        "fr": [
+          "Autorité du canal de Panama"
+        ],
+        "hi": [
+          "पनामा नहर प्राधिकरण"
+        ],
+        "it": [
+          "Autorità del Canale di Panama"
+        ],
+        "ja": [
+          "パナマ運河庁"
+        ],
+        "ru": [
+          "Управление Панамского канала"
+        ],
+        "zh": [
+          "巴拿马运河管理局"
+        ]
+      },
+      "evidence": "Associated Press / 2026-04-02"
+    },
+    {
+      "term": "toll",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "رسوم"
+        ],
+        "de": [
+          "Maut"
+        ],
+        "en": [
+          "toll"
+        ],
+        "es": [
+          "peaje"
+        ],
+        "fr": [
+          "péage"
+        ],
+        "hi": [
+          "टोल"
+        ],
+        "it": [
+          "pedaggio"
+        ],
+        "ja": [
+          "通行料"
+        ],
+        "ru": [
+          "пошлина"
+        ],
+        "zh": [
+          "通行费"
+        ]
+      },
+      "evidence": "Associated Press / 2026-04-02"
+    },
+    {
+      "term": "blockade",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حصار"
+        ],
+        "de": [
+          "Blockade"
+        ],
+        "en": [
+          "blockade"
+        ],
+        "es": [
+          "bloqueo"
+        ],
+        "fr": [
+          "blocus"
+        ],
+        "hi": [
+          "नाकाबंदी"
+        ],
+        "it": [
+          "blocco"
+        ],
+        "ja": [
+          "封鎖"
+        ],
+        "ru": [
+          "блокада"
+        ],
+        "zh": [
+          "封锁"
+        ]
+      },
+      "evidence": "Associated Press / 2026-04-02"
+    },
+    {
+      "term": "MSC",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "إم إس سي"
+        ],
+        "de": [],
+        "en": [
+          "MSC"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "एमएससी"
+        ],
+        "it": [],
+        "ja": [
+          "MSC"
+        ],
+        "ru": [
+          "MSC"
+        ],
+        "zh": [
+          "地中海航运"
+        ]
+      },
+      "evidence": "Financial Times / 2026-02-23"
+    },
+    {
+      "term": "transit",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "عبور"
+        ],
+        "de": [
+          "Transit"
+        ],
+        "en": [
+          "transit"
+        ],
+        "es": [
+          "tránsito"
+        ],
+        "fr": [],
+        "hi": [
+          "पारगमन"
+        ],
+        "it": [
+          "transito"
+        ],
+        "ja": [
+          "通過"
+        ],
+        "ru": [
+          "транзит"
+        ],
+        "zh": [
+          "过境"
+        ]
+      },
+      "evidence": "Fox News / 2026-01-18"
+    }
+  ]
+}

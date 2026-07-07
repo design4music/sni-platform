@@ -1,0 +1,581 @@
+{
+  "metadata": {
+    "fn_id": "us_mexico_trade_border",
+    "centroid": "AMERICAS-MEXICO",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 46,
+    "seeds": [
+      "tariff",
+      "USMCA",
+      "border",
+      "National Guard",
+      "migrant",
+      "customs"
+    ],
+    "timestamp": "2026-07-07T12:07:57.678933"
+  },
+  "bundle": [
+    {
+      "term": "USMCA",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "USMCA"
+        ],
+        "de": [],
+        "en": [
+          "USMCA"
+        ],
+        "es": [
+          "T-MEC",
+          "USMCA"
+        ],
+        "fr": [],
+        "hi": [
+          "USMCA"
+        ],
+        "it": [],
+        "ja": [
+          "USMCA"
+        ],
+        "ru": [
+          "USMCA"
+        ],
+        "zh": [
+          "美墨加协定"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-20"
+    },
+    {
+      "term": "tariff",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تعريفة جمركية"
+        ],
+        "de": [
+          "Zoll"
+        ],
+        "en": [
+          "tariff"
+        ],
+        "es": [
+          "arancel"
+        ],
+        "fr": [
+          "tarif douanier"
+        ],
+        "hi": [
+          "टैरिफ"
+        ],
+        "it": [
+          "dazio"
+        ],
+        "ja": [
+          "関税"
+        ],
+        "ru": [
+          "тариф"
+        ],
+        "zh": [
+          "关税"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-21"
+    },
+    {
+      "term": "steel",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "صلب"
+        ],
+        "de": [
+          "Stahl"
+        ],
+        "en": [
+          "steel"
+        ],
+        "es": [
+          "acero"
+        ],
+        "fr": [
+          "acier"
+        ],
+        "hi": [
+          "इस्पात"
+        ],
+        "it": [
+          "acciaio"
+        ],
+        "ja": [
+          "鉄鋼"
+        ],
+        "ru": [
+          "сталь"
+        ],
+        "zh": [
+          "钢铁"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-20"
+    },
+    {
+      "term": "aluminum",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ألومنيوم"
+        ],
+        "de": [
+          "Aluminium"
+        ],
+        "en": [
+          "aluminum"
+        ],
+        "es": [
+          "aluminio"
+        ],
+        "fr": [
+          "aluminium"
+        ],
+        "hi": [
+          "एल्युमिनियम"
+        ],
+        "it": [
+          "alluminio"
+        ],
+        "ja": [
+          "アルミニウム"
+        ],
+        "ru": [
+          "алюминий"
+        ],
+        "zh": [
+          "铝"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-20"
+    },
+    {
+      "term": "autos",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "سيارات"
+        ],
+        "de": [
+          "Autos"
+        ],
+        "en": [
+          "autos"
+        ],
+        "es": [
+          "automóviles"
+        ],
+        "fr": [
+          "automobiles"
+        ],
+        "hi": [
+          "ऑटो"
+        ],
+        "it": [
+          "auto"
+        ],
+        "ja": [
+          "自動車"
+        ],
+        "ru": [
+          "автомобили"
+        ],
+        "zh": [
+          "汽车"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-20"
+    },
+    {
+      "term": "CBP",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "CBP"
+        ],
+        "de": [],
+        "en": [
+          "CBP"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "CBP"
+        ],
+        "it": [],
+        "ja": [
+          "CBP"
+        ],
+        "ru": [
+          "CBP"
+        ],
+        "zh": [
+          "美国海关和边境保护局"
+        ]
+      },
+      "evidence": "CNN / 2026-05-20"
+    },
+    {
+      "term": "Border Patrol",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "دوريات الحدود"
+        ],
+        "de": [
+          "Grenzpatrouille"
+        ],
+        "en": [
+          "Border Patrol"
+        ],
+        "es": [
+          "Patrulla Fronteriza"
+        ],
+        "fr": [
+          "Patrouille frontalière"
+        ],
+        "hi": [
+          "सीमा गश्ती"
+        ],
+        "it": [
+          "Pattuglia di frontiera"
+        ],
+        "ja": [
+          "国境警備隊"
+        ],
+        "ru": [
+          "пограничный патруль"
+        ],
+        "zh": [
+          "边境巡逻队"
+        ]
+      },
+      "evidence": "Associated Press / 2026-01-28"
+    },
+    {
+      "term": "ICE",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "ICE"
+        ],
+        "de": [],
+        "en": [
+          "ICE"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "ICE"
+        ],
+        "it": [],
+        "ja": [
+          "ICE"
+        ],
+        "ru": [
+          "ICE"
+        ],
+        "zh": [
+          "美国移民和海关执法局"
+        ]
+      },
+      "evidence": "Reuters / 2026-03-30"
+    },
+    {
+      "term": "migrant",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "مهاجر"
+        ],
+        "de": [
+          "Migrant"
+        ],
+        "en": [
+          "migrant"
+        ],
+        "es": [
+          "migrante"
+        ],
+        "fr": [],
+        "hi": [
+          "प्रवासी"
+        ],
+        "it": [
+          "migrante"
+        ],
+        "ja": [
+          "移民"
+        ],
+        "ru": [
+          "мигрант"
+        ],
+        "zh": [
+          "移民"
+        ]
+      },
+      "evidence": "Associated Press / 2026-03-23"
+    },
+    {
+      "term": "deportation",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ترحيل"
+        ],
+        "de": [
+          "Abschiebung"
+        ],
+        "en": [
+          "deportation"
+        ],
+        "es": [
+          "deportación"
+        ],
+        "fr": [
+          "expulsion"
+        ],
+        "hi": [
+          "निर्वासन"
+        ],
+        "it": [
+          "deportazione"
+        ],
+        "ja": [
+          "強制送還"
+        ],
+        "ru": [
+          "депортация"
+        ],
+        "zh": [
+          "驱逐出境"
+        ]
+      },
+      "evidence": "CNN / 2026-05-27"
+    },
+    {
+      "term": "National Guard",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الحرس الوطني"
+        ],
+        "de": [
+          "Nationalgarde"
+        ],
+        "en": [
+          "National Guard"
+        ],
+        "es": [
+          "Guardia Nacional"
+        ],
+        "fr": [
+          "Garde nationale"
+        ],
+        "hi": [
+          "राष्ट्रीय रक्षक"
+        ],
+        "it": [
+          "Guardia Nazionale"
+        ],
+        "ja": [
+          "国家警備隊"
+        ],
+        "ru": [
+          "Национальная гвардия"
+        ],
+        "zh": [
+          "国民警卫队"
+        ]
+      },
+      "evidence": "The National / 2026-06-09"
+    },
+    {
+      "term": "Sheinbaum",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "شينباوم"
+        ],
+        "de": [],
+        "en": [
+          "Sheinbaum"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "शीनबाम"
+        ],
+        "it": [],
+        "ja": [
+          "シェインバウム"
+        ],
+        "ru": [
+          "Шейнбаум"
+        ],
+        "zh": [
+          "辛鲍姆"
+        ]
+      },
+      "evidence": "Associated Press / 2026-04-15"
+    },
+    {
+      "term": "screwworm",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "دودة اللحم"
+        ],
+        "de": [
+          "Schraubenwurm"
+        ],
+        "en": [
+          "screwworm"
+        ],
+        "es": [
+          "gusano barrenador"
+        ],
+        "fr": [
+          "ver à vis"
+        ],
+        "hi": [
+          "स्क्रूवर्म"
+        ],
+        "it": [
+          "verme della carne"
+        ],
+        "ja": [
+          "スクリューワーム"
+        ],
+        "ru": [
+          "личинка мясной мухи"
+        ],
+        "zh": [
+          "螺旋蛆"
+        ]
+      },
+      "evidence": "Reuters / 2026-06-06"
+    },
+    {
+      "term": "border",
+      "type": "concept",
+      "aliases": {
+        "en": [
+          "border"
+        ],
+        "de": [
+          "Grenze"
+        ],
+        "es": [
+          "frontera"
+        ],
+        "fr": [
+          "frontiere"
+        ],
+        "it": [
+          "frontiera"
+        ],
+        "ar": [
+          "إغلاق الحدود"
+        ],
+        "ru": [
+          "закрытие границы"
+        ],
+        "zh": [
+          "边境关闭"
+        ],
+        "ja": [
+          "国境閉鎖"
+        ],
+        "hi": [
+          "सीमा बंदी"
+        ]
+      },
+      "evidence": "Le Figaro / 2026-02-23"
+    },
+    {
+      "term": "border wall",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "جدار الحدود"
+        ],
+        "de": [
+          "Grenzmauer"
+        ],
+        "en": [
+          "border wall"
+        ],
+        "es": [
+          "muro fronterizo"
+        ],
+        "fr": [
+          "mur frontalier"
+        ],
+        "hi": [
+          "सीमा दीवार"
+        ],
+        "it": [
+          "muro di confine"
+        ],
+        "ja": [
+          "国境の壁"
+        ],
+        "ru": [
+          "пограничная стена"
+        ],
+        "zh": [
+          "边境墙"
+        ]
+      },
+      "evidence": "Associated Press / 2026-05-17"
+    },
+    {
+      "term": "tunnel",
+      "type": "concept",
+      "aliases": {
+        "en": [
+          "tunnel"
+        ],
+        "de": [
+          "Tunnel"
+        ],
+        "es": [
+          "tunel"
+        ],
+        "fr": [
+          "tunnel"
+        ],
+        "it": [
+          "tunnel"
+        ],
+        "ar": [
+          "نفق سري"
+        ],
+        "ru": [
+          "секретный туннель"
+        ],
+        "zh": [
+          "秘密隧道"
+        ],
+        "ja": [
+          "秘密トンネル"
+        ],
+        "hi": [
+          "गुप्त सुरंग"
+        ]
+      },
+      "evidence": "France 24 (EN) / 2026-06-03"
+    }
+  ]
+}
