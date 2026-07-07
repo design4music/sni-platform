@@ -1133,7 +1133,7 @@
   subcategory: energy
   asset_type: port
   commodities: [oil]
-  centroid_ids: [MIDEAST-GULF]
+  centroid_ids: [MIDEAST-IRAN]
   criticality: 4
   ranking_source: "EIA Iran country analysis"
   rank_note: "Loads the large majority of Iran's crude oil exports."
@@ -1153,7 +1153,7 @@
   subcategory: energy
   asset_type: port
   commodities: [oil]
-  centroid_ids: [MIDEAST-GULF]
+  centroid_ids: [MIDEAST-IRAQ]
   criticality: 4
   ranking_source: "EIA Iraq country analysis"
   rank_note: "Loads the large majority of Iraq's crude oil exports."
