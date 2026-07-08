@@ -1837,3 +1837,50 @@ decisions:
       - Kharg/Basra asset centroids fixed in the registry
         (MIDEAST-IRAN / MIDEAST-IRAQ); phantom AMERICAS-CENTRAL-AMERICA
         replaced with AMERICAS-CENTRAL on remaining registry rows.
+
+
+  - id: D-093
+    date: 2026-07-08
+    type: architectural
+    status: accepted
+    title: Daemon Slot FN REFRESH -- FN attribution moves from manual-only into the pipeline
+    rationale:
+      - Discovered while planning the fn-map refresh cron. FN attribution
+        (event_friction_nodes, title_narratives) was populated ONLY by the
+        manual bootstrap_friction_node.py CLI; nothing in the daemon touched
+        it. Consequence on production -- newly-ingested titles and newly-
+        promoted events were never attributed to theaters automatically; the
+        FN pages and the fn-map asset layer froze at the last hand-run
+        bootstrap. Keeping attribution current as news flows was simply not
+        happening.
+      - A naive daemon slot (calling the existing full-rebuild bootstrap for
+        every active FN) was measured at ~25 min (1373s attribution over 152
+        FNs, full DELETE plus 180-day re-INSERT with per-FN ILIKE alias
+        matching). Too slow, would risk the slot timeout on Render (which
+        runs ~2x slower).
+    consequences:
+      - New daemon slot fn_refresh (6h, mechanical, no LLM) in
+        pipeline/runner/pipeline_daemon.py, placed after Slot 4 ENRICHMENT
+        so it sees freshly-promoted events. Calls refresh_all_active(conn)
+        then rebuild_evidence(conn). 30-min timeout.
+      - refresh_all_active defaults to INCREMENTAL -- additive INSERT with
+        ON CONFLICT DO NOTHING over a 7-day window, no DELETE, matching the
+        pipeline never-wipe philosophy (D-022). Measured 23s vs 1373s for the
+        full rebuild. Atomics still run before theaters (theater catch-all
+        excludes atomic-claimed titles).
+      - Full recompute (incremental False, window 180 days, deletes and
+        rebuilds every FN) stays the manual CLI reconciliation path -- for
+        when centroids/anchors/publishers change, or to catch old-dated
+        events promoted late (the incremental window filters on event.date,
+        so an event older than 7 days that is newly promoted is missed until
+        a full re-bootstrap). Accepted, documented tradeoff.
+      - Refactors, both CLIs unchanged. bootstrap_friction_node exposes
+        refresh_all_active(conn) plus FNConfigError (skippable in batch,
+        fatal in CLI). compute_fn_asset_evidence exposes rebuild_evidence(conn)
+        and guards its temp tables with DROP TABLE IF EXISTS for the daemon
+        long-lived pooled connections.
+      - Deploy note -- this is daemon (worker) code; the Render WORKER must
+        be redeployed to pick it up (separate from the frontend deploy).
+        ~85 atomic FNs from the old global seed still have no fn_anchor
+        bundle and are skipped for event attribution (pre-existing data debt,
+        not introduced here; a future curation pass adds bundles).
