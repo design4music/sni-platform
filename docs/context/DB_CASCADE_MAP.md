@@ -39,6 +39,19 @@ as of 2026-07-08 — the four that can destroy the platform:
 Smaller but still real: `strategic_narratives` (->88k), `narratives_v2`
 (->84k), `events_v3` (->534k), `strategic_assets` (->31), `epics` (->0).
 
+**Row count vs. real footprint — read this before trusting the totals.**
+`events_v3` holds ~2.17M rows but only ~200k are live (~162k promoted +
+~39k unpromoted); the other **~91% (1.97M) are `merged_into` tombstones**
+— soft-deleted duplicates from the 30-min sibling-reconciliation pass
+(D-057) that carry zero child rows. So the `--audit` cascade totals are
+correct as "rows that would be deleted" but overstate real content ~11x
+for anything chaining through `events_v3` (centroids_v3, ctm). The
+meaningful live footprint: ~348k titles, ~200k events, ~394k event-title
+links. Separate open item: nothing purges the tombstones, so events_v3
+grows unboundedly (~2M in 6 months, most of the 650MB dump). A periodic
+tombstone purge is a real maintenance opportunity — but it is itself a
+multi-million-row DELETE and falls under the rule below.
+
 ## The rule (for humans and LLMs)
 
 1. **Inserts default to `INSERT ... ON CONFLICT DO NOTHING`** (or
