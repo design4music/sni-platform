@@ -61,6 +61,10 @@ def load_aliases(cur):
 
 
 def make_tmp_aliases(cur, pairs):
+    # DROP IF EXISTS guards the daemon's long-lived pooled connection: a
+    # prior aborted run could leave the temp table around and CREATE would
+    # then fail with "already exists".
+    cur.execute("DROP TABLE IF EXISTS tmp_asset_aliases")
     cur.execute("CREATE TEMP TABLE tmp_asset_aliases (asset_id text, alias text)")
     cur.executemany(
         "INSERT INTO tmp_asset_aliases VALUES (%s, %s)",
@@ -105,6 +109,7 @@ def rebuild(cur, pairs):
     # ILIKE scan; done standalone the planner handles it in minutes. Folding
     # the theater join into the same statement made the planner grind for
     # 20+ minutes on the same data (observed 2026-07-07).
+    cur.execute("DROP TABLE IF EXISTS tmp_hits")
     cur.execute(
         f"""
         CREATE TEMP TABLE tmp_hits AS
@@ -180,6 +185,17 @@ def rebuild(cur, pairs):
     print("-- top links:")
     for fn_id, asset_id, n30, n90 in cur.fetchall():
         print(f"   {n90:5d} (30d: {n30:4d})  {fn_id:28s} -> {asset_id}")
+    return n
+
+
+def rebuild_evidence(conn):
+    """Daemon entry point: rebuild fn_asset_evidence on an existing
+    connection and commit. Returns the link count."""
+    with conn.cursor() as cur:
+        pairs = load_aliases(cur)
+        n = rebuild(cur, pairs)
+    conn.commit()
+    return n
 
 
 def main():

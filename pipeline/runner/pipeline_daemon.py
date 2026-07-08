@@ -6,6 +6,7 @@ Scheduling slots (phases run sequentially within each slot):
 - Slot 2 CLASSIFICATION (15m): Phase 3.1 (labels) + 3.2 (backfill) + 3.3 (tracks)
 - Slot 3 CLUSTERING  (30m):  Phase 4 event clustering + 3.2 sibling reconciliation + 4.5a promote + 4.2* materialize + 4.2f narrative matching
 - Slot 4 ENRICHMENT  (6h):   Phase 4.5a + 4.5b + 4.2g (LLM narrative discovery) + 4.2h (LLM review)
+- Slot FN REFRESH    (6h):   FN attribution (incremental, additive) + fn_asset_evidence recompute (mechanical, no LLM)
 - Daily purge: Remove rejected titles + reset api_error_count
 
 Features:
@@ -65,6 +66,7 @@ class PipelineDaemon:
         self.enrichment_interval = (
             10800  # 3 hours - Phase 4.5a + 4.5b (smaller batches, more frequent)
         )
+        self.fn_refresh_interval = 21600  # 6 hours - FN re-attribution + asset evidence
         self.social_interval = 3600  # 1 hour - Slot 5: Social Posting (testing)
         self.purge_interval = 86400  # 24 hours - daily cleanup
 
@@ -75,6 +77,7 @@ class PipelineDaemon:
             "classification": 0,
             "clustering": 0,
             "enrichment": 0,
+            "fn_refresh": 0,
             "social": 0,
             "purge": 0,
         }
@@ -96,6 +99,7 @@ class PipelineDaemon:
         self.timeout_classification = 1200  # 20 min for 3.1 + 3.2 + 3.3
         self.timeout_clustering = 900  # 15 min for Phase 4 + 4.1
         self.timeout_enrichment = 10800  # 180 min for 4.5a + 4.5b
+        self.timeout_fn_refresh = 1800  # 30 min for FN re-attribution + evidence
         self.timeout_social = 300  # 5 min for social posting
         self.timeout_purge = 300  # 5 min for daily cleanup
 
@@ -893,6 +897,38 @@ class PipelineDaemon:
             % (ok, unchanged, fail, tier_counts[1], tier_counts[2], tier_counts[3])
         )
 
+    def run_fn_refresh(self):
+        """FN attribution refresh + asset-evidence recompute (Slot FN, 6h).
+
+        Mechanical, no LLM. Re-attributes every active friction node
+        (event_friction_nodes + title_narratives) so newly-promoted events
+        and freshly-ingested titles appear under their theaters, then
+        rebuilds fn_asset_evidence (news-derived asset pressure links).
+        Without this the FN/map layer only reflects the last manual
+        bootstrap — this is what keeps it current as news flows.
+        """
+        from scripts.bootstrap_friction_node import refresh_all_active
+        from scripts.compute_fn_asset_evidence import rebuild_evidence
+
+        conn = self.get_connection()
+        try:
+            # Incremental additive attribution over a short window (the
+            # function's default) -- cheap. Full recompute stays manual.
+            summary = refresh_all_active(conn)
+            print(
+                "FN refresh: %d FNs, %d event links, %d title links (%d skipped)"
+                % (
+                    summary["fns"],
+                    summary["events"],
+                    summary["titles"],
+                    summary["skipped_events"],
+                )
+            )
+            n_links = rebuild_evidence(conn)
+            print("fn_asset_evidence: %d links" % n_links)
+        finally:
+            self.return_connection(conn)
+
     def run_materialize_signals(self):
         """Materialize top signals per centroid for current unfrozen months."""
         from pipeline.phase_4.materialize_centroid_signals import materialize
@@ -1506,6 +1542,29 @@ class PipelineDaemon:
             )
             print("\nSlot 4 ENRICHMENT: next in %ds" % remaining)
 
+        # --- SLOT FN: FRICTION-NODE REFRESH (attribution + asset evidence) ---
+        if self.should_run_slot("fn_refresh"):
+            slot_t0 = time.time()
+            await self.run_with_timeout(
+                "Slot FN: FN Attribution Refresh",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Slot FN: FN Attribution Refresh",
+                    self.run_fn_refresh,
+                ),
+                self.timeout_fn_refresh,
+            )
+            self.last_run["fn_refresh"] = time.time()
+            self._save_last_run(
+                "fn_refresh",
+                duration_ms=int((time.time() - slot_t0) * 1000),
+            )
+        else:
+            remaining = int(
+                self.fn_refresh_interval - (time.time() - self.last_run["fn_refresh"])
+            )
+            print("\nSlot FN REFRESH: next in %ds" % remaining)
+
         # --- SLOT 5: SOCIAL POSTING ---
         if self.should_run_slot("social") and self.config.social_posting_enabled:
             slot_t0 = time.time()
@@ -1582,6 +1641,10 @@ class PipelineDaemon:
         print(
             "  Slot 4 ENRICHMENT:     %dh  (Phase 4.5a + 4.5b)"
             % (self.enrichment_interval // 3600)
+        )
+        print(
+            "  Slot FN REFRESH:       %dh  (FN attribution + asset evidence)"
+            % (self.fn_refresh_interval // 3600)
         )
         if self.config.social_posting_enabled:
             print(

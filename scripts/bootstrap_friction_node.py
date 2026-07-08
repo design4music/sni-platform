@@ -1,11 +1,15 @@
 """Friction-node attribution bootstrap.
 
 Populates event_friction_nodes + title_narratives for a single friction
-node, reading all per-FN configuration from the database. NOT pipeline-
-integrated — this is curation infrastructure, run interactively when:
-  - a new friction node is added
-  - a friction node's narratives or publishers change materially
-  - keyword tuning lands on a related narrative
+node, reading all per-FN configuration from the database.
+
+Two entry points:
+  - CLI (main): one FN, interactive. Run when a new FN is added, its
+    narratives/publishers change, or keyword tuning lands.
+  - refresh_all_active(conn): every active FN, for the daemon's fn_refresh
+    slot -- this is what keeps theater attribution current as news flows.
+    Atomics are re-attributed before theaters (theater title attribution
+    excludes titles already claimed by an atomic FN).
 
 Usage:
   python scripts/bootstrap_friction_node.py --fn-id iran_nuclear_program
@@ -40,6 +44,11 @@ from psycopg2.extras import RealDictCursor
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import config
+
+
+class FNConfigError(Exception):
+    """A friction node is missing config needed to attribute (no centroids
+    or no fn_anchor bundle). Fatal for the CLI, skippable in batch."""
 
 
 def parse_args() -> argparse.Namespace:
@@ -81,17 +90,22 @@ def fetch_narratives(cur, fn_id: str) -> list[dict]:
     return cur.fetchall()
 
 
-def link_events(cur, fn: dict, window_days: int) -> int:
+def link_events(cur, fn: dict, window_days: int, incremental: bool = False) -> int:
     """Apply the FN's event gate to populate event_friction_nodes.
 
     Uses the same shape as title attribution:
       - centroid scope: ANY member title of the event must overlap fn.centroid_ids
       - primary target scope: at least one title must contain primary_target centroid (if set)
       - topic gate: event canonical title matches any fn_anchor bundle alias
+
+    incremental=True (daemon path): skip the DELETE and only INSERT (ON
+    CONFLICT DO NOTHING) over a short recent window. Additive and cheap --
+    never wipes existing attribution. Full recompute (incremental=False)
+    is the CLI path.
     """
     fn_centroid_ids = fn["centroid_ids"] or []
     if not fn_centroid_ids:
-        raise SystemExit(
+        raise FNConfigError(
             f"FN {fn['id']} has no centroid_ids configured; cannot scope event attribution"
         )
 
@@ -113,12 +127,13 @@ def link_events(cur, fn: dict, window_days: int) -> int:
                     seen.add(a)
                     aliases.append(a)
     if not aliases:
-        raise SystemExit(f"FN {fn['id']} has no fn_anchor bundle in taxonomy_v3")
+        raise FNConfigError(f"FN {fn['id']} has no fn_anchor bundle in taxonomy_v3")
 
-    cur.execute(
-        "DELETE FROM event_friction_nodes WHERE fn_id = %s",
-        (fn["id"],),
-    )
+    if not incremental:
+        cur.execute(
+            "DELETE FROM event_friction_nodes WHERE fn_id = %s",
+            (fn["id"],),
+        )
 
     # Build primary_target filter: if set, require at least 50% of event titles
     # contain the primary_target centroid (semantic check that event is really about that region).
@@ -176,7 +191,7 @@ def link_events(cur, fn: dict, window_days: int) -> int:
 
 
 def link_titles(
-    cur, fn: dict, narratives: list[dict], window_days: int
+    cur, fn: dict, narratives: list[dict], window_days: int, incremental: bool = False
 ) -> dict[str, int]:
     """Apply per-narrative title attribution rules.
 
@@ -215,10 +230,11 @@ def link_titles(
                     seen.add(a)
                     aliases.append(a)
 
-    cur.execute(
-        "DELETE FROM title_narratives WHERE narrative_id = ANY(%s)",
-        (narrative_ids,),
-    )
+    if not incremental:
+        cur.execute(
+            "DELETE FROM title_narratives WHERE narrative_id = ANY(%s)",
+            (narrative_ids,),
+        )
 
     is_theater = fn.get("fn_type") == "theater"
     centroids = fn["centroid_ids"] or []
@@ -262,6 +278,51 @@ def link_titles(
     return counts
 
 
+def refresh_all_active(conn, window_days: int = 7, incremental: bool = True) -> dict:
+    """Re-attribute EVERY active friction node in one transaction.
+
+    Called by the daemon's fn_refresh slot. Atomics run first so theater
+    title attribution (which excludes titles already claimed by an atomic)
+    sees the fresh atomic sets. FNs missing config (no bundle/centroids)
+    are skipped, not fatal.
+
+    Default is INCREMENTAL over a short window (additive, ON CONFLICT DO
+    NOTHING, no DELETE) -- the daemon path, cheap enough to run every few
+    hours. A full recompute (incremental=False, window_days=180) is the
+    manual/CLI reconciliation for when centroids/anchors/publishers change
+    or to catch old-dated events that were promoted late; it deletes and
+    rebuilds every FN's attribution and is slow (~25 min over 150 FNs), so
+    it is NOT the daemon default.
+    """
+    n_fns = n_events = n_titles = n_skipped = 0
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        # (fn_type='theater') sorts False(atomic) before True(theater).
+        cur.execute(
+            """SELECT id, name_en, fn_type, centroid_ids, primary_target
+                 FROM friction_nodes
+                WHERE is_active = true
+                ORDER BY (fn_type = 'theater'), id"""
+        )
+        fns = cur.fetchall()
+        for fn in fns:
+            narratives = fetch_narratives(cur, fn["id"])
+            if fn.get("fn_type") != "theater":
+                try:
+                    n_events += link_events(cur, fn, window_days, incremental)
+                except FNConfigError:
+                    n_skipped += 1  # no bundle/centroids -> no event attribution
+            counts = link_titles(cur, fn, narratives, window_days, incremental)
+            n_titles += sum(counts.values())
+            n_fns += 1
+    conn.commit()
+    return {
+        "fns": n_fns,
+        "events": n_events,
+        "titles": n_titles,
+        "skipped_events": n_skipped,
+    }
+
+
 def main() -> None:
     args = parse_args()
     conn = psycopg2.connect(**config.db_connect_kwargs(), cursor_factory=RealDictCursor)
@@ -284,8 +345,11 @@ def main() -> None:
                 # narratives + bundle.
                 print("\nfn_type=theater — skipping event_friction_nodes step.")
             else:
-                n_events = link_events(cur, fn, args.window_days)
-                print(f"\nevent_friction_nodes inserted: {n_events}")
+                try:
+                    n_events = link_events(cur, fn, args.window_days)
+                    print(f"\nevent_friction_nodes inserted: {n_events}")
+                except FNConfigError as e:
+                    raise SystemExit(str(e))
 
             counts = link_titles(cur, fn, narratives, args.window_days)
             print("title_narratives inserted:")
