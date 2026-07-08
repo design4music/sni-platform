@@ -127,6 +127,16 @@ export function joinList(items: string[], locale: Locale = 'en'): string {
 // JSON-LD structured data builders
 // ──────────────────────────────────────────────────────────────
 
+const AUTHOR_SCHEMA = {
+  '@type': 'Person',
+  name: 'Maksim Micheliov',
+  url: `${SITE_URL}/about`,
+  sameAs: [
+    'https://www.linkedin.com/in/mmdesign/',
+    `${SITE_URL}/about`,
+  ],
+};
+
 const PUBLISHER_SCHEMA = {
   '@type': 'Organization',
   name: 'WorldBrief',
@@ -174,6 +184,7 @@ export function newsArticleJsonLd(args: {
       '@id': url,
     },
     url,
+    author: AUTHOR_SCHEMA,
     publisher: PUBLISHER_SCHEMA,
     ...(args.articleSection ? { articleSection: args.articleSection } : {}),
     ...(args.keywords && args.keywords.length ? { keywords: args.keywords.join(', ') } : {}),
@@ -199,7 +210,15 @@ export function articleJsonLd(args: {
     inLanguage: args.locale === 'de' ? 'de' : 'en',
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     url,
+    author: AUTHOR_SCHEMA,
     publisher: PUBLISHER_SCHEMA,
+  };
+}
+
+export function personJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    ...AUTHOR_SCHEMA,
   };
 }
 

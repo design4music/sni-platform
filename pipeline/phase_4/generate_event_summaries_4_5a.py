@@ -727,6 +727,7 @@ async def generate_event_data(
         backbone_text = format_backbone_signals(backbone_signals)
         user_prompt = EVENT_SUMMARY_USER_PROMPT.format(
             num_titles=len(titles_to_use),
+            context="",
             titles_text=titles_text + outlier_note + perspective_note,
             backbone_signals=backbone_text,
         )

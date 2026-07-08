@@ -310,6 +310,11 @@ export default async function EventDetailPage({ params }: Props) {
               <p key={i}>{para.trim()}</p>
             ))}
           </div>
+          <p className="text-xs text-dashboard-text-muted mt-4 pt-4 border-t border-dashboard-border">
+            by WorldBrief &amp;{' '}
+            <Link href="/about" className="text-blue-400 hover:underline">Maksim Micheliov</Link>
+            {' | AI-generated summary'}
+          </p>
         </div>
       )}
 

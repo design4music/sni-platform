@@ -120,14 +120,17 @@ def load_promoted_events(conn, ctm_id: str) -> list:
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT e.id, e.source_batch_count
+            SELECT e.id, e.source_batch_count, e.date::text
               FROM events_v3 e
              WHERE e.ctm_id = %s AND e.is_promoted = true
              ORDER BY e.date, e.source_batch_count DESC
             """,
             (ctm_id,),
         )
-        events = [{"id": str(r[0]), "source_count": r[1]} for r in cur.fetchall()]
+        events = [
+            {"id": str(r[0]), "source_count": r[1], "date": r[2]}
+            for r in cur.fetchall()
+        ]
 
         for ev in events:
             cur.execute(
@@ -309,8 +312,10 @@ async def llm_title_and_summary(ev: dict) -> dict:
         system_prompt = EVENT_SUMMARY_PROMPT_MAXI
         max_tokens = 1400
 
+    context = "%s | %s" % (ev.get("centroid_id", ""), ev.get("date", ""))
     user_prompt = EVENT_SUMMARY_USER_PROMPT.format(
         num_titles=num,
+        context=context,
         titles_text=_format_titles(sample),
         backbone_signals=_format_backbone(ev["backbone"]),
     )
@@ -452,6 +457,11 @@ async def describe_promoted_events(ctm_id: str) -> dict:
     """
     conn = get_conn()
     try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT centroid_id FROM ctm WHERE id = %s", (ctm_id,))
+            row = cur.fetchone()
+            centroid_id = row[0] if row else ""
+
         events = load_promoted_events(conn, ctm_id)
         # Filter to events that need LLM work
         events = [
@@ -471,6 +481,8 @@ async def describe_promoted_events(ctm_id: str) -> dict:
         events = [
             ev for ev in load_promoted_events(conn, ctm_id) if ev["id"] in needs_prose
         ]
+        for ev in events:
+            ev["centroid_id"] = centroid_id
 
         if not events:
             return {"needs_prose": 0, "written": 0}

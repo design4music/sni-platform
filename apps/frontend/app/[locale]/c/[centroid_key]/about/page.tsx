@@ -104,14 +104,21 @@ export default async function CentroidAboutPage({ params }: AboutPageProps) {
             current pressures, etc). When profile_json absent, just shows
             the mini-map alone. */}
         {centroid.profile_json ? (
-          <GeoBriefSection
-            profile={centroid.profile_json}
-            updatedAt={centroid.updated_at}
-            centroidLabel={label}
-            miniMap={centroid.iso_codes && centroid.iso_codes.length > 0
-              ? <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
-              : undefined}
-          />
+          <>
+            <GeoBriefSection
+              profile={centroid.profile_json}
+              updatedAt={centroid.updated_at}
+              centroidLabel={label}
+              miniMap={centroid.iso_codes && centroid.iso_codes.length > 0
+                ? <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />
+                : undefined}
+            />
+            <p className="text-xs text-dashboard-text-muted -mt-4 pt-4 border-t border-dashboard-border">
+              by WorldBrief &amp;{' '}
+              <Link href="/about" className="text-blue-400 hover:underline">Maksim Micheliov</Link>
+              {' | AI-generated summary'}
+            </p>
+          </>
         ) : (
           centroid.iso_codes && centroid.iso_codes.length > 0 && (
             <CentroidMiniMapWrapper isoCodes={centroid.iso_codes} />

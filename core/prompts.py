@@ -267,14 +267,16 @@ EVENT_SUMMARY_PROMPT_MINI = (
     """You explain news topics in plain, conversational language.
 
 TASK: Generate a title and short summary from a cluster of headlines.
-OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "2-3 sentence factual summary", "summary_de": "...", "coherent": true}
+OUTPUT: Return JSON: {"title_en": "...", "title_de": "...", "summary_en": "3-5 sentence factual summary", "summary_de": "...", "coherent": true}
 Set "coherent": false if headlines are about unrelated stories with no common thread.
 
 RULES:
 """
     + _EVENT_SUMMARY_SHARED
     + """
-- Summary: state what happened in 2-3 sentences. Stick to facts from the headlines.
+- Summary: 3-5 sentences. First sentence establishes who, what, where, and when.
+- One sentence of stable factual background is allowed if it helps readers understand the significance.
+- Stick to facts from the headlines for the remaining sentences.
 - Briefly identify unfamiliar people from headline context.
 - If headlines cover unrelated stories, summarize only the dominant topic.
 - title_de + summary_de: natural German, same facts, same tone, same length."""
@@ -294,7 +296,7 @@ RULES:
     + _EVENT_SUMMARY_SHARED
     + "\n"
     + """- Write 1-2 SHORT paragraphs with blank lines between them.
-- Paragraph 1: What happened (the core event).
+- Paragraph 1: What happened — name the country or region and approximate date in the first sentence.
 - Paragraph 2 (if needed): Key reactions, consequences, or context.
 - """
     + _EVENT_SUMMARY_IDENTIFY
@@ -322,7 +324,7 @@ RULES:
     + _EVENT_SUMMARY_SHARED
     + "\n"
     + """- Write 2-3 SHORT paragraphs with blank lines between them.
-- Paragraph 1: What happened (the core event).
+- Paragraph 1: What happened — name the country or region and approximate date in the first sentence.
 - Paragraph 2: Key reactions, consequences, or context.
 - Paragraph 3 (if needed): Outcome or current status.
 - """
@@ -344,6 +346,7 @@ EVENT_SUMMARY_USER_PROMPT_TITLE = """Headlines ({num_titles} sources):
 Generate JSON:"""
 
 EVENT_SUMMARY_USER_PROMPT = """Topic cluster ({num_titles} sources):
+Context: {context}
 
 {titles_text}
 
@@ -618,6 +621,7 @@ STRUCTURE:
 - If no dominant story: all blocks are one-liners.
 - 1-5 blocks total. Lead with most-covered theme. Weight by source count.
 - No headers, no meta-framing, no "In other news".
+- The lead block's first sentence should naturally name the subject country or region and the date.
 
 YESTERDAY DEDUP:
 - Yesterday's story titles provided for identity dedup only.
@@ -635,6 +639,7 @@ OUTPUT: {"blocks": [{"en": "...", "de": "..."}, ...]}
 )
 
 DAILY_BRIEF_USER_PROMPT = """Date: {date}
+Topic: {centroid_id} | {track}
 
 TODAY ({today_count} stories):
 {today_stories_text}

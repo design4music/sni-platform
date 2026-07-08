@@ -152,11 +152,15 @@ async def generate_brief(
     date: object,
     today_events: list,
     yesterday_titles: list,
+    centroid_id: str = "",
+    track: str = "",
 ) -> dict:
     today_text = format_today_stories(today_events)
     yesterday_block = format_yesterday_block(yesterday_titles)
     user_prompt = DAILY_BRIEF_USER_PROMPT.format(
         date=date.isoformat(),
+        centroid_id=centroid_id,
+        track=track,
         today_count=len(today_events),
         today_stories_text=today_text,
         yesterday_block=yesterday_block,
@@ -280,7 +284,13 @@ async def process_ctm(ctm_id: str, force_refresh: bool = False) -> dict:
                     conn, meta["centroid_id"], meta["track"], date - timedelta(days=1)
                 )
                 try:
-                    result = await generate_brief(date, today_evs, yday)
+                    result = await generate_brief(
+                        date,
+                        today_evs,
+                        yday,
+                        centroid_id=meta["centroid_id"],
+                        track=meta["track"],
+                    )
                 except Exception as e:
                     print("  brief fail %s: %s" % (date, e))
                     return
