@@ -49,6 +49,20 @@ page: current state, active roadmap, open tickets, recent commits.
 - `SESSION_START.md` is a living pointer; keep it current after big sessions.
 - No change to project intent or model may occur silently.
 
+## Database safety (non-negotiable)
+
+- **Inserts default to `ON CONFLICT DO NOTHING`** (or `DO UPDATE` for a
+  real upsert). Never destructive, always re-runnable.
+- **No `DELETE` / `TRUNCATE` / `DROP` on a data table without explicit
+  human confirmation** — stating rows affected AND the cascade total.
+  Prefer `is_active = false` (soft delete) over hard delete.
+- **Apply every `.sql` migration via `scripts/safe_db_migrate.py`**, never
+  raw `psql`. It backs up, then prints the recursive `ON DELETE CASCADE`
+  blast radius and refuses without `--yes-i-checked`.
+- Full picture + `--audit` command in [`DB_CASCADE_MAP.md`](DB_CASCADE_MAP.md);
+  the incident that motivated this is
+  [`DB_SAFETY_INCIDENT_20260707.md`](DB_SAFETY_INCIDENT_20260707.md).
+
 ## Change discipline
 
 - New requirements or refactors that affect intent or structure must

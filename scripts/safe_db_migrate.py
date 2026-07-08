@@ -58,32 +58,75 @@ def scan_file(sql_text):
     return findings
 
 
-def check_delete_blast_radius(cur, table):
-    """For a table targeted by DELETE, find ON DELETE CASCADE children and
-    count how many child rows currently exist (worst case if all parent
-    rows matched)."""
+def _direct_cascade_children(cur, table):
+    """Tables that ON DELETE CASCADE from `table` (one level down).
+    Returns [(child_table, child_col), ...]."""
     cur.execute(
         """
-        SELECT tc.table_name, kcu.column_name, rc.delete_rule
-        FROM information_schema.table_constraints tc
-        JOIN information_schema.key_column_usage kcu
-          ON kcu.constraint_name = tc.constraint_name
+        SELECT con.conrelid::regclass::text AS child_table, a.attname AS child_col
+        FROM pg_constraint con
         JOIN information_schema.referential_constraints rc
-          ON rc.constraint_name = tc.constraint_name
-        WHERE rc.unique_constraint_name IN (
-            SELECT constraint_name FROM information_schema.table_constraints
-            WHERE table_name = %s AND constraint_type = 'PRIMARY KEY'
-        )
+          ON rc.constraint_name = con.conname
+        JOIN pg_attribute a
+          ON a.attrelid = con.conrelid AND a.attnum = ANY(con.conkey)
+        WHERE con.contype = 'f'
+          AND rc.delete_rule = 'CASCADE'
+          AND con.confrelid = %s::regclass
         """,
         (table,),
     )
-    children = cur.fetchall()
+    return cur.fetchall()
+
+
+def check_delete_blast_radius(cur, table, _visited=None, _depth=1):
+    """RECURSIVE cascade blast radius for a DELETE on `table`.
+
+    Walks the full ON DELETE CASCADE tree — not just direct children — so a
+    DELETE on `centroids_v3` correctly surfaces `events_v3` three levels down
+    (centroids_v3 -> ctm -> events_v3 -> ...). Each row is
+    (depth, child_table, child_col, current_row_count). Cycle-safe.
+    """
+    if _visited is None:
+        _visited = set()
     report = []
-    for child_table, fk_col, delete_rule in children:
-        cur.execute(f"SELECT count(*) FROM {child_table}")
+    for child_table, fk_col in _direct_cascade_children(cur, table):
+        if child_table in _visited:
+            continue
+        _visited.add(child_table)
+        cur.execute(
+            f"SELECT count(*) FROM {child_table}"
+        )  # noqa: S608 (identifier from catalog)
         n = cur.fetchone()[0]
-        report.append((child_table, fk_col, delete_rule, n))
+        report.append((_depth, child_table, fk_col, n))
+        report.extend(check_delete_blast_radius(cur, child_table, _visited, _depth + 1))
     return report
+
+
+def audit_all_cascades(cur):
+    """Print the full cascade forest for the DB: every table that is a
+    CASCADE parent, and its complete descendant tree with row counts.
+    Read-only. `python safe_db_migrate.py --audit`."""
+    cur.execute(
+        """
+        SELECT DISTINCT con.confrelid::regclass::text
+        FROM pg_constraint con
+        JOIN information_schema.referential_constraints rc
+          ON rc.constraint_name = con.conname
+        WHERE con.contype = 'f' AND rc.delete_rule = 'CASCADE'
+        ORDER BY 1
+        """
+    )
+    parents = [r[0] for r in cur.fetchall()]
+    print(f"== ON DELETE CASCADE audit: {len(parents)} parent tables ==\n")
+    for parent in parents:
+        tree = check_delete_blast_radius(cur, parent)
+        total = sum(n for _, _, _, n in tree)
+        cur.execute(f"SELECT count(*) FROM {parent}")  # noqa: S608
+        own = cur.fetchone()[0]
+        print(f"DELETE FROM {parent} ({own} rows) cascades to {total:,} child rows:")
+        for depth, child, col, n in tree:
+            print(f"  {'  ' * depth}-> {child}.{col}: {n:,}")
+        print()
 
 
 def backup(target, host, port, name, user, password):
@@ -125,12 +168,32 @@ def backup(target, host, port, name, user, password):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("sql_file")
+    ap.add_argument("sql_file", nargs="?", help="omit with --audit")
     ap.add_argument("--target", default="local", choices=["local", "render"])
     ap.add_argument("--yes-i-checked", action="store_true")
+    ap.add_argument(
+        "--audit",
+        action="store_true",
+        help="print the DB's full ON DELETE CASCADE forest with row counts, then exit (read-only, no sql_file needed)",
+    )
     args = ap.parse_args()
 
     load_env()
+
+    if args.audit:
+        conn = connect(
+            os.environ["DB_HOST"],
+            os.environ["DB_PORT"],
+            os.environ["DB_NAME"],
+            os.environ["DB_USER"],
+            os.environ["DB_PASSWORD"],
+        )
+        audit_all_cascades(conn.cursor())
+        conn.close()
+        return
+
+    if not args.sql_file:
+        raise SystemExit("sql_file required (or use --audit)")
     path = Path(args.sql_file)
     if not path.exists():
         raise SystemExit(f"not found: {path}")
@@ -159,20 +222,17 @@ def main():
         seen_tables = set()
         for kind, table, snippet in findings:
             print(f"   [{kind}] {table}: {snippet[:100]}")
-            if kind == "DELETE" and table not in seen_tables:
+            if kind in ("DELETE", "TRUNCATE") and table not in seen_tables:
                 seen_tables.add(table)
                 report = check_delete_blast_radius(cur, table)
                 if report:
-                    print(f"      -- {table} has CASCADE children:")
-                    for child, col, rule, n in report:
-                        marker = (
-                            "!!! WILL CASCADE-DELETE"
-                            if rule == "CASCADE"
-                            else "(no cascade)"
-                        )
-                        print(
-                            f"         {child}.{col} ON DELETE {rule} -- {n} rows currently {marker}"
-                        )
+                    total = sum(n for _, _, _, n in report)
+                    print(
+                        f"      !!! {table} CASCADE-deletes {total:,} rows across "
+                        f"{len(report)} descendant table(s):"
+                    )
+                    for depth, child, col, n in report:
+                        print(f"         {'  ' * depth}-> {child}.{col}: {n:,} rows")
         print()
         if not args.yes_i_checked:
             print("Refusing to apply. Read the blast-radius report above.")
