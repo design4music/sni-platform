@@ -55,6 +55,65 @@ import type {
 const TTL = 12 * 3600;
 const SAMPLE_TITLES_PER_NARRATIVE = 6;
 
+// Theater coalition roll-up: a theater carries no fn_anchor bundle of its own
+// (spec: theaters never match). Its coalition cards source sample titles +
+// counts from the member atomics -- a title qualifies for coalition N iff its
+// publisher is in N.publishers AND it is attributed to a member-atomic
+// narrative of the same stance sign. Ranking mirrors the atomic sample-title
+// query (framing tier -> publisher diversity -> promoted -> source consensus
+// -> framing strength -> recency). total_count is the uncapped distinct-title
+// count for the coalition (the card's "N titles" figure).
+// Params: $1 framing_keywords[], $2 member_fn_ids[], $3 theater stance,
+//         $4 publishers[], $5 limit.
+const THEATER_ROLLUP_SQL = `
+  WITH src AS (
+    SELECT DISTINCT ON (t.id)
+      t.id AS title_id,
+      t.title_display,
+      t.publisher_name,
+      t.pubdate_utc::text AS pubdate_utc,
+      COALESCE(e.source_batch_count, 1) AS sbc,
+      CASE WHEN e.is_promoted = true THEN 1 ELSE 0 END AS promoted_int,
+      (SELECT COUNT(*) FROM unnest($1::text[]) kw
+        WHERE t.title_display ILIKE '%' || kw || '%') AS framing_strength
+    FROM title_narratives tn
+    JOIN narratives_v2 an ON an.id = tn.narrative_id
+    JOIN friction_nodes afn ON afn.id = an.fn_id
+    JOIN titles_v3 t ON t.id = tn.title_id
+    LEFT JOIN event_v3_titles et ON et.title_id = t.id
+    LEFT JOIN events_v3 e ON e.id = et.event_id AND e.merged_into IS NULL
+    WHERE afn.id = ANY($2::text[]) AND afn.fn_type = 'atomic'
+      AND an.stance IS NOT NULL AND sign(an.stance)::int = sign($3::int)
+      AND t.publisher_name = ANY($4::text[])
+    ORDER BY t.id,
+      CASE WHEN e.is_promoted = true THEN 0 ELSE 1 END,
+      COALESCE(e.source_batch_count, 0) DESC NULLS LAST
+  ),
+  publisher_ranked AS (
+    SELECT *,
+      ROW_NUMBER() OVER (
+        PARTITION BY publisher_name
+        ORDER BY promoted_int DESC, sbc DESC, framing_strength DESC, pubdate_utc DESC
+      ) AS pub_rn,
+      COUNT(*) OVER () AS total_count
+    FROM src
+  ),
+  ranked AS (
+    SELECT *,
+      ROW_NUMBER() OVER (
+        ORDER BY
+          CASE WHEN framing_strength > 0 THEN 0 ELSE 1 END,
+          CASE WHEN pub_rn <= 2 THEN 0 ELSE 1 END,
+          promoted_int DESC, sbc DESC, framing_strength DESC, pubdate_utc DESC
+      ) AS rn
+    FROM publisher_ranked
+  )
+  SELECT title_id AS id, title_display AS title, publisher_name,
+         pubdate_utc, total_count::int AS total_count
+  FROM ranked
+  WHERE rn <= $5
+  ORDER BY rn`;
+
 function locale2(locale?: string): 'en' | 'de' {
   return locale === 'de' ? 'de' : 'en';
 }
@@ -260,8 +319,58 @@ export async function getFrictionNodeView(
 
     const narrativeIds = narrativeRows.map((r) => r.narrative_id);
 
-    // Aggregate match counts per narrative (uncapped).
     const countByNarrative = new Map<string, number>();
+    const titlesByNarrative = new Map<string, SampleTitle[]>();
+
+    // Theater branch: roll sample titles + counts up from the member atomics
+    // (theaters carry no bundle of their own). See THEATER_ROLLUP_SQL.
+    if (fn.fn_type === 'theater') {
+      const memberIds = fn.member_fn_ids ?? [];
+      for (const n of narrativeRows) {
+        const publishers = n.publishers ?? [];
+        if (!memberIds.length || !publishers.length || n.stance == null) {
+          countByNarrative.set(n.narrative_id, 0);
+          continue;
+        }
+        const rows = await query<{
+          id: string;
+          title: string;
+          publisher_name: string | null;
+          pubdate_utc: string;
+          total_count: number;
+        }>(THEATER_ROLLUP_SQL, [
+          n.framing_keywords ?? [],
+          memberIds,
+          n.stance,
+          publishers,
+          SAMPLE_TITLES_PER_NARRATIVE,
+        ]);
+        countByNarrative.set(n.narrative_id, rows[0]?.total_count ?? 0);
+        titlesByNarrative.set(
+          n.narrative_id,
+          rows.map((r) => ({
+            id: r.id,
+            title: r.title,
+            publisher_name: r.publisher_name,
+            pubdate_utc: r.pubdate_utc,
+          })),
+        );
+      }
+      const event_count = 0; // theaters have no direct events
+      return {
+        fn,
+        narratives: narrativeRows.map((r) => ({
+          ...r,
+          publishers: r.publishers ?? [],
+          match_count: countByNarrative.get(r.narrative_id) ?? 0,
+          sample_titles: titlesByNarrative.get(r.narrative_id) ?? [],
+        })),
+        event_count,
+      };
+    }
+
+    // --- Atomic FN path -------------------------------------------------
+    // Aggregate match counts per narrative (uncapped).
     if (narrativeIds.length) {
       const countRows2 = await query<{ narrative_id: string; n: number }>(
         `SELECT narrative_id, COUNT(*)::int AS n
@@ -285,7 +394,6 @@ export async function getFrictionNodeView(
     //
     // Event-level deduplication picks one title per event so near-duplicate
     // headlines from the same clustered story don't dominate the top 6.
-    const titlesByNarrative = new Map<string, SampleTitle[]>();
     if (narrativeIds.length) {
       const titleRows = await query<{
         narrative_id: string;

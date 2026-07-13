@@ -51,6 +51,65 @@ class FNConfigError(Exception):
     or no fn_anchor bundle). Fatal for the CLI, skippable in batch."""
 
 
+# Alias match semantics (see out/fn_audit_EUROPE.md section 6 for why the
+# old substring ILIKE over-matched: EW hit 9.2% of random titles via "news").
+# Two independent paths -- aliases are pre-split by source language (see
+# flatten_aliases) because English needs boundary protection that other
+# languages don't have and can't safely use. German compounds words with no
+# separator ("Fluechtlinge" embedded in "Kriegsfluechtlinge" has no \m
+# transition to anchor on) -- a boundary regex silently stops matching real
+# German compounds even with correct spelling. Non-English aliases in this
+# system are either script-distinct (ru/zh/ar/ja/hi -- no word-boundary
+# concept to exploit) or long, specific Latin words, not the short/generic
+# tokens that made bare substring risky for English. New non-English
+# aliases should still avoid short/generic single words (same spirit as the
+# "no 2-char token" rule) since this path has no boundary protection.
+# `kw` and `t` must be in scope. Regex metachars escaped SQL-side.
+_ACRONYM_MATCH = r"""t.title_display ~ ('\m' || regexp_replace(kw, '([.^$*+?()\[\]{}|\\])', '\\\1', 'g') || '\M')"""
+_WORD_START_MATCH = r"""t.title_display ~* ('\m' || regexp_replace(kw, '([.^$*+?()\[\]{}|\\])', '\\\1', 'g'))"""
+_SUBSTRING_MATCH = r"""t.title_display ILIKE '%%' || kw || '%%'"""
+
+# EN path: short all-caps acronyms (<=4 chars) get case-SENSITIVE whole-word
+# matching -- REPO stops matching "report", POW stops matching "power".
+# Everything else: case-insensitive word-START anchor; prefix match is kept
+# deliberately so stems still work (dron -> drone/dronow).
+ALIAS_MATCH_EN_SQL = f"""(CASE
+    WHEN kw ~ '^[A-Z0-9][A-Z0-9-]{{0,3}}$' THEN {_ACRONYM_MATCH}
+    ELSE {_WORD_START_MATCH} END)"""
+
+# Other-language path (de/es/fr/it/ru/zh/ar/ja/hi): same acronym protection
+# (acronyms are acronyms regardless of source language), else substring --
+# no word-boundary requirement, so German/compounding languages match
+# correctly and CJK/Arabic/Hindi (no boundary concept) are unaffected.
+ALIAS_MATCH_OTHER_SQL = f"""(CASE
+    WHEN kw ~ '^[A-Z0-9][A-Z0-9-]{{0,3}}$' THEN {_ACRONYM_MATCH}
+    ELSE {_SUBSTRING_MATCH} END)"""
+
+
+def flatten_aliases(aliases_json: dict | None) -> tuple[list[str], list[str]]:
+    """Split a fn_anchor aliases jsonb into (en_aliases, other_aliases),
+    deduped, preserving first-seen order. The split -- not just the
+    flattened union -- is what lets EN and non-EN route through different
+    match semantics (see ALIAS_MATCH_EN_SQL / ALIAS_MATCH_OTHER_SQL)."""
+    en_aliases: list[str] = []
+    other_aliases: list[str] = []
+    if not aliases_json:
+        return en_aliases, other_aliases
+    seen: set[str] = set()
+    for a in aliases_json.get("en") or []:
+        if a and a not in seen:
+            seen.add(a)
+            en_aliases.append(a)
+    for lang, lang_aliases in aliases_json.items():
+        if lang == "en":
+            continue
+        for a in lang_aliases or []:
+            if a and a not in seen:
+                seen.add(a)
+                other_aliases.append(a)
+    return en_aliases, other_aliases
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description=__doc__,
@@ -81,7 +140,7 @@ def fetch_fn(cur, fn_id: str) -> dict:
 
 def fetch_narratives(cur, fn_id: str) -> list[dict]:
     cur.execute(
-        """SELECT id, name_en, publishers, framing_keywords
+        """SELECT id, name_en, publishers, framing_keywords, framing_required
              FROM narratives_v2
             WHERE fn_id = %s AND is_active = true
             ORDER BY display_order""",
@@ -118,15 +177,8 @@ def link_events(cur, fn: dict, window_days: int, incremental: bool = False) -> i
         (fn["id"],),
     )
     row = cur.fetchone()
-    aliases: list[str] = []
-    seen: set[str] = set()
-    if row and row["aliases"]:
-        for lang_aliases in row["aliases"].values():
-            for a in lang_aliases or []:
-                if a and a not in seen:
-                    seen.add(a)
-                    aliases.append(a)
-    if not aliases:
+    en_aliases, other_aliases = flatten_aliases(row["aliases"] if row else None)
+    if not en_aliases and not other_aliases:
         raise FNConfigError(f"FN {fn['id']} has no fn_anchor bundle in taxonomy_v3")
 
     if not incremental:
@@ -167,9 +219,13 @@ def link_events(cur, fn: dict, window_days: int, incremental: bool = False) -> i
                 SELECT 1 FROM event_v3_titles et
                 JOIN titles_v3 t ON t.id = et.title_id
                 WHERE et.event_id = e.id
-                  AND EXISTS (
-                    SELECT 1 FROM unnest(%(aliases)s::text[]) kw
-                    WHERE t.title_display ILIKE '%%' || kw || '%%'
+                  AND (
+                    EXISTS (SELECT 1 FROM unnest(%(en_aliases)s::text[]) kw WHERE """
+        + ALIAS_MATCH_EN_SQL
+        + """)
+                    OR EXISTS (SELECT 1 FROM unnest(%(other_aliases)s::text[]) kw WHERE """
+        + ALIAS_MATCH_OTHER_SQL
+        + """)
                   )
               )"""
         + primary_target_filter
@@ -184,7 +240,8 @@ def link_events(cur, fn: dict, window_days: int, incremental: bool = False) -> i
             "window": str(window_days),
             "centroids": fn_centroid_ids,
             "primary_target": primary_target,
-            "aliases": aliases,
+            "en_aliases": en_aliases,
+            "other_aliases": other_aliases,
         },
     )
     return cur.rowcount
@@ -199,11 +256,22 @@ def link_titles(
       - come from a publisher in narrative.publishers
       - mention any alias from the FN's fn_anchor bundle in taxonomy_v3
       - have centroid_ids overlapping fn.centroid_ids
+      - if fn.primary_target is set, the title itself must carry that
+        centroid (symmetric with link_events' 50%-of-event-titles check,
+        simplified to a direct check since a title is atomic)
 
-    framing_keywords are NOT a hard attribution filter under the 1-to-1
-    model. Pro/con narratives on one FN have disjoint publisher lists,
-    so publisher alone disambiguates. framing_keywords stay on the
+    framing_keywords are NOT a hard attribution filter by default -- under
+    the 1-to-1 model pro/con narratives on one FN have disjoint publisher
+    lists, so publisher alone disambiguates, and framing_keywords stay on the
     narrative for sample-title ranking + the "Loaded vocabulary" UI.
+
+    EXCEPTION -- framing_required=true: when narratives on one FN SHARE a
+    publisher coalition but compete on stance (the "friendly-critic" own-goal
+    case, e.g. Western outlets voicing both reform-progress and systemic-alarm
+    framings of Ukraine corruption), publisher cannot disambiguate. Setting
+    framing_required makes a framing_keyword hit an additional AND-condition,
+    so the title attributes only to the narrative whose framing it matches.
+    Opt-in per narrative; default false leaves every other narrative unchanged.
 
     For fn_type='theater' (catch-all), titles already attributed to any
     atomic FN are excluded — atomic FNs claim their content first.
@@ -221,14 +289,7 @@ def link_titles(
         (fn["id"],),
     )
     row = cur.fetchone()
-    aliases: list[str] = []
-    seen: set[str] = set()
-    if row and row["aliases"]:
-        for lang_aliases in row["aliases"].values():
-            for a in lang_aliases or []:
-                if a and a not in seen:
-                    seen.add(a)
-                    aliases.append(a)
+    en_aliases, other_aliases = flatten_aliases(row["aliases"] if row else None)
 
     if not incremental:
         cur.execute(
@@ -238,11 +299,12 @@ def link_titles(
 
     is_theater = fn.get("fn_type") == "theater"
     centroids = fn["centroid_ids"] or []
+    primary_target = fn.get("primary_target")
     counts: dict[str, int] = {}
     for n in narratives:
         publishers = n["publishers"] or []
 
-        if not publishers or not aliases or not centroids:
+        if not publishers or (not en_aliases and not other_aliases) or not centroids:
             counts[n["id"]] = 0
             continue
 
@@ -253,8 +315,19 @@ def link_titles(
                 WHERE t.publisher_name = ANY(%(publishers)s)
                   AND t.pubdate_utc > NOW() - (%(window)s || ' days')::interval
                   AND t.centroid_ids && %(centroids)s::text[]
-                  AND EXISTS (SELECT 1 FROM unnest(%(aliases)s::text[]) kw
-                               WHERE t.title_display ILIKE '%%' || kw || '%%')
+                  AND (
+                    EXISTS (SELECT 1 FROM unnest(%(en_aliases)s::text[]) kw WHERE """
+            + ALIAS_MATCH_EN_SQL
+            + """)
+                    OR EXISTS (SELECT 1 FROM unnest(%(other_aliases)s::text[]) kw WHERE """
+            + ALIAS_MATCH_OTHER_SQL
+            + """)
+                  )
+                  AND (%(primary_target)s::text IS NULL OR %(primary_target)s = ANY(t.centroid_ids))
+                  AND (NOT %(framing_required)s OR EXISTS (
+                      SELECT 1 FROM unnest(%(framing_keywords)s::text[]) fk
+                       WHERE t.title_display ILIKE '%%' || fk || '%%'
+                  ))
                   AND (NOT %(is_theater)s OR NOT EXISTS (
                       SELECT 1
                         FROM title_narratives tn2
@@ -269,8 +342,12 @@ def link_titles(
                 "publishers": publishers,
                 "window": str(window_days),
                 "centroids": list(centroids),
-                "aliases": aliases,
+                "en_aliases": en_aliases,
+                "other_aliases": other_aliases,
                 "is_theater": is_theater,
+                "primary_target": primary_target,
+                "framing_required": bool(n.get("framing_required")),
+                "framing_keywords": n["framing_keywords"] or [],
             },
         )
         counts[n["id"]] = cur.rowcount
