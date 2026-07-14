@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "fn_id": "arctic_military_presence",
+    "note": "General Arctic security/great-power-competition atomic. Hosts the shared bare 'Arctic'/'High North' toponyms plus military-specific named anchors (Northern Fleet, named exercises, base sites). Multilateral archetype, primary_target=null; relies on toponym purity. Generic 'military/NATO/troops' deliberately EXCLUDED (would leak all-Russia/all-US defense news since aliases are OR'd)."
+  },
+  "bundle": [
+    { "term": "Arctic (toponym)", "aliases": {
+      "en": ["Arctic", "High North"],
+      "de": ["Arktis", "Arktik", "Hoher Norden"],
+      "es": ["Ártico"],
+      "fr": ["Arctique", "Grand Nord"],
+      "it": ["Artico"],
+      "ru": ["Арктик", "Заполярь", "Крайнего Севера"],
+      "zh": ["北极"],
+      "ar": ["القطب الشمالي", "المنطقة القطبية"],
+      "ja": ["北極"],
+      "hi": ["आर्कटिक"]
+    }},
+    { "term": "Barents / Kola / Murmansk (RU Arctic mil geography)", "aliases": {
+      "en": ["Barents", "Kola Peninsula", "Murmansk", "Severomorsk", "Novaya Zemlya", "Franz Josef Land"],
+      "de": ["Barentssee"],
+      "ru": ["Баренцев", "Кольск", "Мурманск", "Североморск", "Новая Земля"]
+    }},
+    { "term": "Nordic Arctic mil geography", "aliases": {
+      "en": ["Svalbard", "Spitsbergen", "Finnmark", "Kirkenes", "Tromsø", "Bardufoss", "Rovaniemi", "Lapland"],
+      "de": ["Spitzbergen", "Lappland"]
+    }},
+    { "term": "Northern Fleet", "aliases": {
+      "en": ["Northern Fleet"], "de": ["Nordflotte"], "fr": ["flotte du Nord"], "es": ["Flota del Norte"],
+      "ru": ["Северный флот"], "zh": ["北方舰队"], "ja": ["北方艦隊"]
+    }},
+    { "term": "Named Arctic exercises / missions", "aliases": {
+      "en": ["Arctic Sentry", "Cold Response", "Nordic Response", "Arctic Forge", "Joint Viking"]
+    }},
+    { "term": "Pituffik / Thule (US Arctic base)", "aliases": {
+      "en": ["Pituffik"]
+    }}
+  ]
+}

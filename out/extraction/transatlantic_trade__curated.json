@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "fn_id": "transatlantic_trade",
+    "note": "Bilateral EU<->US tariff/trade dispute. Archetype B asymmetric: European side is multi-centroid (in centroid_ids), US side pinned via primary_target=AMERICAS-USA -> AND-gates the dyad, so generic tariff/trade terms stop leaking to US-India/US-China/EU-Mercosur. Pruned (audit-driven): dropped war-word 'retaliation', 'framework agreement' (Gaza ceasefire), 'market access'/'Section 301'/'export controls' (US-China), 'Boeing'/'Airbus' (dormant+promiscuous), 'safeguard'/'trade pact'/'trade agreement' (generic/redundant). Digital-tax routed to tech FN."
+  },
+  "bundle": [
+    { "term": "tariff family", "aliases": {
+      "en": ["tariff", "tariffs", "counter-tariff", "retaliatory tariff", "trade war", "import duty", "import duties", "customs dut"],
+      "de": ["Zoll", "Zölle", "Strafzoll", "Strafzölle", "Vergeltungszoll", "Gegenzoll", "Handelskrieg", "Einfuhrzoll"],
+      "es": ["arancel", "aranceles", "guerra comercial"],
+      "fr": ["droits de douane", "tarifs douaniers", "guerre commerciale", "surtaxe"],
+      "it": ["dazi", "dazio", "guerra commerciale"],
+      "ru": ["тариф", "пошлин", "торговая война"],
+      "zh": ["关税", "贸易战"],
+      "ar": ["تعريفة", "رسوم جمركية", "حرب تجارية"],
+      "ja": ["関税", "貿易戦争"],
+      "hi": ["टैरिफ", "व्यापार युद्ध", "शुल्क"]
+    }},
+    { "term": "trade-deal machinery", "aliases": {
+      "en": ["trade deal", "trade talks", "trade dispute", "trade deficit", "trade surplus", "countermeasure", "anti-dumping", "WTO", "Section 232"],
+      "de": ["Handelsabkommen", "Handelsstreit", "Handelsdefizit", "Gegenmaßnahme"],
+      "es": ["acuerdo comercial", "déficit comercial"],
+      "fr": ["accord commercial", "déficit commercial"],
+      "it": ["accordo commerciale", "disavanzo commerciale"],
+      "ru": ["торговое соглашение", "торговый дефицит", "антидемпинг"],
+      "zh": ["贸易协议", "贸易逆差", "反倾销"],
+      "ar": ["اتفاق تجاري", "العجز التجاري"],
+      "ja": ["貿易協定", "貿易赤字"],
+      "hi": ["व्यापार समझौता", "व्यापार घाटा"]
+    }},
+    { "term": "sectoral disputes", "aliases": {
+      "en": ["steel", "aluminium", "aluminum", "car tariffs", "auto tariffs", "subsidy", "subsidies"],
+      "de": ["Stahl", "Subvention", "Autozölle"],
+      "es": ["acero", "subvención"],
+      "fr": ["acier", "subvention"],
+      "it": ["acciaio", "sussidi"],
+      "ru": ["сталь", "субсиди"],
+      "zh": ["钢铁", "补贴"],
+      "ar": ["الصلب"],
+      "ja": ["鉄鋼"],
+      "hi": ["इस्पात"]
+    }}
+  ]
+}

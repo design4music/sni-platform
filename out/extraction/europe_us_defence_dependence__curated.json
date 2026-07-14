@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "fn_id": "europe_us_defence_dependence",
+    "note": "Bilateral security-guarantee dispute. Archetype B asymmetric: European set in centroid_ids, US pinned via primary_target=AMERICAS-USA. Pruned (audit-driven): dropped 'security guarantee(s)' + all translations -- they collided heavily with Ukraine peace-guarantee coverage (EUROPE-UKRAINE:38-41). Kept the cleaner credibility markers (Article 5, nuclear umbrella, extended deterrence)."
+  },
+  "bundle": [
+    { "term": "burden-sharing", "aliases": {
+      "en": ["burden-sharing", "burden sharing", "fair share", "free-rider", "freeloader", "freeloading", "pay more", "spending target", "defence spending", "defense spending", "defence budget", "defense budget", "2 percent", "5 percent", "GDP on defence", "GDP on defense", "spending pledge", "defence pledge"],
+      "de": ["Lastenteilung", "Lastenverteilung", "Verteidigungsausgaben", "Verteidigungsbudget", "Verteidigungshaushalt", "Trittbrettfahrer", "fairer Anteil"],
+      "es": ["reparto de cargas", "gasto en defensa", "gasto militar"],
+      "fr": ["partage du fardeau", "dépenses de défense", "budget de défense"],
+      "it": ["condivisione degli oneri", "spesa per la difesa", "bilancio della difesa"],
+      "ru": ["распределение бремени", "оборонные расходы", "военные расходы"],
+      "zh": ["防务开支", "国防开支", "分担费用", "军费"],
+      "ar": ["الإنفاق الدفاعي", "تقاسم الأعباء"],
+      "ja": ["防衛費", "国防費", "負担分担"],
+      "hi": ["रक्षा खर्च", "रक्षा बजट"]
+    }},
+    { "term": "US troop posture in Europe", "aliases": {
+      "en": ["troop withdrawal", "troop drawdown", "troop cuts", "withdraw troops", "pull out troops", "US troops", "American troops", "force posture", "Ramstein", "Grafenwoehr", "Grafenwöhr", "US bases", "American forces", "troop presence"],
+      "de": ["Truppenabzug", "Truppenreduzierung", "US-Truppen", "amerikanische Truppen", "Truppenpräsenz"],
+      "es": ["retirada de tropas", "tropas estadounidenses"],
+      "fr": ["retrait des troupes", "troupes américaines"],
+      "it": ["ritiro delle truppe", "truppe americane"],
+      "ru": ["вывод войск", "американские войска", "сокращение войск"],
+      "zh": ["撤军", "驻欧美军", "美军"],
+      "ar": ["سحب القوات", "القوات الأمريكية"],
+      "ja": ["米軍撤退", "駐留米軍"],
+      "hi": ["सैनिकों की वापसी", "अमेरिकी सैनिक"]
+    }},
+    { "term": "deterrent umbrella / guarantee credibility", "aliases": {
+      "en": ["Article 5", "nuclear umbrella", "extended deterrence", "defence guarantee", "defense guarantee", "abandon Europe", "reliable ally", "commitment to NATO"],
+      "de": ["nuklearer Schirm", "nukleare Teilhabe", "Beistandsgarantie", "erweiterte Abschreckung"],
+      "es": ["paraguas nuclear"],
+      "fr": ["parapluie nucléaire", "dissuasion élargie"],
+      "it": ["ombrello nucleare"],
+      "ru": ["ядерный зонтик"],
+      "zh": ["核保护伞"],
+      "ar": ["المظلة النووية"],
+      "ja": ["核の傘"],
+      "hi": ["परमाणु छत्र"]
+    }}
+  ]
+}

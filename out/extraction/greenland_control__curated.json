@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "fn_id": "greenland_control",
+    "note": "Target-centric on Greenland, but the 'Greenland' toponym is itself the subject gate. Bundle is toponym/actor-only: generic control verbs (buy/annex/sovereignty) are OMITTED because aliases are OR'd and EUROPE-GREENLAND is under-populated (titles tag NORDIC+USA), so a bare verb would leak across all US/Nordic news. Precision comes from the place name."
+  },
+  "bundle": [
+    { "term": "Greenland (place)", "aliases": {
+      "en": ["Greenland", "Grønland"],
+      "de": ["Grönland"],
+      "es": ["Groenlandia"],
+      "fr": ["Groenland"],
+      "it": ["Groenlandia"],
+      "ru": ["Гренландия", "Гренланди"],
+      "zh": ["格陵兰"],
+      "ar": ["غرينلاند", "جرينلاند"],
+      "ja": ["グリーンランド"],
+      "hi": ["ग्रीनलैंड"]
+    }},
+    { "term": "Nuuk (capital)", "aliases": {
+      "en": ["Nuuk"], "ru": ["Нуук"], "zh": ["努克"], "ja": ["ヌーク"]
+    }},
+    { "term": "Pituffik / Thule base", "aliases": {
+      "en": ["Pituffik", "Thule Air Base", "Thule base"], "ru": ["Питуффик", "Туле"]
+    }},
+    { "term": "Kangerlussuaq", "aliases": { "en": ["Kangerlussuaq"] }},
+    { "term": "Naleraq (pro-independence party)", "aliases": { "en": ["Naleraq"] }},
+    { "term": "Inuit Ataqatigiit", "aliases": { "en": ["Inuit Ataqatigiit"] }},
+    { "term": "Siumut", "aliases": { "en": ["Siumut"] }},
+    { "term": "Egede (Greenland PM)", "aliases": { "en": ["Egede"] }}
+  ]
+}

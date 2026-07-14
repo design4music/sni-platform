@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "fn_id": "eu_strategic_autonomy",
+    "note": "The European autonomy RESPONSE (EU-subject). primary_target null: subject 'Europe' spans many centroids, so concept-alias purity is the gate (terms of art like 'strategic autonomy','EU army','ReArm Europe' are self-gating). Digital/cloud sovereignty deliberately routed to europe_us_tech_sovereignty instead. Centroid gate = EU + national-EU + USA + China (third-pole)."
+  },
+  "bundle": [
+    { "term": "strategic autonomy concept", "aliases": {
+      "en": ["strategic autonomy", "European sovereignty", "strategic sovereignty", "European pillar", "self-reliance", "reduce dependence", "less dependent", "wean off", "de-risking", "decoupling", "buy European", "European preference"],
+      "de": ["strategische Autonomie", "europäische Souveränität", "strategische Souveränität", "Unabhängigkeit von den USA", "Abhängigkeit verringern"],
+      "es": ["autonomía estratégica", "soberanía europea"],
+      "fr": ["autonomie stratégique", "souveraineté européenne", "préférence européenne"],
+      "it": ["autonomia strategica", "sovranità europea"],
+      "ru": ["стратегическая автономия", "европейский суверенитет"],
+      "zh": ["战略自主", "欧洲主权", "去风险"],
+      "ar": ["الاستقلال الاستراتيجي", "السيادة الأوروبية"],
+      "ja": ["戦略的自律", "欧州の主権"],
+      "hi": ["रणनीतिक स्वायत्तता", "यूरोपीय संप्रभुता"]
+    }},
+    { "term": "European defence project", "aliases": {
+      "en": ["European defence union", "European defense union", "defence union", "EU army", "European army", "European deterrent", "Eurodeterrent", "European nuclear", "common defence", "common defense", "European pillar of NATO"],
+      "de": ["Verteidigungsunion", "EU-Armee", "europäische Armee", "europäische Abschreckung", "gemeinsame Verteidigung"],
+      "es": ["unión de defensa", "ejército europeo"],
+      "fr": ["union de défense", "armée européenne", "défense européenne", "dissuasion européenne"],
+      "it": ["unione della difesa", "esercito europeo", "difesa europea"],
+      "ru": ["европейская армия", "оборонный союз"],
+      "zh": ["欧洲军队", "欧洲防务", "防务联盟"],
+      "ar": ["الجيش الأوروبي", "الدفاع الأوروبي"],
+      "ja": ["欧州軍", "欧州防衛"],
+      "hi": ["यूरोपीय सेना", "यूरोपीय रक्षा"]
+    }},
+    { "term": "rearmament initiatives (named)", "aliases": {
+      "en": ["ReArm Europe", "Readiness 2030", "European Defence Fund", "PESCO", "European Defence Industrial Strategy", "EDIP", "rearm", "re-arm", "rearmament", "defence industrial base"],
+      "de": ["Wiederbewaffnung", "Aufrüstung", "Verteidigungsindustrie"],
+      "es": ["rearme", "industria de defensa"],
+      "fr": ["réarmement", "industrie de défense"],
+      "it": ["riarmo", "industria della difesa"],
+      "ru": ["перевооружение", "оборонная промышленность"],
+      "zh": ["重新武装", "国防工业"],
+      "ar": ["إعادة التسلح", "الصناعة الدفاعية"],
+      "ja": ["再軍備", "防衛産業"],
+      "hi": ["पुनः शस्त्रीकरण", "रक्षा उद्योग"]
+    }}
+  ]
+}

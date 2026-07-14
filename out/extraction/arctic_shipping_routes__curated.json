@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "fn_id": "arctic_shipping_routes",
+    "note": "Arctic maritime/passage atomic. Named routes + icebreaker + Arctic port infrastructure. 'icebreaker' is Arctic-specific enough to stand alone but audited for Baltic-winter-shipping leak. Multilateral incl. China (Polar Silk Road); primary_target=null."
+  },
+  "bundle": [
+    { "term": "Named Arctic sea routes", "aliases": {
+      "en": ["Northern Sea Route", "Northwest Passage", "Polar Silk Road", "Transpolar", "Arctic route", "Arctic shipping", "Arctic passage", "Arctic corridor"],
+      "de": ["Nordostpassage", "Nordwestpassage", "Nördliche Seeroute", "polare Seidenstraße"],
+      "fr": ["route maritime du Nord", "passage du Nord-Ouest"],
+      "es": ["Ruta del Mar del Norte", "Paso del Noroeste"],
+      "ru": ["Севморпуть", "Северный морской путь", "Северо-Западный проход"],
+      "zh": ["北极航道", "北方航道", "冰上丝绸之路"],
+      "ja": ["北極海航路"]
+    }},
+    { "term": "Icebreaker fleet", "aliases": {
+      "en": ["icebreaker"],
+      "de": ["Eisbrecher"], "fr": ["brise-glace"], "es": ["rompehielos"], "it": ["rompighiaccio"],
+      "ru": ["ледокол"], "zh": ["破冰船"], "ja": ["砕氷船"], "ar": ["كاسحة الجليد"]
+    }},
+    { "term": "Arctic port / shipping infrastructure", "aliases": {
+      "en": ["Sabetta", "Arctic port"]
+    }}
+  ]
+}

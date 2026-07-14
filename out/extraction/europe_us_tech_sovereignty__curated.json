@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "fn_id": "europe_us_tech_sovereignty",
+    "note": "EU regulation of US Big Tech + European digital/cloud decoupling. centroid_ids = European set only, primary_target NULL: the phenomenon always has a European regulator/actor, so European-scope drops US-domestic tech news while keeping the decoupling half (no US firm named). Pruned (audit-driven): dropped 'DSA' (collides with 'Defence Services Asia' trade show), 'Silicon Valley' (generic business), 'break up' (generic). Kept spelled-out 'Digital Services Act'."
+  },
+  "bundle": [
+    { "term": "EU regulatory instruments (named)", "aliases": {
+      "en": ["Digital Markets Act", "DMA", "Digital Services Act", "AI Act", "gatekeeper", "GDPR", "Data Act", "Chips Act"],
+      "de": ["Datenschutz-Grundverordnung", "DSGVO", "Plattformregulierung"],
+      "es": ["RGPD", "ley de mercados digitales", "ley de servicios digitales"],
+      "fr": ["RGPD", "règlement sur les marchés numériques", "régulation numérique"],
+      "it": ["GDPR", "legge sui mercati digitali"],
+      "ru": ["цифровое регулирование", "закон о цифровых рынках"],
+      "zh": ["数字市场法", "数字服务法", "通用数据保护条例"],
+      "ar": ["قانون الأسواق الرقمية", "اللائحة العامة لحماية البيانات"],
+      "ja": ["デジタル市場法", "一般データ保護規則"],
+      "hi": ["डिजिटल बाज़ार अधिनियम"]
+    }},
+    { "term": "digital / cloud sovereignty", "aliases": {
+      "en": ["digital sovereignty", "technological sovereignty", "tech sovereignty", "cloud sovereignty", "sovereign cloud", "Gaia-X", "hyperscaler", "data localisation", "data localization", "Big Tech", "Schrems", "Data Privacy Framework", "digital autonomy"],
+      "de": ["digitale Souveränität", "technologische Souveränität", "souveräne Cloud", "Techkonzerne", "Techgiganten"],
+      "es": ["soberanía digital", "nube soberana", "gigantes tecnológicos"],
+      "fr": ["souveraineté numérique", "cloud souverain", "géants du numérique"],
+      "it": ["sovranità digitale", "cloud sovrano", "giganti tecnologici"],
+      "ru": ["цифровой суверенитет", "техногиганты"],
+      "zh": ["数字主权", "科技巨头", "主权云"],
+      "ar": ["السيادة الرقمية", "عمالقة التكنولوجيا"],
+      "ja": ["デジタル主権", "巨大テック"],
+      "hi": ["डिजिटल संप्रभुता", "बिग टेक"]
+    }},
+    { "term": "regulatory action against Big Tech", "aliases": {
+      "en": ["antitrust", "antitrust fine", "competition probe", "content moderation", "disinformation rules", "digital services tax", "digital tax", "platform fine", "regulatory crackdown"],
+      "de": ["Kartellrecht", "Kartellverfahren", "Kartellamt", "Digitalsteuer", "Wettbewerbsverfahren"],
+      "es": ["antimonopolio", "multa antimonopolio", "tasa digital"],
+      "fr": ["antitrust", "amende antitrust", "abus de position dominante", "taxe numérique"],
+      "it": ["antitrust", "multa antitrust", "tassa digitale"],
+      "ru": ["антимонопольн", "цифровой налог", "штраф техгигант"],
+      "zh": ["反垄断", "数字税", "罚款"],
+      "ar": ["مكافحة الاحتكار", "الضريبة الرقمية"],
+      "ja": ["反トラスト", "デジタル課税"],
+      "hi": ["एंटीट्रस्ट", "डिजिटल कर"]
+    }}
+  ]
+}

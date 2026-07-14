@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "fn_id": "arctic_resources_competition",
+    "note": "Arctic extraction/resource-race atomic. Relies on named Arctic fields + Arctic-qualified resource compounds, NOT bare 'oil'/'gas' (those would leak all energy news). Bare 'Arctic' included but audited for weather/climate leak. Multilateral incl. China; primary_target=null."
+  },
+  "bundle": [
+    { "term": "Named Arctic hydrocarbon fields / projects", "aliases": {
+      "en": ["Yamal", "Snøhvit", "Snohvit", "Johan Castberg", "Wisting", "Hammerfest", "Willow", "Prudhoe Bay", "Vostok Oil", "Arctic LNG", "Shtokman", "Prirazlomnoye"],
+      "ru": ["Ямал", "Восток Ойл", "Штокман", "Приразломн"]
+    }},
+    { "term": "Arctic-qualified resource compounds", "aliases": {
+      "en": ["Arctic oil", "Arctic gas", "Arctic drilling", "Arctic LNG", "Arctic mining", "Arctic minerals", "Arctic seabed", "Arctic shelf", "Arctic reserves", "Arctic exploration"],
+      "de": ["Arktis-Öl", "Arktis-Gas", "Arktisbohrung"],
+      "fr": ["pétrole arctique", "gaz arctique"],
+      "es": ["petróleo ártico", "gas ártico"],
+      "ru": ["арктическ нефт", "арктическ газ", "арктическ шельф", "арктическ месторожд"]
+    }},
+    { "term": "Arctic rare earths / critical minerals", "aliases": {
+      "en": ["Arctic rare earth", "Kvanefjeld", "Tanbreez", "Isua"]
+    }},
+    { "term": "Arctic warming / climate access (EN word-anchored, excludes Antarctic)", "aliases": {
+      "en": ["Arctic warming", "Arctic melt", "melting Arctic", "Arctic sea ice", "Arctic ice", "Arctic climate", "black carbon", "Arctic permafrost", "Arctic thaw", "thawing permafrost"],
+      "de": ["arktische Erwärmung", "Arktisschmelze", "arktisches Meereis"],
+      "fr": ["fonte de l'Arctique", "réchauffement arctique"],
+      "es": ["deshielo ártico"],
+      "ru": ["арктическ лед", "таяни арктик", "арктическ климат"],
+      "zh": ["北极海冰", "北极变暖"]
+    }}
+  ]
+}
