@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "fn_id": "zangezur_corridor",
+    "note": "A2 archetype: the toponym/program name IS the gate. WIDE centroids (ASIA-CAUCASUS+TURKEY+IRAN+RUSSIA+USA) because sub-toponyms (Syunik, Meghri, Nakhchivan) and the branded 'Trump Route'/TRIPP name are not all in the ASIA-CAUCASUS anchor, so wider scope only helps recall. Generic 'corridor'/'transit'/'connectivity' OMITTED (would leak across every corridor story under the wide centroids) - precision comes from the specific names."
+  },
+  "bundle": [
+    { "term": "Zangezur (the corridor)", "aliases": {
+      "en": ["Zangezur"], "de": ["Sangesur"], "fr": ["Zanguezour"], "ru": ["Зангезур"], "zh": ["赞格祖尔"], "ar": ["زنغزور"], "ja": ["ザンゲズール"], "hi": ["ज़ंगेज़ुर"] }},
+    { "term": "Syunik (Armenian province crossed)", "aliases": {
+      "en": ["Syunik"], "ru": ["Сюник"] }},
+    { "term": "Meghri (border town)", "aliases": {
+      "en": ["Meghri"], "ru": ["Мегри"] }},
+    { "term": "Nakhchivan (exclave connected)", "aliases": {
+      "en": ["Nakhchivan","Nakhichevan"], "de": ["Nachitschewan"], "fr": ["Nakhitchevan"], "ru": ["Нахичевань","Нахчыван"], "zh": ["纳希切万"], "ar": ["ناخيتشيفان"], "ja": ["ナヒチェヴァン"] }},
+    { "term": "TRIPP / Trump Route (branded corridor name)", "aliases": {
+      "en": ["TRIPP","Trump Route"], "ru": ["Маршрут Трампа"] }}
+  ]
+}

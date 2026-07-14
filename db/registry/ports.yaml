@@ -1206,6 +1206,29 @@
     kaspischem Rohoel einen Weg zu den Weltmaerkten unter Umgehung sowohl
     Russlands als auch der Strasse von Hormus verschafft.
 
+- id: sangachal_terminal
+  name_en: Sangachal Terminal
+  name_de: Sangachal-Terminal
+  category: port
+  subcategory: energy
+  asset_type: port
+  commodities: [oil, gas]
+  centroid_ids: [ASIA-CAUCASUS]
+  criticality: 3
+  ranking_source: "BP/AIOC operator disclosures; EIA Azerbaijan country analysis"
+  rank_note: "One of the world's largest oil and gas terminals; the origin point of the BTC oil pipeline and the South Caucasus gas pipeline."
+  description_en: >-
+    A large oil and gas processing and export terminal on Azerbaijan's
+    Caspian coast south of Baku, where output from the offshore
+    Azeri-Chirag-Gunashli oil fields and the Shah Deniz gas field is
+    gathered before entering the BTC and South Caucasus pipelines.
+  description_de: >-
+    Ein grosses Oel- und Gasaufbereitungs- und Exportterminal an
+    Aserbaidschans Kaspikueste suedlich von Baku, wo die Foerderung der
+    Offshore-Oelfelder Azeri-Chirag-Gunaschli und des Gasfelds Shah Deniz
+    gesammelt wird, bevor sie in die BTC- und die Suedkaukasus-Pipeline
+    eingespeist wird.
+
 - id: fujairah_hub
   name_en: Fujairah Bunkering-Export Hub
   name_de: Bunker- und Exportzentrum Fudschaira

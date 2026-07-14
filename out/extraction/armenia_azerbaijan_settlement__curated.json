@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "fn_id": "armenia_azerbaijan_settlement",
+    "note": "War-or-peace container, gated by ASIA-CAUCASUS. Holds BOTH the conflict track (border clashes, ceasefire violations, POW) AND the peace track (treaty, delimitation, normalization), plus Armenia-Turkey normalization and the NK-legacy/accountability residual (Karabakh geography, Vardanyan trial). Country-neutral: no bare Armenia/Azerbaijan. Some domain generics (peace, ceasefire, delimitation) are safe under the Caucasus gate. Avoided ru 'мир' (substring of Владимир etc.)."
+  },
+  "bundle": [
+    { "term": "Nagorno-Karabakh / Artsakh (object of the settlement)", "aliases": {
+      "en": ["Nagorno-Karabakh","Karabakh","Artsakh"],
+      "de": ["Bergkarabach"], "fr": ["Haut-Karabakh"], "es": ["Nagorno Karabaj"], "it": ["Nagorno Karabakh"],
+      "ru": ["Карабах","Нагорный Карабах","Арцах"], "zh": ["纳戈尔诺-卡拉巴赫"], "ar": ["ناغورنو كاراباخ"], "ja": ["ナゴルノ・カラバフ"], "hi": ["नागोर्नो-काराबाख"] }},
+    { "term": "Lachin corridor (NK access)", "aliases": {
+      "en": ["Lachin"], "de": ["Latschin"], "ru": ["Лачин"], "fr": ["Latchine"] }},
+    { "term": "Tavush (border delimitation zone)", "aliases": {
+      "en": ["Tavush"], "ru": ["Тавуш"] }},
+    { "term": "peace treaty", "aliases": {
+      "en": ["peace treaty","peace deal","peace agreement","peace process"],
+      "de": ["Friedensvertrag","Friedensabkommen","Friedensprozess"],
+      "fr": ["traité de paix","accord de paix"], "es": ["tratado de paz","acuerdo de paz"], "it": ["trattato di pace","accordo di pace"],
+      "ru": ["мирный договор","мирное соглашение"], "zh": ["和平协议"], "ar": ["معاهدة سلام"], "ja": ["和平条約"], "hi": ["शांति संधि"] }},
+    { "term": "border delimitation / demarcation", "aliases": {
+      "en": ["delimitation","demarcation"],
+      "de": ["Grenzziehung","Grenzdemarkation"], "fr": ["délimitation"], "es": ["delimitación"], "it": ["delimitazione"],
+      "ru": ["делимитация","демаркация"] }},
+    { "term": "normalization", "aliases": {
+      "en": ["normalization","normalisation"],
+      "de": ["Normalisierung"], "fr": ["normalisation"], "es": ["normalización"], "it": ["normalizzazione"],
+      "ru": ["нормализаци"], "zh": ["关系正常化"], "ar": ["تطبيع"] }},
+    { "term": "ceasefire / truce / clash (conflict track)", "aliases": {
+      "en": ["ceasefire","truce","border clash","skirmish","cross-border fire"],
+      "de": ["Waffenstillstand","Grenzgefecht","Scharmützel"],
+      "fr": ["cessez-le-feu"], "es": ["alto el fuego"], "it": ["cessate il fuoco"],
+      "ru": ["перемирие","прекращение огня","приграничн"], "zh": ["停火"], "ar": ["وقف إطلاق النار"], "ja": ["停戦"], "hi": ["युद्धविराम"] }},
+    { "term": "prisoners of war / detainees", "aliases": {
+      "en": ["prisoner of war","POW","detainee","captive"],
+      "de": ["Kriegsgefangene","Gefangenenaustausch"],
+      "ru": ["военнопленн","обмен пленными"], "fr": ["prisonniers de guerre"] }},
+    { "term": "Vardanyan (ex-Artsakh leader on trial in Baku)", "aliases": {
+      "en": ["Vardanyan"], "ru": ["Варданян"] }},
+    { "term": "war crimes accountability", "aliases": {
+      "en": ["war crimes","tribunal"],
+      "de": ["Kriegsverbrechen"], "ru": ["военные преступления","трибунал"], "fr": ["crimes de guerre"] }},
+    { "term": "Armenia-Turkey normalization (railway / reopening)", "aliases": {
+      "en": ["railway reopening","direct trade","border reopening"],
+      "de": ["Eisenbahn","Grenzöffnung"], "ru": ["железнодорожн","открытие границы"] }}
+  ]
+}

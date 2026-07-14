@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "fn_id": "georgia_geopolitical_drift",
+    "note": "Placeholder atomic (thin now, durable). Gated by ASIA-CAUCASUS; Georgia toponyms/actors were just added to the ASIA-CAUCASUS centroid anchor so Georgia titles tag the region. Here the COUNTRY is the discriminator (vs Armenia/Azerbaijan atomics), so the bundle is Georgia geography/actors + the drift domain (foreign-agent law, EU-candidacy freeze, breakaway regions). Omit bare EN 'Georgia' (US-state collision); 'Georgian'/'Tbilisi'/'Georgian Dream' carry it."
+  },
+  "bundle": [
+    { "term": "Tbilisi / Sakartvelo", "aliases": {
+      "en": ["Tbilisi","Sakartvelo","Georgian"], "de": ["Tiflis","georgisch"], "ru": ["Тбилиси","Грузия","Грузии"], "zh": ["第比利斯"], "ar": ["تبليسي"], "ja": ["トビリシ"], "hi": ["त्बिलिसी"] }},
+    { "term": "Georgian Dream (ruling party)", "aliases": {
+      "en": ["Georgian Dream"], "de": ["Georgischer Traum"], "ru": ["Грузинская мечта"] }},
+    { "term": "Ivanishvili / Kobakhidze / Kavelashvili (leadership)", "aliases": {
+      "en": ["Ivanishvili","Kobakhidze","Kavelashvili"], "de": ["Iwanischwili","Kobachidse"], "ru": ["Иванишвили","Кобахидзе","Кавелашвили"] }},
+    { "term": "Abkhazia / South Ossetia (breakaway regions)", "aliases": {
+      "en": ["Abkhazia","South Ossetia"], "de": ["Abchasien","Südossetien"], "ru": ["Абхазия","Южная Осетия"], "fr": ["Abkhazie"] }},
+    { "term": "foreign-agent / foreign-influence law", "aliases": {
+      "en": ["foreign agent","foreign influence law"],
+      "de": ["Agentengesetz","ausländische Agenten"],
+      "ru": ["иностранных агентов","иноагент"], "fr": ["agents de l'étranger"] }},
+    { "term": "EU candidacy / accession freeze", "aliases": {
+      "en": ["EU candidate","candidate status","accession freeze"],
+      "de": ["EU-Kandidat","Beitrittskandidat"], "ru": ["статус кандидата","евроинтеграци"] }}
+  ]
+}

@@ -11,7 +11,7 @@
   subcategory: oil_pipeline
   asset_type: pipeline
   commodities: [oil]
-  centroid_ids: [EUROPE-AZERBAIJAN, MIDEAST-TURKEY]
+  centroid_ids: [ASIA-CAUCASUS, MIDEAST-TURKEY]
   criticality: 3
   ranking_source: "Global Energy Monitor GOIT route tracker"
   rank_note: "~1 Mb/d Caspian crude to the Mediterranean, bypassing both Russia and Hormuz -- a strategic diversification route."
@@ -23,6 +23,28 @@
     Transportiert aserbaidschanisches Kaspi-Oel zum Mittelmeer unter
     Umgehung sowohl russischen Territoriums als auch der Strasse von Hormus,
     eine strategische Diversifizierungsroute.
+
+- id: scp_pipeline
+  name_en: South Caucasus Pipeline
+  name_de: Suedkaukasus-Pipeline
+  category: pipeline
+  subcategory: gas_pipeline
+  asset_type: pipeline
+  commodities: [gas]
+  centroid_ids: [ASIA-CAUCASUS, MIDEAST-TURKEY]
+  criticality: 3
+  ranking_source: "Global Energy Monitor GGIT route tracker"
+  rank_note: "Carries Shah Deniz gas from Azerbaijan via Georgia to Turkey -- the first leg of the Southern Gas Corridor to Europe, running parallel to the BTC oil line."
+  description_en: >-
+    Carries Azerbaijani gas from the Shah Deniz field across Georgia to the
+    Turkish border, forming the first leg of the Southern Gas Corridor that
+    supplies non-Russian gas to Southeastern Europe, parallel to the
+    Baku-Tbilisi-Ceyhan oil pipeline.
+  description_de: >-
+    Transportiert aserbaidschanisches Gas vom Shah-Deniz-Feld ueber Georgien
+    zur tuerkischen Grenze und bildet die erste Etappe des Suedlichen
+    Gaskorridors, der Suedosteuropa mit nicht-russischem Gas versorgt,
+    parallel zur Baku-Tiflis-Ceyhan-Oelpipeline.
 
 - id: druzhba_pipeline_west
   name_en: Druzhba Pipeline (Western Segment)

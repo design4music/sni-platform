@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "fn_id": "armenia_western_pivot",
+    "note": "Region-internal, gated by ASIA-CAUCASUS only. Discriminator = pivot/realignment DOMAIN anchors (Russia-led bloc acronyms, EU institutions, accession/rapprochement, Russian economic pressure, domestic pro-West/pro-Russia contest parties). Deliberately NO bare 'Armenia' (would capture all Armenia news and collapse purity vs settlement/power). Bloc acronyms CSTO/EAEU/ОДКБ/ЕАЭС are high-precision within the Caucasus gate."
+  },
+  "bundle": [
+    { "term": "CSTO (Russia-led security bloc)", "aliases": {
+      "en": ["CSTO"], "ru": ["ОДКБ"], "zh": ["集体安全条约组织"], "ar": ["منظمة معاهدة الأمن الجماعي"] }},
+    { "term": "EAEU (Russia-led economic union)", "aliases": {
+      "en": ["EAEU","Eurasian Economic Union"], "de": ["Eurasische Wirtschaftsunion"], "ru": ["ЕАЭС","Евразийский экономический союз"], "zh": ["欧亚经济联盟"] }},
+    { "term": "European Political Community summit", "aliases": {
+      "en": ["European Political Community","EPC summit"], "de": ["Europäische Politische Gemeinschaft"], "ru": ["Европейское политическое сообщество"] }},
+    { "term": "EU accession / European Union", "aliases": {
+      "en": ["European Union","accession","EU bid","EU membership","EU path"],
+      "de": ["Europäische Union","Beitritt","EU-Beitritt"],
+      "fr": ["Union européenne","adhésion"],
+      "es": ["Unión Europea","adhesión"],
+      "it": ["Unione europea","adesione"],
+      "ru": ["Евросоюз","вступление в ЕС","евроинтеграци"],
+      "zh": ["欧盟","入盟"], "ar": ["الاتحاد الأوروبي","الانضمام للاتحاد"], "ja": ["欧州連合","EU加盟"], "hi": ["यूरोपीय संघ"] }},
+    { "term": "Brussels (EU seat)", "aliases": {
+      "en": ["Brussels"], "de": ["Brüssel"], "fr": ["Bruxelles"], "es": ["Bruselas"], "ru": ["Брюссель"] }},
+    { "term": "rapprochement / pivot / realignment", "aliases": {
+      "en": ["rapprochement","pivot","realignment","pro-Western","pro-West","pro-Europe","pro-European","Western pivot"],
+      "de": ["Annäherung","Hinwendung","Neuausrichtung","prowestlich","proeuropäisch"],
+      "fr": ["rapprochement","prooccidental"],
+      "es": ["acercamiento","prooccidental"],
+      "it": ["riavvicinamento","filooccidentale"],
+      "ru": ["сближение","разворот на Запад","прозападн"] }},
+    { "term": "Association Agreement", "aliases": {
+      "en": ["Association Agreement"], "de": ["Assoziierungsabkommen"], "fr": ["accord d'association"], "ru": ["соглашение об ассоциации"] }},
+    { "term": "Russian economic pressure (import bans / restrictions)", "aliases": {
+      "en": ["import ban","import restriction","import curb","trade lifeline"],
+      "de": ["Einfuhrverbot","Importverbot","Importbeschränkung"],
+      "ru": ["запрет на импорт","эмбарго","ограничения на ввоз"] }},
+    { "term": "membership referendum", "aliases": {
+      "en": ["referendum"], "de": ["Referendum"], "fr": ["référendum"], "ru": ["референдум"] }},
+    { "term": "Civil Contract (ruling party)", "aliases": {
+      "en": ["Civil Contract"], "ru": ["Гражданский договор"] }},
+    { "term": "Armenia Alliance / Prosperous Armenia (opposition blocs)", "aliases": {
+      "en": ["Armenia Alliance","Prosperous Armenia"], "ru": ["Армения Альянс","Процветающая Армения"] }},
+    { "term": "Kocharyan (pro-Russian opposition)", "aliases": {
+      "en": ["Kocharyan","Kocharian"], "ru": ["Кочарян"] }}
+  ]
+}

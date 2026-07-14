@@ -663,7 +663,7 @@
   subcategory: field
   asset_type: production_cluster
   commodities: [gas]
-  centroid_ids: [EUROPE-AZERBAIJAN]
+  centroid_ids: [ASIA-CAUCASUS]
   criticality: 3
   ranking_source: "EIA/IGU (Azerbaijan's flagship Caspian gas field)"
   rank_note: "Azerbaijan's flagship Caspian gas field feeding the Southern Gas Corridor to Europe."

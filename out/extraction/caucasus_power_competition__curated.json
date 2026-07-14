@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "fn_id": "caucasus_power_competition",
+    "note": "External-actor jockeying over the South Caucasus, gated by ASIA-CAUCASUS. Discriminator = SPECIFIC power-competition anchors (Azerbaijani energy geopolitics, Israel-Azerbaijan-Turkey-Iran dynamics incl. the Armenian-genocide-recognition spillover, Russia-Azerbaijan friction, US-Azerbaijan track, INSTC/North-South corridor). Deliberately NO bare external-country names (Russia/Iran/Turkey/Israel) - they collide with the pivot atomic and over-match; rely on named programs/companies/events instead."
+  },
+  "bundle": [
+    { "term": "SOCAR (Azerbaijan state oil)", "aliases": {
+      "en": ["SOCAR"], "ru": ["SOCAR","ГНКАР"] }},
+    { "term": "Southern Gas Corridor / TANAP", "aliases": {
+      "en": ["Southern Gas Corridor","TANAP","Baku Energy Week"], "de": ["Südlicher Gaskorridor"], "ru": ["Южный газовый коридор"] }},
+    { "term": "Caspian energy / hydrocarbons", "aliases": {
+      "en": ["Caspian","gas pipeline","hydrocarbons"], "de": ["Kaspisch","Gaspipeline"], "ru": ["Каспий","газопровод"] }},
+    { "term": "Armenian genocide recognition (Israel-Turkey spillover)", "aliases": {
+      "en": ["genocide recognition","Armenian genocide"], "de": ["Völkermord an den Armeniern","Armenier-Genozid"], "fr": ["génocide arménien"], "ru": ["геноцид армян"], "tr": [] }},
+    { "term": "INSTC / North-South corridor (Russia-Iran axis)", "aliases": {
+      "en": ["INSTC","North-South Transport Corridor","North-South corridor"], "ru": ["МТК Север-Юг","Север-Юг"] }},
+    { "term": "US-Azerbaijan / grand-deal track", "aliases": {
+      "en": ["grand deal","strategic partnership with Azerbaijan"] }},
+    { "term": "Russia-Azerbaijan friction (detained nationals / espionage)", "aliases": {
+      "en": ["espionage","detained nationals"], "ru": ["шпионаж","задержанных россиян"] }}
+  ]
+}
