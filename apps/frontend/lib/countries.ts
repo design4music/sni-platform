@@ -107,6 +107,11 @@ export const COUNTRY_NAMES: Record<string, string> = {
   BH: 'Bahrain',
   PS: 'Palestine',
 
+  // South Caucasus
+  GE: 'Georgia',
+  AM: 'Armenia',
+  AZ: 'Azerbaijan',
+
   // Africa
   ZA: 'South Africa',
   NG: 'Nigeria',
@@ -172,6 +177,9 @@ export const COUNTRY_TO_REGION: Record<string, string> = {
   IR: 'Middle East', IQ: 'Middle East', EG: 'Middle East', JO: 'Middle East',
   LB: 'Middle East', SY: 'Middle East', YE: 'Middle East', QA: 'Middle East',
   KW: 'Middle East', OM: 'Middle East', BH: 'Middle East', PS: 'Middle East',
+
+  // South Caucasus
+  GE: 'South Caucasus', AM: 'South Caucasus', AZ: 'South Caucasus',
 
   // Africa
   ZA: 'Africa', NG: 'Africa', KE: 'Africa', ET: 'Africa', GH: 'Africa',
