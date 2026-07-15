@@ -248,6 +248,16 @@ export default function StrategicAssetLayer({
       group.addTo(map);
       overlayRef.current = group;
     }
+
+    // Keep pressed routes above the selection overlay/spokes. Otherwise, if
+    // pipelines were made visible BEFORE activating the theater, the overlay is
+    // added on top of them and they read muted / feel unclickable. Bringing the
+    // pressed lines to front makes the result order-independent.
+    for (const { lines, asset } of linesRef.current.values()) {
+      if (affected.size > 0 && isPressed(asset, affected)) {
+        for (const l of lines) l.bringToFront();
+      }
+    }
   }, [selectedId, map]);
 
   // Build all layers. Point assets are visible at every zoom level
