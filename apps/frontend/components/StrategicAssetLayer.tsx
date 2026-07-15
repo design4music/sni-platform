@@ -283,9 +283,12 @@ export default function StrategicAssetLayer({
       if (Math.max(...lons) > 180) copies.push(latlngs.map(([lat, lon]) => [lat, lon - 360]));
       if (Math.min(...lons) < -180) copies.push(latlngs.map(([lat, lon]) => [lat, lon + 360]));
 
+      // Preserve current selection's pressed state across rebuilds (toggling
+      // routes/pipelines re-runs this effect but not the selection effect).
+      const linePressed = affectedRef.current.size > 0 && isPressed(asset, affectedRef.current);
       const lines: L.Polyline[] = [];
       for (const pts of copies) {
-        const line = L.polyline(pts, { ...routeStyle(asset.asset_type, false), interactive: true });
+        const line = L.polyline(pts, { ...routeStyle(asset.asset_type, linePressed), interactive: true });
         line.bindTooltip(assetTooltipHtml(asset), { direction: 'top', className: 'map-tooltip', sticky: true });
         line.on('mouseover', () => lines.forEach(l => l.setStyle(routeStyle(asset.asset_type, isPressed(asset, affectedRef.current), true))));
         line.on('mouseout', () => lines.forEach(l => l.setStyle(routeStyle(asset.asset_type, isPressed(asset, affectedRef.current)))));
@@ -305,7 +308,8 @@ export default function StrategicAssetLayer({
       const pos = positions.get(asset.id);
       if (!pos) continue;
 
-      const { html, size } = buildDot(asset, false);
+      const dotPressed = affectedRef.current.size > 0 && isPressed(asset, affectedRef.current);
+      const { html, size } = buildDot(asset, dotPressed);
       const marker = L.marker(pos, { icon: divIconFor(html, size), interactive: true });
       marker.bindTooltip(assetTooltipHtml(asset), { direction: 'top', className: 'map-tooltip' });
       marker.on('mouseover', () => {
@@ -329,7 +333,7 @@ export default function StrategicAssetLayer({
       const geom = conflict.anchor as { type: string; coordinates: number[] };
       if (geom?.type !== 'Point' || !geom.coordinates) continue;
 
-      const { html, size } = buildConflictBadge(conflict, false);
+      const { html, size } = buildConflictBadge(conflict, conflict.id === selectedRef.current);
       const marker = L.marker(toLatLng(geom.coordinates), {
         icon: divIconFor(html, size),
         interactive: true,
