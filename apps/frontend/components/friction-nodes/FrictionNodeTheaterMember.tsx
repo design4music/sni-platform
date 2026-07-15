@@ -10,7 +10,7 @@ interface Props {
 
 /**
  * One card per atomic FN inside a theater. Shows name, editorial summary
- * (clamped), event count, and stance bricks (small) for the FN's
+ * (clamped), headline count, and stance bricks (small) for the FN's
  * narratives. Click anywhere on the card to open the atomic FN page.
  */
 export default function FrictionNodeTheaterMember({ member, locale, isDe }: Props) {
@@ -52,12 +52,6 @@ export default function FrictionNodeTheaterMember({ member, locale, isDe }: Prop
       )}
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-dashboard-text-muted">
-        <span>
-          <span className="uppercase tracking-wider mr-1">
-            {isDe ? 'Ereignisse' : 'Events'}:
-          </span>
-          <span className="text-dashboard-text">{member.event_count}</span>
-        </span>
         <span>
           <span className="uppercase tracking-wider mr-1">
             {isDe ? 'Schlagzeilen' : 'Headlines'}:

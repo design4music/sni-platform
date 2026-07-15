@@ -199,12 +199,6 @@ export default async function FrictionNodePage({ params }: Props) {
               </span>
               <span className="text-dashboard-text">{view.narratives.length}</span>
             </div>
-            <div title={isDe ? 'Promotete Ereignisse, die das Phaenomen dieser FN beruehren' : 'Promoted events that touch this FN\'s phenomenon'}>
-              <span className="uppercase tracking-wider mr-1">
-                {isDe ? 'Ereignisse' : 'Events'}:
-              </span>
-              <span className="text-dashboard-text">{view.event_count}</span>
-            </div>
             <div title={isDe ? 'Schlagzeilen, die einer Narrativ-Koalition zugeordnet sind' : 'Headlines bucketed into a narrative coalition'}>
               <span className="uppercase tracking-wider mr-1">
                 {isDe ? 'Zugeordnete Schlagzeilen' : 'Attributed headlines'}:
@@ -316,7 +310,6 @@ async function renderTheaterPage(
     { name: fn.name, path: `/friction-nodes/${slug}` },
   ]);
 
-  const totalEvents = members.reduce((acc, m) => acc + m.event_count, 0);
   const totalAttributed = members.reduce(
     (acc, m) => acc + m.stances.reduce((a, s) => a + s.match_count, 0),
     0,
@@ -355,12 +348,6 @@ async function renderTheaterPage(
                 {isDe ? 'Konflikte in dieser Zone' : 'Conflicts in this zone'}:
               </span>
               <span className="text-dashboard-text">{members.length}</span>
-            </div>
-            <div>
-              <span className="uppercase tracking-wider mr-1">
-                {isDe ? 'Ereignisse gesamt' : 'Events (combined)'}:
-              </span>
-              <span className="text-dashboard-text">{totalEvents}</span>
             </div>
             <div>
               <span className="uppercase tracking-wider mr-1">
