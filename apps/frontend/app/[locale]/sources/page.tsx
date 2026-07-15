@@ -45,7 +45,7 @@ export default async function SourcesPage() {
   ]);
   const groupedFeeds = groupFeedsByRegionAndCountry(feeds);
 
-  const regionOrder = ['Americas', 'Europe', 'Asia', 'Middle East', 'South Caucasus', 'Africa', 'Oceania', 'International Organizations'];
+  const regionOrder = ['Americas', 'Europe', 'Asia', 'Middle East', 'Africa', 'Oceania', 'International Organizations'];
   const sortedRegions = regionOrder.filter(r => groupedFeeds[r]);
 
   // Collect all i18n strings needed by the client component

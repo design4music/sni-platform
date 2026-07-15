@@ -40,8 +40,8 @@ function routeStyle(assetType: string, pressed: boolean, hover = false): L.PathO
   const calm = assetType === 'pipeline' ? PIPELINE_CALM : CORRIDOR_CALM;
   return {
     color: pressed ? LINE_PRESSED : calm,
-    weight: pressed ? 1.8 : hover ? 1.8 : 1.1,
-    opacity: pressed ? 0.95 : hover ? 1 : 0.85,
+    weight: pressed ? 2.8 : hover ? 2.2 : 1.1,
+    opacity: pressed ? 1 : hover ? 1 : 0.85,
   };
 }
 

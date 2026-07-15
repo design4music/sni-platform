@@ -178,8 +178,8 @@ export const COUNTRY_TO_REGION: Record<string, string> = {
   LB: 'Middle East', SY: 'Middle East', YE: 'Middle East', QA: 'Middle East',
   KW: 'Middle East', OM: 'Middle East', BH: 'Middle East', PS: 'Middle East',
 
-  // South Caucasus
-  GE: 'South Caucasus', AM: 'South Caucasus', AZ: 'South Caucasus',
+  // South Caucasus (grouped under Asia, matching the ASIA-CAUCASUS centroid)
+  GE: 'Asia', AM: 'Asia', AZ: 'Asia',
 
   // Africa
   ZA: 'Africa', NG: 'Africa', KE: 'Africa', ET: 'Africa', GH: 'Africa',
