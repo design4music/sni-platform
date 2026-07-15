@@ -33,15 +33,19 @@ function isLinear(asset: Asset): boolean {
 // the dark ocean); pipelines in white (distinct from landmass, borders,
 // and trade routes when crossing water). Red when pressed.
 const CORRIDOR_CALM = '#3d5166';
-const PIPELINE_CALM = 'rgba(226,232,240,0.75)';
+const PIPELINE_CALM = 'rgba(226,232,240,0.92)';
 const LINE_PRESSED = '#ef4444';
 
 function routeStyle(assetType: string, pressed: boolean, hover = false): L.PathOptions {
-  const calm = assetType === 'pipeline' ? PIPELINE_CALM : CORRIDOR_CALM;
+  const isPipe = assetType === 'pipeline';
+  const calm = isPipe ? PIPELINE_CALM : CORRIDOR_CALM;
+  // Pipelines must stay legibly white against the dark (unhighlighted) map when
+  // NOT pressed -- e.g. after switching selection to another theater. Trade
+  // routes stay subtler.
   return {
     color: pressed ? LINE_PRESSED : calm,
-    weight: pressed ? 2.8 : hover ? 2.2 : 1.1,
-    opacity: pressed ? 1 : hover ? 1 : 0.85,
+    weight: pressed ? 2.8 : hover ? 2.2 : isPipe ? 1.4 : 1.1,
+    opacity: pressed ? 1 : hover ? 1 : isPipe ? 1 : 0.85,
   };
 }
 
