@@ -9,18 +9,17 @@ import {
   getFrictionNodeView,
   getFrictionNodeWeeklyActivity,
   getFrictionNodeEventsByWeek,
-  getSiblingFrictionNodes,
   getCentroidLookup,
   getTheaterForAtomicFn,
   getTheaterMembers,
   getFrictionNodeBySlug,
 } from '@/lib/friction-nodes';
 import type { CentroidLookupEntry } from '@/lib/friction-nodes-shared';
+import { filterNarrativesForDisplay } from '@/lib/friction-nodes-shared';
 import FrictionNodeNarrativeBricks from '@/components/friction-nodes/FrictionNodeNarrativeBricks';
 import FrictionNodeNarrativeCards from '@/components/friction-nodes/FrictionNodeNarrativeCards';
 import FrictionNodeActivityChart from '@/components/friction-nodes/FrictionNodeActivityChart';
 import FrictionNodeEventsByWeek from '@/components/friction-nodes/FrictionNodeEventsByWeek';
-import FrictionNodeRelated from '@/components/friction-nodes/FrictionNodeRelated';
 import CoalitionPills from '@/components/friction-nodes/CoalitionPills';
 import FrictionNodeTheaterMember from '@/components/friction-nodes/FrictionNodeTheaterMember';
 
@@ -66,14 +65,19 @@ export default async function FrictionNodePage({ params }: Props) {
     return renderTheaterPage(slug, fnRow, intlLocale);
   }
 
-  const [view, weekly, weeklyEvents, related, theater] = await Promise.all([
+  const [view, weekly, weeklyEvents, theater] = await Promise.all([
     getFrictionNodeView(slug, locale),
     getFrictionNodeWeeklyActivity(slug),
     getFrictionNodeEventsByWeek(slug, locale, 10),
-    getSiblingFrictionNodes(slug, locale),
     getTheaterForAtomicFn(slug, locale),
   ]);
   if (!view) return notFound();
+
+  // "Specific conflicts in this zone" -- same section as the theater
+  // landing page, reused here so a reader sees the full sibling set (incl.
+  // itself, muted) rather than a plain link list. Depends on theater's id,
+  // so it can't join the Promise.all above.
+  const theaterMembers = theater ? await getTheaterMembers(theater.id, locale) : [];
 
   // Resolve all centroid IDs touched by the FN or its narratives so we can
   // render country pills (flag + label) instead of raw IDs.
@@ -85,7 +89,11 @@ export default async function FrictionNodePage({ params }: Props) {
   );
 
   const isDe = intlLocale === 'de';
+  // Attributed-headline total stays the true aggregate (includes titles on
+  // any hidden thin narrative below); the narrative-count stat below uses
+  // displayNarratives so it matches the cards actually rendered.
   const totalAttributed = view.narratives.reduce((acc, n) => acc + n.match_count, 0);
+  const displayNarratives = filterNarrativesForDisplay(view.narratives);
 
   // Locale-aware label bundles.
   const brickLabels = {
@@ -133,16 +141,6 @@ export default async function FrictionNodePage({ params }: Props) {
     selectAWeek: isDe ? '(Top-Ereignisse aller Wochen)' : '(top events across all weeks)',
     showAll: isDe ? 'Alle Wochen' : 'All weeks',
   };
-  const relatedLabels = {
-    sectionTitle: isDe ? 'Andere Konflikte in dieser Zone' : 'Other conflicts in this zone',
-    sectionDescription: isDe
-      ? 'Weitere spezifische Konflikte unter derselben uebergreifenden Konfliktzone.'
-      : 'Other specific conflicts under the same umbrella conflict zone.',
-    none: isDe
-      ? 'Keine anderen Konflikte in dieser Zone.'
-      : 'No other conflicts in this zone.',
-  };
-
   // BreadcrumbList JSON-LD for SEO.
   const breadcrumbJson = breadcrumbList([
     { name: 'WorldBrief', path: '/' },
@@ -197,7 +195,7 @@ export default async function FrictionNodePage({ params }: Props) {
               <span className="uppercase tracking-wider mr-1">
                 {isDe ? 'Konkurrierende Narrative' : 'Competing narratives'}:
               </span>
-              <span className="text-dashboard-text">{view.narratives.length}</span>
+              <span className="text-dashboard-text">{displayNarratives.length}</span>
             </div>
             <div title={isDe ? 'Schlagzeilen, die einer Narrativ-Koalition zugeordnet sind' : 'Headlines bucketed into a narrative coalition'}>
               <span className="uppercase tracking-wider mr-1">
@@ -231,9 +229,11 @@ export default async function FrictionNodePage({ params }: Props) {
         </aside>
       </header>
 
-      {/* 1. Brick row */}
+      {/* 1. Brick row -- first two narratives always shown; a thin 3rd+
+           nuance narrative stays hidden until it crosses 5 attributed
+           titles (see filterNarrativesForDisplay). */}
       <FrictionNodeNarrativeBricks
-        narratives={view.narratives}
+        narratives={displayNarratives}
         locale={intlLocale}
         labels={brickLabels}
       />
@@ -241,7 +241,7 @@ export default async function FrictionNodePage({ params }: Props) {
       {/* 2. Narrative distribution chart (interpretive layer only) */}
       <section className="mb-10">
         <FrictionNodeActivityChart
-          narratives={view.narratives}
+          narratives={displayNarratives}
           weekly={weekly}
           labels={chartLabels}
         />
@@ -249,7 +249,7 @@ export default async function FrictionNodePage({ params }: Props) {
 
       {/* 3. Detailed narrative cards */}
       <FrictionNodeNarrativeCards
-        narratives={view.narratives}
+        narratives={displayNarratives}
         centroidLookup={centroidLookup}
         locale={intlLocale}
         labels={cardLabels}
@@ -258,8 +258,33 @@ export default async function FrictionNodePage({ params }: Props) {
       {/* 4. Events per week — clickable bars + per-week list */}
       <FrictionNodeEventsByWeek weeks={weeklyEvents} labels={eventsLabels} />
 
-      {/* 5. Related friction nodes */}
-      <FrictionNodeRelated related={related} locale={intlLocale} labels={relatedLabels} />
+      {/* 5. Specific conflicts in this zone -- same section as the theater
+           landing page; the current FN's own card renders muted/inert. */}
+      {theaterMembers.length > 0 && (
+        <section className="mb-10">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-dashboard-text mb-1">
+              {isDe ? 'Spezifische Konflikte in dieser Zone' : 'Specific conflicts in this zone'}
+            </h2>
+            <p className="text-sm text-dashboard-text-muted">
+              {isDe
+                ? 'Eigenstaendige Konflikte mit eigenen Koalitionen. Schlagzeilen, die hierher gehoeren, erscheinen nicht oben.'
+                : 'Distinct conflicts with their own coalitions. Headlines that fit here do not show in the umbrella above.'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {theaterMembers.map((m) => (
+              <FrictionNodeTheaterMember
+                key={m.id}
+                member={m}
+                locale={intlLocale}
+                isDe={isDe}
+                isCurrent={m.id === slug}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Methodology note */}
       <div className="mt-12 pt-6 border-t border-dashboard-border text-xs text-dashboard-text-muted">
@@ -293,6 +318,9 @@ async function renderTheaterPage(
     getFrictionNodeView(slug, intlLocale),
   ]);
   const theaterNarratives = view?.narratives ?? [];
+  // Card/brick display only -- first two theater narratives always shown;
+  // a thin 3rd+ nuance narrative hides until it crosses 5 attributed titles.
+  const displayTheaterNarratives = filterNarrativesForDisplay(theaterNarratives);
   // Resolve every centroid touched by the theater itself or by any of its
   // narratives, so narrative-card country pills find their flag/label.
   const allCentroidIds = new Set<string>(fn.centroid_ids ?? []);
@@ -375,7 +403,7 @@ async function renderTheaterPage(
       {theaterNarratives.length > 0 && (
         <>
           <FrictionNodeNarrativeBricks
-            narratives={theaterNarratives}
+            narratives={displayTheaterNarratives}
             locale={intlLocale}
             labels={{
               sectionTitle: isDe ? 'Konkurrierende Narrative' : 'Competing narratives',
@@ -386,7 +414,7 @@ async function renderTheaterPage(
             }}
           />
           <FrictionNodeNarrativeCards
-            narratives={theaterNarratives}
+            narratives={displayTheaterNarratives}
             centroidLookup={centroidLookup}
             locale={intlLocale}
             labels={{

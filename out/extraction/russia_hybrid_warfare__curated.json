@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "fn_id": "russia_hybrid_warfare",
+    "centroid": "EUROPE-BALTIC",
+    "curated_from": "v3 -- pruned after audit: dropped arson (generic crime word, e.g. UK hate-crime arson unrelated), Estonia/Finland bare country names (huge volume of unrelated domestic news, e.g. 'Finland's social affairs minister appointed'; Gulf of Finland already covers the real geography), bare espionage/disinformation (58%/37% foreign, dominated by Israel/Iran/China spy and info-war coverage; active measures already anchors the Russian-tradecraft angle precisely)"
+  },
+  "bundle": [
+    {"term": "sabotage", "type": "concept", "aliases": {"ar": ["تخريب"], "de": ["Sabotage"], "en": ["sabotage"], "es": ["sabotaje"], "fr": ["sabotage"], "hi": ["तोड़फोड़"], "it": ["sabotaggio"], "ja": ["サボタージュ"], "ru": ["саботаж"], "zh": ["破坏"]}},
+    {"term": "saboteur", "type": "concept", "aliases": {"ar": ["مخرب"], "de": ["Saboteur"], "en": ["saboteur"], "es": ["saboteador"], "fr": ["saboteur"], "hi": ["तोड़फोड़ करने वाला"], "it": ["sabotatore"], "ja": ["サボタージュを行う者"], "ru": ["саботажник"], "zh": ["破坏者"]}},
+    {"term": "undersea cable", "type": "concept", "aliases": {"ar": ["كابل بحري"], "de": ["Unterseekabel"], "en": ["undersea cable", "subsea cable"], "es": ["cable submarino"], "fr": ["câble sous-marin"], "hi": ["समुद्र के नीचे केबल"], "it": ["cavo sottomarino"], "ja": ["海底ケーブル"], "ru": ["подводный кабель"], "zh": ["海底电缆"]}},
+    {"term": "Baltic Sea", "type": "entity", "aliases": {"ar": ["بحر البلطيق"], "de": ["Ostsee"], "en": ["Baltic Sea"], "es": ["mar Báltico"], "fr": ["mer Baltique"], "hi": ["बाल्टिक सागर"], "it": ["mar Baltico"], "ja": ["バルト海"], "ru": ["Балтийское море"], "zh": ["波罗的海"]}},
+    {"term": "shadow fleet", "type": "concept", "aliases": {"ar": ["الأسطول الخفي"], "de": ["Schattenflotte"], "en": ["shadow fleet", "dark fleet"], "es": ["flota fantasma"], "fr": ["flotte fantôme"], "hi": ["छाया बेड़ा"], "it": ["flotta ombra"], "ja": ["シャドー・フリート"], "ru": ["теневой флот"], "zh": ["影子船队"]}},
+    {"term": "anchor-dragging", "type": "concept", "aliases": {"ar": [], "de": [], "en": ["anchor-dragging", "anchor dragging"], "es": [], "fr": [], "hi": [], "it": [], "ja": [], "ru": [], "zh": []}},
+    {"term": "GPS jamming", "type": "concept", "aliases": {"ar": ["تشويش GPS"], "de": ["GPS-Störung"], "en": ["GPS jamming"], "es": ["interferencia GPS"], "fr": ["brouillage GPS"], "hi": ["जीपीएस जैमिंग"], "it": ["disturbo GPS"], "ja": ["GPS妨害"], "ru": ["глушение GPS"], "zh": ["GPS干扰"]}},
+    {"term": "spoofing", "type": "concept", "aliases": {"ar": ["انتحال الإشارة"], "de": [], "en": ["spoofing"], "es": [], "fr": [], "hi": ["स्पूफिंग"], "it": [], "ja": ["スプーフィング"], "ru": ["спуфинг"], "zh": ["欺骗式干扰"]}},
+    {"term": "active measures", "type": "concept", "aliases": {"ar": ["تدابير نشطة"], "de": ["aktive Maßnahmen"], "en": ["active measures"], "es": ["medidas activas"], "fr": ["mesures actives"], "hi": ["सक्रिय उपाय"], "it": ["misure attive"], "ja": ["アクティブメジャーズ"], "ru": ["активные мероприятия"], "zh": ["积极措施"]}},
+    {"term": "hybrid warfare", "type": "concept", "aliases": {"ar": ["حرب هجينة"], "de": ["hybride Kriegsführung"], "en": ["hybrid warfare", "hybrid threat", "hybrid threats"], "es": ["guerra híbrida"], "fr": ["guerre hybride"], "hi": ["संकर युद्ध"], "it": ["guerra ibrida"], "ja": ["ハイブリッド戦"], "ru": ["гибридная война"], "zh": ["混合战争"]}},
+    {"term": "gray zone", "type": "concept", "aliases": {"ar": ["منطقة رمادية"], "de": ["Grauzone"], "en": ["gray zone", "grey zone"], "es": ["zona gris"], "fr": ["zone grise"], "hi": ["ग्रे ज़ोन"], "it": ["zona grigia"], "ja": ["グレーゾーン"], "ru": ["серая зона"], "zh": ["灰色地带"]}},
+    {"term": "Nord Stream", "type": "entity", "aliases": {"ar": ["نورد ستريم"], "de": [], "en": ["Nord Stream"], "es": [], "fr": [], "hi": ["नॉर्ड स्ट्रीम"], "it": [], "ja": ["ノルドストリーム"], "ru": ["Северный поток"], "zh": ["北溪"]}},
+    {"term": "Druzhba", "type": "entity", "aliases": {"ar": ["دروجبا"], "de": [], "en": ["Druzhba"], "es": [], "fr": [], "hi": ["द्रुज़्बा"], "it": [], "ja": ["ドルジバ"], "ru": ["Дружба"], "zh": ["友谊管道"]}},
+    {"term": "Eagle S", "type": "entity", "aliases": {"ar": [], "de": [], "en": ["Eagle S"], "es": [], "fr": [], "hi": [], "it": [], "ja": [], "ru": [], "zh": []}},
+    {"term": "Gulf of Finland", "type": "entity", "aliases": {"ar": ["خليج فنلندا"], "de": ["Finnischer Meerbusen"], "en": ["Gulf of Finland"], "es": ["golfo de Finlandia"], "fr": ["golfe de Finlande"], "hi": ["फ़िनलैंड की खाड़ी"], "it": ["golfo di Finlandia"], "ja": ["フィンランド湾"], "ru": ["Финский залив"], "zh": ["芬兰湾"]}}
+  ]
+}

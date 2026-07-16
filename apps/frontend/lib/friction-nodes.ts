@@ -27,7 +27,6 @@ export type {
   NarrativeWeeklyPoint,
   FnRecentEvent,
   FnWeekBucket,
-  RelatedFn,
   CentroidLookupEntry,
   TheaterPointer,
   TheaterMemberFn,
@@ -42,7 +41,6 @@ import type {
   NarrativeWeeklyPoint,
   FnRecentEvent,
   FnWeekBucket,
-  RelatedFn,
   CentroidLookupEntry,
   TheaterPointer,
   TheaterMemberFn,
@@ -626,39 +624,6 @@ export async function getFrictionNodeEventsByWeek(
       }
     }
     return Array.from(byWeek.values()).sort((a, b) => a.week.localeCompare(b.week));
-  });
-}
-
-/**
- * Other atomic conflicts in the same theater (siblings under the same
- * fn_type='theater' row whose member_fn_ids contains this slug).
- * Returns empty for theater rows themselves.
- */
-export async function getSiblingFrictionNodes(
-  slug: string,
-  locale?: string,
-): Promise<RelatedFn[]> {
-  const loc = locale2(locale);
-  return cached(`fn_siblings:${slug}:${loc}`, TTL, async () => {
-    return query<RelatedFn>(
-      `WITH theater AS (
-         SELECT member_fn_ids
-         FROM friction_nodes
-         WHERE fn_type = 'theater'
-           AND is_active = true
-           AND $1 = ANY(member_fn_ids)
-         LIMIT 1
-       )
-       SELECT fn.id,
-              ${loc === 'de' ? 'COALESCE(fn.name_de, fn.name_en)' : 'fn.name_en'} AS name,
-              0::int AS shared_narratives
-       FROM friction_nodes fn, theater
-       WHERE fn.id = ANY(theater.member_fn_ids)
-         AND fn.id != $1
-         AND fn.is_active = true
-       ORDER BY fn.name_en`,
-      [slug],
-    );
   });
 }
 

@@ -89,12 +89,6 @@ export interface CentroidLookupEntry {
   iso2: string | null;     // first iso_code if any (for FlagImg)
 }
 
-export interface RelatedFn {
-  id: string;
-  name: string;
-  shared_narratives: number;
-}
-
 export interface FrictionNodeView {
   fn: FrictionNode;
   narratives: NarrativeOnFn[];
@@ -122,4 +116,22 @@ export function colorForNarrative(stance: number | null): string {
   if (stance === 0) return '#71717a';
   if (stance === 1) return '#10b981';
   return '#15803d';
+}
+
+/**
+ * Card/brick display filter: the first two narratives (by display_order --
+ * normally the dominant pro/con pair) always render. A third-or-later
+ * narrative (typically a minority nuance stance) is hidden until it
+ * accumulates at least `minCount` attributed titles, so a newly-added thin
+ * narrative doesn't render as a conspicuously empty card next to populated
+ * ones. It reappears on its own once the daemon's incremental attribution
+ * crosses the threshold -- no manual toggle needed. Does not affect
+ * page-level stats (e.g. "competing narratives" counts) -- apply only to
+ * the arrays passed into FrictionNodeNarrativeBricks/Cards.
+ */
+export function filterNarrativesForDisplay<T extends { match_count: number }>(
+  narratives: T[],
+  minCount = 5,
+): T[] {
+  return narratives.filter((n, i) => i < 2 || n.match_count >= minCount);
 }
