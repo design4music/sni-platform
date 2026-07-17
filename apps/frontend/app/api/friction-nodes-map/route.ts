@@ -78,7 +78,10 @@ export async function GET() {
       FROM strategic_assets
       WHERE is_active = true
     `),
-    // Events link only to atomic FNs; theaters aggregate through member_fn_ids.
+    // Events link only to atomic FNs. Theaters aggregate through member_fn_ids;
+    // a standalone atomic (one no active theater bundles) aggregates its own id
+    // and appears here in its own right — same shape, so all downstream mapping
+    // (conflicts marker, asset stress) treats it identically to a theater.
     query<TheaterRow>(`
       SELECT t.id, t.name_en, t.scope, t.affected_asset_ids, t.centroid_ids, t.anchor_point,
              COUNT(efn.event_id) AS total_events,
@@ -88,6 +91,22 @@ export async function GET() {
       LEFT JOIN events_v3 e ON e.id = efn.event_id
       WHERE t.fn_type = 'theater' AND t.is_active = true
       GROUP BY t.id
+
+      UNION ALL
+
+      SELECT a.id, a.name_en, a.scope, a.affected_asset_ids, a.centroid_ids, a.anchor_point,
+             COUNT(efn.event_id) AS total_events,
+             MAX(e.last_active)::text AS last_active
+      FROM friction_nodes a
+      LEFT JOIN event_friction_nodes efn ON efn.fn_id = a.id
+      LEFT JOIN events_v3 e ON e.id = efn.event_id
+      WHERE a.fn_type = 'atomic' AND a.is_active = true
+        AND NOT EXISTS (
+          SELECT 1 FROM friction_nodes th
+          WHERE th.fn_type = 'theater' AND th.is_active = true
+            AND a.id = ANY(th.member_fn_ids)
+        )
+      GROUP BY a.id
     `),
     query<FlowRow>(`
       SELECT id, commodity, from_asset, to_asset, via_asset_ids, geometry,

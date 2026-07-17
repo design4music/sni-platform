@@ -71,6 +71,36 @@ export default function FrictionNodesBrowser({ data, locale }: Props) {
           <div className="space-y-3">
             {region.theaters.map((theater) => (
               <div key={theater.id} className="border border-dashboard-border rounded-lg overflow-hidden">
+                {/* Standalone atomic: no members to expand, link straight to it */}
+                {theater.standalone ? (
+                  <Link
+                    href={`/${locale}/friction-nodes/${theater.id}`}
+                    className="block px-4 py-3 bg-dashboard-card hover:bg-dashboard-card-hover transition"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-dashboard-text">
+                            {theater.name}
+                          </span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-dashboard-border text-dashboard-text-muted">
+                            {theater.event_count} {isDe ? 'Ereignisse' : 'events'}
+                          </span>
+                          {isDormant(theater.last_activity_date) && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-slate-700/30 text-slate-300">
+                              {isDe ? 'Ruhend' : 'Dormant'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-dashboard-text-muted">
+                          {isDe ? 'Zuletzt aktiv' : 'Last active'}: {formatDate(theater.last_activity_date)}
+                        </div>
+                      </div>
+                      <span className="text-dashboard-text-muted text-lg shrink-0">→</span>
+                    </div>
+                  </Link>
+                ) : (
+                <>
                 {/* Theater header */}
                 <button
                   onClick={() => toggleTheater(theater.id)}
@@ -142,6 +172,8 @@ export default function FrictionNodesBrowser({ data, locale }: Props) {
                       ))
                     )}
                   </div>
+                )}
+                </>
                 )}
               </div>
             ))}

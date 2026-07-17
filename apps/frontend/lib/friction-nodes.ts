@@ -695,6 +695,14 @@ export interface TheaterWithMembers {
   event_count: number;
   last_activity_date: string | null;
   members: FrictionNodeWithActivity[];
+  /**
+   * True for an atomic FN that no theater bundles, surfaced here as a
+   * top-level zone in its own right. Conflicts whose real coverage supports
+   * only one atomic (South China Sea) have no theater to nest under; without
+   * this they load but never render. `members` is always empty — the entry
+   * links straight to the atomic's own page.
+   */
+  standalone?: boolean;
 }
 
 export interface FnByRegion {
@@ -737,13 +745,18 @@ export async function getAllFrictionNodesByRegion(
       name: string;
       description: string | null;
       editorial_summary: string | null;
+      centroid_ids: string[];
     }>(
       `SELECT id,
               ${loc === 'de' ? 'COALESCE(name_de, name_en)' : 'name_en'} AS name,
               ${loc === 'de' ? 'COALESCE(description_de, description_en)' : 'description_en'} AS description,
-              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary
+              ${loc === 'de' ? 'COALESCE(editorial_summary_de, editorial_summary_en)' : 'editorial_summary_en'} AS editorial_summary,
+              centroid_ids
        FROM friction_nodes
        WHERE is_active = true AND fn_type = 'atomic'`,
+    );
+    const centroidsByAtomic = new Map<string, string[]>(
+      atomicRows.map((r) => [r.id, r.centroid_ids ?? []]),
     );
 
     // Get event counts for atomic FNs only (theaters don't have direct events)
@@ -814,6 +827,26 @@ export async function getAllFrictionNodesByRegion(
 
       if (!byRegion.has(region)) byRegion.set(region, []);
       byRegion.get(region)!.push(theaterRecord);
+    }
+
+    // Atomics no theater claims stand on their own. Their detail page already
+    // renders (getTheaterForAtomicFn just returns null); this is the only
+    // place they would otherwise drop out of the UI entirely.
+    const bundledIds = new Set(theaterRows.flatMap((t) => t.member_fn_ids ?? []));
+    for (const [id, atomic] of atomicById) {
+      if (bundledIds.has(id)) continue;
+      const region = extractRegion(centroidsByAtomic.get(id) ?? []);
+      if (!byRegion.has(region)) byRegion.set(region, []);
+      byRegion.get(region)!.push({
+        id: atomic.id,
+        name: atomic.name,
+        description: atomic.description,
+        editorial_summary: atomic.editorial_summary,
+        event_count: atomic.event_count,
+        last_activity_date: atomic.last_activity_date,
+        members: [],
+        standalone: true,
+      });
     }
 
     // Sort regions in display order, sort theaters within region
