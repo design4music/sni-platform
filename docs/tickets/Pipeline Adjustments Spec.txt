@@ -1,0 +1,437 @@
+# Pipeline Adjustments. Spec.
+## Current Output Problems (USA · geo_economy · January)
+
+### 1) Domestic section is unusable
+
+**Two incompatible object types are mixed together:**
+
+* **“Theme buckets”** (keyword + count):
+
+  * Examples: *America (15)*, *USA (10)*, *US (161)*, *Trump (399)*, *Fed (84)*, *Federal Reserve (5)*, Arabic variants of “Trump”, etc.
+  * Problems:
+
+    * Keywords are **generic identity tokens** (country names, demonyms, leaders).
+    * Same concept split across variants (*US / USA / U.S.*, *Fed / Federal Reserve*).
+    * No normalization or consolidation.
+    * These buckets consume the majority of titles and carry **no informational value**.
+
+* **“Specific events”** (LLM-generated summaries with many sources):
+
+  * Example: a single event dated Jan 18 summarizing **many unrelated topics**:
+
+    * EU export controls vs US
+    * South Korea tariff talks
+    * Daimler Truck losses
+    * Elon Musk vs OpenAI
+    * Apple/Google benefits
+    * Turkish content
+  * Problems:
+
+    * These are **not events**, but arbitrary compilations.
+    * Titles are mixed with **no thematic coherence**.
+    * Summaries describe nothing concrete.
+    * Source counts (20–30+) hide multiple distinct stories.
+
+**Result:**
+Domestic “events” are either meaningless keyword dumps or incoherent mega-compilations.
+
+---
+
+### 2) International content leaks into Domestic
+
+* Domestic bucket contains:
+
+  * Greenland / Groenlandia / Grönland references
+  * European, Asian, Middle Eastern items
+* Indicates **geo separation is ineffective at later stages**, even if Phase 2 matched correctly.
+
+---
+
+### 3) Bilateral / Multilateral section looks structured, but isn’t
+
+At first glance:
+
+* 15 bilateral centroids appear (Nordic, China, Iran, India, EU, Venezuela, France, Taiwan, South Korea, Russia, Germany, Canada, UK).
+* This looks promising.
+
+Inside each bilateral bucket:
+
+* **Country-name buckets dominate everything**
+
+  * Example: *Greenland (188 sources)* under Nordic
+  * *China / Chinese* under China
+  * *India / Indian* under India
+
+* These buckets absorb **almost all titles**, leaving nothing meaningful beneath.
+
+* **Language variants fragment the same concept**
+
+  * *Greenland / Groenland / Groenlandia / Arabic variants* appear as separate buckets.
+  * Each often with 1–2 sources → noise.
+
+* **Generic actors leak again**
+
+  * Buckets like *US*, *Trump*, *EU* appear inside bilateral sections.
+  * These are not topics; they are identity anchors.
+
+---
+
+### 4) Good events exist — but are isolated and not generalized
+
+Example (France):
+
+* *“Boeing surpasses Airbus in aircraft orders…”* (4 sources, multilingual)
+  → **This is a correct event.**
+
+But:
+
+* A near-duplicate *“Airbus …”* event exists separately (3 sources).
+* Same story, same actors, same topic — **not clustered together**.
+* Indicates the system can produce good events **only accidentally**, not reliably.
+
+---
+
+### 5) Structural mixing of incompatible objects
+
+Across the UI:
+
+* Keyword-count buckets
+* LLM-generated summaries
+* Single-title items
+* Multilingual duplicates
+
+All appear at the same hierarchy level, with no clear distinction.
+
+**For a human reader:**
+
+* Impossible to tell what is an event vs a topic vs noise.
+* No way to scan “what actually happened”.
+
+---
+
+## Why this happens (diagnosis)
+
+* Alias-based bucketing currently includes:
+
+  * **Identity aliases** (country names, demonyms, leaders).
+  * **Generic actors** (US, Trump, EU).
+* “Biggest bucket wins” logic guarantees these dominate.
+* No minimum size thresholds → one-off aliases become buckets.
+* LLM is asked to cluster **pre-destroyed structure**:
+
+  * Mixed-language
+  * Mixed-topic
+  * Mixed-geo
+* Result: LLM outputs are forced to summarize incoherent input and fail predictably.
+
+---
+
+**Bottom line:**
+The current output does not represent events, topics, or narratives in any meaningful sense.
+It is dominated by identity keywords, language variants, and arbitrary LLM aggregation.
+
+Below is a **super-condensed, human-level requirements summary** you can give to Claude.
+It describes **what the system must do and how it should behave**, without implementation detail.
+
+---
+
+## Solutions. Core Ideas.
+
+Mechanical clustering **does not replace** LLM reasoning.
+It exists **only to reduce search space** so the LLM does not scan 2,000 titles at once.
+
+LLM remains responsible for:
+
+* deciding what is a *real event*
+* grouping titles into coherent stories
+* writing summaries
+* rejecting titles that do not belong
+
+---
+
+## Target UI / Mental Model
+
+### Top level (only two sections)
+
+1. **Domestic**
+2. **International**
+
+---
+
+## Domestic
+
+* Domestic contains **events only**.
+
+* Each event has:
+
+  * summary
+  * date
+  * full list of sources (ALL titles, nothing hidden)
+
+* LLM creates events by analyzing **pre-grouped buckets**, not the full corpus.
+
+* Titles that do **not** form a coherent event go into:
+
+  * **“Other Domestic Events”** (one bucket, sources only)
+
+* Define a per-CTM threshold `MIN_EVENT_SOURCES` based on CTM size and type.
+* Start with the concrete rule:
+
+* **US Domestic (any US CTM):** `min_event_sources = 10`
+* **US International bilaterals (inside US CTM):** `min_event_sources = 5`
+* **Non-US CTMs:** `min_event_sources = 3`
+
+Below threshold → “Other Domestic Events”.
+
+---
+
+## International
+
+* International is split into **bilateral buckets**:
+
+  * US–China
+  * US–India
+  * US–Germany
+  * US–Russia
+  * etc.
+
+* Inside each bilateral bucket:
+
+  * Event 1
+  * Event 2
+  * Event 3
+  * …
+  * **Other Events** (sources only)
+
+* Same rules as Domestic:
+
+  * Events are created by LLM
+  * Minimum size threshold applies
+  * All titles must be visible somewhere
+
+---
+
+## Role of Keywords (Critical Change)
+
+* Keywords are **not events**.
+* Their function to **reduce LLM's cognitive load** by splitting the whole volume of titles to smaller thematic buckets.
+
+Key changes:
+
+* Use **ALL matched keywords per title**, not just one.
+* Many titles have 2–5 keywords → this is an asset, not noise.
+* Keyword combinations (e.g. *EU + Greenland + Trump + tariffs*) often strongly indicate a single story.
+* LLM should be allowed to:
+
+  * inspect keyword sets
+  * group titles with *similar keyword combinations*
+  * verify coherence by reading titles if needed
+
+### IDEA №1!!! Consider deterministic keyword-set similarity with **Jaccard similarity** or **overlap rules**
+
+We want:
+
+* `["greenland","trump","us"]` and `["greenland","trump"]` → same bucket
+* `["fed","trump","us"]` → different bucket
+
+So let each title have a cleaned keyword set `K` (possibly after removing generic identity tokens like `us/usa/america/trump`).
+
+Group titles if:
+
+* they share at least `m` keywords, OR
+* Jaccard(K1, K2) ≥ `t`
+
+Example settings that would behave as you expect:
+
+* `m = 2` OR `t = 0.6`
+
+Then:
+
+* Greenland/Trump/US vs Greenland/Trump
+  overlap is high (especially after removing generic `us`) → grouped
+* Fed/Trump/US vs Greenland/Trump/US
+  overlap low → not grouped
+
+### Important caveat
+
+If you keep `trump` and `us` in the keyword sets, they will create false similarity everywhere. So for similarity grouping to work, you must:
+
+* either **remove** generic anchors before set similarity, or
+* **downweight** them (treat them as not-counting).
+
+This is still deterministic, not “semantic embeddings.”
+
++++++++++++++++++++++
+### IDEA №2!!! Have LLM pass to detect **meaningfully similar** keyword sets, e.g.
+ 
+* `["refugees","trump","us"]` and `["deportation","trump"]` and `["immigrants","us", "trump"]` → same bucket
+
+---
+
+## LLM Review / Validation Step (New)
+
+When LLM processes a bucket, it should:
+
+* evaluate whether keyword-grouped titles belong together
+* split or discard titles that don’t fit
+* ensure each event is internally coherent
+
+This is **intentional human-like judgment**, not mechanical grouping.
+
+---
+
+## Use of Date (Soft Signal)
+
+* Publication date is a **strong but not absolute** indicator.
+* Stories within the same day (or ±1 day) with similar keywords are *very likely* the same event.
+* Same keywords across distant dates → treat cautiously.
+
+---
+
+## Important Corrections to Previous Logic
+
+* ❌ **Remove “biggest bucket absorbs all” rule inside sub-buckets**
+
+  * This rule is valid only at the **bilateral level** (to absorb some multilateral spillover).
+  * It was a mistake inside Domestic or within bilateral sub-clusters.
+
+* ❌ Do **not** cluster by generic identity keywords:
+
+  * US / USA / America
+  * Trump
+  * country names alone
+
+* These are context anchors, not topics.
+
+---
+
+## Visibility Requirement (Non-negotiable)
+
+* No “+33 more sources hidden”.
+* All titles must be visible within the tree:
+
+  * Domestic → Event → Sources
+  * International → US–X → Event → Sources
+  * Other Events → Sources
+
+---
+
+## Data Flexibility
+
+* It should be possible to:
+
+  * add or adjust keywords manually in DB
+  * backfill titles for a single CTM/month quickly
+* This supports rapid iteration and correction.
+
+---
+
+## Summary in One Sentence
+
+> Mechanical keyword grouping narrows the field; the LLM then *actively reasons* over smaller, keyword-rich, date-aware buckets to produce coherent events, while all leftover titles are transparently exposed as “Other Events.”
+
+Here is your **Vision of Success** in a clean, requirements-style form.
+
+---
+
+## Frontend End State
+
+### Top-level structure (only two)
+
+1. **Domestic**
+2. **International**
+
+No global “Key Events.”
+No global “Other Sources.”
+
+---
+
+## Domestic
+
+### Content
+
+Domestic contains a list of **events**.
+
+Each **event** shows:
+
+* **Date**
+* **LLM-generated summary** (meaningful, single-story)
+* **Source count**
+* Expandable list showing **all sources** (no “+33 more sources” hiding)
+
+### Quality / Size constraints
+
+* Typical event size: **10–50 sources**
+* **>50 sources** → indicates event is too broad / mixes unrelated topics
+* **<10 sources** (for US domestic) → indicates event is too granular / fragmented
+
+### Minimum threshold policy
+
+* **US Domestic:** event must have **≥10 titles**
+* Anything with **<10 titles** goes to a single bucket:
+
+  * **Other Domestic Coverage** (sources-only list)
+
+### Expected shape
+
+* Roughly **up to ~20 domestic events**
+* Remaining titles accumulate in **Other Domestic Coverage**
+
+---
+
+## International
+
+### Structure
+
+International is split into **bilateral relationship buckets**:
+
+* US–Nordic
+* US–China
+* US–Iran
+* US–India
+* etc. (as currently)
+
+### Inside each bilateral bucket
+
+A list of **events**, with identical UI and semantics as Domestic:
+
+Each **event** shows:
+
+* Date
+* LLM summary
+* Source count
+* Expandable list with **all sources**
+
+### Quality / Size constraints
+
+* Typical event size: **5–30/40 sources**
+* **>40–50** → too broad; must split into multiple events
+* **<5** → too granular; should fall into “other coverage”
+
+### Minimum threshold policy
+
+* **International bilateral events:** event must have **≥5 titles**
+* Anything with **<5 titles** goes into that bilateral’s own bucket:
+
+  * **Other {Centroid} Coverage** (e.g., “Other China Coverage”)
+
+### Expected behavior on “hot topics”
+
+Example: Nordic has many Greenland-tagged titles.
+This should yield **multiple meaningful Greenland-related events**, not one giant “Greenland (188)” bucket.
+
+---
+
+## Critical invariants
+
+* **One title belongs to exactly one event/bucket location.**
+
+  * No duplicates across different events or folders.
+* **100% of titles are visible somewhere** within this tree:
+
+  * either a concrete event, or an “other coverage” bucket at the correct scope (Domestic or specific bilateral).
+* The old top-level “Other sources” section is **removed/deprecated**.
+
+---
+
+

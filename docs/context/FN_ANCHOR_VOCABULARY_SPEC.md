@@ -141,6 +141,22 @@ Atomic components, not phrases.
    `narratives_v2.framing_keywords`.
 6. **No 2-character tokens.** Substring match makes them dangerous
    (`IS` ⊂ `Israel`).
+6b. **No short/generic non-English aliases.** Non-English aliases (any
+   language but `en`) match via substring with no word-boundary
+   protection (see `ALIAS_MATCH_OTHER_SQL` in
+   `scripts/bootstrap_friction_node.py`) -- English gets boundary
+   protection, other languages don't and structurally can't (German
+   compounds words with no separator, so a boundary regex would silently
+   stop matching real compounds even with correct spelling). This is safe
+   for long, specific words but the same collision risk as rule 6 applies
+   to short/generic ones -- avoid them the same way you'd avoid a 2-char
+   English token.
+6c. **Write non-English aliases in native orthography, not ASCII
+   transliteration.** `Fluechtlinge` never matches real text using
+   `Flüchtlinge` -- it's a literal character mismatch, not a boundary
+   issue. Same for stripped Spanish/French/Italian accents
+   (`corrupcion` vs `corrupción`, `negociation` vs `négociation`). Write
+   `ä ö ü ß`, `á é í ó ú ñ`, `à â ç é è ê ë î ï ô ù û ü`, etc. directly.
 7. **Atomic FN bundles do not duplicate their parent theater bundle**
    — the conjunction lets either match qualify; duplication only
    inflates the file.
@@ -182,7 +198,26 @@ get their own list because the script differs. No collapse there.
 
 The four-step process. Run for every new FN.
 
-### Step 1 — Seed selection (5 minutes)
+**Model assignment** (learned from the `eu_cohesion_theater` build,
+2026-07-15 — see `project_eu_cohesion_theater` memory for the full
+session). The steps split cleanly into two kinds: *mechanical*
+(follow a checklist against known facts — cheap model is fine) and
+*judgment* (read ambiguous real-world output and decide what it
+means — reasoning depth earns its cost here). Concretely:
+
+| Step | Model | Why |
+|---|---|---|
+| 1. Seed selection | **Sonnet** | Picking obvious topic words once you know the phenomenon. |
+| 2. Run extractor | **Sonnet** (or no LLM — it's a script) | Mechanical script invocation. |
+| 3. Human curation | **Opus** for the *drop/keep calls*, Sonnet-OK for *applying* a decided rule | The 7 hard rules are checklist-mechanical, but deciding whether an alias is a real leak or benign co-occurrence is not: auditing `eu_right_realignment`, `Bardella` showed 84% "%foreign" against `MIDEAST-LEVANT`, and every one of those titles *also* carried `FRANCE` — reading the auditor's raw percentage without checking co-occurrence would have wrongly dropped a precise anchor. That kind of "does this number actually mean what it looks like" check is where a shallower pass tends to accept a plausible-looking metric instead of verifying it. |
+| 4. Apply | **Sonnet** | Script invocation, idempotent, no judgment. |
+| Verify (row exists) | **Sonnet** | Simple SQL check. |
+
+If you're delegating step 3 to a subagent, hand it the auditor's
+*samples*, not just the percentages — the judgment call needs the
+actual headline text, not the summary statistic.
+
+### Step 1 — Seed selection (5 minutes) `[Sonnet]`
 
 Pick 5–20 high-confidence topic words that pre-filter the corpus
 to titles plausibly about this FN. For Syria recognition:
@@ -190,7 +225,7 @@ to titles plausibly about this FN. For Syria recognition:
 sanctions, ambassador, embassy, Damascus`. Doesn't need to be
 exhaustive — just enough to gather a sample.
 
-### Step 2 — Run the extractor
+### Step 2 — Run the extractor `[Sonnet]`
 
 ```bash
 python scripts/extract_fn_anchor_via_deepseek.py \
@@ -206,7 +241,7 @@ spec's rules, auto-collapses Latin-script duplicates, writes
 `out/extraction/<fn_id>__<timestamp>.json` (bundle proposal) and
 `.corpus.md` (the sample).
 
-### Step 3 — Human curation
+### Step 3 — Human curation `[Opus for drop/keep judgment; Sonnet OK once decided]`
 
 Open the JSON. Apply the 4-pillar lens and the 7 hard rules. Typical
 edits:
@@ -222,7 +257,13 @@ edits:
 
 Save as `out/extraction/<fn_id>__curated.json`.
 
-### Step 4 — Apply
+**PAUSE POINT (manual-switch fallback)**: if you can't delegate this
+step to a subagent (e.g. it's a long back-and-forth in the main
+conversation and switching would lose context), this is where to stop
+and run `/model claude-opus-4-8` before continuing, then switch back
+to Sonnet after the curated JSON is saved.
+
+### Step 4 — Apply `[Sonnet]`
 
 ```bash
 python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn_id>__curated.json   # dry-run
@@ -232,7 +273,7 @@ python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn_id>__curated.
 Idempotent — re-running replaces the bundle's aliases for the same
 FN.
 
-### Verify
+### Verify `[Sonnet]`
 
 ```sql
 SELECT jsonb_object_keys(aliases) AS lang,
@@ -301,6 +342,8 @@ Per-language translation needed: Pillar 4 verbs, plus
 
 ## Related
 
+- Theater build methodology (archetypes, prune loop, real-coverage
+  calibration): [`FN_THEATER_BUILD_SPEC.md`](FN_THEATER_BUILD_SPEC.md)
 - Runbook: [`FRICTION_NODES_RUNBOOK.md`](FRICTION_NODES_RUNBOOK.md)
 - Bootstrap (matching code): `scripts/bootstrap_friction_node.py`
   (lines 117-147 events, 205-231 titles)

@@ -1,0 +1,76 @@
+# CTM summaries
+
+## First: separate two concerns:
+
+1. **Internal freshness** – reacting to real developments (e.g. Greenland spike)
+2. **External stability** – not rewriting history every 12 hours
+
+These must be decoupled.
+
+---
+
+## Track-level (CTM) summaries — what makes sense
+
+### What CTM summaries *are*
+
+They are:
+
+* Monthly narrative digests
+* Built from events
+* Intended to stabilize at month-end
+
+They are **not** live feeds.
+
+---
+
+### Recommendation for CTM summaries (clear and pragmatic)
+
+#### 1. During the month: **provisional**
+
+* Generate CTM summaries **incrementally**, but:
+
+  * Mark them implicitly as *in-progress*
+  * Accept that they may change
+
+#### 2. Update cadence (key part)
+
+Use **event-driven + throttled** regeneration:
+
+* **Not every pipeline run**
+* **Not fixed daily**
+* Instead:
+
+  * Regenerate if **one of these triggers fires**:
+
+    * Significant title-count delta (e.g. +X% or +N absolute)
+    * New *event cluster* appears
+  * With a **minimum cooldown** (e.g. once per 24–48h)
+
+This gives you:
+
+* Fast reaction to Greenland-type explosions
+* No pointless rewrites for low-activity CTMs
+
+Conceptually:
+
+> “Update when something meaningfully changed, but don’t thrash.”
+
+This is much closer to editorial logic than cron logic.
+
+**Important!**
+
+Separate **Domestic** and **International** topics clearly (different paragraphs).
+
+---
+
+### 3. End of month: **finalization**
+
+* At freeze:
+
+  * Regenerate **once, clean**
+  * Mark as final
+  * Never touch again (pipeline-wise)
+
+That’s your historical record.
+
+---

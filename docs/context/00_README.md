@@ -24,6 +24,11 @@ page: current state, active roadmap, open tickets, recent commits.
 - `FN_ID_NAMING.md` — id naming convention for any new friction node (read before creating any id)
 - `DB_SAFETY_INCIDENT_20260707.md` — why every `.sql` migration against real data goes through `scripts/safe_db_migrate.py`, no exceptions
 - `NARRATIVE_DISCOVERY_PLAN.md` — narrative evolution + sleeping FNs plan (parked for review)
+- `OFFICIAL_DOCUMENTS_LAYER.md` — unified regime-B ingestion (regulatory
+  items + official statements as narrative primary sources); approved
+  design 2026-07-10, ready for implementation. Supersedes storage section
+  of `../regulatory_layer_concept.md`; registries at
+  `../../db/registry/official_sources_*.yaml`
 - **fn-map branch (unmerged, not deployed)** — strategic asset registry
   + conflict map + supply flows. `../../db/registry/README.md` (asset
   registry schema/conventions), `../fn_map_data_sources.md` (data

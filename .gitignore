@@ -58,6 +58,18 @@ Thumbs.db
 
 # Test coverage
 .coverage
+
+# Node
+node_modules/
+.next/
+
+# Scratch/local-only
+out/
+.mcp.json
+cookies.txt
+nul
+taxonomy_tools/out/
+db/*.sql
 htmlcov/
 .pytest_cache/
 

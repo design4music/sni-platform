@@ -1,0 +1,162 @@
+# Official statement sources -- registry (doc_class: statement)
+# Single source of truth; generated into official_sources, never edit the
+# table directly. See docs/context/OFFICIAL_DOCUMENTS_LAYER.md.
+#
+# Phase 1 pilot scope: ukraine_war_theater + iran_theater organ sets.
+# Symmetry rule: every coalition carrying a narrative in narratives_v2
+# gets its official organs listed.
+#
+# NOTE for implementation: every url below must be VERIFIED (working
+# RSS endpoint or scrapeable listing) before first fetch; several are
+# best-known candidates. fetch_format reflects expectation, adjust on
+# verification. Some RU/IR state sites may require local fetching or
+# block datacenter IPs -- verify from the actual runtime environment.
+
+# --- Russia ---
+- id: ru_kremlin_en
+  source_class: statement
+  name_en: President of Russia (Kremlin, EN)
+  org: Presidential Executive Office, Russian Federation
+  url: http://en.kremlin.ru/events/all/feed        # verify
+  fetch_format: rss
+  language_code: en
+  actor_centroid: EUROPE-RUSSIA
+  coalition: ru
+  notes: Head-of-state statements, addresses, decree announcements; canonical RU position.
+
+- id: ru_mfa_en
+  source_class: statement
+  name_en: Russian MFA (EN)
+  org: Ministry of Foreign Affairs, Russian Federation
+  url: https://mid.ru/en/press_service/             # verify; listing page, RSS availability unclear
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: EUROPE-RUSSIA
+  coalition: ru
+  notes: Lavrov statements, ministry briefings; primary articulation of RU foreign-policy framing.
+
+- id: ru_un_mission
+  source_class: statement
+  name_en: Permanent Mission of Russia to the UN
+  org: Russian Federation Mission to the UN
+  url: https://russiaun.ru/en/news                  # verify; listing page
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: EUROPE-RUSSIA
+  coalition: ru
+  notes: UNSC/UNGA speeches in full text; densest single source of RU multilateral framing.
+
+# --- Ukraine ---
+- id: ua_president_en
+  source_class: statement
+  name_en: President of Ukraine (EN)
+  org: Office of the President of Ukraine
+  url: https://www.president.gov.ua/en/news         # verify; listing page
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: EUROPE-UKRAINE
+  coalition: ua
+  notes: Presidential addresses and statements; canonical UA position.
+
+- id: ua_mfa_en
+  source_class: statement
+  name_en: Ukrainian MFA (EN)
+  org: Ministry of Foreign Affairs of Ukraine
+  url: https://mfa.gov.ua/en/news                   # verify
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: EUROPE-UKRAINE
+  coalition: ua
+  notes: Ministry statements, sanctions advocacy, accountability demands.
+
+# --- United States ---
+- id: us_state_dept
+  source_class: statement
+  name_en: US State Department press
+  org: US Department of State
+  url: https://www.state.gov/press-releases/        # verify; RSS variant exists
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: AMERICAS-USA
+  coalition: west_us
+  notes: Secretary statements and department positions; canonical US foreign-policy voice.
+
+- id: us_white_house
+  source_class: statement
+  name_en: White House briefing room
+  org: Executive Office of the President, USA
+  url: https://www.whitehouse.gov/briefing-room/    # verify
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: AMERICAS-USA
+  coalition: west_us
+  notes: Presidential statements and readouts; the Trump-plan track speaks here first.
+
+# --- Europe ---
+- id: eu_eeas
+  source_class: statement
+  name_en: EEAS press material
+  org: European External Action Service
+  url: https://www.eeas.europa.eu/eeas/press-material_en   # verify
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: NON-STATE-EU
+  coalition: west_eu
+  notes: EU foreign-policy statements, sanctions announcements, Kallas-era positions.
+
+- id: nato_newsroom
+  source_class: statement
+  name_en: NATO newsroom
+  org: North Atlantic Treaty Organization
+  url: https://www.nato.int/cps/en/natohq/news.htm  # verify; RSS variant exists
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: NON-STATE-NATO
+  coalition: west_eu
+  notes: Alliance statements, summit communiques, SecGen remarks.
+
+# --- Iran ---
+- id: ir_mfa_en
+  source_class: statement
+  name_en: Iranian MFA (EN)
+  org: Ministry of Foreign Affairs, Islamic Republic of Iran
+  url: https://en.mfa.ir/                           # verify; access may be restricted
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: MIDEAST-IRAN
+  coalition: iran
+  notes: Ministry statements; canonical IR framing on nuclear file and regional posture.
+
+- id: ir_un_mission
+  source_class: statement
+  name_en: Permanent Mission of Iran to the UN
+  org: Islamic Republic of Iran Mission to the UN
+  url: https://iran-un.org/en/                      # verify
+  fetch_format: html_listing
+  language_code: en
+  actor_centroid: MIDEAST-IRAN
+  coalition: iran
+  notes: UNSC/UNGA statements in full text; IR multilateral framing.
+
+# --- Multilateral arenas ---
+- id: un_meetings_coverage
+  source_class: statement
+  name_en: UN meetings coverage (press.un.org)
+  org: United Nations Department of Global Communications
+  url: https://press.un.org/en/content/meetings-coverage/feed   # verify
+  fetch_format: rss
+  language_code: en
+  actor_centroid: NON-STATE-UN
+  coalition: multilateral
+  notes: All-sides UNSC/UNGA summaries with S/PV references; the arena where every coalition performs its narrative on the record. Verify NON-STATE-UN centroid id exists before generation.
+
+- id: iaea_news
+  source_class: statement
+  name_en: IAEA news and statements
+  org: International Atomic Energy Agency
+  url: https://www.iaea.org/news/rss                # verify
+  fetch_format: rss
+  language_code: en
+  actor_centroid: NON-STATE-UN
+  coalition: multilateral
+  notes: DG statements on ZNPP and the Iran file; the institutional referee voice for both pilot theaters. Same centroid caveat as above.

@@ -1,0 +1,123 @@
+#UI for multiple month (CTM items)
+
+### Centroid page = temporal hub
+
+* **Main column**: background brief (timeless context)
+* **Track cards (6)**: always visible, always same structure [currently we only show cards if there are titles. Change it to always show all track cards for this centroid type but make muted/disabled/not clickable if there's no content (current or historical). If this month has 0 titles but previous month(s) had content for this track - open it with a canned message: "no current coverage, see previous months" - something like this]
+* **Month picker replaces sidebar clutter**
+
+**Month picker behavior**
+
+* Default = **latest month**
+* Click month → all track cards update to that month’s CTMs
+* No duplication of navigation logic
+
+This preserves:
+
+* Mental model: *“I’m looking at USA → February → Economy”*
+* Structural consistency over time
+
+✅ This should be your **v1**.
+
+---
+
+## 2. Month Picker Design Pattern
+
+### Option A — Horizontal month strip (recommended)
+
+* 6–12 months visible (scrollable if needed)
+* Label: `Jan 2026 · Feb · Mar`
+* Active month highlighted
+* Lives where the “related countries” box used to be
+
+**Why this works**
+
+* Temporal awareness without cognitive load
+* Scales cleanly to years later (pagination / jump-to-year later)
+* Zero ambiguity about “what month am I in?”
+
+---
+
+## 3. Inside a Track (CTM page) — clarify hierarchy
+
+You currently have:
+
+* **Main column**: CTM summary + Topics (events)
+* **Right sidebar**:
+
+  * Track switcher (vertical)
+  * Some extra menus (optional / removable)
+
+### What to add (important)
+
+#### A. Local Month Switcher (secondary)
+
+* Smaller than centroid-level picker
+* Same months, same order
+* Changes **only this track’s CTM**
+
+This allows:
+
+* “USA → Economy → Jan vs Feb” without bouncing back
+
+But:
+
+* It must visually subordinate to the centroid-level picker
+* Never contradict it silently
+
+---
+
+## 4. Long-page problem (USA, China, etc.)
+
+You’re absolutely right: **TOC is needed**.
+
+### Sidebar Table of Contents (high value)
+
+Auto-generated anchors:
+
+* Overview
+* Domestic activity
+*International coverage
+* Bilateral: China
+* Bilateral: EU
+* Bilateral: Russia
+* Other international
+
+**Rules**
+
+* Appears only if page length exceeds threshold
+* Scroll-spy highlight (where you are)
+* Lives in the **same sidebar as month + track controls**
+
+This turns:
+
+> “endlessly long page”
+> into
+> “navigable analytical document”
+
+---
+
+## 5. One subtle but important UI rule
+
+### Time never changes silently
+
+* If month changes:
+
+  * Visual indicator must change
+  * URL must change
+  * Header must say it explicitly
+
+No “why does this look different?” moments.
+
+---
+
+## 6. Mental model summary (this is gold, keep it)
+
+* **Centroid** = stable subject
+* **Track** = analytical lens
+* **CTM** = monthly publication
+* **Month picker** = time lens
+* **Archive** = history, not clutter
+
+You’re building **periodicals**, not feeds.
+

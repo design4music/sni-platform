@@ -17,6 +17,12 @@ itself is populated (source-anchored YAML, generated into the DB) and
 `docs/fn_map_data_sources.md` for the attribute-sourcing discipline.
 This runbook's steps 1-5 below are unchanged; two things are new:
 
+> **Calibrating a theater for accuracy** (atomic archetypes, `primary_target`
+> as the AND-substitute, less-but-better alias pruning, corpus-driven
+> audit→prune→measure loop, the friendly-critic narrative caveat) is a
+> separate methodology spec: [`FN_THEATER_BUILD_SPEC.md`](FN_THEATER_BUILD_SPEC.md).
+> Read it before building or re-tuning any theater.
+
 ## Mental model
 
 The Friction Node layer maps the contested geopolitical surface in
@@ -181,8 +187,20 @@ and `linked_id=<fn.id>`. The `aliases` jsonb is multi-lingual:
 ```
 
 Use the deepseek anchor extractor if you don't have one already drafted
-(`scripts/extract_fn_anchor_via_deepseek.py`). Aliases are matched as
-case-insensitive `ILIKE '%alias%'` against `title_display`.
+(`scripts/extract_fn_anchor_via_deepseek.py`). Alias matching against
+`title_display` (since 2026-07-09, `ALIAS_MATCH_SQL` in
+`scripts/bootstrap_friction_node.py`):
+
+- short all-caps acronyms (<=4 chars): case-sensitive whole word
+  (`REPO` no longer matches "report", `EW` no longer matches "news")
+- other ASCII aliases: case-insensitive, anchored at word start,
+  prefix allowed (stems like `dron` still match "drone")
+- non-ASCII aliases: substring ILIKE (CJK has no word boundaries)
+
+Generic single words (`strike`, `offensive`, `sanctions`) still
+over-match under any semantics -- keep them out of bundles. Run
+`python scripts/audit_friction_nodes.py --region <R>` section 6 to lint
+a bundle against a random title sample.
 
 Insert via migration:
 ```sql
@@ -344,6 +362,9 @@ UNION ALL SELECT 'C. + fn_anchor alias', COUNT(*) FROM titles_v3 t, n, fn, af
     AND t.centroid_ids && fn.centroid_ids
     AND EXISTS (SELECT 1 FROM unnest(af.arr) kw WHERE t.title_display ILIKE '%' || kw || '%');
 ```
+
+(Step C above uses plain ILIKE for a quick upper bound; the bootstrap's
+real matcher is stricter -- see `ALIAS_MATCH_SQL` semantics in step 2.)
 
 The biggest drop reveals the bottleneck. Common causes:
 - **Publishers not in corpus**: cross-check against

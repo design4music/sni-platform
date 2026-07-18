@@ -1,0 +1,61 @@
+Claude Code — Problem Brief + Investigation Task (tight)
+
+Context
+- We process monthly news titles into CTM items and then “events” (coherent story units: actors + purpose/intent + geography + time window).
+- Deterministic bucketing works up to: Domestic vs International, Bilateral (e.g., USA–China), and Multilateral. Beyond that, event extraction quality collapses.
+
+Problem
+- Keyword/taxonomy buckets do NOT reliably form coherent event groups at scale.
+- Failure mode in large buckets (esp. USA Domestic / Economy):
+  - “everything” bucket around dominant anchors (e.g., Trump), OR
+  - extreme fragmentation (same underlying story split across many buckets due to language, outlet phrasing, batching artifacts, and LLM inconsistency).
+- Result: duplicated/missed events, unstable actor sets, poor CTM summary quality.
+
+Goal
+- For a single hard case (USA / Economy / month=2026-01), quantify the failure and propose a better batching+merge architecture that makes LLM event extraction reliable.
+
+Candidate directions to evaluate
+A) LLM micro-passes (mechanical-first):
+   - Deterministic micro-bucketing by publisher_domain (+ language) + week-of-month (+ fallback chunk size).
+   - LLM extracts “proto-events” per micro-bucket (actors, action core, intent, time window, supporting title IDs).
+   - Deterministic merge of proto-events across micro-buckets using actor IDs + coarse time bin + action-class signature; small LLM arbitration only for ambiguous merges.
+
+B) Other architectures involving several LLM micro-passes, extraction of “proto-events” per micro-bucket and merging across Batches. 
+
+C) Taxonomy intensification (keyword-first):
+   - Expand aliases/vocabulary to create more nuanced deterministic keyword buckets.
+   - Use buckets to drive event extraction directly.
+
+Alternatively propose your solution.
+
+Your task
+1) Pull data for USA/Economy/2026-01 (CTM + underlying titles) and characterize the scale + fragmentation:
+   - total titles in CTM
+   - distribution by bilateral/domestic buckets already produced
+   - top publisher domains and counts
+   - language mix
+   - top taxonomy/CSC hits (actors/keywords) and their frequency (identify “dominant anchor” like Trump)
+   - evidence of fragmentation: many small buckets, repeated anchors across buckets, large “misc/other” remainder
+2) Produce a short diagnosis: why keyword bucketing fails here (with observed stats).
+3) Propose a concrete solution and minimal implementation plan:
+   - choose A, B, C or your solution (can be hybrid); justify briefly
+   - specify deterministic bucket keys and thresholds (domain/lang/week/chunk)
+   - define proto-event JSON schema (fields + constraints)
+   - define merge signature rules (actor normalization + time bin + action class)
+   - list DB changes if needed (optional; prefer no schema changes)
+
+DB query guidance (adapt to actual schema)
+- Find CTM row for centroid=USA, track=geo_economy, month=2026-01; get ctm_id
+- Join CTM → titles table to fetch (title_id, title_text, pubdate, source/publisher_domain, language, matched taxonomy terms/actors if stored)
+- Aggregations:
+  - count(*) by bucket_type (domestic/bilateral/multilateral)
+  - count(*) by publisher_domain
+  - count(*) by language
+  - top matched anchors/CSC terms frequency
+  - bucket size histogram (current keyword buckets if stored; else simulate via top anchor hits)
+
+Deliverable
+- One concise proposal (<= ~40 lines) with:
+  - measured problem snapshot for USA/Economy/2026-01
+  - recommended architecture (prefer mechanical micro-bucketing + proto-events + deterministic merge unless data suggests otherwise)
+  - next implementation steps (smallest change set)
