@@ -1,0 +1,31 @@
+# Regulatory sources -- registry (doc_class: regulatory)
+# Single source of truth; generated into official_sources, never edit the
+# table directly. See docs/context/OFFICIAL_DOCUMENTS_LAYER.md and
+# docs/regulatory_layer_concept.md (relevance gate, enrichment, frontend).
+#
+# Phase 2 scope: the two anchor sources below. Next candidates (add as
+# rows when phase 3 lands): EU consolidated sanctions list, OFAC (US),
+# UK OFSI, US Federal Register, TARIC (tariffs), WTO notifications.
+#
+# NOTE for implementation: verify each url resolves to a working RSS
+# endpoint before first fetch.
+
+- id: de_bgbl_1
+  source_class: regulatory
+  name_en: Bundesgesetzblatt Teil I
+  org: Federal Republic of Germany
+  url: https://www.recht.bund.de/rss/feeds/bgbl-1.xml    # verify exact feed path
+  fetch_format: rss
+  language_code: de
+  jurisdiction: DE
+  notes: German federal law gazette; the authoritative in-force record. Relevance gate drops administrative minutiae before enrichment.
+
+- id: eu_oj_l_series
+  source_class: regulatory
+  name_en: EUR-Lex Official Journal L-series
+  org: European Union
+  url: https://eur-lex.europa.eu/EN/display-rss.html      # verify; OJ L daily feed
+  fetch_format: rss
+  language_code: en
+  jurisdiction: EU
+  notes: EU regulations, directives, decisions as published; CELEX ids into official_ref. Sanctions regulations appear here first.

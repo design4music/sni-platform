@@ -25,23 +25,17 @@ assets, flows), the same join surface everything else in WorldBrief uses.
 
 ## 2. Storage
 
-**New table `regulatory_items`** -- not rows in titles/events. The house
-rule (prefer extending existing tables with a kind discriminator) has an
-escape clause for genuinely different content schemas, and this qualifies:
-jurisdiction, instrument_type (law / ordinance / EU regulation / directive
-/ decision), lifecycle status, effective_date distinct from
-published_date, official identifier (BGBl citation, CELEX number),
-canonical link to authoritative text. None of the news machinery
-(clustering, dedup, importance) may touch these rows.
-
-Supporting pieces:
-- **`regulatory_sources`** registry (feed URL, authority, jurisdiction,
-  kind) -- the analog of the feeds table, deliberately NOT mixed into the
-  media outlets table. Adding a jurisdiction later = a row, not a project.
-- Entity mapping via the existing house pattern: `centroid_ids[]`,
-  commodity slugs, `affected_asset_ids[]` arrays (same as friction_nodes).
-- Cross-links to news events (Phase 3) as a link table: event -> reg item
-  ("media reaction to this law").
+**Superseded 2026-07-10** by the unified official-documents layer --
+see `docs/context/OFFICIAL_DOCUMENTS_LAYER.md`. Regulatory items are
+`official_documents` rows with `doc_class='regulatory'`; the source
+registry is `db/registry/official_sources_regulatory.yaml` generated
+into `official_sources`. One infrastructure serves regulatory items and
+official statements (narrative primary sources) -- both share the
+inverted semantics of section 1. Everything this section previously
+specified (typed lifecycle/effective_date/official_ref fields, no news
+machinery touching the rows, centroid/commodity/asset entity mapping,
+event cross-links in phase 3) is carried over verbatim in the unified
+schema.
 
 ## 3. Pipeline (thin, cheap, separate slot)
 

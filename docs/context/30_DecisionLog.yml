@@ -1884,3 +1884,40 @@ decisions:
         ~85 atomic FNs from the old global seed still have no fn_anchor
         bundle and are skipped for event attribution (pre-existing data debt,
         not introduced here; a future curation pass adds bundles).
+
+  - id: D-094
+    date: 2026-07-10
+    type: architectural
+    status: accepted
+    title: Official documents layer -- unified regime-B ingestion for regulatory items and narrative primary sources
+    rationale:
+      - Theater-level narratives were sourced from catch-all headline
+        residue (titles no atomic FN claimed) -- a coverage-accounting
+        artifact, not narrative substance. A single official statement
+        (e.g. a UNSC speech) articulates a coalition's frame more densely
+        than the entire matched headline set. Narratives are a core asset
+        and must be real, sourced, dated.
+      - The planned regulatory layer (regulatory_layer_concept.md) and the
+        new narrative-sources need share every property of the "inverted
+        semantics" regime -- tens/week, unique, source-is-the-fact,
+        interpretation over clustering. Building two bespoke pipelines
+        would violate the one-man-orchestra leanness constraint.
+    consequences:
+      - Spec at docs/context/OFFICIAL_DOCUMENTS_LAYER.md (approved, ready
+        for implementation). Two tables (official_sources,
+        official_documents) discriminated by doc_class in
+        (regulatory, statement); one fetch script; two class-specific
+        enrichment prompts (deliberately not merged, Rule 9); one review
+        queue; YAML registries in db/registry/official_sources_*.yaml
+        (asset-registry pattern, source-anchored, symmetric across
+        coalitions).
+      - Supersedes storage section 2 of regulatory_layer_concept.md;
+        all other sections of that concept remain in force.
+      - Media headline attribution is repositioned as the narratives'
+        propagation meter (echo volume per outlet cohort); primary
+        sources become the substance layer. Theater fn_anchor bundles
+        keep only macro-grain vocabulary no member atomic owns.
+      - Phasing -- P1 infrastructure + statements pilot
+        (ukraine_war_theater + iran_theater, ~13 sources), P2 regulatory
+        (BGBl + EUR-Lex), P3 top-10-20 actor organ sets + daemon slot +
+        sanctions substream. No news-pipeline changes at any phase.

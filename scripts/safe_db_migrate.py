@@ -257,7 +257,9 @@ def main():
         "-v",
         "ON_ERROR_STOP=1",
     ]
-    result = subprocess.run(docker_cmd, input=sql_text, text=True, capture_output=True)
+    result = subprocess.run(
+        docker_cmd, input=sql_text, text=True, encoding="utf-8", capture_output=True
+    )
     print(result.stdout)
     if result.returncode != 0:
         print(result.stderr)

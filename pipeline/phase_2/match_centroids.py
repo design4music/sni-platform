@@ -470,24 +470,32 @@ def process_batch(batch_size=100, max_titles=None):
                 page_size=batch_size,
             )
 
-        # Batch update out_of_scope titles
+        # Batch update out_of_scope titles. Clear centroid_ids/matched_aliases:
+        # on a REmatch (title previously assigned, vocabulary since changed)
+        # stale tags would otherwise survive and keep leaking into FN and
+        # narrative attribution, which join on centroid_ids without checking
+        # processing_status.
         if out_of_scope_ids:
             cur.execute(
                 """
                 UPDATE titles_v3
                 SET processing_status = 'out_of_scope',
+                    centroid_ids = '{}',
+                    matched_aliases = NULL,
                     updated_at = NOW()
                 WHERE id = ANY(%s::uuid[])
                 """,
                 (out_of_scope_ids,),
             )
 
-        # Batch update blocked_stopword titles
+        # Batch update blocked_stopword titles (same stale-tag clearing)
         if blocked_stopword_ids:
             cur.execute(
                 """
                 UPDATE titles_v3
                 SET processing_status = 'blocked_stopword',
+                    centroid_ids = '{}',
+                    matched_aliases = NULL,
                     updated_at = NOW()
                 WHERE id = ANY(%s::uuid[])
                 """,

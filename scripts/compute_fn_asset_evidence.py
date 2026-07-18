@@ -35,7 +35,18 @@ QC_MIN_ALIAS_LEN = 5
 # theater. Theaters whose identity centroid is ambient fall back to
 # BILATERAL matching (both of the first two centroids on the title) or,
 # with no second centroid, attribution-only.
-AMBIENT_CENTROIDS = ("AMERICAS-USA", "ASIA-CHINA", "EUROPE-RUSSIA")
+#
+# ASIA-JAPAN added 2026-07-16: ambient for a different reason than the three
+# great powers -- Japan is a top-tier LNG/crude importer, so it co-tags on
+# Gulf and global-shipping coverage carrying no China content at all. With
+# japan_china_theater (identity centroid ASIA-JAPAN, the only theater keyed
+# on it) taking the single-centroid branch, the bare ASIA-JAPAN check linked
+# strait_of_hormuz at 55 titles/90d -- every one a Japan-Gulf energy story
+# ("Japan Cuts Gas in Favor of Coal as Hormuz Disruption Chokes LNG"), none
+# attributed to any Japan-China narrative. Ambient membership routes it to
+# the bilateral branch (ASIA-JAPAN AND ASIA-CHINA), which is the same dyad
+# gate the theater's atomics use.
+AMBIENT_CENTROIDS = ("AMERICAS-USA", "ASIA-CHINA", "EUROPE-RUSSIA", "ASIA-JAPAN")
 
 
 def connect():
@@ -102,7 +113,13 @@ def qc_report(cur, pairs):
             print(f"   {alias!r} ({asset_id})")
 
 
-def rebuild(cur, pairs):
+def rebuild(cur, pairs, fn_id=None):
+    """fn_id=None (default, daemon path): full wholesale rebuild, unchanged.
+    fn_id=<theater id>: scopes the DELETE + INSERT (stage 2) to that theater
+    only -- other theaters' existing rows are untouched. Stage 1 (alias ->
+    title hits) always scans all active assets regardless of fn_id; narrowing
+    it would defeat the point of the dynamic tier, which is to discover asset
+    links beyond whatever is manually curated in affected_asset_ids."""
     make_tmp_aliases(cur, pairs)
     t0 = time.time()
     # Stage 1: alias -> title hits, materialized once. This is the expensive
@@ -137,7 +154,10 @@ def rebuild(cur, pairs):
     #      (US/China/Russia) linked Hormuz to nearly every theater when
     #      the full list was used (observed on first rebuild).
     t1 = time.time()
-    cur.execute("DELETE FROM fn_asset_evidence")
+    cur.execute(
+        "DELETE FROM fn_asset_evidence WHERE (%(fn_id)s::text IS NULL OR fn_id = %(fn_id)s)",
+        {"fn_id": fn_id},
+    )
     cur.execute(
         f"""
         INSERT INTO fn_asset_evidence
@@ -155,11 +175,13 @@ def rebuild(cur, pairs):
           JOIN friction_nodes fn
             ON fn.fn_type = 'theater' AND fn.is_active
            AND (nv.fn_id = fn.id OR nv.fn_id = ANY(fn.member_fn_ids))
+           AND (%(fn_id)s::text IS NULL OR fn.id = %(fn_id)s)
           UNION
           SELECT fn.id, h.asset_id, h.title_id, h.pubdate_utc
           FROM tmp_hits h
           JOIN friction_nodes fn
             ON fn.fn_type = 'theater' AND fn.is_active
+           AND (%(fn_id)s::text IS NULL OR fn.id = %(fn_id)s)
            AND CASE
                  WHEN COALESCE(fn.primary_target, fn.centroid_ids[1]) NOT IN {AMBIENT_CENTROIDS}
                    THEN COALESCE(fn.primary_target, fn.centroid_ids[1]) = ANY(h.centroid_ids)
@@ -171,7 +193,8 @@ def rebuild(cur, pairs):
         ) hits
         GROUP BY fn_id, asset_id
         HAVING count(*) >= {MIN_TITLES_90D}
-        """
+        """,
+        {"fn_id": fn_id},
     )
     n = cur.rowcount
     print(f"OK stage 2: aggregated in {time.time()-t1:.1f}s", flush=True)
@@ -179,8 +202,11 @@ def rebuild(cur, pairs):
     cur.execute(
         """
         SELECT e.fn_id, e.asset_id, e.n_titles_30d, e.n_titles_90d
-        FROM fn_asset_evidence e ORDER BY e.n_titles_90d DESC LIMIT 12
-        """
+        FROM fn_asset_evidence e
+        WHERE (%(fn_id)s::text IS NULL OR e.fn_id = %(fn_id)s)
+        ORDER BY e.n_titles_90d DESC LIMIT 12
+        """,
+        {"fn_id": fn_id},
     )
     print("-- top links:")
     for fn_id, asset_id, n30, n90 in cur.fetchall():
@@ -201,6 +227,12 @@ def rebuild_evidence(conn):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--qc", action="store_true", help="alias QC report only, no writes")
+    ap.add_argument(
+        "--fn-id",
+        default=None,
+        help="scope rebuild to one theater id (DELETE+INSERT only that fn_id; "
+        "other theaters' rows untouched). Omit for the full wholesale rebuild.",
+    )
     args = ap.parse_args()
 
     conn = connect()
@@ -211,7 +243,7 @@ def main():
         qc_report(cur, pairs)
         conn.rollback()
     else:
-        rebuild(cur, pairs)
+        rebuild(cur, pairs, fn_id=args.fn_id)
         conn.commit()
     conn.close()
 

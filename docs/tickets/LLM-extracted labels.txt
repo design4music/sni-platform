@@ -1,0 +1,178 @@
+# 1. Clean, abstract, ambiguity-resistant ontology (v2.0)
+
+## 1. FORMAL DECISION & RULE CHANGES
+
+*(binding changes to rules or status)*
+
+* `LEGAL_RULING`
+* `LEGISLATIVE_DECISION`
+* `POLICY_CHANGE`
+* `REGULATORY_ACTION`
+
+These are **finalized rule changes**.
+
+---
+
+## 2. COERCIVE ENFORCEMENT
+
+*(use of force or authority to compel behavior)*
+
+* `MILITARY_OPERATION`
+* `LAW_ENFORCEMENT_OPERATION`
+* `SANCTION_ENFORCEMENT`
+
+These involve **compulsion**, not persuasion.
+
+---
+
+## 3. RESOURCE & CAPABILITY MOVES
+
+*(material capacity changes)*
+
+* `RESOURCE_ALLOCATION`
+* `INFRASTRUCTURE_DEVELOPMENT`
+* `CAPABILITY_TRANSFER`
+
+Covers economy, energy, military aid, tech export.
+
+---
+
+## 4. COORDINATION & ALIGNMENT
+
+*(actors acting together or repositioning)*
+
+* `ALLIANCE_COORDINATION`
+* `STRATEGIC_REALIGNMENT`
+* `MULTILATERAL_ACTION`
+
+---
+
+## 5. PRESSURE & INFLUENCE
+
+*(attempts to change behavior without formal compulsion)*
+
+* `POLITICAL_PRESSURE`
+* `ECONOMIC_PRESSURE`
+* `DIPLOMATIC_PRESSURE`
+* `INFORMATION_INFLUENCE`
+
+Used **only when no formal or coercive act occurred**.
+
+---
+
+## 6. CONTESTATION & RESISTANCE
+
+*(structured pushback against power)*
+
+* `LEGAL_CONTESTATION`
+* `INSTITUTIONAL_RESISTANCE`
+* `COLLECTIVE_PROTEST`
+
+---
+
+## 7. INCIDENTS & EVENTS (non-instrumental)
+
+*(events without clear strategic initiator)*
+
+* `SECURITY_INCIDENT`
+* `SOCIAL_INCIDENT`
+* `ECONOMIC_DISRUPTION`
+
+This is where **everything that “just happens” goes**.
+
+---
+### Application rules
+
+* When multiple action classes seem applicable, choose the one highest in this hierarchy
+* If two candidate classes belong to different tiers, always choose the higher tier.
+* If both an action and a reaction appear in the title: Label the initiator, not the responder.
+* Formal beats informal: if both appear plausible: formal mechanisms always override informal ones.
+* Concrete beats abstract: if a tangible act occurred, do not use a pressure or influence class.
+* Capability change beats intent: if an action changes real-world capacity, choose it over signaling.
+* Contestation only if it is the story: use contestation classes only if the resistance itself is the primary event.
+* Incident as last resort: use SECURITY_INCIDENT, SOCIAL_INCIDENT, or ECONOMIC_DISRUPTION only if:
+  * No clear strategic initiator exists
+  * No formal mechanism is involved
+  * No organized pressure or resistance is described
+
+This prevents the ontology from becoming a junk drawer.
+
+* Actor abstraction rule (important). When an individual acts in an official capacity: map to the institution, not the person.
+
+Examples:
+  * President → Executive branch
+  * Minister → Relevant ministry
+  * Police officer → Law enforcement
+
+This avoids personality gravity wells and improves clustering.
+
+* Tie-breaker. If two classes remain equally plausible within the same tier: choose the class that implies greater systemic consequence.
+  If still ambiguous: prefer the more abstract one (higher generality).
+  Never invent a new class.
+
+“If more than one action class seems applicable, apply the Action Strength Hierarchy and always select the earliest, most binding, and most coercive action performed by the initiating actor.”
+
+## 2. DOMAIN TAGS (secondary axis, optional but useful)
+
+Exactly **one** primary domain per label:
+
+* `GOVERNANCE`
+* `ECONOMY`
+* `SECURITY`
+* `FOREIGN_POLICY`
+* `SOCIETY`
+* `TECHNOLOGY`
+* `MEDIA`
+
+---
+### Application rules
+* Primary system affected. Choose the domain of the system being directly acted upon, not the one discussed.
+* Governance beats society. If formal authority or law is involved: always choose GOVERNANCE over SOCIETY.
+* Security beats foreign policy. If physical force, policing, or military assets are involved: choose SECURITY over FOREIGN_POLICY.
+* Economy beats governance (when material flows dominate). If the action primarily changes: money, trade, resources, production → choose ECONOMY, even if governments act.
+* Technology only when the system is technology. Use TECHNOLOGY only if the action changes: technological capability, digital infrastructure, platforms, cyber, AI, chips, networks. Not when tech is just a tool.
+* Media only when media is the target. Use MEDIA only if: journalists, outlets, platforms, information flows are the object of action. Not when media merely reports.
+
+---
+
+## 3. EVENT LABEL STRUCTURE (canonical)
+
+Each title is normalized into **one label**:
+
+PRIMARY_ACTOR → ACTION_CLASS → DOMAIN (→ OPTIONAL_TARGET)
+
+Examples:
+
+* US_EXECUTIVE → POLITICAL_PRESSURE → GOVERNANCE → FED
+* IRAN_GOVERNMENT → SANCTION_ENFORCEMENT → ECONOMY
+* GREENLAND_CIVILIANS → COLLECTIVE_PROTEST → SOCIETY → US_POLICY
+* FEDERAL_LAW_ENFORCEMENT → MEDIA_INTIMIDATION → MEDIA
+
+Rules:
+
+* **No free-form verbs**
+* **No adjectives**
+* **No summaries**
+* **Exactly one ACTION_CLASS**
+* **Exactly one DOMAIN**
+* **Optional TARGET**
+
+---
+
+## Setup
+
+We write labels into the database.
+
+title_id        TEXT / INT    -- FK to titles
+event_label     TEXT          -- canonical "ACTOR → ACTION_CLASS → DOMAIN → TARGET?"
+actor           TEXT          -- normalized actor (institution-level)
+action_class    TEXT          -- from fixed ontology
+domain           TEXT         -- from fixed domain list
+target          TEXT NULL     -- optional, free text but normalized
+label_version   TEXT          -- e.g. "ELO_v2.0"
+created_at      TIMESTAMP
+
+We need label version because ontology will evolve
+
+
+

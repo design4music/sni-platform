@@ -1,0 +1,17 @@
+-- FN Europe review, phase 4: ukraine_war_theater Black Sea alias fix (2026-07-09)
+-- Bare "Black Sea" over-matched: the Black Sea borders 6 countries and
+-- carries its own generic maritime-security news cycle (fishing-boat
+-- attacks, tanker incidents, an unrelated Hormuz-initiative comparison)
+-- that has nothing to do with the war's contested framing, but still gets
+-- swept in once the story lands on a Ukraine-tagged title. Same failure
+-- shape as the NATO/EU nouns pruned in the prior migration -- geographic
+-- instead of institutional. "Black Sea grain" (specific program) and
+-- "Sea of Azov" (bordered only by Russia/Ukraine, not shared-noise) stay.
+-- "Novorossiysk" added as a named-facility replacement.
+BEGIN;
+
+UPDATE taxonomy_v3
+   SET aliases = '{"ar": ["منظمة الأمن والتعاون في أوروبا", "فاغنر", "المحكمة الجنائية الدولية", "محكمة العدل الدولية", "عملية عسكرية خاصة", "جرائم الحرب", "اسرى الحرب", "تبادل اسرى", "لاجئين", "نازحين", "اعادة الاعمار", "ممر المساعدات", "دونباس", "القرم", "بحر آزوف", "ضحايا مدنيين", "ممر الحبوب"], "de": ["OSZE", "IStGH", "IGH", "militaerische Spezialoperation", "Kriegsverbrechen", "Kriegsgefangene", "Gefangenenaustausch", "Fluechtlinge", "Vertriebene", "Wiederaufbau", "Hilfskorridor", "Donbass", "Krim", "Asowsches Meer", "zivile Opfer", "Getreidekorridor", "Getreideabkommen"], "en": ["OSCE", "Wagner", "ICC", "ICJ", "special military operation", "SMO", "war crimes", "prisoner of war", "POW", "POW exchange", "refugees", "displaced", "reconstruction", "aid corridor", "Donbas", "Donbass", "Crimea", "Sea of Azov", "civilian casualties", "grain corridor", "Black Sea grain", "Novorossiysk"], "es": ["CPI", "CIJ", "operacion militar especial", "crimenes de guerra", "prisioneros de guerra", "intercambio de prisioneros", "refugiados", "desplazados", "reconstruccion", "corredor de ayuda", "Donbas", "Crimea", "Mar de Azov", "victimas civiles", "corredor de granos"], "fr": ["CPI", "CIJ", "operation militaire speciale", "crimes de guerre", "prisonniers de guerre", "echange de prisonniers", "refugies", "deplaces", "reconstruction", "corridor d''aide", "Donbass", "Crimee", "mer d''Azov", "victimes civiles", "corridor cerealier"], "hi": ["OSCE", "वैगनर", "अंतरराष्ट्रीय आपराधिक न्यायालय", "अंतरराष्ट्रीय न्यायालय", "विशेष सैन्य अभियान", "युद्ध अपराध", "युद्ध बंदी", "युद्धबंदी विनिमय", "शरणार्थी", "विस्थापित", "पुनर्निर्माण", "सहायता गलियारा", "डोनबास", "क्रीमिया", "आज़ोव सागर", "नागरिक हताहत", "अनाज गलियारा"], "it": ["CPI", "CIG", "operazione militare speciale", "crimini di guerra", "prigionieri di guerra", "scambio di prigionieri", "rifugiati", "sfollati", "ricostruzione", "corridoio di aiuti", "Donbass", "Crimea", "Mar d''Azov", "vittime civili", "corridoio del grano"], "ja": ["欧州安全保障協力機構", "ワグネル", "国際刑事裁判所", "国際司法裁判所", "特別軍事作戦", "戦争犯罪", "捕虜", "捕虜交換", "難民", "国内避難民", "復興", "支援回廊", "ドンバス", "クリミア", "アゾフ海", "民間人犠牲者", "穀物協定"], "ru": ["ОБСЕ", "Вагнер", "МУС", "Международный суд", "СВО", "спецоперация", "специальная военная операция", "военные преступления", "военнопленные", "обмен пленными", "беженцы", "переселенцы", "восстановление", "коридор помощи", "Донбасс", "Крым", "Азовское море", "гражданские жертвы", "зерновой коридор", "зерновая сделка", "Новороссийск"], "zh": ["欧安组织", "瓦格纳集团", "国际刑事法院", "国际法院", "特别军事行动", "战争罪", "战犯", "战俘", "战俘交换", "难民", "流离失所者", "重建", "援助走廊", "顿巴斯", "克里米亚", "亚速海", "平民伤亡", "粮食走廊"]}'::jsonb
+ WHERE taxonomy_function = 'fn_anchor' AND linked_id = 'ukraine_war_theater';
+
+COMMIT;
