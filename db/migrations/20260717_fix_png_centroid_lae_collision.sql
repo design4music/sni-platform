@@ -50,7 +50,7 @@ WHERE taxonomy_function = 'centroid_anchor'
 --     (1,718 such rows already exist).
 UPDATE titles_v3 SET
   centroid_ids = array_remove(centroid_ids, 'OCEANIA-PAPUANEWGUINEA'),
-  matched_aliases = array_remove(array_remove(matched_aliases, 'ラエ'), 'لاي'),
+  matched_aliases = matched_aliases - 'ラエ' - 'لاي',
   updated_at = NOW()
 WHERE centroid_ids @> ARRAY['OCEANIA-PAPUANEWGUINEA']
   AND NOT (
