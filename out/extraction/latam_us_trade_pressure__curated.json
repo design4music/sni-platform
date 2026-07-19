@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "fn_id": "latam_us_trade_pressure",
+    "drafted": "2026-07-18",
+    "method": "hand-drafted, 4-pillar lens, FN_ANCHOR_VOCABULARY_SPEC",
+    "notes": [
+      "Participant set IS the subject set (three South American centroids), so the participant gate already does the work of primary_target -- domain verbs like 'tariff' and 'sanction' are cross-filtered and safe.",
+      "Third-party leaders deliberately absent (Trump, Bessent, Lula, Milei, Bolsonaro). Heads of state are already carried by the centroid_anchor rows; putting them here would match all domestic politics.",
+      "ES needs both 'sanción' and 'sanciones': non-EN is pure substring and ó != o, so the accented singular does not cover the plural.",
+      "'OFAC' / 'USTR' are all-caps <=4 chars -> case-sensitive whole-word acronym path, safe.",
+      "DROPPED the IMF/FMI/swap-line term after audit: 'FMI' returned 19 titles of routine Argentine macro coverage (staff deals, reserve targets, pension reform). The Fund is multilateral, not a US instrument -- filing that as US coercion would be a false attribution. The genuinely US-leverage story (Treasury swap line) was n=1, not worth the 19 false positives.",
+      "OFAC / USTR / Section 301 / countervailing / decertif returned 0 matches in the 365d window and are KEPT deliberately: high-precision dormant anchors that cost nothing and give the placeholder somewhere to land future escalation."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "tariffs and duties",
+      "aliases": {
+        "en": ["tariff"],
+        "es": ["arancel"],
+        "de": ["Zoll", "Strafzoll"],
+        "fr": ["droits de douane"],
+        "it": ["dazio"],
+        "ru": ["пошлин"],
+        "zh": ["关税"],
+        "ja": ["関税"],
+        "ar": ["تعريفة جمركية"],
+        "hi": ["टैरिफ"]
+      }
+    },
+    {
+      "term": "sanctions",
+      "aliases": {
+        "en": ["sanction"],
+        "es": ["sanción", "sanciones"],
+        "de": ["Sanktion"],
+        "it": ["sanzione"],
+        "ru": ["санкц"],
+        "zh": ["制裁"],
+        "ja": ["制裁"],
+        "ar": ["عقوبات"],
+        "hi": ["प्रतिबंध"]
+      }
+    },
+    {
+      "term": "Magnitsky designations",
+      "aliases": {
+        "en": ["Magnitsky"],
+        "ru": ["Магнитск"],
+        "zh": ["马格尼茨基"]
+      }
+    },
+    {
+      "term": "US trade and sanctions instruments",
+      "aliases": {
+        "en": ["OFAC", "USTR", "Section 301", "countervailing", "antidumping", "anti-dumping"],
+        "es": ["derechos compensatorios"],
+        "zh": ["反倾销"],
+        "ja": ["反ダンピング"]
+      }
+    },
+    {
+      "term": "drug-war certification",
+      "aliases": {
+        "en": ["decertif"],
+        "es": ["descertificación"]
+      }
+    }
+  ]
+}

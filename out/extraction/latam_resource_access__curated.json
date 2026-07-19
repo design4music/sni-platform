@@ -1,0 +1,141 @@
+{
+  "metadata": {
+    "fn_id": "latam_resource_access",
+    "drafted": "2026-07-18",
+    "method": "hand-drafted, 4-pillar lens, then pruned against audit_fn_anchor_aliases output",
+    "notes": [
+      "Actor-neutral: US, EU, China and India all compete for South American minerals in this corpus. Chinese operators are one vector, not the whole phenomenon.",
+      "DROPPED bare 'mine': EN word-START means it prefixes Atletico Mineiro / Minetti / Minerva (11 of 99 hits were name noise). Replaced with 'mineral' + 'mining' + non-EN 'minera'/'mineraç', which return 108 hits with zero name collisions ('minera' does not prefix 'Minerva').",
+      "DROPPED 'concession'/'concesión': audited at n=4/n=2 and leaking to Buenos Aires public-media concessions and Italian Mercosur concessions.",
+      "DROPPED 'port'/'puerto': EN word-start catches Portugal/portfolio; ES substring catches 'aeropuerto'.",
+      "DROPPED bare 'litio' (ES substring path, contained in 'coalition') and 'salar' (contained in English 'salary'). 'de litio' used instead.",
+      "'BRI' safe: all-caps <=4 chars goes down the case-sensitive whole-word acronym path."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "critical minerals framing",
+      "aliases": {
+        "en": ["critical mineral"],
+        "es": ["minerales críticos"],
+        "de": ["kritische Rohstoffe"],
+        "fr": ["minéraux critiques"],
+        "it": ["minerali critici"],
+        "ru": ["критически важных минерал"],
+        "zh": ["关键矿产"],
+        "ja": ["重要鉱物"],
+        "ar": ["المعادن الحرجة"],
+        "hi": ["महत्वपूर्ण खनिज"]
+      }
+    },
+    {
+      "term": "mining and extraction",
+      "aliases": {
+        "en": ["mineral", "mining"],
+        "es": ["minera", "minería"],
+        "de": ["Bergbau"],
+        "it": ["estrazione mineraria"],
+        "ru": ["добыч"],
+        "zh": ["采矿"],
+        "ja": ["鉱山"],
+        "ar": ["التعدين"],
+        "hi": ["खनन"]
+      }
+    },
+    {
+      "term": "lithium",
+      "aliases": {
+        "en": ["lithium"],
+        "es": ["de litio"],
+        "ru": ["литий"],
+        "zh": ["锂矿"],
+        "ja": ["リチウム"],
+        "ar": ["الليثيوم"],
+        "hi": ["लिथियम"]
+      }
+    },
+    {
+      "term": "copper",
+      "aliases": {
+        "en": ["copper"],
+        "es": ["cobre"],
+        "de": ["Kupfer"],
+        "ru": ["медь"],
+        "zh": ["铜矿"],
+        "ja": ["銅鉱"],
+        "ar": ["النحاس"],
+        "hi": ["तांबा"]
+      }
+    },
+    {
+      "term": "rare earths",
+      "aliases": {
+        "en": ["rare earth"],
+        "es": ["tierras raras"],
+        "de": ["Seltene Erden"],
+        "fr": ["terres rares"],
+        "it": ["terre rare"],
+        "ru": ["редкозем"],
+        "zh": ["稀土"],
+        "ja": ["レアアース"],
+        "ar": ["العناصر الأرضية النادرة"],
+        "hi": ["दुर्लभ मृदा"]
+      }
+    },
+    {
+      "term": "Belt and Road initiative",
+      "aliases": {
+        "en": ["Belt and Road", "BRI"],
+        "es": ["Franja y la Ruta"],
+        "de": ["Seidenstraße"],
+        "fr": ["route de la soie"],
+        "it": ["via della seta"],
+        "ru": ["Пояс и путь"],
+        "zh": ["一带一路"],
+        "ja": ["一帯一路"],
+        "ar": ["الحزام والطريق"],
+        "hi": ["बेल्ट एंड रोड"]
+      }
+    },
+    {
+      "term": "Chinese operators and investors in the region",
+      "aliases": {
+        "en": ["Huawei", "BYD", "Ganfeng", "Sinopec", "CNOOC", "COSCO", "Zijin", "Tianqi", "State Grid", "ByteDance"],
+        "zh": ["华为", "比亚迪", "赣锋", "紫金", "国家电网"],
+        "ja": ["ファーウェイ"],
+        "ru": ["Хуавэй"],
+        "ar": ["هواوي"],
+        "hi": ["हुआवेई"]
+      }
+    },
+    {
+      "term": "Chancay deep-water terminal",
+      "aliases": {
+        "en": ["Chancay"],
+        "zh": ["钱凯"]
+      }
+    },
+    {
+      "term": "panda bond financing",
+      "aliases": {
+        "en": ["panda bond"],
+        "zh": ["熊猫债"]
+      }
+    },
+    {
+      "term": "rail and waterway infrastructure",
+      "aliases": {
+        "en": ["railway", "railroad", "dredging"],
+        "es": ["ferrocarril", "hidrovía"],
+        "de": ["Eisenbahn"],
+        "fr": ["chemin de fer"],
+        "it": ["ferrovia"],
+        "ru": ["железнодорож"],
+        "zh": ["铁路"],
+        "ja": ["鉄道"],
+        "ar": ["السكك الحديدية"],
+        "hi": ["रेलवे"]
+      }
+    }
+  ]
+}

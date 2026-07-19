@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "fn_id": "latam_eu_market_access",
+    "drafted": "2026-07-18",
+    "method": "hand-drafted, 4-pillar lens, FN_ANCHOR_VOCABULARY_SPEC",
+    "notes": [
+      "Sub-case A2 (FN_THEATER_BUILD_SPEC section 2): the bloc name IS the gate. 'Mercosur' is a highly specific proper name -- 349 titles in scope, essentially all on-topic -- so generic domain vocabulary (beef, quota, farmers, import ban) is deliberately OMITTED. Aliases are OR'd; adding commodity generics would pull in all South American agricultural trade coverage and buy nothing the name does not already carry.",
+      "'Mercosur' also substring-covers the German compound 'Mercosur-Abkommen' and Spanish 'acuerdo UE-Mercosur', so no per-language phrase variants are needed.",
+      "'Mercosul' is the Portuguese spelling, which the Brazilian outlets use.",
+      "EFTA / EUDR are all-caps <=4 chars -> case-sensitive whole-word acronym path, safe.",
+      "DROPPED the ratification stems after audit, vindicating the A2 principle: 'ratif' ran 44% foreign and 'Ratifiz' 80%, both leaking to unrelated Turkish ratification stories, while the on-topic hits ('Uruguai e Argentina ratificam acordo Mercosul-UE') all contain 'Mercosul' anyway. The name already carries them; the stem only added leak."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "Mercosur bloc",
+      "aliases": {
+        "en": ["Mercosur", "Mercosul"],
+        "ru": ["Меркосур"],
+        "zh": ["南方共同市场"],
+        "ja": ["メルコスール"],
+        "ar": ["ميركوسور"],
+        "hi": ["मर्कोसुर"]
+      }
+    },
+    {
+      "term": "European trade counterparties",
+      "aliases": {
+        "en": ["EFTA"],
+        "de": ["EFTA-Abkommen"],
+        "es": ["AELC"]
+      }
+    },
+    {
+      "term": "EU deforestation regulation",
+      "aliases": {
+        "en": ["EUDR", "deforestation regulation"],
+        "de": ["Entwaldungsverordnung"],
+        "es": ["reglamento de deforestación"],
+        "fr": ["règlement sur la déforestation"],
+        "it": ["regolamento sulla deforestazione"],
+        "ru": ["вырубк"],
+        "zh": ["零毁林"],
+        "ja": ["森林破壊防止"],
+        "ar": ["إزالة الغابات"],
+        "hi": ["वनों की कटाई"]
+      }
+    }
+  ]
+}

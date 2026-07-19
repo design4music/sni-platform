@@ -1,0 +1,140 @@
+{
+  "metadata": {
+    "fn_id": "colombia_political_transition",
+    "drafted": "2026-07-18",
+    "method": "hand-drafted, 4-pillar lens, vocabulary verified to EXIST in the corpus before inclusion",
+    "notes": [
+      "Grounding killed most of the vocabulary a cold draft would have used: 'Pacto Histórico' 0 hits, 'Centro Democrático' 0, 'Registraduría' 0, 'Casa de Nariño' 0, 'CNE' 0, 'JEP' 0. Colombian election headlines in this corpus use CANDIDATE NAMES, not party or institution names.",
+      "Measured and kept: Espriella 103, Cepeda 35, Uribe 5, Quintero 1, Fajardo 1.",
+      "DROPPED bare election generics ('election', 'elecc', 'candidat'): 136 Colombian hits but 33 non-Colombian ANDEAN hits (~20% leak to Ecuadorian/Bolivian elections), and the candidate surnames already carry the story. Kept only the Colombia-specific electoral process terms (segunda vuelta / balotaje), which do not leak.",
+      "Candidate surnames are own-side Pillar 1 actors, not third-party leaders -- rule 4 excludes foreign leaders covering the FN, not the FN's own political class.",
+      "'Petro' deliberately excluded here too -- see colombia_us_alignment notes. Only 21 of his 184 hits are election-related.",
+      "'El Tigre' (the winner's nickname) omitted: 'Espriella' already covers those headlines and 'Tigre' is a collision risk.",
+      "AUDIT PRUNE: dropped 'Quintero' (1 hit, 100% foreign -- a different Quintero in AFRICA-EAST) and 'president-elect' (3 hits, 33% foreign to Israel/USA; Spanish 'presidente electo' covers the same ground at 0%). KEPT Espriella (103, 8% foreign) and Cepeda (35, 9%): that 'foreign' is AMERICAS-USA co-mention of the Trump endorsement -- benign co-occurrence, the Bardella case, not leak."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "Colombian political principals of the transition",
+      "aliases": {
+        "en": [
+          "Espriella",
+          "Cepeda",
+          "Uribe",
+          "Fajardo"
+        ]
+      }
+    },
+    {
+      "term": "runoff and second round",
+      "aliases": {
+        "en": [
+          "runoff"
+        ],
+        "es": [
+          "segunda vuelta",
+          "balotaje"
+        ],
+        "de": [
+          "Stichwahl"
+        ],
+        "fr": [
+          "second tour"
+        ],
+        "it": [
+          "ballottaggio"
+        ],
+        "ru": [
+          "второй тур"
+        ],
+        "zh": [
+          "第二轮"
+        ],
+        "ja": [
+          "決選投票"
+        ],
+        "ar": [
+          "جولة الإعادة"
+        ],
+        "hi": [
+          "दूसरे दौर"
+        ]
+      }
+    },
+    {
+      "term": "transfer of office",
+      "aliases": {
+        "en": [
+          "inauguration"
+        ],
+        "es": [
+          "posesión presidencial",
+          "presidente electo"
+        ],
+        "de": [
+          "Amtseinführung"
+        ],
+        "fr": [
+          "investiture"
+        ],
+        "it": [
+          "insediamento"
+        ],
+        "ru": [
+          "инаугурац"
+        ],
+        "zh": [
+          "就职"
+        ],
+        "ja": [
+          "大統領就任"
+        ],
+        "ar": [
+          "تنصيب"
+        ],
+        "hi": [
+          "शपथ ग्रहण"
+        ]
+      }
+    },
+    {
+      "term": "contested legitimacy of the result",
+      "aliases": {
+        "en": [
+          "vote count",
+          "electoral fraud",
+          "legal challenge"
+        ],
+        "es": [
+          "conteo de votos",
+          "fraude electoral",
+          "impugnación"
+        ],
+        "de": [
+          "Wahlbetrug"
+        ],
+        "fr": [
+          "fraude électorale"
+        ],
+        "it": [
+          "brogli elettorali"
+        ],
+        "ru": [
+          "фальсификац"
+        ],
+        "zh": [
+          "选举舞弊"
+        ],
+        "ja": [
+          "選挙不正"
+        ],
+        "ar": [
+          "تزوير الانتخابات"
+        ],
+        "hi": [
+          "चुनावी धोखाधड़ी"
+        ]
+      }
+    }
+  ]
+}

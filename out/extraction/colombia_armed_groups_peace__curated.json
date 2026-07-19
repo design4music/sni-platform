@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "fn_id": "colombia_armed_groups_peace",
+    "drafted": "2026-07-18",
+    "method": "hand-drafted, 4-pillar lens, corpus-verified",
+    "notes": [
+      "Thin by design and by measurement: ELN 4, FARC 6, cartel 13, guerrilla 8, Gulf Clan 2, 'paz total' 1, peace talks 1. Roughly 30 distinct titles. Accepted as a placeholder -- this is structurally central to Colombia and is the natural home if the peace process collapses or US counter-narcotics pressure returns.",
+      "CRITICAL: bare 'paz' is unusable. It is a non-EN alias so it matches by pure SUBSTRING, and of 130 'paz' hits inside AMERICAS-ANDEAN, 129 are noise -- La Paz (Bolivia, which is IN this centroid), 'capaz', 'incapaz'. Phrase forms only.",
+      "'ELN' and 'FARC' are all-caps <=4 chars -> case-sensitive whole-word acronym path, so they cannot match inside longer words.",
+      "'coca' checked: 11 word-start hits in gate, zero Coca-Cola.",
+      "'Catatumbo', 'disidencias' and 'Segunda Marquetalia' measure 0 today; kept as high-precision dormant anchors for the region and factions most likely to generate the next escalation."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "armed organisations",
+      "aliases": {
+        "en": ["ELN", "FARC", "Gulf Clan", "Segunda Marquetalia"],
+        "es": ["Clan del Golfo", "disidencias"]
+      }
+    },
+    {
+      "term": "guerrilla and paramilitary forms",
+      "aliases": {
+        "en": ["guerrilla", "paramilitar"],
+        "de": ["Guerilla"],
+        "ru": ["партизан"],
+        "zh": ["游击"],
+        "ja": ["ゲリラ"],
+        "ar": ["حرب العصابات"],
+        "hi": ["छापामार"]
+      }
+    },
+    {
+      "term": "drug cartels",
+      "aliases": {
+        "en": ["cartel"],
+        "es": ["cártel", "narcotráfico"],
+        "de": ["Kartell"],
+        "ru": ["картел"],
+        "zh": ["贩毒集团"],
+        "ja": ["カルテル"],
+        "ar": ["كارتل"],
+        "hi": ["कार्टेल"]
+      }
+    },
+    {
+      "term": "cocaine and coca economy",
+      "aliases": {
+        "en": ["cocaine", "coca leaf"],
+        "es": ["cocaína", "cocalero", "hoja de coca"],
+        "de": ["Kokain"],
+        "fr": ["cocaïne"],
+        "it": ["cocaina"],
+        "ru": ["кокаин"],
+        "zh": ["可卡因"],
+        "ja": ["コカイン"],
+        "ar": ["الكوكايين"],
+        "hi": ["कोकीन"]
+      }
+    },
+    {
+      "term": "peace process (PHRASES ONLY -- bare 'paz' is 99% noise)",
+      "aliases": {
+        "en": ["total peace", "peace talks", "peace process", "peace negotiations"],
+        "es": ["paz total", "proceso de paz", "acuerdo de paz", "negociaciones de paz"],
+        "de": ["Friedensprozess", "Friedensgespräche"],
+        "fr": ["processus de paix"],
+        "it": ["processo di pace"],
+        "ru": ["мирный процесс"],
+        "zh": ["和平进程"],
+        "ja": ["和平プロセス"],
+        "ar": ["عملية السلام"],
+        "hi": ["शांति प्रक्रिया"]
+      }
+    },
+    {
+      "term": "conflict geography (dormant)",
+      "aliases": {
+        "en": ["Catatumbo", "Arauca", "Cauca"]
+      }
+    }
+  ]
+}

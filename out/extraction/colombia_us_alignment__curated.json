@@ -1,0 +1,227 @@
+{
+  "metadata": {
+    "fn_id": "colombia_us_alignment",
+    "drafted": "2026-07-18",
+    "method": "hand-drafted, 4-pillar lens, every candidate alias pre-measured for Colombia-share inside AMERICAS-ANDEAN",
+    "notes": [
+      "Gate is AMERICAS-ANDEAN, which also covers EC/BO/PE/GY, so each alias was measured for what share of its ANDEAN hits are actually Colombian before being kept.",
+      "KEPT with measured Colombia-share: 'White House'/'Casa Blanca' 27/29 = 93%; tariff/arancel 13/15 = 87%; threat/amenaza 20/28 = 71%; military operation 7/15 = 47% (kept only as a PHRASE -- bare 'military' returns 41 non-Colombian ANDEAN hits).",
+      "DROPPED 'embajador'/'ambassador'/'embassy': 33 ANDEAN hits but only 7 Colombian (21%) -- it is Ecuadorian and Bolivian diplomacy.",
+      "DROPPED 'Petro' despite being the single strongest Colombia localizer (184 hits, zero Petrobras/Petroecuador collisions inside this gate). Only 80 of those 184 are US-related -- 43% on-topic. Petro is a COUNTRY-level anchor, and the theater carries no bundle, so he belongs to no atomic. Putting him here would have made this atomic a de-facto country gate colliding with the other two (the A2b trap).",
+      "No 'Trump' anywhere: third-party leader, hard rule 4.",
+      "'OFAC' is all-caps <=4 chars -> case-sensitive whole-word acronym path, safe.",
+      "'decertif' / 'Plan Colombia' / 'lista Clinton' measure ~0 today and are KEPT deliberately as high-precision dormant anchors -- they are the historic core of US-Colombia friction and cost nothing while quiet.",
+      "AUDIT PRUNE: dropped fr 'menace' (3 hits, 67% foreign -- it is also an English word and the non-EN path is pure substring, so it matched English 'menace' in Iran/Venezuela/Cuba titles) and ja '軍事作戦' (1 hit, 100% foreign, a Ukraine title)."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "the US executive as venue",
+      "aliases": {
+        "en": [
+          "White House"
+        ],
+        "es": [
+          "Casa Blanca"
+        ],
+        "de": [
+          "Weißes Haus"
+        ],
+        "fr": [
+          "Maison Blanche"
+        ],
+        "it": [
+          "Casa Bianca"
+        ],
+        "ru": [
+          "Белый дом"
+        ],
+        "zh": [
+          "白宫"
+        ],
+        "ja": [
+          "ホワイトハウス"
+        ],
+        "ar": [
+          "البيت الأبيض"
+        ],
+        "hi": [
+          "व्हाइट हाउस"
+        ]
+      }
+    },
+    {
+      "term": "coercive threat",
+      "aliases": {
+        "en": [
+          "threat"
+        ],
+        "es": [
+          "amenaza"
+        ],
+        "de": [
+          "Drohung",
+          "droht"
+        ],
+        "fr": [],
+        "it": [
+          "minaccia"
+        ],
+        "ru": [
+          "угроз"
+        ],
+        "zh": [
+          "威胁"
+        ],
+        "ja": [
+          "脅迫"
+        ],
+        "ar": [
+          "تهديد"
+        ],
+        "hi": [
+          "धमकी"
+        ]
+      }
+    },
+    {
+      "term": "tariffs",
+      "aliases": {
+        "en": [
+          "tariff"
+        ],
+        "es": [
+          "arancel"
+        ],
+        "de": [
+          "Zoll"
+        ],
+        "fr": [
+          "droits de douane"
+        ],
+        "it": [
+          "dazio"
+        ],
+        "ru": [
+          "пошлин"
+        ],
+        "zh": [
+          "关税"
+        ],
+        "ja": [
+          "関税"
+        ],
+        "ar": [
+          "تعريفة جمركية"
+        ],
+        "hi": [
+          "टैरिफ"
+        ]
+      }
+    },
+    {
+      "term": "threatened military action (phrase only -- bare 'military' leaks to Ecuador/Bolivia)",
+      "aliases": {
+        "en": [
+          "military operation",
+          "military action"
+        ],
+        "es": [
+          "operación militar"
+        ],
+        "de": [
+          "Militäroperation"
+        ],
+        "fr": [
+          "opération militaire"
+        ],
+        "it": [
+          "operazione militare"
+        ],
+        "ru": [
+          "военная операция"
+        ],
+        "zh": [
+          "军事行动"
+        ],
+        "ja": [],
+        "ar": [
+          "عملية عسكرية"
+        ],
+        "hi": [
+          "सैन्य अभियान"
+        ]
+      }
+    },
+    {
+      "term": "sanctions and travel measures",
+      "aliases": {
+        "en": [
+          "sanction",
+          "visa",
+          "OFAC",
+          "Clinton list"
+        ],
+        "es": [
+          "sanción",
+          "sanciones",
+          "lista Clinton"
+        ],
+        "de": [
+          "Sanktion"
+        ],
+        "it": [
+          "sanzione"
+        ],
+        "ru": [
+          "санкц"
+        ],
+        "zh": [
+          "制裁"
+        ],
+        "ja": [
+          "制裁"
+        ],
+        "ar": [
+          "عقوبات"
+        ],
+        "hi": [
+          "प्रतिबंध"
+        ]
+      }
+    },
+    {
+      "term": "extradition and counter-narcotics certification (dormant anchors)",
+      "aliases": {
+        "en": [
+          "extradit",
+          "decertif",
+          "Plan Colombia"
+        ],
+        "es": [
+          "extradic",
+          "descertificación",
+          "certificación antidrogas"
+        ],
+        "de": [
+          "Auslieferung"
+        ],
+        "ru": [
+          "экстрадиц"
+        ],
+        "zh": [
+          "引渡"
+        ],
+        "ja": [
+          "身柄引き渡し"
+        ],
+        "ar": [
+          "تسليم المطلوبين"
+        ],
+        "hi": [
+          "प्रत्यर्पण"
+        ]
+      }
+    }
+  ]
+}
