@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "fn_id": "latam_port_infrastructure_control",
+    "note": "Control of strategic port infrastructure in the Americas -- concession disputes, court-ordered operator changes, and the coercive retaliation over them (Panama/CK Hutchison, Peru/Chancay). Multilateral archetype, primary_target=null. NAME-GATED (A2-like): every alias is a named canal/port/operator; generic domain nouns are deliberately EXCLUDED because aliases are OR'd and the centroid gate spans AMERICAS-USA + ASIA-CHINA. Pre-audit against 180d corpus: 'concession' 64 in-gate hits / 1 on-topic, 'terminal' 53/1, 'arbitration' 16/7, 'Cosco' 10/2 (rest Hormuz shipping), 'Maersk' 18 in-gate with 7 Hormuz/tariff leaks and ZERO unique on-topic contribution (every on-topic Maersk title also carries Panama or Hutchison) -- all dropped. Bare 'Panama' is NOT A2-safe: flag-of-convenience noise (Black Sea drone strike, IRGC missile near Umm Qasr, Odesa, cargo sinking off Western Sahara). Compounds only. Non-Latin lists are near-zero in the current corpus (Chinese state media publish this story in English, same as the SCS build) but are kept in native orthography for future ingest."
+  },
+  "bundle": [
+    {
+      "term": "Panama Canal (the waterway itself)",
+      "aliases": {
+        "en": ["Panama Canal"],
+        "de": ["Panamakanal", "Panama-Kanal"],
+        "es": ["Canal de Panamá"],
+        "fr": ["canal de Panama"],
+        "it": ["Canale di Panama"],
+        "ru": ["Панамск"],
+        "zh": ["巴拿马运河"],
+        "ja": ["パナマ運河"],
+        "ar": ["قناة بنما"],
+        "hi": ["पनामा नहर"]
+      }
+    },
+    {
+      "term": "The canal port terminals (the contested concession)",
+      "aliases": {
+        "en": ["canal ports", "Panama port"],
+        "de": ["Panama-Häfen"],
+        "es": ["puertos del canal"],
+        "fr": ["ports du canal"],
+        "it": ["porti del canale"],
+        "ru": ["порты канала"],
+        "zh": ["巴拿马港口"],
+        "ja": ["パナマ港"],
+        "ar": ["موانئ القناة"],
+        "hi": ["नहर बंदरगाह"]
+      }
+    },
+    {
+      "term": "CK Hutchison (the evicted operator)",
+      "aliases": {
+        "en": ["Hutchison"],
+        "de": [],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": ["Хатчисон"],
+        "zh": ["长江和记", "和记港口"],
+        "ja": ["ハチソン"],
+        "ar": ["هاتشيسون"],
+        "hi": ["हचिसन"]
+      }
+    },
+    {
+      "term": "Chancay (the Peruvian parallel case)",
+      "aliases": {
+        "en": ["Chancay"],
+        "de": [],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": ["Чанкай"],
+        "zh": ["钱凯"],
+        "ja": ["チャンカイ"],
+        "ar": ["تشانكاي"],
+        "hi": ["चांके"]
+      }
+    },
+    {
+      "term": "Maritime coercion over the dispute (flag-state retaliation)",
+      "aliases": {
+        "en": ["Panama-flagged", "Panama ship", "port state control"],
+        "de": ["Hafenstaatkontrolle"],
+        "es": ["control por el Estado rector del puerto"],
+        "fr": ["contrôle par l'État du port"],
+        "it": [],
+        "ru": ["контроль государства порта"],
+        "zh": ["港口国监督"],
+        "ja": ["ポートステートコントロール"],
+        "ar": ["رقابة دولة الميناء"],
+        "hi": ["पोर्ट स्टेट कंट्रोल"]
+      }
+    },
+    {
+      "term": "Canal neutrality regime (dormant treaty anchor)",
+      "aliases": {
+        "en": ["Neutrality Treaty", "Torrijos"],
+        "de": [],
+        "es": ["Tratado de Neutralidad"],
+        "fr": ["traité de neutralité"],
+        "it": [],
+        "ru": ["договор о нейтралитете"],
+        "zh": ["中立条约"],
+        "ja": ["中立条約"],
+        "ar": ["معاهدة الحياد"],
+        "hi": ["तटस्थता संधि"]
+      }
+    }
+  ]
+}
