@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "cuba_energy_collapse",
+    "source": "hand-curated 2026-07-19, pre-audited against 180d AMERICAS-CUBA corpus",
+    "notes": "Dropped 'crisis' (n=115 but zero discriminating power -- it matches all five atomics). Dropped for 0 corpus hits: megawatt, thermoelectric, Guiteras, Felton, Rente, kerosene, queue, famine, sanitation, water supply, termoelectrica, corte de luz, gasolina, racionamiento, desnutricion, medicamentos, basura, penuria, Stromnetz, Treibstoff, Kraftstoff, Benzinmangel, Knappheit, Medikamente, coupure, faim, razionamento. Non-Latin scripts kept at n=0 where the term is long and collision-free (checklist requires non-empty ar/ru/zh/ja/hi)."
+  },
+  "bundle": [
+    {
+      "term": "grid and power",
+      "aliases": {
+        "en": ["blackout", "power grid", "power cut", "outage", "electricity", "electrical", "generator"],
+        "es": ["apagón", "apagones", "red eléctrica"],
+        "de": ["Stromausfall"],
+        "fr": ["panne de courant"],
+        "it": [],
+        "ru": ["отключение электричества"],
+        "zh": ["停电"],
+        "ja": ["停電", "電力網"],
+        "ar": ["انقطاع الكهرباء"],
+        "hi": ["बिजली कटौती"]
+      }
+    },
+    {
+      "term": "fuel scarcity",
+      "aliases": {
+        "en": ["fuel", "gasoline", "diesel", "petrol", "shortage", "ration", "scarcity"],
+        "es": ["combustible", "escasez", "desabasto"],
+        "de": ["Versorgungskrise"],
+        "fr": ["carburant", "pénurie", "rationnement"],
+        "it": ["carburante"],
+        "ru": ["топливо"],
+        "zh": ["燃料短缺"],
+        "ja": ["燃料不足"],
+        "ar": ["نقص الوقود"],
+        "hi": ["ईंधन संकट"]
+      }
+    },
+    {
+      "term": "humanitarian effects",
+      "aliases": {
+        "en": ["hunger", "malnutrition", "medicine", "medical supplies", "hospital", "rubbish", "garbage", "collapse"],
+        "es": ["hambre"],
+        "de": ["Hunger"],
+        "fr": [], "it": [],
+        "ru": ["гуманитарный кризис"],
+        "zh": ["缺粮"],
+        "ja": ["食料不足"],
+        "ar": ["مجاعة"],
+        "hi": ["भुखमरी"]
+      }
+    }
+  ]
+}

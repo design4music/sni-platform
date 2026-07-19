@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "cuba_military_coercion",
+    "source": "hand-curated 2026-07-19, pre-audited against 180d AMERICAS-CUBA corpus",
+    "notes": "Dropped en 'invade' -- word-START prefix matched Italian 'l'acqua invade il Malecon' (flooding); 'invasion' is clean at n=8. Dropped 'aircraft carrier' as redundant with the shorter 'carrier'. Dropped de 'Invasion' as a pure Latin duplicate of en 'invasion' (identical match set). Dropped for 0 hits: Caimanera, SOUTHCOM, Southern Command, warship, destroyer, frigate, marines, overflight, airspace, military option, airstrike, MINFAR, militia, sabotage, Playa Giron, buque de guerra, espacio aereo, sobrevuelo, milicia, movilizacion, sabotaje, incursion(es). Both 'Guantanamo' and 'Guantanamo' (accented) are kept -- they are distinct literal strings and each matches titles the other misses."
+  },
+  "bundle": [
+    {
+      "term": "base and command geography",
+      "aliases": {
+        "en": ["Guantanamo", "Guantánamo", "Pentagon", "Bay of Pigs"],
+        "es": ["Comando Sur"],
+        "de": [], "fr": [], "it": [], "ru": [], "zh": [], "ja": [], "ar": [], "hi": []
+      }
+    },
+    {
+      "term": "force deployment",
+      "aliases": {
+        "en": ["Nimitz", "carrier", "naval", "surveillance flight", "reconnaissance", "drone"],
+        "es": ["portaaviones"],
+        "de": [],
+        "fr": ["porte-avions"],
+        "it": ["portaerei"],
+        "ru": ["авианосец"],
+        "zh": ["航母"],
+        "ja": ["空母"],
+        "ar": ["حاملة طائرات"],
+        "hi": ["विमानवाहक"]
+      }
+    },
+    {
+      "term": "threat of force",
+      "aliases": {
+        "en": ["invasion", "intervention", "military action", "war powers", "mobilisation", "mobilization"],
+        "es": ["invasión", "intervención militar", "ataque militar"],
+        "de": [], "fr": [], "it": [],
+        "ru": ["военная интервенция"],
+        "zh": ["军事干预"],
+        "ja": ["軍事介入"],
+        "ar": ["غزو"],
+        "hi": ["सैन्य हस्तक्षेप"]
+      }
+    },
+    {
+      "term": "armed incidents and infiltration",
+      "aliases": {
+        "en": ["speedboat", "infiltration", "infiltrate", "incursion", "Autodefensas"],
+        "es": ["infiltración", "lancha rápida"],
+        "de": [], "fr": [], "it": [], "ru": [], "zh": [], "ja": [], "ar": [], "hi": []
+      }
+    }
+  ]
+}

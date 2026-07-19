@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "fn_id": "cuba_embargo_sanctions",
+    "source": "hand-curated 2026-07-19, pre-audited against 180d AMERICAS-CUBA corpus",
+    "notes": "Every alias verified n>0 against real headlines before applying. Dropped for 0 corpus hits: Helms-Burton, Title III, Torricelli, designation, Restricted List, SDN, Gaviota, CIMEX, Habanos, remittance, Western Union, state sponsor, terrorism list, lista negra, licencia, decreto, remesa, patrocinador, Handelsembargo, Enteignung, sanzioni. Dropped 'claim' (generic; 'Trump claims talks under way'). de 'Blockade' kept alongside en 'blockade' deliberately -- the non-EN substring path catches German compounds (Oelblockade) that the EN word-START path cannot."
+  },
+  "bundle": [
+    {
+      "term": "core instruments",
+      "aliases": {
+        "en": ["embargo", "blockade", "sanction", "OFAC", "Treasury", "blacklist", "license", "executive order", "waiver"],
+        "es": ["bloqueo", "sanciones"],
+        "de": ["Blockade", "Sanktion"],
+        "fr": ["blocus"],
+        "it": [],
+        "ru": ["санкции против Кубы"],
+        "zh": ["制裁"],
+        "ja": ["制裁", "禁輸"],
+        "ar": ["عقوبات", "حصار"],
+        "hi": ["प्रतिबंध"]
+      }
+    },
+    {
+      "term": "designated Cuban entities",
+      "aliases": {
+        "en": ["GAESA", "Moa Nickel"],
+        "es": [], "de": [], "fr": [], "it": [], "ru": [], "zh": [], "ja": [], "ar": [], "hi": []
+      }
+    },
+    {
+      "term": "third parties withdrawing under sanctions threat",
+      "aliases": {
+        "en": ["Hapag-Lloyd", "CMA CGM", "Iberostar", "Melia"],
+        "es": ["Meliá"],
+        "de": [], "fr": [], "it": [], "ru": [], "zh": [], "ja": [], "ar": [], "hi": []
+      }
+    },
+    {
+      "term": "property claims and legal warfare",
+      "aliases": {
+        "en": ["expropriat", "nationalis", "confiscat", "compensation", "indict", "Exxon"],
+        "es": ["expropia", "confisca", "indemniza", "imputa"],
+        "de": [],
+        "fr": ["expropriation"],
+        "it": [], "ru": [], "zh": [], "ja": [], "ar": [], "hi": []
+      }
+    }
+  ]
+}

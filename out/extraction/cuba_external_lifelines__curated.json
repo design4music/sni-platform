@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "fn_id": "cuba_external_lifelines",
+    "source": "hand-curated 2026-07-19, pre-audited against 180d AMERICAS-CUBA corpus",
+    "notes": "Rule-6b kills caught by the pre-audit: fr 'don' n=71 (subset of Donald/donate/London), de 'Spende' n=7 (subset of Spanish 'suspende'), fr 'pret' n=1 ('pret au dialogue' = ready, not loan), en 'cargo' n=9 (Portuguese 'cargo' = office). All dropped. Dropped bare 'supply'/'supplies' as ambiguous across the sanctions and energy atomics -- the lifeline ACT is carried by tanker/shipment/deliver/convoy/aid. Dropped for 0 hits: Rosneft, Zarubezhneft, PDVSA, Sinopec, CNPC, donation, credit line, loan, debt relief, deferral, barter, ALBA, BRICS, airlift, Mariel, suministro, donacion, prestamo, credito, flete, Frachter, Kredit, Rohoel. Patron COUNTRY names deliberately absent (Australia lesson): they would admit every Cuba/Russia co-mention including pure rhetoric. Patron centroids are likewise NOT in centroid_ids -- add only if the post-attribution audit shows a real centroid gap."
+  },
+  "bundle": [
+    {
+      "term": "supply movement",
+      "aliases": {
+        "en": ["tanker", "shipment", "crude", "delivery", "deliver", "shipping", "vessel", "convoy"],
+        "es": ["petrolero", "buque", "cargamento", "envío", "crudo"],
+        "de": ["Tanker", "Lieferung"],
+        "fr": [],
+        "it": ["petroliera"],
+        "ru": ["нефть", "танкер"],
+        "zh": ["油轮"],
+        "ja": ["タンカー"],
+        "ar": ["ناقلة نفط"],
+        "hi": ["तेल टैंकर"]
+      }
+    },
+    {
+      "term": "aid and solidarity",
+      "aliases": {
+        "en": ["humanitarian aid", "donate", "relief", "solidarity"],
+        "es": ["ayuda humanitaria"],
+        "de": ["Hilfsgüter"],
+        "fr": ["aide humanitaire"],
+        "it": [],
+        "ru": ["гуманитарная помощь"],
+        "zh": ["人道主义援助"],
+        "ja": ["人道支援"],
+        "ar": ["مساعدات إنسانية"],
+        "hi": ["मानवीय सहायता"]
+      }
+    },
+    {
+      "term": "patron firms and fora",
+      "aliases": {
+        "en": ["Pemex", "CELAC", "SPIEF"],
+        "es": [], "de": [], "fr": [], "it": [], "ru": [], "zh": [], "ja": [], "ar": [], "hi": []
+      }
+    }
+  ]
+}

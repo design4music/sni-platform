@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "fn_id": "cuba_regime_survival",
+    "source": "hand-curated 2026-07-19, pre-audited against 180d AMERICAS-CUBA corpus",
+    "notes": "BIGGEST CALL OF THIS BUILD: bare 'Castro' (n=162, the largest single anchor available) is DELIBERATELY EXCLUDED. Of its 162 titles, 80 are the US legal case against Raul Castro (which belongs to cuba_embargo_sanctions, already anchored there by 'indict'/'imputa') and only 6 are legitimacy/reform. Including it would have made this atomic the theater's largest on entirely misfiled content. The legitimacy sense is carried by 'Diaz-Canel' (the sitting president) and es 'castrismo' (the succession/ideology sense) instead. Also dropped: 'exile'/'exilio' (samples dominated by the speedboat attack -> cuba_military_coercion), 'detention'/'detain' (US ICE-custody deaths, a US domestic immigration story, plus one patrol-boat arrest), 'crackdown' (both hits are US SANCTIONS crackdowns, not Cuban repression), 'activist' (mixed with aid convoys). de 'Reform' dropped as a pure Latin duplicate of en 'reform' (identical n=32 match set). Dropped for 0 hits: PCC, Politburo, National Assembly, single-party, succession, dissident(en), opposition(en), repression(en), censorship, UNPACU, Ladies in White, San Isidro, 11J, mipyme, cuentapropista, devaluation, state enterprise, legitimacy, referendum, election, Partido Comunista, Buro Politico, Asamblea Nacional, derechos humanos, censura, Damas de Blanco, sucesion, devaluacion."
+  },
+  "bundle": [
+    {
+      "term": "regime actors and institutions",
+      "aliases": {
+        "en": ["Díaz-Canel", "Diaz-Canel", "Communist Party"],
+        "es": ["castrismo"],
+        "de": [], "fr": [], "it": [],
+        "ru": ["компартия"],
+        "zh": ["共产党"],
+        "ja": ["共産党"],
+        "ar": ["الحزب الشيوعي"],
+        "hi": ["कम्युनिस्ट पार्टी"]
+      }
+    },
+    {
+      "term": "dissent and internal control",
+      "aliases": {
+        "en": ["protest", "prisoner", "political prisoner", "release", "human rights"],
+        "es": ["disidente", "oposición", "protesta", "preso político", "excarcela", "detención", "represión"],
+        "de": ["Gefangene"],
+        "fr": [], "it": [],
+        "ru": ["политзаключённые"],
+        "zh": ["政治犯"],
+        "ja": ["政治犯"],
+        "ar": ["سجناء سياسيين"],
+        "hi": ["राजनीतिक कैदी"]
+      }
+    },
+    {
+      "term": "reform and economic model",
+      "aliases": {
+        "en": ["reform", "private sector"],
+        "es": ["reforma"],
+        "de": [], "fr": [], "it": [],
+        "ru": ["реформа"],
+        "zh": ["改革"],
+        "ja": ["改革"],
+        "ar": ["إصلاح"],
+        "hi": ["सुधार"]
+      }
+    }
+  ]
+}
