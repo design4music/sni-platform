@@ -42,7 +42,41 @@ def parse_args() -> argparse.Namespace:
         default="dry-run",
         help="dry-run prints what would change; apply commits.",
     )
+    p.add_argument(
+        "--emit-sql",
+        metavar="PATH",
+        help=(
+            "Also write an idempotent upsert for this bundle to PATH, for "
+            "deploying it to Render. This script only ever writes to the DB the "
+            "environment points at (local), so without this the bundle never "
+            "reaches production -- an audit on 2026-07-18 found 46 active "
+            "atomics on Render with no bundle for exactly this reason. Appends "
+            "if PATH exists, so a whole theater can accumulate into one file."
+        ),
+    )
     return p.parse_args()
+
+
+def emit_sql(path: str, fn_id: str, item_raw: str, aliases: dict) -> None:
+    """Append an idempotent fn_anchor upsert to a .sql file.
+
+    Conflict target is the partial unique index idx_taxonomy_v3_unique_fn_anchor
+    on (linked_id) WHERE taxonomy_function='fn_anchor' AND is_active.
+    """
+    payload = json.dumps(aliases, ensure_ascii=False).replace("'", "''")
+    n = sum(len(v) for v in aliases.values())
+    stmt = (
+        f"\n-- {fn_id} ({n} aliases)\n"
+        "INSERT INTO taxonomy_v3 (id, linked_id, item_raw, aliases, is_active, is_stop_word, taxonomy_function)\n"
+        f"VALUES (gen_random_uuid(), '{fn_id}', '{item_raw}', '{payload}'::jsonb, true, false, 'fn_anchor')\n"
+        "ON CONFLICT (linked_id) WHERE taxonomy_function = 'fn_anchor' AND is_active = true\n"
+        "DO UPDATE SET aliases = EXCLUDED.aliases, item_raw = EXCLUDED.item_raw, updated_at = now();\n"
+    )
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("a", encoding="utf-8") as f:
+        f.write(stmt)
+    print(f"  emitted deploy SQL -> {path}")
 
 
 def merge_bundle_to_aliases(bundle: list[dict]) -> dict:
@@ -84,11 +118,15 @@ def main() -> None:
         if vals:
             print(f"  {lang}: {len(vals):3d} aliases")
 
+    item_raw = f"{fn_id} fn_anchor"
+
+    if args.emit_sql:
+        emit_sql(args.emit_sql, fn_id, item_raw, aliases)
+
     if args.mode == "dry-run":
         print("\nDRY-RUN: no changes committed. Re-run with --mode apply to write.")
         return
 
-    item_raw = f"{fn_id} fn_anchor"
     conn = psycopg2.connect(**config.db_connect_kwargs())
     try:
         with conn.cursor() as cur:

@@ -97,8 +97,13 @@ plausible-looking count.
    anchor.
    ```bash
    PYTHONIOENCODING=utf-8 python scripts/audit_fn_anchor_aliases.py --fn-id <fn> --window-days 180 --samples 1 --min-n 1
-   python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn>__curated.json --mode apply
+   python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn>__curated.json --mode apply \
+       --emit-sql db/migrations/<date>_<theater>_bundles.sql
    ```
+   **`--emit-sql` is not optional.** The apply script only writes to the local
+   DB, so without it the bundle never reaches Render — that is how 46 of 121
+   active atomics ended up bundle-less in production (audit 2026-07-18). Commit
+   the emitted .sql AND `git add -f` the curated JSON (`out/` is gitignored).
 4. `[Opus for diagnosis; Sonnet for the mechanical UPDATE]` **Set centroid
    roles (§2)** — target-centric → `primary_target`; multilateral/bilateral →
    null. **Diagnose leak as a possible CENTROID GAP before blaming aliases**

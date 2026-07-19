@@ -267,11 +267,29 @@ to Sonnet after the curated JSON is saved.
 
 ```bash
 python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn_id>__curated.json   # dry-run
-python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn_id>__curated.json --mode apply
+python scripts/apply_fn_anchor_bundle.py --json out/extraction/<fn_id>__curated.json \
+    --mode apply --emit-sql db/migrations/<date>_<theater>_bundles.sql
 ```
 
 Idempotent — re-running replaces the bundle's aliases for the same
 FN.
+
+**Always pass `--emit-sql`.** This script writes to whatever DB the
+environment points at — in practice always local — so the bundle does
+NOT travel with the theater's migrations. Skipping this is how Render
+ended up with **46 of 121 active atomics carrying no bundle** (audit,
+2026-07-18). An atomic with no bundle matches nothing, so a bootstrap
+against it silently returns zero events and reads as a failed build
+rather than a missing input.
+
+`--emit-sql` appends, so one file accumulates a whole theater's bundles,
+and it works in dry-run too (generate the deploy SQL without writing to
+any DB). Commit that file alongside the theater's other migrations.
+
+Also: **the curated JSON itself must be committed** — `out/` is
+gitignored, so it needs `git add -f`. The deploy runbook names these
+JSONs as structural content with git as the source of truth, but as of
+2026-07-18 only 16 of 100 on disk were tracked.
 
 ### Verify `[Sonnet]`
 
