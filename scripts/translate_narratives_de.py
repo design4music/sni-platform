@@ -7,7 +7,7 @@ import time
 import psycopg2
 import requests
 
-API_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-1ff922c364774577902bf81477e143f0")
+API_KEY = os.environ["DEEPSEEK_API_KEY"]
 API_URL = "https://api.deepseek.com/v1/chat/completions"
 DB_URL = "postgresql://postgres:password@localhost:5432/sni_v2"
 BATCH_SIZE = 20  # narratives per LLM call
