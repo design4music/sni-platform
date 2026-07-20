@@ -1,0 +1,165 @@
+{
+  "metadata": {
+    "fn_id": "us_epstein_elite_network",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "Epstein",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "إبستين"
+        ],
+        "de": [],
+        "en": [
+          "Epstein"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "एपस्टीन"
+        ],
+        "it": [],
+        "ja": [
+          "エプスタイン"
+        ],
+        "ru": [
+          "Эпштейн"
+        ],
+        "zh": [
+          "爱泼斯坦"
+        ]
+      }
+    },
+    {
+      "term": "Ghislaine Maxwell",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "غيسلين ماكسويل"
+        ],
+        "de": [],
+        "en": [
+          "Ghislaine"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "गिस्लेन मैक्सवेल"
+        ],
+        "it": [],
+        "ja": [
+          "ギレーヌ・マクスウェル"
+        ],
+        "ru": [
+          "Гислейн Максвелл"
+        ],
+        "zh": [
+          "吉丝莲"
+        ]
+      }
+    },
+    {
+      "term": "Giuffre",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Giuffre"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "Джуффре"
+        ],
+        "zh": [
+          "朱弗雷"
+        ]
+      }
+    },
+    {
+      "term": "Wexner",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Wexner"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "Векснер"
+        ],
+        "zh": []
+      }
+    },
+    {
+      "term": "Leon Black",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Leon Black"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "Mandelson",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Mandelson"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "Мандельсон"
+        ],
+        "zh": []
+      }
+    },
+    {
+      "term": "Zorro Ranch",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Zorro Ranch",
+          "Little St. James"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    }
+  ]
+}

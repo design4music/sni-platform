@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "fn_id": "us_fed_independence",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "curation_notes": [
+      "Extractor drafted a MONETARY POLICY bundle, not an independence-conflict bundle. Dropped the whole market-mechanics pillar (monetary policy, interest rate, rate hike/cut/decision, forward guidance, inflation, price stability, balance sheet, stress test, inflation hawk, policy meeting, quiet period). Aliases are OR'd, so on a bare-country gate any one of those admits every US economics story.",
+      "MEASURED AND DROPPED THE BARE INSTITUTION. 'Fed' takes the case-sensitive acronym path and matched 1229 titles, but a read of the sample put it at only ~50% on-topic for an INDEPENDENCE atomic -- the rest is Treasuries, gold, rate bets, Fed minutes, fintech payment accounts, NY Fed FX checks. That is well below the A2 bar (Greenland ~95%), i.e. the Australia lesson: A2 is available only when the subject's coverage IS the dispute, and Fed coverage is half ordinary central banking. Dropped bare Fed / Federal Reserve / central bank and anchored on the officers and the removal-and-appointment fight instead. Measured result: 585 titles / 85 non-EN / 82 publishers -- sharper AND larger than the 470 pre-estimate.",
+      "Same logic applied to the non-English bare forms, which take the SUBSTRING path and would each re-admit all Fed coverage in that language: dropped bare ФРС, 美联储, FRB, الاحتياطي الفيدرالي. Kept only their compound chair/governor/independence forms.",
+      "Dropped 'Supreme Court': belongs to us_judicial_constraint, and bare 'Supreme Court' is a 1798-title firehose (India/Korea/Nigeria/Estonia/Australia). The Lisa Cook ruling still lands here via 'Lisa Cook' + 'Fed governor'.",
+      "Dropped generic process nouns firing/sack/subpoena/criminal probe/Senate confirmation/Board of Governors -- OR'd generics on a country gate.",
+      "Dropped 'John Williams' (NY Fed president) -- collides with the composer, who is far more frequent.",
+      "Dropped bare 'Bowman' (generic surname); full name only.",
+      "NEVER add bare 'Warsh': the EN matcher is word-START prefix, so \\mWarsh matches 'warship'/'warships' -- 698 raw vs ~150 real.",
+      "'Powell' pre-audited at 256 titles and is 100% Jerome Powell, and the content is the dispute itself (DOJ probe into Powell, Trump threatening to fire him, the independence quote, Warsh replacing him). Kept.",
+      "'Hassett' pre-audited at 8 -- rare surname, safe.",
+      "Added 'Fed chief' and de 'Fed-Vorständin'/'Fed-Vorstand': the order rule makes phrases literal, and these forms appear in the corpus (FAZ: 'Gericht lässt Fed-Vorständin im Amt')."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "Fed chair",
+      "type": "entity",
+      "aliases": {
+        "ar": ["رئيس الاحتياطي الفيدرالي"],
+        "de": ["Fed-Chef", "Notenbankchef"],
+        "en": ["Fed chair", "Fed chairman", "Fed chief", "Federal Reserve chair"],
+        "es": ["presidente de la Fed"],
+        "fr": ["président de la Fed"],
+        "hi": ["फेड अध्यक्ष"],
+        "it": ["presidente della Fed"],
+        "ja": ["FRB議長"],
+        "ru": ["глава ФРС"],
+        "zh": ["美联储主席"]
+      }
+    },
+    {
+      "term": "Fed governor",
+      "type": "entity",
+      "aliases": {
+        "ar": ["محافظ الاحتياطي الفيدرالي"],
+        "de": ["Fed-Gouverneur", "Fed-Vorständin", "Fed-Vorstand"],
+        "en": ["Fed governor", "Federal Reserve governor"],
+        "es": ["gobernador de la Fed"],
+        "fr": ["gouverneur de la Fed"],
+        "hi": ["फेड गवर्नर"],
+        "it": ["governatore della Fed"],
+        "ja": ["FRB理事"],
+        "ru": ["член совета управляющих ФРС"],
+        "zh": ["美联储理事"]
+      }
+    },
+    {
+      "term": "Fed independence",
+      "type": "concept",
+      "aliases": {
+        "ar": ["استقلال الاحتياطي الفيدرالي"],
+        "de": ["Unabhängigkeit der US-Notenbank", "Notenbank-Unabhängigkeit"],
+        "en": ["Fed independence", "Federal Reserve independence", "central bank independence"],
+        "es": ["independencia de la Fed"],
+        "fr": ["indépendance de la Fed"],
+        "hi": ["फेड की स्वतंत्रता"],
+        "it": ["indipendenza della Fed"],
+        "ja": ["FRBの独立性"],
+        "ru": ["независимость ФРС"],
+        "zh": ["美联储独立性"]
+      }
+    },
+    {
+      "term": "Jerome Powell",
+      "type": "entity",
+      "aliases": {
+        "ar": ["جيروم باول"],
+        "de": [],
+        "en": ["Powell"],
+        "es": [],
+        "fr": [],
+        "hi": ["जेरोम पॉवेल"],
+        "it": [],
+        "ja": ["パウエル"],
+        "ru": ["Пауэлл"],
+        "zh": ["鲍威尔"]
+      }
+    },
+    {
+      "term": "Kevin Warsh",
+      "type": "entity",
+      "aliases": {
+        "ar": ["كيفن وارش"],
+        "de": [],
+        "en": ["Kevin Warsh"],
+        "es": [],
+        "fr": [],
+        "hi": ["केविन वार्श"],
+        "it": [],
+        "ja": ["ウォーシュ"],
+        "ru": ["Уорш"],
+        "zh": ["沃什"]
+      }
+    },
+    {
+      "term": "Lisa Cook",
+      "type": "entity",
+      "aliases": {
+        "ar": ["ليزا كوك"],
+        "de": [],
+        "en": ["Lisa Cook"],
+        "es": [],
+        "fr": [],
+        "hi": ["लिसा कुक"],
+        "it": [],
+        "ja": ["リサ・クック"],
+        "ru": ["Лиза Кук"],
+        "zh": ["丽莎·库克"]
+      }
+    },
+    {
+      "term": "Michelle Bowman",
+      "type": "entity",
+      "aliases": {
+        "ar": ["ميشيل بومان"],
+        "de": [],
+        "en": ["Michelle Bowman"],
+        "es": [],
+        "fr": [],
+        "hi": ["मिशेल बोमन"],
+        "it": [],
+        "ja": ["ボウマン"],
+        "ru": ["Боуман"],
+        "zh": ["鲍曼"]
+      }
+    },
+    {
+      "term": "Kevin Hassett",
+      "type": "entity",
+      "aliases": {
+        "ar": ["كيفن هاسيت"],
+        "de": [],
+        "en": ["Hassett"],
+        "es": [],
+        "fr": [],
+        "hi": ["केविन हासेट"],
+        "it": [],
+        "ja": ["ハセット"],
+        "ru": ["Хассет"],
+        "zh": ["哈塞特"]
+      }
+    },
+    {
+      "term": "FOMC",
+      "type": "entity",
+      "aliases": {
+        "ar": ["اللجنة الفيدرالية للسوق المفتوحة"],
+        "de": [],
+        "en": ["FOMC"],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": ["連邦公開市場委員会"],
+        "ru": ["Комитет по открытым рынкам"],
+        "zh": ["联邦公开市场委员会"]
+      }
+    }
+  ]
+}

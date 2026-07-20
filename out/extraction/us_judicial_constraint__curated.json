@@ -1,0 +1,282 @@
+{
+  "metadata": {
+    "fn_id": "us_judicial_constraint",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "SCOTUS",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "المحكمة العليا الأمريكية"
+        ],
+        "de": [
+          "US-Supreme-Court",
+          "Oberster Gerichtshof der USA"
+        ],
+        "en": [
+          "SCOTUS",
+          "US Supreme Court",
+          "U.S. Supreme Court",
+          "Supreme Court justice",
+          "chief justice",
+          "Supreme Court rules",
+          "Supreme Court ruling",
+          "Supreme Court blocks",
+          "Supreme Court upholds",
+          "Supreme Court allows",
+          "Supreme Court rejects",
+          "Supreme Court denies",
+          "Supreme Court strikes",
+          "Supreme Court clears",
+          "Supreme Court sides",
+          "Supreme Court hears",
+          "Supreme Court weighs",
+          "Supreme Court backs",
+          "Supreme Court lets",
+          "Supreme Court tosses",
+          "Supreme Court expands",
+          "Supreme Court restores"
+        ],
+        "es": [
+          "Tribunal Supremo de EE"
+        ],
+        "fr": [
+          "Cour suprême des États-Unis"
+        ],
+        "hi": [
+          "अमेरिकी सुप्रीम कोर्ट"
+        ],
+        "it": [],
+        "ja": [
+          "米連邦最高裁"
+        ],
+        "ru": [
+          "Верховный суд США"
+        ],
+        "zh": [
+          "美国最高法院"
+        ]
+      }
+    },
+    {
+      "term": "birthright citizenship",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الجنسية بالولادة"
+        ],
+        "de": [
+          "Staatsbürgerschaftsrecht",
+          "Geburtsortsprinzip"
+        ],
+        "en": [
+          "birthright citizenship"
+        ],
+        "es": [
+          "ciudadanía por nacimiento"
+        ],
+        "fr": [
+          "droit du sol"
+        ],
+        "hi": [
+          "जन्मसिद्ध नागरिकता"
+        ],
+        "it": [
+          "cittadinanza per nascita"
+        ],
+        "ja": [
+          "出生地主義"
+        ],
+        "ru": [
+          "гражданство по рождению"
+        ],
+        "zh": [
+          "出生公民权"
+        ]
+      }
+    },
+    {
+      "term": "federal judge",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "قاض فيدرالي"
+        ],
+        "de": [
+          "Bundesrichter",
+          "Berufungsgericht"
+        ],
+        "en": [
+          "federal judge",
+          "appeals court",
+          "district judge"
+        ],
+        "es": [
+          "juez federal"
+        ],
+        "fr": [
+          "juge fédéral"
+        ],
+        "hi": [
+          "संघीय न्यायाधीश"
+        ],
+        "it": [
+          "giudice federale"
+        ],
+        "ja": [
+          "連邦判事"
+        ],
+        "ru": [
+          "федеральный судья"
+        ],
+        "zh": [
+          "联邦法官"
+        ]
+      }
+    },
+    {
+      "term": "injunction",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "einstweilige Verfügung"
+        ],
+        "en": [
+          "injunction",
+          "shadow docket",
+          "stay of the ruling"
+        ],
+        "es": [
+          "medida cautelar"
+        ],
+        "fr": [
+          "injonction"
+        ],
+        "hi": [],
+        "it": [
+          "ingiunzione"
+        ],
+        "ja": [],
+        "ru": [
+          "судебный запрет"
+        ],
+        "zh": [
+          "禁令"
+        ]
+      }
+    },
+    {
+      "term": "separation of powers",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "فصل السلطات"
+        ],
+        "de": [
+          "Gewaltenteilung",
+          "verfassungswidrig",
+          "Unabhängigkeit der Justiz"
+        ],
+        "en": [
+          "separation of powers",
+          "judicial independence",
+          "judicial review",
+          "unconstitutional",
+          "presidential power",
+          "executive power"
+        ],
+        "es": [
+          "separación de poderes",
+          "inconstitucional"
+        ],
+        "fr": [
+          "séparation des pouvoirs",
+          "inconstitutionnel"
+        ],
+        "hi": [
+          "शक्तियों का पृथक्करण"
+        ],
+        "it": [
+          "separazione dei poteri",
+          "incostituzionale"
+        ],
+        "ja": [
+          "三権分立"
+        ],
+        "ru": [
+          "разделение властей"
+        ],
+        "zh": [
+          "三权分立",
+          "违宪"
+        ]
+      }
+    },
+    {
+      "term": "executive order",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "أمر تنفيذي"
+        ],
+        "de": [
+          "Dekret",
+          "Verfügung"
+        ],
+        "en": [
+          "executive order"
+        ],
+        "es": [
+          "orden ejecutiva"
+        ],
+        "fr": [
+          "décret présidentiel"
+        ],
+        "hi": [
+          "कार्यकारी आदेश"
+        ],
+        "it": [
+          "ordine esecutivo"
+        ],
+        "ja": [
+          "大統領令"
+        ],
+        "ru": [
+          "указ президента"
+        ],
+        "zh": [
+          "行政命令"
+        ]
+      }
+    },
+    {
+      "term": "justices",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Clarence Thomas",
+          "Coney Barrett",
+          "Sotomayor",
+          "Kavanaugh",
+          "Gorsuch",
+          "Ketanji",
+          "Neil Gorsuch"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "metadata": {
+    "fn_id": "us_executive_loyalty",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "Pam Bondi",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بام بوندي"
+        ],
+        "de": [],
+        "en": [
+          "Pam Bondi"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [
+          "パム・ボンディ"
+        ],
+        "ru": [
+          "Пэм Бонди"
+        ],
+        "zh": [
+          "帕姆·邦迪"
+        ]
+      }
+    },
+    {
+      "term": "Kristi Noem",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Noem"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "Ноэм"
+        ],
+        "zh": [
+          "诺姆"
+        ]
+      }
+    },
+    {
+      "term": "Tulsi Gabbard",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "غابارد"
+        ],
+        "de": [],
+        "en": [
+          "Gabbard"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [
+          "ギャバード"
+        ],
+        "ru": [
+          "Габбард"
+        ],
+        "zh": [
+          "加巴德"
+        ]
+      }
+    },
+    {
+      "term": "Kash Patel",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Kash Patel"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "Кэш Пател"
+        ],
+        "zh": [
+          "卡什·帕特尔"
+        ]
+      }
+    },
+    {
+      "term": "Todd Blanche",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Todd Blanche"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "Jay Clayton",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Jay Clayton"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "attorney general",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "المدعي العام"
+        ],
+        "de": [
+          "Justizministerin",
+          "Justizminister",
+          "Generalstaatsanwalt"
+        ],
+        "en": [
+          "attorney general"
+        ],
+        "es": [
+          "fiscal general"
+        ],
+        "fr": [
+          "procureur général"
+        ],
+        "hi": [
+          "अटॉर्नी जनरल"
+        ],
+        "it": [
+          "procuratore generale"
+        ],
+        "ja": [
+          "司法長官"
+        ],
+        "ru": [
+          "генеральный прокурор"
+        ],
+        "zh": [
+          "司法部长"
+        ]
+      }
+    },
+    {
+      "term": "inspector general",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Generalinspekteur"
+        ],
+        "en": [
+          "inspector general",
+          "watchdog fired"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "FBI director",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "FBI-Direktor"
+        ],
+        "en": [
+          "FBI director"
+        ],
+        "es": [
+          "director del FBI"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "директор ФБР"
+        ],
+        "zh": [
+          "联邦调查局局长"
+        ]
+      }
+    },
+    {
+      "term": "intelligence chief",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Geheimdienstchefin",
+          "Geheimdienstchef"
+        ],
+        "en": [
+          "intelligence chief",
+          "national intelligence"
+        ],
+        "es": [
+          "jefa de inteligencia"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "глава разведки"
+        ],
+        "zh": [
+          "情报总监"
+        ]
+      }
+    },
+    {
+      "term": "cabinet shakeup",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Kabinettsumbildung"
+        ],
+        "en": [
+          "cabinet shakeup",
+          "cabinet reshuffle"
+        ],
+        "es": [
+          "remodelación del gabinete"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    }
+  ]
+}

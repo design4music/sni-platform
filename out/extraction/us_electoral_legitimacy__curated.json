@@ -1,0 +1,256 @@
+{
+  "metadata": {
+    "fn_id": "us_electoral_legitimacy",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "midterm",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "انتخابات التجديد النصفي"
+        ],
+        "de": [
+          "Zwischenwahl"
+        ],
+        "en": [
+          "midterm"
+        ],
+        "es": [
+          "elecciones de mitad de mandato"
+        ],
+        "fr": [
+          "élections de mi-mandat"
+        ],
+        "hi": [
+          "मध्यावधि चुनाव"
+        ],
+        "it": [
+          "elezioni di midterm"
+        ],
+        "ja": [
+          "中間選挙"
+        ],
+        "ru": [
+          "промежуточные выборы"
+        ],
+        "zh": [
+          "中期选举"
+        ]
+      }
+    },
+    {
+      "term": "redistricting",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "إعادة تقسيم الدوائر"
+        ],
+        "de": [
+          "Wahlbezirk",
+          "Neuzuschnitt"
+        ],
+        "en": [
+          "redistricting",
+          "congressional map",
+          "voting map"
+        ],
+        "es": [
+          "redistribución de distritos"
+        ],
+        "fr": [
+          "redécoupage"
+        ],
+        "hi": [
+          "परिसीमन"
+        ],
+        "it": [
+          "ridefinizione dei collegi"
+        ],
+        "ja": [
+          "選挙区割り"
+        ],
+        "ru": [
+          "перекройка округов"
+        ],
+        "zh": [
+          "选区重划"
+        ]
+      }
+    },
+    {
+      "term": "gerrymander",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "gerrymander"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "ballot",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الاقتراع"
+        ],
+        "de": [
+          "Briefwahl",
+          "Stimmzettel"
+        ],
+        "en": [
+          "ballot",
+          "mail-in",
+          "absentee"
+        ],
+        "es": [
+          "voto por correo",
+          "papeleta"
+        ],
+        "fr": [
+          "vote par correspondance"
+        ],
+        "hi": [
+          "मतपत्र"
+        ],
+        "it": [
+          "voto per corrispondenza"
+        ],
+        "ja": [
+          "郵便投票"
+        ],
+        "ru": [
+          "бюллетень"
+        ],
+        "zh": [
+          "邮寄选票"
+        ]
+      }
+    },
+    {
+      "term": "voter ID",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Wählerverzeichnis",
+          "Wählerausweis"
+        ],
+        "en": [
+          "voter ID",
+          "voter roll",
+          "voter purge",
+          "proof of citizenship",
+          "citizenship requirement",
+          "voter intimidation"
+        ],
+        "es": [
+          "padrón electoral"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "списки избирателей"
+        ],
+        "zh": [
+          "选民身份"
+        ]
+      }
+    },
+    {
+      "term": "Voting Rights Act",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Voting Rights Act",
+          "voting rights"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "election fraud",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "تزوير الانتخابات"
+        ],
+        "de": [
+          "Wahlbetrug",
+          "Wahlintegrität"
+        ],
+        "en": [
+          "election fraud",
+          "election integrity",
+          "election security",
+          "election interference",
+          "voting machine",
+          "poll watcher"
+        ],
+        "es": [
+          "fraude electoral"
+        ],
+        "fr": [
+          "fraude électorale"
+        ],
+        "hi": [
+          "चुनावी धोखाधड़ी"
+        ],
+        "it": [
+          "frode elettorale"
+        ],
+        "ja": [
+          "選挙不正"
+        ],
+        "ru": [
+          "фальсификация выборов"
+        ],
+        "zh": [
+          "选举舞弊"
+        ]
+      }
+    },
+    {
+      "term": "primary election",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "primary election",
+          "electoral college",
+          "turnout"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    }
+  ]
+}

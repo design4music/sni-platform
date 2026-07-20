@@ -1,0 +1,241 @@
+{
+  "metadata": {
+    "fn_id": "us_press_freedom",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "Kimmel",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Kimmel"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [
+          "キンメル"
+        ],
+        "ru": [
+          "Киммел"
+        ],
+        "zh": [
+          "基梅尔"
+        ]
+      }
+    },
+    {
+      "term": "broadcast licence",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "رخصة البث"
+        ],
+        "de": [
+          "Sendelizenz",
+          "Rundfunklizenz"
+        ],
+        "en": [
+          "broadcast license",
+          "broadcast licence",
+          "license review",
+          "FCC chair",
+          "FCC orders",
+          "FCC opens"
+        ],
+        "es": [
+          "licencia de emisión"
+        ],
+        "fr": [
+          "licence de diffusion"
+        ],
+        "hi": [],
+        "it": [
+          "licenza di trasmissione"
+        ],
+        "ja": [
+          "放送免許"
+        ],
+        "ru": [
+          "вещательная лицензия"
+        ],
+        "zh": [
+          "广播执照"
+        ]
+      }
+    },
+    {
+      "term": "press freedom",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "حرية الصحافة"
+        ],
+        "de": [
+          "Pressefreiheit"
+        ],
+        "en": [
+          "press freedom",
+          "freedom of the press"
+        ],
+        "es": [
+          "libertad de prensa"
+        ],
+        "fr": [
+          "liberté de la presse"
+        ],
+        "hi": [
+          "प्रेस की स्वतंत्रता"
+        ],
+        "it": [
+          "libertà di stampa"
+        ],
+        "ja": [
+          "報道の自由"
+        ],
+        "ru": [
+          "свобода прессы"
+        ],
+        "zh": [
+          "新闻自由"
+        ]
+      }
+    },
+    {
+      "term": "First Amendment",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Erster Verfassungszusatz"
+        ],
+        "en": [
+          "First Amendment"
+        ],
+        "es": [
+          "Primera Enmienda"
+        ],
+        "fr": [
+          "Premier Amendement"
+        ],
+        "hi": [],
+        "it": [
+          "Primo Emendamento"
+        ],
+        "ja": [],
+        "ru": [
+          "Первая поправка"
+        ],
+        "zh": [
+          "第一修正案"
+        ]
+      }
+    },
+    {
+      "term": "censorship",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الرقابة"
+        ],
+        "de": [
+          "Zensur"
+        ],
+        "en": [
+          "censorship",
+          "editorial independence"
+        ],
+        "es": [
+          "censura"
+        ],
+        "fr": [
+          "censure"
+        ],
+        "hi": [
+          "सेंसरशिप"
+        ],
+        "it": [
+          "censura"
+        ],
+        "ja": [
+          "検閲"
+        ],
+        "ru": [
+          "цензура"
+        ],
+        "zh": [
+          "审查"
+        ]
+      }
+    },
+    {
+      "term": "public broadcasting",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "öffentlich-rechtlicher Rundfunk"
+        ],
+        "en": [
+          "NPR",
+          "PBS",
+          "public broadcasting"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "Comey",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Comey"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "Коми"
+        ],
+        "zh": [
+          "科米"
+        ]
+      }
+    },
+    {
+      "term": "CPJ",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "CPJ",
+          "Committee to Protect Journalists"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    }
+  ]
+}

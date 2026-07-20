@@ -1,0 +1,235 @@
+{
+  "metadata": {
+    "fn_id": "us_interior_immigration_enforcement",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "ICE",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "إدارة الهجرة والجمارك"
+        ],
+        "de": [
+          "ICE-Gewahrsam",
+          "Einwanderungsbehörde"
+        ],
+        "en": [
+          "ICE"
+        ],
+        "es": [
+          "el ICE"
+        ],
+        "fr": [],
+        "hi": [
+          "आईसीई"
+        ],
+        "it": [],
+        "ja": [
+          "移民税関捜査局"
+        ],
+        "ru": [],
+        "zh": [
+          "移民及海关执法局"
+        ]
+      }
+    },
+    {
+      "term": "DHS",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Heimatschutzministerium"
+        ],
+        "en": [
+          "DHS",
+          "Homeland Security"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "deportation",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "ترحيل"
+        ],
+        "de": [
+          "Abschiebung",
+          "abgeschoben"
+        ],
+        "en": [
+          "deport"
+        ],
+        "es": [
+          "deportación",
+          "deportado"
+        ],
+        "fr": [
+          "expulsion"
+        ],
+        "hi": [
+          "निर्वासन"
+        ],
+        "it": [
+          "deportazione"
+        ],
+        "ja": [
+          "強制送還"
+        ],
+        "ru": [
+          "депортация"
+        ],
+        "zh": [
+          "驱逐出境"
+        ]
+      }
+    },
+    {
+      "term": "immigration detention",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "مركز احتجاز"
+        ],
+        "de": [
+          "Haftanstalt",
+          "Abschiebehaft"
+        ],
+        "en": [
+          "immigration detention",
+          "detention center",
+          "detention centre",
+          "detainee"
+        ],
+        "es": [
+          "centro de detención"
+        ],
+        "fr": [
+          "centre de rétention"
+        ],
+        "hi": [
+          "हिरासत केंद्र"
+        ],
+        "it": [],
+        "ja": [
+          "収容施設"
+        ],
+        "ru": [
+          "центр содержания"
+        ],
+        "zh": [
+          "拘留中心"
+        ]
+      }
+    },
+    {
+      "term": "expedited removal",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "expedited removal",
+          "removal flight"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "TPS",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "TPS",
+          "Temporary Protected Status"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "sanctuary city",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Zufluchtsstadt"
+        ],
+        "en": [
+          "sanctuary city",
+          "sanctuary state"
+        ],
+        "es": [
+          "ciudad santuario"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "Alligator Alcatraz",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Alligator Alcatraz"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "border czar",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "border czar"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "metadata": {
+    "fn_id": "us_political_violence",
+    "centroid": "AMERICAS-USA",
+    "curated": "2026-07-19",
+    "source": "curated from Deepseek draft; see module docstring"
+  },
+  "bundle": [
+    {
+      "term": "Secret Service",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الخدمة السرية"
+        ],
+        "de": [],
+        "en": [
+          "Secret Service"
+        ],
+        "es": [
+          "Servicio Secreto"
+        ],
+        "fr": [],
+        "hi": [
+          "सीक्रेट सर्विस"
+        ],
+        "it": [],
+        "ja": [
+          "シークレットサービス"
+        ],
+        "ru": [
+          "Секретная служба"
+        ],
+        "zh": [
+          "特勤局"
+        ]
+      }
+    },
+    {
+      "term": "assassination attempt",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "محاولة اغتيال"
+        ],
+        "de": [
+          "Attentat",
+          "Attentatsversuch"
+        ],
+        "en": [
+          "assassination attempt",
+          "assassination plot",
+          "attempted assassination"
+        ],
+        "es": [
+          "intento de asesinato",
+          "atentado"
+        ],
+        "fr": [
+          "tentative d'assassinat"
+        ],
+        "hi": [
+          "हत्या का प्रयास"
+        ],
+        "it": [
+          "tentato omicidio",
+          "attentato"
+        ],
+        "ja": [
+          "暗殺未遂"
+        ],
+        "ru": [
+          "покушение"
+        ],
+        "zh": [
+          "暗杀未遂"
+        ]
+      }
+    },
+    {
+      "term": "political violence",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "العنف السياسي"
+        ],
+        "de": [
+          "politische Gewalt"
+        ],
+        "en": [
+          "political violence",
+          "politically motivated"
+        ],
+        "es": [
+          "violencia política"
+        ],
+        "fr": [
+          "violence politique"
+        ],
+        "hi": [
+          "राजनीतिक हिंसा"
+        ],
+        "it": [
+          "violenza politica"
+        ],
+        "ja": [
+          "政治的暴力"
+        ],
+        "ru": [
+          "политическое насилие"
+        ],
+        "zh": [
+          "政治暴力"
+        ]
+      }
+    },
+    {
+      "term": "Correspondents Dinner",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Correspondents"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "Cole Allen",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Cole Allen"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      }
+    },
+    {
+      "term": "extremist plot",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [
+          "Extremist"
+        ],
+        "en": [
+          "extremist",
+          "foiled plot",
+          "sniper"
+        ],
+        "es": [
+          "extremista"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [
+          "экстремист"
+        ],
+        "zh": []
+      }
+    }
+  ]
+}
