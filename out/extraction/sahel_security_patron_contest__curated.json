@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "fn_id": "sahel_security_patron_contest",
+    "note": "The contest to become the Sahel's security patron after France: Africa Corps performance and retreat, Türkiye's drone/training model, US re-engagement, Morocco's Atlantic access offer. CENTROID FIX: EUROPE-RUSSIA was REMOVED from centroid_ids after pre-audit -- on the OR-gate it admitted every Russia title on earth ('drone' 1702 hits dominated by EUROPE-UKRAINE, 'military cooperation' 13 dominated by North Korea, 'arms' 76, 'training' 43). This is the australia_theater lesson: the other participants must be OUT of centroid_ids or the OR-gate swallows their domestic news. Gated on AFRICA-SAHEL alone with the phenomenon in the bundle. DROPPED: drone/arms/training/withdraw/military cooperation/mercenary/instructor/partnership (generic, and each one leaked hard through the Russia gate), AFRICOM/defence deal/patron/Francafrique (0 hits). This is the thinnest atomic in the theater (~25 titles) -- kept because the phenomenon is real and persistent, not because the volume is comfortable."
+  },
+  "bundle": [
+    {
+      "term": "Russian security apparatus in Africa",
+      "aliases": {
+        "en": ["Africa Corps", "Wagner"],
+        "fr": ["militaires russes", "soutien russe", "Corps africain"],
+        "de": ["russische Militärs", "Afrikakorps"],
+        "es": ["militares rusos"],
+        "it": ["militari russi"],
+        "ru": ["Африканский корпус", "Вагнер"],
+        "ar": ["الفيلق الأفريقي", "فاغنر"],
+        "zh": ["非洲军团", "瓦格纳"],
+        "ja": ["アフリカ軍団", "ワグネル"],
+        "hi": ["अफ्रीका कोर", "वैगनर"]
+      }
+    },
+    {
+      "term": "Competing external patrons",
+      "aliases": {
+        "en": ["Bayraktar", "Ankara", "Rabat", "Atlantic Initiative"],
+        "fr": ["Ankara", "Rabat", "initiative atlantique"],
+        "de": [],
+        "es": [],
+        "it": [],
+        "ru": ["Анкара", "Рабат"],
+        "ar": ["أنقرة", "الرباط"],
+        "zh": ["安卡拉", "拉巴特"],
+        "ja": ["アンカラ", "ラバト"],
+        "hi": ["अंकारा", "रबात"]
+      }
+    }
+  ]
+}

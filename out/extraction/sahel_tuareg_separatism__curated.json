@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "sahel_tuareg_separatism",
+    "note": "Tuareg/Azawad separatism and the northern Mali question. A2 anchor==subject: the group name and Kidal carry the precision, so no primary_target and no generic domain verbs. DROPPED after pre-audit: Azawad/CSP/Menaka/Gao/Tinzaouaten/self-determination/secession (all 0 hits in 180d -- the corpus says FLA and Kidal, not Azawad), Timbuktu (1 hit and it is the 'Timbuktu Triangle' in NIGERIA, a Boko Haram story -- outright collision). 'rebel' kept at 60/18% foreign: the foreign is RUSSIA co-mention (Moscow rejecting the rebels' withdrawal call), benign. Some overlap with sahel_jihadist_insurgency is expected and correct -- JNIM and the FLA are running a joint offensive; spec §1 says maximise purity, not chase zero overlap."
+  },
+  "bundle": [
+    {
+      "term": "Tuareg movement and its formations",
+      "aliases": {
+        "en": ["Tuareg", "Touareg", "FLA", "Front de Libération de l'Azawad"],
+        "fr": ["touareg", "touaregs"],
+        "de": ["Tuareg-Rebellen"],
+        "es": ["tuareg"],
+        "it": ["tuareg"],
+        "ru": ["туарег"],
+        "ar": ["الطوارق"],
+        "zh": ["图阿雷格"],
+        "ja": ["トゥアレグ"],
+        "hi": ["तुआरेग"]
+      }
+    },
+    {
+      "term": "Contested northern terrain",
+      "aliases": {
+        "en": ["Kidal"],
+        "fr": ["nord du Mali"],
+        "de": ["Nordmali"],
+        "es": ["norte de Malí"],
+        "it": ["nord del Mali"],
+        "ru": ["Кидаль", "север Мали"],
+        "ar": ["كيدال", "شمال مالي"],
+        "zh": ["基达尔", "马里北部"],
+        "ja": ["キダル", "マリ北部"],
+        "hi": ["किदाल"]
+      }
+    },
+    {
+      "term": "Separatist claim",
+      "aliases": {
+        "en": ["separatist", "rebel"],
+        "fr": ["séparatiste", "rebelles"],
+        "de": ["Separatisten", "Rebellen"],
+        "es": ["separatista", "rebeldes"],
+        "it": ["separatisti", "ribelli"],
+        "ru": ["сепаратист", "повстанцы"],
+        "ar": ["انفصاليين", "متمردين"],
+        "zh": ["分离主义", "叛军"],
+        "ja": ["分離主義", "反政府勢力"],
+        "hi": ["अलगाववादी", "विद्रोही"]
+      }
+    }
+  ]
+}

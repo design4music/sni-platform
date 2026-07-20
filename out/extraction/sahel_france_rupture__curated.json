@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "sahel_france_rupture",
+    "note": "The France-Sahel rupture: severed diplomatic ties, the DGSE agent jailed for 20 years, France blamed for the Niamey airport attack, diplomats pulled, citizens told to leave. Dyad AND -- centroid_ids {AFRICA-SAHEL, EUROPE-FRANCE} with primary_target=AFRICA-SAHEL. At TITLE level primary_target is a hard AND (bootstrap link_titles), so EUROPE-FRANCE on the OR-gate is a no-op there; it is kept for EVENT-level recall, where one member title can supply the centroid and the 50%-of-titles rule still filters. Pre-audited against AFRICA-SAHEL alone (the real effective title gate) -- NOT against the OR-gate, which showed 98% foreign on 'ambassador' (Ramaphosa's envoy) and pulled a French hospital story on 'evacuate'. DROPPED: expel/Francafrique/severed/troops withdrawal/Quai d'Orsay/ingérence/espionnage-fr (0 hits), Barkhane (0 -- the operation that named the retired atomic is absent from the corpus), evacuate (1, and it was Ghana), embassy (5, 80% foreign -- Russian and Chinese embassies), ambassador EN (1, and it was Russia's)."
+  },
+  "bundle": [
+    {
+      "term": "Diplomatic rupture",
+      "aliases": {
+        "en": ["diplomatic relations", "diplomatic ties", "colonial ruler"],
+        "fr": ["relations diplomatiques", "diplomate", "ambassadeur de France", "ressortissants"],
+        "de": ["diplomatische Beziehungen"],
+        "es": ["relaciones diplomáticas"],
+        "it": ["relazioni diplomatiche"],
+        "ru": ["дипломатические отношения"],
+        "ar": ["العلاقات الدبلوماسية"],
+        "zh": ["外交关系"],
+        "ja": ["外交関係"],
+        "hi": ["राजनयिक संबंध"]
+      }
+    },
+    {
+      "term": "Espionage and detention cases",
+      "aliases": {
+        "en": ["DGSE", "espionage"],
+        "fr": ["agent français", "espion"],
+        "de": ["Spionage"],
+        "es": ["espionaje"],
+        "it": ["spionaggio"],
+        "ru": ["шпионаж"],
+        "ar": ["التجسس"],
+        "zh": ["间谍"],
+        "ja": ["スパイ"],
+        "hi": ["जासूसी"]
+      }
+    },
+    {
+      "term": "Colonial-legacy grievance",
+      "aliases": {
+        "en": ["colonial", "neocolonial"],
+        "fr": ["colonial", "néocolonial"],
+        "de": ["Kolonialmacht"],
+        "es": ["colonial"],
+        "it": ["coloniale"],
+        "ru": ["колониальн"],
+        "ar": ["الاستعمار"],
+        "zh": ["殖民"],
+        "ja": ["植民地"],
+        "hi": ["औपनिवेशिक"]
+      }
+    }
+  ]
+}

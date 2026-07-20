@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "fn_id": "sahel_jihadist_insurgency",
+    "note": "Jihadist armed groups across the Sahel + Lake Chad basin. Terrain-gated (AFRICA-SAHEL, AFRICA-NIGERIA) plus the groups' own NON-STATE centroids -- 'Boko Haram'/'Islamic State'/'al Qaeda' audited at 100% %foreign against those three centroids, which is a CENTROID GAP (spec §4), not a leak: they are this FN's own actors. primary_target=null (multi-country phenomenon; any target deletes three quarters of it). Tuareg separatism is deliberately NOT here -- see sahel_tuareg_separatism. DROPPED after pre-audit against the real matcher: Ansaroul/Macina/Katiba/garrison/Tinzaouaten (0 hits), ambush (2, Nigeria banditry), barracks (1, a child-abuse story), extremist (3), terrorist (86 but 49% foreign and generic news vocabulary -- spec Pillar 3 ✗), coup (belongs to junta atomic), checkpoint (2 hits, one a Lagos police shooting). ADDED after the first narrative pass measured sahel_counterinsurgency_abuses at 1 title: the counterinsurgency-harm theme is large and real (HRW on army exactions since April, 'Burkina Faso: Army behind most civilian deaths', the Nigerian Air Force strike on a Borno market, Africa Corps 'atrocités') but most of that coverage never names an armed group, so the group-name bundle could not see it. airstrike/air strike/civilian are Pillar-4 domain actions and target-nouns, not stance vocabulary. DROPPED from that addition after audit: abduct (55) and kidnap (44) -- Nigerian banditry and ordinary crime ('kidnappers targeting billionaires in Lagos'), troops (54, 69% foreign -- the US-deployment-to-Nigeria story, a different phenomenon), soldiers (29, generic)."
+  },
+  "bundle": [
+    {
+      "term": "Named jihadist organisations",
+      "aliases": {
+        "en": ["JNIM", "Boko Haram", "ISWAP", "Islamic State", "al Qaeda", "al-Qaida"],
+        "fr": ["État islamique", "Etat islamique", "Groupe de soutien à l'islam et aux musulmans"],
+        "de": ["Islamischer Staat"],
+        "es": ["Estado Islámico"],
+        "it": ["Stato Islamico"],
+        "ru": ["Исламское государство", "Аль-Каида", "ДЖНИМ"],
+        "ar": ["داعش", "القاعدة", "جماعة نصرة الإسلام والمسلمين", "بوكو حرام"],
+        "zh": ["伊斯兰国", "基地组织", "博科圣地"],
+        "ja": ["イスラム国", "アルカイダ", "ボコ・ハラム"],
+        "hi": ["इस्लामिक स्टेट", "अल कायदा", "बोको हराम"]
+      }
+    },
+    {
+      "term": "Insurgent actor nouns",
+      "aliases": {
+        "en": ["jihadist", "jihadi", "militant", "insurgent"],
+        "fr": ["djihadiste", "jihadiste"],
+        "de": ["Dschihadist", "Islamisten"],
+        "es": ["yihadista"],
+        "it": ["jihadisti"],
+        "ru": ["джихадист", "боевик"],
+        "ar": ["جهاديين", "مسلحين"],
+        "zh": ["圣战分子", "武装分子"],
+        "ja": ["ジハード主義", "イスラム過激派"],
+        "hi": ["जिहादी", "चरमपंथी"]
+      }
+    },
+    {
+      "term": "Counterinsurgency operations and their civilian toll",
+      "aliases": {
+        "en": ["airstrike", "air strike", "civilian"],
+        "fr": ["frappes aériennes", "civils"],
+        "de": ["Luftangriff", "Zivilisten"],
+        "es": ["ataque aéreo", "civiles"],
+        "it": ["raid aereo", "civili"],
+        "ru": ["авиаудар", "мирных жителей"],
+        "ar": ["غارة جوية", "مدنيين"],
+        "zh": ["空袭", "平民"],
+        "ja": ["空爆", "民間人"],
+        "hi": ["हवाई हमला", "नागरिक"]
+      }
+    },
+    {
+      "term": "Insurgent operations against the state",
+      "aliases": {
+        "en": ["blockade", "army base", "military base"],
+        "fr": ["blocus", "base militaire", "camp militaire", "poste militaire"],
+        "de": ["Belagerung", "Militärstützpunkt"],
+        "es": ["asedio", "base militar"],
+        "it": ["assedio", "base militare"],
+        "ru": ["блокада", "военная база"],
+        "ar": ["حصار", "قاعدة عسكرية"],
+        "zh": ["封锁", "军事基地"],
+        "ja": ["封鎖", "軍事基地"],
+        "hi": ["घेराबंदी", "सैन्य अड्डा"]
+      }
+    }
+  ]
+}

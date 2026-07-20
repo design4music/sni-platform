@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "sahel_junta_consolidation",
+    "note": "Military rule, its consolidation instruments, and the sovereigntist realignment. Gated on AFRICA-SAHEL alone -- a purely internal phenomenon; any external centroid on the OR-gate would admit foreign-only titles. DROPPED after pre-audit: putsch (0 EN hits; kept in de/ru where it is the idiom), Deby (0), Tchiani (1, and that title is a Türkiye story -> patron contest), transition (1, a Senegal LNG story, and generic), sovereignty EN (0), press freedom (1, Niger STATE in Nigeria), election (2, Guinea-Bissau). ECOWAS/CEDEAO/Alliance of Sahel States ALL measured 0-2 hits: the AES-vs-ECOWAS bloc rupture that Phase 1 sized at ~22 does not survive the exact matcher -- that number came from a loose regex that was counting the AES Corp utility. Recorded honestly rather than keyword-stuffed. DROPPED on re-measure: the dissolve/dissoudre/dissolution verb family -- it added only ~4 titles over the 'political parties' noun and two of them were off-theater ('Senegal's president dismisses prime minister, dissolves government', 'Guinea dissolves 40 political parties'). Keep the object noun, drop the generic verb (the Colombia lesson: neutral RESULT words leak). DROPPED on sample-read: bare 'coup' (EN). The word-START matcher is case-insensitive and language-blind, so an EN alias fires on FRENCH titles -- 'coup' caught 'CAN 2025 : coup de tonnerre, le Sénégal destitué' (a football story). French is a third of this theater's corpus, so EN-list short words must be checked against French idiom (coup de tonnerre / coup d'envoi / coup dur), not just against English. 'coup' added almost no unique recall -- its real hits also matched 'junte', 'Goita' or 'Africa Corps'. Kept the unambiguous fr 'coup d'État' instead."
+  },
+  "bundle": [
+    {
+      "term": "Military rule",
+      "aliases": {
+        "en": ["junta", "junte", "military government", "military rule"],
+        "fr": ["junte", "coup d'État", "régime militaire", "militaires au pouvoir"],
+        "de": ["Militärjunta", "Putsch", "Militärregierung"],
+        "es": ["junta militar", "golpe de Estado"],
+        "it": ["giunta militare", "colpo di Stato"],
+        "ru": ["хунта", "переворот"],
+        "ar": ["المجلس العسكري", "انقلاب"],
+        "zh": ["军政府", "政变"],
+        "ja": ["軍事政権", "クーデター"],
+        "hi": ["सैन्य शासन", "तख्तापलट"]
+      }
+    },
+    {
+      "term": "Junta leadership",
+      "aliases": {
+        "en": ["Goita", "Goïta", "Traore", "Traoré", "Doumbouya"],
+        "fr": [],
+        "de": [],
+        "es": [],
+        "it": [],
+        "ru": ["Гойта", "Траоре"],
+        "ar": ["غويتا", "تراوري"],
+        "zh": ["戈伊塔", "特拉奥雷"],
+        "ja": ["ゴイタ", "トラオレ"],
+        "hi": ["गोइता", "त्राओरे"]
+      }
+    },
+    {
+      "term": "Consolidation instruments",
+      "aliases": {
+        "en": ["political parties", "human rights", "ICC"],
+        "fr": ["partis politiques", "droits de l'homme", "Cour pénale internationale"],
+        "de": ["Parteien verboten", "Menschenrechte"],
+        "es": ["partidos políticos", "derechos humanos"],
+        "it": ["partiti politici", "diritti umani"],
+        "ru": ["политические партии", "права человека"],
+        "ar": ["الأحزاب السياسية", "حقوق الإنسان"],
+        "zh": ["政党", "人权"],
+        "ja": ["政党", "人権"],
+        "hi": ["राजनीतिक दल", "मानवाधिकार"]
+      }
+    }
+  ]
+}
