@@ -73,29 +73,47 @@ function representativePoint(asset: Asset): [number, number] | null {
 }
 
 // Declutter: co-located assets (Benelux port cluster, Gulf terminals) get
-// spread on a small ring so dots never fully stack.
-function declutter(assets: Asset[]): Map<string, [number, number]> {
-  const CELL = 1.1; // degrees
-  const cells = new Map<string, Array<{ id: string; pos: [number, number] }>>();
+// spread on a small ring so dots never fully stack. Grouping and spread
+// both happen in SCREEN-PIXEL space (via map.project/unproject at the
+// current zoom), not fixed geographic degrees. A fixed-degree ring is
+// either invisible at world-zoom or, on a narrow landmass, overshoots the
+// coastline: two Taiwan assets 58km apart (Kaohsiung, TSMC Fab 18) used to
+// collide under a 1.1-degree (~120km) grid and get spread onto a 0.55-degree
+// (~61km) ring, throwing correctly-placed points into the sea on either
+// side of an island that's only ~150km wide. Pixel-based math scales
+// automatically: the same offset shrinks to a vanishing geographic distance
+// when zoomed in on a small area, and grows when zoomed out to a world view.
+const DECLUTTER_CELL_PX = 34;
+const DECLUTTER_RADIUS_PX = 13;
+
+function declutter(assets: Asset[], map: L.Map): Map<string, [number, number]> {
+  const zoom = map.getZoom();
+  const cells = new Map<string, Array<{ id: string; px: L.Point }>>();
   for (const a of assets) {
     const pos = representativePoint(a);
     if (!pos) continue;
-    const key = `${Math.round(pos[0] / CELL)}:${Math.round(pos[1] / CELL)}`;
+    const px = map.project(L.latLng(pos[0], pos[1]), zoom);
+    const key = `${Math.round(px.x / DECLUTTER_CELL_PX)}:${Math.round(px.y / DECLUTTER_CELL_PX)}`;
     if (!cells.has(key)) cells.set(key, []);
-    cells.get(key)!.push({ id: a.id, pos });
+    cells.get(key)!.push({ id: a.id, px });
   }
   const out = new Map<string, [number, number]>();
   for (const members of cells.values()) {
     if (members.length === 1) {
-      out.set(members[0].id, members[0].pos);
+      const ll = map.unproject(members[0].px, zoom);
+      out.set(members[0].id, [ll.lat, ll.lng]);
       continue;
     }
-    const cLat = members.reduce((s, m) => s + m.pos[0], 0) / members.length;
-    const cLon = members.reduce((s, m) => s + m.pos[1], 0) / members.length;
-    const r = 0.55;
+    const cx = members.reduce((s, m) => s + m.px.x, 0) / members.length;
+    const cy = members.reduce((s, m) => s + m.px.y, 0) / members.length;
     members.forEach((m, i) => {
       const angle = (2 * Math.PI * i) / members.length;
-      out.set(m.id, [cLat + r * Math.sin(angle), cLon + r * Math.cos(angle)]);
+      const p = L.point(
+        cx + DECLUTTER_RADIUS_PX * Math.cos(angle),
+        cy + DECLUTTER_RADIUS_PX * Math.sin(angle),
+      );
+      const ll = map.unproject(p, zoom);
+      out.set(m.id, [ll.lat, ll.lng]);
     });
   }
   return out;
@@ -156,9 +174,25 @@ export default function StrategicAssetLayer({
   const affectedRef = useRef<Set<string>>(new Set()); // assets pressed by current selection
   const selectedRef = useRef<string | null>(selectedId);
   const onSelectRef = useRef(onSelect);
+  const pointAssetsRef = useRef<Asset[]>([]); // for re-decluttering on zoom
 
   useEffect(() => { selectedRef.current = selectedId; }, [selectedId]);
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
+
+  // Re-declutter on zoom: pixel-space grouping/spread depends on the current
+  // zoom level, so a point that was "co-located" (needing a spread ring) at
+  // world-zoom can stand fully apart once zoomed in, and vice versa.
+  useEffect(() => {
+    const onZoom = () => {
+      const positions = declutter(pointAssetsRef.current, map);
+      for (const [id, { marker }] of dotsRef.current) {
+        const pos = positions.get(id);
+        if (pos) marker.setLatLng(pos);
+      }
+    };
+    map.on('zoomend', onZoom);
+    return () => { map.off('zoomend', onZoom); };
+  }, [map]);
 
   const hiddenKey = [...hiddenCategories].sort().join(',');
 
@@ -280,7 +314,8 @@ export default function StrategicAssetLayer({
 
     const pointAssets = data.assets.filter(a => !isLinear(a));
     const lineAssets = data.assets.filter(isLinear);
-    const positions = declutter(pointAssets);
+    pointAssetsRef.current = pointAssets;
+    const positions = declutter(pointAssets, map);
 
     // Lines first so dots and badges stay clickable above them.
     for (const asset of lineAssets) {

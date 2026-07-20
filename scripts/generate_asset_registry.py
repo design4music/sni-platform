@@ -47,7 +47,14 @@ REQUIRED = (
 def load_registry():
     rows = {}
     for path in sorted(glob.glob(os.path.join(REG_DIR, "*.yaml"))):
-        for a in yaml.safe_load(open(path, encoding="ascii")) or []:
+        entries = yaml.safe_load(open(path, encoding="ascii")) or []
+        # db/registry/ also hosts non-asset registries (e.g. regulatory
+        # source feeds for official_sources) that share the directory but
+        # not this schema -- skip files whose rows declare a different
+        # source_class instead of failing the whole asset load.
+        if entries and "source_class" in entries[0]:
+            continue
+        for a in entries:
             missing = [k for k in REQUIRED if k not in a or a[k] in (None, "")]
             if missing:
                 raise SystemExit(f"FAIL {path} {a.get('id')}: missing {missing}")
@@ -174,8 +181,8 @@ def upsert(cur, reg):
                 "is_active": True,
             }
             if geom is not None:
-                fields["geometry"] = json.dumps(geom)
-            sets = [f"{k}=%s" for k in fields]
+                fields["geometry"] = geom
+            sets = [f"{k}=%s::jsonb" if k == "geometry" else f"{k}=%s" for k in fields]
             vals = [json.dumps(v) if k == "geometry" else v for k, v in fields.items()]
             sets.append("meta = COALESCE(meta, '{}'::jsonb) || %s::jsonb")
             vals.append(json.dumps(meta))
