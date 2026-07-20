@@ -1,0 +1,5 @@
+# SQL migrations may embed CRLF inside string literals (editorial_summary
+# paragraph breaks are stored with \r\n in the DB). Newline translation on
+# checkout rewrites those literals and silently corrupts the content, so keep
+# migration files byte-exact.
+db/migrations/*.sql -text
