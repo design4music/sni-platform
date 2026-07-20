@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "fn_id": "ethiopia_regional_confrontation",
+    "centroid": "AFRICA-HORN",
+    "window_days": 180,
+    "hand_drafted": true,
+    "note": "Multilateral / Archetype B -- primary_target null. There is no subject centroid to target (AFRICA-ETHIOPIA and AFRICA-ERITREA do not exist as centroid_anchor rows), so alias purity is the only lever. Gate is fixed nouns: the Tigray/Eritrea war-risk actors plus the Egypt axis (GERD, Asmara). AFRICA-HORN is a MULTI-COUNTRY centroid (ET/ER/SO/DJ), so per vocab-spec Pillar 2 edge case the country name `Eritrea` IS legitimate sub-centroid geography here -- the centroid cannot disambiguate which Horn state a title is about. `Ethiopia` is deliberately NOT included: it would admit bus crashes, bond restructurings, Dangote fertiliser and hyenas.",
+    "pre_audit_drops": [
+      "Horn of Africa - 17 titles, all 17 in scope, but they are Turkey's deepwater drilling, Djibouti-and-the-Iran-war, and 'Türkiye won't let Israel's aggression into Horn of Africa'. A THEATER-level term, not this atomic's; would cross-contaminate somalia_state_security.",
+      "Ethiopia (en) - would make this a country FN, not a friction node. Excluded on purpose.",
+      "Amhara - 0 titles system-wide/180d.",
+      "Fano - 4 matches, 1 real (an AFP fact-check saying the article was fabricated); the rest are Stefano/Fanone/Troufanov/orfano substring garbage.",
+      "Assab - 0 titles, despite being the port Abiy is said to want.",
+      "Mekelle - 0 titles.",
+      "Erythrée - 0 titles: wrong orthography, corrected to Érythrée (vocab-spec rule 6c).",
+      "Тиграй / Эритрея / 提格雷 / 厄立特里亚 / ティグレ / エリトリア - 0 titles each; RU corpus is 5 titles and CJK 0 for this theater. Kept in the bundle anyway as correct-orthography future-proofing, at zero cost."
+    ],
+    "collision_notes": [
+      "TPLF and GERD are 4-char all-caps -> the acronym path (case-SENSITIVE whole word), so no 'gerd'/'tplf' substring risk.",
+      "Éthiopie / Äthiopien ride the non-EN SUBSTRING path with no boundary protection. Accepted: total FR+DE Horn coverage is 41 titles and all sampled matches are on-topic. Revisit if German/French Ethiopia coverage broadens."
+    ]
+  },
+  "bundle": [
+    { "term": "Tigray conflict actors and terrain", "aliases": {
+      "en": ["Tigray", "TPLF", "Aksum"],
+      "fr": ["Tigré"],
+      "ru": ["Тиграй"],
+      "zh": ["提格雷"],
+      "ja": ["ティグレ"],
+      "ar": ["تيغراي"]
+    }},
+    { "term": "Eritrea as belligerent and as Egypt's partner", "aliases": {
+      "en": ["Eritrea", "Asmara", "Afwerki"],
+      "fr": ["Érythrée"],
+      "de": ["Eritreas"],
+      "ru": ["Эритрея"],
+      "zh": ["厄立特里亚"],
+      "ja": ["エリトリア"],
+      "ar": ["إريتريا"]
+    }},
+    { "term": "Ethiopian leadership (own-side actor, Pillar 1)", "aliases": {
+      "en": ["Abiy"],
+      "fr": ["Éthiopie"],
+      "de": ["Äthiopien"]
+    }},
+    { "term": "Egypt axis and the sea-access demand", "aliases": {
+      "en": ["GERD", "sea access"],
+      "ar": ["سد النهضة"]
+    }}
+  ]
+}

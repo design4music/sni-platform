@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "fn_id": "somalia_state_security",
+    "centroid": "AFRICA-HORN",
+    "window_days": 180,
+    "hand_drafted": true,
+    "note": "Multilateral / Archetype B -- primary_target null. Broad-slice atomic by design (sign-off 2026-07-20: prefer generous slices on lower-stakes theaters over micro-fragmentation). Covers al-Shabaab + US airstrikes, the AU mission funding crisis, the Mogadishu election-delay clashes, the piracy resurgence, and Turkey's patronage. `Somalia` carries the atomic: AFRICA-HORN is a MULTI-COUNTRY centroid (ET/ER/SO/DJ) so the country name is legitimate sub-centroid geography (vocab-spec Pillar 2 edge case), and it is what pulls the Turkey- and USA-centroid titles in through the OR-gate.",
+    "pre_audit_drops": [
+      "Somali - 341 titles, 271 in scope. The EN matcher is word-START PREFIX, so `Somali` captures ALL 118 Somaliland titles and hands the sibling atomic's entire corpus to this one. Single most important drop in this theater.",
+      "pirat / pirac - 65 and 69 titles (41/38 in scope) but dominated by Iran's 'US state piracy' naval-blockade rhetoric (USA is a participant centroid here) plus music piracy and 'pirater des comptes Instagram'. The real Somali piracy headlines nearly all say 'off Somalia' / 'near Somalia', so `Somalia` already carries them.",
+      "hijack - 60 titles, 32 in scope, contaminated by 'hijack Instagram accounts'. Same reasoning as above.",
+      "Piraterie (de) - 3 titles, 2 in scope, one of which is Iran accusing the US. Kept Piraten instead (German substring path: 'Piraten' does NOT reach 'Piraterie').",
+      "الشباب - 10 titles, 0 in scope. Means 'the youth' in Arabic generally; exactly the rule-6b generic non-English trap.",
+      "青年党 - 'youth party' in Chinese; generic, 0 titles.",
+      "AUSSOM / ATMIS / AMISOM - 0 titles each. The AU-mission funding story is phrased 'AU mission in Somalia' and is carried by `Somalia`.",
+      "Jubaland / Hirshabelle / Galmudug / Villa Somalia - 0 titles each."
+    ],
+    "collision_notes": [
+      "`Somalia` (word-START) does NOT reach `Somaliland` -- they diverge at position 7 -- so the sibling A2 atomic is not swallowed. Verified against the matcher, not assumed.",
+      "Residual noise on `Somalia` measured at roughly 1 in 6 (Minnesota fraud arrest, a referee's US visa refusal, Hajj flights, a London car attack). Accepted under the generous-slice instruction; revisit if it grows.",
+      "UKMTO -- DROPPED AFTER THE FIRST BOOTSTRAP, not at pre-audit. At TITLE level it looked safe: 26 titles system-wide, only 2 in this FN's centroid scope. But link_events uses TWO SEPARATE EXISTS clauses (one member title supplies the centroid, a DIFFERENT one matches an alias), so a single UKMTO advisory inside a Gulf shipping cluster dragged the whole event in: 9 of the 11 non-Horn events on the first run were Hormuz/Oman/Fujairah/Qatar ('Iran fires on container ship in Strait of Hormuz', 'US soldiers killed in Kuwait drone strike'). LESSON: an alias that is rare-but-global at title level is dangerous at event level -- pre-audit measures titles, the event gate is looser.",
+      "NON-ENGLISH REPEAT OF THE SAME COLLISION (rule 6b). The non-EN path is PURE SUBSTRING with no boundary protection, and the natural 'Somalia' form is a literal substring of the natural 'Somaliland' form in three languages: ar الصومال ⊂ أرض الصومال (38 titles, 18 of them Somaliland -- nearly half would be mislabelled), ru Сомали ⊂ Сомалиленд (7/1), zh 索马里 ⊂ 索马里兰 (0/0 today, but structurally unsafe). All three dropped. ja ソマリア and hi सोमालिया do NOT collide and are kept.",
+      "Arabic replaced with الصومالي (the adjectival form, 6 titles): not a substring of أرض الصومال, and it also reaches الصومالية by prefix. Russian replaced with Сомалийск for the same reason."
+    ]
+  },
+  "bundle": [
+    { "term": "Somalia as subject (sub-centroid geography)", "aliases": {
+      "en": ["Somalia"],
+      "ru": ["Сомалийск"],
+      "ja": ["ソマリア"],
+      "ar": ["الصومالي"],
+      "hi": ["सोमालिया"]
+    }},
+    { "term": "insurgency and counter-terror actors", "aliases": {
+      "en": ["Shabaab"],
+      "ja": ["アル・シャバブ"]
+    }},
+    { "term": "sub-national terrain", "aliases": {
+      "en": ["Mogadishu", "Puntland", "Garacad"],
+      "de": ["Mogadischu"],
+      "ar": ["مقديشو"],
+      "ru": ["Могадишо"],
+      "zh": ["摩加迪沙"],
+      "ja": ["モガディシュ"]
+    }},
+    { "term": "maritime security reporting", "aliases": {
+      "de": ["Piraten"]
+    }}
+  ]
+}

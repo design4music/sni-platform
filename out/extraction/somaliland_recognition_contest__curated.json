@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "fn_id": "somaliland_recognition_contest",
+    "centroid": "AFRICA-HORN",
+    "window_days": 180,
+    "hand_drafted": true,
+    "note": "Spec §2 sub-case A2 -- anchor == subject. `Somaliland` is a near-perfect toponym gate: 118 titles/180d, 114 in the FN's centroid scope, ~100% on-topic. Per A2 the bundle is NAME-ONLY: no generic domain verbs, primary_target null, participants widened (AFRICA-HORN + MIDEAST-ISRAEL + USA/EGYPT/TURKEY) because a title cannot carry the name without being on-topic, so wider scope only helps recall. Same shape as arctic greenland_control.",
+    "pre_audit_drops": [
+      "recognition - 116 titles, 70 in scope, but samples are wine-region recognition, Meta facial recognition, Armenian Genocide recognition. Classic A2 generic-verb leak; the participant gate includes ISRAEL and USA so a bare domain noun is unusable here.",
+      "secession - 11 titles, 3 in scope, ALL Alberta/Canada separatism.",
+      "breakaway - 21 titles, 4 in scope; Netanyahu breakaway party noise. Costs ~2 real Anadolu titles ('Somalia's breakaway region') -- precision over recall.",
+      "Berbera - 0 titles/180d despite being the UAE-built port at the centre of the basing story; headlines say 'Somaliland' instead.",
+      "صوماليلاند - 0 titles. Arabic corpus uses أرض الصومال (18 titles) instead."
+    ],
+    "collision_notes": [
+      "EN matcher is word-START prefix: `Somaliland` cannot be reached by `Somalia` (diverges at position 7), so the sibling atomic somalia_state_security does not swallow this one. The reverse is NOT true -- a bare `Somali` alias would capture all 118 of these titles, so it is banned from the sibling bundle."
+    ]
+  },
+  "bundle": [
+    { "term": "Somaliland (the subject; the entire gate)", "aliases": {
+      "en": ["Somaliland", "Hargeisa"],
+      "ar": ["أرض الصومال"],
+      "ru": ["Сомалиленд"],
+      "zh": ["索马里兰"],
+      "ja": ["ソマリランド"],
+      "hi": ["सोमालीलैंड"]
+    }}
+  ]
+}
