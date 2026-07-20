@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "fn_id": "serbia_government_legitimacy",
+    "note": "Archetype A2 (anchor == subject), primary_target=null: EUROPE-BALKANS spans 8 countries and there is no SERBIA centroid, so the target gate is unavailable and the bundle must carry all precision. Deliberately ACTOR-anchored, not country-anchored: bare 'Serbia'/'Srbij' matched 833 titles/180d and would turn this into an all-Serbia-news firehose (N1 Serbia alone publishes 389 titles into this centroid). The tight actor set measures 513 titles, 166 of them non-local. Generic domain verbs (protest, election, student, izbor) are OMITTED per spec sec 2 A2: aliases are OR'd with no target gate, and bare verbs pulled in 111 Kosovo/Albania election and protest titles that belong to neither this atomic nor this phenomenon. Per Pillar 2's multi-country-centroid edge case the country name WOULD be legitimate sub-centroid geography here; it is excluded on volume grounds only, and is therefore re-admitted in the low-volume script-distinct languages (ru/zh/ja/ar/hi) and in German, where 'Serbien' cannot collide with English titles. Latin-script country forms are kept out of it/es/fr because flatten_aliases does not filter by detected_language -- a Latin alias in any non-en key matches English titles too, via the weaker substring path. Includes the energy-leverage strand (NIS/Gazprom/refinery licence) by explicit scoping decision rather than as a separate atomic."
+  },
+  "bundle": [
+    {
+      "term": "Vucic and the ruling progressives (own-side actors)",
+      "aliases": {
+        "en": [
+          "Vučić",
+          "Vucic",
+          "SNS",
+          "Brnabić",
+          "Brnabic",
+          "Šapić",
+          "naprednj"
+        ],
+        "de": [],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": [
+          "Вучич"
+        ],
+        "zh": [
+          "武契奇"
+        ],
+        "ar": [
+          "فوتشيتش"
+        ],
+        "ja": [
+          "ブチッチ"
+        ],
+        "hi": [
+          "वुचिच"
+        ]
+      }
+    },
+    {
+      "term": "Opposition and parliament (own-side institutions)",
+      "aliases": {
+        "en": [
+          "opozicij",
+          "Skupštin"
+        ],
+        "de": [],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": [
+          "Скупщин"
+        ],
+        "zh": [],
+        "ar": [],
+        "ja": [],
+        "hi": []
+      }
+    },
+    {
+      "term": "Belgrade and the protest trigger geography",
+      "aliases": {
+        "en": [
+          "Beograd",
+          "Belgrade",
+          "Novi Sad",
+          "nadstrešnic"
+        ],
+        "de": [
+          "Belgrad"
+        ],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": [
+          "Белград"
+        ],
+        "zh": [
+          "贝尔格莱德"
+        ],
+        "ar": [
+          "بلغراد"
+        ],
+        "ja": [
+          "ベオグラード"
+        ],
+        "hi": [
+          "बेलग्रेड"
+        ]
+      }
+    },
+    {
+      "term": "NIS / Russian-owned energy assets under sanctions",
+      "aliases": {
+        "en": [
+          "NIS",
+          "Gazprom",
+          "TurkStream",
+          "gasovod",
+          "rafinerij"
+        ],
+        "de": [],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": [
+          "Газпром",
+          "нефтяно"
+        ],
+        "zh": [],
+        "ar": [],
+        "ja": [],
+        "hi": []
+      }
+    },
+    {
+      "term": "Serbia as sub-centroid geography (script- and spelling-distinct only)",
+      "aliases": {
+        "en": [],
+        "de": [
+          "Serbien"
+        ],
+        "es": [
+          "serbio"
+        ],
+        "fr": [
+          "serbe"
+        ],
+        "it": [
+          "serbo"
+        ],
+        "ru": [
+          "Сербии",
+          "Сербия"
+        ],
+        "zh": [
+          "塞尔维亚"
+        ],
+        "ar": [
+          "صربيا"
+        ],
+        "ja": [
+          "セルビア"
+        ],
+        "hi": [
+          "सर्बिया"
+        ]
+      }
+    }
+  ]
+}

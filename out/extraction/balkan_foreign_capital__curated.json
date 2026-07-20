@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "fn_id": "balkan_foreign_capital",
+    "note": "Archetype A2 (anchor == subject), primary_target=null. Measures 91 titles/180d across 39 publishers with ZERO overlap against serbia_government_legitimacy. Dominant instance is the Kushner/Trump-family-linked Sazan-Vlora resort and the Albanian protest movement against it; Fincantieri's shipbuilding deal is the secondary strand. 'Trump' is EXCLUDED per hard rule 4 (third-party leader) even though it appears in most headlines -- 'resort' and 'Kushner' already carry those titles. Kushner/Jared are NOT third-party leaders here: the foreign investor is a principal party to a foreign-capital phenomenon, i.e. Pillar 1. 'pipeline' is excluded despite the Trump-linked Bosnia gas-pipeline strand, because it collides with the Serbia gasovod sabotage story owned by the sibling atomic; that leaves the Bosnia strand largely unreachable, which is accepted rather than bought with cross-atomic leak. 'resort' was checked against the word-START matcher: 'resorted' returns 0 false positives in this centroid. Latin-script aliases are kept out of it/es/fr (flatten_aliases ignores detected_language, so they would match English titles through the weaker substring path); those languages carry accented forms that cannot collide."
+  },
+  "bundle": [
+    {
+      "term": "Investor principals (own-side actors)",
+      "aliases": {
+        "en": [
+          "Kushner",
+          "Jared",
+          "Fincantieri"
+        ],
+        "de": [],
+        "es": [],
+        "fr": [],
+        "it": [],
+        "ru": [
+          "Кушнер"
+        ],
+        "zh": [
+          "库什纳"
+        ],
+        "ar": [
+          "كوشنر"
+        ],
+        "ja": [
+          "クシュナー"
+        ],
+        "hi": [
+          "कुशनर"
+        ]
+      }
+    },
+    {
+      "term": "The contested development itself",
+      "aliases": {
+        "en": [
+          "resort",
+          "Sazan"
+        ],
+        "de": [
+          "Luxusresort",
+          "Ferienanlage"
+        ],
+        "es": [
+          "turístico"
+        ],
+        "fr": [
+          "touristique"
+        ],
+        "it": [
+          "turistico"
+        ],
+        "ru": [
+          "курорт"
+        ],
+        "zh": [
+          "度假村"
+        ],
+        "ar": [
+          "منتجع"
+        ],
+        "ja": [
+          "リゾート"
+        ],
+        "hi": [
+          "रिसॉर्ट"
+        ]
+      }
+    }
+  ]
+}
