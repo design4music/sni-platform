@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "fn_id": "m23_conflict",
+    "note": "Gate is AFRICA-DRC alone (AFRICA-RWANDA/-UGANDA/-BURUNDI/NON-STATE-M23 do not exist -- 0 titles ever). Archetype A2: the group names and the eastern-Congo toponyms are self-gating, so NO generic domain verbs (rebel/offensive/clash/attack) -- Ebola is 40% of the AFRICA-DRC gate and a bare `rebel` would drag 'Ebola case in rebel-held area' in. Absorbs the merged eastern_congo_armed_groups (ADF/CODECO). primary_target null. Bare `Rwanda` deliberately EXCLUDED: it scores 18 under the gate but pulls the Rwanda-closes-border Ebola cluster; the Rwandan-backing claim is contested and belongs on the narrative axis, not in the neutral topic gate. DROPPED after pre-audit against the real matcher: `Ituri` (9 hits, 8 Ebola -- it is the outbreak epicentre this window), `Bunia` (5 hits, 4 Ebola), `Butembo` (0), `Kinshasa` (19 hits but a promiscuous capital alias spanning Ebola/deportations/domestic politics; the war is in the east). `Kivu` KEPT despite 1/1 Ebola bleed under the current gate -- that is an artifact of the AFRICA-CENTRAL centroid gap swallowing real Kivu conflict coverage, and Kivu is the structural name of the terrain. `AFC` and `M23` route through the case-SENSITIVE acronym path (^[A-Z0-9][A-Z0-9-]{0,3}$), so no football/lowercase collisions; verified 6/6 and 43/43 on-topic under the gate."
+  },
+  "bundle": [
+    { "term": "armed groups and their commands", "aliases": {
+      "en": ["M23", "AFC", "Alliance Fleuve Congo", "CODECO", "FDLR", "FARDC", "Wazalendo", "Allied Democratic Forces", "Nangaa", "Twirwaneho"],
+      "ru": ["М23", "Альянс реки Конго", "КОДЕКО"],
+      "zh": ["M23运动", "刚果河联盟", "民主同盟军"],
+      "ar": ["حركة إم23", "تحالف نهر الكونغو", "القوات الديمقراطية المتحالفة"],
+      "ja": ["コンゴ川同盟"],
+      "hi": ["एम23"]
+    }},
+    { "term": "eastern Congo terrain", "aliases": {
+      "en": ["Goma", "Bukavu", "Kivu", "Rubaya", "Uvira", "Beni", "Masisi", "Rutshuru", "Walikale", "Kisangani"],
+      "ru": ["Гома", "Киву", "Букаву"],
+      "zh": ["戈马", "基伍", "布卡武"],
+      "ar": ["غوما", "كيفو", "بوكافو"],
+      "ja": ["北キブ", "南キブ"],
+      "hi": ["गोमा", "किवु"]
+    }}
+  ]
+}

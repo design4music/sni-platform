@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "fn_id": "drc_peace_process",
+    "note": "NEW atomic (Phase 1 sign-off). Gate is AFRICA-DRC alone; primary_target null. The DRC gate is what makes the generic diplomacy vocabulary safe -- measured Ebola bleed under the gate is ~1 title (`ceasefire` catches 'WHO chief calls for DRC ceasefire', which is arguably correct co-attribution anyway). KEY DRAFTING DECISION: `accord` is placed in `fr`, NOT `en`. The EN path is word-START prefix, so an `en` entry of `accord` would also fire on 'according to'; French has no such word and the non-EN path is pure substring, so `accord` there safely covers accord/accords/désaccord. Verified 7/7 real accords under the gate today, though 2 of those are the US migrant-deportation accord -- accepted noise. Named venues (`Doha`, `Luanda`) score 0 this window but are the standing mediation tracks and are safe under the DRC gate; per FN_THEATER_BUILD_SPEC they are kept as dormant high-precision anchors. `Tshisekedi` EXCLUDED despite 10 hits: he appears in music-honour, Egypt-visit and Ebola contexts, i.e. he is a head-of-state alias not a peace-process one. `Kabila` KEPT (7/7 sanctions-related). MONUSCO lands here, absorbing the retired drc_intervention_forces residue -- its live story is the withdrawal and the ceasefire-monitoring mandate. POST-AUDIT DROPS (2026-07-20), both found by reading samples rather than trusting the percentage: `talks` (en, 3 hits) was pulling minerals content -- 'Congo replaces Gecamines leadership amid minerals talks with US' -- it is a cross-domain generic, not a mediation word; `pourparlers` (fr, 1 hit) fired on a France 24 roundup where the pourparlers were about Western Sahara. Conversely the two HIGHEST %foreign scores were KEPT after inspection: `sanction` (87% foreign, AMERICAS-USA:13) and `Kabila` (86%, AMERICAS-USA:6) are high only because the United States IS the sanctioning party -- benign co-mention, the same trap as the `Bardella`/MIDEAST-LEVANT case in the spec. Dropping them on the percentage would have gutted the atomic's core."
+  },
+  "bundle": [
+    { "term": "mediation instruments and venues", "aliases": {
+      "en": ["ceasefire", "truce", "mediat", "negotiat", "peace", "Doha", "Luanda", "MONUSCO"],
+      "fr": ["accord", "paix", "cessez-le-feu", "médiation", "trêve"],
+      "ru": ["перемирие", "переговоры", "мирное соглашение", "МООНСДРК"],
+      "zh": ["停火", "和平协议", "谈判"],
+      "ar": ["وقف إطلاق النار", "اتفاق سلام", "مفاوضات"],
+      "ja": ["停戦", "和平合意"],
+      "hi": ["संघर्ष विराम", "शांति समझौता"]
+    }},
+    { "term": "external pressure and accountability", "aliases": {
+      "en": ["sanction", "embargo", "visa restriction", "Kabila", "Kagame", "ICJ", "war crimes"],
+      "fr": ["sanctionn", "restrictions de visa"],
+      "ru": ["санкции", "Кагаме", "Кабила"],
+      "zh": ["制裁", "卡加梅"],
+      "ar": ["عقوبات", "كاغامي", "كابيلا"],
+      "ja": ["制裁"],
+      "hi": ["प्रतिबंध"]
+    }}
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "fn_id": "drc_minerals_competition",
+    "note": "Gate narrowed to AFRICA-DRC alone. AMERICAS-USA and ASIA-CHINA were DROPPED from centroid_ids: the participant gate is an OR, so keeping global centroids on an atomic whose bundle holds `cobalt`/`mine`/`copper` would admit every US and Chinese commodity headline. One atomic, not two (§2 A2b): the great-power-competition strand and the conflict-financing strand share an identical alias set (coltan/cobalt/Rubaya/mine/pact) and an OR'd bundle cannot separate them -- conflict financing is carried in the narrative layer instead. `mine` (word-start prefix) is the workhorse: 27 hits under the gate, 0 Ebola bleed, and the prefix covers mine/miner/mineral/minerals/mining/minier/minerai in one entry. `tin` DROPPED -- the prefix path would fire on tiny/tinder for 1 real hit; `cassiterite` and `Bisie` carry that concept instead. Corporate names KEPT against the §3 default (which drops corporate/market terms as global-M&A leaks): under a DRC-only gate, a Glencore or CMOC title that carries AFRICA-DRC is on-topic by construction. Dormant-but-precise anchors retained at 0 hits this window: Katanga, Kolwezi, Lualaba, Bisie, Kamoa, CMOC, ERG, cassiterite, smelter. POST-BOOTSTRAP DROP (2026-07-20): `Glencore`, on hygiene grounds -- it is the one retained corporate name that is a genuinely global M&A entity (the §3 leak class), whereas Zijin/CMOC/KoBold/Virtus/Chemaf are DRC-specific operators. Zero recall cost: both genuine Glencore-DRC events independently match `copper` and `mine`. MEASURED HONESTLY: the drop did NOT remove the off-topic event 'Glencore seeks big-ticket deals after Rio Tinto megamerger collapse' -- the event count held at 37 across the re-bootstrap, proving that event arrives through the two-separate-EXISTS event gate (one member title supplies AFRICA-DRC, a different one matches an alias), not through this alias. That artifact is systemic across every A2 atomic and needs an event-gate change, not a data lever."
+  },
+  "bundle": [
+    { "term": "the minerals themselves", "aliases": {
+      "en": ["cobalt", "coltan", "tantalum", "cassiterite", "lithium", "copper", "mine"],
+      "fr": ["minerai", "cuivre", "étain"],
+      "ru": ["кобальт", "колтан", "медь", "тантал"],
+      "zh": ["钴", "钶钽铁矿", "铜矿", "锂"],
+      "ar": ["الكوبالت", "الكولتان", "النحاس"],
+      "ja": ["コバルト", "コルタン"],
+      "hi": ["कोबाल्ट", "कोल्टन"]
+    }},
+    { "term": "extraction sites and operators", "aliases": {
+      "en": ["Gecamines", "Gécamines", "Chemaf", "Kamoa", "Tenke", "Katanga", "Kolwezi", "Lualaba", "Bisie", "Rubaya", "KoBold", "CMOC", "ERG", "Zijin", "Virtus"],
+      "ru": ["Жекамин", "Катанга"],
+      "zh": ["卡莫阿", "紫金矿业"],
+      "ar": ["كاتانغا"],
+      "ja": ["カタンガ"],
+      "hi": ["कटंगा"]
+    }},
+    { "term": "supply-chain control", "aliases": {
+      "en": ["artisanal", "smelter", "export ban", "export control", "supply chain", "refinery", "quota"],
+      "fr": ["artisanale", "chaîne d'approvisionnement", "exportation"],
+      "ru": ["цепочка поставок", "экспортные ограничения"],
+      "zh": ["供应链", "出口管制"],
+      "ar": ["سلسلة التوريد", "حظر التصدير"],
+      "ja": ["サプライチェーン"],
+      "hi": ["आपूर्ति श्रृंखला"]
+    }}
+  ]
+}
