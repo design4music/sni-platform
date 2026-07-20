@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "fn_id": "china_threat_assessment",
+    "note": "Archetype A dyad: participants={ASIA-CHINA}, primary_target=OCEANIA-AUSTRALIA. The target gate is what makes `missile`/`ballistic`/`cyber` safe here -- measured: Australia's Gulf missile deployments, the Iran-crisis production story and the domestic GMLRS titles all lack the China centroid and are excluded. `spy` and `spies` are both listed: EN matching is word-START prefix, so \\mspy catches spy/spying/spyware but NOT spies. `China threat`/`hype`/`fabricated` deliberately EXCLUDED as stance vocabulary -- they belong in narratives_v2.framing_keywords."
+  },
+  "bundle": [
+    {
+      "term": "Intelligence and assessment bodies of the FN's own side",
+      "aliases": {
+        "en": ["ASIO", "ASD", "ASPI", "Lowy", "Five Eyes", "think tank", "intelligence agency", "spy agency", "spy chief"],
+        "de": ["Geheimdienst", "Denkfabrik", "Nachrichtendienst"],
+        "fr": ["services de renseignement", "groupe de réflexion"],
+        "es": ["agencia de inteligencia", "centro de estudios"],
+        "it": ["agenzia di intelligence", "centro studi"],
+        "ru": ["разведывательное агентство", "аналитический центр", "спецслужба"],
+        "zh": ["情报机构", "智库", "五眼联盟", "洛伊研究所"],
+        "ja": ["情報機関", "シンクタンク", "ファイブアイズ"],
+        "ar": ["وكالة استخبارات", "مركز أبحاث", "العيون الخمس"],
+        "hi": ["खुफिया एजेंसी", "थिंक टैंक", "फाइव आईज"]
+      }
+    },
+    {
+      "term": "Espionage and foreign interference",
+      "aliases": {
+        "en": ["espionage", "spy", "spies", "foreign interference", "interference", "infiltrate", "infiltration", "covert", "informant", "recruit", "United Front", "Confucius Institute", "influence operation", "sabotage", "surveillance"],
+        "de": ["Spionage", "Spion", "ausländische Einflussnahme", "Einflussnahme", "Unterwanderung", "verdeckt", "Anwerbung", "Überwachung", "Sabotage"],
+        "fr": ["espionnage", "espion", "ingérence étrangère", "ingérence", "infiltration", "recrutement", "surveillance", "sabotage"],
+        "es": ["espionaje", "espía", "injerencia extranjera", "injerencia", "infiltración", "reclutamiento", "vigilancia", "sabotaje"],
+        "it": ["spionaggio", "spia", "ingerenza straniera", "ingerenza", "infiltrazione", "reclutamento", "sorveglianza"],
+        "ru": ["шпионаж", "шпион", "иностранное вмешательство", "вмешательство", "вербовка", "слежка", "диверсия"],
+        "zh": ["间谍活动", "间谍", "外国干涉", "渗透", "策反", "统战", "孔子学院", "监控", "破坏活动"],
+        "ja": ["スパイ活動", "スパイ", "外国干渉", "浸透", "工作", "統一戦線", "孔子学院", "監視"],
+        "ar": ["تجسس", "جاسوس", "تدخل أجنبي", "تدخل", "اختراق", "تجنيد", "مراقبة"],
+        "hi": ["जासूसी", "जासूस", "विदेशी हस्तक्षेप", "हस्तक्षेप", "घुसपैठ", "भर्ती", "निगरानी"]
+      }
+    },
+    {
+      "term": "Cyber intrusion",
+      "aliases": {
+        "en": ["cyber", "hacking", "hacker", "data breach", "critical infrastructure", "state-sponsored"],
+        "de": ["Cyberangriff", "Hacker", "Datenleck", "kritische Infrastruktur", "staatlich gesteuert"],
+        "fr": ["cyberattaque", "pirate informatique", "fuite de données", "infrastructure critique"],
+        "es": ["ciberataque", "pirata informático", "filtración de datos", "infraestructura crítica"],
+        "it": ["attacco informatico", "violazione dei dati", "infrastruttura critica"],
+        "ru": ["кибератака", "хакер", "утечка данных", "критическая инфраструктура"],
+        "zh": ["网络攻击", "黑客", "数据泄露", "关键基础设施", "国家支持"],
+        "ja": ["サイバー攻撃", "ハッカー", "情報漏洩", "重要インフラ"],
+        "ar": ["هجوم سيبراني", "قرصنة", "تسريب بيانات", "بنية تحتية حيوية"],
+        "hi": ["साइबर हमला", "हैकिंग", "डेटा उल्लंघन", "महत्वपूर्ण बुनियादी ढांचा"]
+      }
+    },
+    {
+      "term": "Military reach and strike capability",
+      "aliases": {
+        "en": ["missile", "ballistic", "strike capacity", "strike capability", "strike range", "nuclear-capable", "warhead", "flotilla", "warship", "circumnavigat", "incursion", "intercept", "sonar", "EEZ", "exclusive economic zone", "military buildup", "military build-up", "force projection"],
+        "de": ["Rakete", "ballistisch", "Angriffsreichweite", "atomwaffenfähig", "Sprengkopf", "Flottille", "Kriegsschiff", "Eindringen", "ausschließliche Wirtschaftszone", "Aufrüstung"],
+        "fr": ["missile", "balistique", "capacité de frappe", "à capacité nucléaire", "ogive", "flottille", "navire de guerre", "incursion", "zone économique exclusive"],
+        "es": ["misil", "balístico", "capacidad de ataque", "con capacidad nuclear", "ojiva", "flotilla", "buque de guerra", "incursión", "zona económica exclusiva"],
+        "it": ["missile", "balistico", "capacità di attacco", "testata", "nave da guerra", "incursione", "zona economica esclusiva"],
+        "ru": ["ракета", "баллистическая", "ударный потенциал", "ядерный боезаряд", "флотилия", "военный корабль", "вторжение", "исключительная экономическая зона"],
+        "zh": ["导弹", "弹道", "打击能力", "核弹头", "军舰", "闯入", "专属经济区", "军力扩张", "环航"],
+        "ja": ["ミサイル", "弾道", "打撃能力", "核弾頭", "軍艦", "侵入", "排他的経済水域", "軍拡"],
+        "ar": ["صاروخ", "باليستي", "قدرة الضربة", "رأس نووي", "سفينة حربية", "توغل", "المنطقة الاقتصادية الخالصة"],
+        "hi": ["मिसाइल", "बैलिस्टिक", "हमला क्षमता", "परमाणु हथियार", "युद्धपोत", "घुसपैठ", "विशेष आर्थिक क्षेत्र"]
+      }
+    }
+  ]
+}

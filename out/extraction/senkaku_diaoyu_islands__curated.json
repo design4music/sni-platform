@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "fn_id": "senkaku_diaoyu_islands",
+    "note": "MERGED atomic: absorbs east_china_sea_claims (spec 2 A2b -- Senkaku 12 / ECS 5 / both 1 / shelf-gas 1 titles per 180d; not splittable, no centroid to target for 'the East China Sea'). Dyad gate centroid_ids={ASIA-CHINA} + primary_target=ASIA-JAPAN makes the domain nouns (coast guard, EEZ, buoy) safe. DROPPED pre-audit: bare 'rig' (EN word-START anchor -> matches 'rights'), bare zh 'diaoyu' equivalent 钓鱼 (= 'fishing'; use 钓鱼岛), 'drill'/'exercise' (belongs to japan_defense_expansion), 'Taisho' (= wartime military rank / era name, not the islet). DROPPED post-audit (real-gate check, not %foreign): 'intrusion' 13 titles of which 12 were the GSDF embassy knife incident, 'intrude' 6/6 embassy, 'patrol' 8/9 either China-patrols-near-Taiwan or China-Russia bomber patrols. All three belong to other atomics; the one real Diaoyu patrol title also carries 'Diaoyu' + 'coast guard', so recall loss is zero. Kept 'fishing boat' (13/13 genuine EEZ seizures)."
+  },
+  "bundle": [
+    {
+      "term": "The islands themselves",
+      "aliases": {
+        "en": ["Senkaku", "Diaoyu", "Uotsuri", "Kubashima"],
+        "ru": ["Сенкаку", "Дяоюйдао"],
+        "ar": ["سينكاكو", "دياويو"],
+        "hi": ["सेनकाकू"],
+        "zh": ["钓鱼岛", "钓鱼台", "釣魚島"],
+        "ja": ["尖閣", "魚釣島"]
+      }
+    },
+    {
+      "term": "The sea and adjacent Japanese geography",
+      "aliases": {
+        "en": ["East China Sea", "Yonaguni", "Ishigaki", "Nansei", "Miyako Strait"],
+        "de": ["Ostchinesisches Meer"],
+        "fr": ["mer de Chine orientale"],
+        "es": ["mar de China Oriental"],
+        "it": ["Mar Cinese Orientale"],
+        "ru": ["Восточно-Китайское море"],
+        "ar": ["بحر الصين الشرقي"],
+        "hi": ["पूर्वी चीन सागर"],
+        "zh": ["东海"],
+        "ja": ["東シナ海", "与那国", "石垣", "南西諸島"]
+      }
+    },
+    {
+      "term": "Maritime enforcement actors",
+      "aliases": {
+        "en": ["coast guard", "coastguard", "CCG", "JCG", "maritime militia"],
+        "de": ["Küstenwache"],
+        "fr": ["garde-côtes"],
+        "es": ["guardia costera"],
+        "it": ["guardia costiera"],
+        "ru": ["береговой охраны"],
+        "ar": ["خفر السواحل"],
+        "hi": ["तटरक्षक"],
+        "zh": ["海警"],
+        "ja": ["海上保安", "海警"]
+      }
+    },
+    {
+      "term": "Maritime zones and legal status",
+      "aliases": {
+        "en": ["EEZ", "exclusive economic zone", "territorial waters", "contiguous zone", "continental shelf", "median line", "ADIZ"],
+        "de": ["Hoheitsgewässer", "Wirtschaftszone"],
+        "fr": ["eaux territoriales", "zone économique exclusive"],
+        "es": ["aguas territoriales", "zona económica exclusiva"],
+        "ru": ["территориальные воды", "исключительной экономической зоны"],
+        "ar": ["المياه الإقليمية", "المنطقة الاقتصادية الخالصة"],
+        "hi": ["क्षेत्रीय जल"],
+        "zh": ["领海", "专属经济区", "毗连区"],
+        "ja": ["領海", "接続水域", "排他的経済水域"]
+      }
+    },
+    {
+      "term": "Grey-zone activity at sea",
+      "aliases": {
+        "en": ["incursion", "expel", "survey ship", "research vessel", "buoy", "trawler", "fishing boat", "water cannon"],
+        "de": ["Forschungsschiff"],
+        "fr": ["navire de recherche"],
+        "es": ["buque de investigación"],
+        "ru": ["научно-исследовательское судно"],
+        "ar": ["سفينة أبحاث"],
+        "zh": ["驱离", "调查船", "浮标"],
+        "ja": ["領海侵入", "退去", "調査船", "ブイ", "漁船"]
+      }
+    },
+    {
+      "term": "Seabed resource works",
+      "aliases": {
+        "en": ["drilling", "gas field", "drilling rig", "drilling platform", "Chunxiao"],
+        "de": ["Gasfeld", "Bohrinsel"],
+        "fr": ["champ gazier"],
+        "es": ["campo de gas"],
+        "ru": ["газовое месторождение", "буровой"],
+        "ar": ["حقل غاز", "منصة حفر"],
+        "hi": ["गैस क्षेत्र"],
+        "zh": ["春晓", "钻井平台", "油气田"],
+        "ja": ["ガス田", "掘削"]
+      }
+    }
+  ]
+}

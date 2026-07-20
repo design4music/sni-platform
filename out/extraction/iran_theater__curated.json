@@ -1,0 +1,693 @@
+{
+  "metadata": {
+    "fn_id": "iran_theater",
+    "centroid": "MIDEAST-IRAN (theater scope)",
+    "window_days": 365,
+    "sample_size_requested": 0,
+    "sample_size_actual": 0,
+    "seeds": [],
+    "timestamp": "2026-05-11T15:05:03.586043",
+    "curated_at": "2026-05-11",
+    "curator_notes": "Manually curated cross-cutting Iran-war vocabulary. Excludes terms in atomic FN bundles (no Hormuz, no Aramco, no Natanz, no Hezbollah, no Khamenei). Catches the \"general Iran-cluster war\" coverage."
+  },
+  "bundle": [
+    {
+      "term": "Iran war",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حرب إيران",
+          "الحرب على إيران",
+          "الحرب مع إيران",
+          "حرب إيران-إسرائيل"
+        ],
+        "de": [
+          "Iran-Krieg",
+          "Krieg gegen den Iran",
+          "Iran-Israel-Krieg"
+        ],
+        "en": [
+          "Iran war",
+          "war on Iran",
+          "war with Iran",
+          "war in Iran",
+          "Iran-Israel war",
+          "Iran-US war",
+          "US-Iran war"
+        ],
+        "es": [
+          "guerra de Irán",
+          "guerra contra Irán",
+          "guerra Irán-Israel"
+        ],
+        "fr": [
+          "guerre en Iran",
+          "guerre contre l'Iran",
+          "guerre Iran-Israël"
+        ],
+        "hi": [
+          "ईरान युद्ध"
+        ],
+        "it": [
+          "guerra in Iran",
+          "guerra contro l'Iran"
+        ],
+        "ja": [
+          "イラン戦争"
+        ],
+        "ru": [
+          "война с Ираном",
+          "война в Иране",
+          "иранская война",
+          "ирано-израильская война",
+          "ирано-американская война"
+        ],
+        "zh": [
+          "伊朗战争"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Operation True Promise",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "عملية الوعد الصادق",
+          "الوعد الصادق"
+        ],
+        "de": [],
+        "en": [
+          "Operation True Promise",
+          "True Promise",
+          "True Promise II",
+          "Operation Honest Promise"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "ऑपरेशन ट्रू प्रॉमिस"
+        ],
+        "it": [],
+        "ja": [
+          "真実の約束作戦"
+        ],
+        "ru": [
+          "операция Истинное обещание",
+          "Истинное обещание II"
+        ],
+        "zh": [
+          "真实承诺行动"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "escalation",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تصعيد"
+        ],
+        "de": [
+          "Eskalation"
+        ],
+        "en": [
+          "escalation"
+        ],
+        "es": [
+          "escalada"
+        ],
+        "fr": [
+          "escalade"
+        ],
+        "hi": [
+          "तनाव बढ़ना"
+        ],
+        "it": [
+          "escalation",
+          "escalation militare"
+        ],
+        "ja": [
+          "エスカレーション"
+        ],
+        "ru": [
+          "эскалация"
+        ],
+        "zh": [
+          "升级"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "de-escalation",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تخفيف التصعيد",
+          "وقف التصعيد"
+        ],
+        "de": [
+          "Deeskalation"
+        ],
+        "en": [
+          "de-escalation",
+          "deescalation"
+        ],
+        "es": [
+          "desescalada"
+        ],
+        "fr": [
+          "désescalade"
+        ],
+        "hi": [
+          "तनाव कम करना"
+        ],
+        "it": [],
+        "ja": [
+          "緊張緩和"
+        ],
+        "ru": [
+          "деэскалация"
+        ],
+        "zh": [
+          "降级"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "retaliation",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "انتقام",
+          "رد انتقامي",
+          "تأديب"
+        ],
+        "de": [
+          "Vergeltung"
+        ],
+        "en": [
+          "retaliation",
+          "retaliatory",
+          "reprisal"
+        ],
+        "es": [
+          "represalia"
+        ],
+        "fr": [
+          "représailles"
+        ],
+        "hi": [
+          "प्रतिशोध",
+          "जवाबी कार्रवाई"
+        ],
+        "it": [
+          "rappresaglia"
+        ],
+        "ja": [
+          "報復"
+        ],
+        "ru": [
+          "возмездие",
+          "ответный удар"
+        ],
+        "zh": [
+          "报复"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "strike",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ضربة",
+          "ضربات",
+          "غارة جوية"
+        ],
+        "de": [
+          "Angriff",
+          "Luftangriff"
+        ],
+        "en": [
+          "strike",
+          "strikes",
+          "airstrike",
+          "air strike"
+        ],
+        "es": [
+          "ataque",
+          "ataque aéreo"
+        ],
+        "fr": [
+          "frappe",
+          "frappes",
+          "frappe aérienne"
+        ],
+        "hi": [
+          "हमला",
+          "हवाई हमला"
+        ],
+        "it": [
+          "attacco",
+          "attacco aereo"
+        ],
+        "ja": [
+          "攻撃",
+          "空爆"
+        ],
+        "ru": [
+          "удар",
+          "удары",
+          "авиаудар"
+        ],
+        "zh": [
+          "打击",
+          "空袭"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "missile",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "صاروخ",
+          "صاروخ باليستي",
+          "صاروخ كروز"
+        ],
+        "de": [
+          "Rakete",
+          "ballistische Rakete"
+        ],
+        "en": [
+          "missile",
+          "ballistic missile",
+          "cruise missile"
+        ],
+        "es": [
+          "misil",
+          "misil balístico"
+        ],
+        "fr": [
+          "missile",
+          "missile balistique"
+        ],
+        "hi": [
+          "मिसाइल"
+        ],
+        "it": [
+          "missile",
+          "missile balistico"
+        ],
+        "ja": [
+          "ミサイル"
+        ],
+        "ru": [
+          "ракета",
+          "баллистическая ракета",
+          "крылатая ракета"
+        ],
+        "zh": [
+          "导弹"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "drone",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "طائرة مسيرة",
+          "طائرة بدون طيار"
+        ],
+        "de": [
+          "Drohne",
+          "Kampfdrohne"
+        ],
+        "en": [
+          "drone",
+          "UAV",
+          "unmanned aerial vehicle"
+        ],
+        "es": [
+          "dron",
+          "avión no tripulado"
+        ],
+        "fr": [],
+        "hi": [
+          "ड्रोन"
+        ],
+        "it": [],
+        "ja": [
+          "ドローン",
+          "無人航空機"
+        ],
+        "ru": [
+          "беспилотник",
+          "дрон"
+        ],
+        "zh": [
+          "无人机"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "ceasefire",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "وقف إطلاق النار",
+          "هدنة"
+        ],
+        "de": [
+          "Waffenstillstand",
+          "Feuerpause"
+        ],
+        "en": [
+          "ceasefire",
+          "cease-fire",
+          "truce"
+        ],
+        "es": [
+          "alto el fuego",
+          "tregua"
+        ],
+        "fr": [
+          "cessez-le-feu",
+          "trêve"
+        ],
+        "hi": [
+          "युद्धविराम"
+        ],
+        "it": [
+          "cessate il fuoco",
+          "tregua"
+        ],
+        "ja": [
+          "停戦"
+        ],
+        "ru": [
+          "прекращение огня",
+          "перемирие"
+        ],
+        "zh": [
+          "停火",
+          "停战"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "air defense",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "الدفاع الجوي",
+          "منظومة دفاع جوي",
+          "القبة الحديدية"
+        ],
+        "de": [
+          "Luftabwehr",
+          "Luftverteidigung",
+          "Iron Dome"
+        ],
+        "en": [
+          "air defense",
+          "air defence",
+          "air-defense system",
+          "air defense system",
+          "interceptor",
+          "Iron Dome",
+          "Arrow",
+          "David's Sling"
+        ],
+        "es": [
+          "defensa aérea",
+          "Cúpula de Hierro"
+        ],
+        "fr": [
+          "défense aérienne",
+          "Dôme de fer"
+        ],
+        "hi": [
+          "वायु रक्षा"
+        ],
+        "it": [
+          "difesa aerea",
+          "Iron Dome"
+        ],
+        "ja": [
+          "防空",
+          "アイアンドーム"
+        ],
+        "ru": [
+          "ПВО",
+          "противовоздушная оборона",
+          "Железный купол"
+        ],
+        "zh": [
+          "防空",
+          "铁穹"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "sanctions",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "عقوبات",
+          "عقوبات ثانوية"
+        ],
+        "de": [
+          "Sanktionen",
+          "Sekundärsanktionen"
+        ],
+        "en": [
+          "sanctions",
+          "secondary sanctions",
+          "oil sanctions"
+        ],
+        "es": [
+          "sanciones",
+          "sanciones secundarias"
+        ],
+        "fr": [
+          "sanctions",
+          "sanctions secondaires"
+        ],
+        "hi": [
+          "प्रतिबंध"
+        ],
+        "it": [
+          "sanzioni",
+          "sanzioni secondarie"
+        ],
+        "ja": [
+          "制裁"
+        ],
+        "ru": [
+          "санкции",
+          "вторичные санкции"
+        ],
+        "zh": [
+          "制裁"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "oil prices",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "أسعار النفط",
+          "سوق النفط",
+          "برنت"
+        ],
+        "de": [
+          "Ölpreise",
+          "Ölmarkt"
+        ],
+        "en": [
+          "oil prices",
+          "oil market",
+          "Brent crude",
+          "WTI"
+        ],
+        "es": [
+          "precios del petróleo",
+          "mercado petrolero"
+        ],
+        "fr": [
+          "prix du pétrole",
+          "marché pétrolier"
+        ],
+        "hi": [
+          "तेल की कीमतें"
+        ],
+        "it": [
+          "prezzi del petrolio",
+          "mercato petrolifero"
+        ],
+        "ja": [
+          "原油価格"
+        ],
+        "ru": [
+          "цены на нефть",
+          "нефтяной рынок",
+          "Brent"
+        ],
+        "zh": [
+          "油价",
+          "石油价格"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "proxy war",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حرب بالوكالة"
+        ],
+        "de": [
+          "Stellvertreterkrieg"
+        ],
+        "en": [
+          "proxy war",
+          "proxy warfare"
+        ],
+        "es": [
+          "guerra subsidiaria",
+          "guerra por delegación"
+        ],
+        "fr": [
+          "guerre par procuration"
+        ],
+        "hi": [
+          "प्रॉक्सी युद्ध"
+        ],
+        "it": [
+          "guerra per procura"
+        ],
+        "ja": [
+          "代理戦争"
+        ],
+        "ru": [
+          "прокси-война",
+          "опосредованная война"
+        ],
+        "zh": [
+          "代理人战争"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Middle East war",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حرب الشرق الأوسط",
+          "حرب إقليمية",
+          "صراع إقليمي"
+        ],
+        "de": [
+          "Nahost-Krieg",
+          "Regionalkrieg",
+          "regionaler Konflikt"
+        ],
+        "en": [
+          "Middle East war",
+          "regional war",
+          "wider regional war",
+          "regional conflict"
+        ],
+        "es": [
+          "guerra en Oriente Medio",
+          "guerra regional"
+        ],
+        "fr": [
+          "guerre au Moyen-Orient",
+          "guerre régionale"
+        ],
+        "hi": [
+          "मध्य पूर्व युद्ध"
+        ],
+        "it": [
+          "guerra in Medio Oriente",
+          "guerra regionale"
+        ],
+        "ja": [
+          "中東戦争"
+        ],
+        "ru": [
+          "ближневосточная война",
+          "региональная война",
+          "региональный конфликт"
+        ],
+        "zh": [
+          "中东战争"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "diplomacy",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "دبلوماسية مكوكية",
+          "وساطة"
+        ],
+        "de": [
+          "Pendeldiplomatie",
+          "Vermittlung"
+        ],
+        "en": [
+          "diplomatic talks",
+          "shuttle diplomacy",
+          "mediation"
+        ],
+        "es": [
+          "diplomacia itinerante",
+          "mediación"
+        ],
+        "fr": [
+          "diplomatie de la navette",
+          "médiation"
+        ],
+        "hi": [
+          "मध्यस्थता"
+        ],
+        "it": [
+          "diplomazia della navetta",
+          "mediazione"
+        ],
+        "ja": [
+          "仲介"
+        ],
+        "ru": [
+          "челночная дипломатия",
+          "посредничество"
+        ],
+        "zh": [
+          "穿梭外交",
+          "调解"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    }
+  ]
+}

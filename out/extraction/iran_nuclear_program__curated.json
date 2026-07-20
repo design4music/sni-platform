@@ -1,0 +1,876 @@
+{
+  "metadata": {
+    "fn_id": "iran_nuclear_program",
+    "centroid": "MIDEAST-IRAN",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 200,
+    "seeds": [
+      "nuclear",
+      "enrich",
+      "centrifuge",
+      "JCPOA",
+      "Natanz",
+      "Fordow",
+      "uranium",
+      "IAEA",
+      "fissile",
+      "atomic",
+      "plutonium",
+      "snapback",
+      "Bushehr",
+      "Arak",
+      "Fakhrizadeh",
+      "AEOI",
+      "Parchin",
+      "Salehi",
+      "hexafluoride"
+    ],
+    "timestamp": "2026-05-11T11:50:23.208272",
+    "curated_at": "2026-05-11",
+    "curator_notes": "Dropped Faslane/Dimona; renamed Ispahan->Isfahan; added 9 manual entries (Vienna talks, Parchin, Salehi, Arak, snapback, non-proliferation, fissile, weapons-grade, hexafluoride)."
+  },
+  "bundle": [
+    {
+      "term": "Natanz",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "نطنز"
+        ],
+        "de": [],
+        "en": [
+          "Natanz"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "नतंज़"
+        ],
+        "it": [],
+        "ja": [
+          "ナタンズ"
+        ],
+        "ru": [
+          "Натанз"
+        ],
+        "zh": [
+          "纳坦兹"
+        ]
+      },
+      "evidence": "Reuters / 2026-03-21"
+    },
+    {
+      "term": "Fordow",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "فردو"
+        ],
+        "de": [],
+        "en": [
+          "Fordow"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "फ़ोर्डो"
+        ],
+        "it": [],
+        "ja": [
+          "フォルドウ"
+        ],
+        "ru": [
+          "Фордо"
+        ],
+        "zh": [
+          "福尔多"
+        ]
+      },
+      "evidence": "Jerusalem Post / 2026-04-11"
+    },
+    {
+      "term": "Bushehr",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بوشهر"
+        ],
+        "de": [
+          "Buschehr"
+        ],
+        "en": [
+          "Bushehr"
+        ],
+        "es": [],
+        "fr": [
+          "Bouchehr"
+        ],
+        "hi": [
+          "बुशहर"
+        ],
+        "it": [],
+        "ja": [
+          "ブシェール"
+        ],
+        "ru": [
+          "Бушер"
+        ],
+        "zh": [
+          "布什尔"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-04"
+    },
+    {
+      "term": "JCPOA",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "برجام"
+        ],
+        "de": [],
+        "en": [
+          "JCPOA"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "जेसीपीओए"
+        ],
+        "it": [],
+        "ja": [
+          "JCPOA"
+        ],
+        "ru": [
+          "СВПД"
+        ],
+        "zh": [
+          "伊核协议"
+        ]
+      },
+      "evidence": "CNN / 2026-04-08"
+    },
+    {
+      "term": "IAEA",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الوكالة الدولية للطاقة الذرية"
+        ],
+        "de": [
+          "IAEO"
+        ],
+        "en": [
+          "IAEA"
+        ],
+        "es": [
+          "OIEA"
+        ],
+        "fr": [
+          "AIEA"
+        ],
+        "hi": [
+          "आईएईए"
+        ],
+        "it": [
+          "AIEA"
+        ],
+        "ja": [
+          "IAEA"
+        ],
+        "ru": [
+          "МАГАТЭ"
+        ],
+        "zh": [
+          "国际原子能机构"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-06"
+    },
+    {
+      "term": "AEOI",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "منظمة الطاقة الذرية الإيرانية"
+        ],
+        "de": [],
+        "en": [
+          "AEOI"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "एईओआई"
+        ],
+        "it": [],
+        "ja": [
+          "AEOI"
+        ],
+        "ru": [
+          "ОАЭИ"
+        ],
+        "zh": [
+          "伊朗原子能组织"
+        ]
+      },
+      "evidence": "Fars News / 2026-04-09"
+    },
+    {
+      "term": "Fakhrizadeh",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "فخري زاده"
+        ],
+        "de": [
+          "Fachrisadeh"
+        ],
+        "en": [
+          "Fakhrizadeh"
+        ],
+        "es": [
+          "Fajrizadé"
+        ],
+        "fr": [],
+        "hi": [
+          "फ़ख़रीज़ादेह"
+        ],
+        "it": [],
+        "ja": [
+          "ファフリザデ"
+        ],
+        "ru": [
+          "Фахризаде"
+        ],
+        "zh": [
+          "法赫里扎德"
+        ]
+      },
+      "evidence": "CNN / 2026-04-07"
+    },
+    {
+      "term": "enrichment",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تخصيب"
+        ],
+        "de": [
+          "Anreicherung"
+        ],
+        "en": [
+          "enrichment"
+        ],
+        "es": [
+          "enriquecimiento"
+        ],
+        "fr": [
+          "enrichissement"
+        ],
+        "hi": [
+          "संवर्धन"
+        ],
+        "it": [
+          "arricchimento"
+        ],
+        "ja": [
+          "濃縮"
+        ],
+        "ru": [
+          "обогащение"
+        ],
+        "zh": [
+          "浓缩"
+        ]
+      },
+      "evidence": "Washington Post / 2026-04-14"
+    },
+    {
+      "term": "centrifuge",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "طرد مركزي"
+        ],
+        "de": [
+          "Zentrifuge"
+        ],
+        "en": [
+          "centrifuge"
+        ],
+        "es": [
+          "centrífuga"
+        ],
+        "fr": [
+          "centrifugeuse"
+        ],
+        "hi": [
+          "सेंट्रीफ्यूज"
+        ],
+        "it": [
+          "centrifuga"
+        ],
+        "ja": [
+          "遠心分離機"
+        ],
+        "ru": [
+          "центрифуга"
+        ],
+        "zh": [
+          "离心机"
+        ]
+      },
+      "evidence": "Fox News / 2026-03-27"
+    },
+    {
+      "term": "uranium",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "يورانيوم"
+        ],
+        "de": [
+          "Uran"
+        ],
+        "en": [
+          "uranium"
+        ],
+        "es": [
+          "uranio"
+        ],
+        "fr": [],
+        "hi": [
+          "यूरेनियम"
+        ],
+        "it": [
+          "uranio"
+        ],
+        "ja": [
+          "ウラン"
+        ],
+        "ru": [
+          "уран"
+        ],
+        "zh": [
+          "铀"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-15"
+    },
+    {
+      "term": "plutonium",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "بلوتونيوم"
+        ],
+        "de": [
+          "Plutonium"
+        ],
+        "en": [
+          "plutonium"
+        ],
+        "es": [
+          "plutonio"
+        ],
+        "fr": [],
+        "hi": [
+          "प्लूटोनियम"
+        ],
+        "it": [
+          "plutonio"
+        ],
+        "ja": [
+          "プルトニウム"
+        ],
+        "ru": [
+          "плутоний"
+        ],
+        "zh": [
+          "钚"
+        ]
+      },
+      "evidence": "Deutsche Welle / 2026-03-28"
+    },
+    {
+      "term": "heavy water",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ماء ثقيل"
+        ],
+        "de": [
+          "Schwerwasser"
+        ],
+        "en": [
+          "heavy water"
+        ],
+        "es": [
+          "agua pesada"
+        ],
+        "fr": [
+          "eau lourde"
+        ],
+        "hi": [
+          "भारी जल"
+        ],
+        "it": [
+          "acqua pesante"
+        ],
+        "ja": [
+          "重水"
+        ],
+        "ru": [
+          "тяжелая вода"
+        ],
+        "zh": [
+          "重水"
+        ]
+      },
+      "evidence": "Deutsche Welle / 2026-03-28"
+    },
+    {
+      "term": "NPT",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "معاهدة عدم انتشار الأسلحة النووية"
+        ],
+        "de": [
+          "NVV"
+        ],
+        "en": [
+          "NPT"
+        ],
+        "es": [
+          "TNP"
+        ],
+        "fr": [
+          "TNP"
+        ],
+        "hi": [
+          "एनपीटी"
+        ],
+        "it": [
+          "TNP"
+        ],
+        "ja": [
+          "NPT"
+        ],
+        "ru": [
+          "ДНЯО"
+        ],
+        "zh": [
+          "不扩散核武器条约"
+        ]
+      },
+      "evidence": "Press TV / 2026-03-28"
+    },
+    {
+      "term": "Isfahan",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "أصفهان"
+        ],
+        "de": [],
+        "en": [
+          "Isfahan",
+          "Esfahan",
+          "Ispahan"
+        ],
+        "es": [
+          "Isfahán"
+        ],
+        "fr": [],
+        "hi": [
+          "इस्फ़हान"
+        ],
+        "it": [],
+        "ja": [
+          "イスファハン"
+        ],
+        "ru": [
+          "Исфахан"
+        ],
+        "zh": [
+          "伊斯法罕"
+        ]
+      },
+      "evidence": "Le Monde / 2026-03-13"
+    },
+    {
+      "term": "nuclear",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "نووي"
+        ],
+        "de": [
+          "nuklear"
+        ],
+        "en": [
+          "nuclear"
+        ],
+        "es": [],
+        "fr": [
+          "nucléaire"
+        ],
+        "hi": [
+          "परमाणु"
+        ],
+        "it": [
+          "nucleare"
+        ],
+        "ja": [
+          "核"
+        ],
+        "ru": [
+          "ядерный"
+        ],
+        "zh": [
+          "核"
+        ]
+      },
+      "evidence": "Financial Times / 2026-04-12"
+    },
+    {
+      "term": "Vienna talks",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "محادثات فيينا",
+          "مفاوضات فيينا"
+        ],
+        "de": [
+          "Wiener Gespräche",
+          "Wiener Verhandlungen"
+        ],
+        "en": [
+          "Vienna talks",
+          "Vienna negotiations"
+        ],
+        "es": [
+          "negociaciones de Viena"
+        ],
+        "fr": [
+          "négociations de Vienne",
+          "pourparlers de Vienne"
+        ],
+        "hi": [
+          "वियना वार्ता"
+        ],
+        "it": [
+          "negoziati di Vienna"
+        ],
+        "ja": [
+          "ウィーン交渉"
+        ],
+        "ru": [
+          "Венские переговоры"
+        ],
+        "zh": [
+          "维也纳谈判"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Parchin",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بارجين"
+        ],
+        "de": [],
+        "en": [
+          "Parchin"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "पारचिन"
+        ],
+        "it": [],
+        "ja": [
+          "パルチン"
+        ],
+        "ru": [
+          "Парчин"
+        ],
+        "zh": [
+          "帕尔钦"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Salehi",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "صالحي",
+          "علي أكبر صالحي"
+        ],
+        "de": [],
+        "en": [
+          "Salehi",
+          "Ali Akbar Salehi"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "सालेही"
+        ],
+        "it": [],
+        "ja": [
+          "サレヒ"
+        ],
+        "ru": [
+          "Салехи"
+        ],
+        "zh": [
+          "萨利希"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Arak",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "أراك"
+        ],
+        "de": [],
+        "en": [
+          "Arak"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "अराक"
+        ],
+        "it": [],
+        "ja": [
+          "アラク"
+        ],
+        "ru": [
+          "Арак"
+        ],
+        "zh": [
+          "阿拉克"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "snapback",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "آلية الزناد",
+          "سناب باك"
+        ],
+        "de": [
+          "Snapback",
+          "Snapback-Mechanismus"
+        ],
+        "en": [
+          "snapback",
+          "snapback mechanism",
+          "snapback sanctions"
+        ],
+        "es": [
+          "snapback",
+          "mecanismo de reactivación"
+        ],
+        "fr": [
+          "snapback",
+          "mécanisme de snapback"
+        ],
+        "hi": [],
+        "it": [],
+        "ja": [
+          "スナップバック"
+        ],
+        "ru": [
+          "snapback",
+          "механизм snapback"
+        ],
+        "zh": [
+          "快速恢复制裁机制"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "non-proliferation",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "عدم الانتشار"
+        ],
+        "de": [
+          "Nichtverbreitung"
+        ],
+        "en": [
+          "non-proliferation",
+          "nonproliferation"
+        ],
+        "es": [
+          "no proliferación"
+        ],
+        "fr": [
+          "non-prolifération"
+        ],
+        "hi": [
+          "अप्रसार"
+        ],
+        "it": [
+          "non proliferazione"
+        ],
+        "ja": [
+          "不拡散"
+        ],
+        "ru": [
+          "нераспространение"
+        ],
+        "zh": [
+          "不扩散"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "fissile",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "مادة انشطارية",
+          "انشطاري"
+        ],
+        "de": [
+          "spaltbar",
+          "spaltbares Material"
+        ],
+        "en": [
+          "fissile",
+          "fissile material"
+        ],
+        "es": [
+          "fisionable",
+          "material fisible"
+        ],
+        "fr": [
+          "fissile",
+          "matière fissile"
+        ],
+        "hi": [
+          "विखंडनीय"
+        ],
+        "it": [
+          "fissile",
+          "materiale fissile"
+        ],
+        "ja": [
+          "核分裂性"
+        ],
+        "ru": [
+          "расщепляющийся",
+          "делящийся материал"
+        ],
+        "zh": [
+          "可裂变"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "weapons-grade",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "درجة الأسلحة",
+          "بدرجة الأسلحة"
+        ],
+        "de": [
+          "waffenfähig"
+        ],
+        "en": [
+          "weapons-grade",
+          "weapons grade"
+        ],
+        "es": [
+          "de grado militar"
+        ],
+        "fr": [
+          "de qualité militaire"
+        ],
+        "hi": [
+          "हथियार ग्रेड"
+        ],
+        "it": [
+          "di grado militare"
+        ],
+        "ja": [
+          "兵器級"
+        ],
+        "ru": [
+          "оружейный",
+          "оружейного качества"
+        ],
+        "zh": [
+          "武器级"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "hexafluoride",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "سادس فلوريد اليورانيوم"
+        ],
+        "de": [
+          "Hexafluorid",
+          "Uranhexafluorid"
+        ],
+        "en": [
+          "hexafluoride",
+          "uranium hexafluoride",
+          "UF6"
+        ],
+        "es": [
+          "hexafluoruro",
+          "hexafluoruro de uranio"
+        ],
+        "fr": [
+          "hexafluorure",
+          "hexafluorure d'uranium"
+        ],
+        "hi": [
+          "हेक्साफ्लोराइड"
+        ],
+        "it": [
+          "esafluoruro",
+          "esafluoruro di uranio"
+        ],
+        "ja": [
+          "六フッ化物"
+        ],
+        "ru": [
+          "гексафторид",
+          "гексафторид урана"
+        ],
+        "zh": [
+          "六氟化物"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    }
+  ]
+}

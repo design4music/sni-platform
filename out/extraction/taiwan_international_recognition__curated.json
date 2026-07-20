@@ -1,0 +1,101 @@
+{
+  "metadata": {
+    "fn_id": "taiwan_international_recognition",
+    "note": "Scope centroid_ids={ASIA-TAIWAN} only. Diplomatic-ally country names ARE included and do not violate the no-country-name rule: that rule bars restating the FN's OWN centroid country, whereas these are the counterparties of the recognition contest, and the ASIA-TAIWAN gate makes them safe (only Taiwan-tagged Lithuania/Haiti/Eswatini coverage can match). 'delegation' DROPPED -- it collided with the KMT delegations that belong to taiwan_political_warfare. Bare 'transit' DROPPED after audit: 13 of its 14 hits were warship transits of the Taiwan Strait (taiwan_military_pressure content), not President Lai's transit diplomacy -- 'transit visit' and 'flight permit' carry that story instead. Spanish 'escala' DROPPED: non-EN aliases match by bare substring, so it matched 'escalada' (escalation). Ally list will need refreshing as allies switch; that is data, not code.",
+    "archetype": "target-centric on Taiwan, gated by the participant centroid"
+  },
+  "bundle": [
+    {
+      "term": "diplomatic recognition",
+      "aliases": {
+        "en": ["recognition", "recognise", "recognize", "diplomatic ally", "diplomatic allies", "diplomatic relations", "diplomatic ties", "sever ties", "de-recognition"],
+        "de": ["Anerkennung", "anerkennen", "diplomatische Beziehungen", "diplomatischer Verbündeter"],
+        "es": ["reconocimiento", "reconocer", "relaciones diplomáticas"],
+        "fr": ["reconnaissance", "reconnaître", "relations diplomatiques"],
+        "it": ["riconoscimento", "riconoscere", "relazioni diplomatiche"],
+        "ru": ["признание", "дипломатические отношения"],
+        "zh": ["承认", "邦交"],
+        "ja": ["承認", "国交"],
+        "ar": ["اعتراف", "علاقات دبلوماسية"],
+        "hi": ["मान्यता", "राजनयिक संबंध"]
+      }
+    },
+    {
+      "term": "diplomatic allies (states)",
+      "aliases": {
+        "en": ["Eswatini", "Swaziland", "Somaliland", "Paraguay", "Guatemala", "Belize", "Palau", "Tuvalu", "Marshall Islands", "Saint Lucia", "Saint Vincent", "Saint Kitts", "Haiti", "Holy See", "Vatican", "Lithuania", "Seychelles"],
+        "de": ["Litauen", "Vatikan", "Salomonen"],
+        "es": ["Lituania", "Vaticano"],
+        "fr": ["Lituanie", "Saint-Siège"],
+        "ru": ["Литва", "Ватикан"],
+        "zh": ["立陶宛", "梵蒂冈", "史瓦帝尼"],
+        "ja": ["リトアニア"],
+        "ar": ["ليتوانيا"]
+      }
+    },
+    {
+      "term": "international organisations",
+      "aliases": {
+        "en": ["WHA", "World Health Assembly", "ICAO", "Interpol", "United Nations", "Resolution 2758", "observer status", "membership bid"],
+        "de": ["Weltgesundheitsversammlung", "Vereinte Nationen", "Beobachterstatus"],
+        "es": ["Naciones Unidas", "estatus de observador"],
+        "fr": ["Nations unies", "statut d'observateur"],
+        "it": ["Nazioni Unite"],
+        "ru": ["ООН", "статус наблюдателя"],
+        "zh": ["世卫大会", "联合国", "2758号决议"],
+        "ja": ["国連", "オブザーバー資格"],
+        "ar": ["الأمم المتحدة"]
+      }
+    },
+    {
+      "term": "one-China policy",
+      "aliases": {
+        "en": ["one-China", "one China"],
+        "de": ["Ein-China"],
+        "es": ["una sola China"],
+        "fr": ["une seule Chine"],
+        "it": ["una sola Cina"],
+        "ru": ["одного Китая"],
+        "zh": ["一个中国", "一中原则"],
+        "ja": ["一つの中国"],
+        "ar": ["صين واحدة"],
+        "hi": ["एक चीन"]
+      }
+    },
+    {
+      "term": "status naming",
+      "aliases": {
+        "en": ["Chinese Taipei", "Taiwan region", "Republic of China", "sovereign state", "statehood"],
+        "de": ["Chinesisch-Taipeh", "Republik China"],
+        "zh": ["中华台北", "台湾地区"],
+        "ja": ["中華台北"]
+      }
+    },
+    {
+      "term": "representative offices",
+      "aliases": {
+        "en": ["representative office", "Taipei Economic and Cultural", "de facto embassy", "embassy", "ambassador", "consulate", "envoy"],
+        "de": ["Repräsentanz", "Botschaft", "Botschafter", "Konsulat"],
+        "es": ["oficina de representación", "embajada", "embajador"],
+        "fr": ["bureau de représentation", "ambassade", "ambassadeur"],
+        "it": ["ufficio di rappresentanza", "ambasciata", "ambasciatore"],
+        "ru": ["представительство", "посольство", "посол"],
+        "zh": ["代表处", "大使馆"],
+        "ja": ["代表処", "大使館"],
+        "ar": ["مكتب تمثيلي", "سفارة"]
+      }
+    },
+    {
+      "term": "overflight and stopovers",
+      "aliases": {
+        "en": ["overflight", "stopover", "flight permit", "transit visit"],
+        "de": ["Überflug", "Zwischenstopp", "Überflugrechte"],
+        "es": ["sobrevuelo"],
+        "fr": ["survol"],
+        "it": ["sorvolo"],
+        "zh": ["过境"],
+        "ja": ["経由地"]
+      }
+    }
+  ]
+}

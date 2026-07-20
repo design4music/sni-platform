@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "fn_id": "india_pakistan_militancy",
+    "note": "Sub-case A2: named groups/operations are the gate, so primary_target stays NULL. Generic 'terror'/'militant' are deliberately OMITTED -- under this centroid scope they pull in the Pakistan-Afghanistan strike coverage (Pakistan striking 'militant hideouts' in Afghanistan), which belongs to pakistan_afghanistan_border. Pre-audited 2026-07-17. BANNED ALIASES (verified false-positive engines): 'Jaish' word-STARTs into Jaishankar, India's foreign minister -- 5 real vs 115 matched; 'LeT' has a lowercase 'e' so it dodges the acronym path and word-STARTs into let/letter/lethal (80 hits); 'Jaish-e' n=0 (the corpus writes 'JeM' or 'Jaish chief', never the hyphenated form). DROPPED after the post-apply audit: 'JeM' (3 of its 8 hits were Jemima, Imran Khan's ex-wife -- lowercase 'e' dodges the acronym path; Masood Azhar carries the group instead); 'NIA' (67% foreign -- India's investigation agency covers everything: the VanDyke/Ukrainians case, Myanmar insurgents, Bhima Koregaon, a Modi-convoy scare; every on-topic hit already carries Pahalgam/Lashkar/Hizbul, so it added ~0 recall for ~12 false positives); 'UAPA' (domestic catch-all -- Umar Khalid, Andrabi). Dead: TRF, Resistance Front, Balakot, Muridke, Bahawalpur, surgical strike."
+  },
+  "bundle": [
+    {
+      "term": "Named militant groups and figures",
+      "aliases": {
+        "en": ["Lashkar", "Hafiz Saeed", "Masood Azhar", "Hizbul",
+               "Al Badr", "Dawood"],
+        "ru": ["Лашкар-е-Тайба", "Джаиш-е-Мохаммад"],
+        "zh": ["虔诚军", "穆罕默德军"],
+        "ar": ["عسكر طيبة", "جيش محمد"],
+        "hi": ["लश्कर", "जैश"]
+      }
+    },
+    {
+      "term": "State agencies of the accusation (own-side actors)",
+      "aliases": {
+        "en": ["ISI"]
+      }
+    },
+    {
+      "term": "The named attack and the named retaliation",
+      "aliases": {
+        "en": ["Pahalgam", "Sindoor", "Pulwama"],
+        "ru": ["Пахалгам"],
+        "zh": ["帕哈尔加姆"],
+        "ar": ["باهالغام"],
+        "ja": ["パハルガム"],
+        "hi": ["पहलगाम", "सिंदूर"]
+      }
+    }
+  ]
+}

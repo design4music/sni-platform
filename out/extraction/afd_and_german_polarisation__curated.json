@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "fn_id": "afd_and_german_polarisation",
+    "note": "Centroid GERMANY (single-country), so the gate is the phenomenon, not the country. Core is AfD party name + leaders + the domestic-institutional vocabulary (Brandmauer, Verfassungsschutz, Parteiverbot). Generic 'far-right' descriptors kept minimal per-language for foreign coverage of the AfD. Archetype A2/domestic, primary_target null."
+  },
+  "bundle": [
+    { "term": "AfD party + leaders", "aliases": {
+      "en": ["AfD", "Alternative für Deutschland", "Weidel", "Chrupalla", "Höcke", "Hocke", "Junge Alternative"],
+      "ru": ["АдГ", "Альтернатива для Германии", "Вайдель"],
+      "zh": ["德国另类选择党", "魏德尔"],
+      "ar": ["البديل من أجل ألمانيا"],
+      "ja": ["ドイツのための選択肢"],
+      "hi": ["एएफडी"]
+    }},
+    { "term": "firewall / non-cooperation", "aliases": {
+      "en": ["Brandmauer", "firewall"],
+      "de": ["Unvereinbarkeitsbeschluss"]
+    }},
+    { "term": "extremism classification / ban", "aliases": {
+      "en": ["Verfassungsschutz"],
+      "de": ["Rechtsextremismus", "rechtsextrem", "Parteiverbot", "gesichert rechtsextrem", "Einstufung", "verfassungsfeindlich"]
+    }},
+    { "term": "far-right descriptor (foreign coverage)", "aliases": {
+      "es": ["extrema derecha", "ultraderecha"],
+      "fr": ["extrême droite"],
+      "it": ["estrema destra"]
+    }}
+  ]
+}

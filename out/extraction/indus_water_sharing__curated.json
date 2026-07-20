@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "fn_id": "indus_water_sharing",
+    "note": "Sub-case A2: the named treaty is the gate; primary_target NULL because an AND-gate drops the atomic 34->19 (India-side and Pakistan-side coverage each carry only their own centroid). Pre-audited 2026-07-17. CRITICAL: bare 'Indus' is BANNED -- the EN matcher is word-START, not whole-word, so it catches industry/industrial (37 real vs 409 matched). 'Indus Waters' is a named-treaty phrase (Pillar 3), the one legitimate exception to the atoms-only rule here. DROPPED: 'dam' (word-STARTs into damage/dampen -- 'collateral damage', 'heat damages summer crop'); 'water treaty' (2/3 hits were the GANGES water treaty with Bangladesh); 'canal', 'river flow' too thin/generic. Kishanganga/Baglihar/Ratle/Tarbela/Mangla are n=0 today but kept as dormant named-project anchors -- they are the treaty's actual arbitration subjects and will fire when the dispute moves."
+  },
+  "bundle": [
+    {
+      "term": "The treaty itself",
+      "aliases": {
+        "en": ["Indus Waters", "IWT", "Permanent Indus Commission"],
+        "de": ["Indus-Wasser", "Indus-Vertrag"],
+        "es": ["Aguas del Indo"],
+        "fr": ["eaux de l'Indus"],
+        "it": ["acque dell'Indo"],
+        "ru": ["водах Инда", "Договор о водах Инда"],
+        "zh": ["印度河水条约"],
+        "ar": ["معاهدة مياه السند"],
+        "ja": ["インダス川水条約"],
+        "hi": ["सिंधु जल संधि"]
+      }
+    },
+    {
+      "term": "The rivers in dispute",
+      "aliases": {
+        "en": ["Chenab", "Jhelum", "Sutlej"],
+        "ru": ["Ченаб", "Джелам"],
+        "zh": ["杰赫勒姆"],
+        "ar": ["تشيناب"],
+        "hi": ["चिनाब", "झेलम"]
+      }
+    },
+    {
+      "term": "Named projects and arbitration machinery",
+      "aliases": {
+        "en": ["Kishanganga", "Baglihar", "Ratle", "Tarbela", "Mangla",
+               "pondage", "Court of Arbitration"],
+        "hi": ["किशनगंगा", "बगलिहार"]
+      }
+    }
+  ]
+}

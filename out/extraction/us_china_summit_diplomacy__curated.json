@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "fn_id": "us_china_summit_diplomacy",
+    "authored": "2026-07-16",
+    "archetype": "B (bilateral/symmetric); scope gate centroid_ids={AMERICAS-USA} + primary_target=ASIA-CHINA",
+    "notes": [
+      "DROPPED 'talks' (249 titles, 28.1% Iran co-tag = ~2x the 15.7% corpus baseline). Samples confirmed real leak: 'China backs mediation efforts in Iran-US talks', 'Wang urges continued efforts to advance Iran-US talks'. Generic verb mistranslating into iran_theater.",
+      "DROPPED 'Beijing' (381). Samples show it is a metonym for the Chinese government across every atomic ('Beijing's nod for H200', 'Beijing's new supply chain rules') plus pure noise (Tiffany flagship). Country synonym => handled by centroid (Pillar 2).",
+      "DROPPED 'Trump' (2115 = 35% of the dyad corpus). Vocab-spec rule 4 and hopeless promiscuity.",
+      "KEPT 'summit' despite 15.1% Iran co-tag: that is BELOW the 15.7% corpus baseline, and all 14 sampled Iran-co-tagged titles are legitimate US-China summit stories that merely list Iran as an agenda item. Benign co-occurrence, not leak.",
+      "'Xi' is a DELIBERATE, MEASURED exception to vocab-spec rule 6 (no 2-char tokens). The EN matcher gives prefix semantics (~* '\\mXi'), which costs 14 collateral titles out of 1096 (1.3%: Xiaomi/Xinhua/Xi'an/Pope Leo XIV). Shortest-unique 'Jinping' would match only 174 of 1082 (loses 84%). Inside the USA+CHINA dyad gate, 'Xi' reads as leader-level relationship coverage, not a generic China anchor -- chip/tariff stories say Nvidia and tariff, not Xi. Re-check if the centroid gate is ever widened.",
+      "DROPPED 'Wang Yi' (round 2, after reading attributed samples): 18 titles, 9 of them Iran (50% -- 3x the 15.7% corpus baseline). As China's foreign minister he comments on every file ('China opposes military strikes against Iran', 'Wang Yi cites US-Iran progress', 'phone talks with Iranian, French, Omani counterparts'), so he is a promiscuous own-side actor rather than an anchor for THIS phenomenon. The ~7 genuinely bilateral titles mostly carry 'Xi' or 'summit' anyway. 'He Lifeng' kept (3 titles, 0 Iran -- the trade principal, not a general spokesman)."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "principals and own-side officials",
+      "aliases": {
+        "en": ["Xi", "He Lifeng"],
+        "de": [], "es": [], "fr": [], "it": [],
+        "ru": ["Цзиньпин"],
+        "ja": ["習近平", "習氏"],
+        "ar": ["شي جين بينغ"],
+        "zh": ["习近平"],
+        "hi": ["शी जिनपिंग"]
+      }
+    },
+    {
+      "term": "summit and state-visit events",
+      "aliases": {
+        "en": ["summit", "state visit", "state banquet", "delegation", "bilateral", "G2"],
+        "de": ["Gipfel", "Staatsbesuch"],
+        "es": ["cumbre", "visita de Estado"],
+        "fr": ["sommet", "visite d'État"],
+        "it": ["vertice", "visita di Stato"],
+        "ru": ["саммит", "государственный визит"],
+        "ja": ["首脳会談", "国賓訪問"],
+        "ar": ["قمة", "زيارة دولة"],
+        "zh": ["峰会", "国事访问"],
+        "hi": ["शिखर सम्मेलन", "राजकीय यात्रा"]
+      }
+    },
+    {
+      "term": "summit venues",
+      "aliases": {
+        "en": ["Temple of Heaven", "Great Hall of the People", "Zhongnanhai", "Mar-a-Lago"],
+        "de": [], "es": [], "fr": [], "it": [], "ru": [], "ja": [], "ar": [], "zh": [], "hi": []
+      }
+    }
+  ]
+}

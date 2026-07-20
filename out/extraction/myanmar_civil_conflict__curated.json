@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "fn_id": "myanmar_civil_conflict",
+    "archetype": "A2 (anchor == subject; name carries precision, null target)",
+    "notes": "Single standalone atomic. Bare 'Myanmar' is ~95% on-topic (only ~22/470 noise: quakes, cyclone, a ruby). No ASIA-MYANMAR centroid exists, so the name IS the gate. Per A2: name + translations + a few unambiguous own-side proper nouns; NO generic domain verbs (they'd leak across the shared SE/SASIA/CHINA centroid to Cambodia/Thailand/regional news). 'Burma' needs per-language forms (Birma/Birmania/Birmanie); 'Myanmar' is identical across Latin scripts so EN-only. zh 缅甸 collides with nothing here; ja ミャンマー is the standard katakana."
+  },
+  "bundle": [
+    {
+      "term": "country name + own-side actors/toponyms",
+      "aliases": {
+        "en": ["Myanmar", "Burma", "Naypyidaw", "Naypyitaw", "Yangon", "Rangoon", "Rakhine", "Rohingya", "Tatmadaw", "Myawaddy", "Min Aung Hlaing", "Suu Kyi", "USDP"],
+        "de": ["Birma"],
+        "es": ["Birmania"],
+        "it": ["Birmania"],
+        "fr": ["Birmanie"],
+        "ru": ["Мьянм", "Бирма"],
+        "hi": ["म्यांमार", "म्यांमा", "बर्मा"],
+        "ar": ["ميانمار", "بورما"],
+        "zh": ["缅甸", "敏昂莱", "昂山素季"],
+        "ja": ["ミャンマー", "ビルマ", "スーチー"]
+      }
+    }
+  ]
+}

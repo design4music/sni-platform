@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "fn_id": "japan_china_taiwan_question",
+    "note": "NEW atomic. Japan's posture on Taiwan and China's response -- distinct from taiwan_strait_theater, which is gated {ASIA-TAIWAN} only and covers the China<->Taiwan<->US axis. Terrain here is the Japan-China bilateral rupture; Taiwan is the trigger, not the theater. Dyad gate centroid_ids={ASIA-CHINA} + primary_target=ASIA-JAPAN. 'Taiwan' is legitimate Pillar-2 geography here (vocab spec Pillar 2 edge case) because Taiwan is NOT this FN's gated centroid -- 80/80 in-gate Taiwan titles are on-topic. Takaichi is a PRINCIPAL actor of the Japan side, not a third-party leader (hard rule 4 does not apply). Residual overlap with taiwan_military_pressure (27 PLA-drill titles) is accepted per spec 1. DROPPED post-audit (real-gate check): 'protest' (22 titles, but it is a generic diplomatic verb cutting across all five atomics -- it was pulling 'China lodges stern protest over Japan PM's Yasukuni Shrine tribute' from memory_wars and 'Japan protests Chinese drilling rig' from the maritime atomic; 'embassy' already catches the rupture titles, so recall loss is zero), 'envoy' (13, the vehicle for any Chinese FM statement), 'consulate' (5, mostly consular/citizen-safety noise), 'summon' (0 real hits), 'Taipei' (1 hit, off-topic)."
+  },
+  "bundle": [
+    {
+      "term": "Taiwan as the subject of the dispute",
+      "aliases": {
+        "en": ["Taiwan", "Taiwan Strait", "cross-strait", "cross-Strait"],
+        "de": ["Taiwanstraße"],
+        "fr": ["détroit de Taïwan", "Taïwan"],
+        "es": ["estrecho de Taiwán", "Taiwán"],
+        "it": ["stretto di Taiwan"],
+        "ru": ["Тайван", "Тайбэй"],
+        "ar": ["تايوان", "تايبيه"],
+        "hi": ["ताइवान"],
+        "zh": ["台湾", "台灣", "台海"],
+        "ja": ["台湾", "台湾海峡"]
+      }
+    },
+    {
+      "term": "Japanese principals in the dispute",
+      "aliases": {
+        "en": ["Takaichi"],
+        "ru": ["Такаити"],
+        "ar": ["تاكايتشي"],
+        "hi": ["ताकाइची"],
+        "zh": ["高市"],
+        "ja": ["高市"]
+      }
+    },
+    {
+      "term": "The legal and doctrinal frame of Japan's involvement",
+      "aliases": {
+        "en": ["collective self-defense", "collective self-defence", "survival-threatening", "existential crisis situation", "Taiwan contingency", "first island chain", "one-China", "one China", "Resolution 2758", "three political documents", "1972 joint communique"],
+        "de": ["kollektive Selbstverteidigung", "Ein-China"],
+        "fr": ["légitime défense collective", "une seule Chine"],
+        "es": ["autodefensa colectiva", "una sola China"],
+        "ru": ["коллективной самообороны", "одного Китая"],
+        "ar": ["الدفاع الجماعي عن النفس", "صين واحدة"],
+        "hi": ["सामूहिक आत्मरक्षा", "एक चीन"],
+        "zh": ["集体自卫权", "一个中国", "台湾问题", "存亡危机事态"],
+        "ja": ["集団的自衛権", "存立危機事態", "台湾有事", "一つの中国"]
+      }
+    },
+    {
+      "term": "The diplomatic rupture and its incidents",
+      "aliases": {
+        "en": ["retract", "retraction", "withdraw the remarks", "embassy", "bluebook", "diplomatic bluebook"],
+        "de": ["Botschaft", "widerrufen"],
+        "fr": ["ambassade", "rétracter"],
+        "es": ["embajada", "retractarse"],
+        "it": ["ambasciata"],
+        "ru": ["посольств", "отозвать"],
+        "ar": ["السفارة", "التراجع"],
+        "hi": ["दूतावास"],
+        "zh": ["撤回", "使馆"],
+        "ja": ["撤回", "大使館"]
+      }
+    },
+    {
+      "term": "Japanese naval and legislative involvement",
+      "aliases": {
+        "en": ["strait transit", "MSDF", "destroyer transit", "lawmaker visit", "parliamentary delegation"],
+        "ru": ["проход эсминца"],
+        "ar": ["عبور المضيق"],
+        "hi": ["जलडमरूमध्य"],
+        "zh": ["过航", "穿航"],
+        "ja": ["海峡通過", "護衛艦"]
+      }
+    }
+  ]
+}

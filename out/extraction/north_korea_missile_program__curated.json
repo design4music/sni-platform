@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "north_korea_missile_program",
+    "note": "Archetype A (target-centric): primary_target=ASIA-NORKOREA. The target gate is what makes the generic domain vocabulary (missile, launch, enrichment, sanction) safe -- a title only attributes if it also carries the DPRK centroid. Absorbs the denuclearisation/UNSC pressure vocabulary from the retired north_korea_international_pressure node: the pressure regime is about this programme. Bare zh/ja 核 deliberately EXCLUDED (matches 核心/核算/中核); only compounds used. Hwasong kept EN-only -- ja/zh 火星 is the planet Mars. Kim Jong Un EXCLUDED: he appears in every DPRK title and would make this atomic match the whole theater."
+  },
+  "bundle": [
+    {
+      "term": "Missile systems and programme names",
+      "aliases": {
+        "en": ["Hwasong", "Pukguksong", "ICBM", "SLBM", "MRBM", "IRBM", "KN-23", "Chollima"]
+      }
+    },
+    {
+      "term": "Named nuclear/missile sites (Pillar 2)",
+      "aliases": {
+        "en": ["Punggye-ri", "Yongbyon", "Sohae", "Tongchang-ri", "Sinpo", "Kangson", "Pyongsan"],
+        "ru": ["Пунгери", "Йонбён", "Сохэ"],
+        "zh": ["丰溪里", "宁边", "西海"],
+        "ja": ["豊渓里", "寧辺", "西海"]
+      }
+    },
+    {
+      "term": "Weapons domain actions and nouns (Pillar 4)",
+      "aliases": {
+        "en": ["missile", "ballistic", "nuclear", "warhead", "enrichment", "enriched", "uranium", "plutonium", "centrifuge", "hypersonic", "denuclear", "launch", "weapons-grade"],
+        "de": ["Rakete", "Atomwaffe", "Kernwaffe", "Sprengkopf", "Anreicherung", "Uran", "Denuklearisierung", "Abschuss", "ballistisch", "Atomprogramm", "Atomtest"],
+        "es": ["misil", "ojiva", "enriquecimiento", "uranio", "balístico", "lanzamiento"],
+        "fr": ["nucléaire", "ogive", "enrichissement", "balistique", "lancement"],
+        "it": ["nucleare", "testata", "arricchimento", "uranio", "balistico", "lancio"],
+        "ru": ["ракет", "ядерн", "боеголов", "обогащен", "уран", "баллистич", "денуклеариз", "запуск", "испытани"],
+        "zh": ["导弹", "核武", "核试", "弹道", "浓缩", "无核化", "试射", "铀"],
+        "ja": ["ミサイル", "核実験", "核兵器", "弾道", "濃縮", "ウラン", "非核化", "発射"],
+        "ar": ["صاروخ", "نووي", "باليستي", "تخصيب", "يورانيوم"],
+        "hi": ["मिसाइल", "परमाणु", "बैलिस्टिक", "यूरेनियम"]
+      }
+    },
+    {
+      "term": "Pressure regime directed at the programme (absorbed from retired FN)",
+      "aliases": {
+        "en": ["sanction", "embargo", "Security Council", "NPT", "Six-Party", "IAEA"],
+        "de": ["Sanktion", "Sicherheitsrat"],
+        "es": ["sanción", "sanciones"],
+        "it": ["sanzion"],
+        "fr": ["Conseil de sécurité"],
+        "ru": ["санкц", "Совбез", "Совет Безопасности"],
+        "zh": ["制裁", "安理会"],
+        "ja": ["制裁", "安保理"],
+        "ar": ["عقوبات", "مجلس الأمن"],
+        "hi": ["प्रतिबंध"]
+      }
+    }
+  ]
+}

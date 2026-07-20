@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "fn_id": "us_russia_arms_control",
+    "note": "Nuclear arms control and strategic stability. Live phase: New START EXPIRED 2026-02-04, ending decades of warhead limits; Trump has floated a new pact; China has urged the two to resume strategic-stability dialogue. Dyad-AND gate (centroid_ids={AMERICAS-USA} + primary_target=EUROPE-RUSSIA). CRITICAL: bare 'START' is a false-positive engine -- it is 5 chars so it misses the <=4-char case-sensitive acronym path and falls onto the case-INSENSITIVE word-START path, matching start/started/jump-start ('US, Israel start spiral of violence', 'Denmark, USA, Greenland start talks'). 49 raw hits vs 27 for 'New START'. Only the qualified form is used. 'NPT' and bare 'nuclear' EXCLUDED -- both route to Iran. ICBM/INF/CTBT are all-caps <=4 chars so they take the case-sensitive whole-word acronym path and are safe. Several precise system anchors (Burevestnik, Poseidon, Sarmat, ICBM, warhead) are near-dormant in the current window but are kept as durable, zero-collision anchors for when the story returns."
+  },
+  "bundle": [
+    {
+      "term": "Named treaties and regimes",
+      "aliases": {
+        "en": ["New START", "INF", "CTBT", "Open Skies"],
+        "de": ["Neuer START", "Offener Himmel"],
+        "ru": ["СНВ", "ДСНВ", "Открытое небо", "Новый СНВ"],
+        "zh": ["新削减战略武器条约"],
+        "ja": ["新START"],
+        "es": ["Nuevo START"],
+        "fr": ["Nouveau START"]
+      }
+    },
+    {
+      "term": "Arms-control concepts",
+      "aliases": {
+        "en": ["arms control", "strategic stability", "disarmament", "arms race", "nuclear treaty", "nuclear pact", "nuclear arsenal"],
+        "de": ["Rüstungskontrolle", "strategische Stabilität", "Abrüstung", "Wettrüsten", "Atomwaffenvertrag", "Atomarsenal"],
+        "es": ["control de armas", "estabilidad estratégica", "desarme", "carrera armamentista", "arsenal nuclear"],
+        "it": ["controllo degli armamenti", "stabilità strategica", "disarmo", "corsa agli armamenti", "arsenale nucleare"],
+        "fr": ["contrôle des armements", "stabilité stratégique", "désarmement", "course aux armements", "arsenal nucléaire"],
+        "ru": ["контроль над вооружениями", "стратегическая стабильность", "разоружени", "гонка вооружений", "ядерный арсенал", "нераспространени"],
+        "zh": ["军控", "军备控制", "战略稳定", "核裁军", "军备竞赛", "核武库"],
+        "ja": ["軍備管理", "戦略的安定", "核軍縮", "軍拡競争", "核兵器庫"],
+        "ar": ["الحد من التسلح", "الاستقرار الاستراتيجي", "نزع السلاح", "سباق التسلح", "الترسانة النووية"],
+        "hi": ["परमाणु निरस्त्रीकरण", "हथियार नियंत्रण", "हथियारों की होड़"]
+      }
+    },
+    {
+      "term": "Strategic delivery and defence systems",
+      "aliases": {
+        "en": ["ICBM", "warhead", "Burevestnik", "Poseidon", "Sarmat", "Oreshnik", "hypersonic", "nuclear triad", "Golden Dome", "missile defence", "missile defense"],
+        "de": ["Sprengkopf", "Hyperschall", "Raketenabwehr", "nukleare Triade"],
+        "es": ["ojiva", "hipersónico", "defensa antimisiles"],
+        "it": ["testata", "ipersonico", "difesa antimissile"],
+        "fr": ["ogive", "hypersonique", "défense antimissile"],
+        "ru": ["Буревестник", "Посейдон", "Сармат", "Орешник", "боеголовк", "гиперзвук", "ядерная триада", "противоракетн"],
+        "zh": ["洲际导弹", "核弹头", "高超音速", "导弹防御"],
+        "ja": ["大陸間弾道ミサイル", "核弾頭", "極超音速", "ミサイル防衛"],
+        "ar": ["رأس نووي", "صاروخ عابر للقارات", "الدفاع الصاروخي"],
+        "hi": ["परमाणु हथियार", "मिसाइल रक्षा"]
+      }
+    },
+    {
+      "term": "Testing and verification",
+      "aliases": {
+        "en": ["nuclear test", "inspections", "verification regime", "warhead limits"],
+        "de": ["Atomtest", "Inspektionen"],
+        "es": ["ensayo nuclear", "inspecciones"],
+        "fr": ["essai nucléaire", "inspections"],
+        "it": ["test nucleare", "ispezioni"],
+        "ru": ["ядерные испытания", "инспекци"],
+        "zh": ["核试验", "核查"],
+        "ja": ["核実験", "査察"],
+        "ar": ["تجربة نووية", "عمليات تفتيش"],
+        "hi": ["परमाणु परीक्षण"]
+      }
+    }
+  ]
+}

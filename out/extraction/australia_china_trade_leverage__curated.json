@@ -1,0 +1,344 @@
+{
+  "metadata": {
+    "fn_id": "australia_china_trade_leverage",
+    "note": "Archetype A dyad: participants={ASIA-CHINA}, primary_target=OCEANIA-AUSTRALIA. The target gate is the AND-substitute, so generic domain nouns (quota, tariff, export) are safe -- a title only attributes if it also carries Australia. No country names. `economic coercion`/`weaponisation` deliberately EXCLUDED: stance vocabulary belongs in narratives_v2.framing_keywords, not the topic gate (vocab spec rule 5). Corporate anchors (BHP/Fortescue/CMRG) are included because the dyad gate makes them the iron-ore dispute rather than global commercial noise -- audit them. | RULE 6b PRUNE (post-audit): dropped short Latin-script non-EN aliases that substring-collide with English text -- `vin`(fr) matched Kevin/driving/savings, `litio`(es,it) matched Coalition, and `quota`(fr,it) duplicated the EN entry (Latin-collapse rule). orge/orzo/vino/Zoll/Wein dropped as the same latent class. The corpus is 94% EN so these cost nothing in recall."
+  },
+  "bundle": [
+    {
+      "term": "Traded commodities at issue",
+      "aliases": {
+        "en": [
+          "beef",
+          "barley",
+          "wine",
+          "lobster",
+          "canola",
+          "iron ore",
+          "coal",
+          "rare earth",
+          "critical mineral",
+          "lithium",
+          "apple",
+          "bull semen"
+        ],
+        "de": [
+          "Rindfleisch",
+          "Gerste",
+          "Hummer",
+          "Eisenerz",
+          "Kohle",
+          "seltene Erden",
+          "kritische Mineralien",
+          "Lithium"
+        ],
+        "fr": [
+          "boeuf",
+          "homard",
+          "minerai de fer",
+          "charbon",
+          "terres rares",
+          "minéraux critiques",
+          "lithium"
+        ],
+        "es": [
+          "carne de vacuno",
+          "cebada",
+          "langosta",
+          "mineral de hierro",
+          "carbón",
+          "tierras raras",
+          "minerales críticos"
+        ],
+        "it": [
+          "carne bovina",
+          "aragosta",
+          "minerale di ferro",
+          "carbone",
+          "terre rare",
+          "minerali critici"
+        ],
+        "ru": [
+          "говядина",
+          "ячмень",
+          "вино",
+          "железная руда",
+          "уголь",
+          "редкоземельные",
+          "критические минералы",
+          "литий"
+        ],
+        "zh": [
+          "牛肉",
+          "大麦",
+          "葡萄酒",
+          "龙虾",
+          "铁矿石",
+          "煤炭",
+          "稀土",
+          "关键矿产",
+          "锂"
+        ],
+        "ja": [
+          "牛肉",
+          "大麦",
+          "ワイン",
+          "ロブスター",
+          "鉄鉱石",
+          "石炭",
+          "レアアース",
+          "重要鉱物",
+          "リチウム"
+        ],
+        "ar": [
+          "لحم البقر",
+          "الشعير",
+          "النبيذ",
+          "خام الحديد",
+          "الفحم",
+          "المعادن النادرة",
+          "الليثيوم"
+        ],
+        "hi": [
+          "गोमांस",
+          "जौ",
+          "शराब",
+          "लौह अयस्क",
+          "कोयला",
+          "दुर्लभ पृथ्वी",
+          "लिथियम"
+        ]
+      }
+    },
+    {
+      "term": "Trade instruments and barriers",
+      "aliases": {
+        "en": [
+          "tariff",
+          "quota",
+          "anti-dumping",
+          "dumping",
+          "export ban",
+          "import ban",
+          "export restriction",
+          "export licence",
+          "export license",
+          "market access",
+          "trade barrier",
+          "customs",
+          "free trade",
+          "trade deal",
+          "supply chain",
+          "embargo",
+          "suspension"
+        ],
+        "de": [
+          "Quote",
+          "Antidumping",
+          "Exportverbot",
+          "Importverbot",
+          "Ausfuhrbeschränkung",
+          "Marktzugang",
+          "Handelsbarriere",
+          "Freihandel",
+          "Lieferkette",
+          "Embargo"
+        ],
+        "fr": [
+          "tarif douanier",
+          "antidumping",
+          "interdiction d'exportation",
+          "restriction à l'exportation",
+          "accès au marché",
+          "barrière commerciale",
+          "libre-échange",
+          "chaîne d'approvisionnement",
+          "embargo"
+        ],
+        "es": [
+          "arancel",
+          "cuota",
+          "antidumping",
+          "prohibición de exportación",
+          "restricción a la exportación",
+          "acceso al mercado",
+          "barrera comercial",
+          "libre comercio",
+          "cadena de suministro",
+          "embargo"
+        ],
+        "it": [
+          "tariffa",
+          "antidumping",
+          "divieto di esportazione",
+          "accesso al mercato",
+          "barriera commerciale",
+          "libero scambio",
+          "catena di approvvigionamento"
+        ],
+        "ru": [
+          "пошлина",
+          "квота",
+          "антидемпинг",
+          "запрет на экспорт",
+          "ограничение экспорта",
+          "доступ на рынок",
+          "торговый барьер",
+          "цепочка поставок",
+          "эмбарго"
+        ],
+        "zh": [
+          "关税",
+          "配额",
+          "反倾销",
+          "出口禁令",
+          "出口限制",
+          "市场准入",
+          "贸易壁垒",
+          "自由贸易",
+          "供应链",
+          "禁运"
+        ],
+        "ja": [
+          "関税",
+          "割当",
+          "反ダンピング",
+          "輸出禁止",
+          "輸出制限",
+          "市場アクセス",
+          "貿易障壁",
+          "自由貿易",
+          "サプライチェーン"
+        ],
+        "ar": [
+          "تعريفة جمركية",
+          "حصة",
+          "مكافحة الإغراق",
+          "حظر التصدير",
+          "قيود التصدير",
+          "الوصول إلى السوق",
+          "حاجز تجاري",
+          "سلسلة التوريد"
+        ],
+        "hi": [
+          "शुल्क",
+          "कोटा",
+          "डंपिंग रोधी",
+          "निर्यात प्रतिबंध",
+          "बाजार पहुंच",
+          "व्यापार बाधा",
+          "मुक्त व्यापार",
+          "आपूर्ति श्रृंखला"
+        ]
+      }
+    },
+    {
+      "term": "Named trade and investment institutions",
+      "aliases": {
+        "en": [
+          "MOFCOM",
+          "ChAFTA",
+          "CMRG",
+          "FIRB",
+          "Foreign Investment Review Board",
+          "Fortescue",
+          "Lynas",
+          "Landbridge",
+          "Darwin Port",
+          "Treasury Wine"
+        ],
+        "zh": [
+          "商务部",
+          "中国矿产资源集团"
+        ],
+        "ja": [
+          "商務省"
+        ],
+        "ru": [
+          "Минкоммерции"
+        ],
+        "ar": [
+          "وزارة التجارة الصينية"
+        ],
+        "hi": [
+          "वाणिज्य मंत्रालय"
+        ]
+      }
+    },
+    {
+      "term": "Investment screening and divestment",
+      "aliases": {
+        "en": [
+          "divest",
+          "stake sale",
+          "forced sale",
+          "investment screening",
+          "national interest test",
+          "port lease",
+          "state buyer",
+          "state-owned buyer",
+          "price index",
+          "pricing dispute"
+        ],
+        "de": [
+          "Veräußerung",
+          "Anteilsverkauf",
+          "Investitionsprüfung",
+          "Hafenpacht",
+          "staatlicher Käufer",
+          "Preisstreit"
+        ],
+        "fr": [
+          "cession",
+          "vente de participation",
+          "contrôle des investissements",
+          "acheteur d'État",
+          "différend tarifaire"
+        ],
+        "es": [
+          "desinversión",
+          "venta de participación",
+          "control de inversiones",
+          "comprador estatal"
+        ],
+        "it": [
+          "cessione",
+          "vendita di quote",
+          "controllo degli investimenti",
+          "acquirente statale"
+        ],
+        "ru": [
+          "продажа доли",
+          "проверка инвестиций",
+          "государственный покупатель",
+          "ценовой спор"
+        ],
+        "zh": [
+          "出售股份",
+          "投资审查",
+          "强制出售",
+          "国家买家",
+          "价格指数",
+          "定价争端",
+          "港口租约"
+        ],
+        "ja": [
+          "株式売却",
+          "投資審査",
+          "国有買い手",
+          "価格指数"
+        ],
+        "ar": [
+          "بيع الحصص",
+          "فحص الاستثمار",
+          "المشتري الحكومي"
+        ],
+        "hi": [
+          "विनिवेश",
+          "हिस्सेदारी बिक्री",
+          "निवेश जांच",
+          "राज्य खरीदार"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "fn_id": "aukus_alliance_reliability",
+    "note": "Sub-case A2 (anchor == subject): `AUKUS` is a near-perfect gate -- 70 titles/180d, nothing else in the corpus is AUKUS. participants={OCEANIA-AUSTRALIA} only, primary_target=null. Deliberately NO domain verbs (`alliance`, `deal`, `deterrence`): aliases are OR'd with no AND, and a bare `alliance` under the Australia centroid would swallow the Australia-Fiji defence pact that belongs to pacific_island_contest. `Osborne`/`Henderson` (the shipyards) are DROPPED -- word-START matching makes them collide with the surnames. Only the named platforms and sites survive alongside the acronym."
+  },
+  "bundle": [
+    {
+      "term": "The pact itself",
+      "aliases": {
+        "en": ["AUKUS"],
+        "ru": ["АУКУС"],
+        "zh": ["奥库斯", "美英澳"],
+        "ja": ["オーカス"],
+        "ar": ["أوكوس"],
+        "hi": ["ऑकस"]
+      }
+    },
+    {
+      "term": "Submarine platforms and programme",
+      "aliases": {
+        "en": ["submarine", "Virginia-class", "Collins-class", "SSN", "nuclear-powered boat", "underwater drone", "unmanned underwater"],
+        "de": ["U-Boot", "Unterseeboot", "Unterwasserdrohne"],
+        "fr": ["sous-marin", "drone sous-marin"],
+        "es": ["submarino", "dron submarino"],
+        "it": ["sottomarino", "drone sottomarino"],
+        "ru": ["подводная лодка", "подводный дрон"],
+        "zh": ["潜艇", "核潜艇", "水下无人机"],
+        "ja": ["潜水艦", "原子力潜水艦", "水中ドローン"],
+        "ar": ["غواصة", "غواصة نووية"],
+        "hi": ["पनडुब्बी", "परमाणु पनडुब्बी"]
+      }
+    },
+    {
+      "term": "Named sites of the programme",
+      "aliases": {
+        "en": ["HMAS Stirling", "Naval Support Activity Stirling", "Submarine Rotational Force"]
+      }
+    }
+  ]
+}

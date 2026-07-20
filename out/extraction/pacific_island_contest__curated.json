@@ -1,0 +1,82 @@
+{
+  "metadata": {
+    "fn_id": "pacific_island_contest",
+    "note": "Terrain gate = the island centroids (MELANESIA/POLYNESIA/MICRONESIA/PNG); bundle carries the PHENOMENON only. NO island toponyms: the centroid already locates the geography, and aliases are OR'd -- a bare `Fiji` would admit every cyclone/rugby/tourism title (measured ~63% on-topic). No `Australia`/`China` (country names, handled by centroids on the dyad atomics). No `police` (PNG domestic crime noise) -- only the named `policing initiative`. Verbs are safe here because the island centroid is a tight terrain gate (562 titles/180d).\n\nThe 'Military signalling' term was DROPPED after the first audit: its generic war vocabulary (`ballistic missile`/`warship`, and the ja/zh equivalents) is a spec-3 leak class, and it was pulling Japanese Iran/Israel coverage in through the OCEANIA-PAPUANEWGUINEA centroid bug (`ラエ` = Lae, a substring of `イスラエル`). The Pacific missile-test titles are NOT lost -- they all carry ASIA-CHINA + OCEANIA-AUSTRALIA and are held by china_threat_assessment, which is where the military-reach phenomenon lives. This atomic is the diplomatic/security-alignment contest; that split is orthogonal."
+  },
+  "bundle": [
+    {
+      "term": "Security pacts and defence agreements",
+      "aliases": {
+        "en": ["security pact", "security agreement", "security deal", "defence pact", "defense pact", "defence treaty", "defense treaty", "defence agreement", "defense agreement", "mutual defence", "mutual defense", "defence alliance", "defense alliance", "security cooperation", "policing"],
+        "de": ["Sicherheitspakt", "Sicherheitsabkommen", "Verteidigungspakt", "Verteidigungsabkommen", "Verteidigungsbündnis"],
+        "fr": ["pacte de sécurité", "accord de sécurité", "pacte de défense", "traité de défense", "alliance de défense"],
+        "es": ["pacto de seguridad", "acuerdo de seguridad", "pacto de defensa", "tratado de defensa", "alianza de defensa"],
+        "it": ["patto di sicurezza", "accordo di sicurezza", "patto di difesa", "trattato di difesa"],
+        "pt": ["pacto de segurança", "acordo de segurança", "pacto de defesa"],
+        "ru": ["пакт о безопасности", "соглашение о безопасности", "оборонный пакт", "договор об обороне"],
+        "zh": ["安全协议", "安全协定", "防务协议", "防卫协定", "共同防御"],
+        "ja": ["安全保障協定", "防衛協定", "安保協定"],
+        "ar": ["اتفاق أمني", "معاهدة أمنية", "اتفاقية دفاعية", "معاهدة دفاعية"],
+        "hi": ["सुरक्षा समझौता", "रक्षा समझौता", "रक्षा संधि"]
+      }
+    },
+    {
+      "term": "Foreign military basing",
+      "aliases": {
+        "en": ["military base", "naval base", "foreign base", "military presence", "basing", "port access", "wharf", "airstrip", "runway upgrade"],
+        "de": ["Militärbasis", "Militärstützpunkt", "Marinestützpunkt", "Militärpräsenz", "Hafenzugang"],
+        "fr": ["base militaire", "base navale", "présence militaire", "accès portuaire"],
+        "es": ["base militar", "base naval", "presencia militar", "acceso portuario"],
+        "it": ["base militare", "base navale", "presenza militare"],
+        "pt": ["base militar", "base naval", "presença militar"],
+        "ru": ["военная база", "военно-морская база", "военное присутствие"],
+        "zh": ["军事基地", "海军基地", "军事存在", "港口准入"],
+        "ja": ["軍事基地", "海軍基地", "軍事拠点"],
+        "ar": ["قاعدة عسكرية", "قاعدة بحرية", "وجود عسكري"],
+        "hi": ["सैन्य अड्डा", "नौसैनिक अड्डा", "सैन्य उपस्थिति"]
+      }
+    },
+    {
+      "term": "Pacific regional institutions and named agreements",
+      "aliases": {
+        "en": ["Pacific Islands Forum", "Melanesian Spearhead Group", "Pacific Policing Initiative", "policing initiative", "Falepili", "Boe Declaration", "Blue Pacific", "Compact of Free Association", "Nauru Agreement", "Forum Fisheries"],
+        "zh": ["太平洋岛国论坛", "蓝色太平洋"],
+        "ja": ["太平洋諸島フォーラム"],
+        "ru": ["Форум тихоокеанских островов"],
+        "ar": ["منتدى جزر المحيط الهادئ"],
+        "hi": ["प्रशांत द्वीप समूह मंच"]
+      }
+    },
+    {
+      "term": "Diplomatic alignment and recognition switching",
+      "aliases": {
+        "en": ["diplomatic ties", "switch recognition", "diplomatic recognition", "one-China", "Taiwan", "sphere of influence", "influence", "courting", "align", "alignment", "tilt", "pivot", "step up", "aid package", "development assistance", "medical team", "health aid", "budget support", "infrastructure loan", "debt trap", "seabed mineral", "co-op"],
+        "de": ["diplomatische Beziehungen", "Einflusssphäre", "Einfluss", "Ausrichtung", "Hilfspaket", "Entwicklungshilfe", "Schuldenfalle"],
+        "fr": ["relations diplomatiques", "sphère d'influence", "influence", "aide au développement", "piège de la dette"],
+        "es": ["relaciones diplomáticas", "esfera de influencia", "influencia", "ayuda al desarrollo", "trampa de deuda"],
+        "it": ["relazioni diplomatiche", "sfera di influenza", "influenza", "aiuto allo sviluppo", "trappola del debito"],
+        "pt": ["relações diplomáticas", "esfera de influência", "influência", "ajuda ao desenvolvimento"],
+        "ru": ["дипломатические отношения", "сфера влияния", "влияние", "помощь в развитии", "долговая ловушка"],
+        "zh": ["外交关系", "势力范围", "影响力", "发展援助", "债务陷阱", "建交"],
+        "ja": ["外交関係", "勢力圏", "影響力", "開発援助", "債務の罠"],
+        "ar": ["علاقات دبلوماسية", "مجال النفوذ", "نفوذ", "مساعدات تنموية", "فخ الديون"],
+        "hi": ["राजनयिक संबंध", "प्रभाव क्षेत्र", "प्रभाव", "विकास सहायता", "ऋण जाल"]
+      }
+    },
+    {
+      "term": "Treaty-making and ratification",
+      "aliases": {
+        "en": ["treaty", "pact", "memorandum of understanding", "ratify", "ratification", "signing ceremony", "communique"],
+        "de": ["Vertrag", "Absichtserklärung", "Ratifizierung", "Unterzeichnung"],
+        "fr": ["traité", "protocole d'accord", "ratification", "signature"],
+        "es": ["tratado", "memorando de entendimiento", "ratificación", "firma"],
+        "it": ["trattato", "memorandum d'intesa", "ratifica", "firma"],
+        "ru": ["договор", "меморандум о взаимопонимании", "ратификация", "подписание"],
+        "zh": ["条约", "谅解备忘录", "批准", "签署"],
+        "ja": ["条約", "覚書", "批准", "署名"],
+        "ar": ["معاهدة", "مذكرة تفاهم", "تصديق", "توقيع"],
+        "hi": ["संधि", "समझौता ज्ञापन", "अनुसमर्थन", "हस्ताक्षर"]
+      }
+    }
+  ]
+}

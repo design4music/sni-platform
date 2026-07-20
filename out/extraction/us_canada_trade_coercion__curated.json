@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "fn_id": "us_canada_trade_coercion",
+    "centroid": "AMERICAS-CANADA",
+    "window_days": 180,
+    "hand_drafted": true,
+    "note": "Pre-audited against real matcher semantics (word-start prefix) under the dyad gate CANADA+USA. tariff=79, USMCA=24, trade war=8, decertif=5 carry the atomic.",
+    "post_audit_drops": [
+      "NAFTA - word-start prefix matches 'Naftali' (Bennett); 71% foreign, MIDEAST-ISRAEL:5",
+      "retaliat / Vergeltung / represalia / represailles / ritorsione / countermeasure - generic-verb-that-mistranslates class (spec 3). retaliat=326 at 93% foreign, all Iran/Israel military retaliation. Contributed 0 hits under the real dyad gate, so pure leak risk with no recall value. counter-tariff / Gegenzoll kept - unambiguous.",
+      "potash / Raps / Kali / potash-ru - potash=3 at 100% foreign (Ukraine/Belarus, not Canada). Raps=99 and Kali=71 are rule-6b short non-EN substring collisions (Kali is contained in 'Kalifornien')."
+    ],
+    "timestamp": "2026-07-18"
+  },
+  "bundle": [
+    {
+      "term": "USMCA",
+      "type": "entity",
+      "aliases": {
+        "ar": ["USMCA"], "de": ["USMCA"], "en": ["USMCA", "CUSMA"],
+        "es": ["T-MEC", "USMCA"], "fr": ["ACEUM"], "hi": ["USMCA"],
+        "it": ["USMCA"], "ja": ["USMCA"], "ru": ["USMCA"], "zh": ["美墨加协定"]
+      }
+    },
+    {
+      "term": "tariff",
+      "type": "concept",
+      "aliases": {
+        "ar": ["تعريفة جمركية", "رسوم جمركية"], "de": ["Zoll", "Zöll"], "en": ["tariff"],
+        "es": ["arancel"], "fr": ["droits de douane"], "hi": ["टैरिफ"],
+        "it": ["dazio"], "ja": ["関税"], "ru": ["тариф", "пошлин"], "zh": ["关税"]
+      }
+    },
+    {
+      "term": "trade war",
+      "type": "concept",
+      "aliases": {
+        "ar": ["حرب تجارية"], "de": ["Handelskrieg"], "en": ["trade war"],
+        "es": ["guerra comercial"], "fr": ["guerre commerciale"], "hi": ["व्यापार युद्ध"],
+        "it": ["guerra commerciale"], "ja": ["貿易戦争"], "ru": ["торговая война"], "zh": ["贸易战"]
+      }
+    },
+    {
+      "term": "trade negotiation",
+      "type": "concept",
+      "aliases": {
+        "ar": ["مفاوضات تجارية"], "de": ["Handelsgespräch", "Handelsabkommen"],
+        "en": ["trade talks", "trade deal", "trade negotiat", "trade agreement"],
+        "es": ["negociaciones comerciales"], "fr": ["négociations commerciales"],
+        "hi": ["व्यापार वार्ता"], "it": ["negoziati commerciali"],
+        "ja": ["貿易交渉"], "ru": ["торговые переговоры"], "zh": ["贸易谈判"]
+      }
+    },
+    {
+      "term": "counter-tariff",
+      "type": "concept",
+      "aliases": {
+        "ar": ["إجراءات انتقامية"], "de": ["Gegenzoll"], "en": ["counter-tariff"],
+        "es": ["contra-arancel"], "fr": ["contre-tarif"], "hi": ["जवाबी शुल्क"],
+        "it": ["contro-dazio"], "ja": ["報復関税"], "ru": ["ответные пошлины"], "zh": ["反制关税"]
+      }
+    },
+    {
+      "term": "decertification",
+      "type": "concept",
+      "aliases": {
+        "ar": ["سحب الاعتماد"], "de": ["Zulassung entziehen"], "en": ["decertif"],
+        "es": ["descertific"], "fr": ["décertific"], "hi": ["प्रमाणन रद्द"],
+        "it": ["decertific"], "ja": ["認証取り消し"], "ru": ["отзыв сертификации"], "zh": ["取消认证"]
+      }
+    },
+    {
+      "term": "softwood lumber",
+      "type": "entity",
+      "aliases": {
+        "ar": ["الأخشاب اللينة"], "de": ["Nadelholz", "Bauholz"], "en": ["softwood", "lumber"],
+        "es": ["madera blanda"], "fr": ["bois d'oeuvre"], "hi": ["इमारती लकड़ी"],
+        "it": ["legname"], "ja": ["針葉樹材"], "ru": ["пиломатериал"], "zh": ["软木材"]
+      }
+    },
+    {
+      "term": "steel and aluminium",
+      "type": "concept",
+      "aliases": {
+        "ar": ["الصلب والألمنيوم"], "de": ["Stahl", "Aluminium"], "en": ["steel", "aluminum", "aluminium"],
+        "es": ["acero"], "fr": ["acier"], "hi": ["इस्पात"],
+        "it": ["acciaio"], "ja": ["鉄鋼"], "ru": ["сталь"], "zh": ["钢铝"]
+      }
+    },
+    {
+      "term": "countervailing duty",
+      "type": "concept",
+      "aliases": {
+        "ar": ["رسوم تعويضية"], "de": ["Ausgleichszoll", "Antidumping"],
+        "en": ["countervail", "anti-dumping", "dumping", "surtax"],
+        "es": ["derechos compensatorios"], "fr": ["droits compensateurs"],
+        "hi": ["प्रतिकारी शुल्क"], "it": ["dazi compensativi"],
+        "ja": ["相殺関税"], "ru": ["компенсационная пошлина"], "zh": ["反补贴税"]
+      }
+    },
+    {
+      "term": "protectionism",
+      "type": "concept",
+      "aliases": {
+        "ar": ["الحمائية"], "de": ["Protektionis"], "en": ["protectionis"],
+        "es": ["proteccionis"], "fr": ["protectionnis"], "hi": ["संरक्षणवाद"],
+        "it": ["protezionis"], "ja": ["保護主義"], "ru": ["протекционизм"], "zh": ["保护主义"]
+      }
+    },
+    {
+      "term": "agricultural trade goods",
+      "type": "entity",
+      "aliases": {
+        "ar": ["الكانولا"], "de": ["Rapsöl"], "en": ["canola", "dairy"],
+        "es": ["colza"], "fr": ["canola"], "hi": ["कैनोला"],
+        "it": ["colza"], "ja": ["カノーラ"], "ru": ["рапсовое"], "zh": ["油菜籽"]
+      }
+    },
+    {
+      "term": "supply management",
+      "type": "concept",
+      "aliases": {
+        "ar": ["إدارة العرض"], "de": ["Angebotssteuerung"], "en": ["supply management"],
+        "es": ["gestión de la oferta"], "fr": ["gestion de l'offre"], "hi": ["आपूर्ति प्रबंधन"],
+        "it": ["gestione dell'offerta"], "ja": ["供給管理"], "ru": ["регулирование поставок"], "zh": ["供应管理"]
+      }
+    }
+  ]
+}

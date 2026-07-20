@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "fn_id": "french_nationalist_challenge",
+    "note": "Centroid FRANCE (single-country). Gate is the RN actors/party + French government-instability vocabulary (no-confidence, censure, dissolution) which within the FRANCE centroid maps to the domestic political crisis. Macron foreign-policy noise is excluded by not carrying his name or foreign toponyms. Archetype A2/domestic, primary_target null."
+  },
+  "bundle": [
+    { "term": "RN actors + party", "aliases": {
+      "en": ["Le Pen", "Bardella", "Rassemblement National", "National Rally", "Zemmour", "Reconquête"],
+      "ru": ["Ле Пен", "Бардель", "Национальное объединение"],
+      "zh": ["勒庞", "国民联盟"],
+      "ar": ["لوبان", "التجمع الوطني"],
+      "ja": ["ルペン", "国民連合"],
+      "hi": ["ले पेन"]
+    }},
+    { "term": "government instability", "aliases": {
+      "en": ["no-confidence", "motion of censure", "dissolution"],
+      "de": ["Misstrauensvotum"],
+      "fr": ["motion de censure", "censure", "dissolution", "gouvernement minoritaire"],
+      "es": ["moción de censura"],
+      "it": ["mozione di sfiducia"]
+    }},
+    { "term": "national-populist descriptor / sovereignty", "aliases": {
+      "en": ["national-populist"],
+      "fr": ["extrême droite", "souverainisme", "souveraineté nationale"],
+      "de": ["Rechtsnationalismus"],
+      "es": ["extrema derecha"],
+      "it": ["estrema destra"]
+    }}
+  ]
+}

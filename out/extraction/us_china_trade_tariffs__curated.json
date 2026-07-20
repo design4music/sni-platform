@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "fn_id": "us_china_trade_tariffs",
+    "authored": "2026-07-16",
+    "archetype": "B (bilateral/symmetric); scope gate centroid_ids={AMERICAS-USA} + primary_target=ASIA-CHINA",
+    "notes": [
+      "Fixed trade nouns measured near-zero Iran leak inside the dyad gate: tariff 154/9 Iran, Section 301 10/0, trade war 18/1, soybean 18/1, procurement 5/0.",
+      "'EV' kept: uppercase 2-char tokens match the acronym branch (^[A-Z0-9][A-Z0-9-]{0,3}$) => case-SENSITIVE whole-word '\\mEV\\M', so it cannot hit 'even'/'ever'. 21 titles, 0 Iran.",
+      "DROPPED bare 'customs' and bare 'deal' (generic; 'deal' = 215 titles spanning the Iran ceasefire story). 'customs duty' kept as the fixed noun.",
+      "2026 phase is bidirectional and live: Section 301 probes, the Supreme Court tariff ruling, negotiated tariff REDUCTION at the May summit, Chinese EVs, farm/beef market access, and China banning procurement from 46 US firms."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "tariff instruments",
+      "aliases": {
+        "en": ["tariff", "Section 301", "anti-dumping", "customs duty", "de minimis", "countermeasure", "export ban"],
+        "de": ["Zoll", "Zölle", "Strafzoll"],
+        "es": ["arancel"],
+        "fr": ["droits de douane"],
+        "it": ["dazi"],
+        "ru": ["пошлин"],
+        "ja": ["関税"],
+        "ar": ["التعريفات الجمركية", "رسوم جمركية"],
+        "zh": ["关税"],
+        "hi": ["टैरिफ"]
+      }
+    },
+    {
+      "term": "trade conflict and access",
+      "aliases": {
+        "en": ["trade war", "trade deficit", "market access", "procurement"],
+        "de": ["Handelskrieg", "Handelsdefizit"],
+        "es": ["guerra comercial"],
+        "fr": ["guerre commerciale"],
+        "it": ["guerra commerciale"],
+        "ru": ["торговая война"],
+        "ja": ["貿易戦争"],
+        "ar": ["الحرب التجارية"],
+        "zh": ["贸易战"],
+        "hi": ["व्यापार युद्ध"]
+      }
+    },
+    {
+      "term": "traded goods at issue",
+      "aliases": {
+        "en": ["soybean", "electric vehicle", "EV"],
+        "de": ["Sojabohnen"],
+        "es": ["soja"],
+        "fr": ["soja"],
+        "it": ["soia"],
+        "ru": ["соя"],
+        "ja": ["大豆"],
+        "ar": ["فول الصويا"],
+        "zh": ["大豆"],
+        "hi": ["सोयाबीन"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "fn_id": "japan_defense_expansion",
+    "note": "NEW atomic. Japan's military posture and the postwar constraints on it. Dyad gate centroid_ids={ASIA-CHINA} + primary_target=ASIA-JAPAN scopes it to the China-facing half of the debate, which is correct for this theater. JUDGMENT CALL: 'militaris'/'militariz' (65 titles) are KEPT in the topic gate even though they carry a Chinese stance lean, because they identify the phenomenon and BOTH camps use them ('Japan defence minister rebuffs claims of new militarism' -- Guardian). Excluding them would strand the Chinese half of the corpus and collapse the pro/con narrative pair. The pure stance forms ('neo-militarism', 'militarist revival') go additionally into narratives_v2.framing_keywords, not here. EN path is a word-START prefix anchor, so 'militaris' covers militarism/militarist/militarisation. DROPPED: 'rig' (matches 'rights'), 'NATO' (cross-theater institution per spec 3), bare 'drill'/'exercise' (generic, and owned by taiwan_military_pressure)."
+  },
+  "bundle": [
+    {
+      "term": "Military expansion as a phenomenon",
+      "aliases": {
+        "en": ["militaris", "militariz", "rearm", "remilitaris", "remilitariz", "military buildup", "military build-up", "defense buildup", "defence buildup"],
+        "de": ["Militarisierung", "Aufrüstung", "Wiederbewaffnung"],
+        "fr": ["militarisation", "réarmement"],
+        "es": ["militarización", "rearme"],
+        "it": ["militarizzazione", "riarmo"],
+        "ru": ["милитариз", "перевооружени"],
+        "ar": ["عسكرة", "إعادة التسلح"],
+        "hi": ["सैन्यवाद", "पुनःशस्त्रीकरण"],
+        "zh": ["军国主义", "军事扩张", "扩军"],
+        "ja": ["軍国主義", "軍拡"]
+      }
+    },
+    {
+      "term": "Postwar constitutional constraints",
+      "aliases": {
+        "en": ["pacifis", "Article 9", "constitutional revision", "constitutional amendment", "postwar regime", "postwar order", "three non-nuclear principles"],
+        "de": ["Friedensverfassung", "Verfassungsänderung"],
+        "fr": ["constitution pacifiste", "révision constitutionnelle"],
+        "es": ["constitución pacifista", "reforma constitucional"],
+        "it": ["costituzione pacifista"],
+        "ru": ["пацифистск", "пересмотр конституции"],
+        "ar": ["الدستور السلمي", "تعديل الدستور"],
+        "hi": ["शांतिवादी संविधान"],
+        "zh": ["和平宪法", "修宪", "第九条", "战后体制"],
+        "ja": ["平和憲法", "憲法改正", "九条", "戦後レジーム"]
+      }
+    },
+    {
+      "term": "Strike capability and force structure",
+      "aliases": {
+        "en": ["counter-strike", "counterstrike", "counterattack capability", "strike capability", "long-range missile", "standoff missile", "Tomahawk", "Type 12", "Izumo", "GSDF", "MSDF", "ASDF", "SDF", "Self-Defense Force", "Self-Defence Force"],
+        "de": ["Selbstverteidigungsstreitkräfte", "Marschflugkörper"],
+        "fr": ["forces d'autodéfense", "capacité de frappe"],
+        "es": ["fuerzas de autodefensa", "capacidad de ataque"],
+        "ru": ["силы самообороны", "ударный потенциал"],
+        "ar": ["قوات الدفاع الذاتي", "قدرة الضربة"],
+        "hi": ["आत्मरक्षा बल"],
+        "zh": ["自卫队", "反击能力", "对敌基地攻击"],
+        "ja": ["自衛隊", "反撃能力", "敵基地攻撃", "巡航ミサイル"]
+      }
+    },
+    {
+      "term": "Budget, doctrine documents and arms exports",
+      "aliases": {
+        "en": ["defense budget", "defence budget", "defense spending", "defence spending", "defense white paper", "defence white paper", "National Security Strategy", "defense document", "defence document", "arms export", "weapons export", "defense equipment transfer", "lethal weapons export"],
+        "de": ["Verteidigungshaushalt", "Rüstungsexport", "Verteidigungsausgaben"],
+        "fr": ["budget de la défense", "exportation d'armes"],
+        "es": ["presupuesto de defensa", "exportación de armas"],
+        "it": ["bilancio della difesa", "esportazione di armi"],
+        "ru": ["оборонный бюджет", "экспорт вооружений"],
+        "ar": ["ميزانية الدفاع", "تصدير الأسلحة"],
+        "hi": ["रक्षा बजट", "हथियार निर्यात"],
+        "zh": ["防卫费", "防卫白皮书", "武器出口", "国家安全保障战略"],
+        "ja": ["防衛費", "防衛白書", "武器輸出", "国家安全保障戦略", "防衛装備移転"]
+      }
+    }
+  ]
+}

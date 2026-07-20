@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "fn_id": "north_korea_china_patronage",
+    "note": "Archetype A (target-centric): primary_target=ASIA-NORKOREA, participants {NORKOREA, CHINA}. The China NAME is the discriminator, not a country-name violation: the centroid gate resolves the DPRK (the subject), so 'China' is what separates this axis from north_korea_russia_alignment. Generic domain verbs (trade, flights, oil, summit) deliberately EXCLUDED -- aliases are OR'd, so a bare verb would match every DPRK trade/summit title and leak straight into the Russia atomic. Xi Jinping and Wang Yi are own-side principals here (Pillar 1), not third-party leaders. ru 'Ван И' EXCLUDED: substring of Иван Иванович.",
+    "sanctions_evasion": "China-specific non-enforcement vocabulary (ship-to-ship, coal, seafood, labourers) lives here rather than on the missile atomic, per the approved structure. Lazarus/crypto dropped entirely: 4 titles, not worth a leak-prone alias."
+  },
+  "bundle": [
+    {
+      "term": "China (the discriminating name) and its principals",
+      "aliases": {
+        "en": ["China", "Chinese", "Beijing", "Xi Jinping", "Wang Yi"],
+        "de": ["chinesisch", "Peking"],
+        "fr": ["Chine", "chinois", "Pékin"],
+        "it": ["Cina", "cinese", "Pechino"],
+        "es": ["chino", "Pekín"],
+        "ru": ["Кита", "Пекин", "Си Цзиньпин"],
+        "zh": ["中国", "北京", "习近平", "王毅"],
+        "ja": ["中国", "北京", "習近平", "王毅"],
+        "ar": ["الصين", "بكين"],
+        "hi": ["चीन", "बीजिंग"]
+      }
+    },
+    {
+      "term": "Border geography and crossings (Pillar 2)",
+      "aliases": {
+        "en": ["Dandong", "Sinuiju", "Yalu", "Tumen", "Rason", "Panjin"],
+        "ru": ["Даньдун", "Синыйджу", "Ялуцзян"],
+        "zh": ["丹东", "新义州", "鸭绿江", "图们"],
+        "ja": ["丹東", "新義州", "鴨緑江"]
+      }
+    },
+    {
+      "term": "Institutions and named links (Pillar 3)",
+      "aliases": {
+        "en": ["Air China", "Treaty of Friendship", "Chinese People's Volunteers", "CPV martyrs"],
+        "zh": ["中朝", "志愿军", "友好条约"],
+        "ja": ["中朝", "中国人民志願軍"]
+      }
+    },
+    {
+      "term": "China-specific sanctions non-enforcement (Pillar 4)",
+      "aliases": {
+        "en": ["ship-to-ship", "sanctions waiver", "sanctions exemption"],
+        "ru": ["перевалк"],
+        "zh": ["制裁豁免"]
+      }
+    }
+  ]
+}

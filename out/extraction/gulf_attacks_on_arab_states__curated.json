@@ -1,0 +1,525 @@
+{
+  "metadata": {
+    "fn_id": "gulf_attacks_on_arab_states",
+    "centroid": "MIDEAST-IRAN",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 149,
+    "seeds": [
+      "Aramco",
+      "Abqaiq",
+      "Houthi missile",
+      "UAE air defence",
+      "Al Udeid",
+      "Tower 22",
+      "Saudi pipeline",
+      "Khurais",
+      "Houthi drone",
+      "Iranian missile",
+      "Al Asad",
+      "base attack",
+      "oil facility",
+      "refinery"
+    ],
+    "timestamp": "2026-05-11T12:49:25.778953",
+    "curated_at": "2026-05-11 (v2 — tightened per user review)",
+    "curator_notes": "Tightened bundle to FN5-specific named targets only. Dropped cross-FN concepts (missile, drone, ballistic missile, interceptor, air defense, air base, oil, refinery) and FN2-overlap (Houthi). Off-topic Israeli locations + Iranian island Lavan also dropped. Added Saudi attack targets Yanbu, Eastern Province, Khobar, Jubail."
+  },
+  "bundle": [
+    {
+      "term": "Ras Tanura",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "رأس تنورة"
+        ],
+        "de": [],
+        "en": [
+          "Ras Tanura"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "रास तनूरा"
+        ],
+        "it": [],
+        "ja": [
+          "ラース・タヌーラ"
+        ],
+        "ru": [
+          "Рас-Таннура"
+        ],
+        "zh": [
+          "拉斯塔努拉"
+        ]
+      },
+      "evidence": "Euronews / 2026-03-02"
+    },
+    {
+      "term": "Al Taweelah",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الطويلة"
+        ],
+        "de": [],
+        "en": [
+          "Al Taweelah"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "अल तवीला"
+        ],
+        "it": [],
+        "ja": [
+          "アル・タウィーラ"
+        ],
+        "ru": [
+          "Аль-Тавила"
+        ],
+        "zh": [
+          "阿尔塔维拉"
+        ]
+      },
+      "evidence": "Gulf News / 2026-03-28"
+    },
+    {
+      "term": "Aramco",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "أرامكو",
+          "أرامكو السعودية"
+        ],
+        "de": [],
+        "en": [
+          "Aramco",
+          "Saudi Aramco"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "अरामको"
+        ],
+        "it": [],
+        "ja": [
+          "アラムコ"
+        ],
+        "ru": [
+          "Aramco",
+          "Сауди Арамко"
+        ],
+        "zh": [
+          "沙特阿美",
+          "阿美石油"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Abqaiq",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بقيق"
+        ],
+        "de": [],
+        "en": [
+          "Abqaiq",
+          "Buqayq"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "अबकैक"
+        ],
+        "it": [],
+        "ja": [
+          "アブカイク"
+        ],
+        "ru": [
+          "Абкайк"
+        ],
+        "zh": [
+          "阿布盖格"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Khurais",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "خريص"
+        ],
+        "de": [],
+        "en": [
+          "Khurais"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "खुरैस"
+        ],
+        "it": [],
+        "ja": [
+          "フライス"
+        ],
+        "ru": [
+          "Хурайс"
+        ],
+        "zh": [
+          "胡赖斯"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Yanbu",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "ينبع"
+        ],
+        "de": [],
+        "en": [
+          "Yanbu",
+          "Yanbu pipeline",
+          "Yanbu terminal"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "यनबू"
+        ],
+        "it": [],
+        "ja": [
+          "ヤンブー"
+        ],
+        "ru": [
+          "Янбу"
+        ],
+        "zh": [
+          "延布"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Eastern Province",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "المنطقة الشرقية",
+          "الشرقية السعودية"
+        ],
+        "de": [
+          "Ostprovinz"
+        ],
+        "en": [
+          "Eastern Province",
+          "Saudi Eastern Province"
+        ],
+        "es": [
+          "Provincia Oriental"
+        ],
+        "fr": [
+          "Province orientale"
+        ],
+        "hi": [
+          "पूर्वी प्रांत"
+        ],
+        "it": [
+          "Provincia Orientale"
+        ],
+        "ja": [
+          "東部州"
+        ],
+        "ru": [
+          "Восточная провинция"
+        ],
+        "zh": [
+          "东部省"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Khobar",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الخبر"
+        ],
+        "de": [],
+        "en": [
+          "Khobar",
+          "Al Khobar"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "खोबर"
+        ],
+        "it": [],
+        "ja": [
+          "アル・コバール"
+        ],
+        "ru": [
+          "Эль-Хубар"
+        ],
+        "zh": [
+          "胡拜尔"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Jubail",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الجبيل"
+        ],
+        "de": [],
+        "en": [
+          "Jubail",
+          "Al Jubail"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "जुबैल"
+        ],
+        "it": [],
+        "ja": [
+          "ジュベール"
+        ],
+        "ru": [
+          "Эль-Джубайль"
+        ],
+        "zh": [
+          "朱拜勒"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Al Udeid",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "العديد",
+          "قاعدة العديد الجوية"
+        ],
+        "de": [],
+        "en": [
+          "Al Udeid",
+          "Al Udeid Air Base"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "अल उदेद"
+        ],
+        "it": [],
+        "ja": [
+          "アル・ウデイド"
+        ],
+        "ru": [
+          "Аль-Удейд",
+          "база Аль-Удейд"
+        ],
+        "zh": [
+          "乌代德"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Al Asad",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "عين الأسد",
+          "قاعدة عين الأسد"
+        ],
+        "de": [],
+        "en": [
+          "Al Asad",
+          "Al Asad Air Base",
+          "Ain al-Asad"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "ऐन अल असद"
+        ],
+        "it": [],
+        "ja": [
+          "アイン・アル・アサド"
+        ],
+        "ru": [
+          "Айн-эль-Асад",
+          "Аль-Асад"
+        ],
+        "zh": [
+          "艾因阿萨德"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Tower 22",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "البرج 22"
+        ],
+        "de": [],
+        "en": [
+          "Tower 22"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "टावर 22"
+        ],
+        "it": [],
+        "ja": [
+          "タワー22"
+        ],
+        "ru": [
+          "Башня 22",
+          "Tower 22"
+        ],
+        "zh": [
+          "22号塔"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Camp Arifjan",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "معسكر عريفجان",
+          "عريفجان"
+        ],
+        "de": [],
+        "en": [
+          "Camp Arifjan",
+          "Arifjan"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "कैंप अरीफजान"
+        ],
+        "it": [],
+        "ja": [
+          "キャンプ・アリフジャン"
+        ],
+        "ru": [
+          "Кэмп-Арифджан"
+        ],
+        "zh": [
+          "阿里夫詹营"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "US base",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "قاعدة أمريكية",
+          "القاعدة الأمريكية"
+        ],
+        "de": [
+          "US-Stützpunkt",
+          "amerikanische Militärbasis"
+        ],
+        "en": [
+          "US base",
+          "American base",
+          "US military base",
+          "American military base"
+        ],
+        "es": [
+          "base estadounidense"
+        ],
+        "fr": [
+          "base américaine"
+        ],
+        "hi": [
+          "अमेरिकी अड्डा"
+        ],
+        "it": [
+          "base americana"
+        ],
+        "ja": [
+          "米軍基地"
+        ],
+        "ru": [
+          "американская база",
+          "база США"
+        ],
+        "zh": [
+          "美军基地"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "embassy",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "سفارة",
+          "قنصلية"
+        ],
+        "de": [
+          "Botschaft",
+          "Konsulat"
+        ],
+        "en": [
+          "embassy",
+          "consulate"
+        ],
+        "es": [
+          "embajada",
+          "consulado"
+        ],
+        "fr": [
+          "ambassade",
+          "consulat"
+        ],
+        "hi": [
+          "दूतावास"
+        ],
+        "it": [
+          "ambasciata",
+          "consolato"
+        ],
+        "ja": [
+          "大使館",
+          "領事館"
+        ],
+        "ru": [
+          "посольство",
+          "консульство"
+        ],
+        "zh": [
+          "大使馆",
+          "领事馆"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    }
+  ]
+}

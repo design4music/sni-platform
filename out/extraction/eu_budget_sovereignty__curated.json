@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "fn_id": "eu_budget_sovereignty",
+    "note": "Multilateral centroid. Gate is EU budget/own-resources + CAP/cohesion + Green-Deal-regulation vocabulary. Acronyms MFF/CAP are whole-word case-sensitive (GCAP won't match CAP). 'Green Deal'/'combustion engine' carry the regulatory-sovereignty backlash. primary_target null."
+  },
+  "bundle": [
+    { "term": "EU budget / MFF / own resources", "aliases": {
+      "en": ["EU budget", "multiannual financial framework", "MFF", "own resources", "EU tax", "EU levy", "net contributor", "rebate", "NextGenerationEU", "recovery fund"],
+      "de": ["EU-Haushalt", "mehrjähriger Finanzrahmen", "Eigenmittel", "EU-Steuer", "Nettozahler", "Aufbaufonds"],
+      "es": ["presupuesto de la UE", "marco financiero", "recursos propios", "contribuyente neto"],
+      "fr": ["budget de l'UE", "cadre financier", "ressources propres", "contributeur net"],
+      "it": ["bilancio UE", "quadro finanziario", "risorse proprie", "contributore netto"],
+      "ru": ["бюджет ЕС", "еврооблигаци"],
+      "zh": ["欧盟预算"],
+      "ar": ["ميزانية الاتحاد الأوروبي"],
+      "ja": ["EU予算"],
+      "hi": ["यूरोपीय संघ बजट"]
+    }},
+    { "term": "cohesion / agricultural policy", "aliases": {
+      "en": ["cohesion funds", "Common Agricultural Policy", "CAP", "farm subsidies", "cohesion policy"],
+      "de": ["Kohäsionsfonds", "Gemeinsame Agrarpolitik", "Agrarsubventionen", "Kohäsionspolitik"],
+      "es": ["fondos de cohesión", "política agrícola común", "subvenciones agrícolas"],
+      "fr": ["fonds de cohésion", "politique agricole commune", "subventions agricoles"],
+      "it": ["fondi di coesione", "politica agricola comune", "sussidi agricoli"],
+      "ru": ["единая сельскохозяйственная политика"],
+      "zh": ["共同农业政策"]
+    }},
+    { "term": "Green Deal regulatory backlash", "aliases": {
+      "en": ["Green Deal", "combustion engine", "combustion-engine ban", "permitting rules", "nature restoration"],
+      "de": ["Green Deal", "Verbrennungsmotor", "Verbrenner-Aus"],
+      "es": ["Pacto Verde", "motor de combustión"],
+      "fr": ["Pacte vert", "moteur thermique"],
+      "it": ["Green Deal", "motore a combustione"]
+    }}
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "fn_id": "eu_right_realignment",
+    "note": "Multilateral centroid. EU-institutional party-politics gate: parliamentary group names (EPP/ECR/PfE), the cordon sanitaire, and cross-border sovereigntist coordination. Deliberately does NOT gate on national party names (AfD/Le Pen) — those belong to the country atomics; this is the EU-level altitude. 'Weber' kept as EPP-leader anchor but flagged for audit (common surname). primary_target null."
+  },
+  "bundle": [
+    { "term": "EP party groups", "aliases": {
+      "en": ["EPP", "European People's Party", "ECR", "European Conservatives and Reformists", "Patriots for Europe", "Patriots.eu"],
+      "de": ["Europäische Volkspartei", "EVP", "Patrioten für Europa"],
+      "es": ["Partido Popular Europeo", "Patriotas por Europa"],
+      "fr": ["Parti populaire européen", "Patriotes pour l'Europe", "groupe parlementaire"],
+      "it": ["Partito Popolare Europeo", "Patrioti per l'Europa"],
+      "ru": ["Европейская народная партия", "Патриоты за Европу"],
+      "zh": ["欧洲人民党", "欧洲爱国者"],
+      "ar": ["حزب الشعب الأوروبي"],
+      "ja": ["欧州人民党"]
+    }},
+    { "term": "cordon sanitaire / mainstreaming", "aliases": {
+      "en": ["cordon sanitaire", "mainstream right", "normalisation of the right"],
+      "de": ["Brandmauer", "nationalkonservativ", "Rechtsruck"],
+      "es": ["cordón sanitario", "ultraderecha europea"],
+      "fr": ["cordon sanitaire", "extrême droite européenne"],
+      "it": ["cordone sanitario"]
+    }},
+    { "term": "EPP leadership / cross-border coordination", "aliases": {
+      "en": ["Manfred Weber", "sovereigntist bloc", "national-conservative bloc"],
+      "de": ["Weber-Kurs"],
+      "fr": ["souverainistes"]
+    }}
+  ]
+}

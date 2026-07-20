@@ -1,0 +1,409 @@
+{
+  "metadata": {
+    "fn_id": "mexico_cartel_war",
+    "centroid": "AMERICAS-MEXICO",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 139,
+    "seeds": [
+      "CJNG",
+      "Sinaloa",
+      "El Mencho",
+      "cartel",
+      "National Guard",
+      "kingpin"
+    ],
+    "timestamp": "2026-07-07T12:04:02.175531"
+  },
+  "bundle": [
+    {
+      "term": "Sinaloa Cartel",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "كارتل سينالوا"
+        ],
+        "de": [],
+        "en": [
+          "Sinaloa Cartel"
+        ],
+        "es": [
+          "Cártel de Sinaloa"
+        ],
+        "fr": [
+          "Cartel de Sinaloa"
+        ],
+        "hi": [
+          "सिनालोआ कार्टेल"
+        ],
+        "it": [],
+        "ja": [
+          "シナロア・カルテル"
+        ],
+        "ru": [
+          "Картель Синалоа"
+        ],
+        "zh": [
+          "锡那罗亚贩毒集团"
+        ]
+      },
+      "evidence": "New York Times / 2026-04-29"
+    },
+    {
+      "term": "Jalisco New Generation Cartel",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "كارتل خاليسكو الجيل الجديد"
+        ],
+        "de": [],
+        "en": [
+          "Jalisco New Generation Cartel"
+        ],
+        "es": [
+          "Cártel Jalisco Nueva Generación"
+        ],
+        "fr": [
+          "Cartel de Jalisco Nouvelle Génération"
+        ],
+        "hi": [
+          "जालिस्को न्यू जनरेशन कार्टेल"
+        ],
+        "it": [],
+        "ja": [
+          "ハリスコ新世代カルテル"
+        ],
+        "ru": [
+          "Картель Халиско Нового Поколения"
+        ],
+        "zh": [
+          "哈利斯科新一代贩毒集团"
+        ]
+      },
+      "evidence": "MSNBC / 2026-04-28"
+    },
+    {
+      "term": "CJNG",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "CJNG"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "Jerusalem Post / 2026-02-23"
+    },
+    {
+      "term": "El Mencho",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "إل مينتشو"
+        ],
+        "de": [],
+        "en": [
+          "El Mencho"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "एल मेन्चो"
+        ],
+        "it": [],
+        "ja": [
+          "エル・メンチョ"
+        ],
+        "ru": [
+          "Эль Менчо"
+        ],
+        "zh": [
+          "埃尔·门乔"
+        ]
+      },
+      "evidence": "BBC World / 2026-03-03"
+    },
+    {
+      "term": "El Jardinero",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "إل خاردينيرو"
+        ],
+        "de": [],
+        "en": [
+          "El Jardinero"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "एल जार्डिनेरो"
+        ],
+        "it": [],
+        "ja": [
+          "エル・ハルディネロ"
+        ],
+        "ru": [
+          "Эль Хардинеро"
+        ],
+        "zh": [
+          "园丁"
+        ]
+      },
+      "evidence": "CNN / 2026-04-29"
+    },
+    {
+      "term": "Los Chapitos",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "لوس تشابيتوس"
+        ],
+        "de": [],
+        "en": [
+          "Los Chapitos"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "लॉस चापिटोस"
+        ],
+        "it": [],
+        "ja": [
+          "ロス・チャピトス"
+        ],
+        "ru": [
+          "Лос Чапитос"
+        ],
+        "zh": [
+          "小查波"
+        ]
+      },
+      "evidence": "El País / 2026-05-06"
+    },
+    {
+      "term": "Cartel del Noreste",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "كارتل الشمال الشرقي"
+        ],
+        "de": [],
+        "en": [
+          "Cartel del Noreste"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "कार्टेल डेल नोरेस्टे"
+        ],
+        "it": [],
+        "ja": [
+          "北東部カルテル"
+        ],
+        "ru": [
+          "Картель дель Нороэсте"
+        ],
+        "zh": [
+          "东北贩毒集团"
+        ]
+      },
+      "evidence": "El País / 2026-04-14"
+    },
+    {
+      "term": "fentanyl",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "فينتانيل"
+        ],
+        "de": [
+          "Fentanyl"
+        ],
+        "en": [
+          "fentanyl"
+        ],
+        "es": [
+          "fentanilo"
+        ],
+        "fr": [],
+        "hi": [
+          "फेंटेनाइल"
+        ],
+        "it": [],
+        "ja": [
+          "フェンタニル"
+        ],
+        "ru": [
+          "фентанил"
+        ],
+        "zh": [
+          "芬太尼"
+        ]
+      },
+      "evidence": "El País / 2026-04-23"
+    },
+    {
+      "term": "methamphetamine",
+      "type": "concept",
+      "note": "curated: dropped short substring forms meth/Meth/मेथ (match method/Methodically/something); keep full-word forms only",
+      "aliases": {
+        "ar": [
+          "ميثامفيتامين"
+        ],
+        "de": [
+          "Methamphetamin"
+        ],
+        "en": [
+          "methamphetamine"
+        ],
+        "es": [
+          "metanfetamina"
+        ],
+        "fr": [],
+        "hi": [],
+        "it": [
+          "metanfetamina"
+        ],
+        "ja": [
+          "メタンフェタミン"
+        ],
+        "ru": [
+          "метамфетамин"
+        ],
+        "zh": [
+          "冰毒"
+        ]
+      },
+      "evidence": "Al Jazeera / 2026-06-08"
+    },
+    {
+      "term": "extra cartel organisations",
+      "type": "entity",
+      "note": "curated add 2026-07-17: high-precision cartel names seen in real coverage",
+      "aliases": {
+        "ar": ["كارتل الخليج", "بلتران ليفا", "إل تشابو"],
+        "de": [],
+        "en": ["Chapo", "Gulf Cartel", "Beltran Leyva"],
+        "es": ["Cartel del Golfo", "Cártel del Golfo", "Beltrán Leyva"],
+        "fr": ["Cartel du Golfe"],
+        "hi": [],
+        "it": [],
+        "ja": ["湾岸カルテル", "エル・チャポ"],
+        "ru": ["Картель Залива", "Бельтран Лейва", "Эль Чапо"],
+        "zh": ["海湾贩毒集团", "小矮子"]
+      },
+      "evidence": "El País / 2026-05, cartel roundup coverage"
+    },
+    {
+      "term": "narco",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ناركو"
+        ],
+        "de": [],
+        "en": [
+          "narco"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "नार्को"
+        ],
+        "it": [],
+        "ja": [
+          "ナルコ"
+        ],
+        "ru": [
+          "нарко"
+        ],
+        "zh": [
+          "毒枭"
+        ]
+      },
+      "evidence": "Khaleej Times / 2026-02-24"
+    },
+    {
+      "term": "drug trafficking",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "اتجار بالمخدرات"
+        ],
+        "de": [
+          "Drogenhandel"
+        ],
+        "en": [
+          "drug trafficking"
+        ],
+        "es": [
+          "tráfico de drogas"
+        ],
+        "fr": [
+          "trafic de drogue"
+        ],
+        "hi": [
+          "मादक पदार्थों की तस्करी"
+        ],
+        "it": [
+          "traffico di droga"
+        ],
+        "ja": [
+          "麻薬密売"
+        ],
+        "ru": [
+          "наркоторговля"
+        ],
+        "zh": [
+          "毒品贩运"
+        ]
+      },
+      "evidence": "BBC World / 2026-04-30"
+    },
+    {
+      "term": "cartel",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "كارتل مخدرات"
+        ],
+        "de": [
+          "Kartell"
+        ],
+        "en": [
+          "cartel"
+        ],
+        "es": [
+          "cártel"
+        ],
+        "fr": [
+          "cartel"
+        ],
+        "hi": [
+          "ड्रग कार्टेल"
+        ],
+        "it": [
+          "cartello"
+        ],
+        "ja": [
+          "麻薬カルテル"
+        ],
+        "ru": [
+          "наркокартель"
+        ],
+        "zh": [
+          "贩毒集团"
+        ]
+      },
+      "evidence": "Associated Press / 2026-04-07"
+    }
+  ]
+}

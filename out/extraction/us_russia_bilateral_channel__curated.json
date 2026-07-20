@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "fn_id": "us_russia_bilateral_channel",
+    "note": "The US-Russia relationship mechanism itself: who talks to whom, in what format, and whether relations are warming or freezing. Dyad-AND gate (centroid_ids={AMERICAS-USA} + primary_target=EUROPE-RUSSIA) makes generic diplomacy nouns safe. EXCLUDES ceasefire / peace-plan / mediation verbs -- those stay with ukraine_peace_negotiations (808 events). Abu Dhabi DROPPED after sampling: all 5 samples were the Russia-Ukraine-US trilateral, i.e. Ukraine-atomic content, not the bilateral channel. Alaska/Anchorage KEPT (the Trump-Putin bilateral summit). Bare 'call' DROPPED -- word-START matches called/calls/calling ('Zelensky calls for...'); 'talks'/'meeting' carry the concept. Trump and Putin excluded per rule 4 (heads of state appear in every theater); the working principals of the channel ARE this FN's own-side actors (vocab spec pillar 1). Pre-audit on 180d dyad corpus: Lavrov 116, envoy 105, Witkoff 63, Rubio 60, summit 45, ambassador 30, dialogue 23, delegation 21, Kushner 18, Dmitriev 17, Anchorage 11."
+  },
+  "bundle": [
+    {
+      "term": "Channel principals (working level, both sides)",
+      "aliases": {
+        "en": ["Lavrov", "Ryabkov", "Peskov", "Zakharova", "Ushakov", "Dmitriev", "Witkoff", "Rubio"],
+        "ru": ["Лавров", "Рябков", "Песков", "Захарова", "Ушаков", "Дмитриев", "Уиткофф", "Рубио"],
+        "zh": ["拉夫罗夫", "鲁比奥"],
+        "ja": ["ラブロフ", "ルビオ"],
+        "ar": ["لافروف", "روبيو"],
+        "hi": ["लावरोव"]
+      }
+    },
+    {
+      "term": "Bilateral summit venues",
+      "aliases": {
+        "en": ["Alaska", "Anchorage"],
+        "ru": ["Аляск", "Анкоридж"],
+        "de": ["Alaska"]
+      }
+    },
+    {
+      "term": "High-specificity contact formats",
+      "aliases": {
+        "en": ["summit", "state visit", "delegation", "special envoy"],
+        "de": ["Gipfel", "Staatsbesuch", "Delegation", "Sondergesandte"],
+        "es": ["cumbre", "visita de Estado", "delegación", "enviado especial"],
+        "it": ["vertice", "visita di Stato", "delegazione", "inviato speciale"],
+        "fr": ["sommet", "visite d'État", "délégation", "émissaire spécial"],
+        "ru": ["саммит", "спецпосланник", "госвизит", "делегаци"],
+        "zh": ["峰会", "国事访问", "特使", "代表团"],
+        "ja": ["首脳会談", "国賓訪問", "特使", "代表団"],
+        "ar": ["قمة", "زيارة دولة", "مبعوث خاص", "وفد"],
+        "hi": ["शिखर सम्मेलन", "विशेष दूत", "राजकीय यात्रा"]
+      }
+    },
+    {
+      "term": "State of relations (specific, non-generic)",
+      "aliases": {
+        "en": ["bilateral", "normalisation", "normalization", "rapprochement", "detente"],
+        "de": ["bilateral", "Normalisierung", "Annäherung", "Entspannung"],
+        "es": ["bilateral", "normalización", "acercamiento", "distensión"],
+        "it": ["bilaterale", "normalizzazione", "riavvicinamento", "distensione"],
+        "fr": ["bilatéral", "normalisation", "rapprochement", "détente"],
+        "ru": ["двусторонн", "нормализаци", "сближени", "разрядк"],
+        "zh": ["双边", "正常化"],
+        "ja": ["二国間", "関係正常化"],
+        "ar": ["ثنائية", "تطبيع"],
+        "hi": ["द्विपक्षीय"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "fn_id": "japan_china_memory_wars",
+    "note": "KEPT against the initial instinct to drop it: 28 titles/180d, 25 of them exclusive to this bucket, recurring every month Jan-Jun 2026 (Yasukuni offering, looted-relics restitution, comfort-women denial, Nanjing denial, Guangdong war-crimes archives, restoring wartime military ranks). Not stale training data. Dyad gate centroid_ids={ASIA-CHINA} + primary_target=ASIA-JAPAN; the ASIA-JAPAN target is LOAD-BEARING here -- it is what keeps Korea-Japan comfort-women/textbook coverage out, since that vocabulary is shared. Generic nouns ('shrine', 'massacre', 'aggression', 'war crime') are safe only because of that gate. 'militaris*' is deliberately NOT here -- it lives on japan_defense_expansion; the history-inflected framing of it belongs in that FN's narrative framing_keywords. Real-gate audit CONFIRMED the gate carries the precision: 'aggression' is 5/5 'Japanese wartime aggression' (the Iran/Israel 'aggression' noise that made it look 60% foreign is gated out), and 'forced labor' drops from 11 Xinjiang/Section-301 hits to 0. DROPPED post-audit: 'apolog' -- 3/3 real hits were the embassy/Takaichi rupture ('demand Takaichi to apologize over embassy intrusion'), not historical apology; the evergreen concept stays reachable via wartime/war crime/aggression."
+  },
+  "bundle": [
+    {
+      "term": "Yasukuni and commemoration sites",
+      "aliases": {
+        "en": ["Yasukuni", "shrine", "ritual offering", "masakaki"],
+        "de": ["Schrein"],
+        "fr": ["sanctuaire"],
+        "es": ["santuario"],
+        "it": ["santuario"],
+        "ru": ["Ясукуни", "храм Ясукуни"],
+        "ar": ["ياسوكوني", "ضريح"],
+        "hi": ["यासुकुनी"],
+        "zh": ["靖国神社", "供奉"],
+        "ja": ["靖国", "真榊", "玉串料"]
+      }
+    },
+    {
+      "term": "Wartime atrocities and their sites",
+      "aliases": {
+        "en": ["Nanjing", "Nanking", "massacre", "Unit 731", "comfort women", "forced labor", "forced labour", "biological warfare", "abandoned chemical weapons"],
+        "de": ["Massaker", "Trostfrauen", "Zwangsarbeit"],
+        "fr": ["massacre", "femmes de réconfort", "travail forcé"],
+        "es": ["masacre", "mujeres de consuelo", "trabajo forzado"],
+        "it": ["massacro"],
+        "ru": ["Нанкин", "резня", "женщины для утешения", "принудительный труд"],
+        "ar": ["نانجينغ", "مجزرة", "نساء المتعة", "العمل القسري"],
+        "hi": ["नानजिंग", "नरसंहार"],
+        "zh": ["南京大屠杀", "慰安妇", "七三一", "强征劳工", "细菌战"],
+        "ja": ["南京大虐殺", "慰安婦", "731部隊", "強制労働"]
+      }
+    },
+    {
+      "term": "Historical responsibility and its contestation",
+      "aliases": {
+        "en": ["wartime", "war criminal", "war crime", "aggression", "history textbook", "textbook", "historical revisionis", "atonement", "war of resistance", "victory day"],
+        "de": ["Kriegsverbrech", "Geschichtsbuch", "Aggression"],
+        "fr": ["crime de guerre", "manuel d'histoire"],
+        "es": ["crimen de guerra", "libro de texto"],
+        "it": ["crimine di guerra"],
+        "ru": ["военные преступл", "учебник истории", "агресси"],
+        "ar": ["جرائم الحرب", "كتاب التاريخ", "العدوان"],
+        "hi": ["युद्ध अपराध"],
+        "zh": ["历史问题", "历史认识", "战犯", "侵略", "教科书", "抗战", "胜利日"],
+        "ja": ["歴史認識", "戦犯", "侵略", "教科書", "戦時"]
+      }
+    },
+    {
+      "term": "Looted cultural property",
+      "aliases": {
+        "en": ["cultural relic", "looted", "restitution", "repatriation of relics", "artifact return"],
+        "de": ["Kulturgut", "Restitution", "geraubt"],
+        "fr": ["biens culturels", "restitution", "pillé"],
+        "es": ["bienes culturales", "restitución", "saqueado"],
+        "it": ["beni culturali", "restituzione"],
+        "ru": ["культурных ценностей", "реституци", "награбленн"],
+        "ar": ["الآثار الثقافية", "المنهوبة", "إعادة"],
+        "hi": ["सांस्कृतिक अवशेष"],
+        "zh": ["文物", "掠夺", "归还"],
+        "ja": ["文化財", "略奪", "返還"]
+      }
+    }
+  ]
+}

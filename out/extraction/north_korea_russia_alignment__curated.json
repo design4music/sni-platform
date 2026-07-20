@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "fn_id": "north_korea_russia_alignment",
+    "note": "Archetype A (target-centric): primary_target=ASIA-NORKOREA, participants {NORKOREA, RUSSIA, UKRAINE, BELARUS}. Mirror of the China atomic: the Russia/Belarus/Ukraine NAMES are the discriminators that separate this axis from north_korea_china_patronage (measured co-occurrence between the two axes is 3 titles). Generic 'troops'/'soldiers'/'arms' deliberately EXCLUDED -- with only a DPRK target gate they would match USFK troop stories and the missile atomic. Putin, Lavrov, Shoigu and Lukashenko are own-side principals here (Russia and Belarus are parties to this FN), not third-party leaders."
+  },
+  "bundle": [
+    {
+      "term": "Russia (the discriminating name) and its principals",
+      "aliases": {
+        "en": ["Russia", "Russian", "Moscow", "Putin", "Kremlin", "Lavrov", "Shoigu"],
+        "de": ["Russland", "russisch", "Kreml", "Moskau"],
+        "fr": ["Russie", "russe", "Moscou"],
+        "it": ["russo", "Mosca"],
+        "es": ["Rusia", "ruso", "Moscú"],
+        "ru": ["Росси", "Москв", "Путин", "Кремл", "Лавров", "Шойгу"],
+        "zh": ["俄罗斯", "莫斯科", "普京", "拉夫罗夫"],
+        "ja": ["ロシア", "モスクワ", "プーチン", "ラブロフ"],
+        "ar": ["روسيا", "موسكو", "بوتين"],
+        "hi": ["रूस", "मास्को", "पुतिन"]
+      }
+    },
+    {
+      "term": "Belarus (the third leg of the axis)",
+      "aliases": {
+        "en": ["Belarus", "Lukashenko", "Lukashenka", "Minsk"],
+        "ru": ["Беларус", "Белорус", "Лукашенко", "Минск"],
+        "zh": ["白俄罗斯", "卢卡申科"],
+        "ja": ["ベラルーシ", "ルカシェンコ"]
+      }
+    },
+    {
+      "term": "The Ukraine deployment (Pillar 3)",
+      "aliases": {
+        "en": ["Ukraine", "Kursk"],
+        "de": ["Ukrainisch"],
+        "es": ["Ucrania"],
+        "it": ["Ucraina"],
+        "ru": ["Украин", "Курск"],
+        "zh": ["乌克兰", "库尔斯克"],
+        "ja": ["ウクライナ", "クルスク"],
+        "ar": ["أوكرانيا"],
+        "hi": ["यूक्रेन"]
+      }
+    },
+    {
+      "term": "Border geography and named links (Pillar 2)",
+      "aliases": {
+        "en": ["Khasan", "Tumangang", "Rajin", "Vladivostok", "Primorye"],
+        "ru": ["Хасан", "Туманган", "Раджин", "Владивосток", "Приморь"],
+        "ja": ["ハサン", "ウラジオストク"]
+      }
+    }
+  ]
+}

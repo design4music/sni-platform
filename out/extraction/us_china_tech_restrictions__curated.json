@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "us_china_tech_restrictions",
+    "authored": "2026-07-16",
+    "archetype": "B (bilateral/symmetric); scope gate centroid_ids={AMERICAS-USA} + primary_target=ASIA-CHINA",
+    "notes": [
+      "Export controls as the policy instrument. Measured inside the dyad gate: chip 184/2 Iran, Nvidia 164/0, Huawei 40/0, H200 34/0, export control 18/0, ASML 8/0.",
+      "'chip' kept as the shortest form -- EN word-START matching means it already covers chips/chipmaker/chipmaking, so those are not listed (rule 1).",
+      "DROPPED bare 'license'/'licence' (generic across every regulatory story) and bare 'curbs' (stance-flavoured and promiscuous).",
+      "Latin-collapse: Nvidia/ASML/SMIC/Huawei/Micron/H200/EUV/Blackwell are spelled identically in de/es/fr/it, so they live in 'en' only and still match Latin-script titles in those languages (the alias split is by alias language, not title language).",
+      "2026 phase is bidirectional: the US restricts, but China also blocked H200 imports Washington had CLEARED for export."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "control instruments",
+      "aliases": {
+        "en": ["export control", "entity list", "smuggling"],
+        "de": ["Exportkontrolle", "Ausfuhrkontrolle"],
+        "es": ["control de exportaciones"],
+        "fr": ["contrôle des exportations"],
+        "it": ["controlli sulle esportazioni"],
+        "ru": ["экспортный контроль"],
+        "ja": ["輸出規制"],
+        "ar": ["ضوابط التصدير"],
+        "zh": ["出口管制"],
+        "hi": ["निर्यात नियंत्रण"]
+      }
+    },
+    {
+      "term": "semiconductor technology",
+      "aliases": {
+        "en": ["chip", "semiconductor", "wafer", "foundry", "lithography", "EUV"],
+        "de": ["Halbleiter"],
+        "es": ["semiconductores"],
+        "fr": ["semi-conducteurs"],
+        "it": ["semiconduttori"],
+        "ru": ["полупроводник", "чипы"],
+        "ja": ["半導体"],
+        "ar": ["أشباه الموصلات", "الرقائق"],
+        "zh": ["半导体", "芯片"],
+        "hi": ["अर्धचालक"]
+      }
+    },
+    {
+      "term": "firms and named products under control",
+      "aliases": {
+        "en": ["Nvidia", "ASML", "SMIC", "Huawei", "Micron", "Applied Materials", "H200", "Blackwell"],
+        "de": [], "es": [], "fr": [], "it": [], "ru": [], "ja": [], "ar": [], "zh": [], "hi": []
+      }
+    }
+  ]
+}

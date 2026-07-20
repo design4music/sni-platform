@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "fn_id": "korea_peninsula_deterrence",
+    "note": "Archetype A (target-centric): primary_target=ASIA-SOUTHKOREA. Scope is the US-ROK alliance and its modernisation -- OPCON transfer, USFK posture, extended deterrence, the nuclear-powered submarine bid, burden-sharing. The ROK centroid carries ~1,055 titles of Samsung/chips/tariff/shipbuilding noise in 180d, so alliance vocabulary must stay institutional. Bare 'submarine' EXCLUDED: it resolves to Hanwha's export bids (Canada, Greece, Poland), which is industrial competition, not deterrence -- 'nuclear-powered' carries the bid instead.",
+    "audit_2026_07_16": "The domain verbs are KEPT deliberately, per spec section 2 archetype A: the auditor does not apply primary_target and so overstates their leak. Verified with the gate applied, 'alliance' is 236 -> 19 titles (US-ROK alliance: OPCON, USFK, RIMPAC, ambassador nominee), 'deterrence' -> 4, 'military exercise' -> 7, 'joint drill' -> 4, THAAD -> 9. ja 米韓 kept: 100% nominal foreign but the samples are exactly on-topic (米韓合同軍事演習), the co-tag is Ukraine. DROPPED: ja 国連軍 (rule 6b collision -- substring of 国連軍縮, UN disarmament, which is what it actually matched); ru учени (collision -- substring of ученый/ученик); ru атомн (Iran/Israel-dominated, and gated it would pull ROK civil nuclear-power news); en 'troop level' (generic -- matched US troop cuts in Germany)."
+  },
+  "bundle": [
+    {
+      "term": "Alliance institutions (Pillar 1)",
+      "aliases": {
+        "en": ["USFK", "United Nations Command", "Combined Forces Command", "Nuclear Consultative Group", "Security Consultative Meeting"],
+        "ru": ["Командование ООН"],
+        "zh": ["驻韩美军", "联合国军"],
+        "ja": ["在韓米軍", "米韓連合軍"]
+      }
+    },
+    {
+      "term": "Named exercises and agreements (Pillar 3)",
+      "aliases": {
+        "en": ["Freedom Shield", "Ulchi", "Foal Eagle", "Key Resolve", "THAAD", "OPCON", "wartime operational control", "Special Measures Agreement", "Washington Declaration"],
+        "ru": ["ОПКОН", "Фридом шилд"],
+        "zh": ["萨德", "自由之盾"],
+        "ja": ["サード", "フリーダムシールド", "乙支"]
+      }
+    },
+    {
+      "term": "US basing geography in the ROK (Pillar 2)",
+      "aliases": {
+        "en": ["Camp Humphreys", "Pyeongtaek", "Osan", "Kunsan", "Yongsan", "Seongju"],
+        "zh": ["平泽", "乌山", "星州"],
+        "ja": ["平沢", "烏山", "星州"]
+      }
+    },
+    {
+      "term": "Deterrence domain vocabulary (Pillar 4)",
+      "aliases": {
+        "en": ["extended deterrence", "nuclear umbrella", "deterrence", "alliance", "nuclear-powered", "burden-sharing", "defense cost", "defence cost", "joint drill", "military exercise"],
+        "de": ["Abschreckung", "Bündnis", "Allianz", "atomgetrieben", "Lastenteilung", "Militärübung"],
+        "fr": ["dissuasion", "à propulsion nucléaire", "exercice militaire"],
+        "it": ["deterrenza", "alleanza", "propulsione nucleare"],
+        "es": ["disuasión", "alianza", "propulsión nuclear", "ejercicio militar"],
+        "ru": ["сдерживани", "альянс", "ядерный зонтик"],
+        "zh": ["威慑", "同盟", "联合军演", "核潜艇", "核动力"],
+        "ja": ["抑止", "同盟", "合同演習", "原子力潜水艦", "米韓"],
+        "ar": ["الردع", "التحالف"],
+        "hi": ["गठबंधन", "प्रतिरोध"]
+      }
+    }
+  ]
+}

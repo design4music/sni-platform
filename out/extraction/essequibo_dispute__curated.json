@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "fn_id": "essequibo_dispute",
+    "note": "Essequibo territorial dispute with Guyana. Archetype A2 (toponym == subject, null target). The name carries precision, so the bundle is toponym + the oil block + the ICJ venue only -- no generic verbs. Thin atomic (~16-30 titles/180d). Centroids VEN + ANDEAN + CARIBBEAN (where Guyana coverage actually lands -- no AMERICAS-GUYANA centroid exists)."
+  },
+  "bundle": [
+    { "term": "Essequibo toponym", "aliases": {
+      "en": ["Essequibo", "Esequibo", "Guayana Esequiba", "Guyana Esequiba"],
+      "ru": ["Эссекибо", "Эсекибо"],
+      "zh": ["埃塞奎博"],
+      "ar": ["إيسيكيبو", "إسيكيبو"],
+      "ja": ["エセキボ"],
+      "hi": ["एसेक्विबो"]
+    }},
+    { "term": "Contested oil block", "aliases": {
+      "en": ["Stabroek"]
+    }},
+    { "term": "Adjudication venue", "aliases": {
+      "en": ["World Court", "International Court of Justice"],
+      "de": ["Internationaler Gerichtshof", "Weltgericht"],
+      "es": ["Corte Internacional de Justicia", "Tribunal Internacional"],
+      "fr": ["Cour internationale de justice"],
+      "it": ["Corte internazionale di giustizia"],
+      "ru": ["Международный суд"],
+      "zh": ["国际法院"],
+      "ar": ["محكمة العدل الدولية"],
+      "ja": ["国際司法裁判所"]
+    }}
+  ]
+}

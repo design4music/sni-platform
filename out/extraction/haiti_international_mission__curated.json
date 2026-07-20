@@ -1,0 +1,233 @@
+{
+  "metadata": {
+    "fn_id": "haiti_international_mission",
+    "centroid": "AMERICAS-CARIBBEAN",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 63,
+    "seeds": [
+      "Kenya",
+      "mission",
+      "UN",
+      "Security Council",
+      "troops",
+      "force"
+    ],
+    "timestamp": "2026-07-07T12:13:33.647845"
+  },
+  "bundle": [
+    {
+      "term": "MSS",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "MSS"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "France 24 (EN) / 2026-02-28"
+    },
+    {
+      "term": "TPS",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "TPS"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "MSNBC / 2026-04-09"
+    },
+    {
+      "term": "presidential council",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "presidential council"
+        ],
+        "es": [
+          "consejo presidencial"
+        ],
+        "fr": [
+          "conseil présidentiel"
+        ],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "Associated Press / 2026-02-08"
+    },
+    {
+      "term": "Chad police",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Chad police"
+        ],
+        "es": [],
+        "fr": [
+          "police tchadienne"
+        ],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "France 24 / 2026-04-02"
+    },
+    {
+      "term": "US forces",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "US forces"
+        ],
+        "es": [
+          "fuerzas de EE.UU."
+        ],
+        "fr": [
+          "forces américaines"
+        ],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "Fox News / 2026-01-20"
+    },
+    {
+      "term": "Kenya police",
+      "type": "entity",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "Kenya police"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "BBC World / 2026-04-09"
+    },
+    {
+      "term": "extrajudicial killings",
+      "type": "concept",
+      "aliases": {
+        "ar": [],
+        "de": [],
+        "en": [
+          "extrajudicial killings"
+        ],
+        "es": [
+          "ejecuciones extrajudiciales"
+        ],
+        "fr": [
+          "exécutions extrajudiciaires"
+        ],
+        "hi": [],
+        "it": [],
+        "ja": [],
+        "ru": [],
+        "zh": []
+      },
+      "evidence": "El País / 2026-04-23"
+    },
+    {
+      "term": "Human Rights Watch",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "هيومن رايتس ووتش"
+        ],
+        "de": [],
+        "en": [
+          "Human Rights Watch"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "ह्यूमन राइट्स वॉच"
+        ],
+        "it": [],
+        "ja": [
+          "ヒューマン・ライツ・ウォッチ"
+        ],
+        "ru": [
+          "Human Rights Watch"
+        ],
+        "zh": [
+          "人权观察"
+        ]
+      },
+      "evidence": "Reuters / 2026-03-10"
+    },
+    {
+      "term": "election",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "انتخابات"
+        ],
+        "de": [
+          "Wahl"
+        ],
+        "en": [
+          "election"
+        ],
+        "es": [
+          "elección"
+        ],
+        "fr": [
+          "élection"
+        ],
+        "hi": [
+          "चुनाव"
+        ],
+        "it": [
+          "elezione"
+        ],
+        "ja": [
+          "選挙"
+        ],
+        "ru": [
+          "выборы"
+        ],
+        "zh": [
+          "选举"
+        ]
+      },
+      "evidence": "France 24 (EN) / 2026-02-28"
+    }
+  ]
+}

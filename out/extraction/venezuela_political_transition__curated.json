@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "venezuela_political_transition",
+    "note": "Post-intervention transition. Target-centric on Venezuela. Own-side political actors (Delcy/Jorge Rodriguez, Machado, Edmundo Gonzalez, Maduro-aftermath, chavismo/PSUV) + Miraflores + governance/election/legitimacy domain. 'Maduro' EN-only (es/pt/it 'maduro'=ripe -- audit). 'Delcy' preferred over bare 'Rodriguez' (common surname false positives). primary_target=AMERICAS-VENEZUELA gates generic election/opposition/reform verbs."
+  },
+  "bundle": [
+    { "term": "Transition-government principals", "aliases": {
+      "en": ["Delcy Rodríguez", "Delcy", "Jorge Rodríguez", "Padrino López", "chavismo", "chavista", "PSUV", "Miraflores", "Cabello"]
+    }},
+    { "term": "Opposition principals", "aliases": {
+      "en": ["Machado", "Edmundo González", "María Corina", "Vente Venezuela", "Guaidó"]
+    }},
+    { "term": "Maduro aftermath", "aliases": {
+      "en": ["Maduro"]
+    }},
+    { "term": "Transition / governance domain", "aliases": {
+      "en": ["interim government", "interim president", "acting president", "transitional government", "transition", "inauguration", "power transfer", "caretaker", "cabinet", "amnesty", "purge", "legitimacy", "mandate", "succession"],
+      "de": ["Übergangsregierung", "Übergangspräsident", "Interimspräsident", "Machtübergabe", "Amtseinführung", "Legitimität", "Übergang"],
+      "es": ["gobierno interino", "gobierno de transición", "presidente interino", "presidenta encargada", "transición", "traspaso de poder", "legitimidad", "amnistía"],
+      "fr": ["gouvernement intérimaire", "président par intérim", "transition", "transfert du pouvoir", "légitimité"],
+      "it": ["governo ad interim", "presidente ad interim", "transizione", "legittimità"],
+      "ru": ["временное правительство", "переходное правительство", "и.о. президента", "передача власти", "легитимность"],
+      "zh": ["临时政府", "过渡政府", "代理总统", "权力交接", "合法性"],
+      "ar": ["حكومة انتقالية", "الرئيس المؤقت", "انتقال السلطة", "الشرعية"],
+      "ja": ["暫定政府", "移行政府", "暫定大統領", "権力移譲", "正統性"],
+      "hi": ["अंतरिम सरकार", "कार्यवाहक राष्ट्रपति", "सत्ता हस्तांतरण"]
+    }},
+    { "term": "Elections / opposition politics", "aliases": {
+      "en": ["election", "snap election", "vote", "poll", "referendum", "opposition", "ballot", "candidate"],
+      "de": ["Wahl", "Neuwahl", "Opposition", "Referendum", "Kandidat", "Stimmzettel"],
+      "es": ["elecciones", "oposición", "referéndum", "candidato", "comicios", "votación"],
+      "fr": ["élections", "opposition", "référendum", "candidat", "scrutin"],
+      "it": ["elezioni", "opposizione", "referendum", "candidato"],
+      "ru": ["выборы", "оппозиция", "референдум", "кандидат", "голосование"],
+      "zh": ["选举", "反对派", "公投", "候选人", "投票"],
+      "ar": ["انتخابات", "المعارضة", "استفتاء", "مرشح", "تصويت"],
+      "ja": ["選挙", "野党", "国民投票", "候補", "投票"],
+      "hi": ["चुनाव", "विपक्ष", "जनमत संग्रह", "उम्मीदवार"]
+    }},
+    { "term": "Unrest / social governance", "aliases": {
+      "en": ["protest", "unrest", "crackdown", "detention", "wage increase", "reform", "repression", "strike wave"],
+      "de": ["Proteste", "Unruhen", "Razzia", "Festnahme", "Lohnerhöhung", "Repression"],
+      "es": ["protestas", "disturbios", "represión", "detención", "aumento salarial", "reforma"],
+      "fr": ["manifestations", "troubles", "répression", "détention", "réforme"],
+      "it": ["proteste", "disordini", "repressione", "detenzione", "riforma"],
+      "ru": ["протесты", "беспорядки", "репрессии", "задержание", "реформа"],
+      "zh": ["抗议", "骚乱", "镇压", "拘留", "改革"],
+      "ar": ["احتجاجات", "اضطرابات", "قمع", "اعتقال", "إصلاح"],
+      "ja": ["抗議", "騒乱", "弾圧", "拘束", "改革"],
+      "hi": ["विरोध", "अशांति", "दमन", "सुधार"]
+    }}
+  ]
+}

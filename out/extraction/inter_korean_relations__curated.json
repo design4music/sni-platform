@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "fn_id": "inter_korean_relations",
+    "note": "Archetype B (bilateral): the engagement/hostility track runs in both directions -- Seoul's overtures, Pyongyang's responses, incidents on the line -- so no valid primary_target. Alias purity is therefore the only lever: fixed toponyms, named agreements and own-side institutions only. Bare 'unification' EXCLUDED -- it is a homograph trap that pulls the Japanese Unification Church dissolution case (roughly a third of all 'unification' hits). 'reunification' is safe (the Church is never called that) and 'Unification Minist' is the shortest form covering Ministry/Minister. Bare 'drone' EXCLUDED: no target gate here, so it would pull the whole Ukraine drone corpus -- the DPRK drone-incursion story carries 'Unification Minist' anyway.",
+    "audit_2026_07_16": "fr 'tract' DROPPED -- rule 6b substring collision: 'tract' is a substring of 'contract' and matched Hanwha submarine-contract stories (n=12, 42% foreign). Kept despite high nominal %foreign, verified benign co-mention: 'Unification Minist' (39%, samples all the ROK ministry), ja 南北対話 (100%, the co-tag is the Vatican -- president/Pope discussing inter-Korean dialogue), it 'riunificazione' (100%, the co-tag is a Trump mention in an on-topic NK-constitution story)."
+  },
+  "bundle": [
+    {
+      "term": "The line and its geography (Pillar 2)",
+      "aliases": {
+        "en": ["DMZ", "Panmunjom", "Kaesong", "Kumgang", "Yeonpyeong", "Joint Security Area", "Northern Limit Line", "NLL", "demilitarized zone", "demilitarised zone"],
+        "de": ["entmilitarisierte Zone"],
+        "ru": ["Пханмунджом", "Кэсон", "Кымган", "Ёнпхён", "демилитаризованн"],
+        "zh": ["板门店", "开城", "金刚山", "延坪"],
+        "ja": ["板門店", "開城", "金剛山", "延坪"],
+        "ar": ["المنطقة منزوعة السلاح"]
+      }
+    },
+    {
+      "term": "Own-side institutions and principals (Pillar 1)",
+      "aliases": {
+        "en": ["Unification Minist", "Kim Yo-jong", "Kim Yo Jong"],
+        "ru": ["Ким Ё Чжон", "министерство объединения"],
+        "zh": ["统一部", "金与正"],
+        "ja": ["統一部", "金与正"]
+      }
+    },
+    {
+      "term": "Named agreements and the engagement track (Pillar 3)",
+      "aliases": {
+        "en": ["inter-Korean", "armistice", "Comprehensive Military Agreement", "no-fly zone", "family reunion", "hotline", "reunification"],
+        "de": ["innerkoreanisch", "Wiedervereinigung", "Waffenstillstand"],
+        "fr": ["intercoréen", "réunification"],
+        "it": ["intercoreano", "riunificazione"],
+        "es": ["intercoreano", "reunificación"],
+        "ru": ["межкорейск", "воссоединени", "перемири"],
+        "zh": ["朝韩", "韩朝", "停战协定"],
+        "ja": ["南北首脳", "南北関係", "南北対話", "休戦協定"],
+        "ar": ["بين الكوريتين"],
+        "hi": ["अंतर-कोरियाई"]
+      }
+    },
+    {
+      "term": "Incidents on the line (Pillar 4)",
+      "aliases": {
+        "en": ["loudspeaker", "leaflet", "GPS jamming", "border wall"],
+        "de": ["Lautsprecher", "Flugblatt"],
+        "fr": ["haut-parleur"],
+        "it": ["altoparlante", "volantino"],
+        "es": ["altavoz", "panfleto"],
+        "ru": ["громкоговорител", "листовк"],
+        "zh": ["扩音器", "传单"],
+        "ja": ["拡声器", "ビラ"]
+      }
+    }
+  ]
+}

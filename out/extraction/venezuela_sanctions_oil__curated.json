@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "fn_id": "venezuela_sanctions_oil",
+    "note": "Oil restart & economic opening. Target-centric on Venezuela (primary_target=AMERICAS-VENEZUELA cross-filters generic oil/economic verbs). Own-side oil entities (PDVSA/Citgo) + sub-country oil geography (Orinoco/Paraguana/Jose/Maracaibo) + returning majors (Chevron/Exxon/Eni/Conoco/Repsol -- safe under the VEN target gate) + sanctions-easing/oil/economic domain vocab. Sanctions kept here (the story is sanctions LIFTING -> oil restart)."
+  },
+  "bundle": [
+    { "term": "Venezuelan oil entities", "aliases": {
+      "en": ["PDVSA", "Citgo", "Petrocedeño", "Petropiar", "Corpoelec"]
+    }},
+    { "term": "Returning oil majors / operators", "aliases": {
+      "en": ["Chevron", "ExxonMobil", "Exxon", "ConocoPhillips", "Conoco", "Repsol", "Eni", "Maurel", "Shell"]
+    }},
+    { "term": "Sub-country oil geography", "aliases": {
+      "en": ["Orinoco", "Faja", "Paraguaná", "Jose terminal", "Lake Maracaibo", "Maracaibo", "Amuay", "Cardón", "El Palito"]
+    }},
+    { "term": "Oil / crude domain", "aliases": {
+      "en": ["oil", "crude", "barrel", "refinery", "refining", "refiner", "oilfield", "drilling", "oil rig", "output", "oil exports", "oil production", "oil law", "oil deal", "petrostate", "heavy crude", "condensate", "petroleum"],
+      "de": ["Öl", "Rohöl", "Ölförderung", "Ölexporte", "Raffinerie", "Ölgeschäft", "Ölfeld"],
+      "es": ["petróleo", "crudo", "barril", "refinería", "petrolera", "exportaciones de crudo", "producción petrolera", "yacimiento"],
+      "fr": ["pétrole", "brut", "raffinerie", "baril", "pétrolier"],
+      "it": ["petrolio", "greggio", "raffineria", "barile", "petrolifera"],
+      "ru": ["нефть", "нефтяной", "нефтедобыча", "баррель", "нефтеэкспорт", "НПЗ"],
+      "zh": ["石油", "原油", "炼油", "石油出口", "石油产量", "重油"],
+      "ar": ["النفط", "النفط الخام", "تصفية النفط", "صادرات النفط", "إنتاج النفط"],
+      "ja": ["石油", "原油", "製油", "石油輸出"],
+      "hi": ["तेल", "कच्चा तेल", "तेल निर्यात"]
+    }},
+    { "term": "Sanctions easing / relief", "aliases": {
+      "en": ["sanctions", "sanctions relief", "sanctions easing", "sanctions lifted", "delisting", "OFAC", "licence", "license", "waiver", "embargo", "secondary sanctions"],
+      "de": ["Sanktionen", "Sanktionslockerung", "Sanktionserleichterung", "Lizenz", "Embargo"],
+      "es": ["sanciones", "alivio de sanciones", "levantamiento de sanciones", "licencia", "embargo"],
+      "fr": ["sanctions", "levée des sanctions", "allègement des sanctions", "licence", "embargo"],
+      "it": ["sanzioni", "revoca delle sanzioni", "licenza", "embargo"],
+      "ru": ["санкции", "снятие санкций", "смягчение санкций", "лицензия", "эмбарго"],
+      "zh": ["制裁", "解除制裁", "放松制裁", "许可证", "禁运"],
+      "ar": ["العقوبات", "رفع العقوبات", "تخفيف العقوبات", "الحظر"],
+      "ja": ["制裁", "制裁解除", "制裁緩和", "禁輸"],
+      "hi": ["प्रतिबंध", "प्रतिबंध हटाना"]
+    }},
+    { "term": "Economic opening / reform", "aliases": {
+      "en": ["debt restructuring", "bondholders", "default", "hyperinflation", "dollarization", "bolívar", "minimum wage", "economic reform", "foreign investment", "arbitration award", "expropriation"],
+      "de": ["Schuldenumstrukturierung", "Hyperinflation", "Mindestlohn", "Wirtschaftsreform", "Auslandsinvestitionen"],
+      "es": ["reestructuración de deuda", "hiperinflación", "dolarización", "salario mínimo", "reforma económica", "inversión extranjera", "expropiación"],
+      "fr": ["restructuration de la dette", "hyperinflation", "salaire minimum", "investissement étranger"],
+      "it": ["ristrutturazione del debito", "iperinflazione", "salario minimo", "investimenti esteri"],
+      "ru": ["реструктуризация долга", "гиперинфляция", "минимальная зарплата", "иностранные инвестиции"],
+      "zh": ["债务重组", "恶性通胀", "最低工资", "外国投资"],
+      "ar": ["إعادة هيكلة الديون", "التضخم المفرط", "الحد الأدنى للأجور", "الاستثمار الأجنبي"],
+      "ja": ["債務再編", "ハイパーインフレ", "最低賃金", "外国投資"],
+      "hi": ["ऋण पुनर्गठन", "विदेशी निवेश"]
+    }}
+  ]
+}

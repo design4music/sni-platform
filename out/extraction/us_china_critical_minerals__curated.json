@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "fn_id": "us_china_critical_minerals",
+    "authored": "2026-07-16",
+    "archetype": "B (bilateral/symmetric); scope gate centroid_ids={AMERICAS-USA} + primary_target=ASIA-CHINA",
+    "notes": [
+      "Re-scoped from the old us_china_supply_chains, whose name ('Strategic supply chain competition and dependencies') was a category, not a phenomenon. The real 2026 content is critical minerals as CHINA'S counter-leverage to US export controls: the rare-earth truce, China placing two US rare-earth producers on its own export-control list, the $12bn US stockpile, Pentagon 'deal team six', gallium/magnets.",
+      "Measured inside the dyad gate, all 0 Iran: rare earth 60, critical mineral 37, supply chain 23, stockpile 9, magnet 4, MP Materials 2, gallium 1.",
+      "DROPPED 'refinery'/'refining' -- direct collision with the Iran oil story (US sanctions on Chinese 'teapot' refineries), which is the dominant leak class in this dyad.",
+      "The mineral sub-vocabulary is genuinely thin in the corpus; 'rare earth' + 'critical mineral' carry the atomic. Low-volume specifics (neodymium, dysprosium, germanium, graphite) are kept as cheap, zero-risk fixed nouns for future coverage."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "rare earths and critical minerals",
+      "aliases": {
+        "en": ["rare earth", "critical mineral", "gallium", "germanium", "graphite", "neodymium", "dysprosium", "magnet"],
+        "de": ["Seltene Erden", "kritische Rohstoffe"],
+        "es": ["tierras raras", "minerales críticos"],
+        "fr": ["terres rares", "minéraux critiques"],
+        "it": ["terre rare", "minerali critici"],
+        "ru": ["редкоземельн", "критически важных минералов"],
+        "ja": ["レアアース", "希土類"],
+        "ar": ["العناصر النادرة", "المعادن النادرة"],
+        "zh": ["稀土"],
+        "hi": ["दुर्लभ मृदा"]
+      }
+    },
+    {
+      "term": "supply security measures",
+      "aliases": {
+        "en": ["supply chain", "stockpile"],
+        "de": ["Lieferkette"],
+        "es": ["cadena de suministro"],
+        "fr": ["chaîne d'approvisionnement"],
+        "it": ["catena di approvvigionamento"],
+        "ru": ["цепочки поставок"],
+        "ja": ["サプライチェーン"],
+        "ar": ["سلسلة التوريد"],
+        "zh": ["供应链"],
+        "hi": ["आपूर्ति श्रृंखला"]
+      }
+    },
+    {
+      "term": "producers",
+      "aliases": {
+        "en": ["MP Materials", "Lynas"],
+        "de": [], "es": [], "fr": [], "it": [], "ru": [], "ja": [], "ar": [], "zh": [], "hi": []
+      }
+    }
+  ]
+}

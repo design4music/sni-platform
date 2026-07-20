@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "fn_id": "hungary_rule_of_law",
+    "note": "Centroid VISEGRAD+NON-STATE-EU (no per-country centroid; PL/CZ/SK share it). Gate is Hungarian political ACTORS + rule-of-law/EU-funds PHENOMENON, NOT bare 'Hungary' (which would over-capture sport/economy/weather). Budapest kept as political centre. Non-Latin lists carry the country name as gate since in-scope foreign coverage of Hungary is mostly political. Archetype A2-hybrid, primary_target null."
+  },
+  "bundle": [
+    { "term": "Hungarian political actors/parties", "aliases": {
+      "en": ["Orban", "Orbán", "Fidesz", "Tisza", "Sulyok", "Karácsony", "Magyar Péter", "Péter Magyar"]
+    }},
+    { "term": "Budapest (political centre)", "aliases": {
+      "en": ["Budapest"], "ru": ["Будапешт"], "zh": ["布达佩斯"], "ar": ["بودابست"], "ja": ["ブダペスト"]
+    }},
+    { "term": "rule of law / conditionality", "aliases": {
+      "en": ["rule of law", "conditionality", "Article 7", "illiberal"],
+      "de": ["Rechtsstaatlichkeit", "Konditionalität", "Artikel 7"],
+      "es": ["Estado de derecho", "condicionalidad", "artículo 7"],
+      "fr": ["État de droit", "conditionnalité", "article 7"],
+      "it": ["Stato di diritto", "condizionalità", "articolo 7"],
+      "ru": ["верховенство права"],
+      "zh": ["法治"],
+      "ar": ["سيادة القانون"],
+      "ja": ["法の支配"]
+    }},
+    { "term": "frozen EU funds", "aliases": {
+      "en": ["frozen funds", "frozen EU funds", "cohesion funds", "recovery fund", "EU funds withheld", "suspended funds"],
+      "de": ["eingefrorene Gelder", "eingefrorene EU-Mittel", "Kohäsionsmittel", "gesperrte Mittel"],
+      "es": ["fondos congelados", "fondos de cohesión"],
+      "fr": ["fonds gelés", "fonds de cohésion"],
+      "it": ["fondi congelati", "fondi di coesione"]
+    }},
+    { "term": "judicial independence / media pluralism / civil society", "aliases": {
+      "en": ["judicial independence", "media pluralism", "media freedom", "Sovereignty Protection", "civil society"],
+      "de": ["richterliche Unabhängigkeit", "Medienfreiheit", "Souveränitätsschutz"],
+      "es": ["independencia judicial", "libertad de prensa"],
+      "fr": ["indépendance judiciaire", "liberté de la presse"],
+      "it": ["indipendenza giudiziaria", "libertà di stampa"]
+    }},
+    { "term": "Hungary (name gate, non-Latin scripts + DE)", "aliases": {
+      "de": ["Ungarn"],
+      "ru": ["Венгрия", "Венгри", "Орбан", "Фидес"],
+      "zh": ["匈牙利", "欧尔班"],
+      "ar": ["المجر", "هنغاريا", "أوربان"],
+      "ja": ["ハンガリー", "オルバン"],
+      "hi": ["हंगरी", "ओर्बान"]
+    }}
+  ]
+}

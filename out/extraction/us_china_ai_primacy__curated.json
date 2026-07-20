@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "fn_id": "us_china_ai_primacy",
+    "authored": "2026-07-16",
+    "archetype": "B (bilateral/symmetric); scope gate centroid_ids={AMERICAS-USA} + primary_target=ASIA-CHINA",
+    "notes": [
+      "The AI/tech primacy RACE, distinct from the export-control instrument (us_china_tech_restrictions): 342 titles carry AI-race vocabulary without any chip/export-control term.",
+      "Per user direction (2026-07-16): tech espionage and IP disputes are folded in here and framed as hard competition, NOT as a norms/principle topic. Hence 'blacklist'/'espionage'/'intellectual property' sit in this bundle rather than in a separate atomic.",
+      "'AI' kept: uppercase 2-char token matches the acronym branch => case-SENSITIVE whole-word '\\mAI\\M', so it cannot hit 'said'/'aid'/'air'. 307 titles, 12 Iran (well under the 15.7% baseline). Note 'artificial intelligence' spelled out is only 1 title -- the acronym carries this atomic.",
+      "Measured, all 0 Iran: TikTok 127, Alibaba 77, Anthropic 67, Manus 60, blacklist 40, DeepSeek 36, OpenAI 32, ByteDance 25, Baidu 25.",
+      "DROPPED bare 'model' (matches modelling/modest via word-start prefix) and bare 'agent'/'theft' (generic).",
+      "Absorbs the residual of the deactivated us_china_investment_screening: the Meta-Manus veto is an AI story, not a CFIUS story."
+    ]
+  },
+  "bundle": [
+    {
+      "term": "artificial intelligence",
+      "aliases": {
+        "en": ["AI", "artificial intelligence", "frontier model", "distillation", "data center", "data centre", "chatbot"],
+        "de": ["künstliche Intelligenz"],
+        "es": ["inteligencia artificial"],
+        "fr": ["intelligence artificielle"],
+        "it": ["intelligenza artificiale"],
+        "ru": ["искусственный интеллект"],
+        "ja": ["人工知能", "生成AI"],
+        "ar": ["الذكاء الاصطناعي"],
+        "zh": ["人工智能"],
+        "hi": ["कृत्रिम बुद्धिमत्ता"]
+      }
+    },
+    {
+      "term": "competing AI firms and models",
+      "aliases": {
+        "en": ["DeepSeek", "OpenAI", "Anthropic", "Alibaba", "Baidu", "ByteDance", "TikTok", "Manus", "Tencent", "Qwen", "Ernie"],
+        "de": [], "es": [], "fr": [], "it": [],
+        "ru": [], "ja": [],
+        "ar": ["تيك توك", "علي بابا"],
+        "zh": [], "hi": []
+      }
+    },
+    {
+      "term": "competitive-conduct disputes",
+      "aliases": {
+        "en": ["blacklist", "espionage", "intellectual property"],
+        "de": ["Schwarze Liste", "Spionage"],
+        "es": ["lista negra", "espionaje"],
+        "fr": ["liste noire", "espionnage"],
+        "it": ["lista nera", "spionaggio"],
+        "ru": ["черный список", "шпионаж"],
+        "ja": ["禁輸リスト", "スパイ"],
+        "ar": ["القائمة السوداء", "التجسس"],
+        "zh": ["黑名单", "间谍"],
+        "hi": ["काली सूची", "जासूसी"]
+      }
+    }
+  ]
+}

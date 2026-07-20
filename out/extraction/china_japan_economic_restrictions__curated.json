@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "fn_id": "china_japan_economic_restrictions",
+    "note": "NEW atomic. The instruments China applied to Japan after the Taiwan-remarks rupture: rare-earth export licensing, travel advisories and the tourism drop, seafood import suspension, visa rules, detained nationals. Dyad gate centroid_ids={ASIA-CHINA} + primary_target=ASIA-JAPAN. Separated from japan_china_taiwan_question because the instrument is orthogonal to the dispute that triggered it and carries its own narrative axis (lawful regulation vs coercion). DELIBERATELY EXCLUDED: 'sales', 'carmaker', 'earnings', 'stocks', 'yen' -- the in-gate corpus has a heavy Toyota/Honda/Nikkei market-noise floor (spec 3, corporate/market class) that is NOT this phenomenon. Overlap with us_china_critical_minerals is 4 titles (it gates on {AMERICAS-USA}). Real-gate audit: 'rare earth' looked 58% foreign against {ASIA-CHINA} alone but is 25/25 on-topic once ASIA-JAPAN gates it; 'seafood' and 'boycott' fall to 0 real hits (the Nordic-salmon noise is gated out) and are KEPT as precise evergreen instruments. DROPPED post-audit: 'detention' -- 4 real hits split between the Dalian story and the embassy 'detention of SDF suspect'; 'detain' (a separate word-start stem, not a prefix of 'detention') covers the phenomenon cleanly at 11/11."
+  },
+  "bundle": [
+    {
+      "term": "Rare earths and mineral inputs",
+      "aliases": {
+        "en": ["rare earth", "rare-earth", "gallium", "germanium", "graphite", "critical mineral", "magnet export"],
+        "de": ["Seltene Erden"],
+        "fr": ["terres rares"],
+        "es": ["tierras raras"],
+        "it": ["terre rare"],
+        "ru": ["редкоземельн"],
+        "ar": ["المعادن النادرة", "العناصر الأرضية النادرة"],
+        "hi": ["दुर्लभ मृदा"],
+        "zh": ["稀土", "镓", "锗"],
+        "ja": ["レアアース", "希土類", "ガリウム"]
+      }
+    },
+    {
+      "term": "Export control instruments",
+      "aliases": {
+        "en": ["export control", "export curb", "export restriction", "export licence", "export license", "export ban", "export permit", "customs clearance"],
+        "de": ["Exportkontrolle", "Ausfuhrbeschränkung"],
+        "fr": ["contrôle des exportations", "restriction à l'exportation"],
+        "es": ["control de exportaciones", "restricción a la exportación"],
+        "it": ["controllo delle esportazioni"],
+        "ru": ["экспортный контроль", "ограничения на экспорт"],
+        "ar": ["ضوابط التصدير", "قيود التصدير"],
+        "hi": ["निर्यात नियंत्रण"],
+        "zh": ["出口管制", "出口限制", "出口许可"],
+        "ja": ["輸出規制", "輸出管理", "輸出許可"]
+      }
+    },
+    {
+      "term": "Travel and people-flow restrictions",
+      "aliases": {
+        "en": ["travel advisory", "travel warning", "travel alert", "group tour", "tourist", "tourism", "visa", "flight cancellation", "airline route suspension", "student exchange"],
+        "de": ["Reisewarnung", "Tourismus"],
+        "fr": ["avis aux voyageurs", "tourisme"],
+        "es": ["aviso de viaje", "turismo"],
+        "it": ["avviso di viaggio", "turismo"],
+        "ru": ["туризм", "предупреждение о поездках"],
+        "ar": ["تحذير السفر", "السياحة"],
+        "hi": ["यात्रा परामर्श", "पर्यटन"],
+        "zh": ["旅游警示", "赴日旅游", "团队游", "签证"],
+        "ja": ["渡航自粛", "観光客", "訪日", "ビザ"]
+      }
+    },
+    {
+      "term": "Import suspensions on Japanese goods",
+      "aliases": {
+        "en": ["seafood", "scallop", "import ban", "import suspension", "import curb", "boycott"],
+        "de": ["Meeresfrüchte", "Einfuhrverbot", "Boykott"],
+        "fr": ["fruits de mer", "interdiction d'importation", "boycott"],
+        "es": ["mariscos", "prohibición de importación", "boicot"],
+        "it": ["frutti di mare"],
+        "ru": ["морепродукт", "запрет на импорт", "бойкот"],
+        "ar": ["المأكولات البحرية", "حظر الاستيراد", "مقاطعة"],
+        "hi": ["समुद्री भोजन", "आयात प्रतिबंध"],
+        "zh": ["水产品", "海产品", "进口禁令", "暂停进口", "抵制"],
+        "ja": ["水産物", "ホタテ", "輸入停止", "禁輸", "不買"]
+      }
+    },
+    {
+      "term": "Detentions and treatment of nationals",
+      "aliases": {
+        "en": ["detain", "detained national", "exit ban", "espionage charge"],
+        "de": ["Festnahme", "Ausreisesperre"],
+        "fr": ["interdiction de sortie"],
+        "ru": ["задержан", "запрет на выезд"],
+        "ar": ["احتجاز", "منع السفر"],
+        "hi": ["हिरासत"],
+        "zh": ["拘留", "拘押", "出境禁令"],
+        "ja": ["拘束", "拘留", "邦人"]
+      }
+    }
+  ]
+}

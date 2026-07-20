@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "fn_id": "kashmir_dispute",
+    "note": "Sub-case A2: the toponym IS the gate. primary_target left NULL and centroid_ids widened to {ASIA-INDIA, ASIA-PAKISTAN} because only 48 of 107 Kashmir titles carry the Pakistan centroid -- an AND-gate would delete more than half the phenomenon. Territorial/sovereignty scope only; the Pahalgam attack and Operation Sindoor live on india_pakistan_militancy. Pre-audited 2026-07-17. DROPPED: 'ceasefire violation' (matched Lebanon/Israel/Iran ceasefires -- Pakistan commenting on the Middle East, 0/3 on-topic); 'statehood' (redundant, every hit already carries J&K); 'Uri' (word-START match would catch Uribe/urine for 1 title); 'Line of Control' n=0; 'LoC' banned -- lowercase 'o' dodges the acronym path so it word-STARTs into local/location (182 false hits). Dead: PoJK, plebiscite, Hurriyat, Siachen, Kupwara, Baramulla. 'PoK' kept at 24/25 (one 'Bangla Pokkho' leak)."
+  },
+  "bundle": [
+    {
+      "term": "The disputed territory and its sub-geography",
+      "aliases": {
+        "en": ["Kashmir", "J&K", "PoK", "Jammu", "Srinagar", "Gilgit", "Baltistan"],
+        "de": ["Kaschmir"],
+        "es": ["Cachemira"],
+        "fr": ["Cachemire"],
+        "ru": ["Кашмир", "Джамму", "Сринагар"],
+        "zh": ["克什米尔", "查谟"],
+        "ar": ["كشمير", "جامو", "سريناغار"],
+        "ja": ["カシミール"],
+        "hi": ["कश्मीर", "जम्मू", "श्रीनगर"]
+      }
+    },
+    {
+      "term": "Constitutional / legal status of the territory",
+      "aliases": {
+        "en": ["Article 370"],
+        "de": ["Artikel 370"],
+        "ru": ["статья 370"],
+        "zh": ["370条"],
+        "ar": ["المادة 370"],
+        "hi": ["अनुच्छेद 370"]
+      }
+    }
+  ]
+}

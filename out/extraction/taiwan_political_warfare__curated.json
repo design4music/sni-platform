@@ -1,0 +1,112 @@
+{
+  "metadata": {
+    "fn_id": "taiwan_political_warfare",
+    "note": "Scope centroid_ids={ASIA-TAIWAN} only. Bare 'DPP' DROPPED as an alias: the DPP is the governing party and appears across every Taiwan story (arms, recognition, drills), so it identifies the island's politics rather than this phenomenon. 'DPP authorities' is kept instead -- it is a distinctive Beijing-media term of art and a precise marker of united-front framing, not a phrase variant. 'separatist' / 'Taiwan independence' are kept as matching aliases (they name the object of the campaign) but must stay OUT of the FN's neutral description prose; framing belongs in narratives_v2. Cheng Li-wun is an own-side principal of the KMT-CCP channel, not a third-party visitor, so rule 4 does not bar her.",
+    "archetype": "bilateral within a single-centroid scope; primary_target null"
+  },
+  "bundle": [
+    {
+      "term": "united front",
+      "aliases": {
+        "en": ["united front"],
+        "de": ["Einheitsfront"],
+        "es": ["frente unido"],
+        "fr": ["front uni"],
+        "it": ["fronte unito"],
+        "ru": ["единый фронт"],
+        "zh": ["统战", "统一战线"],
+        "ja": ["統一戦線"]
+      }
+    },
+    {
+      "term": "Kuomintang",
+      "aliases": {
+        "en": ["KMT", "Kuomintang", "Nationalist Party"],
+        "ru": ["Гоминьдан"],
+        "zh": ["国民党"],
+        "ja": ["国民党"]
+      }
+    },
+    {
+      "term": "Cheng Li-wun (KMT chair)",
+      "aliases": {
+        "en": ["Cheng Li-wun"],
+        "zh": ["郑丽文"]
+      }
+    },
+    {
+      "term": "DPP authorities (Beijing usage)",
+      "aliases": {
+        "en": ["DPP authorities"],
+        "zh": ["民进党当局"]
+      }
+    },
+    {
+      "term": "Taiwan Affairs Office",
+      "aliases": {
+        "en": ["Taiwan Affairs Office", "TAO"],
+        "zh": ["国台办", "台办"]
+      }
+    },
+    {
+      "term": "separatism / Taiwan independence",
+      "aliases": {
+        "en": ["separatist", "separatism", "Taiwan independence"],
+        "de": ["Separatist", "Separatismus", "Unabhängigkeit Taiwans"],
+        "es": ["separatista", "independencia de Taiwán"],
+        "fr": ["séparatiste", "indépendance de Taïwan"],
+        "it": ["separatista", "indipendenza di Taiwan"],
+        "ru": ["сепаратист", "независимость Тайваня"],
+        "zh": ["台独"],
+        "ja": ["台湾独立"],
+        "ar": ["انفصالي", "استقلال تايوان"],
+        "hi": ["अलगाववादी"]
+      }
+    },
+    {
+      "term": "cross-strait exchanges and incentives",
+      "aliases": {
+        "en": ["cross-strait exchange", "cross-Strait exchange", "Straits Forum", "compatriot", "preferential policies"],
+        "zh": ["海峡论坛", "台湾同胞", "惠台"],
+        "ja": ["両岸交流"]
+      }
+    },
+    {
+      "term": "infiltration and espionage",
+      "aliases": {
+        "en": ["infiltration", "infiltrate", "espionage", "spy", "subversion", "fifth column"],
+        "de": ["Infiltration", "Spionage", "Unterwanderung"],
+        "es": ["infiltración", "espionaje"],
+        "fr": ["infiltration", "espionnage"],
+        "it": ["infiltrazione", "spionaggio"],
+        "ru": ["шпионаж"],
+        "zh": ["渗透", "间谍"],
+        "ja": ["浸透", "スパイ"],
+        "ar": ["تجسس"],
+        "hi": ["जासूसी"]
+      }
+    },
+    {
+      "term": "disinformation and cognitive warfare",
+      "aliases": {
+        "en": ["disinformation", "influence operation", "propaganda", "cognitive warfare", "information warfare"],
+        "de": ["Desinformation", "Propaganda", "Einflussoperation"],
+        "es": ["desinformación", "propaganda"],
+        "fr": ["désinformation", "propagande"],
+        "it": ["disinformazione", "propaganda"],
+        "ru": ["дезинформация", "пропаганда"],
+        "zh": ["认知作战", "假讯息"],
+        "ja": ["偽情報", "認知戦"],
+        "ar": ["تضليل", "دعاية"],
+        "hi": ["दुष्प्रचार"]
+      }
+    },
+    {
+      "term": "Legislative Yuan / recall votes",
+      "aliases": {
+        "en": ["Legislative Yuan", "recall vote", "recall campaign"],
+        "zh": ["立法院", "罢免"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,1335 @@
+{
+  "metadata": {
+    "fn_id": "iran_regime_legitimacy_contest",
+    "centroid": "MIDEAST-IRAN",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 200,
+    "seeds": [
+      "regime change",
+      "opposition",
+      "dissident",
+      "protest",
+      "mullahs",
+      "theocracy",
+      "Pezeshkian",
+      "Pahlavi",
+      "MEK",
+      "hijab",
+      "morality police",
+      "Reza Pahlavi",
+      "Khamenei",
+      "supreme leader"
+    ],
+    "timestamp": "2026-05-11T12:48:53.111978",
+    "curated_at": "2026-05-11 (v2 — broadened to theater-level FN)",
+    "curator_notes": "BROADENED per user reframe: FN3 is the theater-level Iran-war FN (strikes, retaliation, regime, sovereignty discourse). Added 12 broad terms: Khamenei, Pezeshkian, supreme leader, Islamic Republic, regime, Iran war, strike, retaliation, ceasefire, missile, drone, sanctions. Safe with friction_nodes.actor_centroid_ids gate (added same day) — broad concepts scope to MIDEAST-IRAN-tagged titles only."
+  },
+  "bundle": [
+    {
+      "term": "Mojtaba Khamenei",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "مجتبى خامنئي"
+        ],
+        "de": [],
+        "en": [
+          "Mojtaba Khamenei"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "मोज्तबा खामेनेई"
+        ],
+        "it": [],
+        "ja": [
+          "モジタバ・ハメネイ"
+        ],
+        "ru": [
+          "Моджтаба Хаменеи"
+        ],
+        "zh": [
+          "穆杰塔巴·哈梅内伊"
+        ]
+      },
+      "evidence": "Fox News / 2026-04-12"
+    },
+    {
+      "term": "Reza Pahlavi",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "رضا بهلوي"
+        ],
+        "de": [],
+        "en": [
+          "Reza Pahlavi"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "रेज़ा पहलवी"
+        ],
+        "it": [],
+        "ja": [
+          "レザー・パフラヴィー"
+        ],
+        "ru": [
+          "Реза Пехлеви"
+        ],
+        "zh": [
+          "礼萨·巴列维"
+        ]
+      },
+      "evidence": "Al Jazeera / 2026-03-28"
+    },
+    {
+      "term": "Setad",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "ستاد"
+        ],
+        "de": [],
+        "en": [
+          "Setad"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "सेताद"
+        ],
+        "it": [],
+        "ja": [
+          "セタード"
+        ],
+        "ru": [
+          "Сетад"
+        ],
+        "zh": [
+          "塞塔德"
+        ]
+      },
+      "evidence": "Le Figaro / 2026-03-13"
+    },
+    {
+      "term": "Lion and Sun",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "الأسد والشمس"
+        ],
+        "de": [
+          "Löwe und Sonne"
+        ],
+        "en": [
+          "Lion and Sun"
+        ],
+        "es": [
+          "León y Sol"
+        ],
+        "fr": [
+          "Lion et Soleil"
+        ],
+        "hi": [
+          "शेर और सूरज"
+        ],
+        "it": [
+          "Leone e Sole"
+        ],
+        "ja": [
+          "ライオンと太陽"
+        ],
+        "ru": [
+          "Лев и Солнце"
+        ],
+        "zh": [
+          "狮子和太阳"
+        ]
+      },
+      "evidence": "Euronews / 2026-03-19"
+    },
+    {
+      "term": "execution",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "إعدام"
+        ],
+        "de": [
+          "Hinrichtung"
+        ],
+        "en": [
+          "execution"
+        ],
+        "es": [
+          "ejecución"
+        ],
+        "fr": [
+          "exécution"
+        ],
+        "hi": [
+          "फाँसी"
+        ],
+        "it": [
+          "esecuzione"
+        ],
+        "ja": [
+          "処刑"
+        ],
+        "ru": [
+          "казнь"
+        ],
+        "zh": [
+          "处决"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-05"
+    },
+    {
+      "term": "protester",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "متظاهر"
+        ],
+        "de": [
+          "Protestierer"
+        ],
+        "en": [
+          "protester"
+        ],
+        "es": [
+          "manifestante"
+        ],
+        "fr": [
+          "manifestant"
+        ],
+        "hi": [
+          "प्रदर्शनकारी"
+        ],
+        "it": [
+          "manifestante"
+        ],
+        "ja": [
+          "抗議者"
+        ],
+        "ru": [
+          "протестующий"
+        ],
+        "zh": [
+          "抗议者"
+        ]
+      },
+      "evidence": "France 24 (EN) / 2026-04-06"
+    },
+    {
+      "term": "dissident",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "معارض"
+        ],
+        "de": [
+          "Dissident"
+        ],
+        "en": [
+          "dissident"
+        ],
+        "es": [
+          "disidente"
+        ],
+        "fr": [],
+        "hi": [
+          "असंतुष्ट"
+        ],
+        "it": [
+          "dissidente"
+        ],
+        "ja": [
+          "反体制派"
+        ],
+        "ru": [
+          "диссидент"
+        ],
+        "zh": [
+          "异见人士"
+        ]
+      },
+      "evidence": "Wall Street Journal / 2026-03-22"
+    },
+    {
+      "term": "crackdown",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حملة أمنية"
+        ],
+        "de": [
+          "Kampagne"
+        ],
+        "en": [
+          "crackdown"
+        ],
+        "es": [
+          "represión"
+        ],
+        "fr": [
+          "répression"
+        ],
+        "hi": [
+          "दमन"
+        ],
+        "it": [
+          "repressione"
+        ],
+        "ja": [
+          "弾圧"
+        ],
+        "ru": [
+          "подавление"
+        ],
+        "zh": [
+          "镇压"
+        ]
+      },
+      "evidence": "Fox News / 2026-03-19"
+    },
+    {
+      "term": "uprising",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "انتفاضة"
+        ],
+        "de": [
+          "Aufstand"
+        ],
+        "en": [
+          "uprising"
+        ],
+        "es": [
+          "levantamiento"
+        ],
+        "fr": [
+          "soulèvement"
+        ],
+        "hi": [
+          "विद्रोह"
+        ],
+        "it": [
+          "rivolta"
+        ],
+        "ja": [
+          "蜂起"
+        ],
+        "ru": [
+          "восстание"
+        ],
+        "zh": [
+          "起义"
+        ]
+      },
+      "evidence": "New York Times / 2026-03-18"
+    },
+    {
+      "term": "regime change",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تغيير النظام"
+        ],
+        "de": [
+          "Regimewechsel"
+        ],
+        "en": [
+          "regime change"
+        ],
+        "es": [
+          "cambio de régimen"
+        ],
+        "fr": [
+          "changement de régime"
+        ],
+        "hi": [
+          "शासन परिवर्तन"
+        ],
+        "it": [
+          "cambio di regime"
+        ],
+        "ja": [
+          "政権交代"
+        ],
+        "ru": [
+          "смена режима"
+        ],
+        "zh": [
+          "政权更迭"
+        ]
+      },
+      "evidence": "Fox News / 2026-04-11"
+    },
+    {
+      "term": "anti-government",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "مناهض للحكومة"
+        ],
+        "de": [
+          "regierungsfeindlich"
+        ],
+        "en": [
+          "anti-government"
+        ],
+        "es": [
+          "antigubernamental"
+        ],
+        "fr": [
+          "antigouvernemental"
+        ],
+        "hi": [
+          "सरकार विरोधी"
+        ],
+        "it": [
+          "antigovernativo"
+        ],
+        "ja": [
+          "反政府"
+        ],
+        "ru": [
+          "антиправительственный"
+        ],
+        "zh": [
+          "反政府"
+        ]
+      },
+      "evidence": "BBC World / 2026-03-19"
+    },
+    {
+      "term": "monarchy",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ملكية"
+        ],
+        "de": [
+          "Monarchie"
+        ],
+        "en": [
+          "monarchy"
+        ],
+        "es": [
+          "monarquía"
+        ],
+        "fr": [
+          "monarchie"
+        ],
+        "hi": [
+          "राजशाही"
+        ],
+        "it": [
+          "monarchia"
+        ],
+        "ja": [
+          "君主制"
+        ],
+        "ru": [
+          "монархия"
+        ],
+        "zh": [
+          "君主制"
+        ]
+      },
+      "evidence": "Frankfurter Allgemeine / 2026-03-14"
+    },
+    {
+      "term": "Pahlavi",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بهلوي"
+        ],
+        "de": [],
+        "en": [
+          "Pahlavi"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "पहलवी"
+        ],
+        "it": [],
+        "ja": [
+          "パフラヴィー"
+        ],
+        "ru": [
+          "Пехлеви"
+        ],
+        "zh": [
+          "巴列维"
+        ]
+      },
+      "evidence": "Jerusalem Post / 2026-04-08"
+    },
+    {
+      "term": "opposition",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "معارضة"
+        ],
+        "de": [
+          "Opposition"
+        ],
+        "en": [
+          "opposition"
+        ],
+        "es": [
+          "oposición"
+        ],
+        "fr": [],
+        "hi": [
+          "विपक्ष"
+        ],
+        "it": [
+          "opposizione"
+        ],
+        "ja": [
+          "反対派"
+        ],
+        "ru": [
+          "оппозиция"
+        ],
+        "zh": [
+          "反对派"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-04"
+    },
+    {
+      "term": "Larijani",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "لاريجاني"
+        ],
+        "de": [],
+        "en": [
+          "Larijani"
+        ],
+        "es": [
+          "Lariyaní"
+        ],
+        "fr": [],
+        "hi": [
+          "लारिजानी"
+        ],
+        "it": [],
+        "ja": [
+          "ラリジャニ"
+        ],
+        "ru": [
+          "Лариджани"
+        ],
+        "zh": [
+          "拉里贾尼"
+        ]
+      },
+      "evidence": "The Guardian / 2026-03-18"
+    },
+    {
+      "term": "MEK",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "منظمة مجاهدي خلق",
+          "مجاهدين خلق"
+        ],
+        "de": [],
+        "en": [
+          "MEK",
+          "Mujahedin-e-Khalq",
+          "MKO",
+          "PMOI",
+          "People's Mojahedin"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "मुजाहिदीन-ए-ख़ल्क़"
+        ],
+        "it": [],
+        "ja": [
+          "ムジャヒディーン・ハルク"
+        ],
+        "ru": [
+          "ОМИН",
+          "Моджахедин-е-Хальк"
+        ],
+        "zh": [
+          "人民圣战者组织"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "morality police",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "شرطة الأخلاق",
+          "دوريات الإرشاد"
+        ],
+        "de": [
+          "Sittenpolizei"
+        ],
+        "en": [
+          "morality police",
+          "Guidance Patrol",
+          "Gasht-e Ershad"
+        ],
+        "es": [
+          "policía de la moral"
+        ],
+        "fr": [
+          "police des moeurs"
+        ],
+        "hi": [
+          "नैतिकता पुलिस"
+        ],
+        "it": [
+          "polizia morale"
+        ],
+        "ja": [
+          "風紀警察"
+        ],
+        "ru": [
+          "полиция нравов",
+          "патруль наставлений"
+        ],
+        "zh": [
+          "道德警察"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "hijab",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حجاب",
+          "الحجاب الإجباري"
+        ],
+        "de": [],
+        "en": [
+          "hijab",
+          "mandatory hijab"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "हिजाब"
+        ],
+        "it": [],
+        "ja": [
+          "ヒジャブ"
+        ],
+        "ru": [
+          "хиджаб"
+        ],
+        "zh": [
+          "头巾"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Velayat-e Faqih",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ولاية الفقيه"
+        ],
+        "de": [],
+        "en": [
+          "Velayat-e Faqih",
+          "Guardianship of the Jurist",
+          "Wilayat al-Faqih"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "विलायत-ए-फ़क़ीह"
+        ],
+        "it": [],
+        "ja": [
+          "法学者の統治"
+        ],
+        "ru": [
+          "Велаят-е факих"
+        ],
+        "zh": [
+          "法基统治"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Women Life Freedom",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "المرأة الحياة الحرية"
+        ],
+        "de": [
+          "Frau Leben Freiheit"
+        ],
+        "en": [
+          "Women Life Freedom",
+          "Woman Life Freedom",
+          "Zan Zendegi Azadi"
+        ],
+        "es": [
+          "Mujer Vida Libertad"
+        ],
+        "fr": [
+          "Femme Vie Liberté"
+        ],
+        "hi": [
+          "ज़न ज़िंदगी आज़ादी"
+        ],
+        "it": [
+          "Donna Vita Libertà"
+        ],
+        "ja": [
+          "女性 命 自由"
+        ],
+        "ru": [
+          "Женщина Жизнь Свобода",
+          "Zan Zendegi Azadi"
+        ],
+        "zh": [
+          "女性 生命 自由"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Mahsa Amini",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "مهسا أميني",
+          "جينا أميني"
+        ],
+        "de": [],
+        "en": [
+          "Mahsa Amini",
+          "Jina Amini"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "महसा अमीनी"
+        ],
+        "it": [],
+        "ja": [
+          "マフサ・アミニ"
+        ],
+        "ru": [
+          "Махса Амини",
+          "Жина Амини"
+        ],
+        "zh": [
+          "玛莎·阿米尼"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Council of Guardians",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "مجلس صيانة الدستور"
+        ],
+        "de": [
+          "Wächterrat"
+        ],
+        "en": [
+          "Council of Guardians",
+          "Guardian Council"
+        ],
+        "es": [
+          "Consejo de Guardianes"
+        ],
+        "fr": [
+          "Conseil des gardiens"
+        ],
+        "hi": [
+          "संरक्षक परिषद"
+        ],
+        "it": [
+          "Consiglio dei Guardiani"
+        ],
+        "ja": [
+          "護憲評議会"
+        ],
+        "ru": [
+          "Совет стражей конституции"
+        ],
+        "zh": [
+          "宪法监护委员会"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Assembly of Experts",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "مجلس خبراء القيادة",
+          "مجلس الخبراء"
+        ],
+        "de": [
+          "Expertenrat"
+        ],
+        "en": [
+          "Assembly of Experts"
+        ],
+        "es": [
+          "Asamblea de Expertos"
+        ],
+        "fr": [
+          "Assemblée des experts"
+        ],
+        "hi": [
+          "विशेषज्ञ सभा"
+        ],
+        "it": [
+          "Assemblea degli Esperti"
+        ],
+        "ja": [
+          "専門家会議"
+        ],
+        "ru": [
+          "Совет экспертов"
+        ],
+        "zh": [
+          "专家会议"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Khamenei",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "خامنئي",
+          "علي خامنئي",
+          "آية الله خامنئي"
+        ],
+        "de": [],
+        "en": [
+          "Khamenei",
+          "Ali Khamenei",
+          "Ayatollah Khamenei"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "ख़ामनेई"
+        ],
+        "it": [],
+        "ja": [
+          "ハーメネイー"
+        ],
+        "ru": [
+          "Хаменеи",
+          "Али Хаменеи",
+          "аятолла Хаменеи"
+        ],
+        "zh": [
+          "哈梅内伊"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "Pezeshkian",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "بزشكيان",
+          "مسعود بزشكيان"
+        ],
+        "de": [],
+        "en": [
+          "Pezeshkian",
+          "Masoud Pezeshkian"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "पेज़ेशकियान"
+        ],
+        "it": [],
+        "ja": [
+          "ペゼシュキアン"
+        ],
+        "ru": [
+          "Пезешкиан",
+          "Масуд Пезешкиан"
+        ],
+        "zh": [
+          "佩泽希齐扬"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "supreme leader",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "المرشد الأعلى",
+          "المرشد الأعلى للثورة"
+        ],
+        "de": [
+          "Oberster Führer"
+        ],
+        "en": [
+          "supreme leader",
+          "Supreme Leader of Iran"
+        ],
+        "es": [
+          "líder supremo"
+        ],
+        "fr": [
+          "guide suprême"
+        ],
+        "hi": [
+          "सर्वोच्च नेता"
+        ],
+        "it": [
+          "guida suprema"
+        ],
+        "ja": [
+          "最高指導者"
+        ],
+        "ru": [
+          "верховный лидер",
+          "верховный руководитель"
+        ],
+        "zh": [
+          "最高领袖"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "Islamic Republic",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الجمهورية الإسلامية",
+          "الجمهورية الإسلامية في إيران"
+        ],
+        "de": [
+          "Islamische Republik"
+        ],
+        "en": [
+          "Islamic Republic",
+          "Islamic Republic of Iran"
+        ],
+        "es": [
+          "República Islámica"
+        ],
+        "fr": [
+          "République islamique"
+        ],
+        "hi": [
+          "इस्लामी गणराज्य"
+        ],
+        "it": [
+          "Repubblica Islamica"
+        ],
+        "ja": [
+          "イスラム共和国"
+        ],
+        "ru": [
+          "Исламская Республика",
+          "Исламская Республика Иран"
+        ],
+        "zh": [
+          "伊斯兰共和国"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "regime",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "النظام",
+          "النظام الإيراني",
+          "نظام طهران"
+        ],
+        "de": [
+          "Regime",
+          "iranisches Regime"
+        ],
+        "en": [
+          "regime",
+          "Iranian regime",
+          "Tehran regime"
+        ],
+        "es": [
+          "régimen",
+          "régimen iraní"
+        ],
+        "fr": [
+          "régime",
+          "régime iranien"
+        ],
+        "hi": [
+          "शासन",
+          "ईरानी शासन"
+        ],
+        "it": [
+          "regime",
+          "regime iraniano"
+        ],
+        "ja": [
+          "体制",
+          "イラン体制"
+        ],
+        "ru": [
+          "режим",
+          "иранский режим",
+          "тегеранский режим"
+        ],
+        "zh": [
+          "政权",
+          "伊朗政权"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "Iran war",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حرب إيران",
+          "الحرب على إيران",
+          "الحرب مع إيران"
+        ],
+        "de": [
+          "Iran-Krieg",
+          "Krieg gegen den Iran"
+        ],
+        "en": [
+          "Iran war",
+          "war on Iran",
+          "war with Iran",
+          "war in Iran"
+        ],
+        "es": [
+          "guerra de Irán",
+          "guerra contra Irán"
+        ],
+        "fr": [
+          "guerre en Iran",
+          "guerre contre l'Iran"
+        ],
+        "hi": [
+          "ईरान युद्ध"
+        ],
+        "it": [
+          "guerra in Iran",
+          "guerra contro l'Iran"
+        ],
+        "ja": [
+          "イラン戦争"
+        ],
+        "ru": [
+          "война с Ираном",
+          "война в Иране",
+          "иранская война"
+        ],
+        "zh": [
+          "伊朗战争"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "strike",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ضربة",
+          "ضربات",
+          "غارة جوية"
+        ],
+        "de": [
+          "Angriff",
+          "Luftangriff"
+        ],
+        "en": [
+          "strike",
+          "strikes",
+          "airstrike",
+          "air strike"
+        ],
+        "es": [
+          "ataque",
+          "ataque aéreo"
+        ],
+        "fr": [
+          "frappe",
+          "frappes",
+          "frappe aérienne"
+        ],
+        "hi": [
+          "हमला",
+          "हवाई हमला"
+        ],
+        "it": [
+          "attacco",
+          "attacco aereo"
+        ],
+        "ja": [
+          "攻撃",
+          "空爆"
+        ],
+        "ru": [
+          "удар",
+          "удары",
+          "авиаудар"
+        ],
+        "zh": [
+          "打击",
+          "空袭"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "retaliation",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "انتقام",
+          "رد انتقامي"
+        ],
+        "de": [
+          "Vergeltung"
+        ],
+        "en": [
+          "retaliation",
+          "retaliatory"
+        ],
+        "es": [
+          "represalia"
+        ],
+        "fr": [
+          "représailles"
+        ],
+        "hi": [
+          "प्रतिशोध"
+        ],
+        "it": [
+          "rappresaglia"
+        ],
+        "ja": [
+          "報復"
+        ],
+        "ru": [
+          "возмездие",
+          "ответный удар"
+        ],
+        "zh": [
+          "报复"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "ceasefire",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "وقف إطلاق النار",
+          "هدنة"
+        ],
+        "de": [
+          "Waffenstillstand",
+          "Feuerpause"
+        ],
+        "en": [
+          "ceasefire",
+          "cease-fire",
+          "truce"
+        ],
+        "es": [
+          "alto el fuego",
+          "tregua"
+        ],
+        "fr": [
+          "cessez-le-feu",
+          "trêve"
+        ],
+        "hi": [
+          "युद्धविराम"
+        ],
+        "it": [
+          "cessate il fuoco",
+          "tregua"
+        ],
+        "ja": [
+          "停戦"
+        ],
+        "ru": [
+          "прекращение огня",
+          "перемирие"
+        ],
+        "zh": [
+          "停火",
+          "停战"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "missile",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "صاروخ",
+          "صاروخ باليستي",
+          "صاروخ كروز"
+        ],
+        "de": [
+          "Rakete",
+          "ballistische Rakete"
+        ],
+        "en": [
+          "missile",
+          "ballistic missile",
+          "cruise missile"
+        ],
+        "es": [
+          "misil",
+          "misil balístico"
+        ],
+        "fr": [
+          "missile",
+          "missile balistique"
+        ],
+        "hi": [
+          "मिसाइल"
+        ],
+        "it": [
+          "missile",
+          "missile balistico"
+        ],
+        "ja": [
+          "ミサイル"
+        ],
+        "ru": [
+          "ракета",
+          "баллистическая ракета",
+          "крылатая ракета"
+        ],
+        "zh": [
+          "导弹"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "drone",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "طائرة مسيرة",
+          "طائرة بدون طيار"
+        ],
+        "de": [
+          "Drohne",
+          "Kampfdrohne"
+        ],
+        "en": [
+          "drone",
+          "UAV",
+          "unmanned aerial vehicle"
+        ],
+        "es": [
+          "dron",
+          "avión no tripulado"
+        ],
+        "fr": [],
+        "hi": [
+          "ड्रोन"
+        ],
+        "it": [],
+        "ja": [
+          "ドローン",
+          "無人航空機"
+        ],
+        "ru": [
+          "беспилотник",
+          "дрон"
+        ],
+        "zh": [
+          "无人机"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    },
+    {
+      "term": "sanctions",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "عقوبات"
+        ],
+        "de": [
+          "Sanktionen"
+        ],
+        "en": [
+          "sanctions",
+          "snapback sanctions"
+        ],
+        "es": [
+          "sanciones"
+        ],
+        "fr": [],
+        "hi": [
+          "प्रतिबंध"
+        ],
+        "it": [
+          "sanzioni"
+        ],
+        "ja": [
+          "制裁"
+        ],
+        "ru": [
+          "санкции"
+        ],
+        "zh": [
+          "制裁"
+        ]
+      },
+      "evidence": "manual / 2026-05-11 (broad refinement)"
+    }
+  ]
+}

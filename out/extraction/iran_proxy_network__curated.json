@@ -1,0 +1,738 @@
+{
+  "metadata": {
+    "fn_id": "iran_proxy_network",
+    "centroid": "MIDEAST-IRAN",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 193,
+    "seeds": [
+      "Hezbollah",
+      "Hamas",
+      "Houthi",
+      "IRGC",
+      "Quds",
+      "axis of resistance",
+      "proxy",
+      "militia",
+      "Hashed",
+      "PMF",
+      "Kataib",
+      "Asaib"
+    ],
+    "timestamp": "2026-05-11T12:46:38.739934",
+    "curated_at": "2026-05-11",
+    "curator_notes": "Dropped 17 terms (cross-FN, generics, story-specifics, actor-only anchors). Added 7 manual entries (Nasrallah, PMF, Asaib Ahl al-Haq, Harakat al-Nujaba, Fatemiyoun, Quds Day, proxy war)."
+  },
+  "bundle": [
+    {
+      "term": "IRGC",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الحرس الثوري الإيراني"
+        ],
+        "de": [],
+        "en": [
+          "IRGC",
+          "Islamic Revolutionary Guard Corps",
+          "Revolutionary Guards"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "ईरानी क्रांतिकारी गार्ड"
+        ],
+        "it": [],
+        "ja": [
+          "イラン革命防衛隊"
+        ],
+        "ru": [
+          "КСИР"
+        ],
+        "zh": [
+          "伊朗伊斯兰革命卫队"
+        ]
+      },
+      "evidence": "Fox News / 2026-04-06"
+    },
+    {
+      "term": "Quds Force",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "فيلق القدس"
+        ],
+        "de": [
+          "Quds-Einheit"
+        ],
+        "en": [
+          "Quds Force"
+        ],
+        "es": [
+          "Fuerza Quds"
+        ],
+        "fr": [
+          "Force Al-Qods"
+        ],
+        "hi": [
+          "कुद्स फोर्स"
+        ],
+        "it": [
+          "Forza Quds"
+        ],
+        "ja": [
+          "ゴドス軍"
+        ],
+        "ru": [
+          "Кудс"
+        ],
+        "zh": [
+          "圣城旅"
+        ]
+      },
+      "evidence": "Fox News / 2026-04-06"
+    },
+    {
+      "term": "Basij",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الباسيج"
+        ],
+        "de": [
+          "Basidsch"
+        ],
+        "en": [
+          "Basij"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "बसीज"
+        ],
+        "it": [],
+        "ja": [
+          "バシージ"
+        ],
+        "ru": [
+          "Басидж"
+        ],
+        "zh": [
+          "巴斯基"
+        ]
+      },
+      "evidence": "France 24 (EN) / 2026-04-02"
+    },
+    {
+      "term": "Hezbollah",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "حزب الله"
+        ],
+        "de": [
+          "Hisbollah"
+        ],
+        "en": [
+          "Hezbollah"
+        ],
+        "es": [
+          "Hezbolá"
+        ],
+        "fr": [],
+        "hi": [
+          "हिजबुल्लाह"
+        ],
+        "it": [],
+        "ja": [
+          "ヒズボラ"
+        ],
+        "ru": [
+          "Хезболла"
+        ],
+        "zh": [
+          "真主党"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-08"
+    },
+    {
+      "term": "Houthi",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الحوثيون"
+        ],
+        "de": [
+          "Huthi"
+        ],
+        "en": [
+          "Houthi"
+        ],
+        "es": [
+          "Hutí"
+        ],
+        "fr": [],
+        "hi": [
+          "हूती"
+        ],
+        "it": [],
+        "ja": [
+          "フーシ"
+        ],
+        "ru": [
+          "Хуситы"
+        ],
+        "zh": [
+          "胡塞"
+        ]
+      },
+      "evidence": "Associated Press / 2026-03-29"
+    },
+    {
+      "term": "Ansar Allah",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "أنصار الله"
+        ],
+        "de": [],
+        "en": [
+          "Ansar Allah"
+        ],
+        "es": [
+          "Ansar Alá"
+        ],
+        "fr": [],
+        "hi": [
+          "अंसार अल्लाह"
+        ],
+        "it": [],
+        "ja": [
+          "アンサール・アッラー"
+        ],
+        "ru": [
+          "Ансар Аллах"
+        ],
+        "zh": [
+          "安萨尔安拉"
+        ]
+      },
+      "evidence": "CGTN / 2026-04-09"
+    },
+    {
+      "term": "Kata'ib Hezbollah",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "كتائب حزب الله"
+        ],
+        "de": [
+          "Kataib Hisbollah"
+        ],
+        "en": [
+          "Kata'ib Hezbollah"
+        ],
+        "es": [
+          "Kataib Hezbolá"
+        ],
+        "fr": [
+          "Kataëb Hezbollah"
+        ],
+        "hi": [
+          "कताइब हिजबुल्लाह"
+        ],
+        "it": [],
+        "ja": [
+          "カタイブ・ヒズボラ"
+        ],
+        "ru": [
+          "Катаиб Хезболла"
+        ],
+        "zh": [
+          "真主党旅"
+        ]
+      },
+      "evidence": "Jerusalem Post / 2026-04-15"
+    },
+    {
+      "term": "Hamas",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "حماس"
+        ],
+        "de": [],
+        "en": [
+          "Hamas"
+        ],
+        "es": [
+          "Hamás"
+        ],
+        "fr": [],
+        "hi": [
+          "हमास"
+        ],
+        "it": [],
+        "ja": [
+          "ハマス"
+        ],
+        "ru": [
+          "ХАМАС"
+        ],
+        "zh": [
+          "哈马斯"
+        ]
+      },
+      "evidence": "Fox News / 2026-03-16"
+    },
+    {
+      "term": "axis of resistance",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "محور المقاومة"
+        ],
+        "de": [
+          "Achse des Widerstands"
+        ],
+        "en": [
+          "axis of resistance"
+        ],
+        "es": [
+          "eje de la resistencia"
+        ],
+        "fr": [
+          "axe de la résistance"
+        ],
+        "hi": [
+          "प्रतिरोध की धुरी"
+        ],
+        "it": [
+          "asse della resistenza"
+        ],
+        "ja": [
+          "抵抗の枢軸"
+        ],
+        "ru": [
+          "ось сопротивления"
+        ],
+        "zh": [
+          "抵抗轴心"
+        ]
+      },
+      "evidence": "RT / 2026-03-25"
+    },
+    {
+      "term": "proxy",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "وكيل"
+        ],
+        "de": [
+          "Stellvertreter"
+        ],
+        "en": [
+          "proxy"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "प्रॉक्सी"
+        ],
+        "it": [],
+        "ja": [
+          "代理"
+        ],
+        "ru": [
+          "прокси"
+        ],
+        "zh": [
+          "代理人"
+        ]
+      },
+      "evidence": "The Guardian / 2026-03-30"
+    },
+    {
+      "term": "militia",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "ميليشيا"
+        ],
+        "de": [
+          "Miliz"
+        ],
+        "en": [
+          "militia"
+        ],
+        "es": [
+          "milicia"
+        ],
+        "fr": [
+          "milice"
+        ],
+        "hi": [
+          "मिलिशिया"
+        ],
+        "it": [
+          "milizia"
+        ],
+        "ja": [
+          "民兵"
+        ],
+        "ru": [
+          "ополчение"
+        ],
+        "zh": [
+          "民兵"
+        ]
+      },
+      "evidence": "CNN / 2026-04-07"
+    },
+    {
+      "term": "Suleimani",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "سليماني"
+        ],
+        "de": [
+          "Soleimani"
+        ],
+        "en": [
+          "Suleimani"
+        ],
+        "es": [
+          "Soleimani"
+        ],
+        "fr": [
+          "Soleimani"
+        ],
+        "hi": [
+          "सुलेमानी"
+        ],
+        "it": [
+          "Soleimani"
+        ],
+        "ja": [
+          "ソレイマニ"
+        ],
+        "ru": [
+          "Сулеймани"
+        ],
+        "zh": [
+          "苏莱曼尼"
+        ]
+      },
+      "evidence": "The National / 2026-04-04"
+    },
+    {
+      "term": "Naim Qassem",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "نعيم قاسم"
+        ],
+        "de": [
+          "Naïm Qassem"
+        ],
+        "en": [
+          "Naim Qassem"
+        ],
+        "es": [
+          "Naím Qasem"
+        ],
+        "fr": [
+          "Naïm Qassem"
+        ],
+        "hi": [
+          "नईम कासिम"
+        ],
+        "it": [],
+        "ja": [
+          "ナイム・カセム"
+        ],
+        "ru": [
+          "Наим Касем"
+        ],
+        "zh": [
+          "纳伊姆·卡西姆"
+        ]
+      },
+      "evidence": "France 24 / 2026-02-07"
+    },
+    {
+      "term": "Hamidawi",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "حميداوي"
+        ],
+        "de": [],
+        "en": [
+          "Hamidawi"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "हमीदावी"
+        ],
+        "it": [],
+        "ja": [
+          "ハミダウィ"
+        ],
+        "ru": [
+          "Хамидави"
+        ],
+        "zh": [
+          "哈米达维"
+        ]
+      },
+      "evidence": "Jerusalem Post / 2026-04-15"
+    },
+    {
+      "term": "Nasrallah",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "نصرالله",
+          "حسن نصرالله",
+          "السيد نصرالله"
+        ],
+        "de": [],
+        "en": [
+          "Nasrallah",
+          "Hassan Nasrallah",
+          "Sayyed Nasrallah"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "नसरुल्लाह"
+        ],
+        "it": [],
+        "ja": [
+          "ナスララ"
+        ],
+        "ru": [
+          "Насралла",
+          "Хасан Насралла"
+        ],
+        "zh": [
+          "纳斯鲁拉"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Popular Mobilization Forces",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "الحشد الشعبي",
+          "قوات الحشد الشعبي"
+        ],
+        "de": [
+          "Volksmobilisierungskräfte"
+        ],
+        "en": [
+          "Popular Mobilization Forces",
+          "PMF",
+          "al-Hashd al-Shaabi",
+          "Hashd",
+          "Hashed"
+        ],
+        "es": [],
+        "fr": [
+          "Forces de mobilisation populaire"
+        ],
+        "hi": [
+          "पीएमएफ",
+          "अल-हश्द"
+        ],
+        "it": [],
+        "ja": [
+          "人民動員軍"
+        ],
+        "ru": [
+          "Силы народной мобилизации",
+          "Хашд аш-Шааби"
+        ],
+        "zh": [
+          "人民动员力量"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Asaib Ahl al-Haq",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "عصائب أهل الحق"
+        ],
+        "de": [],
+        "en": [
+          "Asaib Ahl al-Haq",
+          "AAH",
+          "League of the Righteous"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "असाइब अहल अल-हक"
+        ],
+        "it": [],
+        "ja": [
+          "アサーイブ・アハル・アル=ハック"
+        ],
+        "ru": [
+          "Асаиб Ахль аль-Хак"
+        ],
+        "zh": [
+          "正义联盟"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Harakat al-Nujaba",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "حركة النجباء",
+          "حركة حزب الله النجباء"
+        ],
+        "de": [],
+        "en": [
+          "Harakat al-Nujaba",
+          "Harakat Hezbollah al-Nujaba",
+          "al-Nujaba"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "हरकत अल-नुजबा"
+        ],
+        "it": [],
+        "ja": [
+          "ハラカト・ヌジャバ"
+        ],
+        "ru": [
+          "Харакат ан-Нуджаба"
+        ],
+        "zh": [
+          "尊贵之家运动"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Fatemiyoun",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "لواء فاطميون",
+          "فاطميون"
+        ],
+        "de": [],
+        "en": [
+          "Fatemiyoun",
+          "Liwa Fatemiyoun",
+          "Fatimiyoun Brigade"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "फातिमियून"
+        ],
+        "it": [],
+        "ja": [
+          "ファーティミーユン"
+        ],
+        "ru": [
+          "Фатимиюн",
+          "Лива Фатимиюн"
+        ],
+        "zh": [
+          "法蒂玛旅"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "Quds Day",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "يوم القدس",
+          "يوم القدس العالمي"
+        ],
+        "de": [],
+        "en": [
+          "Quds Day",
+          "Al-Quds Day",
+          "International Quds Day"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "कुद्स दिवस"
+        ],
+        "it": [],
+        "ja": [
+          "クッズの日"
+        ],
+        "ru": [
+          "День Аль-Кудс"
+        ],
+        "zh": [
+          "圣城日"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    },
+    {
+      "term": "proxy war",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "حرب بالوكالة"
+        ],
+        "de": [
+          "Stellvertreterkrieg"
+        ],
+        "en": [
+          "proxy war",
+          "proxy warfare"
+        ],
+        "es": [
+          "guerra subsidiaria",
+          "guerra por delegación"
+        ],
+        "fr": [
+          "guerre par procuration"
+        ],
+        "hi": [
+          "प्रॉक्सी युद्ध"
+        ],
+        "it": [
+          "guerra per procura"
+        ],
+        "ja": [
+          "代理戦争"
+        ],
+        "ru": [
+          "прокси-война",
+          "опосредованная война"
+        ],
+        "zh": [
+          "代理人战争"
+        ]
+      },
+      "evidence": "manual / 2026-05-11"
+    }
+  ]
+}

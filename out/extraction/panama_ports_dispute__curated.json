@@ -1,0 +1,336 @@
+{
+  "metadata": {
+    "fn_id": "panama_ports_dispute",
+    "centroid": "AMERICAS-CENTRAL",
+    "window_days": 365,
+    "sample_size_requested": 200,
+    "sample_size_actual": 12,
+    "seeds": [
+      "CK Hutchison",
+      "Balboa",
+      "Cristobal",
+      "Supreme Court",
+      "concession",
+      "ports seizure"
+    ],
+    "timestamp": "2026-07-07T12:09:53.512306"
+  },
+  "bundle": [
+    {
+      "term": "Panama Canal",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "قناة بنما"
+        ],
+        "de": [],
+        "en": [
+          "Panama Canal"
+        ],
+        "es": [
+          "Canal de Panamá"
+        ],
+        "fr": [
+          "Canal de Panama"
+        ],
+        "hi": [
+          "पनामा नहर"
+        ],
+        "it": [],
+        "ja": [
+          "パナマ運河"
+        ],
+        "ru": [
+          "Панамский канал"
+        ],
+        "zh": [
+          "巴拿马运河"
+        ]
+      },
+      "evidence": "Associated Press / 2026-02-24"
+    },
+    {
+      "term": "CK Hutchison",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "سي كيه هاتشيسون"
+        ],
+        "de": [],
+        "en": [
+          "CK Hutchison"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "सीके हचिसन"
+        ],
+        "it": [],
+        "ja": [
+          "CKハチソン"
+        ],
+        "ru": [
+          "CK Hutchison"
+        ],
+        "zh": [
+          "长江和记实业"
+        ]
+      },
+      "evidence": "Wall Street Journal / 2026-04-08"
+    },
+    {
+      "term": "Maersk",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "ميرسك"
+        ],
+        "de": [],
+        "en": [
+          "Maersk"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "मार्स्क"
+        ],
+        "it": [],
+        "ja": [
+          "マースク"
+        ],
+        "ru": [
+          "Maersk"
+        ],
+        "zh": [
+          "马士基"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-08"
+    },
+    {
+      "term": "arbitration",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "تحكيم"
+        ],
+        "de": [],
+        "en": [
+          "arbitration"
+        ],
+        "es": [
+          "arbitraje"
+        ],
+        "fr": [
+          "arbitrage"
+        ],
+        "hi": [
+          "मध्यस्थता"
+        ],
+        "it": [],
+        "ja": [
+          "仲裁"
+        ],
+        "ru": [
+          "арбитраж"
+        ],
+        "zh": [
+          "仲裁"
+        ]
+      },
+      "evidence": "Financial Times / 2026-04-08"
+    },
+    {
+      "term": "concession",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "امتياز"
+        ],
+        "de": [],
+        "en": [
+          "concession"
+        ],
+        "es": [
+          "concesión"
+        ],
+        "fr": [],
+        "hi": [
+          "रियायत"
+        ],
+        "it": [],
+        "ja": [
+          "コンセッション"
+        ],
+        "ru": [
+          "концессия"
+        ],
+        "zh": [
+          "特许经营权"
+        ]
+      },
+      "evidence": "Associated Press / 2026-01-30"
+    },
+    {
+      "term": "Supreme Court",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "المحكمة العليا"
+        ],
+        "de": [],
+        "en": [
+          "Supreme Court"
+        ],
+        "es": [
+          "Corte Suprema"
+        ],
+        "fr": [
+          "Cour suprême"
+        ],
+        "hi": [
+          "सर्वोच्च न्यायालय"
+        ],
+        "it": [],
+        "ja": [
+          "最高裁判所"
+        ],
+        "ru": [
+          "Верховный суд"
+        ],
+        "zh": [
+          "最高法院"
+        ]
+      },
+      "evidence": "The Guardian / 2026-01-30"
+    },
+    {
+      "term": "unconstitutional",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "غير دستوري"
+        ],
+        "de": [],
+        "en": [
+          "unconstitutional"
+        ],
+        "es": [
+          "inconstitucional"
+        ],
+        "fr": [
+          "inconstitutionnel"
+        ],
+        "hi": [
+          "असंवैधानिक"
+        ],
+        "it": [],
+        "ja": [
+          "違憲"
+        ],
+        "ru": [
+          "неконституционный"
+        ],
+        "zh": [
+          "违宪"
+        ]
+      },
+      "evidence": "Associated Press / 2026-01-30"
+    },
+    {
+      "term": "takeover",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "استيلاء"
+        ],
+        "de": [],
+        "en": [
+          "takeover"
+        ],
+        "es": [
+          "toma de control"
+        ],
+        "fr": [
+          "prise de contrôle"
+        ],
+        "hi": [
+          "अधिग्रहण"
+        ],
+        "it": [],
+        "ja": [
+          "買収"
+        ],
+        "ru": [
+          "поглощение"
+        ],
+        "zh": [
+          "接管"
+        ]
+      },
+      "evidence": "Reuters / 2026-04-08"
+    },
+    {
+      "term": "seize",
+      "type": "concept",
+      "aliases": {
+        "ar": [
+          "يستولي"
+        ],
+        "de": [],
+        "en": [
+          "seize"
+        ],
+        "es": [
+          "incautar"
+        ],
+        "fr": [
+          "saisir"
+        ],
+        "hi": [
+          "जब्त करना"
+        ],
+        "it": [],
+        "ja": [
+          "押収する"
+        ],
+        "ru": [
+          "изымать"
+        ],
+        "zh": [
+          "扣押"
+        ]
+      },
+      "evidence": "Associated Press / 2026-02-24"
+    },
+    {
+      "term": "Hong Kong",
+      "type": "entity",
+      "aliases": {
+        "ar": [
+          "هونغ كونغ"
+        ],
+        "de": [],
+        "en": [
+          "Hong Kong"
+        ],
+        "es": [],
+        "fr": [],
+        "hi": [
+          "हांगकांग"
+        ],
+        "it": [],
+        "ja": [
+          "香港"
+        ],
+        "ru": [
+          "Гонконг"
+        ],
+        "zh": [
+          "香港"
+        ]
+      },
+      "evidence": "Financial Times / 2026-02-04"
+    }
+  ]
+}

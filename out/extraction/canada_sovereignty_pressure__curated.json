@@ -1,0 +1,104 @@
+{
+  "metadata": {
+    "fn_id": "canada_sovereignty_pressure",
+    "centroid": "AMERICAS-CANADA",
+    "window_days": 180,
+    "hand_drafted": true,
+    "note": "Pre-audited under the dyad gate CANADA+USA. Gordie Howe=7, sovereignt=8, dependence=7, 51st state=4, annex=3.",
+    "post_audit_drops": [
+      "Board of Peace non-English variants (Friedensrat=32 at 78% MIDEAST-PALESTINE, mjls alslam=33, Junta de Paz, Conseil de paix, Sovet mira) - the term is overwhelmingly the GAZA Board of Peace; Canada's withdrawn invitation is an Anglophone sub-story. EN kept (616 raw hits but the CANADA target gate reduces it to the 16 clean Canadian titles verified by sampling).",
+      "takeover / Uebernahme / absorb and all translations - takeover=131 at 48% foreign is generic corporate M&A, and the CANADA gate does NOT exclude Canadian business news (Ecolab/CoolIT, Charlesbank, JPMorgan all present in corpus). Real false-positive engine.",
+      "ar 'dm' (annexation) - 2-character token, rule 6; 48 hits at 65% foreign via substring.",
+      "dependency - 10 hits, 100% foreign, generic. 'dependence' retained.",
+      "rules-based order - 6 hits at 83% foreign, low value.",
+      "national unity - moved to alberta_separatism_us_ties where the phenomenon actually lives; removes within-group overlap.",
+      "Gordie-Howe-Bruecke / 51. Bundesstaat - 100% foreign at n=3/n=2, no German-language coverage of these."
+    ],
+    "timestamp": "2026-07-18"
+  },
+  "bundle": [
+    {
+      "term": "annexation",
+      "type": "concept",
+      "aliases": {
+        "ar": ["الضم"], "de": ["Annexion", "Anschluss"], "en": ["annex"],
+        "es": ["anexión"], "fr": ["annexion"], "hi": ["विलय"],
+        "it": ["annessione"], "ja": ["併合"], "ru": ["аннекси"], "zh": ["吞并"]
+      }
+    },
+    {
+      "term": "51st state",
+      "type": "concept",
+      "aliases": {
+        "ar": ["الولاية الحادية والخمسين"], "de": ["51. Staat"],
+        "en": ["51st state", "statehood"],
+        "es": ["estado 51"], "fr": ["51e État"], "hi": ["51वां राज्य"],
+        "it": ["51esimo stato"], "ja": ["51番目の州"], "ru": ["51-й штат"], "zh": ["第51个州"]
+      }
+    },
+    {
+      "term": "sovereignty",
+      "type": "concept",
+      "aliases": {
+        "ar": ["السيادة"], "de": ["Souveränität"], "en": ["sovereignt"],
+        "es": ["soberanía"], "fr": ["souveraineté"], "hi": ["संप्रभुता"],
+        "it": ["sovranità"], "ja": ["主権"], "ru": ["суверенитет"], "zh": ["主权"]
+      }
+    },
+    {
+      "term": "Gordie Howe International Bridge",
+      "type": "entity",
+      "aliases": {
+        "ar": ["جسر غوردي هاو"], "de": [],
+        "en": ["Gordie Howe", "Detroit-Windsor", "Ambassador Bridge"],
+        "es": [], "fr": [], "hi": ["गोर्डी होवे पुल"],
+        "it": [], "ja": ["ゴーディ・ハウ橋"], "ru": ["мост Горди Хоу"], "zh": ["戈迪豪大桥"]
+      }
+    },
+    {
+      "term": "Board of Peace",
+      "type": "entity",
+      "aliases": {
+        "ar": [], "de": [], "en": ["Board of Peace"],
+        "es": [], "fr": [], "hi": [],
+        "it": [], "ja": [], "ru": [], "zh": []
+      }
+    },
+    {
+      "term": "Golden Dome missile defence cost-sharing",
+      "type": "entity",
+      "aliases": {
+        "ar": ["القبة الذهبية"], "de": ["Golden Dome"], "en": ["Golden Dome"],
+        "es": ["Cúpula Dorada"], "fr": ["Dôme doré"], "hi": ["गोल्डन डोम"],
+        "it": ["Cupola Dorata"], "ja": ["ゴールデンドーム"], "ru": ["Золотой купол"], "zh": ["黄金穹顶"]
+      }
+    },
+    {
+      "term": "economic dependence",
+      "type": "concept",
+      "aliases": {
+        "ar": ["التبعية الاقتصادية"], "de": ["Abhängigkeit"], "en": ["dependence"],
+        "es": ["dependencia"], "fr": ["dépendance"], "hi": ["निर्भरता"],
+        "it": ["dipendenza"], "ja": ["依存"], "ru": ["зависимость"], "zh": ["依赖"]
+      }
+    },
+    {
+      "term": "world order",
+      "type": "concept",
+      "aliases": {
+        "ar": ["النظام العالمي"], "de": ["Weltordnung"], "en": ["world order"],
+        "es": ["orden mundial"], "fr": ["ordre mondial"], "hi": ["विश्व व्यवस्था"],
+        "it": ["ordine mondiale"], "ja": ["世界秩序"], "ru": ["мировой порядок"], "zh": ["世界秩序"]
+      }
+    },
+    {
+      "term": "consumer boycott",
+      "type": "concept",
+      "aliases": {
+        "ar": ["مقاطعة"], "de": ["Boykott"], "en": ["boycott", "Buy Canadian"],
+        "es": ["boicot"], "fr": ["boycott"], "hi": ["बहिष्कार"],
+        "it": ["boicottaggio"], "ja": ["ボイコット"], "ru": ["бойкот"], "zh": ["抵制"]
+      }
+    }
+  ]
+}

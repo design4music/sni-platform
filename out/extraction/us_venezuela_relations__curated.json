@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "fn_id": "us_venezuela_relations",
+    "note": "US coercion & military action. Target-centric on Venezuela. DELIBERATELY avoids bare 'troops/deploy/military/aid/warship' -- the June earthquake relief carries the VEN centroid and floods those. Leans on SPECIFIC coercion vocab: the capture operation, drug-boat / Tren de Aragua strikes, annexation/51st-state rhetoric, regime change, war-powers, blockade, interdiction. 'strike/invasion' audited for quake-relief leak."
+  },
+  "bundle": [
+    { "term": "Named targets of US action", "aliases": {
+      "en": ["Tren de Aragua", "Cartel de los Soles", "Cartel of the Suns", "SOUTHCOM", "Southern Command"]
+    }},
+    { "term": "Regime-change / capture operation", "aliases": {
+      "en": ["regime change", "capture", "abduct", "abduction", "detained Maduro", "seizure of Maduro", "ouster", "toppling", "coup", "extradition", "war powers", "military operation", "special forces"],
+      "de": ["Regimewechsel", "Festnahme", "Entführung", "Sturz", "Staatsstreich", "Kriegsvollmachten", "Militäroperation"],
+      "es": ["cambio de régimen", "captura", "secuestro", "derrocamiento", "golpe", "operación militar", "poderes de guerra"],
+      "fr": ["changement de régime", "capture", "enlèvement", "renversement", "coup d'État", "opération militaire"],
+      "it": ["cambio di regime", "cattura", "rapimento", "rovesciamento", "colpo di Stato", "operazione militare"],
+      "ru": ["смена режима", "захват", "похищение", "свержение", "переворот", "военная операция"],
+      "zh": ["政权更迭", "抓捕", "绑架", "推翻", "政变", "军事行动"],
+      "ar": ["تغيير النظام", "اعتقال", "اختطاف", "إطاحة", "انقلاب", "عملية عسكرية"],
+      "ja": ["体制転換", "拘束", "拉致", "転覆", "クーデター", "軍事作戦"],
+      "hi": ["सत्ता परिवर्तन", "अपहरण", "तख्तापलट", "सैन्य अभियान"]
+    }},
+    { "term": "Annexation / coercion rhetoric", "aliases": {
+      "en": ["51st state", "annex", "annexation", "coercion", "remote coercion", "blockade", "maximum pressure", "gunboat", "occupation"],
+      "de": ["51. Bundesstaat", "annektieren", "Annexion", "Zwang", "Blockade", "maximaler Druck", "Besatzung"],
+      "es": ["estado 51", "anexión", "anexar", "coerción", "bloqueo", "máxima presión", "ocupación"],
+      "fr": ["51e État", "annexion", "annexer", "coercition", "blocus", "pression maximale", "occupation"],
+      "it": ["51º Stato", "annessione", "annettere", "coercizione", "blocco", "massima pressione", "occupazione"],
+      "ru": ["51-й штат", "аннексия", "аннексировать", "принуждение", "блокада", "максимальное давление", "оккупация"],
+      "zh": ["第51州", "吞并", "兼并", "胁迫", "封锁", "极限施压", "占领"],
+      "ar": ["الولاية 51", "ضم", "الإكراه", "حصار", "أقصى ضغط", "احتلال"],
+      "ja": ["51番目の州", "併合", "強制", "封鎖", "最大限の圧力", "占領"],
+      "hi": ["51वां राज्य", "कब्जा", "नाकाबंदी", "अधिकतम दबाव"]
+    }},
+    { "term": "Counter-narcotics strikes / interdiction", "aliases": {
+      "en": ["drug boat", "drug vessel", "drug-boat strike", "narco", "narco-trafficking", "drug trafficking", "interdiction", "tanker seizure", "seized tanker", "drug smuggling", "cocaine", "narco-terror"],
+      "de": ["Drogenboot", "Drogenschmuggel", "Drogenhandel", "Tankerbeschlagnahmung", "Kokain"],
+      "es": ["narcolancha", "narcotráfico", "narcotraficante", "incautación de buque", "cocaína", "narcoterrorismo"],
+      "fr": ["bateau de drogue", "narcotrafic", "trafic de drogue", "saisie de pétrolier", "cocaïne"],
+      "it": ["barca della droga", "narcotraffico", "traffico di droga", "sequestro di petroliera", "cocaina"],
+      "ru": ["наркокатер", "наркотрафик", "наркоторговля", "захват танкера", "кокаин"],
+      "zh": ["贩毒船", "毒品走私", "贩毒", "扣押油轮", "可卡因"],
+      "ar": ["قارب المخدرات", "تهريب المخدرات", "الاتجار بالمخدرات", "مصادرة ناقلة", "الكوكايين"],
+      "ja": ["麻薬ボート", "麻薬密輸", "麻薬取引", "タンカー拿捕", "コカイン"],
+      "hi": ["ड्रग नाव", "मादक तस्करी", "कोकीन"]
+    }}
+  ]
+}

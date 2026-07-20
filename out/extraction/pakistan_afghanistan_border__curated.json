@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "fn_id": "pakistan_afghanistan_border",
+    "note": "Archetype A dyad AND-gate: centroid_ids={ASIA-PAKISTAN} + primary_target=ASIA-AFGHANISTAN (sparser centroid in target: AFG 1420 < PAK 6345). The target gate is what makes the generic domain verbs safe here (strike/airstrike/border/militant/clash) -- a title only attributes if it carries BOTH centroids. Pre-audited 2026-07-17: border n=94, militant n=30, Taliban n=150, Kabul n=117, all on-topic under the gate. Dropped as dead: Chaman, Waziristan, Spin Boldak, Muttaqi, Mujahid, deportation, incursion. Non-EN lists are thin by corpus (this dyad reports overwhelmingly in EN) but kept for script coverage; only long/specific forms per rule 6b."
+  },
+  "bundle": [
+    {
+      "term": "Own-side actors, formations and the named operation",
+      "aliases": {
+        "en": ["Taliban", "TTP", "Tehreek-e-Taliban", "Haqqani", "ISPR", "Ghazab"],
+        "ru": ["Талибан", "Техрик-е Талибан"],
+        "zh": ["塔利班", "巴基斯坦塔利班"],
+        "ar": ["طالبان", "تحريك طالبان"],
+        "ja": ["タリバン"],
+        "hi": ["तालिबान"]
+      }
+    },
+    {
+      "term": "Border geography and named strike locations",
+      "aliases": {
+        "en": ["Kabul", "Kandahar", "Nangarhar", "Kunar", "Bajaur", "Torkham",
+               "Khyber Pakhtunkhwa", "Angoor Adda", "Landi Kotal"],
+        "ru": ["Кабул", "Кандагар"],
+        "zh": ["喀布尔", "坎大哈"],
+        "ar": ["كابول", "قندهار", "ننجرهار"],
+        "ja": ["カブール", "カンダハル"],
+        "hi": ["काबुल", "कंधार"]
+      }
+    },
+    {
+      "term": "The disputed frontier itself",
+      "aliases": {
+        "en": ["Durand"],
+        "de": ["Durand-Linie"],
+        "es": ["Línea Durand"],
+        "fr": ["ligne Durand"],
+        "ru": ["линия Дюранда"],
+        "zh": ["杜兰德线"],
+        "ar": ["خط ديوراند"],
+        "ja": ["デュランド線"],
+        "hi": ["डूरंड रेखा"]
+      }
+    },
+    {
+      "term": "Cross-border military action (safe: cross-filtered by the target gate)",
+      "aliases": {
+        "en": ["airstrike", "strike", "cross-border", "border", "militant",
+               "hideout", "clash", "retaliat", "checkpost", "ceasefire"],
+        "de": ["Luftangriff", "Grenzkonflikt", "Grenzgebiet", "Militante"],
+        "es": ["ataque aéreo", "frontera", "milicianos"],
+        "fr": ["frappe aérienne", "frontière"],
+        "it": ["attacco aereo", "frontiera"],
+        "ru": ["авиаудар", "боевик", "приграничн"],
+        "zh": ["空袭", "边境", "武装分子"],
+        "ar": ["غارة جوية", "الحدود", "مسلحين"],
+        "ja": ["空爆", "国境", "越境"],
+        "hi": ["हवाई हमला", "सीमा पार", "आतंकवादी"]
+      }
+    }
+  ]
+}

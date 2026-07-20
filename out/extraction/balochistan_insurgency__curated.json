@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "fn_id": "balochistan_insurgency",
+    "note": "Sub-case A2: the toponym is the gate. centroid_ids={ASIA-PAKISTAN}, primary_target NULL. 'Baloch' word-STARTs so it already covers Balochistan/Baloch/Balochistan's -- listing both is redundant. Pre-audited 2026-07-17: bare toponym runs ~85% on-topic in Pakistan scope (Greenland-class ~95%, Pacific-class ~63%); the ~15% residual is road accidents and earthquakes datelined Balochistan, accepted rather than lose the insurgency corpus, and re-checked at the measure step. Iranian Sistan-Baluchestan leak measured at 6 co-tagged titles -- not material. DROPPED: 'CPEC' (7 hits, all China-Pakistan economic-corridor diplomacy, not the insurgency); 'insurgency' (generic, n=2, both US mineral-investment stories, 100% foreign). Dead: BLF, Jaffar Express, Makran, Levies. 'BLA' is SAFE here (all-caps, <=4 chars -> case-sensitive whole-word acronym path, so it does not touch blast/blame) but must never appear in a non-EN list, where the substring path would."
+  },
+  "bundle": [
+    {
+      "term": "The region and its sub-geography",
+      "aliases": {
+        "en": ["Baloch", "Gwadar", "Quetta"],
+        "de": ["Belutschistan"],
+        "es": ["Beluchistán"],
+        "fr": ["Baloutchistan"],
+        "it": ["Belucistan"],
+        "ru": ["Белуджистан", "Кветта"],
+        "zh": ["俾路支"],
+        "ar": ["بلوشستان", "كويتا"],
+        "ja": ["バルチスタン"],
+        "hi": ["बलूचिस्तान", "क्वेटा"]
+      }
+    },
+    {
+      "term": "Insurgent formations and figures",
+      "aliases": {
+        "en": ["BLA", "Balochistan Liberation", "Mahrang"],
+        "ru": ["Армия освобождения Белуджистана"],
+        "zh": ["俾路支解放军"],
+        "ar": ["جيش تحرير بلوشستان"]
+      }
+    },
+    {
+      "term": "The phenomenon",
+      "aliases": {
+        "en": ["separatist", "enforced disappearance"],
+        "de": ["Separatisten"],
+        "es": ["separatistas"],
+        "fr": ["séparatistes"],
+        "ru": ["сепаратист", "повстанц"],
+        "zh": ["分离主义"],
+        "ar": ["انفصاليين"],
+        "hi": ["अलगाववादी"]
+      }
+    }
+  ]
+}

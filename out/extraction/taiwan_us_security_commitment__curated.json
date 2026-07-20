@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "fn_id": "taiwan_us_security_commitment",
+    "note": "Scope centroid_ids={ASIA-TAIWAN} only. A primary_target=AMERICAS-USA gate was tested and rejected: only 100 of 108 real Taiwan arms titles carry the USA centroid, so the gate would drop ~7% of legitimate content while the aliases here are already US-specific. Weapon system names (HIMARS/F-16/Harpoon/Patriot) OMITTED per spec leak-class taxonomy -- equipment roams between operations and supply. 'bargaining chip'/'negotiating chip' deliberately NOT in the bundle: it is stance vocabulary and belongs in narratives_v2.framing_keywords; the underlying titles are caught by 'arms sale' anyway.",
+    "archetype": "target-centric on Taiwan, gated by the participant centroid"
+  },
+  "bundle": [
+    {
+      "term": "arms sales",
+      "aliases": {
+        "en": ["arms sale", "arms deal", "arms package", "weapons sale", "weapons deal", "arms backlog", "arms transfer", "foreign military sale", "arms purchase"],
+        "de": ["Waffenverkauf", "Waffenlieferung", "Rüstungsdeal", "Waffengeschäft"],
+        "es": ["venta de armas"],
+        "fr": ["vente d'armes"],
+        "it": ["vendita di armi"],
+        "ru": ["продажа оружия", "поставки оружия"],
+        "zh": ["军售", "对台军售"],
+        "ja": ["武器売却", "武器供与"],
+        "ar": ["صفقة أسلحة", "بيع أسلحة"],
+        "hi": ["हथियार बिक्री"]
+      }
+    },
+    {
+      "term": "Taiwan Relations Act / Six Assurances",
+      "aliases": {
+        "en": ["Taiwan Relations Act", "Six Assurances"],
+        "zh": ["与台湾关系法", "六项保证"],
+        "ja": ["台湾関係法"]
+      }
+    },
+    {
+      "term": "strategic ambiguity",
+      "aliases": {
+        "en": ["strategic ambiguity", "strategic clarity"],
+        "de": ["strategische Ambiguität", "strategische Mehrdeutigkeit", "strategische Klarheit"],
+        "es": ["ambigüedad estratégica"],
+        "fr": ["ambiguïté stratégique"],
+        "it": ["ambiguità strategica"],
+        "ru": ["стратегическая неопределённость"],
+        "zh": ["战略模糊"],
+        "ja": ["戦略的曖昧"]
+      }
+    },
+    {
+      "term": "security commitment / guarantee",
+      "aliases": {
+        "en": ["commitment", "security guarantee", "defense commitment", "defence commitment"],
+        "de": ["Sicherheitsgarantie", "Sicherheitszusage", "Beistandsversprechen"],
+        "es": ["garantía de seguridad", "compromiso de seguridad"],
+        "fr": ["garantie de sécurité", "engagement de sécurité"],
+        "it": ["garanzia di sicurezza"],
+        "ru": ["гарантии безопасности"],
+        "zh": ["安全承诺"],
+        "ja": ["安全保障の約束"],
+        "ar": ["ضمان أمني"]
+      }
+    },
+    {
+      "term": "American Institute in Taiwan / INDOPACOM",
+      "aliases": {
+        "en": ["American Institute in Taiwan", "INDOPACOM", "Indo-Pacific Command"],
+        "zh": ["美国在台协会"]
+      }
+    },
+    {
+      "term": "defence budget and spending",
+      "aliases": {
+        "en": ["defense budget", "defence budget", "defense spending", "defence spending", "military spending", "special budget"],
+        "de": ["Verteidigungshaushalt", "Verteidigungsbudget", "Verteidigungsausgaben", "Militärausgaben"],
+        "es": ["presupuesto de defensa", "gasto militar"],
+        "fr": ["budget de la défense", "dépenses militaires"],
+        "it": ["bilancio della difesa", "spesa militare"],
+        "ru": ["оборонный бюджет", "военные расходы"],
+        "zh": ["国防预算", "军费"],
+        "ja": ["国防予算", "防衛費"],
+        "ar": ["ميزانية الدفاع"],
+        "hi": ["रक्षा बजट"]
+      }
+    },
+    {
+      "term": "burden sharing",
+      "aliases": {
+        "en": ["burden sharing", "burden-sharing"],
+        "de": ["Lastenteilung"],
+        "es": ["reparto de cargas"],
+        "fr": ["partage du fardeau"]
+      }
+    },
+    {
+      "term": "asymmetric defence",
+      "aliases": {
+        "en": ["asymmetric warfare", "asymmetric defense", "asymmetric defence", "porcupine strategy"],
+        "de": ["asymmetrische Kriegführung", "Stachelschwein-Strategie"],
+        "zh": ["不对称作战", "豪猪战略"],
+        "ja": ["非対称戦"]
+      }
+    },
+    {
+      "term": "conscription and reserves",
+      "aliases": {
+        "en": ["conscription", "conscript", "reservist", "military service"],
+        "de": ["Wehrpflicht", "Reservist", "Wehrdienst"],
+        "es": ["servicio militar", "reservista"],
+        "fr": ["service militaire", "réserviste"],
+        "it": ["servizio militare", "riservista"],
+        "ru": ["призыв", "резервист"],
+        "zh": ["征兵", "后备军人"],
+        "ja": ["徴兵", "予備役"],
+        "ar": ["التجنيد"]
+      }
+    }
+  ]
+}

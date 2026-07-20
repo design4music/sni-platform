@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "fn_id": "thailand_cambodia_border",
+    "note": "Standalone atomic (no theater), Archetype B bilateral. Grounded against 365d of ASIA-SOUTHEAST coverage 2026-07-17. HARD CONSTRAINT: no usable country centroid -- ASIA-PACIFIC-THAILAND is empty (0 titles, ASEAN centroid bug) and Cambodia has NO centroid at all; the only populated centroid is the 11-country ASIA-SOUTHEAST bucket, so primary_target is unavailable (null anyway for a bilateral) and gating is PURE ALIAS. Bare 'Cambodia'/'Cambodian' are therefore EXCLUDED: within ASIA-SOUTHEAST they would sweep in the large Cambodia scam-centre / transnational-crime story (a separate FN, out of scope) plus Cambodia-China diplomacy and domestic news -- of ~74 Cambodia-mention titles/180d only ~20 are this border conflict. Precision over recall (spec rule 4, 1a Cuba case): anchored on the country-pair compound (the live workhorse, 8 hits), the MOU43/44 maritime framework (4), the Cambodian PM, and border toponyms. The famous temple toponyms (Preah Vihear/Ta Moan) return 0 in the current quiet window -- the kinetic phase predates the data -- but are kept so recall scales automatically when clashes resume. EXCLUDED with cause: bare 'Anutin' (Thai PM, 88 hits, ~all Thai domestic politics not the conflict), bare 'Chong ' (matched 'Enchong Dee'), bare 'demarcation'/'ceasefire'/'border' (generic, would leak across ASEAN), bare 'UNCLOS' (SCS + Hormuz), 'Surin'/'Ubon' (generic Thai provinces)."
+  },
+  "bundle": [
+    {
+      "term": "Country-pair compound (the live workhorse anchor; hyphen AND en-dash forms)",
+      "aliases": {
+        "en": ["Thai-Cambod", "Thailand-Cambod", "Cambodia-Thai", "Cambodian-Thai", "Cambodia-Thailand", "Thai-Khmer", "Khmer-Thai", "Thai–Cambod", "Thailand–Cambod", "Cambodia–Thai", "Cambodian–Thai", "Cambodia–Thailand", "Thai–Khmer", "Khmer–Thai"],
+        "de": ["thailändisch-kambodschanisch", "kambodschanisch-thailändisch"],
+        "fr": ["thaïlando-cambodgien"],
+        "es": ["tailandés-camboyano", "camboyano-tailandés"],
+        "it": ["thailandese-cambogiano"],
+        "ru": ["таиландско-камбоджийск", "камбоджийско-таиландск"],
+        "zh": ["泰柬"],
+        "ja": ["タイ・カンボジア", "カンボジアとタイ"],
+        "ar": ["الحدود التايلاندية الكمبودية"],
+        "hi": ["थाईलैंड-कंबोडिया", "कंबोडिया-थाईलैंड"]
+      }
+    },
+    {
+      "term": "Disputed border sites and temples (fire on escalation)",
+      "aliases": {
+        "en": ["Preah Vihear", "Ta Moan", "Ta Muen", "Ta Krabey", "Emerald Triangle", "Chong An Ma", "Chong Bok", "Chong Chom", "Chong Sa-Ngam", "Mom Bei", "Phu Makhuea"],
+        "zh": ["柏威夏"],
+        "ja": ["プレアビヒア"],
+        "ru": ["Преа Вихеар"],
+        "ar": ["بريا فيهير"],
+        "hi": ["प्रेह विहार"]
+      }
+    },
+    {
+      "term": "Maritime / Gulf of Thailand overlapping-claims dimension",
+      "aliases": {
+        "en": ["MOU 44", "MOU44", "MOU 43", "MOU43", "Koh Kood", "Ko Kut", "Overlapping Claims Area"]
+      }
+    },
+    {
+      "term": "Boundary mechanisms (full names only; bare 'demarcation' leaks to South Asia LAC)",
+      "aliases": {
+        "en": ["Joint Boundary Committee", "General Border Committee"]
+      }
+    },
+    {
+      "term": "Cambodian principal (own-side actor; 'Hun Sen' dropped -- leaked Cambodia-China Beijing visits)",
+      "aliases": {
+        "en": ["Hun Manet"]
+      }
+    },
+    {
+      "term": "Border provinces adjacent to the clash line",
+      "aliases": {
+        "en": ["Si Sa Ket", "Sisaket", "Oddar Meanchey"]
+      }
+    }
+  ]
+}

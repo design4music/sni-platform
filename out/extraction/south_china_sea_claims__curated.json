@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "fn_id": "south_china_sea_claims",
+    "note": "Standalone atomic (no theater) covering the whole SCS dispute: claims, law, incidents, features and external-power presence. Archetype A2 (anchor == subject): the sea's name and its feature toponyms are near-perfect gates, so NO generic domain verbs (patrol, vessel, coast guard, water cannon, sovereignty) -- aliases are OR'd and a bare verb would leak across all China/US/ASEAN news. primary_target=null; centroid_ids stay {ASIA-CHINA, ASIA-SOUTHEAST, AMERICAS-USA}. Audited against 365d of real headlines 2026-07-16. DROPPED with cause: 'CCG' (7/8 were Diaoyu Dao + east-of-Taiwan -> japan_china_theater leak), 'UNCLOS' (2/3 were the Thailand-Cambodia MOU44 dispute), 'arbitral' (2/3 were Botafogo football arbitration), 'Subi' (109 hits, all Mitsubishi/subida), 'Meiji' (Japanese era/company), 'Sierra Madre' (mountain range; gate includes AMERICAS-USA), 'Taiping' (generic Chinese toponym), 'freedom of navigation'/'Nimitz'/'George Washington'/'Ronald Reagan' (Hormuz + Caribbean + the presidents). CRITICAL: bare zh '南海' is EXCLUDED -- it matches Japanese 南海トラフ (Nankai Trough megaquake) and 南海フェリー; the CJK corpus is 99.7% Japanese (Asahi), so the collision is live, not theoretical (rule 6b)."
+  },
+  "bundle": [
+    {
+      "term": "The sea itself (core anchor, all scripts)",
+      "aliases": {
+        "en": ["South China Sea", "West Philippine Sea"],
+        "de": ["Südchinesisch"],
+        "es": ["Mar de China Meridional"],
+        "it": ["Mar Cinese Meridionale"],
+        "fr": ["mer de Chine méridionale"],
+        "ru": ["Южно-Китайск"],
+        "ja": ["南シナ海"],
+        "ar": ["بحر الصين الجنوبي"],
+        "hi": ["दक्षिण चीन सागर"],
+        "zh": ["南海争端", "南海仲裁", "南海行为准则"]
+      }
+    },
+    {
+      "term": "Scarborough Shoal and its claimant names",
+      "aliases": {
+        "en": ["Scarborough Shoal", "Huangyan", "Panatag"],
+        "zh": ["黄岩岛"]
+      }
+    },
+    {
+      "term": "Spratly Islands and features",
+      "aliases": {
+        "en": ["Spratly", "Nansha", "Second Thomas", "Ayungin", "Ren'ai", "Mischief Reef", "Fiery Cross", "Yongshu", "Thitu", "Pag-asa", "Whitsun", "Sandy Cay", "Itu Aba", "Vanguard Bank"],
+        "zh": ["南沙群岛", "仁爱礁", "美济礁", "永暑礁"]
+      }
+    },
+    {
+      "term": "Paracel Islands, Pratas, Macclesfield and other banks",
+      "aliases": {
+        "en": ["Paracel", "Xisha", "Dongsha", "Pratas", "Zhongsha", "Macclesfield Bank", "Antelope Reef", "Reed Bank", "Recto Bank"],
+        "zh": ["西沙群岛", "东沙群岛"]
+      }
+    },
+    {
+      "term": "Adjacent disputed waters within the basin",
+      "aliases": {
+        "en": ["Natuna", "Beibu", "Gulf of Tonkin"]
+      }
+    },
+    {
+      "term": "Claim doctrine and the legal-diplomatic instruments",
+      "aliases": {
+        "en": ["nine-dash line", "ten-dash line", "code of conduct"]
+      }
+    },
+    {
+      "term": "Claimant maritime agencies and the PH-US exercise",
+      "aliases": {
+        "en": ["PCG", "BFAR", "Tarriela", "Balikatan"]
+      }
+    }
+  ]
+}

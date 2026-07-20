@@ -1,0 +1,238 @@
+{
+  "metadata": {
+    "fn_id": "taiwan_military_pressure",
+    "note": "Scope is centroid_ids={ASIA-TAIWAN} only (~2k titles/180d), which acts as the gate the way primary_target does on Archetype-A FNs: domain verbs (drill, patrol, blockade) are cross-filtered by the Taiwan centroid and are therefore safe here, whereas they would leak across 23k ASIA-CHINA / 129k AMERICAS-USA titles under the old scope. Merged kinetic + grey-zone coercion per approved structure. Carrier names (Shandong/Fujian/Liaoning) OMITTED: all three are Chinese province names and would match province stories; 'aircraft carrier' covers the phenomenon. Bare 'PLA' is safe via the <=4-char all-caps acronym path (case-sensitive whole-word), which will not match 'plan'/'place'. Bare 'deter' DROPPED after audit: the EN path is a word-START prefix match, so it caught 'Trump and Xi will not DETERmine Taiwan's fate' -- replaced by 'deterrence'/'deterrent'.",
+    "archetype": "bilateral within a single-centroid scope; primary_target null"
+  },
+  "bundle": [
+    {
+      "term": "Taiwan Strait",
+      "aliases": {
+        "en": ["Taiwan Strait"],
+        "de": ["Taiwanstraße", "Straße von Taiwan"],
+        "es": ["estrecho de Taiwán"],
+        "fr": ["détroit de Taïwan"],
+        "it": ["stretto di Taiwan"],
+        "ru": ["Тайваньский пролив"],
+        "zh": ["台湾海峡", "台海"],
+        "ja": ["台湾海峡"],
+        "ar": ["مضيق تايوان"],
+        "hi": ["ताइवान जलडमरूमध्य"]
+      }
+    },
+    {
+      "term": "median line",
+      "aliases": {
+        "en": ["median line"],
+        "de": ["Mittellinie"],
+        "es": ["línea media"],
+        "fr": ["ligne médiane"],
+        "zh": ["海峡中线"],
+        "ja": ["中間線"]
+      }
+    },
+    {
+      "term": "air defence identification zone",
+      "aliases": {
+        "en": ["ADIZ", "air defence identification zone", "air defense identification zone"],
+        "de": ["Luftverteidigungszone"],
+        "zh": ["防空识别区"],
+        "ja": ["防空識別圏"]
+      }
+    },
+    {
+      "term": "People's Liberation Army / Eastern Theater Command",
+      "aliases": {
+        "en": ["PLA", "Liberation Army", "Eastern Theater Command", "Eastern Theatre Command"],
+        "de": ["Volksbefreiungsarmee"],
+        "ru": ["НОАК"],
+        "zh": ["解放军", "东部战区"],
+        "ja": ["人民解放軍"]
+      }
+    },
+    {
+      "term": "coast guard",
+      "aliases": {
+        "en": ["coast guard", "coastguard"],
+        "de": ["Küstenwache"],
+        "es": ["guardacostas"],
+        "fr": ["garde-côtes"],
+        "it": ["guardia costiera"],
+        "ru": ["береговая охрана"],
+        "zh": ["海警"],
+        "ja": ["海警局"],
+        "ar": ["خفر السواحل"],
+        "hi": ["तटरक्षक"]
+      }
+    },
+    {
+      "term": "offshore islands",
+      "aliases": {
+        "en": ["Kinmen", "Quemoy", "Matsu", "Penghu", "Pratas", "Dongsha", "Taiping", "Itu Aba"],
+        "zh": ["金门", "马祖", "澎湖", "东沙", "太平岛"],
+        "ja": ["金門"]
+      }
+    },
+    {
+      "term": "Bashi Channel",
+      "aliases": {
+        "en": ["Bashi Channel"],
+        "zh": ["巴士海峡"]
+      }
+    },
+    {
+      "term": "military drills",
+      "aliases": {
+        "en": ["drill", "exercise", "manoeuvre", "maneuver", "war game", "combat readiness"],
+        "de": ["Militärübung", "Manöver", "Gefechtsübung"],
+        "es": ["maniobras militares", "ejercicio militar"],
+        "fr": ["manœuvres militaires", "exercice militaire"],
+        "it": ["esercitazione militare", "manovre militari"],
+        "ru": ["учения"],
+        "zh": ["军演", "演习"],
+        "ja": ["軍事演習", "演習"],
+        "ar": ["مناورات"],
+        "hi": ["सैन्य अभ्यास"]
+      }
+    },
+    {
+      "term": "named exercises",
+      "aliases": {
+        "en": ["Han Kuang", "Strait Thunder", "Joint Sword"],
+        "zh": ["汉光", "海峡雷霆", "联合利剑"]
+      }
+    },
+    {
+      "term": "airspace incursion",
+      "aliases": {
+        "en": ["incursion", "intrusion", "airspace"],
+        "de": ["Luftraum", "Eindringen"],
+        "es": ["espacio aéreo", "incursión"],
+        "fr": ["espace aérien", "incursion"],
+        "it": ["spazio aereo", "incursione"],
+        "ru": ["воздушное пространство"],
+        "zh": ["越线", "扰台"],
+        "ja": ["領空侵犯"],
+        "ar": ["اختراق المجال الجوي"]
+      }
+    },
+    {
+      "term": "blockade / invasion",
+      "aliases": {
+        "en": ["blockade", "quarantine", "invasion", "invade"],
+        "de": ["Blockade", "Seeblockade", "Invasion"],
+        "es": ["bloqueo naval", "invasión"],
+        "fr": ["blocus", "invasion"],
+        "it": ["blocco navale", "invasione"],
+        "ru": ["блокада", "вторжение"],
+        "zh": ["封锁", "入侵"],
+        "ja": ["封鎖", "侵攻"],
+        "ar": ["حصار", "غزو"],
+        "hi": ["नाकाबंदी", "आक्रमण"]
+      }
+    },
+    {
+      "term": "warplanes and warships",
+      "aliases": {
+        "en": ["warplane", "fighter jet", "military aircraft", "warship", "aircraft carrier", "carrier group", "naval vessel"],
+        "de": ["Kampfjet", "Kampfflugzeug", "Kriegsschiff", "Flugzeugträger"],
+        "es": ["portaaviones", "buque de guerra"],
+        "fr": ["porte-avions", "navire de guerre", "avion de combat"],
+        "it": ["portaerei", "nave da guerra"],
+        "ru": ["авианосец", "военный корабль", "истребитель"],
+        "zh": ["战机", "军舰", "航母"],
+        "ja": ["戦闘機", "空母", "軍艦"],
+        "ar": ["حاملة طائرات", "سفينة حربية"],
+        "hi": ["लड़ाकू विमान", "युद्धपोत"]
+      }
+    },
+    {
+      "term": "patrol",
+      "aliases": {
+        "en": ["patrol"],
+        "de": ["Patrouille"],
+        "es": ["patrulla"],
+        "fr": ["patrouille"],
+        "it": ["pattuglia"],
+        "ru": ["патруль"],
+        "zh": ["巡航", "巡逻"],
+        "ja": ["巡視"],
+        "ar": ["دورية"]
+      }
+    },
+    {
+      "term": "deterrence",
+      "aliases": {
+        "en": ["deterrence", "deterrent"],
+        "de": ["Abschreckung"],
+        "es": ["disuasión"],
+        "fr": ["dissuasion"],
+        "it": ["deterrenza"],
+        "ru": ["сдерживание"],
+        "zh": ["威慑", "吓阻"],
+        "ja": ["抑止"]
+      }
+    },
+    {
+      "term": "undersea cable",
+      "aliases": {
+        "en": ["undersea cable", "subsea cable", "submarine cable"],
+        "de": ["Seekabel", "Unterseekabel"],
+        "zh": ["海底电缆"],
+        "ja": ["海底ケーブル"]
+      }
+    },
+    {
+      "term": "surveillance balloon",
+      "aliases": {
+        "en": ["balloon"],
+        "de": ["Ballon"],
+        "es": ["globo"],
+        "zh": ["气球"],
+        "ja": ["気球"]
+      }
+    },
+    {
+      "term": "cyberattack",
+      "aliases": {
+        "en": ["cyberattack", "cyber attack"],
+        "de": ["Cyberangriff"],
+        "es": ["ciberataque"],
+        "fr": ["cyberattaque"],
+        "it": ["attacco informatico"],
+        "ru": ["кибератака"],
+        "zh": ["网络攻击"],
+        "ja": ["サイバー攻撃"],
+        "ar": ["هجوم إلكتروني"]
+      }
+    },
+    {
+      "term": "missiles and drones",
+      "aliases": {
+        "en": ["missile", "drone"],
+        "de": ["Rakete", "Drohne"],
+        "es": ["misil", "dron"],
+        "ru": ["ракета", "беспилотник"],
+        "zh": ["导弹", "无人机"],
+        "ja": ["ミサイル", "無人機"],
+        "ar": ["صاروخ"],
+        "hi": ["मिसाइल", "ड्रोन"]
+      }
+    },
+    {
+      "term": "sand dredging",
+      "aliases": {
+        "en": ["sand dredging", "dredger"],
+        "zh": ["抽砂"]
+      }
+    },
+    {
+      "term": "grey zone",
+      "aliases": {
+        "en": ["grey zone", "gray zone"],
+        "de": ["Grauzone"],
+        "zh": ["灰色地带"]
+      }
+    }
+  ]
+}

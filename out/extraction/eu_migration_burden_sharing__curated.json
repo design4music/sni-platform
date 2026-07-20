@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "fn_id": "eu_migration_burden_sharing",
+    "note": "Multilateral centroid (NON-STATE-EU + big member states). Domain-noun gate: the migration/asylum vocabulary is the phenomenon and is cross-filtered by centroid + (later) publisher/narrative. Named instruments (Migration Pact, Albania protocol, entry-exit/EES, Schengen) add precision. primary_target null."
+  },
+  "bundle": [
+    { "term": "core migration/asylum nouns", "aliases": {
+      "en": ["migration", "migrant", "asylum", "refugee", "deportation", "relocation", "regularisation", "regularization", "amnesty"],
+      "de": ["Migration", "Migrant", "Asyl", "Flüchtling", "Abschiebung", "Umverteilung", "Regularisierung"],
+      "es": ["migración", "migrante", "asilo", "refugiado", "deportación", "regularización", "amnistía", "reubicación"],
+      "fr": ["migration", "migrant", "asile", "réfugié", "expulsion", "relocalisation", "régularisation"],
+      "it": ["migrazione", "migrante", "asilo", "rifugiato", "espulsione", "ricollocazione", "regolarizzazione", "rimpatrio"],
+      "ru": ["миграц", "мигрант", "беженец", "убежищ", "депортац"],
+      "zh": ["移民", "难民", "庇护"],
+      "ar": ["الهجرة", "لاجئ", "لجوء", "ترحيل"],
+      "ja": ["移民", "難民", "庇護"],
+      "hi": ["प्रवासी", "शरणार्थी", "शरण"]
+    }},
+    { "term": "EU migration instruments", "aliases": {
+      "en": ["Migration Pact", "Asylum Pact", "solidarity mechanism", "offshore processing", "entry-exit system", "EES", "Schengen"],
+      "de": ["Migrationspakt", "Asylpakt", "Lastenteilung", "Solidaritätsmechanismus", "Ein- und Ausreisesystem"],
+      "es": ["Pacto Migratorio", "reparto de cargas"],
+      "fr": ["pacte migratoire", "répartition"],
+      "it": ["patto migratorio", "Albania"]
+    }},
+    { "term": "returns / border enforcement", "aliases": {
+      "en": ["pushback", "border checks", "detention centre", "deportation flight"],
+      "de": ["Rückführung", "Grenzkontrollen", "Zurückweisung"],
+      "es": ["retorno", "frontera"],
+      "fr": ["retour", "frontière"],
+      "it": ["rimpatri", "frontiera"]
+    }}
+  ]
+}

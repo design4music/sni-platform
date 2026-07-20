@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "fn_id": "us_russia_sanctions_leverage",
+    "note": "US sanctions relief as a bargaining chip with Moscow. Dyad-AND gate: centroid_ids={AMERICAS-USA} + primary_target=EUROPE-RUSSIA, so generic domain nouns (waiver, sanction, relief) are cross-filtered and safe. DELIBERATELY EXCLUDES the European enforcement vocabulary -- shadow fleet, tanker, seizure, interception, boarding, crude, refinery -- which stays with russia_sanctions_regime in russia_europe_theater (1,100 events, dominated by French/UK tanker seizures and Bulgarian Lukoil supply). Pre-audit on 180d dyad corpus: sanction 218, waiver 146, relief 14 (5/5 samples = sanctions relief, no disaster-relief noise), easing 14, Lukoil 16, Rosneft 6, exemption 5, license 6. Dropped as 0-hit: carve-out, delisting, SDN, secondary sanctions, Sovcomflot, Gazprombank. German compounding means bare 'Sanktion' already catches Sanktionslockerung/Sanktionsausnahme -- no compound variants needed (rule 1)."
+  },
+  "bundle": [
+    {
+      "term": "Sanctions core",
+      "aliases": {
+        "en": ["sanction"],
+        "de": ["Sanktion"],
+        "es": ["sanción"],
+        "it": ["sanzion"],
+        "fr": ["sanction"],
+        "ru": ["санкц"],
+        "zh": ["制裁"],
+        "ja": ["制裁"],
+        "ar": ["عقوبات"],
+        "hi": ["प्रतिबंध"]
+      }
+    },
+    {
+      "term": "Relief instruments and actions",
+      "aliases": {
+        "en": ["waiver", "exemption", "easing", "relief", "lifted", "suspension", "price cap"],
+        "de": ["Ausnahmegenehmigung", "Lockerung", "Befreiung", "Preisdeckel"],
+        "es": ["exención", "levantamiento", "alivio", "flexibilización"],
+        "it": ["esenzione", "allentamento"],
+        "fr": ["dérogation", "exemption", "assouplissement", "levée"],
+        "ru": ["послаблени", "отмена санкций", "снятие санкций", "разрешение на покупку", "лицензи"],
+        "zh": ["豁免", "解除制裁", "放宽"],
+        "ja": ["免除", "制裁緩和"],
+        "ar": ["إعفاء", "رفع العقوبات", "تخفيف"],
+        "hi": ["छूट", "राहत"]
+      }
+    },
+    {
+      "term": "US sanctions machinery",
+      "aliases": {
+        "en": ["OFAC", "Treasury Department", "General Licence", "General License", "CAATSA", "secondary sanctions"],
+        "de": ["Finanzministerium"],
+        "ru": ["Минфин США", "OFAC"]
+      }
+    },
+    {
+      "term": "Sanctioned Russian energy and finance entities (objects of relief)",
+      "aliases": {
+        "en": ["Rosneft", "Lukoil", "Novatek", "Sovcomflot", "Gazprombank", "RDIF"],
+        "ru": ["Роснефть", "Лукойл", "Новатэк", "Совкомфлот", "Газпромбанк", "РФПИ"],
+        "zh": ["俄罗斯石油公司"],
+        "ja": ["ロスネフチ"]
+      }
+    }
+  ]
+}

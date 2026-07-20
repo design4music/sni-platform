@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "fn_id": "alberta_separatism_us_ties",
+    "centroid": "AMERICAS-CANADA",
+    "window_days": 180,
+    "hand_drafted": true,
+    "note": "A2-class name-gate, CANADA-gated only (no dyad AND: a USA participant requirement cuts this atomic 73->24 titles). Post-audit the gate is clean: separatis=79 at 20% foreign, referendum=51 at 10%, secession=6 at 0%.",
+    "pre_audit_drops": [
+      "bare 'Alberta' - 209 hits, pulls all provincial oil/budget news",
+      "bare 'Quebec' - 62 hits, pulls Montreal crime/weather; Quebec sovereignty is ~5 titles and has no US linkage",
+      "RCMP - pulls general crime coverage",
+      "Smith (Alberta premier) - surname collision, head-of-state class",
+      "First Nations - general indigenous news; 'treaty rights' retained instead"
+    ],
+    "post_audit_drops": [
+      "meddl - 24 hits at 50% foreign, generic election-meddling (France/UK/Israel); 'foreign interference' covers the phenomenon",
+      "independence bid - 100% foreign, resolves to Taiwan",
+      "trahison / traicion / Entfremdung - 100% foreign at n<=2 (Kurds, Pahlavi, Hollande)",
+      "sedition - 67% foreign, low value; 'treason' covers it"
+    ],
+    "timestamp": "2026-07-18"
+  },
+  "bundle": [
+    {
+      "term": "separatism",
+      "type": "concept",
+      "aliases": {
+        "ar": ["انفصالي"], "de": ["Separatis"], "en": ["separatis"],
+        "es": ["separatis"], "fr": ["séparatis"], "hi": ["अलगाववाद"],
+        "it": ["separatis"], "ja": ["分離独立"], "ru": ["сепаратис"], "zh": ["分离主义"]
+      }
+    },
+    {
+      "term": "secession",
+      "type": "concept",
+      "aliases": {
+        "ar": ["انفصال"], "de": ["Sezession", "Abspaltung"], "en": ["secession", "secede"],
+        "es": ["secesión"], "fr": ["sécession"], "hi": ["पृथक्करण"],
+        "it": ["secessione"], "ja": ["離脱"], "ru": ["отделение"], "zh": ["脱离"]
+      }
+    },
+    {
+      "term": "independence referendum",
+      "type": "concept",
+      "aliases": {
+        "ar": ["استفتاء الاستقلال"], "de": ["Unabhängigkeitsreferendum", "Volksabstimmung"],
+        "en": ["referendum", "independence vote"],
+        "es": ["referéndum"], "fr": ["référendum"], "hi": ["जनमत संग्रह"],
+        "it": ["referendum"], "ja": ["独立住民投票"], "ru": ["референдум"], "zh": ["独立公投"]
+      }
+    },
+    {
+      "term": "Alberta Prosperity Project",
+      "type": "entity",
+      "aliases": {
+        "ar": ["مشروع ازدهار ألبرتا"], "de": [],
+        "en": ["Alberta Prosperity", "Wexit", "Republic of Alberta", "Sovereignty Act"],
+        "es": [], "fr": [],
+        "hi": [], "it": [],
+        "ja": ["アルバータ独立運動"], "ru": [], "zh": ["艾伯塔繁荣计划"]
+      }
+    },
+    {
+      "term": "treason",
+      "type": "concept",
+      "aliases": {
+        "ar": ["خيانة"], "de": ["Landesverrat"], "en": ["treason"],
+        "es": [], "fr": [], "hi": ["राजद्रोह"],
+        "it": [], "ja": ["反逆"], "ru": ["измена"], "zh": ["叛国"]
+      }
+    },
+    {
+      "term": "foreign interference",
+      "type": "concept",
+      "aliases": {
+        "ar": ["التدخل الأجنبي"], "de": ["ausländische Einmischung"],
+        "en": ["foreign interference", "foreign actor"],
+        "es": ["injerencia extranjera"], "fr": ["ingérence étrangère"],
+        "hi": ["विदेशी हस्तक्षेप"], "it": ["ingerenza straniera"],
+        "ja": ["外国干渉"], "ru": ["иностранное вмешательство"], "zh": ["外国干预"]
+      }
+    },
+    {
+      "term": "national unity",
+      "type": "concept",
+      "aliases": {
+        "ar": ["الوحدة الوطنية"], "de": ["nationale Einheit"],
+        "en": ["national unity", "Western alienation", "equalization"],
+        "es": ["unidad nacional"], "fr": ["unité nationale"], "hi": ["राष्ट्रीय एकता"],
+        "it": ["unità nazionale"], "ja": ["国民統合"], "ru": ["национальное единство"], "zh": ["国家团结"]
+      }
+    },
+    {
+      "term": "treaty rights",
+      "type": "concept",
+      "aliases": {
+        "ar": ["حقوق المعاهدات"], "de": ["Vertragsrechte"], "en": ["treaty rights"],
+        "es": ["derechos de tratado"], "fr": ["droits issus de traités"], "hi": ["संधि अधिकार"],
+        "it": ["diritti dei trattati"], "ja": ["条約上の権利"], "ru": ["договорные права"], "zh": ["条约权利"]
+      }
+    }
+  ]
+}
