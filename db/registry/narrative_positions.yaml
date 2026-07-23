@@ -32,8 +32,8 @@ positions:
   - id: us_imperial_coercion_hemisphere
     name_en: "US imperial/hegemonic coercion of smaller sovereign states"
     name_de: "Imperiale/hegemoniale Nötigung kleinerer souveräner Staaten durch die USA"
-    claim_en: "US imperial/hegemonic coercion of smaller sovereign states"
-    claim_de: "Imperiale/hegemoniale Nötigung kleinerer souveräner Staaten durch die USA"
+    claim_en: "The United States uses sanctions, tariffs, military threats and regime-change pressure to bend smaller sovereign states to its will, violating their right to self-determination."
+    claim_de: "Die USA setzen Sanktionen, Zölle, militärische Drohungen und Druck zum Regimewechsel ein, um kleinere souveräne Staaten gefügig zu machen, und verletzen damit deren Recht auf Selbstbestimmung."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -67,8 +67,8 @@ positions:
   - id: china_lawful_not_coercive
     name_en: "China's trade/tech measures are lawful and normal; the US is the aggressor"
     name_de: "Chinas Handels- und Technologiemaßnahmen sind rechtmäßig und normal; die USA sind der Aggressor"
-    claim_en: "China's trade/tech measures are lawful and normal; the US is the aggressor"
-    claim_de: "Chinas Handels- und Technologiemaßnahmen sind rechtmäßig und normal; die USA sind der Aggressor"
+    claim_en: "China's trade and technology measures are lawful, WTO-consistent and defensive; it is Washington that weaponises tariffs and export controls, so Beijing's response is legitimate."
+    claim_de: "Chinas Handels- und Technologiemaßnahmen sind rechtmäßig, WTO-konform und defensiv; Washington instrumentalisiert Zölle und Exportkontrollen, weshalb Pekings Reaktion legitim ist."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -92,8 +92,8 @@ positions:
   - id: alliance_reliability_doubt
     name_en: "The US alliance is unreliable and delivering less than promised"
     name_de: "Das US-Bündnis ist unzuverlässig und hält weniger als versprochen"
-    claim_en: "The US alliance is unreliable and delivering less than promised"
-    claim_de: "Das US-Bündnis ist unzuverlässig und hält weniger als versprochen"
+    claim_en: "The United States is an unreliable ally that extracts more than it delivers, leaving partners exposed and forcing them to hedge."
+    claim_de: "Die USA sind ein unzuverlässiger Verbündeter, der mehr fordert als leistet, seine Partner ungeschützt lässt und sie zur Absicherung zwingt."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: [great_power_competition]
@@ -116,8 +116,8 @@ positions:
   - id: west_rift_hypocrisy
     name_en: "Intra-Western disputes expose Western hypocrisy, disunity and decline"
     name_de: "Innerwestliche Streitigkeiten offenbaren westliche Heuchelei, Uneinigkeit und Niedergang"
-    claim_en: "Intra-Western disputes expose Western hypocrisy, disunity and decline"
-    claim_de: "Innerwestliche Streitigkeiten offenbaren westliche Heuchelei, Uneinigkeit und Niedergang"
+    claim_en: "The West's internal quarrels expose its hypocrisy, double standards and decline, discrediting its claim to moral leadership."
+    claim_de: "Die inneren Streitigkeiten des Westens offenbaren seine Heuchelei, seine Doppelmoral und seinen Niedergang und untergraben seinen Anspruch auf moralische Führung."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: []
@@ -139,8 +139,8 @@ positions:
   - id: taiwan_japan_security_consensus
     name_en: "Taiwan/Japan under Chinese coercion; deterrence and administration legitimate"
     name_de: "Taiwan/Japan unter chinesischer Nötigung; Abschreckung und Verwaltung sind legitim"
-    claim_en: "Taiwan/Japan under Chinese coercion; deterrence and administration legitimate"
-    claim_de: "Taiwan/Japan unter chinesischer Nötigung; Abschreckung und Verwaltung sind legitim"
+    claim_en: "Taiwan and Japan face genuine Chinese coercion, so deterrence, defence build-up and the legitimacy of their governments must be upheld."
+    claim_de: "Taiwan und Japan sehen sich echter chinesischer Nötigung ausgesetzt, weshalb Abschreckung, Verteidigungsaufbau und die Legitimität ihrer Regierungen gewahrt werden müssen."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: [security_order]
@@ -161,8 +161,8 @@ positions:
   - id: us_domestic_liberal_alarm
     name_en: "US institutions, due process and democratic norms are under threat from within"
     name_de: "US-Institutionen, Rechtsstaatlichkeit und demokratische Normen sind von innen bedroht"
-    claim_en: "US institutions, due process and democratic norms are under threat from within"
-    claim_de: "US-Institutionen, Rechtsstaatlichkeit und demokratische Normen sind von innen bedroht"
+    claim_en: "US institutions, due process and democratic norms are under threat from within, and the damage to the rule of law is real and accelerating."
+    claim_de: "US-Institutionen, Rechtsstaatlichkeit und demokratische Normen sind von innen bedroht, und der Schaden am Rechtsstaat ist real und nimmt zu."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: [liberal_international_order]
@@ -183,8 +183,8 @@ positions:
   - id: western_intervention_scrutiny
     name_en: "Western/US coercive interventions deserve legal and humanitarian scrutiny"
     name_de: "Westlich-US-amerikanische Zwangsinterventionen verdienen rechtliche und humanitäre Prüfung"
-    claim_en: "Western/US coercive interventions deserve legal and humanitarian scrutiny"
-    claim_de: "Westlich-US-amerikanische Zwangsinterventionen verdienen rechtliche und humanitäre Prüfung"
+    claim_en: "Western and US coercive interventions cause civilian harm and breach international law, and deserve the same legal and humanitarian scrutiny applied to their adversaries."
+    claim_de: "Westliche und US-amerikanische Zwangsinterventionen verursachen ziviles Leid und verletzen das Völkerrecht und verdienen dieselbe rechtliche und humanitäre Prüfung wie die ihrer Gegner."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -205,8 +205,8 @@ positions:
   - id: china_strategic_competition
     name_en: "China is a strategic competitor; firmness, derisking and export controls justified"
     name_de: "China ist ein strategischer Konkurrent; Festigkeit, Derisking und Exportkontrollen sind gerechtfertigt"
-    claim_en: "China is a strategic competitor; firmness, derisking and export controls justified"
-    claim_de: "China ist ein strategischer Konkurrent; Festigkeit, Derisking und Exportkontrollen sind gerechtfertigt"
+    claim_en: "China is a strategic competitor whose coercion and unfair practices justify firmness, derisking, export controls and allied coordination."
+    claim_de: "China ist ein strategischer Konkurrent, dessen Nötigung und unfaire Praktiken Festigkeit, Derisking, Exportkontrollen und Abstimmung unter Verbündeten rechtfertigen."
     stance_sign: 1
     meta: economic_order
     meta_secondary: [great_power_competition]
@@ -226,8 +226,8 @@ positions:
   - id: us_executive_mandate
     name_en: "The administration is lawfully executing the mandate voters gave it"
     name_de: "Die Regierung setzt rechtmäßig das Mandat der Wähler um"
-    claim_en: "The administration is lawfully executing the mandate voters gave it"
-    claim_de: "Die Regierung setzt rechtmäßig das Mandat der Wähler um"
+    claim_en: "The administration is lawfully carrying out the mandate voters gave it, and resistance to it is an attempt to overturn a democratic result."
+    claim_de: "Die Regierung setzt rechtmäßig das Mandat um, das ihr die Wähler erteilt haben, und der Widerstand dagegen ist ein Versuch, ein demokratisches Ergebnis zu kippen."
     stance_sign: 1
     meta: liberal_international_order
     meta_secondary: [sovereign_resistance]
@@ -247,8 +247,8 @@ positions:
   - id: cuba_venezuela_humanitarian_siege
     name_en: "US sanctions are an illegal humanitarian siege on Cuba/Venezuela"
     name_de: "US-Sanktionen sind eine illegale humanitäre Belagerung Kubas/Venezuelas"
-    claim_en: "US sanctions are an illegal humanitarian siege on Cuba/Venezuela"
-    claim_de: "US-Sanktionen sind eine illegale humanitäre Belagerung Kubas/Venezuelas"
+    claim_en: "US sanctions on Cuba and Venezuela are an illegal, collective-punishment siege that inflicts humanitarian suffering on civilians."
+    claim_de: "Die US-Sanktionen gegen Kuba und Venezuela sind eine illegale Belagerung mit Kollektivstrafcharakter, die der Zivilbevölkerung humanitäres Leid zufügt."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -268,8 +268,8 @@ positions:
   - id: nato_aggression_russia_defensive
     name_en: "NATO encirclement/provocation is the aggressor; Russia responds defensively"
     name_de: "Die NATO-Einkreisung/Provokation ist der Aggressor; Russland reagiert defensiv"
-    claim_en: "NATO encirclement/provocation is the aggressor; Russia responds defensively"
-    claim_de: "Die NATO-Einkreisung/Provokation ist der Aggressor; Russland reagiert defensiv"
+    claim_en: "NATO's eastward expansion and provocations are the true aggression; Russia's actions are a defensive response to an encroaching threat."
+    claim_de: "Die Osterweiterung und die Provokationen der NATO sind die eigentliche Aggression; Russlands Handeln ist eine defensive Reaktion auf eine vorrückende Bedrohung."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -289,8 +289,8 @@ positions:
   - id: us_domestic_decline_adversarial
     name_en: "US democracy and institutions are decaying (adversarial state-media reading)"
     name_de: "Die US-Demokratie und ihre Institutionen zerfallen (Lesart gegnerischer Staatsmedien)"
-    claim_en: "US democracy and institutions are decaying (adversarial state-media reading)"
-    claim_de: "Die US-Demokratie und ihre Institutionen zerfallen (Lesart gegnerischer Staatsmedien)"
+    claim_en: "American democracy and institutions are decaying from within, proof that the US model is failing."
+    claim_de: "Die amerikanische Demokratie und ihre Institutionen zerfallen von innen — ein Beleg dafür, dass das US-Modell scheitert."
     stance_sign: -1
     meta: liberal_international_order
     meta_secondary: [sovereign_resistance]
@@ -310,8 +310,8 @@ positions:
   - id: iran_axis_of_resistance
     name_en: "The Axis of Resistance is legitimate anti-Israel/anti-US liberation"
     name_de: "Die Achse des Widerstands ist legitime anti-israelische/anti-US-amerikanische Befreiung"
-    claim_en: "The Axis of Resistance is legitimate anti-Israel/anti-US liberation"
-    claim_de: "Die Achse des Widerstands ist legitime anti-israelische/anti-US-amerikanische Befreiung"
+    claim_en: "The Axis of Resistance is a legitimate movement of anti-imperial liberation against Israeli and US domination."
+    claim_de: "Die Achse des Widerstands ist eine legitime Bewegung antiimperialer Befreiung gegen die israelische und US-amerikanische Vorherrschaft."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -331,8 +331,8 @@ positions:
   - id: russia_threat_deterrence
     name_en: "Russia is an aggressive threat; deterrence and rearmament are justified"
     name_de: "Russland ist eine aggressive Bedrohung; Abschreckung und Aufrüstung sind gerechtfertigt"
-    claim_en: "Russia is an aggressive threat; deterrence and rearmament are justified"
-    claim_de: "Russland ist eine aggressive Bedrohung; Abschreckung und Aufrüstung sind gerechtfertigt"
+    claim_en: "Russia is an aggressive, expansionist threat whose behaviour justifies deterrence, rearmament and sustained support for those it targets."
+    claim_de: "Russland ist eine aggressive, expansionistische Bedrohung, deren Verhalten Abschreckung, Aufrüstung und dauerhafte Unterstützung für die von ihm Bedrohten rechtfertigt."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: []
@@ -351,8 +351,8 @@ positions:
   - id: america_first_transactional_alliance
     name_en: "America First: allies freeload on US protection and must pay / rebalance"
     name_de: "America First: Verbündete schmarotzen am US-Schutz und müssen zahlen / nachjustieren"
-    claim_en: "America First: allies freeload on US protection and must pay / rebalance"
-    claim_de: "America First: Verbündete schmarotzen am US-Schutz und müssen zahlen / nachjustieren"
+    claim_en: "Under America First, allies have freeloaded on US protection and must now pay their share or see the relationship rebalanced."
+    claim_de: "Unter America First haben Verbündete vom US-Schutz profitiert, ohne zu zahlen, und müssen nun ihren Anteil leisten oder eine Neuausrichtung der Beziehung hinnehmen."
     stance_sign: 1
     meta: economic_order
     meta_secondary: []
@@ -371,8 +371,8 @@ positions:
   - id: eu_sovereigntist_revolt
     name_en: "Brussels overreaches; nations and voters are right to resist"
     name_de: "Brüssel greift über; Nationen und Wähler dürfen sich zu Recht wehren"
-    claim_en: "Brussels overreaches; nations and voters are right to resist"
-    claim_de: "Brüssel greift über; Nationen und Wähler dürfen sich zu Recht wehren"
+    claim_en: "Brussels overreaches its mandate, and nations and voters are right to resist its centralising demands."
+    claim_de: "Brüssel überschreitet sein Mandat, und Nationen wie Wähler wehren sich zu Recht gegen seine zentralisierenden Forderungen."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -391,8 +391,8 @@ positions:
   - id: sahel_managed_collapse
     name_en: "Sahel military rule delivers neither security nor politics; abuses mount"
     name_de: "Die Militärherrschaft im Sahel liefert weder Sicherheit noch Politik; Übergriffe nehmen zu"
-    claim_en: "Sahel military rule delivers neither security nor politics; abuses mount"
-    claim_de: "Die Militärherrschaft im Sahel liefert weder Sicherheit noch Politik; Übergriffe nehmen zu"
+    claim_en: "Military rule in the Sahel has delivered neither security nor a political path, while abuses and instability mount."
+    claim_de: "Die Militärherrschaft im Sahel hat weder Sicherheit noch einen politischen Weg gebracht, während Übergriffe und Instabilität zunehmen."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -411,8 +411,8 @@ positions:
   - id: trade_war_economic_harm
     name_en: "Tariffs and trade coercion are self-harming economic disruption"
     name_de: "Zölle und Handelszwang sind selbstschädigende wirtschaftliche Verwerfung"
-    claim_en: "Tariffs and trade coercion are self-harming economic disruption"
-    claim_de: "Zölle und Handelszwang sind selbstschädigende wirtschaftliche Verwerfung"
+    claim_en: "Tariffs and trade coercion are self-defeating, raising costs and disrupting the economy of whoever imposes them."
+    claim_de: "Zölle und Handelszwang sind kontraproduktiv, treiben die Kosten in die Höhe und schädigen die Wirtschaft dessen, der sie verhängt."
     stance_sign: -1
     meta: economic_order
     meta_secondary: []
@@ -430,8 +430,8 @@ positions:
   - id: china_territorial_sovereignty
     name_en: "Taiwan, the SCS and the Senkakus are Chinese territory; foreign interference provokes"
     name_de: "Taiwan, das Südchinesische Meer und die Senkaku-Inseln sind chinesisches Gebiet; ausländische Einmischung provoziert"
-    claim_en: "Taiwan, the SCS and the Senkakus are Chinese territory; foreign interference provokes"
-    claim_de: "Taiwan, das Südchinesische Meer und die Senkaku-Inseln sind chinesisches Gebiet; ausländische Einmischung provoziert"
+    claim_en: "Taiwan, the South China Sea and the Senkakus are Chinese territory, and foreign interference in them is the real provocation."
+    claim_de: "Taiwan, das Südchinesische Meer und die Senkaku-Inseln sind chinesisches Gebiet, und die ausländische Einmischung dort ist die eigentliche Provokation."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -449,8 +449,8 @@ positions:
   - id: israel_existential_self_defense
     name_en: "Israel's campaigns are existential self-defense after October 7"
     name_de: "Israels Feldzüge sind existenzielle Selbstverteidigung nach dem 7. Oktober"
-    claim_en: "Israel's campaigns are existential self-defense after October 7"
-    claim_de: "Israels Feldzüge sind existenzielle Selbstverteidigung nach dem 7. Oktober"
+    claim_en: "Israel's military campaigns are a necessary act of existential self-defence following the October 7 attacks."
+    claim_de: "Israels Militäroperationen sind ein notwendiger Akt existenzieller Selbstverteidigung nach den Angriffen vom 7. Oktober."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -468,8 +468,8 @@ positions:
   - id: iran_regime_threat
     name_en: "The Israel-US-Saudi coalition: Iran is an illegitimate existential threat"
     name_de: "Die Koalition aus Israel, USA und Saudi-Arabien: Iran ist eine illegitime existenzielle Bedrohung"
-    claim_en: "The Israel-US-Saudi coalition: Iran is an illegitimate existential threat"
-    claim_de: "Die Koalition aus Israel, USA und Saudi-Arabien: Iran ist eine illegitime existenzielle Bedrohung"
+    claim_en: "Iran is an illegitimate, existential threat whose nuclear ambitions and proxies justify the pressure of the Israeli-US-Saudi coalition."
+    claim_de: "Iran ist eine illegitime, existenzielle Bedrohung, deren nukleare Ambitionen und Stellvertreter den Druck der Koalition aus Israel, USA und Saudi-Arabien rechtfertigen."
     stance_sign: -1
     meta: security_order
     meta_secondary: []
@@ -487,8 +487,8 @@ positions:
   - id: sahel_sovereigntist_partnership
     name_en: "The Sahel juntas rightly chose new partners free of colonial conditions"
     name_de: "Die Sahel-Juntas wählten zu Recht neue Partner ohne koloniale Bedingungen"
-    claim_en: "The Sahel juntas rightly chose new partners free of colonial conditions"
-    claim_de: "Die Sahel-Juntas wählten zu Recht neue Partner ohne koloniale Bedingungen"
+    claim_en: "The Sahel's military governments were right to expel former colonial powers and choose new partners on their own sovereign terms."
+    claim_de: "Die Militärregierungen des Sahel haben zu Recht die früheren Kolonialmächte vertrieben und neue Partner zu ihren eigenen souveränen Bedingungen gewählt."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: [security_order]
@@ -507,8 +507,8 @@ positions:
   - id: greatlakes_costs_critique
     name_en: "External fixes stall; minerals extraction and proxy war impose costs"
     name_de: "Externe Lösungen stocken; Rohstoffabbau und Stellvertreterkrieg verursachen Kosten"
-    claim_en: "External fixes stall; minerals extraction and proxy war impose costs"
-    claim_de: "Externe Lösungen stocken; Rohstoffabbau und Stellvertreterkrieg verursachen Kosten"
+    claim_en: "External fixes for the Great Lakes stall while mineral extraction and proxy war impose mounting costs on the region."
+    claim_de: "Externe Lösungen für die Region der Großen Seen stocken, während Rohstoffabbau und Stellvertreterkrieg der Region wachsende Kosten aufbürden."
     stance_sign: -1
     meta: security_order
     meta_secondary: []
@@ -526,8 +526,8 @@ positions:
   - id: eu_more_integration
     name_en: "Deeper EU integration and solidarity are the answer"
     name_de: "Tiefere EU-Integration und Solidarität sind die Antwort"
-    claim_en: "Deeper EU integration and solidarity are the answer"
-    claim_de: "Tiefere EU-Integration und Solidarität sind die Antwort"
+    claim_en: "The answer to Europe's challenges is deeper EU integration, solidarity and shared sovereignty, not fragmentation."
+    claim_de: "Die Antwort auf Europas Herausforderungen ist tiefere EU-Integration, Solidarität und geteilte Souveränität, nicht Zersplitterung."
     stance_sign: 1
     meta: liberal_international_order
     meta_secondary: []
@@ -545,8 +545,8 @@ positions:
   - id: india_account
     name_en: "India's account: Pakistan sponsors militancy; Kashmir is integral; treaty obsolete"
     name_de: "Indiens Sicht: Pakistan fördert Militanz; Kaschmir ist integraler Bestandteil; der Vertrag ist überholt"
-    claim_en: "India's account: Pakistan sponsors militancy; Kashmir is integral; treaty obsolete"
-    claim_de: "Indiens Sicht: Pakistan fördert Militanz; Kaschmir ist integraler Bestandteil; der Vertrag ist überholt"
+    claim_en: "India is right that Pakistan sponsors militancy, that Kashmir is integral to India, and that the outdated water treaty no longer binds it."
+    claim_de: "Indien hat recht: Pakistan fördert Militanz, Kaschmir ist integraler Bestandteil Indiens, und der überholte Wasservertrag bindet es nicht mehr."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -563,8 +563,8 @@ positions:
   - id: pakistan_grievance
     name_en: "Pakistan's account: India coerces, weaponises water, occupies Kashmir"
     name_de: "Pakistans Sicht: Indien übt Zwang aus, instrumentalisiert Wasser, besetzt Kaschmir"
-    claim_en: "Pakistan's account: India coerces, weaponises water, occupies Kashmir"
-    claim_de: "Pakistans Sicht: Indien übt Zwang aus, instrumentalisiert Wasser, besetzt Kaschmir"
+    claim_en: "Pakistan is the wronged party: India coerces it, weaponises shared water and occupies Kashmir against its people's will."
+    claim_de: "Pakistan ist die geschädigte Partei: Indien übt Zwang aus, instrumentalisiert gemeinsames Wasser und besetzt Kaschmir gegen den Willen seiner Bevölkerung."
     stance_sign: -1
     meta: global_justice
     meta_secondary: [sovereign_resistance]
@@ -581,8 +581,8 @@ positions:
   - id: global_south_buyer_autonomy
     name_en: "Sanctions/pressure are conditional; the Global South asserts buyer autonomy"
     name_de: "Sanktionen/Druck sind bedingt; der Globale Süden behauptet seine Käuferautonomie"
-    claim_en: "Sanctions/pressure are conditional; the Global South asserts buyer autonomy"
-    claim_de: "Sanktionen/Druck sind bedingt; der Globale Süden behauptet seine Käuferautonomie"
+    claim_en: "Sanctions and Western pressure are conditional and self-serving; the Global South is entitled to buy energy and goods from whomever it chooses."
+    claim_de: "Sanktionen und westlicher Druck sind bedingt und eigennützig; der Globale Süden hat das Recht, Energie und Güter von wem auch immer zu kaufen."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: [economic_order]
@@ -599,8 +599,8 @@ positions:
   - id: horn_sovereignty_violated
     name_en: "The Horn realignment violates borders and sovereignty"
     name_de: "Die Neuordnung am Horn von Afrika verletzt Grenzen und Souveränität"
-    claim_en: "The Horn realignment violates borders and sovereignty"
-    claim_de: "Die Neuordnung am Horn von Afrika verletzt Grenzen und Souveränität"
+    claim_en: "The realignment in the Horn of Africa tramples borders and national sovereignty and must be resisted."
+    claim_de: "Die Neuordnung am Horn von Afrika missachtet Grenzen und nationale Souveränität und muss abgewehrt werden."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -617,8 +617,8 @@ positions:
   - id: ukraine_defense_solidarity
     name_en: "Ukraine's war is legitimate national defense deserving full support"
     name_de: "Der Krieg der Ukraine ist legitime Landesverteidigung und verdient volle Unterstützung"
-    claim_en: "Ukraine's war is legitimate national defense deserving full support"
-    claim_de: "Der Krieg der Ukraine ist legitime Landesverteidigung und verdient volle Unterstützung"
+    claim_en: "Ukraine's war is a legitimate defence of its sovereignty and deserves full and sustained Western support."
+    claim_de: "Der Krieg der Ukraine ist eine legitime Verteidigung ihrer Souveränität und verdient volle und dauerhafte westliche Unterstützung."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: [security_order]
@@ -634,8 +634,8 @@ positions:
   - id: caucasus_western_tilt
     name_en: "The South Caucasus is tilting West; engagement and the settlement are gains"
     name_de: "Der Südkaukasus wendet sich dem Westen zu; Engagement und die Einigung sind Gewinne"
-    claim_en: "The South Caucasus is tilting West; engagement and the settlement are gains"
-    claim_de: "Der Südkaukasus wendet sich dem Westen zu; Engagement und die Einigung sind Gewinne"
+    claim_en: "The South Caucasus is turning westward, and engagement plus the peace settlement are genuine gains for the region."
+    claim_de: "Der Südkaukasus wendet sich dem Westen zu, und Engagement wie Friedensregelung sind echte Gewinne für die Region."
     stance_sign: 1
     meta: economic_order
     meta_secondary: []
@@ -651,8 +651,8 @@ positions:
   - id: multipolar_alternative
     name_en: "A multipolar order is the legitimate alternative to US hegemony"
     name_de: "Eine multipolare Ordnung ist die legitime Alternative zur US-Hegemonie"
-    claim_en: "A multipolar order is the legitimate alternative to US hegemony"
-    claim_de: "Eine multipolare Ordnung ist die legitime Alternative zur US-Hegemonie"
+    claim_en: "A multipolar order is the legitimate and overdue alternative to US hegemony and a unipolar world."
+    claim_de: "Eine multipolare Ordnung ist die legitime und überfällige Alternative zur US-Hegemonie und zu einer unipolaren Welt."
     stance_sign: 1
     meta: plural_world_order
     meta_secondary: []
@@ -668,8 +668,8 @@ positions:
   - id: eu_two_state_engagement
     name_en: "The EU/E3 pursue calibrated engagement (Iran diplomacy, two-state, Turkey)"
     name_de: "Die EU/E3 verfolgen ein kalibriertes Engagement (Iran-Diplomatie, Zweistaatenlösung, Türkei)"
-    claim_en: "The EU/E3 pursue calibrated engagement (Iran diplomacy, two-state, Turkey)"
-    claim_de: "Die EU/E3 verfolgen ein kalibriertes Engagement (Iran-Diplomatie, Zweistaatenlösung, Türkei)"
+    claim_en: "The EU and E3 are right to pursue calibrated engagement — on Iran, a two-state solution and Turkey — rather than confrontation."
+    claim_de: "Die EU und die E3 verfolgen zu Recht ein kalibriertes Engagement — bei Iran, einer Zweistaatenlösung und der Türkei — statt Konfrontation."
     stance_sign: 0
     meta: security_order
     meta_secondary: []
@@ -685,8 +685,8 @@ positions:
   - id: turkey_middle_power
     name_en: "Turkey is a legitimate independent middle power and broker"
     name_de: "Die Türkei ist eine legitime unabhängige Mittelmacht und Vermittlerin"
-    claim_en: "Turkey is a legitimate independent middle power and broker"
-    claim_de: "Die Türkei ist eine legitime unabhängige Mittelmacht und Vermittlerin"
+    claim_en: "Turkey is a legitimate, independent middle power and indispensable broker, not a junior partner to be dictated to."
+    claim_de: "Die Türkei ist eine legitime, unabhängige Mittelmacht und unverzichtbare Vermittlerin, kein Juniorpartner, dem man Vorschriften macht."
     stance_sign: 1
     meta: plural_world_order
     meta_secondary: [sovereign_resistance]
@@ -702,8 +702,8 @@ positions:
   - id: dprk_proliferation_threat
     name_en: "North Korea's proliferation and closed door are a hardening threat"
     name_de: "Nordkoreas Proliferation und Abschottung sind eine sich verhärtende Bedrohung"
-    claim_en: "North Korea's proliferation and closed door are a hardening threat"
-    claim_de: "Nordkoreas Proliferation und Abschottung sind eine sich verhärtende Bedrohung"
+    claim_en: "North Korea's advancing proliferation and its closed, hardening posture are a growing threat that must be contained."
+    claim_de: "Nordkoreas fortschreitende Proliferation und seine abgeschottete, sich verhärtende Haltung sind eine wachsende Bedrohung, die eingedämmt werden muss."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -719,8 +719,8 @@ positions:
   - id: us_russia_engagement_pragmatic
     name_en: "Reopened US-Russia channel and energy waivers are pragmatic realism"
     name_de: "Der wiedereröffnete US-russische Kanal und Energieausnahmen sind pragmatischer Realismus"
-    claim_en: "Reopened US-Russia channel and energy waivers are pragmatic realism"
-    claim_de: "Der wiedereröffnete US-russische Kanal und Energieausnahmen sind pragmatischer Realismus"
+    claim_en: "The reopened US-Russia channel and energy waivers are pragmatic realism that serves stability, not appeasement."
+    claim_de: "Der wiedereröffnete Kanal zwischen den USA und Russland und die Energieausnahmen sind pragmatischer Realismus im Dienste der Stabilität, keine Beschwichtigung."
     stance_sign: 1
     meta: security_order
     meta_secondary: [sovereign_resistance]
@@ -735,8 +735,8 @@ positions:
   - id: colombia_negotiated_path
     name_en: "Colombia's negotiated demobilisation and democratic transition are working"
     name_de: "Kolumbiens ausgehandelte Demobilisierung und demokratischer Übergang funktionieren"
-    claim_en: "Colombia's negotiated demobilisation and democratic transition are working"
-    claim_de: "Kolumbiens ausgehandelte Demobilisierung und demokratischer Übergang funktionieren"
+    claim_en: "Colombia's negotiated demobilisation and democratic transition are working and should be sustained."
+    claim_de: "Kolumbiens ausgehandelte Demobilisierung und demokratischer Übergang funktionieren und sollten fortgeführt werden."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -751,8 +751,8 @@ positions:
   - id: greatlakes_engagement_working
     name_en: "External mediation and mineral deals are finally stabilising the Great Lakes"
     name_de: "Externe Vermittlung und Rohstoffabkommen stabilisieren die Region der Großen Seen endlich"
-    claim_en: "External mediation and mineral deals are finally stabilising the Great Lakes"
-    claim_de: "Externe Vermittlung und Rohstoffabkommen stabilisieren die Region der Großen Seen endlich"
+    claim_en: "External mediation and mineral agreements are finally stabilising the Great Lakes region."
+    claim_de: "Externe Vermittlung und Rohstoffabkommen stabilisieren die Region der Großen Seen endlich."
     stance_sign: 1
     meta: economic_order
     meta_secondary: [liberal_international_order]
@@ -767,8 +767,8 @@ positions:
   - id: russia_threat_restraint_skeptic
     name_en: "Threat inflation and militarisation drift are a costly overreaction"
     name_de: "Bedrohungsübertreibung und Militarisierungsdrift sind eine kostspielige Überreaktion"
-    claim_en: "Threat inflation and militarisation drift are a costly overreaction"
-    claim_de: "Bedrohungsübertreibung und Militarisierungsdrift sind eine kostspielige Überreaktion"
+    claim_en: "Talk of a Russian threat is inflated, and the drift toward militarisation is a costly overreaction."
+    claim_de: "Das Gerede von einer russischen Bedrohung ist übertrieben, und die Drift zur Militarisierung ist eine kostspielige Überreaktion."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -783,8 +783,8 @@ positions:
   - id: ukraine_war_proxy_escalation
     name_en: "The war is a US/NATO proxy war; Western aid prolongs it; freeze/settle"
     name_de: "Der Krieg ist ein US-/NATO-Stellvertreterkrieg; westliche Hilfe verlängert ihn; einfrieren/beilegen"
-    claim_en: "The war is a US/NATO proxy war; Western aid prolongs it; freeze/settle"
-    claim_de: "Der Krieg ist ein US-/NATO-Stellvertreterkrieg; westliche Hilfe verlängert ihn; einfrieren/beilegen"
+    claim_en: "The Ukraine war is a US/NATO proxy war that Western aid only prolongs; it should be frozen and settled."
+    claim_de: "Der Ukrainekrieg ist ein Stellvertreterkrieg der USA und der NATO, den westliche Hilfe nur verlängert; er sollte eingefroren und beigelegt werden."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: [security_order]
@@ -799,8 +799,8 @@ positions:
   - id: russia_vindicated
     name_en: "Events vindicate Russia; the West must recognise its position"
     name_de: "Die Ereignisse geben Russland recht; der Westen muss seine Position anerkennen"
-    claim_en: "Events vindicate Russia; the West must recognise its position"
-    claim_de: "Die Ereignisse geben Russland recht; der Westen muss seine Position anerkennen"
+    claim_en: "Events have vindicated Russia's position, and the West must now recognise it."
+    claim_de: "Die Ereignisse haben Russlands Position bestätigt, und der Westen muss sie nun anerkennen."
     stance_sign: 1
     meta: plural_world_order
     meta_secondary: [great_power_competition]
@@ -815,8 +815,8 @@ positions:
   - id: dprk_sovereign_deterrent
     name_en: "North Korea's deterrent and its Russia/China partnerships are legitimate"
     name_de: "Nordkoreas Abschreckung und seine Partnerschaften mit Russland/China sind legitim"
-    claim_en: "North Korea's deterrent and its Russia/China partnerships are legitimate"
-    claim_de: "Nordkoreas Abschreckung und seine Partnerschaften mit Russland/China sind legitim"
+    claim_en: "North Korea's nuclear deterrent and its partnerships with Russia and China are legitimate exercises of sovereignty."
+    claim_de: "Nordkoreas nukleare Abschreckung und seine Partnerschaften mit Russland und China sind legitime Ausübungen von Souveränität."
     stance_sign: 1
     meta: security_order
     meta_secondary: [plural_world_order]
@@ -831,8 +831,8 @@ positions:
   - id: palestine_catastrophe
     name_en: "Israel's Gaza/West Bank campaign is a humanitarian catastrophe / apartheid"
     name_de: "Israels Feldzug in Gaza/Westjordanland ist eine humanitäre Katastrophe / Apartheid"
-    claim_en: "Israel's Gaza/West Bank campaign is a humanitarian catastrophe / apartheid"
-    claim_de: "Israels Feldzug in Gaza/Westjordanland ist eine humanitäre Katastrophe / Apartheid"
+    claim_en: "Israel's campaign in Gaza and the West Bank is a humanitarian catastrophe amounting to apartheid and collective punishment."
+    claim_de: "Israels Feldzug in Gaza und im Westjordanland ist eine humanitäre Katastrophe, die auf Apartheid und Kollektivstrafe hinausläuft."
     stance_sign: -1
     meta: global_justice
     meta_secondary: []
@@ -847,8 +847,8 @@ positions:
   - id: mercosur_european_protection
     name_en: "European farmers/environment object to Mercosur market opening"
     name_de: "Europäische Landwirte/Umwelt lehnen die Marktöffnung durch Mercosur ab"
-    claim_en: "European farmers/environment object to Mercosur market opening"
-    claim_de: "Europäische Landwirte/Umwelt lehnen die Marktöffnung durch Mercosur ab"
+    claim_en: "European farmers and environmental standards would be undercut by opening the market to Mercosur, so the deal must be resisted."
+    claim_de: "Europäische Landwirte und Umweltstandards würden durch die Marktöffnung für Mercosur untergraben, weshalb das Abkommen abzulehnen ist."
     stance_sign: -1
     meta: planetary_governance
     meta_secondary: [sovereign_resistance]
@@ -863,8 +863,8 @@ positions:
   - id: korea_deterrence_dualtrack
     name_en: "Alliance deterrence plus engagement is the right Korea policy"
     name_de: "Bündnisabschreckung plus Engagement ist die richtige Korea-Politik"
-    claim_en: "Alliance deterrence plus engagement is the right Korea policy"
-    claim_de: "Bündnisabschreckung plus Engagement ist die richtige Korea-Politik"
+    claim_en: "The right Korea policy combines firm alliance deterrence with openness to engagement."
+    claim_de: "Die richtige Korea-Politik verbindet feste Bündnisabschreckung mit Offenheit für Engagement."
     stance_sign: 1
     meta: security_order
     meta_secondary: [great_power_competition]
@@ -878,8 +878,8 @@ positions:
   - id: australia_alliance_consensus
     name_en: "Australia's alliances (AUKUS, Pacific) are a necessary security anchor"
     name_de: "Australiens Bündnisse (AUKUS, Pazifik) sind ein notwendiger Sicherheitsanker"
-    claim_en: "Australia's alliances (AUKUS, Pacific) are a necessary security anchor"
-    claim_de: "Australiens Bündnisse (AUKUS, Pazifik) sind ein notwendiger Sicherheitsanker"
+    claim_en: "Australia's alliances — AUKUS and its Pacific partnerships — are a necessary anchor of national security."
+    claim_de: "Australiens Bündnisse — AUKUS und seine pazifischen Partnerschaften — sind ein notwendiger Anker der nationalen Sicherheit."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: []
@@ -893,8 +893,8 @@ positions:
   - id: venezuela_intervention_justified
     name_en: "Removing the Maduro narco-state and restoring the oil sector is a win"
     name_de: "Die Beseitigung des Maduro-Narco-Staats und der Wiederaufbau des Ölsektors sind ein Gewinn"
-    claim_en: "Removing the Maduro narco-state and restoring the oil sector is a win"
-    claim_de: "Die Beseitigung des Maduro-Narco-Staats und der Wiederaufbau des Ölsektors sind ein Gewinn"
+    claim_en: "Removing the Maduro narco-state and restoring Venezuela's oil sector would be a legitimate and beneficial outcome."
+    claim_de: "Die Beseitigung des Maduro-Narco-Staats und der Wiederaufbau des venezolanischen Ölsektors wären ein legitimes und vorteilhaftes Ergebnis."
     stance_sign: 1
     meta: economic_order
     meta_secondary: [security_order]
@@ -908,8 +908,8 @@ positions:
   - id: america_first_cartel_intervention
     name_en: "Cartels are terrorists; US pressure and intervention on Mexico is justified"
     name_de: "Kartelle sind Terroristen; US-Druck und Intervention gegen Mexiko sind gerechtfertigt"
-    claim_en: "Cartels are terrorists; US pressure and intervention on Mexico is justified"
-    claim_de: "Kartelle sind Terroristen; US-Druck und Intervention gegen Mexiko sind gerechtfertigt"
+    claim_en: "Cartels are terrorist organisations, so US pressure on and intervention in Mexico against them is justified."
+    claim_de: "Kartelle sind Terrororganisationen, weshalb US-Druck auf und Intervention in Mexiko gegen sie gerechtfertigt sind."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -923,8 +923,8 @@ positions:
   - id: russia_smo_defensive
     name_en: "Russia's war is a defensive special military operation; Ukraine strikes are terror"
     name_de: "Russlands Krieg ist eine defensive militärische Spezialoperation; ukrainische Angriffe sind Terror"
-    claim_en: "Russia's war is a defensive special military operation; Ukraine strikes are terror"
-    claim_de: "Russlands Krieg ist eine defensive militärische Spezialoperation; ukrainische Angriffe sind Terror"
+    claim_en: "Russia's war is a defensive special military operation, while Ukrainian strikes on Russia are acts of terror."
+    claim_de: "Russlands Krieg ist eine defensive militärische Spezialoperation, während ukrainische Angriffe auf Russland Terrorakte sind."
     stance_sign: -1
     meta: security_order
     meta_secondary: []
@@ -938,8 +938,8 @@ positions:
   - id: russia_washington_bad_faith
     name_en: "Washington negotiates in bad faith while pressuring Russia"
     name_de: "Washington verhandelt in böser Absicht und setzt Russland zugleich unter Druck"
-    claim_en: "Washington negotiates in bad faith while pressuring Russia"
-    claim_de: "Washington verhandelt in böser Absicht und setzt Russland zugleich unter Druck"
+    claim_en: "Washington negotiates with Russia in bad faith, pressuring Moscow even as it claims to seek a deal."
+    claim_de: "Washington verhandelt mit Russland in böser Absicht und setzt Moskau unter Druck, während es vorgibt, eine Einigung zu suchen."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: []
@@ -953,8 +953,8 @@ positions:
   - id: japan_militarism_revival
     name_en: "Japan is reviving militarism behind a pacifist facade"
     name_de: "Japan belebt hinter einer pazifistischen Fassade den Militarismus wieder"
-    claim_en: "Japan is reviving militarism behind a pacifist facade"
-    claim_de: "Japan belebt hinter einer pazifistischen Fassade den Militarismus wieder"
+    claim_en: "Japan is quietly reviving militarism behind a pacifist facade, and the region should be alarmed."
+    claim_de: "Japan belebt hinter einer pazifistischen Fassade still den Militarismus wieder, und die Region sollte alarmiert sein."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -968,8 +968,8 @@ positions:
   - id: israel_turkey_unreliable
     name_en: "Erdogan's Turkey is a two-faced, hostile actor"
     name_de: "Erdogans Türkei ist ein doppelzüngiger, feindseliger Akteur"
-    claim_en: "Erdogan's Turkey is a two-faced, hostile actor"
-    claim_de: "Erdogans Türkei ist ein doppelzüngiger, feindseliger Akteur"
+    claim_en: "Erdogan's Turkey is a two-faced, hostile actor whose ambitions threaten regional stability."
+    claim_de: "Erdogans Türkei ist ein doppelzüngiger, feindseliger Akteur, dessen Ambitionen die regionale Stabilität bedrohen."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: [sovereign_resistance]
@@ -983,8 +983,8 @@ positions:
   - id: iran_sovereign_rights
     name_en: "Iran's nuclear program, system and Hormuz stance are sovereign rights"
     name_de: "Irans Nuklearprogramm, System und Hormus-Haltung sind souveräne Rechte"
-    claim_en: "Iran's nuclear program, system and Hormuz stance are sovereign rights"
-    claim_de: "Irans Nuklearprogramm, System und Hormus-Haltung sind souveräne Rechte"
+    claim_en: "Iran's nuclear programme, political system and stance on Hormuz are sovereign rights that no outside power may curtail."
+    claim_de: "Irans Nuklearprogramm, politisches System und seine Haltung zu Hormus sind souveräne Rechte, die keine äußere Macht beschneiden darf."
     stance_sign: 1
     meta: security_order
     meta_secondary: [sovereign_resistance]
@@ -998,8 +998,8 @@ positions:
   - id: pakistan_security_account
     name_en: "Pakistan's security account: cross-border counterterror is legitimate"
     name_de: "Pakistans Sicherheitssicht: grenzüberschreitende Terrorbekämpfung ist legitim"
-    claim_en: "Pakistan's security account: cross-border counterterror is legitimate"
-    claim_de: "Pakistans Sicherheitssicht: grenzüberschreitende Terrorbekämpfung ist legitim"
+    claim_en: "Pakistan's cross-border counterterrorism operations are a legitimate exercise of its right to self-defence."
+    claim_de: "Pakistans grenzüberschreitende Antiterroroperationen sind eine legitime Ausübung seines Rechts auf Selbstverteidigung."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -1013,8 +1013,8 @@ positions:
   - id: syria_legitimate_transition
     name_en: "The post-Assad transition is legitimate; foreign forces should leave"
     name_de: "Der Übergang nach Assad ist legitim; ausländische Truppen sollten abziehen"
-    claim_en: "The post-Assad transition is legitimate; foreign forces should leave"
-    claim_de: "Der Übergang nach Assad ist legitim; ausländische Truppen sollten abziehen"
+    claim_en: "Syria's post-Assad transition is legitimate, and foreign forces should withdraw and let Syrians govern themselves."
+    claim_de: "Syriens Übergang nach Assad ist legitim, und ausländische Truppen sollten abziehen und die Syrer sich selbst regieren lassen."
     stance_sign: 1
     meta: security_order
     meta_secondary: [great_power_competition]
@@ -1028,8 +1028,8 @@ positions:
   - id: horn_new_partnerships
     name_en: "New recognition/basing/minerals partnerships are reordering the Horn"
     name_de: "Neue Anerkennungs-, Stützpunkt- und Rohstoffpartnerschaften ordnen das Horn von Afrika neu"
-    claim_en: "New recognition/basing/minerals partnerships are reordering the Horn"
-    claim_de: "Neue Anerkennungs-, Stützpunkt- und Rohstoffpartnerschaften ordnen das Horn von Afrika neu"
+    claim_en: "New recognition, basing and mineral partnerships are legitimately reordering the Horn of Africa for the better."
+    claim_de: "Neue Anerkennungs-, Stützpunkt- und Rohstoffpartnerschaften ordnen das Horn von Afrika legitim und zum Besseren neu."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: [plural_world_order]
@@ -1043,8 +1043,8 @@ positions:
   - id: somalia_western_alarm
     name_en: "Somalia's fragility and civilian harm are deepening"
     name_de: "Somalias Fragilität und ziviles Leid vertiefen sich"
-    claim_en: "Somalia's fragility and civilian harm are deepening"
-    claim_de: "Somalias Fragilität und ziviles Leid vertiefen sich"
+    claim_en: "Somalia's fragility and civilian harm are deepening and demand urgent attention."
+    claim_de: "Somalias Fragilität und ziviles Leid vertiefen sich und erfordern dringende Aufmerksamkeit."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1058,8 +1058,8 @@ positions:
   - id: serbia_accountability_deficit
     name_en: "Balkan elites (Serbia) face an accountability deficit; protests are legitimate"
     name_de: "Balkan-Eliten (Serbien) haben ein Rechenschaftsdefizit; Proteste sind legitim"
-    claim_en: "Balkan elites (Serbia) face an accountability deficit; protests are legitimate"
-    claim_de: "Balkan-Eliten (Serbien) haben ein Rechenschaftsdefizit; Proteste sind legitim"
+    claim_en: "Balkan elites, above all in Serbia, face a genuine accountability deficit, and the protests against them are legitimate."
+    claim_de: "Die Eliten des Balkans, allen voran in Serbien, haben ein echtes Rechenschaftsdefizit, und die Proteste gegen sie sind legitim."
     stance_sign: -1
     meta: global_justice
     meta_secondary: [sovereign_resistance]
@@ -1073,8 +1073,8 @@ positions:
   - id: latam_western_terms_hold
     name_en: "Latin America still chooses rules-based Western terms over rivals"
     name_de: "Lateinamerika wählt weiterhin regelbasierte westliche Bedingungen statt der Rivalen"
-    claim_en: "Latin America still chooses rules-based Western terms over rivals"
-    claim_de: "Lateinamerika wählt weiterhin regelbasierte westliche Bedingungen statt der Rivalen"
+    claim_en: "Latin America still chooses rules-based Western terms over the offers of rival powers."
+    claim_de: "Lateinamerika wählt weiterhin regelbasierte westliche Bedingungen statt der Angebote rivalisierender Mächte."
     stance_sign: 1
     meta: liberal_international_order
     meta_secondary: [great_power_competition]
@@ -1087,8 +1087,8 @@ positions:
   - id: cuba_pressure_justified
     name_en: "Cuba's one-party regime jails critics and wrecked its economy; pressure is warranted"
     name_de: "Kubas Einparteienregime sperrt Kritiker ein und ruinierte seine Wirtschaft; Druck ist gerechtfertigt"
-    claim_en: "Cuba's one-party regime jails critics and wrecked its economy; pressure is warranted"
-    claim_de: "Kubas Einparteienregime sperrt Kritiker ein und ruinierte seine Wirtschaft; Druck ist gerechtfertigt"
+    claim_en: "Cuba's one-party regime jails critics and wrecked its own economy, so external pressure on it is warranted."
+    claim_de: "Kubas Einparteienregime sperrt Kritiker ein und hat die eigene Wirtschaft ruiniert, weshalb äußerer Druck auf es gerechtfertigt ist."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: [plural_world_order]
@@ -1101,8 +1101,8 @@ positions:
   - id: balkan_investment_development
     name_en: "Foreign investment in the Balkans is legitimate development"
     name_de: "Ausländische Investitionen auf dem Balkan sind legitime Entwicklung"
-    claim_en: "Foreign investment in the Balkans is legitimate development"
-    claim_de: "Ausländische Investitionen auf dem Balkan sind legitime Entwicklung"
+    claim_en: "Foreign investment in the Balkans is legitimate development that benefits the region, not malign influence."
+    claim_de: "Ausländische Investitionen auf dem Balkan sind legitime Entwicklung zum Nutzen der Region, kein böswilliger Einfluss."
     stance_sign: 1
     meta: economic_order
     meta_secondary: []
@@ -1115,8 +1115,8 @@ positions:
   - id: alberta_grievance_legitimate
     name_en: "Alberta's grievance reflects real material fault lines"
     name_de: "Albertas Unmut spiegelt reale materielle Bruchlinien wider"
-    claim_en: "Alberta's grievance reflects real material fault lines"
-    claim_de: "Albertas Unmut spiegelt reale materielle Bruchlinien wider"
+    claim_en: "Alberta's grievances with Ottawa reflect real material fault lines and deserve to be taken seriously."
+    claim_de: "Albertas Unmut gegenüber Ottawa spiegelt reale materielle Bruchlinien wider und verdient, ernst genommen zu werden."
     stance_sign: 1
     meta: economic_order
     meta_secondary: []
@@ -1129,8 +1129,8 @@ positions:
   - id: arctic_development_normal
     name_en: "Arctic resource development and shipping are normal opportunity"
     name_de: "Rohstoffabbau und Schifffahrt in der Arktis sind normale Chancen"
-    claim_en: "Arctic resource development and shipping are normal opportunity"
-    claim_de: "Rohstoffabbau und Schifffahrt in der Arktis sind normale Chancen"
+    claim_en: "Arctic resource development and shipping are a normal, legitimate economic opportunity."
+    claim_de: "Rohstoffabbau und Schifffahrt in der Arktis sind eine normale, legitime wirtschaftliche Chance."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: [economic_order]
@@ -1143,8 +1143,8 @@ positions:
   - id: korea_us_containment_critique
     name_en: "US alliances on the peninsula are a containment instrument"
     name_de: "US-Bündnisse auf der Halbinsel sind ein Instrument der Eindämmung"
-    claim_en: "US alliances on the peninsula are a containment instrument"
-    claim_de: "US-Bündnisse auf der Halbinsel sind ein Instrument der Eindämmung"
+    claim_en: "US alliances on the Korean peninsula are an instrument of containment that heightens tension rather than security."
+    claim_de: "Die US-Bündnisse auf der koreanischen Halbinsel sind ein Instrument der Eindämmung, das eher Spannung als Sicherheit schafft."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -1157,8 +1157,8 @@ positions:
   - id: israel_syria_jihadist_warning
     name_en: "The new Syrian government are jihadists; normalisation legitimises them"
     name_de: "Die neue syrische Regierung sind Dschihadisten; Normalisierung legitimiert sie"
-    claim_en: "The new Syrian government are jihadists; normalisation legitimises them"
-    claim_de: "Die neue syrische Regierung sind Dschihadisten; Normalisierung legitimiert sie"
+    claim_en: "Syria's new government are jihadists in disguise, and normalising relations with them legitimises extremists."
+    claim_de: "Syriens neue Regierung sind verkappte Dschihadisten, und die Normalisierung der Beziehungen mit ihnen legitimiert Extremisten."
     stance_sign: -1
     meta: security_order
     meta_secondary: [liberal_international_order]
@@ -1171,8 +1171,8 @@ positions:
   - id: afghan_sovereignty_violation
     name_en: "Pakistani cross-border strikes violate Afghan sovereignty"
     name_de: "Pakistanische grenzüberschreitende Angriffe verletzen die afghanische Souveränität"
-    claim_en: "Pakistani cross-border strikes violate Afghan sovereignty"
-    claim_de: "Pakistanische grenzüberschreitende Angriffe verletzen die afghanische Souveränität"
+    claim_en: "Pakistani cross-border strikes violate Afghan sovereignty and cannot be justified as counterterrorism."
+    claim_de: "Pakistanische grenzüberschreitende Angriffe verletzen die afghanische Souveränität und lassen sich nicht als Terrorbekämpfung rechtfertigen."
     stance_sign: -1
     meta: security_order
     meta_secondary: []
@@ -1185,8 +1185,8 @@ positions:
   - id: latam_china_penetration_warning
     name_en: "Chinese port/rail/mineral holdings are strategic penetration of the hemisphere"
     name_de: "Chinesische Hafen-, Bahn- und Rohstoffbeteiligungen sind eine strategische Durchdringung der Hemisphäre"
-    claim_en: "Chinese port/rail/mineral holdings are strategic penetration of the hemisphere"
-    claim_de: "Chinesische Hafen-, Bahn- und Rohstoffbeteiligungen sind eine strategische Durchdringung der Hemisphäre"
+    claim_en: "Chinese port, rail and mineral holdings in the hemisphere are strategic penetration that should alarm the region and Washington."
+    claim_de: "Chinesische Hafen-, Bahn- und Rohstoffbeteiligungen in der Hemisphäre sind eine strategische Durchdringung, die die Region und Washington alarmieren sollte."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -1199,8 +1199,8 @@ positions:
   - id: sudan_catastrophe
     name_en: "Sudan is a humanitarian catastrophe and proxy war"
     name_de: "Der Sudan ist eine humanitäre Katastrophe und ein Stellvertreterkrieg"
-    claim_en: "Sudan is a humanitarian catastrophe and proxy war"
-    claim_de: "Der Sudan ist eine humanitäre Katastrophe und ein Stellvertreterkrieg"
+    claim_en: "Sudan is a humanitarian catastrophe and a proxy war that the world is failing to stop."
+    claim_de: "Der Sudan ist eine humanitäre Katastrophe und ein Stellvertreterkrieg, den die Welt nicht zu stoppen vermag."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: [great_power_competition]
@@ -1213,8 +1213,8 @@ positions:
   - id: myanmar_junta_illegitimate
     name_en: "Myanmar's junta and sham election are illegitimate"
     name_de: "Myanmars Junta und ihre Scheinwahl sind illegitim"
-    claim_en: "Myanmar's junta and sham election are illegitimate"
-    claim_de: "Myanmars Junta und ihre Scheinwahl sind illegitim"
+    claim_en: "Myanmar's junta and its sham election are illegitimate, and its rule should not be recognised."
+    claim_de: "Myanmars Junta und ihre Scheinwahl sind illegitim, und ihre Herrschaft sollte nicht anerkannt werden."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: [security_order]
@@ -1227,8 +1227,8 @@ positions:
   - id: kurdish_political_rights
     name_en: "Kurdish political rights and self-administration deserve protection"
     name_de: "Kurdische politische Rechte und Selbstverwaltung verdienen Schutz"
-    claim_en: "Kurdish political rights and self-administration deserve protection"
-    claim_de: "Kurdische politische Rechte und Selbstverwaltung verdienen Schutz"
+    claim_en: "Kurdish political rights and self-administration are legitimate and deserve protection."
+    claim_de: "Die politischen Rechte und die Selbstverwaltung der Kurden sind legitim und verdienen Schutz."
     stance_sign: -1
     meta: security_order
     meta_secondary: [sovereign_resistance]
@@ -1241,8 +1241,8 @@ positions:
   - id: ukraine_reform_progress
     name_en: "Ukraine's anti-corruption institutions are working / reform in progress"
     name_de: "Die Antikorruptionsinstitutionen der Ukraine funktionieren / Reformen schreiten voran"
-    claim_en: "Ukraine's anti-corruption institutions are working / reform in progress"
-    claim_de: "Die Antikorruptionsinstitutionen der Ukraine funktionieren / Reformen schreiten voran"
+    claim_en: "Ukraine's anti-corruption institutions are working and its reform agenda is advancing."
+    claim_de: "Die Antikorruptionsinstitutionen der Ukraine funktionieren, und ihre Reformagenda kommt voran."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1254,8 +1254,8 @@ positions:
   - id: mexico_cartel_offensive_progress
     name_en: "Mexico's own offensive against the cartels is making progress"
     name_de: "Mexikos eigene Offensive gegen die Kartelle macht Fortschritte"
-    claim_en: "Mexico's own offensive against the cartels is making progress"
-    claim_de: "Mexikos eigene Offensive gegen die Kartelle macht Fortschritte"
+    claim_en: "Mexico's own offensive against the cartels is making real progress and does not need foreign intervention."
+    claim_de: "Mexikos eigene Offensive gegen die Kartelle macht echte Fortschritte und bedarf keiner ausländischen Intervention."
     stance_sign: 1
     meta: security_order
     meta_secondary: []
@@ -1267,8 +1267,8 @@ positions:
   - id: america_first_manifest_expansion
     name_en: "US strategic expansion (Greenland, hemisphere) is legitimate necessity"
     name_de: "Die strategische Expansion der USA (Grönland, Hemisphäre) ist legitime Notwendigkeit"
-    claim_en: "US strategic expansion (Greenland, hemisphere) is legitimate necessity"
-    claim_de: "Die strategische Expansion der USA (Grönland, Hemisphäre) ist legitime Notwendigkeit"
+    claim_en: "US strategic expansion — over Greenland and across the hemisphere — is a legitimate necessity for national security."
+    claim_de: "Die strategische Expansion der USA — bei Grönland und in der gesamten Hemisphäre — ist eine legitime Notwendigkeit für die nationale Sicherheit."
     stance_sign: 1
     meta: great_power_competition
     meta_secondary: []
@@ -1280,8 +1280,8 @@ positions:
   - id: ukraine_regime_illegitimate
     name_en: "The Zelensky government is corrupt and illegitimate"
     name_de: "Die Regierung Selenskyj ist korrupt und illegitim"
-    claim_en: "The Zelensky government is corrupt and illegitimate"
-    claim_de: "Die Regierung Selenskyj ist korrupt und illegitim"
+    claim_en: "The Zelensky government is corrupt and illegitimate, and the West props it up against its own people's interests."
+    claim_de: "Die Regierung Selenskyj ist korrupt und illegitim, und der Westen stützt sie gegen die Interessen des eigenen Volkes."
     stance_sign: -1
     meta: liberal_international_order
     meta_secondary: [security_order]
@@ -1293,8 +1293,8 @@ positions:
   - id: russia_sanctions_backfire
     name_en: "Sanctions on Russia are ineffective and backfire on the West"
     name_de: "Sanktionen gegen Russland sind wirkungslos und schaden dem Westen"
-    claim_en: "Sanctions on Russia are ineffective and backfire on the West"
-    claim_de: "Sanktionen gegen Russland sind wirkungslos und schaden dem Westen"
+    claim_en: "Sanctions on Russia have failed and backfire on the West that imposed them."
+    claim_de: "Die Sanktionen gegen Russland sind gescheitert und schaden dem Westen, der sie verhängt hat."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: []
@@ -1306,8 +1306,8 @@ positions:
   - id: latam_resource_extractivism_critique
     name_en: "Whichever external buyer wins, extraction reproduces dependency"
     name_de: "Welcher externe Käufer auch gewinnt, der Abbau reproduziert Abhängigkeit"
-    claim_en: "Whichever external buyer wins, extraction reproduces dependency"
-    claim_de: "Welcher externe Käufer auch gewinnt, der Abbau reproduziert Abhängigkeit"
+    claim_en: "Whichever external buyer prevails, resource extraction in Latin America only reproduces dependency."
+    claim_de: "Welcher externe Käufer sich auch durchsetzt, der Rohstoffabbau in Lateinamerika reproduziert nur Abhängigkeit."
     stance_sign: -1
     meta: economic_order
     meta_secondary: []
@@ -1319,8 +1319,8 @@ positions:
   - id: mercosur_market_opportunity
     name_en: "The Mercosur-EU deal is long-delayed market access"
     name_de: "Das Mercosur-EU-Abkommen ist ein lange verzögerter Marktzugang"
-    claim_en: "The Mercosur-EU deal is long-delayed market access"
-    claim_de: "Das Mercosur-EU-Abkommen ist ein lange verzögerter Marktzugang"
+    claim_en: "The Mercosur-EU agreement is a long-delayed opening of markets that both sides should seize."
+    claim_de: "Das Mercosur-EU-Abkommen ist eine lange verzögerte Marktöffnung, die beide Seiten ergreifen sollten."
     stance_sign: 1
     meta: plural_world_order
     meta_secondary: []
@@ -1332,8 +1332,8 @@ positions:
   - id: turkey_authoritarian_drift
     name_en: "Turkey is sliding into authoritarianism (Western liberal critique)"
     name_de: "Die Türkei gleitet in den Autoritarismus ab (westlich-liberale Kritik)"
-    claim_en: "Turkey is sliding into authoritarianism (Western liberal critique)"
-    claim_de: "Die Türkei gleitet in den Autoritarismus ab (westlich-liberale Kritik)"
+    claim_en: "Turkey is sliding into authoritarianism, eroding the rule of law and democratic checks."
+    claim_de: "Die Türkei gleitet in den Autoritarismus ab und höhlt Rechtsstaat und demokratische Kontrollen aus."
     stance_sign: -1
     meta: liberal_international_order
     meta_secondary: []
@@ -1345,8 +1345,8 @@ positions:
   - id: somaliland_statehood
     name_en: "Somaliland has earned recognition through self-governance"
     name_de: "Somaliland hat sich durch Selbstverwaltung die Anerkennung verdient"
-    claim_en: "Somaliland has earned recognition through self-governance"
-    claim_de: "Somaliland hat sich durch Selbstverwaltung die Anerkennung verdient"
+    claim_en: "Somaliland has earned recognition through decades of stable self-governance."
+    claim_de: "Somaliland hat sich durch Jahrzehnte stabiler Selbstverwaltung die Anerkennung verdient."
     stance_sign: 1
     meta: global_justice
     meta_secondary: []
@@ -1358,8 +1358,8 @@ positions:
   - id: sudan_army_legitimacy
     name_en: "The Sudanese army is the legitimate authority against the RSF"
     name_de: "Die sudanesische Armee ist die legitime Autorität gegen die RSF"
-    claim_en: "The Sudanese army is the legitimate authority against the RSF"
-    claim_de: "Die sudanesische Armee ist die legitime Autorität gegen die RSF"
+    claim_en: "Sudan's national army is the legitimate authority defending the state against the RSF."
+    claim_de: "Die sudanesische Nationalarmee ist die legitime Autorität, die den Staat gegen die RSF verteidigt."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1371,8 +1371,8 @@ positions:
   - id: saudi_coalition_legitimacy
     name_en: "The Saudi-led coalition restores legitimate government in Yemen"
     name_de: "Die von Saudi-Arabien geführte Koalition stellt die legitime Regierung im Jemen wieder her"
-    claim_en: "The Saudi-led coalition restores legitimate government in Yemen"
-    claim_de: "Die von Saudi-Arabien geführte Koalition stellt die legitime Regierung im Jemen wieder her"
+    claim_en: "The Saudi-led coalition is restoring Yemen's legitimate government against an armed insurgency."
+    claim_de: "Die von Saudi-Arabien geführte Koalition stellt Jemens legitime Regierung gegen einen bewaffneten Aufstand wieder her."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1384,8 +1384,8 @@ positions:
   - id: colombia_peace_failure
     name_en: "Open-ended negotiation lets armed groups regroup"
     name_de: "Ergebnisoffene Verhandlungen lassen bewaffnete Gruppen sich neu formieren"
-    claim_en: "Open-ended negotiation lets armed groups regroup"
-    claim_de: "Ergebnisoffene Verhandlungen lassen bewaffnete Gruppen sich neu formieren"
+    claim_en: "Open-ended negotiation with armed groups only lets them regroup, so Colombia's peace approach has failed."
+    claim_de: "Ergebnisoffene Verhandlungen mit bewaffneten Gruppen lassen diese nur wiedererstarken, weshalb Kolumbiens Friedensansatz gescheitert ist."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1397,8 +1397,8 @@ positions:
   - id: colombia_hard_turn
     name_en: "Voters rejected negotiation with armed groups (hard-line reading)"
     name_de: "Die Wähler lehnten Verhandlungen mit bewaffneten Gruppen ab (Hardliner-Lesart)"
-    claim_en: "Voters rejected negotiation with armed groups (hard-line reading)"
-    claim_de: "Die Wähler lehnten Verhandlungen mit bewaffneten Gruppen ab (Hardliner-Lesart)"
+    claim_en: "Colombian voters have rejected negotiation with armed groups in favour of a hard-line security policy."
+    claim_de: "Die kolumbianischen Wähler haben Verhandlungen mit bewaffneten Gruppen zugunsten einer harten Sicherheitspolitik abgelehnt."
     stance_sign: 1
     meta: plural_world_order
     meta_secondary: [security_order]
@@ -1410,8 +1410,8 @@ positions:
   - id: georgia_european_aspiration
     name_en: "Georgians want a European future their government is blocking"
     name_de: "Die Georgier wollen eine europäische Zukunft, die ihre Regierung blockiert"
-    claim_en: "Georgians want a European future their government is blocking"
-    claim_de: "Die Georgier wollen eine europäische Zukunft, die ihre Regierung blockiert"
+    claim_en: "Georgians want a European future that their own government is actively blocking."
+    claim_de: "Die Georgier wollen eine europäische Zukunft, die ihre eigene Regierung aktiv blockiert."
     stance_sign: 1
     meta: liberal_international_order
     meta_secondary: []
@@ -1423,8 +1423,8 @@ positions:
   - id: georgia_sovereignty_stability
     name_en: "Georgia's government rightly resisted a Western-funded destabilisation"
     name_de: "Georgiens Regierung widerstand zu Recht einer westlich finanzierten Destabilisierung"
-    claim_en: "Georgia's government rightly resisted a Western-funded destabilisation"
-    claim_de: "Georgiens Regierung widerstand zu Recht einer westlich finanzierten Destabilisierung"
+    claim_en: "Georgia's government rightly resisted a Western-funded attempt to destabilise the country."
+    claim_de: "Georgiens Regierung hat zu Recht einem westlich finanzierten Versuch widerstanden, das Land zu destabilisieren."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1436,8 +1436,8 @@ positions:
   - id: myanmar_normalisation
     name_en: "Myanmar's election and civilian handover mark a return to order"
     name_de: "Myanmars Wahl und zivile Machtübergabe markieren eine Rückkehr zur Ordnung"
-    claim_en: "Myanmar's election and civilian handover mark a return to order"
-    claim_de: "Myanmars Wahl und zivile Machtübergabe markieren eine Rückkehr zur Ordnung"
+    claim_en: "Myanmar's election and civilian handover mark a genuine return to order and normalisation."
+    claim_de: "Myanmars Wahl und die zivile Machtübergabe markieren eine echte Rückkehr zur Ordnung und Normalisierung."
     stance_sign: 1
     meta: liberal_international_order
     meta_secondary: [sovereign_resistance]
@@ -1449,8 +1449,8 @@ positions:
   - id: essequibo_guyana
     name_en: "Guyana's Essequibo border is settled; Venezuela's claim is revanchist"
     name_de: "Guyanas Essequibo-Grenze ist geklärt; Venezuelas Anspruch ist revanchistisch"
-    claim_en: "Guyana's Essequibo border is settled; Venezuela's claim is revanchist"
-    claim_de: "Guyanas Essequibo-Grenze ist geklärt; Venezuelas Anspruch ist revanchistisch"
+    claim_en: "Guyana's border over the Essequibo is legally settled, and Venezuela's claim to it is revanchist."
+    claim_de: "Guyanas Grenze am Essequibo ist rechtlich geklärt, und Venezuelas Anspruch darauf ist revanchistisch."
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: []
@@ -1462,8 +1462,8 @@ positions:
   - id: essequibo_venezuela
     name_en: "The Essequibo is Venezuelan by historical right"
     name_de: "Essequibo ist historisch rechtmäßig venezolanisch"
-    claim_en: "The Essequibo is Venezuelan by historical right"
-    claim_de: "Essequibo ist historisch rechtmäßig venezolanisch"
+    claim_en: "The Essequibo belongs to Venezuela by historical right."
+    claim_de: "Der Essequibo gehört Venezuela von historischem Recht wegen."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: [great_power_competition]
@@ -1476,8 +1476,8 @@ positions:
   - id: venezuela_stabilization
     name_en: "The caretaker administration is stabilising Venezuela"
     name_de: "Die Übergangsverwaltung stabilisiert Venezuela"
-    claim_en: "The caretaker administration is stabilising Venezuela"
-    claim_de: "Die Übergangsverwaltung stabilisiert Venezuela"
+    claim_en: "The caretaker administration is stabilising Venezuela and restoring order."
+    claim_de: "Die Übergangsverwaltung stabilisiert Venezuela und stellt die Ordnung wieder her."
     stance_sign: 1
     meta: global_justice
     meta_secondary: []
@@ -1489,8 +1489,8 @@ positions:
   - id: arctic_environmental_alarm
     name_en: "Arctic warming and extraction are an environmental emergency"
     name_de: "Erwärmung und Rohstoffabbau in der Arktis sind ein Umweltnotstand"
-    claim_en: "Arctic warming and extraction are an environmental emergency"
-    claim_de: "Erwärmung und Rohstoffabbau in der Arktis sind ein Umweltnotstand"
+    claim_en: "Arctic warming and resource extraction are an environmental emergency, not an opportunity."
+    claim_de: "Die Erwärmung der Arktis und der Rohstoffabbau sind ein Umweltnotstand, keine Chance."
     stance_sign: -1
     meta: planetary_governance
     meta_secondary: []
@@ -1502,8 +1502,8 @@ positions:
   - id: arctic_route_strategic_threat
     name_en: "Russian/Chinese control of Arctic routes is a strategic threat"
     name_de: "Russische/chinesische Kontrolle der Arktisrouten ist eine strategische Bedrohung"
-    claim_en: "Russian/Chinese control of Arctic routes is a strategic threat"
-    claim_de: "Russische/chinesische Kontrolle der Arktisrouten ist eine strategische Bedrohung"
+    claim_en: "Russian and Chinese control of Arctic shipping routes is a strategic threat the West must counter."
+    claim_de: "Die russische und chinesische Kontrolle über die arktischen Schifffahrtsrouten ist eine strategische Bedrohung, der der Westen begegnen muss."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: []
@@ -1515,8 +1515,8 @@ positions:
   - id: scs_rules_based_order
     name_en: "The South China Sea must follow the rules-based maritime order"
     name_de: "Das Südchinesische Meer muss der regelbasierten maritimen Ordnung folgen"
-    claim_en: "The South China Sea must follow the rules-based maritime order"
-    claim_de: "Das Südchinesische Meer muss der regelbasierten maritimen Ordnung folgen"
+    claim_en: "The South China Sea must be governed by the rules-based maritime order and freedom of navigation."
+    claim_de: "Das Südchinesische Meer muss nach der regelbasierten maritimen Ordnung und der Freiheit der Schifffahrt geregelt werden."
     stance_sign: 1
     meta: liberal_international_order
     meta_secondary: []
@@ -1528,8 +1528,8 @@ positions:
   - id: scs_chinese_claim
     name_en: "China's South China Sea claims are sovereign"
     name_de: "Chinas Ansprüche im Südchinesischen Meer sind souverän"
-    claim_en: "China's South China Sea claims are sovereign"
-    claim_de: "Chinas Ansprüche im Südchinesischen Meer sind souverän"
+    claim_en: "China's claims in the South China Sea are sovereign and historically grounded."
+    claim_de: "Chinas Ansprüche im Südchinesischen Meer sind souverän und historisch begründet."
     stance_sign: 1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1541,8 +1541,8 @@ positions:
   - id: tech_digital_sovereignty
     name_en: "Europe needs digital sovereignty against US tech dominance"
     name_de: "Europa braucht digitale Souveränität gegenüber der US-Technologiedominanz"
-    claim_en: "Europe needs digital sovereignty against US tech dominance"
-    claim_de: "Europa braucht digitale Souveränität gegenüber der US-Technologiedominanz"
+    claim_en: "Europe needs its own digital sovereignty to escape dependence on US technology dominance."
+    claim_de: "Europa braucht eine eigene digitale Souveränität, um sich aus der Abhängigkeit von der US-Technologiedominanz zu befreien."
     stance_sign: -1
     meta: information_order
     meta_secondary: []
@@ -1554,8 +1554,8 @@ positions:
   - id: greenland_self_determination
     name_en: "Greenland's own agency and self-determination come first"
     name_de: "Grönlands eigene Handlungsfähigkeit und Selbstbestimmung haben Vorrang"
-    claim_en: "Greenland's own agency and self-determination come first"
-    claim_de: "Grönlands eigene Handlungsfähigkeit und Selbstbestimmung haben Vorrang"
+    claim_en: "Greenland's own agency and right to self-determination must come before any outside power's designs."
+    claim_de: "Grönlands eigene Handlungsfähigkeit und sein Recht auf Selbstbestimmung müssen Vorrang vor den Absichten jeder äußeren Macht haben."
     stance_sign: 0
     meta: global_justice
     meta_secondary: []
@@ -1567,8 +1567,8 @@ positions:
   - id: thaicam_thai
     name_en: "Thailand's account of the border dispute (Koh Kood is Thai)"
     name_de: "Thailands Sicht des Grenzstreits (Koh Kood ist thailändisch)"
-    claim_en: "Thailand's account of the border dispute (Koh Kood is Thai)"
-    claim_de: "Thailands Sicht des Grenzstreits (Koh Kood ist thailändisch)"
+    claim_en: "Thailand's account of the border dispute is correct: Koh Kood and the contested ground are Thai."
+    claim_de: "Thailands Darstellung des Grenzstreits ist zutreffend: Koh Kood und das umstrittene Gebiet sind thailändisch."
     stance_sign: 1
     meta: security_order
     meta_secondary: [sovereign_resistance]
@@ -1580,8 +1580,8 @@ positions:
   - id: thaicam_cambodian
     name_en: "Cambodia's account (Thailand occupies Cambodian ground)"
     name_de: "Kambodschas Sicht (Thailand besetzt kambodschanisches Gebiet)"
-    claim_en: "Cambodia's account (Thailand occupies Cambodian ground)"
-    claim_de: "Kambodschas Sicht (Thailand besetzt kambodschanisches Gebiet)"
+    claim_en: "Cambodia's account is correct: Thailand is occupying Cambodian ground."
+    claim_de: "Kambodschas Darstellung ist zutreffend: Thailand besetzt kambodschanisches Gebiet."
     stance_sign: -1
     meta: liberal_international_order
     meta_secondary: []
@@ -1593,8 +1593,8 @@ positions:
   - id: thaicam_mediation
     name_en: "The Thailand-Cambodia clash as an occasion for great-power mediation"
     name_de: "Der thailändisch-kambodschanische Zusammenstoß als Anlass für Großmachtvermittlung"
-    claim_en: "The Thailand-Cambodia clash as an occasion for great-power mediation"
-    claim_de: "Der thailändisch-kambodschanische Zusammenstoß als Anlass für Großmachtvermittlung"
+    claim_en: "The Thailand-Cambodia clash is best resolved through great-power mediation."
+    claim_de: "Der thailändisch-kambodschanische Zusammenstoß lässt sich am besten durch Großmachtvermittlung lösen."
     stance_sign: 0
     meta: plural_world_order
     meta_secondary: []
@@ -1607,8 +1607,8 @@ positions:
   - id: zangezur_threat
     name_en: "The Zangezur corridor is an extraterritorial strategic threat"
     name_de: "Der Sangesur-Korridor ist eine extraterritoriale strategische Bedrohung"
-    claim_en: "The Zangezur corridor is an extraterritorial strategic threat"
-    claim_de: "Der Sangesur-Korridor ist eine extraterritoriale strategische Bedrohung"
+    claim_en: "The Zangezur corridor is an extraterritorial imposition and a strategic threat to the region."
+    claim_de: "Der Sangesur-Korridor ist eine extraterritoriale Aufzwingung und eine strategische Bedrohung für die Region."
     stance_sign: -1
     meta: great_power_competition
     meta_secondary: [security_order]
@@ -1620,8 +1620,8 @@ positions:
   - id: aas_contested
     name_en: "The Armenia-Azerbaijan settlement is contested / imposed"
     name_de: "Die Einigung zwischen Armenien und Aserbaidschan ist umstritten / aufgezwungen"
-    claim_en: "The Armenia-Azerbaijan settlement is contested / imposed"
-    claim_de: "Die Einigung zwischen Armenien und Aserbaidschan ist umstritten / aufgezwungen"
+    claim_en: "The Armenia-Azerbaijan settlement is contested and was imposed rather than fairly negotiated."
+    claim_de: "Die Einigung zwischen Armenien und Aserbaidschan ist umstritten und wurde aufgezwungen statt fair ausgehandelt."
     stance_sign: -1
     meta: liberal_international_order
     meta_secondary: [sovereign_resistance]
@@ -1633,8 +1633,8 @@ positions:
   - id: alberta_unity_defence
     name_en: "Alberta separatism is a dangerous bluff and an opening for outside pressure"
     name_de: "Albertas Separatismus ist ein gefährliches Bluffen und ein Einfallstor für Druck von außen"
-    claim_en: "Alberta separatism is a dangerous bluff and an opening for outside pressure"
-    claim_de: "Albertas Separatismus ist ein gefährliches Bluffen und ein Einfallstor für Druck von außen"
+    claim_en: "Alberta separatism is a reckless bluff that only opens the door to outside interference in Canada."
+    claim_de: "Albertas Separatismus ist ein leichtsinniges Bluffen, das nur einer Einmischung von außen in Kanada Tür und Tor öffnet."
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
@@ -1646,8 +1646,8 @@ positions:
   - id: cartel_narco_state_critique
     name_en: "Mexico's cartel problem is a narco-state failure"
     name_de: "Mexikos Kartellproblem ist ein Versagen des Narco-Staats"
-    claim_en: "Mexico's cartel problem is a narco-state failure"
-    claim_de: "Mexikos Kartellproblem ist ein Versagen des Narco-Staats"
+    claim_en: "Mexico's cartel problem is a symptom of a captured narco-state that cannot police itself."
+    claim_de: "Mexikos Kartellproblem ist Symptom eines vereinnahmten Narco-Staats, der sich nicht selbst kontrollieren kann."
     stance_sign: -1
     meta: security_order
     meta_secondary: [global_justice]
