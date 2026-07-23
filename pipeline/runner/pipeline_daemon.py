@@ -1036,6 +1036,17 @@ class PipelineDaemon:
 
         materialize()
 
+    def run_materialize_positions(self):
+        """Materialize the position landing + detail blobs (SPEC v2 §5.5).
+
+        Backs /narratives and /narratives/[id] in the position model. Reads the
+        derived event_positions table (rebuilt in fn_refresh), so it runs after
+        narrative/FN attribution is fresh.
+        """
+        from pipeline.phase_4.materialize_positions import materialize
+
+        materialize()
+
     def run_materialize_outlet_landing(self):
         """Materialize per-outlet OutletLanding blobs.
 
@@ -1455,6 +1466,15 @@ class PipelineDaemon:
                     self.run_phase_with_retry,
                     "Phase 4.2h: Narrative Detail",
                     self.run_materialize_narrative_detail,
+                ),
+                600,
+            )
+            await self.run_with_timeout(
+                "Phase 4.2h2: Position Pages",
+                asyncio.to_thread(
+                    self.run_phase_with_retry,
+                    "Phase 4.2h2: Position Pages",
+                    self.run_materialize_positions,
                 ),
                 600,
             )
