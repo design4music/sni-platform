@@ -378,10 +378,11 @@ def build(cur):
             }
 
         # metas for the landing rail
+        m_desc = "description_de" if locale == "de" else "description"
         cur.execute(
             f"""
             SELECT id, COALESCE({m_name}, name) AS name,
-                   COALESCE(description_de, description) AS description,
+                   COALESCE({m_desc}, description) AS description,
                    signals, sort_order
               FROM meta_narratives ORDER BY sort_order
         """
