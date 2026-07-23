@@ -12,10 +12,10 @@ interface Props {
 }
 
 export default async function EventNarrativeBadges({ eventId, centroidId, variant = 'inline' }: Props) {
-  const links = await getNarrativesForEvent(eventId);
+  const locale = await getLocale();
+  const links = await getNarrativesForEvent(eventId, locale);
   if (links.length === 0) return null;
 
-  const locale = await getLocale();
   const fromWord = locale === 'de' ? 'von' : 'from';
 
   function ForeignActorChip({ label }: { label: string }) {

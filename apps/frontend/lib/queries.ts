@@ -1928,38 +1928,47 @@ export async function getNarrativeEvents(narrativeId: string, limit: number = 50
   });
 }
 
-export async function getNarrativesForEvent(eventId: string): Promise<EventNarrativeLink[]> {
-  return cached(`event_narratives:${eventId}`, 3600, () =>
+// Position model: the event's positions, derived from event_positions (P2).
+// Shaped as EventNarrativeLink (narrative_id = position_id, actor = first owner,
+// confidence repurposed as a normalized strength) so the badge components are
+// unchanged. Ordered by how many of the event's headlines carry the position.
+export async function getNarrativesForEvent(eventId: string, locale?: string): Promise<EventNarrativeLink[]> {
+  const loc = locale === 'de' ? 'de' : 'en';
+  const nameExpr = loc === 'de' ? 'COALESCE(p.name_de, p.name_en)' : 'p.name_en';
+  return cached(`event_positions_links:${eventId}:${loc}`, 3600, () =>
     query<EventNarrativeLink>(
-      `SELECT esn.narrative_id, sn.name as narrative_name,
-              sn.actor_centroid, c.label as actor_label,
-              esn.confidence
-       FROM event_strategic_narratives esn
-       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
-       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
-       WHERE esn.event_id = $1
-       ORDER BY esn.confidence DESC`,
+      `SELECT ep.position_id AS narrative_id,
+              ${nameExpr} AS narrative_name,
+              p.owner_centroids[1] AS actor_centroid,
+              c.label AS actor_label,
+              1.0 AS confidence
+       FROM event_positions ep
+       JOIN positions p ON p.id = ep.position_id AND p.is_active
+       LEFT JOIN centroids_v3 c ON c.id = p.owner_centroids[1]
+       WHERE ep.event_id = $1
+       ORDER BY ep.title_count DESC, narrative_name`,
       [eventId]
     )
   );
 }
 
+// Position model: positions this centroid OWNS (owner_centroids), with derived
+// event counts from event_positions. Shaped as StrategicNarrative (the fields the
+// centroid section reads: id, name, meta_narrative_id, event_count).
 export async function getNarrativesForCentroid(centroidId: string, locale?: string): Promise<StrategicNarrative[]> {
-  return cached(`centroid_narratives:${centroidId}:${locale || 'en'}`, 1800, () =>
+  const loc = locale === 'de' ? 'de' : 'en';
+  const nameExpr = loc === 'de' ? 'COALESCE(p.name_de, p.name_en)' : 'p.name_en';
+  return cached(`centroid_positions:${centroidId}:${loc}`, 1800, () =>
     query<StrategicNarrative>(
-      `SELECT sn.id, sn.meta_narrative_id, ${locCol('mn', 'name', locale)} as meta_name,
-              sn.category, sn.actor_centroid, c.label as actor_label,
-              ${locCol('sn', 'name', locale)} as name,
-              ${locCol('sn', 'claim', locale)} as claim,
-              sn.normative_conclusion, sn.keywords, sn.action_classes, sn.domains,
-              COUNT(esn.event_id)::int as event_count
-       FROM strategic_narratives sn
-       JOIN meta_narratives mn ON mn.id = sn.meta_narrative_id
-       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
-       LEFT JOIN event_strategic_narratives esn ON esn.narrative_id = sn.id
-       WHERE sn.actor_centroid = $1 AND sn.is_active = true
-       GROUP BY sn.id, mn.id, c.label, mn.name, mn.name_de
-       ORDER BY event_count DESC`,
+      `SELECT p.id, p.meta_narrative_id,
+              ${nameExpr} AS name,
+              NULL::text AS actor_centroid, NULL::text AS actor_label,
+              (SELECT count(*) FROM event_positions ep
+                 JOIN events_v3 ev ON ev.id = ep.event_id AND ev.merged_into IS NULL
+                WHERE ep.position_id = p.id)::int AS event_count
+       FROM positions p
+       WHERE $1 = ANY(p.owner_centroids) AND p.is_active = true
+       ORDER BY event_count DESC, name`,
       [centroidId]
     )
   );
@@ -2036,19 +2045,16 @@ export async function getTopNarrativePerEvent(eventIds: string[]): Promise<Recor
   if (eventIds.length === 0) return {};
   return cached(`top_narrative_per_event:${eventIds.sort().join(',')}`, 1800, async () => {
     const rows = await query<EventNarrativeLink & { event_id: string }>(
-      `SELECT DISTINCT ON (esn.event_id)
-              esn.event_id::text as event_id,
-              esn.narrative_id, sn.name as narrative_name,
-              sn.actor_centroid, c.label as actor_label,
-              esn.confidence
-       FROM event_strategic_narratives esn
-       JOIN strategic_narratives sn ON sn.id = esn.narrative_id
-       JOIN events_v3 e ON e.id = esn.event_id
-       JOIN ctm ct ON ct.id = e.ctm_id
-       LEFT JOIN centroids_v3 c ON c.id = sn.actor_centroid
-       WHERE esn.event_id = ANY($1::uuid[])
-         AND sn.actor_centroid = ct.centroid_id
-       ORDER BY esn.event_id, esn.confidence DESC`,
+      `SELECT DISTINCT ON (ep.event_id)
+              ep.event_id::text as event_id,
+              ep.position_id AS narrative_id, p.name_en as narrative_name,
+              p.owner_centroids[1] AS actor_centroid, c.label as actor_label,
+              1.0 AS confidence
+       FROM event_positions ep
+       JOIN positions p ON p.id = ep.position_id AND p.is_active
+       LEFT JOIN centroids_v3 c ON c.id = p.owner_centroids[1]
+       WHERE ep.event_id = ANY($1::uuid[])
+       ORDER BY ep.event_id, ep.title_count DESC`,
       [eventIds]
     );
     const map: Record<string, EventNarrativeLink> = {};
