@@ -64,41 +64,6 @@ function formatDate(dateStr: string, locale: string = 'en-US'): string {
   return date.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function PerspectiveBadge({ centroidId, label, track, trackLabel, month }: {
-  centroidId: string; label: string; track: string; trackLabel: string; month: string;
-}) {
-  // Extract ISO code from centroid_id like "MIDEAST-IRAN" -> "IR" or "AMERICAS-USA" -> "US"
-  const parts = centroidId.split('-');
-  const isoCode = parts.length > 1 ? parts[parts.length - 1] : null;
-  // Map common codes
-  const isoMap: Record<string, string> = {
-    USA: 'US', IRAN: 'IR', ISRAEL: 'IL', TURKEY: 'TR', CHINA: 'CN',
-    RUSSIA: 'RU', INDIA: 'IN', BRAZIL: 'BR', GERMANY: 'DE', FRANCE: 'FR',
-    JAPAN: 'JP', UK: 'GB', KOREA: 'KR', AUSTRALIA: 'AU', CANADA: 'CA',
-  };
-  const iso2 = isoCode ? (isoMap[isoCode] || (isoCode.length === 2 ? isoCode : null)) : null;
-
-  return (
-    <Link
-      href={`/c/${centroidId}/t/${track}?month=${month}`}
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:border-blue-500/40 transition-colors"
-    >
-      {iso2 && (
-        <img
-          src={`/flags/${iso2.toLowerCase()}.png`}
-          alt={iso2}
-          width={20}
-          height={15}
-          className="opacity-80"
-          style={{ objectFit: 'contain', filter: 'saturate(0.7)' }}
-        />
-      )}
-      <span className="text-sm font-medium text-blue-400">{label}</span>
-      <span className="text-xs text-blue-400/60">{trackLabel}</span>
-    </Link>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /* Deferred async server components                                   */
 /* ------------------------------------------------------------------ */
@@ -215,16 +180,6 @@ export default async function EventDetailPage({ params }: Props) {
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
       <JsonLd data={jsonLdBlocks} />
       {locale === 'de' && <TranslationNotice message={tCommon('translatedNotice')} />}
-      {/* Perspective badge */}
-      <div className="mb-4">
-        <PerspectiveBadge
-          centroidId={event.centroid_id}
-          label={getCentroidLabel(event.centroid_id, event.centroid_label, tCentroids)}
-          track={event.track}
-          trackLabel={trackLabel}
-          month={event.month}
-        />
-      </div>
 
       {/* Header */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">
@@ -252,21 +207,6 @@ export default async function EventDetailPage({ params }: Props) {
             ))}
           </div>
         )}
-        {event.absorbed_centroids && event.absorbed_centroids.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <span className="text-xs text-dashboard-text-muted">{t('alsoCovers')}:</span>
-            {event.absorbed_centroids.map((c) => (
-              <span key={c} className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                {c}
-              </span>
-            ))}
-          </div>
-        )}
-        {/* Strategic narrative badges (inline) — centroidId enables the
-            "from {actor}" chip on foreign-framed narratives. */}
-        <Suspense fallback={null}>
-          <EventNarrativeBadges eventId={event_id} centroidId={event.centroid_id} />
-        </Suspense>
       </div>
 
       {/* Story Timeline */}

@@ -95,8 +95,8 @@ export default async function PositionDetailPage({ params }: Props) {
               <h3 className="mt-4 text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">{t('coalition')}</h3>
               <div className="flex flex-wrap gap-1.5">
                 {p.coalitions.map(c => (
-                  <span key={c.coalition} className="text-xs px-2 py-0.5 rounded-full bg-dashboard-border/60 font-mono text-dashboard-text-muted" title={`${c.cards} ${t('appearsOn').toLowerCase()}`}>
-                    {c.coalition}
+                  <span key={c.coalition} className="text-xs px-2 py-0.5 rounded-full bg-dashboard-border/60 text-dashboard-text-muted" title={`${c.cards} ${t('appearsOn').toLowerCase()}`}>
+                    {c.label}
                   </span>
                 ))}
               </div>
@@ -104,15 +104,6 @@ export default async function PositionDetailPage({ params }: Props) {
           )}
         </div>
       )}
-
-      {/* Cross-node reach */}
-      <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-2">{t('crossNodeReach')}</h3>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-dashboard-text">{p.fn_count}</span>
-          <span className="text-xs text-dashboard-text-muted">{t('positionsLabel')} · {p.event_count} {t('events').toLowerCase()}</span>
-        </div>
-      </div>
 
       {/* Sibling positions (competing) */}
       {detail.siblings.length > 0 && (

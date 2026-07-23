@@ -58,6 +58,7 @@ export interface NarrativeOnFn {
   stance: number | null;
   /** Parent position (SPEC v2); the card links up to /narratives/[position_id]. */
   position_id: string | null;
+  position_name: string | null;
   display_order: number;
   match_count: number;
   sample_titles: SampleTitle[];

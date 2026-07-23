@@ -704,6 +704,7 @@ export interface PositionOwner {
 
 export interface PositionCoalition {
   coalition: string;
+  label: string;
   cards: number;
 }
 

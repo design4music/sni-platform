@@ -28,8 +28,8 @@ export default function PositionCard({ position: p, sparkline, labels }: Props) 
             </span>
           )}
           {p.coalitions.slice(0, 3).map(c => (
-            <span key={c.coalition} className="rounded bg-dashboard-border/60 px-1.5 py-0.5 font-mono text-[10px]">
-              {c.coalition}
+            <span key={c.coalition} className="rounded bg-dashboard-border/60 px-1.5 py-0.5 text-[10px]">
+              {c.label}
             </span>
           ))}
         </div>

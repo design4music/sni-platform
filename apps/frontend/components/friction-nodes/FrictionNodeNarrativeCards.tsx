@@ -73,25 +73,23 @@ function NarrativeCard({
         </span>
       </header>
 
-      {/* Up-link to the parent position (SPEC v2) */}
+      {/* Up-link to the parent position (SPEC v2) -- full position title so the
+          connection is obvious at a glance */}
       {n.position_id && (
         <Link
           href={`/narratives/${n.position_id}`}
-          className="inline-flex items-center gap-1 mb-4 text-xs text-blue-400 hover:text-blue-300 transition"
+          title={n.position_name ?? undefined}
+          className="block mb-4 text-xs text-blue-400 hover:text-blue-300 transition"
         >
-          {isDe ? 'Position ansehen' : 'View position'} &rarr;
+          <span className="uppercase tracking-wider text-dashboard-text-muted mr-1">
+            {isDe ? 'Position' : 'View position'}:
+          </span>
+          <span className="leading-snug">{n.position_name ?? (isDe ? 'ansehen' : 'view')}</span>
+          {' '}&rarr;
         </Link>
       )}
 
-      {/* Coalition — country pills with flag + name */}
-      <div className="mb-4">
-        <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5">
-          {labels.coalition}
-        </div>
-        <CoalitionPills centroidIds={n.actor_centroids} lookup={centroidLookup} />
-      </div>
-
-      {/* Loaded vocabulary — collapsed default to 8, expand on click via details */}
+      {/* Loaded vocabulary */}
       {n.framing_keywords && n.framing_keywords.length > 0 && (
         <div className="mb-4">
           <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5">
@@ -115,30 +113,31 @@ function NarrativeCard({
         </div>
       )}
 
-      {/* Full claim — collapsible */}
+      {/* Full claim — always visible; it is core content, not a disclosure */}
       {n.narrative_claim && (
-        <details className="mb-4 group">
-          <summary className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5 cursor-pointer select-none hover:text-dashboard-text transition">
-            {labels.claim}
-          </summary>
-          <p className="text-sm text-dashboard-text-muted leading-relaxed mt-2 max-h-64 overflow-y-auto pr-1">
-            {n.narrative_claim}
-          </p>
-        </details>
+        <p className="mb-4 text-sm text-dashboard-text leading-relaxed">
+          {n.narrative_claim}
+        </p>
       )}
 
-      {/* Publishers — small line above headlines so editorial basis is visible */}
-      {n.publishers && n.publishers.length > 0 && (
-        <div className="mb-3 text-[11px] text-dashboard-text-muted leading-snug">
-          <span className="uppercase tracking-wider mr-1">{labels.coveredBy}:</span>
-          <span>
-            {n.publishers.slice(0, 6).join(' · ')}
-            {n.publishers.length > 6 && (
-              <span className="opacity-70"> · +{n.publishers.length - 6}</span>
-            )}
-          </span>
+      {/* Coalition + covered-by, grouped as the editorial basis */}
+      <div className="mb-4">
+        <div className="text-[11px] uppercase tracking-wider text-dashboard-text-muted mb-1.5">
+          {labels.coalition}
         </div>
-      )}
+        <CoalitionPills centroidIds={n.actor_centroids} lookup={centroidLookup} />
+        {n.publishers && n.publishers.length > 0 && (
+          <div className="mt-2 text-[11px] text-dashboard-text-muted leading-snug">
+            <span className="uppercase tracking-wider mr-1">{labels.coveredBy}:</span>
+            <span>
+              {n.publishers.slice(0, 6).join(' · ')}
+              {n.publishers.length > 6 && (
+                <span className="opacity-70"> · +{n.publishers.length - 6}</span>
+              )}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Recent headlines */}
       <div>

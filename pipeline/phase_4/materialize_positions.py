@@ -36,7 +36,27 @@ LOCALES = ("en", "de")
 WEEKLY_DAYS = 90
 EVENTS_LIMIT = 50
 SIBLING_LIMIT = 10
+# A "competing position" must recur with this position on at least this many
+# friction nodes. A single shared node is incidental co-occurrence, not rivalry
+# (it surfaced unrelated positions on the shared node's page).
+MIN_SHARED_FNS = 2
 KEYWORDS_CAP = 30
+
+
+def coalition_label_map():
+    """coalition id -> {en, de} display label, from coalitions.yaml (incl. parents)."""
+    import yaml
+
+    data = yaml.safe_load(
+        (ROOT / "db" / "registry" / "coalitions.yaml").read_text(encoding="utf-8")
+    )
+    out = {}
+    for c in data.get("parents", []) + data.get("coalitions", []):
+        out[c["id"]] = {
+            "en": c.get("label_en", c["id"]),
+            "de": c.get("label_de", c["id"]),
+        }
+    return out
 
 
 def get_connection():
@@ -169,7 +189,8 @@ def sibling_map(cur):
     )
     out = defaultdict(list)
     for r in cur.fetchall():
-        out[r["src"]].append((r["sib"], r["shared"]))
+        if r["shared"] >= MIN_SHARED_FNS:
+            out[r["src"]].append((r["sib"], r["shared"]))
     for k in out:
         out[k].sort(key=lambda x: (-x[1], x[0]))
     return out
@@ -190,6 +211,7 @@ def build(cur):
     from scripts.narrative_coalitions import resolve as coalition_resolve
 
     clabels = centroid_labels(cur)
+    coal_labels = coalition_label_map()
     counts = position_counts(cur)
     weekly = position_weekly(cur)
     card_counts = per_card_counts(cur)
@@ -252,7 +274,11 @@ def build(cur):
                 if cc and cc != "mixed":
                     coal_tally[cc] += 1
             coalitions = [
-                {"coalition": k, "cards": v}
+                {
+                    "coalition": k,
+                    "label": coal_labels.get(k, {}).get(locale, k),
+                    "cards": v,
+                }
                 for k, v in sorted(coal_tally.items(), key=lambda x: -x[1])
             ]
 

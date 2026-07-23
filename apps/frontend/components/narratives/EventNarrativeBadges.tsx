@@ -38,17 +38,23 @@ export default async function EventNarrativeBadges({ eventId, centroidId, varian
         <p className="text-xs text-dashboard-text-muted leading-relaxed">
           Geopolitical narratives this event connects to
         </p>
-        <div className="space-y-1.5">
+        <div className="space-y-2.5">
           {links.map(link => (
             <Link
               key={link.narrative_id}
               href={`/narratives/${link.narrative_id}`}
-              className="flex items-center gap-2 text-xs hover:text-purple-400 transition"
+              className="block group"
             >
-              <span className="text-purple-400/70 shrink-0">&bull;</span>
-              <span className="text-dashboard-text truncate">{link.narrative_name}</span>
+              <span className="flex gap-2">
+                <span className="text-purple-400/70 shrink-0 mt-0.5">&bull;</span>
+                <span className="text-sm leading-snug text-dashboard-text group-hover:text-purple-400 transition">
+                  {link.narrative_name}
+                </span>
+              </span>
               {isForeign(link) && link.actor_label && (
-                <ForeignActorChip label={link.actor_label} />
+                <span className="block pl-4 mt-0.5 text-[11px] text-dashboard-text-muted">
+                  {fromWord} {link.actor_label}
+                </span>
               )}
             </Link>
           ))}
