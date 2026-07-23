@@ -1,14 +1,13 @@
-import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import DashboardLayout from '@/components/DashboardLayout';
-import NarrativeCard from '@/components/narratives/NarrativeCard';
+import PositionCard from '@/components/narratives/PositionCard';
 import MentionTimeline from '@/components/signals/MentionTimeline';
-import { getMetaNarrativeById, getAllMetaNarratives, getStrategicNarratives, getNarrativeSparklines, getMetaNarrativeActivity } from '@/lib/queries';
+import { getPositionsLanding } from '@/lib/queries';
 import { buildAlternates } from '@/lib/seo';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
-import { getCentroidLabel } from '@/lib/types';
+import type { SignalWeekly } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +17,8 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, locale } = await params;
-  const meta = await getMetaNarrativeById(id, locale);
+  const landing = await getPositionsLanding(locale);
+  const meta = landing?.meta_narratives.find(m => m.id === id);
   if (!meta) return { title: 'Not Found' };
   return {
     title: meta.name,
@@ -27,39 +27,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-async function MetaTimeline({ metaId }: { metaId: string }) {
-  const weekly = await getMetaNarrativeActivity(metaId);
-  if (!weekly || weekly.length === 0) return null;
-  return (
-    <div className="mb-8">
-      <MentionTimeline weekly={weekly} />
-    </div>
-  );
-}
-
 export default async function MetaNarrativePage({ params }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('narratives');
-  const tCentroids = await getTranslations('centroids');
 
-  const [meta, allMeta, allNarratives, sparklines] = await Promise.all([
-    getMetaNarrativeById(id, locale),
-    getAllMetaNarratives(locale),
-    getStrategicNarratives(locale),
-    getNarrativeSparklines(),
-  ]);
-
+  const landing = await getPositionsLanding(locale);
+  const meta = landing?.meta_narratives.find(m => m.id === id);
   if (!meta) return notFound();
 
-  const childNarratives = allNarratives.filter(n => n.meta_narrative_id === id);
-  const totalEvents = childNarratives.reduce((sum, n) => sum + (n.event_count || 0), 0);
+  const allMeta = landing?.meta_narratives ?? [];
+  const sparklines = landing?.sparklines ?? {};
+  const children = (landing?.positions ?? [])
+    .filter(p => p.meta_narrative_id === id)
+    .sort((a, b) => b.event_count - a.event_count || a.name.localeCompare(b.name));
+  const totalEvents = children.reduce((s, p) => s + p.event_count, 0);
+
+  // Aggregate the meta's timeline from its positions' weekly sparklines.
+  const byWeek = new Map<string, number>();
+  for (const p of children) {
+    for (const w of sparklines[p.id] ?? []) {
+      byWeek.set(w.week, (byWeek.get(w.week) ?? 0) + w.count);
+    }
+  }
+  const weekly: SignalWeekly[] = Array.from(byWeek.entries())
+    .map(([week, count]) => ({ week, count }))
+    .sort((a, b) => a.week.localeCompare(b.week));
 
   const breadcrumb = (
     <div className="text-sm text-dashboard-text-muted">
-      <Link href="/narratives" className="text-blue-400 hover:text-blue-300">
-        {t('title')}
-      </Link>
+      <Link href="/narratives" className="text-blue-400 hover:text-blue-300">{t('title')}</Link>
       <span className="mx-2">/</span>
       <span>{meta.name}</span>
     </div>
@@ -68,9 +65,7 @@ export default async function MetaNarrativePage({ params }: Props) {
   const sidebar = (
     <div className="lg:sticky lg:top-24 space-y-6">
       <div className="bg-dashboard-surface border border-dashboard-border rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">
-          {t('allMeta')}
-        </h3>
+        <h3 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-3">{t('allMeta')}</h3>
         <nav className="space-y-1">
           {allMeta.map(m => (
             <Link
@@ -90,38 +85,32 @@ export default async function MetaNarrativePage({ params }: Props) {
     </div>
   );
 
+  const cardLabels = { events: t('events'), owner: t('owner'), nodes: t('positionsLabel') };
+
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
       <div className="mb-8 pb-8 border-b border-dashboard-border">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">{meta.name}</h1>
         <p className="text-lg text-dashboard-text-muted mb-4">{meta.description}</p>
         <div className="flex items-center gap-4 text-sm text-dashboard-text-muted">
-          <span>{t('narrativesInMeta', { count: childNarratives.length })}</span>
+          <span>{children.length} {t('positionsLabel')}</span>
           <span>{totalEvents} {t('events').toLowerCase()}</span>
         </div>
       </div>
 
-      {/* Aggregate timeline */}
-      <Suspense fallback={<div className="w-full h-56 animate-pulse bg-dashboard-border/20 rounded-lg mb-8" />}>
-        <MetaTimeline metaId={id} />
-      </Suspense>
+      {weekly.length > 0 && (
+        <div className="mb-8"><MentionTimeline weekly={weekly} /></div>
+      )}
 
-      {/* Child narratives */}
-      <div className="space-y-1">
-        {childNarratives.map(n => (
-          <NarrativeCard
-            key={n.id}
-            id={n.id}
-            name={n.name}
-            actorCentroid={n.actor_centroid}
-            actorLabel={n.actor_label || null}
-            eventCount={n.event_count || 0}
-            sparkline={sparklines[n.id]}
-            matchedEventsLabel={t('matchedEvents')}
-            tCentroids={tCentroids}
-          />
-        ))}
-      </div>
+      {children.length === 0 ? (
+        <p className="text-dashboard-text-muted">{t('noPositions')}</p>
+      ) : (
+        <div className="space-y-1">
+          {children.map(p => (
+            <PositionCard key={p.id} position={p} sparkline={sparklines[p.id]} labels={cardLabels} />
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 }

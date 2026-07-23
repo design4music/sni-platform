@@ -298,6 +298,7 @@ export async function getFrictionNodeView(
       publishers: string[] | null;
       stance_label: string;
       stance: number | null;
+      position_id: string | null;
       display_order: number;
     }>(
       `SELECT n.id AS narrative_id,
@@ -308,6 +309,7 @@ export async function getFrictionNodeView(
               n.publishers,
               n.stance,
               ${loc === 'de' ? 'COALESCE(n.stance_label_de, n.stance_label_en)' : 'n.stance_label_en'} AS stance_label,
+              n.position_id,
               n.display_order
        FROM narratives_v2 n
        WHERE n.fn_id = $1 AND n.is_active = true

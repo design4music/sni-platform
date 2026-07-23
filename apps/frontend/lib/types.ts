@@ -692,3 +692,81 @@ export function formatTimeAgo(date: Date | null | undefined, t: (key: string, va
     return t('monthsAgo', { count: diffMonths });
   }
 }
+
+// ── Position model (NARRATIVE_CONSOLIDATION_SPEC v2) ────────────────
+// The POSITION is the narrative entity; narratives_v2 rows are its cards.
+// Backed by mv_positions_landing / mv_position_detail.
+
+export interface PositionOwner {
+  id: string;
+  label: string;
+}
+
+export interface PositionCoalition {
+  coalition: string;
+  cards: number;
+}
+
+export interface PositionSummary {
+  id: string;
+  name: string;
+  claim: string;
+  stance_sign: number;
+  meta_narrative_id: string;
+  meta_name: string;
+  meta_secondary: { id: string; name: string }[];
+  owner_centroids: PositionOwner[];
+  coalitions: PositionCoalition[];
+  event_count: number;
+  title_count: number;
+  card_count: number;
+  fn_count: number;
+  normative_line: string | null;
+}
+
+export interface PositionLanding {
+  meta_narratives: MetaNarrative[];
+  positions: PositionSummary[];
+  sparklines: Record<string, SignalWeekly[]>;
+}
+
+export interface PositionCardRow {
+  id: string;
+  fn_id: string;
+  fn_name: string;
+  fn_type: string;
+  stance: number;
+  stance_label: string | null;
+  match_count: number;
+  publisher_count: number;
+  coalition: string | null;
+}
+
+export interface PositionSibling {
+  id: string;
+  name: string;
+  claim: string;
+  stance_sign: number;
+  meta_narrative_id: string;
+  shared_fns: number;
+}
+
+export interface PositionEvent {
+  id: string;
+  date: string;
+  title: string;
+  title_count: number;
+}
+
+export interface PositionDetail {
+  position: PositionSummary & { keywords: string[] };
+  weekly_activity: SignalWeekly[];
+  events: PositionEvent[];
+  cards: PositionCardRow[];
+  cross_fn_reach: {
+    fn_count: number;
+    per_fn: { fn_id: string; fn_name: string; match_count: number }[];
+  };
+  siblings: PositionSibling[];
+  primary_sources: unknown[];
+}

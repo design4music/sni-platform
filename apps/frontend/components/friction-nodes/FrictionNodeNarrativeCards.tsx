@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { NarrativeOnFn, SampleTitle, CentroidLookupEntry } from '@/lib/friction-nodes-shared';
 import { colorForNarrative } from '@/lib/friction-nodes-shared';
 import CoalitionPills from './CoalitionPills';
@@ -40,6 +41,7 @@ function NarrativeCard({
 }) {
   const hue = colorForNarrative(n.stance);
   const anchorId = `narrative-${n.narrative_id}`;
+  const isDe = locale === 'de';
 
   return (
     <article
@@ -54,7 +56,7 @@ function NarrativeCard({
       />
 
       {/* Header: stance label + count */}
-      <header className="flex items-start gap-3 mb-4 flex-wrap pt-1">
+      <header className="flex items-start gap-3 mb-2 flex-wrap pt-1">
         <h3 className="text-xl font-bold leading-tight text-dashboard-text flex-1 min-w-0">
           <span
             aria-hidden
@@ -70,6 +72,16 @@ function NarrativeCard({
           {n.match_count} {labels.titles}
         </span>
       </header>
+
+      {/* Up-link to the parent position (SPEC v2) */}
+      {n.position_id && (
+        <Link
+          href={`/narratives/${n.position_id}`}
+          className="inline-flex items-center gap-1 mb-4 text-xs text-blue-400 hover:text-blue-300 transition"
+        >
+          {isDe ? 'Position ansehen' : 'View position'} &rarr;
+        </Link>
+      )}
 
       {/* Coalition — country pills with flag + name */}
       <div className="mb-4">
@@ -155,23 +167,43 @@ function NarrativeCard({
 
 export default function FrictionNodeNarrativeCards({ narratives, centroidLookup, locale, labels }: Props) {
   if (narratives.length === 0) return null;
+  const isDe = locale === 'de';
+
+  // Two stacked columns by stance sign (SPEC v2 §5.3): supporting / critical,
+  // neutral in its own band below.
+  const supporting = narratives.filter((n) => (n.stance ?? 0) > 0);
+  const critical = narratives.filter((n) => (n.stance ?? 0) < 0);
+  const neutral = narratives.filter((n) => (n.stance ?? 0) === 0);
+
+  const col = (n: NarrativeOnFn) => (
+    <NarrativeCard key={n.narrative_id} n={n} centroidLookup={centroidLookup} locale={locale} labels={labels} />
+  );
+  const heading = (text: string, color: string, count: number) => (
+    <h3 className={`text-xs font-semibold uppercase tracking-wider mb-3 ${color}`}>{text} · {count}</h3>
+  );
+
   return (
     <section className="mb-10">
       <h2 className="text-2xl font-bold mb-2">{labels.sectionTitle}</h2>
       <p className="text-sm text-dashboard-text-muted mb-4 max-w-3xl leading-snug">
         {labels.sectionDescription}
       </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {narratives.map((n) => (
-          <NarrativeCard
-            key={n.narrative_id}
-            n={n}
-            centroidLookup={centroidLookup}
-            locale={locale}
-            labels={labels}
-          />
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        <div className="space-y-4">
+          {heading(isDe ? 'Zustimmend' : 'Supporting', 'text-emerald-400/80', supporting.length)}
+          {supporting.map(col)}
+        </div>
+        <div className="space-y-4">
+          {heading(isDe ? 'Kritisch' : 'Critical', 'text-rose-400/80', critical.length)}
+          {critical.map(col)}
+        </div>
       </div>
+      {neutral.length > 0 && (
+        <div className="mt-4">
+          {heading(isDe ? 'Neutral' : 'Neutral', 'text-slate-400/80', neutral.length)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">{neutral.map(col)}</div>
+        </div>
+      )}
     </section>
   );
 }

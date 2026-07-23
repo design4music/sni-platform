@@ -56,6 +56,8 @@ export interface NarrativeOnFn {
   stance_label: string;
   /** Reader-facing stance: -2..+2 (mirrors outlet_entity_stance.stance). */
   stance: number | null;
+  /** Parent position (SPEC v2); the card links up to /narratives/[position_id]. */
+  position_id: string | null;
   display_order: number;
   match_count: number;
   sample_titles: SampleTitle[];

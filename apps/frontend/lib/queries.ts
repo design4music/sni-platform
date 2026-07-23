@@ -1,7 +1,7 @@
 // Data access layer — one exported query per logical concern.
 import { query, queryNoJIT } from './db';
 import { cached } from './cache';
-import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, PublisherStats, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope, CentroidMonthView, CentroidStripeEntry, CentroidTrackSummary, CtmThemeChip } from './types';
+import { Centroid, CTM, Title, TitleAssignment, Feed, Event, Epic, EpicEvent, EpicCentroidStat, TopSignal, SignalType, FramedNarrative, EventDetail, RelatedEvent, OutletProfile, PublisherStats, SearchResult, TrendingEvent, TrendingSignal, SignalNode, SignalEdge, SignalWeekly, SignalDetailStats, SignalCategoryEntry, SignalGraph, RelationshipCluster, MetaNarrative, StrategicNarrative, EventNarrativeLink, NarrativeMapEntry, CalendarMonthView, CalendarDayView, CalendarClusterCard, CalendarClusterSource, CalendarStripeEntry, CalendarThemeSegment, CalendarAnalysisScope, CentroidMonthView, CentroidStripeEntry, CentroidTrackSummary, CtmThemeChip, PositionLanding, PositionDetail } from './types';
 
 // Locked thresholds for the calendar-day frontend.
 // See docs/FRONTEND_CALENDAR_REDESIGN.md.
@@ -2001,6 +2001,33 @@ export async function getMetaNarrativeActivity(metaId: string): Promise<SignalWe
       [metaId]
     );
     return rows[0]?.items || [];
+  });
+}
+
+// ── Position model (SPEC v2) ───────────────────────────────────────
+// The position is the narrative entity; /narratives and /narratives/[id]
+// read the position MVs. Materializer: pipeline/phase_4/materialize_positions.py,
+// daemon Phase 4.2h2, 12h refresh.
+
+export async function getPositionsLanding(locale?: string): Promise<PositionLanding | null> {
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`positions_landing:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ view: PositionLanding | null }>(
+      `SELECT view FROM mv_positions_landing WHERE locale = $1`,
+      [loc]
+    );
+    return rows[0]?.view || null;
+  });
+}
+
+export async function getPositionById(id: string, locale?: string): Promise<PositionDetail | null> {
+  const loc = locale === 'de' ? 'de' : 'en';
+  return cached(`position_detail:${id}:${loc}`, 12 * 3600, async () => {
+    const rows = await query<{ view: PositionDetail | null }>(
+      `SELECT view FROM mv_position_detail WHERE position_id = $1 AND locale = $2`,
+      [id, loc]
+    );
+    return rows[0]?.view || null;
   });
 }
 
