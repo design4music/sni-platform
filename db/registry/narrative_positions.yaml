@@ -1,0 +1,1652 @@
+# Narrative positions -- the position/card model (NARRATIVE_CONSOLIDATION_SPEC.md v2)
+#
+# A POSITION is the universal narrative core: a claim + stance that recurs across
+# friction nodes. This file is the source of truth for the `positions` table and
+# for `narratives_v2.position_id` (the card -> position link). Reconciled by the
+# P1 script; never edit those columns directly.
+#
+# STATUS: draft -- awaiting DG-0
+#   `meta`/`meta_secondary` and `owner_centroids` are MECHANICAL PROPOSALS
+#   (see scripts/gen_narrative_positions.py). Meta scorer LOO accuracy vs v1's
+#   human labels is 68%. Owner is derived from measured publisher countries.
+#   Both are starting points for DG-0 review, not approved. Nothing writes to the
+#   DB until DG-0 is signed off and `status` reads `approved`.
+#
+# HOW TO REVIEW (DG-0 #2 meta, #3 owner)
+#   Per position: accept/replace `meta` + `meta_secondary`; accept/correct
+#   `owner_centroids`; fix `name`/`claim` wording; move a card between positions
+#   in `cards` if mis-grouped. Card membership (the P0e clustering) is already
+#   accepted -- edits here are corrections, not a from-scratch pass.
+#
+# Regenerating preserves human edits keyed by position id (name/claim/meta/
+# meta_secondary/owner_centroids). Only the mechanical proposals for untouched
+# fields and the card lists are recomputed.
+
+version: 1
+status: draft
+generated_by: scripts/gen_narrative_positions.py
+
+positions:
+
+  # 22 cards / 16 friction nodes | owner tally: EUROPE-RUSSIA:78, ASIA-CHINA:57, AMERICAS-USA:26, MIDEAST-TURKEY:16, MIDEAST-IRAN:14, EUROPE-SOUTH:14
+  - id: us_imperial_coercion_hemisphere
+    name_en: "US imperial/hegemonic coercion of smaller sovereign states"
+    name_de: ''  # TODO translate
+    claim_en: "US imperial/hegemonic coercion of smaller sovereign states"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - casp_imperial_overreach                       # canada_sovereignty_pressure, stance -1
+      - casp_sovereignty_defence                      # canada_sovereignty_pressure, stance -2
+      - colombia_theater_external_pressure            # colombia_theater, stance -1
+      - colombia_theater_hegemonic_critique           # colombia_theater, stance -2
+      - colombia_us_coercion                          # colombia_us_alignment, stance -1
+      - colombia_us_imperial_overreach                # colombia_us_alignment, stance -2
+      - cuba_force_imperial_aggression                # cuba_military_coercion, stance -2
+      - cuba_sovereign_resistance                     # cuba_regime_survival, stance -2
+      - cuba_theater_anti_imperial                    # cuba_theater, stance -2
+      - latam_theater_coercion_critique               # latam_hemispheric_theater, stance -2
+      - latam_theater_terms_imposed                   # latam_hemispheric_theater, stance -1
+      - mexth_anti_hegemony_rift                      # mexico_theater, stance -2
+      - mexth_mexican_sovereignty                     # mexico_theater, stance -2
+      - uscat_external_rift                           # us_canada_theater, stance -1
+      - usca_bloc_fracture                            # us_canada_trade_coercion, stance -1
+      - anti_hegemony_rift                            # us_mexico_military_pressure, stance -2
+      - mexican_sovereignty_defense                   # us_mexico_military_pressure, stance -2
+      - trade_coercion_pushback                       # us_mexico_trade_border, stance -2
+      - ven_coercion_anti_imperial                    # us_venezuela_relations, stance -2
+      - ven_transition_imperial_puppet                # venezuela_political_transition, stance -2
+      - ven_oil_imperial_plunder                      # venezuela_sanctions_oil, stance -2
+      - ven_theater_anti_imperial                     # venezuela_theater, stance -2
+
+  # 13 cards / 13 friction nodes | owner tally: ASIA-CHINA:65, EUROPE-RUSSIA:21, EUROPE-BELARUS:1, MIDEAST-IRAN:1
+  - id: china_lawful_not_coercive
+    name_en: "China's trade/tech measures are lawful and normal; the US is the aggressor"
+    name_de: ''  # TODO translate
+    claim_en: "China's trade/tech measures are lawful and normal; the US is the aggressor"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [ASIA-CHINA]
+    cards:
+      - aukus_bloc_confrontation                      # aukus_alliance_reliability, stance -2
+      - trade_mutual_benefit                          # australia_china_trade_leverage, stance -2
+      - australia_china_counter                       # australia_theater, stance -2
+      - cjer_lawful_regulation                        # china_japan_economic_restrictions, stance -2
+      - china_threat_fabricated                       # china_threat_assessment, stance -2
+      - port_expropriation_coercion                   # latam_port_infrastructure_control, stance -2
+      - pacific_china_cooperation                     # pacific_island_contest, stance -2
+      - us_china_ai_suppression                       # us_china_ai_primacy, stance -2
+      - us_china_minerals_lawful_leverage             # us_china_critical_minerals, stance -2
+      - us_china_summit_new_chapter                   # us_china_summit_diplomacy, stance -2
+      - us_china_tech_containment                     # us_china_tech_restrictions, stance -2
+      - us_china_beijing_moscow_counter               # us_china_theater, stance -2
+      - us_china_trade_unilateralism                  # us_china_trade_tariffs, stance -2
+
+  # 12 cards / 12 friction nodes | owner tally: AMERICAS-USA:149, EUROPE-UK:64, EUROPE-GERMANY:56, ASIA-SOUTHEAST:30, EUROPE-FRANCE:30, EUROPE-SOUTH:27
+  - id: alliance_reliability_doubt
+    name_en: "The US alliance is unreliable and delivering less than promised"
+    name_de: ''  # TODO translate
+    claim_en: "The US alliance is unreliable and delivering less than promised"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - aukus_capability_doubt                        # aukus_alliance_reliability, stance -1
+      - australia_alliance_scepticism                 # australia_theater, stance -1
+      - autonomy_european_awakening                   # eu_strategic_autonomy, stance -1
+      - defence_unreliable_america                    # europe_us_defence_dependence, stance -1
+      - europe_us_transatlantic_rupture               # europe_us_theater, stance -1
+      - alliance_autonomy_strain                      # korea_peninsula_deterrence, stance -1
+      - taiwan_strait_western_doubt                   # taiwan_strait_theater, stance -1
+      - us_commitment_doubted                         # taiwan_us_security_commitment, stance -1
+      - uscat_canadian_consensus                      # us_canada_theater, stance -2
+      - us_russia_normalisation_premature             # us_russia_bilateral_channel, stance -1
+      - us_russia_relief_rewards_moscow               # us_russia_sanctions_leverage, stance -1
+      - us_russia_theater_western_alarm               # us_russia_theater, stance -1
+
+  # 11 cards / 11 friction nodes | owner tally: EUROPE-RUSSIA:91, ASIA-CHINA:33, EUROPE-BELARUS:10, MIDEAST-IRAN:7
+  - id: west_rift_hypocrisy
+    name_en: "Intra-Western disputes expose Western hypocrisy, disunity and decline"
+    name_de: ''  # TODO translate
+    claim_en: "Intra-Western disputes expose Western hypocrisy, disunity and decline"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - afd_persecution_kremlin                       # afd_and_german_polarisation, stance -2
+      - alberta_external_amplification                # alberta_separatism_us_ties, stance -2
+      - eu_fracture_rift_exploitation                 # eu_cohesion_theater, stance -2
+      - migration_eu_failure_kremlin                  # eu_migration_burden_sharing, stance -2
+      - autonomy_multipolar_welcome                   # eu_strategic_autonomy, stance -2
+      - defence_nato_racket                           # europe_us_defence_dependence, stance -2
+      - tech_digital_colonialism                      # europe_us_tech_sovereignty, stance -2
+      - europe_us_western_disunity                    # europe_us_theater, stance -2
+      - france_decline_kremlin                        # french_nationalist_challenge, stance -2
+      - greenland_western_hypocrisy                   # greenland_control, stance -2
+      - trade_western_vassalage                       # transatlantic_trade, stance -2
+
+  # 10 cards / 10 friction nodes | owner tally: AMERICAS-USA:87, ASIA-JAPAN:50, EUROPE-UK:49, ASIA-SOUTHEAST:49, EUROPE-GERMANY:39, EUROPE-FRANCE:25
+  - id: taiwan_japan_security_consensus
+    name_en: "Taiwan/Japan under Chinese coercion; deterrence and administration legitimate"
+    name_de: ''  # TODO translate
+    claim_en: "Taiwan/Japan under Chinese coercion; deterrence and administration legitimate"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: [security_order]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - memory_political_leverage                     # japan_china_memory_wars, stance +2
+      - jc_taiwan_japan_security_stake                # japan_china_taiwan_question, stance +2
+      - jc_theater_japanese_western_consensus         # japan_china_theater, stance +2
+      - jde_deterrence_response                       # japan_defense_expansion, stance +2
+      - senkaku_japanese_administration               # senkaku_diaoyu_islands, stance +2
+      - taiwan_international_space                    # taiwan_international_recognition, stance +1
+      - taiwan_coercion_deterrence                    # taiwan_military_pressure, stance +1
+      - united_front_subversion                       # taiwan_political_warfare, stance +1
+      - taiwan_strait_western_consensus               # taiwan_strait_theater, stance +2
+      - us_commitment_firm                            # taiwan_us_security_commitment, stance +1
+
+  # 10 cards / 10 friction nodes | owner tally: AMERICAS-USA:88, EUROPE-GERMANY:20, EUROPE-UK:16, EUROPE-FRANCE:11, ASIA-INDIA:10, EUROPE-SOUTH:9
+  - id: us_domestic_liberal_alarm
+    name_en: "US institutions, due process and democratic norms are under threat from within"
+    name_de: ''  # TODO translate
+    claim_en: "US institutions, due process and democratic norms are under threat from within"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: [liberal_international_order]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - western_systemic_alarm                        # ukraine_official_corruption, stance -1
+      - usdom_theater_liberal_alarm                   # us_domestic_theater, stance -1
+      - usdom_electoral_franchise_threat              # us_electoral_legitimacy, stance -1
+      - usdom_epstein_obstruction                     # us_epstein_elite_network, stance -1
+      - usdom_loyalty_hollowing                       # us_executive_loyalty, stance -1
+      - usdom_fed_capture_risk                        # us_fed_independence, stance -1
+      - usdom_ice_due_process                         # us_interior_immigration_enforcement, stance -1
+      - usdom_courts_deference                        # us_judicial_constraint, stance -1
+      - usdom_violence_climate                        # us_political_violence, stance -1
+      - usdom_press_suppression                       # us_press_freedom, stance -1
+
+  # 10 cards / 10 friction nodes | owner tally: AMERICAS-USA:62, EUROPE-GERMANY:41, EUROPE-UK:37, EUROPE-FRANCE:29, EUROPE-SOUTH:22, NON-STATE-EU:12
+  - id: western_intervention_scrutiny
+    name_en: "Western/US coercive interventions deserve legal and humanitarian scrutiny"
+    name_de: ''  # TODO translate
+    claim_en: "Western/US coercive interventions deserve legal and humanitarian scrutiny"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - arctic_western_sovereignty_stewardship        # arctic_theater, stance -1
+      - colombia_transition_institutional_concern     # colombia_political_transition, stance -1
+      - greenland_sovereignty_defense                 # greenland_control, stance -1
+      - mexth_western_scrutiny                        # mexico_theater, stance -1
+      - south_asia_international_rights               # south_asia_theater, stance -1
+      - western_intervention_scrutiny                 # us_mexico_military_pressure, stance -1
+      - ven_coercion_western_critical                 # us_venezuela_relations, stance -1
+      - ven_transition_democracy_betrayed             # venezuela_political_transition, stance -1
+      - ven_oil_deals_opacity                         # venezuela_sanctions_oil, stance -1
+      - ven_theater_western_critical                  # venezuela_theater, stance -1
+
+  # 9 cards / 9 friction nodes | owner tally: AMERICAS-USA:137, EUROPE-UK:55, EUROPE-GERMANY:45, ASIA-JAPAN:37, ASIA-SOUTHEAST:21, EUROPE-SOUTH:18
+  - id: china_strategic_competition
+    name_en: "China is a strategic competitor; firmness, derisking and export controls justified"
+    name_de: ''  # TODO translate
+    claim_en: "China is a strategic competitor; firmness, derisking and export controls justified"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - trade_derisking_necessity                     # australia_china_trade_leverage, stance +2
+      - cjer_economic_coercion                        # china_japan_economic_restrictions, stance +2
+      - china_threat_substantiated                    # china_threat_assessment, stance +2
+      - us_china_ai_lead_contest                      # us_china_ai_primacy, stance +1
+      - us_china_minerals_dependence_risk             # us_china_critical_minerals, stance +1
+      - us_china_summit_engagement_works              # us_china_summit_diplomacy, stance +1
+      - us_china_export_control_necessity             # us_china_tech_restrictions, stance +1
+      - us_china_western_competition_consensus        # us_china_theater, stance +2
+      - us_china_tariff_leverage                      # us_china_trade_tariffs, stance +1
+
+  # 9 cards / 9 friction nodes | owner tally: AMERICAS-USA:51
+  - id: us_executive_mandate
+    name_en: "The administration is lawfully executing the mandate voters gave it"
+    name_de: ''  # TODO translate
+    claim_en: "The administration is lawfully executing the mandate voters gave it"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: liberal_international_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - usdom_theater_conservative_case               # us_domestic_theater, stance +1
+      - usdom_electoral_integrity_case                # us_electoral_legitimacy, stance +1
+      - usdom_epstein_accountability                  # us_epstein_elite_network, stance +1
+      - usdom_loyalty_prerogative                     # us_executive_loyalty, stance +1
+      - usdom_fed_orderly_succession                  # us_fed_independence, stance +1
+      - usdom_ice_enforcement_mandate                 # us_interior_immigration_enforcement, stance +1
+      - usdom_courts_checks_hold                      # us_judicial_constraint, stance +1
+      - usdom_violence_protective_response            # us_political_violence, stance +1
+      - usdom_press_accountability                    # us_press_freedom, stance +1
+
+  # 9 cards / 6 friction nodes | owner tally: AMERICAS-USA:54, EUROPE-UK:36, EUROPE-FRANCE:24, EUROPE-GERMANY:24, EUROPE-SOUTH:24, EUROPE-RUSSIA:21
+  - id: cuba_venezuela_humanitarian_siege
+    name_en: "US sanctions are an illegal humanitarian siege on Cuba/Venezuela"
+    name_de: ''  # TODO translate
+    claim_en: "US sanctions are an illegal humanitarian siege on Cuba/Venezuela"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - cuba_economic_warfare                         # cuba_embargo_sanctions, stance -2
+      - cuba_sanctions_overreach                      # cuba_embargo_sanctions, stance -1
+      - cuba_collapse_humanitarian_alarm              # cuba_energy_collapse, stance -1
+      - cuba_collapse_starvation_siege                # cuba_energy_collapse, stance -2
+      - cuba_lifelines_humanitarian_duty              # cuba_external_lifelines, stance -1
+      - cuba_lifelines_solidarity                     # cuba_external_lifelines, stance -2
+      - cuba_force_unlawful                           # cuba_military_coercion, stance -1
+      - cuba_reform_under_siege                       # cuba_regime_survival, stance -1
+      - cuba_theater_western_critique                 # cuba_theater, stance -1
+
+  # 9 cards / 9 friction nodes | owner tally: EUROPE-RUSSIA:93, ASIA-CHINA:29, EUROPE-BELARUS:15, MIDEAST-IRAN:8
+  - id: nato_aggression_russia_defensive
+    name_en: "NATO encirclement/provocation is the aggressor; Russia responds defensively"
+    name_de: ''  # TODO translate
+    claim_en: "NATO encirclement/provocation is the aggressor; Russia responds defensively"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - arctic_nato_militarization                    # arctic_military_presence, stance -1
+      - arctic_russia_china_counter                   # arctic_theater, stance -2
+      - awp_russian_capture                           # armenia_western_pivot, stance -2
+      - cpc_russia_iran_resistance                    # caucasus_power_competition, stance -2
+      - caucasus_russia_china_counter                 # caucasus_theater, stance -2
+      - nato_complicity_provocation                   # russia_airspace_incursions, stance -2
+      - russia_europe_kremlin_counter                 # russia_europe_theater, stance -2
+      - hybrid_russophobia_denial                     # russia_hybrid_warfare, stance -2
+      - nato_encirclement_provocation                 # russia_nato_deterrence, stance -2
+
+  # 9 cards / 9 friction nodes | owner tally: ASIA-CHINA:45, EUROPE-RUSSIA:36, MIDEAST-IRAN:18
+  - id: us_domestic_decline_adversarial
+    name_en: "US democracy and institutions are decaying (adversarial state-media reading)"
+    name_de: ''  # TODO translate
+    claim_en: "US democracy and institutions are decaying (adversarial state-media reading)"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: liberal_international_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [ASIA-CHINA, EUROPE-RUSSIA]
+    cards:
+      - usdom_theater_decline                         # us_domestic_theater, stance -2
+      - usdom_electoral_democracy_facade              # us_electoral_legitimacy, stance -2
+      - usdom_epstein_western_impunity                # us_epstein_elite_network, stance -2
+      - usdom_loyalty_court_politics                  # us_executive_loyalty, stance -2
+      - usdom_fed_dollar_decline                      # us_fed_independence, stance -2
+      - usdom_ice_american_repression                 # us_interior_immigration_enforcement, stance -2
+      - usdom_courts_politicised                      # us_judicial_constraint, stance -2
+      - usdom_violence_instability                    # us_political_violence, stance -2
+      - usdom_press_hypocrisy                         # us_press_freedom, stance -2
+
+  # 9 cards / 9 friction nodes | owner tally: MIDEAST-IRAN:29, MIDEAST-TURKEY:17, MIDEAST-GULF:7, EUROPE-RUSSIA:6, ASIA-CHINA:4
+  - id: iran_axis_of_resistance
+    name_en: "The Axis of Resistance is legitimate anti-Israel/anti-US liberation"
+    name_de: ''  # TODO translate
+    claim_en: "The Axis of Resistance is legitimate anti-Israel/anti-US liberation"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [MIDEAST-IRAN, MIDEAST-TURKEY]
+    cards:
+      - iran_gulf_resistance_solidarity               # gulf_attacks_on_arab_states, stance +2
+      - houthi_resistance_strikes_legitimate          # houthi_strikes_on_israel, stance +2
+      - iran_axis_of_resistance                       # iran_proxy_network, stance +2
+      - iran_legitimate_retaliation_doctrine          # israel_iran_strikes, stance -2
+      - hezbollah_resistance_north                    # israel_lebanon_border, stance -2
+      - houthi_naval_pressure_legitimate              # red_sea_shipping_security, stance +2
+      - houthi_authority_legitimate_resistance        # saudi_houthi_war, stance +2
+      - syrian_sovereignty_under_israeli_aggression   # syria_israeli_strikes, stance +2
+      - houthis_fourth_front_solidarity               # yemen_red_sea_theater, stance +2
+
+  # 8 cards / 8 friction nodes | owner tally: AMERICAS-USA:78, EUROPE-UK:31, EUROPE-BALTIC:19, EUROPE-GERMANY:15, NON-STATE-EU:11, EUROPE-FRANCE:8
+  - id: russia_threat_deterrence
+    name_en: "Russia is an aggressive threat; deterrence and rearmament are justified"
+    name_de: ''  # TODO translate
+    claim_en: "Russia is an aggressive threat; deterrence and rearmament are justified"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - arctic_nato_deterrence                        # arctic_military_presence, stance +1
+      - arctic_western_security_consensus             # arctic_theater, stance +2
+      - airspace_violation_deterrence                 # russia_airspace_incursions, stance +2
+      - russia_europe_western_resolve                 # russia_europe_theater, stance +2
+      - hybrid_campaign_defence                       # russia_hybrid_warfare, stance +2
+      - eastern_flank_deterrence                      # russia_nato_deterrence, stance +2
+      - tighten_and_seize                             # russia_sanctions_regime, stance +2
+      - nato_solidarity_territorial_defense           # turkey_iran_war_spillover, stance +1
+
+  # 8 cards / 8 friction nodes | owner tally: AMERICAS-USA:38
+  - id: america_first_transactional_alliance
+    name_en: "America First: allies freeload on US protection and must pay / rebalance"
+    name_de: ''  # TODO translate
+    claim_en: "America First: allies freeload on US protection and must pay / rebalance"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - casp_continental_dependence                   # canada_sovereignty_pressure, stance +2
+      - autonomy_illusion                             # eu_strategic_autonomy, stance +2
+      - defence_europe_must_pay                       # europe_us_defence_dependence, stance +2
+      - tech_eu_overreach                             # europe_us_tech_sovereignty, stance +2
+      - europe_us_america_first                       # europe_us_theater, stance +2
+      - trade_us_tariffs_justified                    # transatlantic_trade, stance +2
+      - uscat_us_leverage_case                        # us_canada_theater, stance +2
+      - usca_trade_rebalancing                        # us_canada_trade_coercion, stance +2
+
+  # 8 cards / 7 friction nodes | owner tally: EUROPE-SOUTH:63, EUROPE-GERMANY:57, EUROPE-FRANCE:51, AMERICAS-USA:24, EUROPE-UK:20, NON-STATE-EU:15
+  - id: eu_sovereigntist_revolt
+    name_en: "Brussels overreaches; nations and voters are right to resist"
+    name_de: ''  # TODO translate
+    claim_en: "Brussels overreaches; nations and voters are right to resist"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [EUROPE-SOUTH]
+    cards:
+      - afd_exclusion_undemocratic                    # afd_and_german_polarisation, stance -1
+      - budget_national_sovereignty                   # eu_budget_sovereignty, stance -1
+      - eu_sovereigntist_revolt                       # eu_cohesion_theater, stance -1
+      - migration_national_control                    # eu_migration_burden_sharing, stance -1
+      - realignment_new_majority                      # eu_right_realignment, stance -1
+      - france_popular_will                           # french_nationalist_challenge, stance -1
+      - hungary_brussels_coercion                     # hungary_rule_of_law, stance -2
+      - hungary_sovereignty_interference              # hungary_rule_of_law, stance -1
+
+  # 8 cards / 6 friction nodes | owner tally: AMERICAS-USA:33, EUROPE-GERMANY:30, EUROPE-FRANCE:28, EUROPE-UK:25, MIDEAST-GULF:17, EUROPE-SOUTH:13
+  - id: sahel_managed_collapse
+    name_en: "Sahel military rule delivers neither security nor politics; abuses mount"
+    name_de: ''  # TODO translate
+    claim_en: "Sahel military rule delivers neither security nor politics; abuses mount"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - sahel_rupture_deepens_isolation               # sahel_france_rupture, stance -2
+      - sahel_counterinsurgency_abuses                # sahel_jihadist_insurgency, stance -1
+      - sahel_state_losing_ground                     # sahel_jihadist_insurgency, stance -2
+      - sahel_democratic_closure                      # sahel_junta_consolidation, stance -2
+      - sahel_patron_model_failing                    # sahel_security_patron_contest, stance -2
+      - sahel_theater_civilian_cost                   # sahel_theater, stance -1
+      - sahel_theater_state_collapse_critique         # sahel_theater, stance -2
+      - sahel_northern_autonomy_claim                 # sahel_tuareg_separatism, stance -2
+
+  # 7 cards / 7 friction nodes | owner tally: AMERICAS-USA:85, EUROPE-UK:31, EUROPE-GERMANY:29, ASIA-JAPAN:16, EUROPE-SOUTH:14, EUROPE-FRANCE:10
+  - id: trade_war_economic_harm
+    name_en: "Tariffs and trade coercion are self-harming economic disruption"
+    name_de: ''  # TODO translate
+    claim_en: "Tariffs and trade coercion are self-harming economic disruption"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: economic_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - trade_pressure_sovereignty_defense            # latam_us_trade_pressure, stance -1
+      - trade_european_defence                        # transatlantic_trade, stance -1
+      - usca_economic_coercion                        # us_canada_trade_coercion, stance -2
+      - us_china_summit_weak_hand                     # us_china_summit_diplomacy, stance -1
+      - us_china_western_engagement_critique          # us_china_theater, stance -1
+      - us_china_tariff_self_harm                     # us_china_trade_tariffs, stance -1
+      - trade_economic_disruption                     # us_mexico_trade_border, stance -1
+
+  # 7 cards / 7 friction nodes | owner tally: EUROPE-RUSSIA:65, ASIA-CHINA:35, EUROPE-BELARUS:10, MIDEAST-IRAN:5
+  - id: china_territorial_sovereignty
+    name_en: "Taiwan, the SCS and the Senkakus are Chinese territory; foreign interference provokes"
+    name_de: ''  # TODO translate
+    claim_en: "Taiwan, the SCS and the Senkakus are Chinese territory; foreign interference provokes"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA, ASIA-CHINA]
+    cards:
+      - jc_taiwan_interference_charge                 # japan_china_taiwan_question, stance -2
+      - senkaku_chinese_rights_protection             # senkaku_diaoyu_islands, stance -2
+      - one_china_consensus                           # taiwan_international_recognition, stance -1
+      - pla_sovereignty_enforcement                   # taiwan_military_pressure, stance -1
+      - beijing_antiseparatism_unity                  # taiwan_political_warfare, stance -1
+      - taiwan_strait_beijing_counter                 # taiwan_strait_theater, stance -2
+      - taiwan_us_pawn                                # taiwan_us_security_commitment, stance -2
+
+  # 7 cards / 7 friction nodes | owner tally: MIDEAST-ISRAEL:30, AMERICAS-USA:6, MIDEAST-SAUDI:2, MIDEAST-EGYPT:1
+  - id: israel_existential_self_defense
+    name_en: "Israel's campaigns are existential self-defense after October 7"
+    name_de: ''  # TODO translate
+    claim_en: "Israel's campaigns are existential self-defense after October 7"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [MIDEAST-ISRAEL]
+    cards:
+      - israel_dismantle_hamas                        # gaza_war, stance +2
+      - houthi_iranian_proxy_aggression               # houthi_strikes_on_israel, stance -2
+      - israel_preemptive_strike_doctrine             # israel_iran_strikes, stance +2
+      - israel_self_defense_north                     # israel_lebanon_border, stance +2
+      - israel_existential_self_defense               # israel_theater, stance +2
+      - israeli_strikes_on_syria_legitimate           # syria_israeli_strikes, stance -1
+      - judea_samaria_sovereignty                     # west_bank_settlements, stance +1
+
+  # 7 cards / 7 friction nodes | owner tally: AMERICAS-USA:72, MIDEAST-ISRAEL:32, MIDEAST-GULF:13, MIDEAST-SAUDI:11, EUROPE-UK:6, EUROPE-FRANCE:5
+  - id: iran_regime_threat
+    name_en: "The Israel-US-Saudi coalition: Iran is an illegitimate existential threat"
+    name_de: ''  # TODO translate
+    claim_en: "The Israel-US-Saudi coalition: Iran is an illegitimate existential threat"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - west_gulf_aggression_response                 # gulf_attacks_on_arab_states, stance -2
+      - west_iran_nuclear_threat                      # iran_nuclear_program, stance -2
+      - west_iran_proxy_network_threat                # iran_proxy_network, stance -2
+      - west_iran_regime_change_doctrine              # iran_theater, stance -2
+      - freedom_of_navigation_defense                 # red_sea_shipping_security, stance -1
+      - west_hormuz_freedom_of_navigation             # strait_of_hormuz_sovereignty, stance -1
+      - iran_proxy_destabilisation                    # yemen_red_sea_theater, stance -2
+
+  # 7 cards / 6 friction nodes | owner tally: EUROPE-RUSSIA:60, ASIA-CHINA:27, EUROPE-BELARUS:12, AFRICA-NIGERIA:10
+  - id: sahel_sovereigntist_partnership
+    name_en: "The Sahel juntas rightly chose new partners free of colonial conditions"
+    name_de: ''  # TODO translate
+    claim_en: "The Sahel juntas rightly chose new partners free of colonial conditions"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: [security_order]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - sahel_break_with_paris_justified              # sahel_france_rupture, stance +2
+      - sahel_counterterror_necessity                 # sahel_jihadist_insurgency, stance +2
+      - sahel_sovereigntist_self_reliance             # sahel_junta_consolidation, stance +2
+      - sahel_russian_partnership_delivers            # sahel_security_patron_contest, stance +2
+      - sahel_theater_partnership_frame               # sahel_theater, stance +2
+      - sahel_theater_regional_security_response      # sahel_theater, stance +1
+      - sahel_separatism_as_jihadist_alliance         # sahel_tuareg_separatism, stance +2
+
+  # 7 cards / 4 friction nodes | owner tally: EUROPE-UK:23, EUROPE-FRANCE:19, AMERICAS-USA:17, MIDEAST-TURKEY:10, AFRICA-KENYA:8, EUROPE-GERMANY:7
+  - id: greatlakes_costs_critique
+    name_en: "External fixes stall; minerals extraction and proxy war impose costs"
+    name_de: ''  # TODO translate
+    claim_en: "External fixes stall; minerals extraction and proxy war impose costs"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-UK]
+    cards:
+      - drc_minerals_as_resource_capture              # drc_minerals_competition, stance -2
+      - drc_minerals_human_cost                       # drc_minerals_competition, stance -1
+      - drc_accords_stalling                          # drc_peace_process, stance -1
+      - great_lakes_proxy_war_and_its_costs           # great_lakes_theater, stance -2
+      - great_lakes_scepticism_of_outside_fixes       # great_lakes_theater, stance -1
+      - m23_civilian_toll                             # m23_conflict, stance -1
+      - m23_externally_backed_offensive               # m23_conflict, stance -2
+
+  # 7 cards / 7 friction nodes | owner tally: EUROPE-GERMANY:63, EUROPE-SOUTH:49, AMERICAS-USA:42, EUROPE-FRANCE:42, EUROPE-UK:35, EUROPE-ALPINE:21
+  - id: eu_more_integration
+    name_en: "Deeper EU integration and solidarity are the answer"
+    name_de: ''  # TODO translate
+    claim_en: "Deeper EU integration and solidarity are the answer"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: liberal_international_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-GERMANY]
+    cards:
+      - afd_democratic_defense                        # afd_and_german_polarisation, stance +2
+      - budget_more_europe                            # eu_budget_sovereignty, stance +2
+      - eu_cohesion_hold                              # eu_cohesion_theater, stance +2
+      - migration_solidarity_rights                   # eu_migration_burden_sharing, stance +2
+      - realignment_firewall_defense                  # eu_right_realignment, stance +2
+      - france_republican_defense                     # french_nationalist_challenge, stance +2
+      - hungary_eu_standards                          # hungary_rule_of_law, stance +2
+
+  # 6 cards / 5 friction nodes | owner tally: ASIA-INDIA:60
+  - id: india_account
+    name_en: "India's account: Pakistan sponsors militancy; Kashmir is integral; treaty obsolete"
+    name_de: ''  # TODO translate
+    claim_en: "India's account: Pakistan sponsors militancy; Kashmir is integral; treaty obsolete"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [ASIA-INDIA]
+    cards:
+      - baloch_pakistan_internal_failure              # balochistan_insurgency, stance -2
+      - militancy_pakistan_sponsorship                # india_pakistan_militancy, stance +2
+      - indus_treaty_obsolete                         # indus_water_sharing, stance +2
+      - kashmir_integral_to_india                     # kashmir_dispute, stance +2
+      - south_asia_indian_account                     # south_asia_theater, stance +2
+      - south_asia_indian_critique_of_pakistan        # south_asia_theater, stance -2
+
+  # 6 cards / 5 friction nodes | owner tally: ASIA-PAKISTAN:12, MIDEAST-TURKEY:5, AFRICA-NIGERIA:4, AMERICAS-USA:4, EUROPE-UK:4, EUROPE-FRANCE:4
+  - id: pakistan_grievance
+    name_en: "Pakistan's account: India coerces, weaponises water, occupies Kashmir"
+    name_de: ''  # TODO translate
+    claim_en: "Pakistan's account: India coerces, weaponises water, occupies Kashmir"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: global_justice
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [ASIA-PAKISTAN]
+    cards:
+      - baloch_rights_repression                      # balochistan_insurgency, stance -1
+      - militancy_indian_pretext                      # india_pakistan_militancy, stance -2
+      - indus_water_weaponisation                     # indus_water_sharing, stance -2
+      - kashmir_disputed_territory                    # kashmir_dispute, stance -2
+      - kashmir_rights_and_restrictions               # kashmir_dispute, stance -1
+      - south_asia_pakistani_grievance                # south_asia_theater, stance -2
+
+  # 6 cards / 6 friction nodes | owner tally: ASIA-INDIA:14, MIDEAST-TURKEY:10, AMERICAS-BRAZIL:8, EUROPE-RUSSIA:6, ASIA-PAKISTAN:4, MIDEAST-EGYPT:4
+  - id: global_south_buyer_autonomy
+    name_en: "Sanctions/pressure are conditional; the Global South asserts buyer autonomy"
+    name_de: ''  # TODO translate
+    claim_en: "Sanctions/pressure are conditional; the Global South asserts buyer autonomy"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: [economic_order]
+    owner_centroids: [ASIA-INDIA]
+    cards:
+      - drc_sanctions_rejected                        # drc_peace_process, stance -2
+      - latam_theater_regional_agency                 # latam_hemispheric_theater, stance +2
+      - resource_sovereign_development                # latam_resource_access, stance +1
+      - m23_backing_charge_rejected                   # m23_conflict, stance +1
+      - us_russia_buyer_autonomy                      # us_russia_sanctions_leverage, stance +1
+      - us_russia_theater_buyer_autonomy              # us_russia_theater, stance +1
+
+  # 6 cards / 4 friction nodes | owner tally: EUROPE-RUSSIA:8, MIDEAST-GULF:4, MIDEAST-SAUDI:4, MIDEAST-EGYPT:4, MIDEAST-TURKEY:3, MIDEAST-IRAN:3
+  - id: horn_sovereignty_violated
+    name_en: "The Horn realignment violates borders and sovereignty"
+    name_de: ''  # TODO translate
+    claim_en: "The Horn realignment violates borders and sovereignty"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - ethiopia_regional_revisionism                 # ethiopia_regional_confrontation, stance -2
+      - horn_russian_iranian_counter                  # horn_africa_theater, stance -2
+      - horn_sovereignty_bloc                         # horn_africa_theater, stance -2
+      - somali_foreign_militarisation_critique        # somalia_state_security, stance -2
+      - somali_territorial_integrity                  # somaliland_recognition_contest, stance -2
+      - somaliland_transactional_scramble             # somaliland_recognition_contest, stance -1
+
+  # 5 cards / 5 friction nodes | owner tally: AMERICAS-USA:41, EUROPE-GERMANY:30, EUROPE-UK:29, EUROPE-SOUTH:20, EUROPE-BALTIC:15, EUROPE-FRANCE:9
+  - id: ukraine_defense_solidarity
+    name_en: "Ukraine's war is legitimate national defense deserving full support"
+    name_de: ''  # TODO translate
+    claim_en: "Ukraine's war is legitimate national defense deserving full support"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: [security_order]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - ukrainian_defense_and_deep_strikes            # ukraine_battlefield, stance +2
+      - infrastructure_war_economy_strikes            # ukraine_infrastructure_war, stance +2
+      - ukrainian_maximalist_peace                    # ukraine_peace_negotiations, stance +2
+      - ukraine_resistance_solidarity                 # ukraine_war_theater, stance +2
+      - aid_sustains_defense                          # western_aid_to_ukraine, stance +2
+
+  # 5 cards / 5 friction nodes | owner tally: AMERICAS-USA:27, EUROPE-UK:16, NON-STATE-EU:14, EUROPE-GERMANY:14, EUROPE-SOUTH:13, MIDEAST-TURKEY:12
+  - id: caucasus_western_tilt
+    name_en: "The South Caucasus is tilting West; engagement and the settlement are gains"
+    name_de: ''  # TODO translate
+    claim_en: "The South Caucasus is tilting West; engagement and the settlement are gains"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - aas_durable_peace                             # armenia_azerbaijan_settlement, stance +2
+      - awp_european_choice                           # armenia_western_pivot, stance +2
+      - cpc_western_engagement                        # caucasus_power_competition, stance +1
+      - caucasus_western_consensus                    # caucasus_theater, stance +2
+      - zc_connectivity_prosperity                    # zangezur_corridor, stance +1
+
+  # 5 cards / 5 friction nodes | owner tally: EUROPE-RUSSIA:37, ASIA-CHINA:18, ASIA-PAKISTAN:3, EUROPE-BELARUS:2, MIDEAST-GULF:1
+  - id: multipolar_alternative
+    name_en: "A multipolar order is the legitimate alternative to US hegemony"
+    name_de: ''  # TODO translate
+    claim_en: "A multipolar order is the legitimate alternative to US hegemony"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA, ASIA-CHINA]
+    cards:
+      - balkan_theater_external_backing               # balkan_theater, stance +1
+      - multipolar_systemic_alternative               # iran_theater, stance +1
+      - latam_theater_eastern_partnership             # latam_hemispheric_theater, stance +1
+      - resource_south_south_partnership              # latam_resource_access, stance +2
+      - serbia_sovereignty_defense                    # serbia_government_legitimacy, stance +1
+
+  # 5 cards / 5 friction nodes | owner tally: EUROPE-GERMANY:21, EUROPE-UK:15, AMERICAS-USA:13, EUROPE-FRANCE:12, EUROPE-SOUTH:9, NON-STATE-EU:4
+  - id: eu_two_state_engagement
+    name_en: "The EU/E3 pursue calibrated engagement (Iran diplomacy, two-state, Turkey)"
+    name_de: ''  # TODO translate
+    claim_en: "The EU/E3 pursue calibrated engagement (Iran diplomacy, two-state, Turkey)"
+    claim_de: ''  # TODO translate
+    stance_sign: 0
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-GERMANY]
+    cards:
+      - eu_diplomatic_preservation_norm               # iran_theater, stance +0
+      - eu_two_state_pathway                          # israel_theater, stance +0
+      - coalition_counter_isis_necessary              # syria_counter_terror, stance +0
+      - turkey_eu_engagement_pragmatic                # turkey_theater, stance +0
+      - western_pragmatic_navigation                  # yemen_red_sea_theater, stance +0
+
+  # 5 cards / 5 friction nodes | owner tally: MIDEAST-TURKEY:15, MIDEAST-EGYPT:4, MIDEAST-GULF:4, EUROPE-RUSSIA:2, MIDEAST-SAUDI:1
+  - id: turkey_middle_power
+    name_en: "Turkey is a legitimate independent middle power and broker"
+    name_de: ''  # TODO translate
+    claim_en: "Turkey is a legitimate independent middle power and broker"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: plural_world_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [MIDEAST-TURKEY]
+    cards:
+      - damascus_territorial_reunification            # syria_kurdish_question, stance +2
+      - turkey_anti_graft_legalism_defense            # turkey_democratic_backsliding, stance +2
+      - pkk_terror_full_disarmament                   # turkey_kurdish_question, stance +2
+      - turkey_legitimate_broker                      # turkey_mediator_role, stance +2
+      - turkey_independent_middle_power               # turkey_theater, stance +2
+
+  # 5 cards / 5 friction nodes | owner tally: AMERICAS-USA:88, EUROPE-UK:37, ASIA-JAPAN:30, ASIA-SOUTHKOREA:20, EUROPE-FRANCE:19, EUROPE-GERMANY:19
+  - id: dprk_proliferation_threat
+    name_en: "North Korea's proliferation and closed door are a hardening threat"
+    name_de: ''  # TODO translate
+    claim_en: "North Korea's proliferation and closed door are a hardening threat"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - pyongyang_closed_the_door                     # inter_korean_relations, stance -2
+      - korea_hardening_threat                        # korea_theater, stance -2
+      - beijing_shields_pyongyang                     # north_korea_china_patronage, stance -2
+      - nk_proliferation_threat                       # north_korea_missile_program, stance -2
+      - dprk_russia_blood_for_technology              # north_korea_russia_alignment, stance -2
+
+  # 4 cards / 4 friction nodes | owner tally: AMERICAS-USA:63, EUROPE-GERMANY:28, EUROPE-UK:26, ASIA-JAPAN:17, ASIA-SOUTHEAST:14, EUROPE-SOUTH:12
+  - id: us_russia_engagement_pragmatic
+    name_en: "Reopened US-Russia channel and energy waivers are pragmatic realism"
+    name_de: ''  # TODO translate
+    claim_en: "Reopened US-Russia channel and energy waivers are pragmatic realism"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - us_russia_new_treaty_needed                   # us_russia_arms_control, stance +1
+      - us_russia_engagement_necessary                # us_russia_bilateral_channel, stance +1
+      - us_russia_relief_pragmatic                    # us_russia_sanctions_leverage, stance +1
+      - us_russia_theater_engagement_case             # us_russia_theater, stance +1
+
+  # 4 cards / 4 friction nodes | owner tally: AMERICAS-USA:16, EUROPE-UK:8, EUROPE-FRANCE:8, EUROPE-SOUTH:4, EUROPE-GERMANY:3, MIDEAST-GULF:2
+  - id: colombia_negotiated_path
+    name_en: "Colombia's negotiated demobilisation and democratic transition are working"
+    name_de: ''  # TODO translate
+    claim_en: "Colombia's negotiated demobilisation and democratic transition are working"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - colombia_peace_negotiation_defense            # colombia_armed_groups_peace, stance +1
+      - colombia_transition_mandate                   # colombia_political_transition, stance +2
+      - colombia_theater_negotiated_path              # colombia_theater, stance +1
+      - colombia_us_rapprochement                     # colombia_us_alignment, stance +1
+
+  # 4 cards / 3 friction nodes | owner tally: AMERICAS-USA:15, EUROPE-FRANCE:11, EUROPE-UK:9, AFRICA-KENYA:4, MIDEAST-GULF:3, EUROPE-GERMANY:3
+  - id: greatlakes_engagement_working
+    name_en: "External mediation and mineral deals are finally stabilising the Great Lakes"
+    name_de: ''  # TODO translate
+    claim_en: "External mediation and mineral deals are finally stabilising the Great Lakes"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: [liberal_international_order]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - drc_minerals_as_development                   # drc_minerals_competition, stance +2
+      - drc_accords_are_working                       # drc_peace_process, stance +2
+      - drc_sanctions_as_enforcement                  # drc_peace_process, stance +1
+      - great_lakes_engagement_working                # great_lakes_theater, stance +2
+
+  # 4 cards / 4 friction nodes | owner tally: EUROPE-GERMANY:16, EUROPE-SOUTH:12, EUROPE-FRANCE:4, MIDEAST-GULF:4, MIDEAST-TURKEY:4, ASIA-SOUTHEAST:4
+  - id: russia_threat_restraint_skeptic
+    name_en: "Threat inflation and militarisation drift are a costly overreaction"
+    name_de: ''  # TODO translate
+    claim_en: "Threat inflation and militarisation drift are a costly overreaction"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [EUROPE-GERMANY, EUROPE-SOUTH]
+    cards:
+      - escalation_risk_restraint                     # russia_airspace_incursions, stance -1
+      - russia_europe_critical_restraint              # russia_europe_theater, stance -1
+      - securitisation_caution                        # russia_hybrid_warfare, stance -1
+      - militarisation_overreach                      # russia_nato_deterrence, stance -1
+
+  # 4 cards / 3 friction nodes | owner tally: EUROPE-RUSSIA:22, ASIA-INDIA:13, ASIA-CHINA:9, MIDEAST-TURKEY:8, EUROPE-BELARUS:4, ASIA-PAKISTAN:4
+  - id: ukraine_war_proxy_escalation
+    name_en: "The war is a US/NATO proxy war; Western aid prolongs it; freeze/settle"
+    name_de: ''  # TODO translate
+    claim_en: "The war is a US/NATO proxy war; Western aid prolongs it; freeze/settle"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: [security_order]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - frontline_freeze_settlement                   # ukraine_peace_negotiations, stance -1
+      - russian_maximalist_peace                      # ukraine_peace_negotiations, stance -2
+      - proxy_war_restraint_critique                  # ukraine_war_theater, stance -1
+      - aid_as_escalation_and_proxy                   # western_aid_to_ukraine, stance -2
+
+  # 4 cards / 4 friction nodes | owner tally: EUROPE-RUSSIA:40, EUROPE-BELARUS:4
+  - id: russia_vindicated
+    name_en: "Events vindicate Russia; the West must recognise its position"
+    name_de: ''  # TODO translate
+    claim_en: "Events vindicate Russia; the West must recognise its position"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: plural_world_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - us_russia_us_buildup_drives_race              # us_russia_arms_control, stance +2
+      - us_russia_washington_realism                  # us_russia_bilateral_channel, stance +2
+      - us_russia_sanctions_illegitimate              # us_russia_sanctions_leverage, stance +2
+      - us_russia_theater_kremlin_vindication         # us_russia_theater, stance +2
+
+  # 4 cards / 4 friction nodes | owner tally: EUROPE-RUSSIA:24, ASIA-CHINA:12, EUROPE-BELARUS:4
+  - id: dprk_sovereign_deterrent
+    name_en: "North Korea's deterrent and its Russia/China partnerships are legitimate"
+    name_de: ''  # TODO translate
+    claim_en: "North Korea's deterrent and its Russia/China partnerships are legitimate"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: [plural_world_order]
+    owner_centroids: [EUROPE-RUSSIA, ASIA-CHINA]
+    cards:
+      - korea_sanctioned_bloc                         # korea_theater, stance +2
+      - china_dprk_friendship                         # north_korea_china_patronage, stance +2
+      - nk_sovereign_deterrent                        # north_korea_missile_program, stance +2
+      - dprk_russia_comradeship                       # north_korea_russia_alignment, stance +2
+
+  # 4 cards / 3 friction nodes | owner tally: MIDEAST-TURKEY:12, MIDEAST-IRAN:10, MIDEAST-GULF:7, MIDEAST-SAUDI:5, MIDEAST-EGYPT:4, ASIA-INDIA:3
+  - id: palestine_catastrophe
+    name_en: "Israel's Gaza/West Bank campaign is a humanitarian catastrophe / apartheid"
+    name_de: ''  # TODO translate
+    claim_en: "Israel's Gaza/West Bank campaign is a humanitarian catastrophe / apartheid"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: global_justice
+    meta_secondary: []
+    owner_centroids: [MIDEAST-TURKEY]
+    cards:
+      - gaza_humanitarian_catastrophe                 # gaza_war, stance -2
+      - multipolar_anti_israel_alignment              # israel_theater, stance -1
+      - palestine_genocide_framing                    # israel_theater, stance -2
+      - west_bank_apartheid_framing                   # west_bank_settlements, stance -2
+
+  # 4 cards / 2 friction nodes | owner tally: EUROPE-FRANCE:14, EUROPE-GERMANY:12, EUROPE-SOUTH:6, EUROPE-ALPINE:6, NON-STATE-EU:6, AMERICAS-BRAZIL:4
+  - id: mercosur_european_protection
+    name_en: "European farmers/environment object to Mercosur market opening"
+    name_de: ''  # TODO translate
+    claim_en: "European farmers/environment object to Mercosur market opening"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: planetary_governance
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [EUROPE-FRANCE]
+    cards:
+      - mercosur_environmental_critique               # latam_eu_market_access, stance -1
+      - mercosur_european_obstruction                 # latam_eu_market_access, stance -1
+      - mercosur_farm_protection                      # latam_eu_market_access, stance -2
+      - latam_theater_european_objection              # latam_hemispheric_theater, stance -2
+
+  # 3 cards / 3 friction nodes | owner tally: AMERICAS-USA:51, EUROPE-UK:20, ASIA-JAPAN:18, ASIA-SOUTHKOREA:12, ASIA-SOUTHEAST:9, EUROPE-FRANCE:8
+  - id: korea_deterrence_dualtrack
+    name_en: "Alliance deterrence plus engagement is the right Korea policy"
+    name_de: ''  # TODO translate
+    claim_en: "Alliance deterrence plus engagement is the right Korea policy"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - inter_korean_engagement                       # inter_korean_relations, stance +2
+      - alliance_deterrence_necessary                 # korea_peninsula_deterrence, stance +2
+      - korea_allied_dual_track                       # korea_theater, stance +2
+
+  # 3 cards / 3 friction nodes | owner tally: AMERICAS-USA:24, EUROPE-UK:16, OCEANIA-AUSTRALIA:15, ASIA-SOUTHEAST:14, EUROPE-FRANCE:5, ASIA-INDIA:5
+  - id: australia_alliance_consensus
+    name_en: "Australia's alliances (AUKUS, Pacific) are a necessary security anchor"
+    name_de: ''  # TODO translate
+    claim_en: "Australia's alliances (AUKUS, Pacific) are a necessary security anchor"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - aukus_strategic_necessity                     # aukus_alliance_reliability, stance +2
+      - australia_western_consensus                   # australia_theater, stance +2
+      - pacific_western_partnership                   # pacific_island_contest, stance +2
+
+  # 3 cards / 3 friction nodes | owner tally: AMERICAS-USA:28, EUROPE-UK:13, EUROPE-GERMANY:12, EUROPE-SOUTH:10, ASIA-INDIA:10, EUROPE-FRANCE:7
+  - id: venezuela_intervention_justified
+    name_en: "Removing the Maduro narco-state and restoring the oil sector is a win"
+    name_de: ''  # TODO translate
+    claim_en: "Removing the Maduro narco-state and restoring the oil sector is a win"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: [security_order]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - ven_coercion_justified                        # us_venezuela_relations, stance +1
+      - ven_oil_restart_opportunity                   # venezuela_sanctions_oil, stance +1
+      - ven_theater_western_consensus                 # venezuela_theater, stance +2
+
+  # 3 cards / 3 friction nodes | owner tally: AMERICAS-USA:18
+  - id: america_first_cartel_intervention
+    name_en: "Cartels are terrorists; US pressure and intervention on Mexico is justified"
+    name_de: ''  # TODO translate
+    claim_en: "Cartels are terrorists; US pressure and intervention on Mexico is justified"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - mexth_us_pressure_justified                   # mexico_theater, stance +2
+      - intervention_necessity                        # us_mexico_military_pressure, stance +2
+      - leverage_justified                            # us_mexico_trade_border, stance +2
+
+  # 3 cards / 3 friction nodes | owner tally: EUROPE-RUSSIA:33, EUROPE-BELARUS:6, MIDEAST-IRAN:3
+  - id: russia_smo_defensive
+    name_en: "Russia's war is a defensive special military operation; Ukraine strikes are terror"
+    name_de: ''  # TODO translate
+    claim_en: "Russia's war is a defensive special military operation; Ukraine strikes are terror"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - russian_smo_operations                        # ukraine_battlefield, stance -2
+      - infrastructure_war_energy_terror              # ukraine_infrastructure_war, stance -2
+      - russia_special_military_operation             # ukraine_war_theater, stance -2
+
+  # 3 cards / 3 friction nodes | owner tally: EUROPE-RUSSIA:30, EUROPE-BELARUS:3, MIDEAST-IRAN:1
+  - id: russia_washington_bad_faith
+    name_en: "Washington negotiates in bad faith while pressuring Russia"
+    name_de: ''  # TODO translate
+    claim_en: "Washington negotiates in bad faith while pressuring Russia"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - us_china_summit_multipolar_framing            # us_china_summit_diplomacy, stance -2
+      - us_russia_washington_bad_faith                # us_russia_bilateral_channel, stance -2
+      - us_russia_theater_kremlin_grievance           # us_russia_theater, stance -2
+
+  # 3 cards / 3 friction nodes | owner tally: ASIA-CHINA:15, EUROPE-RUSSIA:12, MIDEAST-IRAN:2
+  - id: japan_militarism_revival
+    name_en: "Japan is reviving militarism behind a pacifist facade"
+    name_de: ''  # TODO translate
+    claim_en: "Japan is reviving militarism behind a pacifist facade"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [ASIA-CHINA, EUROPE-RUSSIA]
+    cards:
+      - memory_historical_accountability              # japan_china_memory_wars, stance -2
+      - jc_theater_chinese_state_counter              # japan_china_theater, stance -2
+      - jde_militarism_revival                        # japan_defense_expansion, stance -2
+
+  # 3 cards / 3 friction nodes | owner tally: MIDEAST-ISRAEL:13, EUROPE-SOUTH:6, AMERICAS-USA:3, MIDEAST-GULF:1, ASIA-INDIA:1
+  - id: israel_turkey_unreliable
+    name_en: "Erdogan's Turkey is a two-faced, hostile actor"
+    name_de: ''  # TODO translate
+    claim_en: "Erdogan's Turkey is a two-faced, hostile actor"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [MIDEAST-ISRAEL, EUROPE-SOUTH]
+    cards:
+      - turkey_wrong_side_on_iran                     # turkey_iran_war_spillover, stance -1
+      - turkey_two_faced_opportunist                  # turkey_mediator_role, stance -2
+      - turkey_unreliable_ally_warning                # turkey_theater, stance -2
+
+  # 3 cards / 3 friction nodes | owner tally: MIDEAST-IRAN:12
+  - id: iran_sovereign_rights
+    name_en: "Iran's nuclear program, system and Hormuz stance are sovereign rights"
+    name_de: ''  # TODO translate
+    claim_en: "Iran's nuclear program, system and Hormuz stance are sovereign rights"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [MIDEAST-IRAN]
+    cards:
+      - iran_nuclear_sovereign_right                  # iran_nuclear_program, stance +2
+      - iran_sovereign_existence                      # iran_theater, stance +2
+      - iran_hormuz_sovereign_pressure                # strait_of_hormuz_sovereignty, stance +1
+
+  # 3 cards / 3 friction nodes | owner tally: ASIA-PAKISTAN:9, AFRICA-NIGERIA:3
+  - id: pakistan_security_account
+    name_en: "Pakistan's security account: cross-border counterterror is legitimate"
+    name_de: ''  # TODO translate
+    claim_en: "Pakistan's security account: cross-border counterterror is legitimate"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [ASIA-PAKISTAN, AFRICA-NIGERIA]
+    cards:
+      - baloch_foreign_backed_insurgency              # balochistan_insurgency, stance +2
+      - pakafg_counterterror_necessity                # pakistan_afghanistan_border, stance +2
+      - south_asia_pakistani_security_account         # south_asia_theater, stance +1
+
+  # 3 cards / 3 friction nodes | owner tally: MIDEAST-TURKEY:7, MIDEAST-GULF:7, EUROPE-UK:5, AMERICAS-USA:3, EUROPE-GERMANY:3, MIDEAST-IRAN:3
+  - id: syria_legitimate_transition
+    name_en: "The post-Assad transition is legitimate; foreign forces should leave"
+    name_de: ''  # TODO translate
+    claim_en: "The post-Assad transition is legitimate; foreign forces should leave"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [MIDEAST-TURKEY]
+    cards:
+      - foreign_military_withdrawal_demand            # syria_counter_terror, stance +1
+      - international_engagement_pragmatic            # syria_recognition_and_normalisation, stance +2
+      - syria_legitimate_transition                   # syria_theater, stance +2
+
+  # 3 cards / 2 friction nodes | owner tally: MIDEAST-TURKEY:6, MIDEAST-ISRAEL:4, AFRICA-KENYA:4, MIDEAST-EGYPT:4, EUROPE-SOUTH:2, AFRICA-SOUTHAFRICA:1
+  - id: horn_new_partnerships
+    name_en: "New recognition/basing/minerals partnerships are reordering the Horn"
+    name_de: ''  # TODO translate
+    claim_en: "New recognition/basing/minerals partnerships are reordering the Horn"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: [plural_world_order]
+    owner_centroids: [MIDEAST-TURKEY]
+    cards:
+      - horn_new_partnerships                         # horn_africa_theater, stance +2
+      - horn_regional_stabilisers                     # horn_africa_theater, stance +1
+      - somali_state_rebuilding                       # somalia_state_security, stance +2
+
+  # 3 cards / 3 friction nodes | owner tally: EUROPE-UK:16, AMERICAS-USA:16, EUROPE-FRANCE:10, EUROPE-GERMANY:7, EUROPE-ALPINE:4, MIDEAST-GULF:2
+  - id: somalia_western_alarm
+    name_en: "Somalia's fragility and civilian harm are deepening"
+    name_de: ''  # TODO translate
+    claim_en: "Somalia's fragility and civilian harm are deepening"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [EUROPE-UK]
+    cards:
+      - ethiopia_renewed_war_alarm                    # ethiopia_regional_confrontation, stance -1
+      - horn_western_alarm                            # horn_africa_theater, stance -1
+      - somali_fragility_and_harm                     # somalia_state_security, stance -1
+
+  # 3 cards / 3 friction nodes | owner tally: AMERICAS-USA:14, EUROPE-GERMANY:10, EUROPE-UK:9, EUROPE-SOUTH:7, EUROPE-BALKANS:6, NON-STATE-EU:5
+  - id: serbia_accountability_deficit
+    name_en: "Balkan elites (Serbia) face an accountability deficit; protests are legitimate"
+    name_de: ''  # TODO translate
+    claim_en: "Balkan elites (Serbia) face an accountability deficit; protests are legitimate"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: global_justice
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - balkan_sovereignty_environmental_rejection    # balkan_foreign_capital, stance -2
+      - balkan_theater_accountability_deficit         # balkan_theater, stance -2
+      - serbia_protest_accountability                 # serbia_government_legitimacy, stance -2
+
+  # 2 cards / 2 friction nodes | owner tally: AMERICAS-USA:20, EUROPE-UK:6, EUROPE-GERMANY:6, ASIA-JAPAN:4, EUROPE-FRANCE:4, NON-STATE-EU:4
+  - id: latam_western_terms_hold
+    name_en: "Latin America still chooses rules-based Western terms over rivals"
+    name_de: ''  # TODO translate
+    claim_en: "Latin America still chooses rules-based Western terms over rivals"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: liberal_international_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - latam_theater_western_terms_hold              # latam_hemispheric_theater, stance +2
+      - port_control_restored                         # latam_port_infrastructure_control, stance +2
+
+  # 2 cards / 2 friction nodes | owner tally: AMERICAS-USA:20, EUROPE-UK:12, EUROPE-FRANCE:8, EUROPE-GERMANY:8, EUROPE-SOUTH:8, AMERICAS-BRAZIL:6
+  - id: cuba_pressure_justified
+    name_en: "Cuba's one-party regime jails critics and wrecked its economy; pressure is warranted"
+    name_de: ''  # TODO translate
+    claim_en: "Cuba's one-party regime jails critics and wrecked its economy; pressure is warranted"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: [plural_world_order]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - cuba_repression_documented                    # cuba_regime_survival, stance +1
+      - cuba_theater_pressure_consensus               # cuba_theater, stance +2
+
+  # 2 cards / 2 friction nodes | owner tally: AMERICAS-USA:11, EUROPE-SOUTH:7, EUROPE-UK:7, EUROPE-GERMANY:6, NON-STATE-EU:4, EUROPE-BALKANS:2
+  - id: balkan_investment_development
+    name_en: "Foreign investment in the Balkans is legitimate development"
+    name_de: ''  # TODO translate
+    claim_en: "Foreign investment in the Balkans is legitimate development"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - balkan_investment_development                 # balkan_foreign_capital, stance +1
+      - balkan_theater_investment_opportunity         # balkan_theater, stance +1
+
+  # 2 cards / 2 friction nodes | owner tally: AMERICAS-USA:20, AMERICAS-CANADA:10, EUROPE-UK:6, EUROPE-GERMANY:3, EUROPE-FRANCE:3, NON-STATE-EU:2
+  - id: alberta_grievance_legitimate
+    name_en: "Alberta's grievance reflects real material fault lines"
+    name_de: ''  # TODO translate
+    claim_en: "Alberta's grievance reflects real material fault lines"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: economic_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - alberta_legitimate_grievance                  # alberta_separatism_us_ties, stance +1
+      - uscat_provincial_grievance                    # us_canada_theater, stance +1
+
+  # 2 cards / 2 friction nodes | owner tally: EUROPE-RUSSIA:6, AMERICAS-USA:5, ASIA-CHINA:4, EUROPE-UK:1, AMERICAS-CANADA:1
+  - id: arctic_development_normal
+    name_en: "Arctic resource development and shipping are normal opportunity"
+    name_de: ''  # TODO translate
+    claim_en: "Arctic resource development and shipping are normal opportunity"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: [economic_order]
+    owner_centroids: [EUROPE-RUSSIA, AMERICAS-USA]
+    cards:
+      - arctic_resource_development                   # arctic_resources_competition, stance +1
+      - arctic_route_opportunity                      # arctic_shipping_routes, stance +1
+
+  # 2 cards / 2 friction nodes | owner tally: EUROPE-RUSSIA:16, ASIA-CHINA:8
+  - id: korea_us_containment_critique
+    name_en: "US alliances on the peninsula are a containment instrument"
+    name_de: ''  # TODO translate
+    claim_en: "US alliances on the peninsula are a containment instrument"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA, ASIA-CHINA]
+    cards:
+      - alliance_containment_instrument               # korea_peninsula_deterrence, stance -2
+      - korea_us_containment_critique                 # korea_theater, stance -2
+
+  # 2 cards / 2 friction nodes | owner tally: MIDEAST-ISRAEL:8, MIDEAST-IRAN:6, AMERICAS-USA:2
+  - id: israel_syria_jihadist_warning
+    name_en: "The new Syrian government are jihadists; normalisation legitimises them"
+    name_de: ''  # TODO translate
+    claim_en: "The new Syrian government are jihadists; normalisation legitimises them"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: [liberal_international_order]
+    owner_centroids: [MIDEAST-ISRAEL, MIDEAST-IRAN]
+    cards:
+      - recognition_legitimises_jihadists             # syria_recognition_and_normalisation, stance -2
+      - syria_jihadist_takeover_warning               # syria_theater, stance -2
+
+  # 2 cards / 1 friction nodes | owner tally: ASIA-INDIA:10, EUROPE-RUSSIA:3, AMERICAS-USA:3, MIDEAST-GULF:2, MIDEAST-TURKEY:2, MIDEAST-IRAN:2
+  - id: afghan_sovereignty_violation
+    name_en: "Pakistani cross-border strikes violate Afghan sovereignty"
+    name_de: ''  # TODO translate
+    claim_en: "Pakistani cross-border strikes violate Afghan sovereignty"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [ASIA-INDIA]
+    cards:
+      - pakafg_afghan_sovereignty_violation           # pakistan_afghanistan_border, stance -2
+      - pakafg_civilian_harm_alarm                    # pakistan_afghanistan_border, stance -1
+
+  # 2 cards / 2 friction nodes | owner tally: AMERICAS-USA:16
+  - id: latam_china_penetration_warning
+    name_en: "Chinese port/rail/mineral holdings are strategic penetration of the hemisphere"
+    name_de: ''  # TODO translate
+    claim_en: "Chinese port/rail/mineral holdings are strategic penetration of the hemisphere"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - latam_theater_strategic_warning               # latam_hemispheric_theater, stance -2
+      - resource_strategic_penetration                # latam_resource_access, stance -2
+
+  # 2 cards / 1 friction nodes | owner tally: EUROPE-UK:5, AMERICAS-USA:5, EUROPE-GERMANY:3, EUROPE-FRANCE:3, MIDEAST-TURKEY:3, MIDEAST-GULF:2
+  - id: sudan_catastrophe
+    name_en: "Sudan is a humanitarian catastrophe and proxy war"
+    name_de: ''  # TODO translate
+    claim_en: "Sudan is a humanitarian catastrophe and proxy war"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: [great_power_competition]
+    owner_centroids: [EUROPE-UK]
+    cards:
+      - sudan_humanitarian_catastrophe                # sudan_civil_war, stance -1
+      - sudan_proxy_war_critique                      # sudan_civil_war, stance -2
+
+  # 2 cards / 1 friction nodes | owner tally: ASIA-SOUTHEAST:16, ASIA-INDIA:11, ASIA-JAPAN:10, AMERICAS-USA:9, EUROPE-UK:8, EUROPE-GERMANY:7
+  - id: myanmar_junta_illegitimate
+    name_en: "Myanmar's junta and sham election are illegitimate"
+    name_de: ''  # TODO translate
+    claim_en: "Myanmar's junta and sham election are illegitimate"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: [security_order]
+    owner_centroids: [ASIA-SOUTHEAST]
+    cards:
+      - myanmar_criminal_economy_spillover            # myanmar_civil_conflict, stance -1
+      - myanmar_illegitimate_junta_rule               # myanmar_civil_conflict, stance -2
+
+  # 2 cards / 2 friction nodes | owner tally: AMERICAS-USA:5, MIDEAST-ISRAEL:4, EUROPE-UK:3, EUROPE-FRANCE:3, MIDEAST-GULF:2, EUROPE-GERMANY:2
+  - id: kurdish_political_rights
+    name_en: "Kurdish political rights and self-administration deserve protection"
+    name_de: ''  # TODO translate
+    claim_en: "Kurdish political rights and self-administration deserve protection"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - kurdish_self_administration                   # syria_kurdish_question, stance -1
+      - kurdish_political_rights_critique             # turkey_kurdish_question, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:7, EUROPE-UK:5, EUROPE-GERMANY:5, EUROPE-SOUTH:3, EUROPE-BALTIC:2, EUROPE-UKRAINE:1
+  - id: ukraine_reform_progress
+    name_en: "Ukraine's anti-corruption institutions are working / reform in progress"
+    name_de: ''  # TODO translate
+    claim_en: "Ukraine's anti-corruption institutions are working / reform in progress"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - reform_in_progress                            # ukraine_official_corruption, stance +1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:8, AMERICAS-MEXICO:3, EUROPE-SOUTH:2, EUROPE-UK:2, EUROPE-GERMANY:1, EUROPE-FRANCE:1
+  - id: mexico_cartel_offensive_progress
+    name_en: "Mexico's own offensive against the cartels is making progress"
+    name_de: ''  # TODO translate
+    claim_en: "Mexico's own offensive against the cartels is making progress"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - cartel_offensive_progress                     # mexico_cartel_war, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:6
+  - id: america_first_manifest_expansion
+    name_en: "US strategic expansion (Greenland, hemisphere) is legitimate necessity"
+    name_de: ''  # TODO translate
+    claim_en: "US strategic expansion (Greenland, hemisphere) is legitimate necessity"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - greenland_us_strategic_claim                  # greenland_control, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:11, ASIA-CHINA:3, EUROPE-BELARUS:2, MIDEAST-TURKEY:2, MIDEAST-IRAN:1, AMERICAS-USA:1
+  - id: ukraine_regime_illegitimate
+    name_en: "The Zelensky government is corrupt and illegitimate"
+    name_de: ''  # TODO translate
+    claim_en: "The Zelensky government is corrupt and illegitimate"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: liberal_international_order
+    meta_secondary: [security_order]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - zelensky_regime_corruption                    # ukraine_official_corruption, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:11, ASIA-CHINA:3, ASIA-INDIA:3, EUROPE-BELARUS:2, MIDEAST-TURKEY:2, MIDEAST-IRAN:1
+  - id: russia_sanctions_backfire
+    name_en: "Sanctions on Russia are ineffective and backfire on the West"
+    name_de: ''  # TODO translate
+    claim_en: "Sanctions on Russia are ineffective and backfire on the West"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - sanctions_ineffective_and_backfiring          # russia_sanctions_regime, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-BRAZIL:4, AMERICAS-SOUTHERNCONE:2
+  - id: latam_resource_extractivism_critique
+    name_en: "Whichever external buyer wins, extraction reproduces dependency"
+    name_de: ''  # TODO translate
+    claim_en: "Whichever external buyer wins, extraction reproduces dependency"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: economic_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-BRAZIL, AMERICAS-SOUTHERNCONE]
+    cards:
+      - resource_extractivism_critique                # latam_resource_access, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-BRAZIL:4, AMERICAS-SOUTHERNCONE:2
+  - id: mercosur_market_opportunity
+    name_en: "The Mercosur-EU deal is long-delayed market access"
+    name_de: ''  # TODO translate
+    claim_en: "The Mercosur-EU deal is long-delayed market access"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-BRAZIL, AMERICAS-SOUTHERNCONE]
+    cards:
+      - mercosur_market_opportunity                   # latam_eu_market_access, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-GERMANY:6, EUROPE-ALPINE:3, AMERICAS-USA:2, EUROPE-FRANCE:2, EUROPE-UK:1
+  - id: turkey_authoritarian_drift
+    name_en: "Turkey is sliding into authoritarianism (Western liberal critique)"
+    name_de: ''  # TODO translate
+    claim_en: "Turkey is sliding into authoritarianism (Western liberal critique)"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: liberal_international_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-GERMANY]
+    cards:
+      - turkey_authoritarian_drift_critique           # turkey_democratic_backsliding, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: MIDEAST-ISRAEL:4, AFRICA-SOUTHAFRICA:1
+  - id: somaliland_statehood
+    name_en: "Somaliland has earned recognition through self-governance"
+    name_de: ''  # TODO translate
+    claim_en: "Somaliland has earned recognition through self-governance"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: global_justice
+    meta_secondary: []
+    owner_centroids: [MIDEAST-ISRAEL]
+    cards:
+      - somaliland_statehood_earned                   # somaliland_recognition_contest, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: MIDEAST-EGYPT:2, MIDEAST-SAUDI:2, MIDEAST-GULF:2, MIDEAST-TURKEY:2
+  - id: sudan_army_legitimacy
+    name_en: "The Sudanese army is the legitimate authority against the RSF"
+    name_de: ''  # TODO translate
+    claim_en: "The Sudanese army is the legitimate authority against the RSF"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [MIDEAST-EGYPT, MIDEAST-SAUDI, MIDEAST-GULF, MIDEAST-TURKEY]
+    cards:
+      - sudan_state_legitimacy                        # sudan_civil_war, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: MIDEAST-GULF:3, MIDEAST-EGYPT:2, MIDEAST-SAUDI:2, MIDEAST-TURKEY:2
+  - id: saudi_coalition_legitimacy
+    name_en: "The Saudi-led coalition restores legitimate government in Yemen"
+    name_de: ''  # TODO translate
+    claim_en: "The Saudi-led coalition restores legitimate government in Yemen"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [MIDEAST-GULF]
+    cards:
+      - saudi_coalition_legitimacy_restoration        # saudi_houthi_war, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-MEXICO:2, AMERICAS-SOUTHERNCONE:2, EUROPE-SOUTH:1
+  - id: colombia_peace_failure
+    name_en: "Open-ended negotiation lets armed groups regroup"
+    name_de: ''  # TODO translate
+    claim_en: "Open-ended negotiation lets armed groups regroup"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-MEXICO, AMERICAS-SOUTHERNCONE]
+    cards:
+      - colombia_peace_process_failure                # colombia_armed_groups_peace, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-MEXICO:2, AMERICAS-SOUTHERNCONE:2, EUROPE-SOUTH:1
+  - id: colombia_hard_turn
+    name_en: "Voters rejected negotiation with armed groups (hard-line reading)"
+    name_de: ''  # TODO translate
+    claim_en: "Voters rejected negotiation with armed groups (hard-line reading)"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: plural_world_order
+    meta_secondary: [security_order]
+    owner_centroids: [AMERICAS-MEXICO, AMERICAS-SOUTHERNCONE]
+    cards:
+      - colombia_theater_hard_turn                    # colombia_theater, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-GERMANY:5, AMERICAS-USA:3, NON-STATE-EU:3, EUROPE-UK:3, EUROPE-FRANCE:2, EUROPE-ALPINE:1
+  - id: georgia_european_aspiration
+    name_en: "Georgians want a European future their government is blocking"
+    name_de: ''  # TODO translate
+    claim_en: "Georgians want a European future their government is blocking"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: liberal_international_order
+    meta_secondary: []
+    owner_centroids: [EUROPE-GERMANY]
+    cards:
+      - ggd_european_aspiration                       # georgia_geopolitical_drift, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:10, EUROPE-BELARUS:2
+  - id: georgia_sovereignty_stability
+    name_en: "Georgia's government rightly resisted a Western-funded destabilisation"
+    name_de: ''  # TODO translate
+    claim_en: "Georgia's government rightly resisted a Western-funded destabilisation"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - ggd_sovereignty_stability                     # georgia_geopolitical_drift, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:7, ASIA-CHINA:4, EUROPE-BELARUS:2, MIDEAST-IRAN:1, ASIA-PAKISTAN:1
+  - id: myanmar_normalisation
+    name_en: "Myanmar's election and civilian handover mark a return to order"
+    name_de: ''  # TODO translate
+    claim_en: "Myanmar's election and civilian handover mark a return to order"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: liberal_international_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [EUROPE-RUSSIA, ASIA-CHINA]
+    cards:
+      - myanmar_beijing_backed_normalisation          # myanmar_civil_conflict, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:4, EUROPE-UK:3, EUROPE-FRANCE:1
+  - id: essequibo_guyana
+    name_en: "Guyana's Essequibo border is settled; Venezuela's claim is revanchist"
+    name_de: ''  # TODO translate
+    claim_en: "Guyana's Essequibo border is settled; Venezuela's claim is revanchist"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA, EUROPE-UK]
+    cards:
+      - ven_essequibo_guyana_sovereignty              # essequibo_dispute, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:3, ASIA-CHINA:3, EUROPE-SOUTH:2, AMERICAS-SOUTHERNCONE:2, AMERICAS-BRAZIL:1, ASIA-SOUTHEAST:1
+  - id: essequibo_venezuela
+    name_en: "The Essequibo is Venezuelan by historical right"
+    name_de: ''  # TODO translate
+    claim_en: "The Essequibo is Venezuelan by historical right"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: [great_power_competition]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - ven_essequibo_venezuelan_claim                # essequibo_dispute, stance +1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:7, EUROPE-UK:5, EUROPE-GERMANY:5, EUROPE-SOUTH:4, EUROPE-FRANCE:3, EUROPE-ALPINE:2
+  - id: venezuela_stabilization
+    name_en: "The caretaker administration is stabilising Venezuela"
+    name_de: ''  # TODO translate
+    claim_en: "The caretaker administration is stabilising Venezuela"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: global_justice
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - ven_transition_stabilization                  # venezuela_political_transition, stance +1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:4, EUROPE-UK:2, EUROPE-FRANCE:2, EUROPE-GERMANY:1, NON-STATE-EU:1, EUROPE-SOUTH:1
+  - id: arctic_environmental_alarm
+    name_en: "Arctic warming and extraction are an environmental emergency"
+    name_de: ''  # TODO translate
+    claim_en: "Arctic warming and extraction are an environmental emergency"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: planetary_governance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - arctic_drilling_environmental_alarm           # arctic_resources_competition, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:6, EUROPE-UK:2, EUROPE-FRANCE:1, EUROPE-GERMANY:1, NON-STATE-EU:1
+  - id: arctic_route_strategic_threat
+    name_en: "Russian/Chinese control of Arctic routes is a strategic threat"
+    name_de: ''  # TODO translate
+    claim_en: "Russian/Chinese control of Arctic routes is a strategic threat"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - arctic_route_strategic_threat                 # arctic_shipping_routes, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:8, ASIA-SOUTHEAST:7, EUROPE-UK:6, ASIA-JAPAN:4, EUROPE-GERMANY:3, ASIA-INDIA:2
+  - id: scs_rules_based_order
+    name_en: "The South China Sea must follow the rules-based maritime order"
+    name_de: ''  # TODO translate
+    claim_en: "The South China Sea must follow the rules-based maritime order"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: liberal_international_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - scs_rules_based_maritime_order                # south_china_sea_claims, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: ASIA-CHINA:5
+  - id: scs_chinese_claim
+    name_en: "China's South China Sea claims are sovereign"
+    name_de: ''  # TODO translate
+    claim_en: "China's South China Sea claims are sovereign"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [ASIA-CHINA]
+    cards:
+      - scs_chinese_sovereignty_claim                 # south_china_sea_claims, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:10, EUROPE-GERMANY:5, EUROPE-UK:3, NON-STATE-EU:2, EUROPE-FRANCE:2, EUROPE-SOUTH:2
+  - id: tech_digital_sovereignty
+    name_en: "Europe needs digital sovereignty against US tech dominance"
+    name_de: ''  # TODO translate
+    claim_en: "Europe needs digital sovereignty against US tech dominance"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: information_order
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - tech_digital_sovereignty                      # europe_us_tech_sovereignty, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:2, EUROPE-UK:2, EUROPE-BALTIC:2, EUROPE-GERMANY:1, EUROPE-FRANCE:1, NON-STATE-EU:1
+  - id: greenland_self_determination
+    name_en: "Greenland's own agency and self-determination come first"
+    name_de: ''  # TODO translate
+    claim_en: "Greenland's own agency and self-determination come first"
+    claim_de: ''  # TODO translate
+    stance_sign: 0
+    meta: global_justice
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - greenland_self_determination                  # greenland_control, stance +0
+
+  # 1 cards / 1 friction nodes | owner tally: ASIA-SOUTHEAST:2
+  - id: thaicam_thai
+    name_en: "Thailand's account of the border dispute (Koh Kood is Thai)"
+    name_de: ''  # TODO translate
+    claim_en: "Thailand's account of the border dispute (Koh Kood is Thai)"
+    claim_de: ''  # TODO translate
+    stance_sign: 1
+    meta: security_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [ASIA-SOUTHEAST]
+    cards:
+      - thaicam_thai_sovereignty_defence              # thailand_cambodia_border, stance +2
+
+  # 1 cards / 1 friction nodes | owner tally: ASIA-SOUTHEAST:3, AMERICAS-USA:2, MIDEAST-GULF:2, EUROPE-FRANCE:1
+  - id: thaicam_cambodian
+    name_en: "Cambodia's account (Thailand occupies Cambodian ground)"
+    name_de: ''  # TODO translate
+    claim_en: "Cambodia's account (Thailand occupies Cambodian ground)"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: liberal_international_order
+    meta_secondary: []
+    owner_centroids: [ASIA-SOUTHEAST, AMERICAS-USA, MIDEAST-GULF]
+    cards:
+      - thaicam_cambodian_territorial_claim           # thailand_cambodia_border, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: ASIA-CHINA:5
+  - id: thaicam_mediation
+    name_en: "The Thailand-Cambodia clash as an occasion for great-power mediation"
+    name_de: ''  # TODO translate
+    claim_en: "The Thailand-Cambodia clash as an occasion for great-power mediation"
+    claim_de: ''  # TODO translate
+    stance_sign: 0
+    meta: plural_world_order
+    meta_secondary: []
+    owner_centroids: [ASIA-CHINA]
+    cards:
+      - thaicam_great_power_mediation                 # thailand_cambodia_border, stance +0
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:10, MIDEAST-IRAN:2
+  - id: zangezur_threat
+    name_en: "The Zangezur corridor is an extraterritorial strategic threat"
+    name_de: ''  # TODO translate
+    claim_en: "The Zangezur corridor is an extraterritorial strategic threat"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: great_power_competition
+    meta_secondary: [security_order]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - zc_sovereignty_threat                         # zangezur_corridor, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: EUROPE-RUSSIA:10, EUROPE-GERMANY:5, EUROPE-FRANCE:4, EUROPE-BELARUS:2, EUROPE-UK:1, EUROPE-ALPINE:1
+  - id: aas_contested
+    name_en: "The Armenia-Azerbaijan settlement is contested / imposed"
+    name_de: ''  # TODO translate
+    claim_en: "The Armenia-Azerbaijan settlement is contested / imposed"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: liberal_international_order
+    meta_secondary: [sovereign_resistance]
+    owner_centroids: [EUROPE-RUSSIA]
+    cards:
+      - aas_contested_settlement                      # armenia_azerbaijan_settlement, stance -2
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:10, AMERICAS-CANADA:4, EUROPE-UK:3, AMERICAS-SOUTHERNCONE:2, NON-STATE-EU:1, EUROPE-GERMANY:1
+  - id: alberta_unity_defence
+    name_en: "Alberta separatism is a dangerous bluff and an opening for outside pressure"
+    name_de: ''  # TODO translate
+    claim_en: "Alberta separatism is a dangerous bluff and an opening for outside pressure"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: sovereign_resistance
+    meta_secondary: []
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - alberta_unity_defence                         # alberta_separatism_us_ties, stance -1
+
+  # 1 cards / 1 friction nodes | owner tally: AMERICAS-USA:8, AMERICAS-MEXICO:3, EUROPE-SOUTH:2, EUROPE-UK:2, EUROPE-GERMANY:1, EUROPE-FRANCE:1
+  - id: cartel_narco_state_critique
+    name_en: "Mexico's cartel problem is a narco-state failure"
+    name_de: ''  # TODO translate
+    claim_en: "Mexico's cartel problem is a narco-state failure"
+    claim_de: ''  # TODO translate
+    stance_sign: -1
+    meta: security_order
+    meta_secondary: [global_justice]
+    owner_centroids: [AMERICAS-USA]
+    cards:
+      - cartel_narco_state_critique                   # mexico_cartel_war, stance -1

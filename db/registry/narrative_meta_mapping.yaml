@@ -1,0 +1,763 @@
+# Narrative -> meta-narrative mapping
+#
+# Source of truth for `narratives_v2.meta_narrative_id` /
+# `meta_secondary_ids`. Per NARRATIVE_CONSOLIDATION_SPEC.md 3.A3 step 4 the
+# mapping is a DOMAIN MODEL decision: it is authored here, reviewed in a diff,
+# and reconciled into the column by a script. Never edit the column directly.
+#
+# STATUS: draft -- awaiting DG-0 #1
+#   `archetypes` below are MECHANICAL PROPOSALS from
+#   scripts/narrative_archetype_clustering.py -- a blend of kNN over v1's
+#   human meta labels and each meta's own signal vocabulary. Leave-one-out
+#   accuracy against v1 is 68.5%. They are a starting point for review,
+#   NOT an approved mapping. Nothing may be written to the database until
+#   DG-0 #1 is signed off and `status` here reads `approved`.
+#
+# HOW TO REVIEW (this is DG-0 #1)
+#   Work through out/narrative_consolidation/P0a_archetypes.md. For each
+#   archetype: keep `meta` or replace it, then set `approved: true`. Individual
+#   narratives that do not belong with their group go in `overrides`.
+#   Every active narrative is in exactly one archetype -- there is no
+#   unassigned pile to clear first.
+#
+# RESOLUTION ORDER (what the P1 reconcile script must implement)
+#   1. `overrides[narrative_id]`          -- wins over everything
+#   2. the `meta` of the archetype listing that narrative in `members`
+#   3. unmapped -> reconcile fails loudly; it never guesses
+#
+# Regenerating this file preserves `overrides`, `secondary`,
+# `coalition_overrides`, and any edited `meta`/`approved` on an archetype.
+# Only archetype membership is recomputed.
+#
+# COALITION is not authored here. It is DERIVED from each narrative's publisher
+# bloc via db/registry/coalitions.yaml (that file is DG-0 #2). Only corrections
+# live here, in `coalition_overrides`.
+
+version: 1
+status: draft
+generated_by: scripts/gen_narrative_meta_mapping.py
+
+archetypes:
+
+  # A01 -- sovereign_resistance, stance sign -1 -- 63 narratives, 6,661 titles
+  A01:
+    meta: sovereign_resistance
+    stance_sign: -1
+    approved: false
+    members:
+      - west_iran_regime_change_doctrine              # iran_theater, 2746 titles -- Western coalition: the Iranian regime is illegitimate and replaceable
+      - uscat_canadian_consensus                      # us_canada_theater, 262 titles -- An ally treated as a target
+      - mexth_mexican_sovereignty                     # mexico_theater, 238 titles -- US pressure violates Mexican sovereignty and dignity
+      - jc_theater_chinese_state_counter              # japan_china_theater, 233 titles -- Japan is breaking the postwar settlement and reviving militarism behin
+      - taiwan_strait_beijing_counter                 # taiwan_strait_theater, 208 titles -- Taiwan is Chinese territory and foreign interference, not Chinese acti
+      - sahel_theater_state_collapse_critique         # sahel_theater, 197 titles -- A managed collapse: military rule that delivers neither security nor p
+      - cuba_theater_anti_imperial                    # cuba_theater, 193 titles -- A siege to break a sovereign nation that refuses to submit
+      - myanmar_illegitimate_junta_rule               # myanmar_civil_conflict, 184 titles -- Sham election, illegitimate junta
+      - eu_sovereigntist_revolt                       # eu_cohesion_theater, 130 titles -- Nations and voters are resisting an overreaching Brussels
+      - usdom_fed_capture_risk                        # us_fed_independence, 127 titles -- Political pressure is testing the limits of central-bank independence
+      - usdom_epstein_obstruction                     # us_epstein_elite_network, 126 titles -- Disclosure is being managed, delayed and selectively withheld
+      - mexican_sovereignty_defense                   # us_mexico_military_pressure, 122 titles -- US pressure violates Mexican sovereignty; non-intervention is the red 
+      - usdom_loyalty_hollowing                       # us_executive_loyalty, 111 titles -- Professional institutions are being hollowed out by loyalty tests
+      - cuba_theater_western_critique                 # cuba_theater, 104 titles -- The pressure campaign has become a humanitarian and legal problem of i
+      - greenland_sovereignty_defense                 # greenland_control, 104 titles -- Coercion over Greenland is unacceptable; Danish/European sovereignty m
+      - somali_territorial_integrity                  # somaliland_recognition_contest, 104 titles -- A violation of Somalia's territorial integrity
+      - jde_militarism_revival                        # japan_defense_expansion, 96 titles -- Japan is hollowing out its pacifist constitution and reviving militari
+      - beijing_antiseparatism_unity                  # taiwan_political_warfare, 90 titles -- Opposing separatism and building cross-strait unity is legitimate, and
+      - cuba_economic_warfare                         # cuba_embargo_sanctions, 90 titles -- The blockade is economic warfare against a sovereign nation
+      - alberta_unity_defence                         # alberta_separatism_us_ties, 85 titles -- A dangerous bluff, and an opening for outside pressure
+      - jc_taiwan_interference_charge                 # japan_china_taiwan_question, 84 titles -- Japan's Taiwan remarks are interference in China's internal affairs an
+      - migration_national_control                    # eu_migration_burden_sharing, 72 titles -- Member states must control borders and curb irregular migration
+      - horn_sovereignty_bloc                         # horn_africa_theater, 68 titles -- Sovereignty and non-interference
+      - one_china_consensus                           # taiwan_international_recognition, 63 titles -- The one-China principle is settled international consensus and Taiwan'
+      - caucasus_russia_china_counter                 # caucasus_theater, 61 titles -- The West is destabilizing Russia's neighbourhood and dragging it into 
+      - ethiopia_renewed_war_alarm                    # ethiopia_regional_confrontation, 56 titles -- A second northern war in the making
+      - pla_sovereignty_enforcement                   # taiwan_military_pressure, 56 titles -- Military and coast guard activity around Taiwan is routine, lawful enf
+      - casp_sovereignty_defence                      # canada_sovereignty_pressure, 47 titles -- Sovereignty under pressure
+      - cuba_collapse_starvation_siege                # cuba_energy_collapse, 47 titles -- Starvation by siege is a deliberate instrument of policy
+      - colombia_theater_external_pressure            # colombia_theater, 45 titles -- Decisions shaped from outside
+      - awp_russian_capture                           # armenia_western_pivot, 43 titles -- Armenia is being dragged into an anti-Russian orbit by a Western-engin
+      - saudi_coalition_legitimacy_restoration        # saudi_houthi_war, 43 titles -- Saudi-led coalition is restoring the internationally-recognised Yemeni
+      - sahel_state_losing_ground                     # sahel_jihadist_insurgency, 39 titles -- The state is losing territory it cannot recover
+      - ethiopia_regional_revisionism                 # ethiopia_regional_confrontation, 31 titles -- A revisionist power destabilising the region
+      - cuba_lifelines_humanitarian_duty              # cuba_external_lifelines, 29 titles -- Relief is a humanitarian obligation and third states should not be coe
+      - horn_russian_iranian_counter                  # horn_africa_theater, 28 titles -- Russian and Iranian counter-framing
+      - memory_historical_accountability              # japan_china_memory_wars, 27 titles -- Japan has never reckoned with its wartime aggression and continues to 
+      - sahel_theater_civilian_cost                   # sahel_theater, 27 titles -- The population pays for every side's campaign
+      - western_intervention_scrutiny                 # us_mexico_military_pressure, 23 titles -- US pressure is straining the relationship and inviting scandal
+      - france_popular_will                           # french_nationalist_challenge, 22 titles -- The establishment and the courts are blocking the popular will
+      - cuba_collapse_humanitarian_alarm              # cuba_energy_collapse, 21 titles -- A humanitarian emergency is unfolding whoever is to blame
+      - taiwan_us_pawn                                # taiwan_us_security_commitment, 21 titles -- US arms sales violate the one-China principle and use Taiwan as a pawn
+      - usdom_loyalty_court_politics                  # us_executive_loyalty, 20 titles -- Court politics inside a distracted superpower
+      - usdom_violence_instability                    # us_political_violence, 18 titles -- A superpower unable to secure its own political life
+      - latam_theater_coercion_critique               # latam_hemispheric_theater, 14 titles -- Washington coerces, Beijing is punished
+      - colombia_us_imperial_overreach                # colombia_us_alignment, 13 titles -- A sovereign state treated as a subordinate
+      - migration_eu_failure_kremlin                  # eu_migration_burden_sharing, 12 titles -- EU migration policy is chaos and a failure of the European project
+      - colombia_transition_institutional_concern     # colombia_political_transition, 11 titles -- The result strains the guardrails
+      - somali_foreign_militarisation_critique        # somalia_state_security, 10 titles -- Foreign militarisation is the destabiliser
+      - cuba_force_unlawful                           # cuba_military_coercion, 9 titles -- Threatening to take an island is unlawful and reckless
+      - cuba_sanctions_overreach                      # cuba_embargo_sanctions, 9 titles -- Extraterritorial sanctions are collective punishment
+      - budget_national_sovereignty                   # eu_budget_sovereignty, 8 titles -- Brussels wants more money and power at the expense of nations and taxp
+      - alberta_external_amplification                # alberta_separatism_us_ties, 5 titles -- A fraying federation, watched from outside
+      - kurdish_political_rights_critique             # turkey_kurdish_question, 5 titles -- Turkey collapses Kurdish political rights into terror designation
+      - france_decline_kremlin                        # french_nationalist_challenge, 4 titles -- France's model is failing amid chaos and instability
+      - ggd_sovereignty_stability                     # georgia_geopolitical_drift, 4 titles -- Tbilisi is resisting a Western-orchestrated colour revolution and defe
+      - hungary_sovereignty_interference              # hungary_rule_of_law, 4 titles -- Brussels interferes in a sovereign nation's democracy
+      - pyongyang_closed_the_door                     # inter_korean_relations, 4 titles -- Pyongyang has formally closed the inter-Korean track
+      - drc_minerals_as_resource_capture              # drc_minerals_competition, 2 titles -- A takeover of an established position
+      - drc_sanctions_rejected                        # drc_peace_process, 2 titles -- The designated parties reject the designations
+      - hungary_brussels_coercion                     # hungary_rule_of_law, 2 titles -- Brussels overreaches against a sovereign nation
+      - colombia_peace_process_failure                # colombia_armed_groups_peace, 1 titles -- Talks bought the cartels time
+      - realignment_new_majority                      # eu_right_realignment, 1 titles -- The right has a democratic mandate to govern and to cooperate
+
+  # A02 -- security_order, stance sign +1 -- 48 narratives, 8,180 titles
+  A02:
+    meta: security_order
+    stance_sign: 1
+    approved: false
+    members:
+      - israel_existential_self_defense               # israel_theater, 2541 titles -- Israel: existential self-defense against multi-front Iran-led axis
+      - israel_self_defense_north                     # israel_lebanon_border, 1546 titles -- Israel: push Hezbollah north of the Litani; restore northern security
+      - israel_dismantle_hamas                        # gaza_war, 686 titles -- Israel: war is non-negotiable until Hamas is dismantled and hostages f
+      - ukrainian_defense_and_deep_strikes            # ukraine_battlefield, 516 titles -- Ukraine-aligned: defending the front, liberating territory
+      - iran_axis_of_resistance                       # iran_proxy_network, 451 titles -- Iran-aligned: Axis of Resistance as legitimate liberation movement
+      - iran_hormuz_sovereign_pressure                # strait_of_hormuz_sovereignty, 299 titles -- Iran: Hormuz as sovereign waters and deterrence asymmetry
+      - aid_sustains_defense                          # western_aid_to_ukraine, 243 titles -- Western military, economic, and industrial aid is sustaining and must 
+      - taiwan_coercion_deterrence                    # taiwan_military_pressure, 203 titles -- Chinese military and coast guard pressure around Taiwan is coercion th
+      - iran_nuclear_sovereign_right                  # iran_nuclear_program, 147 titles -- Iran: nuclear program as sovereign right and deterrence hedge
+      - south_asia_indian_account                     # south_asia_theater, 129 titles -- India is the status-quo power defending its territory against a milita
+      - arctic_nato_deterrence                        # arctic_military_presence, 122 titles -- NATO must reinforce the Arctic to deter a growing Russian (and Chinese
+      - korea_sanctioned_bloc                         # korea_theater, 122 titles -- A bloc of sanctioned states drawing closer around Pyongyang
+      - israel_preemptive_strike_doctrine             # israel_iran_strikes, 115 titles -- Israel: preemptive and reactive strikes against an existential nuclear
+      - militancy_pakistan_sponsorship                # india_pakistan_militancy, 100 titles -- Pakistan shelters and directs the groups that attack India
+      - south_asia_pakistani_security_account         # south_asia_theater, 74 titles -- Pakistan is fighting militancy on two fronts against externally backed
+      - cartel_offensive_progress                     # mexico_cartel_war, 72 titles -- The militarised offensive is working: captures and takedowns weaken th
+      - houthis_fourth_front_solidarity               # yemen_red_sea_theater, 71 titles -- Houthi attacks on Israel and Red Sea shipping are legitimate Gaza soli
+      - pakafg_counterterror_necessity                # pakistan_afghanistan_border, 67 titles -- Strikes target militant sanctuaries Kabul refuses to close
+      - iran_gulf_resistance_solidarity               # gulf_attacks_on_arab_states, 62 titles -- Iran-aligned: Axis of Resistance as legitimate liberation movement
+      - us_russia_theater_engagement_case             # us_russia_theater, 49 titles -- Managed engagement is the responsible way to handle a nuclear-armed ad
+      - usdom_violence_protective_response            # us_political_violence, 49 titles -- The protective response worked and the perpetrators face the law
+      - houthi_naval_pressure_legitimate              # red_sea_shipping_security, 46 titles -- Houthi targeting of Israel-linked shipping is legitimate non-state pre
+      - sahel_counterterror_necessity                 # sahel_jihadist_insurgency, 46 titles -- A legitimate war against armed extremist groups
+      - jde_deterrence_response                       # japan_defense_expansion, 43 titles -- Japan's defense build-up is a proportionate response to China's milita
+      - korea_allied_dual_track                       # korea_theater, 43 titles -- Hold the line, keep the door open: deterrence alongside engagement
+      - sahel_theater_regional_security_response      # sahel_theater, 40 titles -- A regional security emergency being fought by national armies
+      - pkk_terror_full_disarmament                   # turkey_kurdish_question, 38 titles -- PKK / YPG / SDF are one terror organisation; disarmament is the only a
+      - foreign_military_withdrawal_demand            # syria_counter_terror, 30 titles -- Foreign military presence violates sovereignty and should withdraw
+      - us_russia_new_treaty_needed                   # us_russia_arms_control, 29 titles -- The expiry of New START is dangerous and a successor framework must be
+      - thaicam_thai_sovereignty_defence              # thailand_cambodia_border, 24 titles -- The border and Koh Kood are Thai territory; Cambodia breaches the memo
+      - alliance_deterrence_necessary                 # korea_peninsula_deterrence, 23 titles -- The alliance and its exercises are what hold deterrence together
+      - inter_korean_engagement                       # inter_korean_relations, 20 titles -- Engagement can lower tension and reopen the inter-Korean track
+      - colombia_theater_negotiated_path              # colombia_theater, 19 titles -- Bargaining still works, at home and abroad
+      - indus_treaty_obsolete                         # indus_water_sharing, 18 titles -- The 1960 treaty no longer fits India's needs and its terms are being r
+      - colombia_us_rapprochement                     # colombia_us_alignment, 14 titles -- The channel was repaired
+      - aas_durable_peace                             # armenia_azerbaijan_settlement, 12 titles -- A historic peace is ending a 30-year conflict and normalizing the regi
+      - kashmir_integral_to_india                     # kashmir_dispute, 12 titles -- Jammu and Kashmir is Indian territory; Pakistan must vacate what it ho
+      - baloch_foreign_backed_insurgency              # balochistan_insurgency, 9 titles -- The attacks are externally sponsored terrorism, not a domestic grievan
+      - houthi_resistance_strikes_legitimate          # houthi_strikes_on_israel, 9 titles -- Houthi missile and drone strikes on Israel are legitimate axis-of-resi
+      - mexth_us_pressure_justified                   # mexico_theater, 9 titles -- US pressure on Mexico is justified and is producing results
+      - nk_sovereign_deterrent                        # north_korea_missile_program, 7 titles -- The arsenal is a sovereign deterrent that will not be traded away
+      - ven_coercion_justified                        # us_venezuela_relations, 7 titles -- The US removed a narco-dictator and a security threat
+      - colombia_transition_mandate                   # colombia_political_transition, 6 titles -- Voters chose a harder line
+      - sahel_separatism_as_jihadist_alliance         # sahel_tuareg_separatism, 5 titles -- The separatists are a front for the armed extremists
+      - defence_europe_must_pay                       # europe_us_defence_dependence, 4 titles -- Europe has freeloaded on US protection for decades and must finally pa
+      - casp_continental_dependence                   # canada_sovereignty_pressure, 1 titles -- Canada depends on American protection
+      - colombia_peace_negotiation_defense            # colombia_armed_groups_peace, 1 titles -- Talks are how the war ends
+      - intervention_necessity                        # us_mexico_military_pressure, 1 titles -- US action against the cartels is necessary because Mexico cannot or wi
+
+  # A03 -- great_power_competition, stance sign -1 -- 43 narratives, 3,645 titles
+  A03:
+    meta: great_power_competition
+    stance_sign: -1
+    approved: false
+    members:
+      - russia_europe_kremlin_counter                 # russia_europe_theater, 737 titles -- Western Russophobia, NATO encirclement and self-defeating sanctions ma
+      - ven_theater_anti_imperial                     # venezuela_theater, 365 titles -- A US imperial operation to seize a sovereign nation's oil
+      - korea_hardening_threat                        # korea_theater, 347 titles -- A hardening threat while the pressure regime frays
+      - arctic_russia_china_counter                   # arctic_theater, 335 titles -- NATO expansion and the US Greenland grab are the real provocation and 
+      - sudan_proxy_war_critique                      # sudan_civil_war, 240 titles -- Sudan war is sustained by UAE arms to RSF; Egypt/Saudi back the army
+      - nk_proliferation_threat                       # north_korea_missile_program, 213 titles -- An expanding arsenal that must be contained
+      - west_gulf_aggression_response                 # gulf_attacks_on_arab_states, 153 titles -- US-Israel-Saudi-UAE: Iranian and Houthi strikes are state-sponsored ag
+      - nato_complicity_provocation                   # russia_airspace_incursions, 141 titles -- NATO territory hosts and enables Ukrainian drone strikes; incursions a
+      - hybrid_russophobia_denial                     # russia_hybrid_warfare, 121 titles -- Hybrid-threat claims are evidence-free Russophobia; shadow-fleet seizu
+      - aid_as_escalation_and_proxy                   # western_aid_to_ukraine, 115 titles -- Western aid prolongs proxy war, wastes taxpayer money, escalates direc
+      - ven_coercion_anti_imperial                    # us_venezuela_relations, 107 titles -- US gunboat imperialism against a sovereign nation
+      - horn_western_alarm                            # horn_africa_theater, 105 titles -- Western alarm at fragmentation and famine
+      - us_china_summit_new_chapter                   # us_china_summit_diplomacy, 98 titles -- Leader diplomacy opens a new chapter proving cooperation beats contain
+      - nato_encirclement_provocation                 # russia_nato_deterrence, 92 titles -- NATO's eastern build-up is aggressive encirclement driving escalation
+      - arctic_western_sovereignty_stewardship        # arctic_theater, 87 titles -- Coercion and reckless exploitation of the Arctic must be resisted — fo
+      - arctic_nato_militarization                    # arctic_military_presence, 50 titles -- NATO is militarising the Arctic and provoking a dangerous new confront
+      - cjer_lawful_regulation                        # china_japan_economic_restrictions, 42 titles -- China's export controls are lawful regulation and Japan's own conduct 
+      - alliance_autonomy_strain                      # korea_peninsula_deterrence, 40 titles -- Seoul is pushing for autonomy and the alliance terms are being renegot
+      - cuba_force_imperial_aggression                # cuba_military_coercion, 32 titles -- Gunboat diplomacy against a small neighbour is imperial aggression
+      - us_china_summit_weak_hand                     # us_china_summit_diplomacy, 30 titles -- Washington left the summit with little to show for it
+      - aukus_capability_doubt                        # aukus_alliance_reliability, 28 titles -- AUKUS is delivering less than promised and binds Australia to an unrel
+      - australia_alliance_scepticism                 # australia_theater, 28 titles -- The alliance is delivering less than Australia was promised
+      - australia_china_counter                       # australia_theater, 21 titles -- Australia is manufacturing a threat and importing a bloc confrontation
+      - western_systemic_alarm                        # ukraine_official_corruption, 17 titles -- Western alarm: high-level corruption threatens Ukraine credibility and
+      - senkaku_chinese_rights_protection             # senkaku_diaoyu_islands, 16 titles -- Diaoyu Dao is inherent Chinese territory and coast guard patrols are l
+      - port_expropriation_coercion                   # latam_port_infrastructure_control, 14 titles -- Expropriation under US pressure
+      - sahel_patron_model_failing                    # sahel_security_patron_contest, 13 titles -- The replacement security model is buckling
+      - ven_coercion_western_critical                 # us_venezuela_relations, 10 titles -- The intervention is lawless regime change
+      - zc_sovereignty_threat                         # zangezur_corridor, 10 titles -- The corridor is an extraterritorial threat to Armenian sovereignty and
+      - trade_mutual_benefit                          # australia_china_trade_leverage, 8 titles -- Australia-China trade is complementary and growing, and quota mechanic
+      - cpc_russia_iran_resistance                    # caucasus_power_competition, 5 titles -- Outside penetration of the region is a hostile encirclement to be resi
+      - anti_hegemony_rift                            # us_mexico_military_pressure, 4 titles -- US pressure on Mexico is imperial overreach in Washington's backyard
+      - arctic_route_strategic_threat                 # arctic_shipping_routes, 4 titles -- Russian and Chinese control of Arctic routes is a strategic threat
+      - colombia_theater_hegemonic_critique           # colombia_theater, 4 titles -- The region as a sphere of influence
+      - mexth_anti_hegemony_rift                      # mexico_theater, 4 titles -- US pressure on Mexico exposes American imperialism in its own backyard
+      - alliance_containment_instrument               # korea_peninsula_deterrence, 2 titles -- Washington treats its allies as instruments for containing China
+      - korea_us_containment_critique                 # korea_theater, 2 titles -- US alliances on the peninsula serve the containment of China
+      - aukus_bloc_confrontation                      # aukus_alliance_reliability, 1 titles -- AUKUS is bloc confrontation that spreads nuclear submarine technology 
+      - latam_theater_strategic_warning               # latam_hemispheric_theater, 1 titles -- Commerce with a strategic tail
+      - militarisation_overreach                      # russia_nato_deterrence, 1 titles -- Threat inflation and war-economy drift are a costly overreach
+      - resource_strategic_penetration                # latam_resource_access, 1 titles -- Beijing is buying strategic depth
+      - russia_europe_critical_restraint              # russia_europe_theater, 1 titles -- Threat inflation, militarisation and escalation risk: a skeptical Euro
+      - securitisation_caution                        # russia_hybrid_warfare, 0 titles -- Caution against over-attribution: accidents and criminality get mislab
+
+  # A04 -- security_order, stance sign -1 -- 30 narratives, 7,185 titles
+  A04:
+    meta: security_order
+    stance_sign: -1
+    approved: false
+    members:
+      - russia_special_military_operation             # ukraine_war_theater, 1461 titles -- Russia's special military operation defends Russian-speaking populatio
+      - hezbollah_resistance_north                    # israel_lebanon_border, 920 titles -- Hezbollah and aligned: northern front as legitimate solidarity resista
+      - russian_smo_operations                        # ukraine_battlefield, 874 titles -- Russia-aligned: the special military operation advancing -- liberation
+      - west_iran_proxy_network_threat                # iran_proxy_network, 860 titles -- Western coalition: Iran proxy network as terror infrastructure
+      - europe_us_transatlantic_rupture               # europe_us_theater, 775 titles -- A vital alliance is rupturing, forcing an alarmed Europe to defend its
+      - west_iran_nuclear_threat                      # iran_nuclear_program, 660 titles -- Western coalition: Iran nuclear as existential threat
+      - infrastructure_war_energy_terror              # ukraine_infrastructure_war, 259 titles -- Russia-aligned: Kyiv attacks civilian energy and endangers nuclear saf
+      - russian_maximalist_peace                      # ukraine_peace_negotiations, 227 titles -- Settlement must complete all SMO objectives: denazification, demilitar
+      - iran_legitimate_retaliation_doctrine          # israel_iran_strikes, 171 titles -- Iran-aligned: Iranian retaliation is legitimate state self-defense und
+      - iran_proxy_destabilisation                    # yemen_red_sea_theater, 165 titles -- Houthis are an Iranian proxy that has hijacked the Yemeni state
+      - pakafg_civilian_harm_alarm                    # pakistan_afghanistan_border, 136 titles -- The border war is killing civilians and risks a wider conflict
+      - pakafg_afghan_sovereignty_violation           # pakistan_afghanistan_border, 128 titles -- Pakistani strikes on Afghan territory are aggression against a soverei
+      - south_asia_indian_critique_of_pakistan        # south_asia_theater, 102 titles -- Pakistan's conduct beyond its borders and failures within them destabi
+      - sahel_northern_autonomy_claim                 # sahel_tuareg_separatism, 80 titles -- Northern Mali is a political question, not only a military one
+      - somali_fragility_and_harm                     # somalia_state_security, 72 titles -- A fragile state and an abandoned population
+      - myanmar_criminal_economy_spillover            # myanmar_civil_conflict, 44 titles -- Scam-compound economy and cross-border crime
+      - baloch_pakistan_internal_failure              # balochistan_insurgency, 39 titles -- The insurgency is Pakistan's own governance failure, not foreign subve
+      - great_lakes_proxy_war_and_its_costs           # great_lakes_theater, 39 titles -- A cross-border war paid for by civilians
+      - syria_jihadist_takeover_warning               # syria_theater, 31 titles -- HTS rule is rebranded al-Qaeda and a long-term security threat
+      - recognition_legitimises_jihadists             # syria_recognition_and_normalisation, 27 titles -- International recognition whitewashes a former al-Qaeda operative
+      - colombia_us_coercion                          # colombia_us_alignment, 25 titles -- Threats replaced diplomacy
+      - us_russia_relief_rewards_moscow               # us_russia_sanctions_leverage, 25 titles -- Easing sanctions hands Moscow a windfall and squanders the West's main
+      - houthi_iranian_proxy_aggression               # houthi_strikes_on_israel, 16 titles -- Houthi strikes are Iranian-orchestrated proxy aggression requiring kin
+      - indus_water_weaponisation                     # indus_water_sharing, 15 titles -- Suspending the treaty is coercion against a downstream population
+      - m23_externally_backed_offensive               # m23_conflict, 11 titles -- An externally backed offensive
+      - cartel_narco_state_critique                   # mexico_cartel_war, 10 titles -- Militarisation is failing and the state is compromised: collusion, cor
+      - militancy_indian_pretext                      # india_pakistan_militancy, 5 titles -- India weaponises unproven allegations to justify pressure and strikes
+      - turkey_wrong_side_on_iran                     # turkey_iran_war_spillover, 5 titles -- Erdogan shields the Iranian regime from accountability
+      - israeli_strikes_on_syria_legitimate           # syria_israeli_strikes, 3 titles -- Israeli strikes on Syria are legitimate preventive defense
+      - escalation_risk_restraint                     # russia_airspace_incursions, 0 titles -- Shoot-down authority and forward posture risk uncontrolled escalation;
+
+  # A05 -- liberal_international_order, stance sign -1 -- 28 narratives, 4,350 titles
+  A05:
+    meta: liberal_international_order
+    stance_sign: -1
+    approved: false
+    members:
+      - west_hormuz_freedom_of_navigation             # strait_of_hormuz_sovereignty, 1864 titles -- Western coalition: free passage through Hormuz is non-negotiable
+      - usdom_theater_liberal_alarm                   # us_domestic_theater, 1111 titles -- Checks and balances under sustained strain
+      - usdom_theater_decline                         # us_domestic_theater, 292 titles -- American decline and the collapse of its claim to model status
+      - freedom_of_navigation_defense                 # red_sea_shipping_security, 165 titles -- Houthi attacks on commercial vessels violate UNCLOS; coalition naval o
+      - usdom_epstein_western_impunity                # us_epstein_elite_network, 134 titles -- A Western elite protecting itself, exposed by its own scandal
+      - usdom_electoral_franchise_threat              # us_electoral_legitimacy, 116 titles -- The rules are being rewritten to shape the result in advance
+      - scs_rules_based_maritime_order                # south_china_sea_claims, 102 titles -- China's claims lack legal basis and its conduct coerces smaller claima
+      - sahel_democratic_closure                      # sahel_junta_consolidation, 100 titles -- Military rule is closing the last civic space
+      - zelensky_regime_corruption                    # ukraine_official_corruption, 72 titles -- Zelensky inner circle is systemically corrupt; Western aid is being st
+      - usdom_ice_american_repression                 # us_interior_immigration_enforcement, 67 titles -- A self-described democracy policing its own population
+      - us_china_trade_unilateralism                  # us_china_trade_tariffs, 59 titles -- US tariffs are unilateral coercion that damages the global trading ord
+      - ven_transition_democracy_betrayed             # venezuela_political_transition, 58 titles -- Chavismo survives; the opposition is frozen out
+      - usdom_courts_politicised                      # us_judicial_constraint, 28 titles -- A judiciary treated as an instrument of factional power
+      - baloch_rights_repression                      # balochistan_insurgency, 25 titles -- The state answers Baloch grievances with force and detention
+      - uscat_external_rift                           # us_canada_theater, 21 titles -- The Western bloc coming apart
+      - m23_civilian_toll                             # m23_conflict, 19 titles -- The population pays for every advance
+      - sahel_rupture_deepens_isolation               # sahel_france_rupture, 19 titles -- The break leaves the Sahel with fewer options, not more
+      - usdom_fed_dollar_decline                      # us_fed_independence, 17 titles -- Politicised money and the erosion of the dollar order
+      - defence_nato_racket                           # europe_us_defence_dependence, 13 titles -- NATO is a crumbling Cold-War racket through which the US bleeds Europe
+      - drc_minerals_human_cost                       # drc_minerals_competition, 11 titles -- The price is paid at the pit
+      - sahel_counterinsurgency_abuses                # sahel_jihadist_insurgency, 11 titles -- The counterinsurgency is killing the civilians it claims to protect
+      - turkey_authoritarian_drift_critique           # turkey_democratic_backsliding, 11 titles -- Imamoglu trial and CHP crackdown dismantle Turkish democracy
+      - usdom_press_hypocrisy                         # us_press_freedom, 10 titles -- Press-freedom advocacy abroad, licence pressure at home
+      - usdom_electoral_democracy_facade              # us_electoral_legitimacy, 9 titles -- A system that lectures others while contesting its own elections
+      - casp_imperial_overreach                       # canada_sovereignty_pressure, 7 titles -- Imperial overreach in its own hemisphere
+      - us_russia_normalisation_premature             # us_russia_bilateral_channel, 5 titles -- Normalising relations while the war continues legitimises the Kremlin 
+      - aas_contested_settlement                      # armenia_azerbaijan_settlement, 4 titles -- The settlement is a contested, externally shaped arrangement rather th
+      - thaicam_cambodian_territorial_claim           # thailand_cambodia_border, 0 titles -- Thailand occupies Cambodian ground; the ICJ ruling and demarcation fav
+
+  # A06 -- sovereign_resistance, stance sign +1 -- 27 narratives, 3,074 titles
+  A06:
+    meta: sovereign_resistance
+    stance_sign: 1
+    approved: false
+    members:
+      - iran_sovereign_existence                      # iran_theater, 836 titles -- Iran: Islamic Republic as sovereign state under permanent foreign assa
+      - ukrainian_maximalist_peace                    # ukraine_peace_negotiations, 498 titles -- Just peace requires full Russian withdrawal to 1991 borders with NATO-
+      - sudan_state_legitimacy                        # sudan_civil_war, 351 titles -- Sudan's army is the constitutional state defending against an RSF muti
+      - judea_samaria_sovereignty                     # west_bank_settlements, 265 titles -- Israeli right: Jewish sovereignty over biblical Judea-Samaria
+      - usdom_theater_conservative_case               # us_domestic_theater, 171 titles -- A mandate being executed against institutional resistance
+      - damascus_territorial_reunification            # syria_kurdish_question, 153 titles -- Damascus must restore central authority over all Syrian territory
+      - usdom_ice_enforcement_mandate                 # us_interior_immigration_enforcement, 102 titles -- Enforcement is delivering a mandate voters asked for
+      - balkan_theater_external_backing               # balkan_theater, 97 titles -- Russia and China back the region's governments as they resist Western-
+      - usdom_fed_orderly_succession                  # us_fed_independence, 93 titles -- A normal succession that leaves the institution intact
+      - scs_chinese_sovereignty_claim                 # south_china_sea_claims, 89 titles -- China's South China Sea claims are historic, lawful, and enforcement i
+      - us_russia_buyer_autonomy                      # us_russia_sanctions_leverage, 79 titles -- Sovereign buyers never accepted that US permission was required
+      - us_russia_theater_buyer_autonomy              # us_russia_theater, 79 titles -- Third countries treat the rivalry as something to navigate, not to joi
+      - taiwan_international_space                    # taiwan_international_recognition, 55 titles -- Taiwan's international participation is legitimate and Beijing's campa
+      - france_republican_defense                     # french_nationalist_challenge, 44 titles -- The rule of law and republican norms must apply to the RN
+      - realignment_firewall_defense                  # eu_right_realignment, 43 titles -- The mainstream must not normalise the radical right
+      - turkey_anti_graft_legalism_defense            # turkey_democratic_backsliding, 31 titles -- Imamoglu indictment is routine anti-corruption process
+      - great_lakes_engagement_working                # great_lakes_theater, 28 titles -- Outside engagement is starting to bite
+      - houthi_authority_legitimate_resistance        # saudi_houthi_war, 19 titles -- Houthi-led Sanaa authority is legitimate national resistance to Saudi-
+      - europe_us_america_first                       # europe_us_theater, 10 titles -- America First: a freeloading, over-regulating Europe must pay, open up
+      - balkan_investment_development                 # balkan_foreign_capital, 7 titles -- Foreign investment brings jobs, tourism and international partnership 
+      - ven_essequibo_venezuelan_claim                # essequibo_dispute, 7 titles -- Essequibo is historically Venezuelan territory
+      - sahel_russian_partnership_delivers            # sahel_security_patron_contest, 6 titles -- The new partnership delivers what the old one did not
+      - sahel_break_with_paris_justified              # sahel_france_rupture, 5 titles -- Cutting ties ends a relationship that never became equal
+      - leverage_justified                            # us_mexico_trade_border, 4 titles -- Tariff and border pressure are legitimate leverage that forces Mexican
+      - m23_backing_charge_rejected                   # m23_conflict, 1 titles -- The accused parties reject the charge
+      - us_russia_engagement_necessary                # us_russia_bilateral_channel, 1 titles -- Keeping a working channel with Moscow is how wars are ended and accide
+      - reform_in_progress                            # ukraine_official_corruption, 0 titles -- Ukrainian anti-corruption institutions are investigating and prosecuti
+
+  # A07 -- economic_order, stance sign +1 -- 24 narratives, 1,497 titles
+  A07:
+    meta: economic_order
+    stance_sign: 1
+    approved: false
+    members:
+      - infrastructure_war_economy_strikes            # ukraine_infrastructure_war, 364 titles -- Ukraine-aligned: precision degradation of Russia's war economy; Russia
+      - jc_theater_japanese_western_consensus         # japan_china_theater, 265 titles -- China's pressure on Japan is coercion that hardens Japanese resolve ra
+      - us_china_export_control_necessity             # us_china_tech_restrictions, 250 titles -- Restricting advanced chip access is necessary to hold a security-criti
+      - ven_oil_restart_opportunity                   # venezuela_sanctions_oil, 150 titles -- Sanctions relief reopens Venezuela's oil to the world
+      - us_china_minerals_dependence_risk             # us_china_critical_minerals, 95 titles -- US dependence on Chinese rare earths is a vulnerability that must be e
+      - cjer_economic_coercion                        # china_japan_economic_restrictions, 91 titles -- China is weaponizing trade, minerals and tourism to punish Japanese po
+      - us_russia_sanctions_illegitimate              # us_russia_sanctions_leverage, 89 titles -- Unilateral sanctions have failed and Washington has been forced to adm
+      - trade_derisking_necessity                     # australia_china_trade_leverage, 47 titles -- Concentrated dependence on the Chinese market is a strategic vulnerabi
+      - cpc_western_engagement                        # caucasus_power_competition, 23 titles -- Outside engagement brings beneficial partnership and integration to th
+      - us_china_summit_engagement_works              # us_china_summit_diplomacy, 22 titles -- Leader-level engagement is putting a floor under a dangerous rivalry
+      - latam_theater_regional_agency                 # latam_hemispheric_theater, 21 titles -- Courted by all sides, committed to none
+      - us_russia_relief_pragmatic                    # us_russia_sanctions_leverage, 19 titles -- Sanctions relief is a pragmatic response to energy-market reality
+      - arctic_resource_development                   # arctic_resources_competition, 14 titles -- Arctic energy and minerals are a legitimate sovereign development oppo
+      - drc_minerals_as_development                   # drc_minerals_competition, 9 titles -- Capital arriving at last
+      - resource_sovereign_development                # latam_resource_access, 8 titles -- The region sets its own terms
+      - balkan_theater_investment_opportunity         # balkan_theater, 7 titles -- Foreign capital and international partnerships are framed as developme
+      - trade_us_tariffs_justified                    # transatlantic_trade, 6 titles -- US tariffs are a justified correction of unfair European trade practic
+      - zc_connectivity_prosperity                    # zangezur_corridor, 6 titles -- The corridor unlocks connectivity, trade and a regional peace dividend
+      - us_china_tariff_leverage                      # us_china_trade_tariffs, 4 titles -- Tariffs and trade probes are legitimate leverage against an unbalanced
+      - budget_more_europe                            # eu_budget_sovereignty, 3 titles -- A capable Union needs stronger common financing
+      - alberta_legitimate_grievance                  # alberta_separatism_us_ties, 2 titles -- A grievance the federation has not answered
+      - uscat_provincial_grievance                    # us_canada_theater, 2 titles -- A federation strained from within
+      - tech_eu_overreach                             # europe_us_tech_sovereignty, 0 titles -- EU tech rules are protectionist harassment of successful American comp
+      - usca_trade_rebalancing                        # us_canada_trade_coercion, 0 titles -- Rebalancing an unfair trading relationship
+
+  # A08 -- economic_order, stance sign -1 -- 24 narratives, 1,533 titles
+  A08:
+    meta: economic_order
+    stance_sign: -1
+    approved: false
+    members:
+      - trade_european_defence                        # transatlantic_trade, 504 titles -- Trump's tariffs are economic coercion that Europe must resist with uni
+      - usca_economic_coercion                        # us_canada_trade_coercion, 136 titles -- Tariff coercion against a treaty partner
+      - ven_oil_imperial_plunder                      # venezuela_sanctions_oil, 123 titles -- Washington is looting Venezuela's oil wealth
+      - trade_coercion_pushback                       # us_mexico_trade_border, 112 titles -- US tariff threats are economic coercion that violate USMCA and Mexican
+      - dprk_russia_blood_for_technology              # north_korea_russia_alignment, 86 titles -- Troops and shells for cash and missile technology
+      - trade_western_vassalage                       # transatlantic_trade, 78 titles -- US tariffs expose how Washington milks its European "vassals" and the 
+      - mexth_western_scrutiny                        # mexico_theater, 61 titles -- US pressure strains the relationship and carries scandal and economic 
+      - us_china_western_engagement_critique          # us_china_theater, 46 titles -- The instruments are backfiring: costs at home, allies hedging, leverag
+      - trade_pressure_sovereignty_defense            # latam_us_trade_pressure, 45 titles -- Tariffs punish a trade partner
+      - taiwan_strait_western_doubt                   # taiwan_strait_theater, 44 titles -- Taiwan's protection is not assured -- Washington may bargain the islan
+      - us_commitment_doubted                         # taiwan_us_security_commitment, 44 titles -- Washington's commitment is wavering and Taiwan risks being traded away
+      - us_china_ai_suppression                       # us_china_ai_primacy, 38 titles -- Chinese AI succeeds on merit and Washington answers with smears and bl
+      - latam_theater_terms_imposed                   # latam_hemispheric_theater, 37 titles -- The costs land locally
+      - trade_economic_disruption                     # us_mexico_trade_border, 37 titles -- Tariff brinkmanship disrupts an integrated economy and rattles markets
+      - latam_theater_european_objection              # latam_hemispheric_theater, 35 titles -- Europe resists its own agreement
+      - us_china_tech_containment                     # us_china_tech_restrictions, 29 titles -- Export controls are containment dressed as security, and they are fail
+      - us_china_tariff_self_harm                     # us_china_trade_tariffs, 19 titles -- Tariff escalation costs US industry and consumers more than it wins
+      - us_china_minerals_lawful_leverage             # us_china_critical_minerals, 17 titles -- China's minerals controls are lawful management and Western blocs unde
+      - ven_oil_deals_opacity                         # venezuela_sanctions_oil, 15 titles -- The oil restart is opaque and serves Trump, not Venezuelans
+      - beijing_shields_pyongyang                     # north_korea_china_patronage, 11 titles -- Beijing's lifeline is what keeps the pressure regime from working
+      - mercosur_european_obstruction                 # latam_eu_market_access, 6 titles -- Europe signs, then restricts
+      - drc_accords_stalling                          # drc_peace_process, 5 titles -- Signed, stalled, and unenforced
+      - great_lakes_scepticism_of_outside_fixes       # great_lakes_theater, 4 titles -- African scepticism about externally designed fixes
+      - resource_extractivism_critique                # latam_resource_access, 1 titles -- Extraction externalises its costs
+
+  # A09 -- great_power_competition, stance sign +1 -- 23 narratives, 5,202 titles
+  A09:
+    meta: great_power_competition
+    stance_sign: 1
+    approved: false
+    members:
+      - ukraine_resistance_solidarity                 # ukraine_war_theater, 1585 titles -- Ukraine's war of national defense deserves full Western and democratic
+      - russia_europe_western_resolve                 # russia_europe_theater, 942 titles -- Europe must deter, defend and sanction a revanchist Russia
+      - us_china_western_competition_consensus        # us_china_theater, 754 titles -- Managed competition: hold the technology lead, reduce dependence, keep
+      - us_china_ai_lead_contest                      # us_china_ai_primacy, 481 titles -- Chinese AI has closed the gap and the US lead is now contested on meri
+      - taiwan_strait_western_consensus               # taiwan_strait_theater, 297 titles -- Taiwan is a democracy under escalating Chinese coercion and its deterr
+      - hybrid_campaign_defence                       # russia_hybrid_warfare, 288 titles -- Russia is waging a coordinated gray-zone campaign that requires attrib
+      - eastern_flank_deterrence                      # russia_nato_deterrence, 150 titles -- Eastern-flank build-up is necessary deterrence against a revanchist Ru
+      - arctic_western_security_consensus             # arctic_theater, 127 titles -- The Arctic must be secured against Russian militarization and Sino-Rus
+      - jc_taiwan_japan_security_stake                # japan_china_taiwan_question, 119 titles -- A Taiwan contingency directly threatens Japan's security and Japan is 
+      - australia_western_consensus                   # australia_theater, 117 titles -- Australia must reduce its exposure to China and deepen its alliances
+      - horn_regional_stabilisers                     # horn_africa_theater, 101 titles -- Regional partners rebuilding state capacity
+      - us_russia_us_buildup_drives_race              # us_russia_arms_control, 50 titles -- US missile defence and rejected proposals are what drive the new arms 
+      - china_threat_substantiated                    # china_threat_assessment, 33 titles -- Chinese espionage and military reach against Australia are real and gr
+      - pacific_western_partnership                   # pacific_island_contest, 29 titles -- Pacific island states are choosing Australia and its partners as their
+      - sahel_theater_partnership_frame               # sahel_theater, 27 titles -- A sovereign realignment that is finally fighting the real enemy
+      - senkaku_japanese_administration               # senkaku_diaoyu_islands, 27 titles -- The Senkakus are Japanese-administered territory and Chinese vessel en
+      - port_control_restored                         # latam_port_infrastructure_control, 19 titles -- Host-state control restored
+      - syrian_sovereignty_under_israeli_aggression   # syria_israeli_strikes, 17 titles -- Israeli strikes violate Syrian sovereignty and undermine the transitio
+      - arctic_route_opportunity                      # arctic_shipping_routes, 13 titles -- Melting ice opens Arctic sea routes as a shared economic opportunity
+      - aukus_strategic_necessity                     # aukus_alliance_reliability, 9 titles -- AUKUS is essential to Australian deterrence and is progressing
+      - latam_theater_eastern_partnership             # latam_hemispheric_theater, 9 titles -- A second partner on offer
+      - greenland_us_strategic_claim                  # greenland_control, 5 titles -- US control of Greenland is a strategic and national-security necessity
+      - us_commitment_firm                            # taiwan_us_security_commitment, 3 titles -- US arms supply and the security commitment to Taiwan are holding and b
+
+  # A10 -- plural_world_order, stance sign -1 -- 21 narratives, 3,282 titles
+  A10:
+    meta: plural_world_order
+    stance_sign: -1
+    approved: false
+    members:
+      - multipolar_anti_israel_alignment              # israel_theater, 1268 titles -- Russia / China / Global South: Israel as US-backed colonial outlier
+      - sanctions_ineffective_and_backfiring          # russia_sanctions_regime, 556 titles -- Sanctions hurt Europe more than Russia; frozen-asset seizure would des
+      - us_china_beijing_moscow_counter               # us_china_theater, 241 titles -- Containment is the anomaly: cooperation, lawful trade and a multipolar
+      - kurdish_self_administration                   # syria_kurdish_question, 199 titles -- Kurdish self-administration is a legitimate democratic experiment to b
+      - usdom_courts_deference                        # us_judicial_constraint, 151 titles -- The bench is expanding executive discretion rather than checking it
+      - proxy_war_restraint_critique                  # ukraine_war_theater, 143 titles -- The war is a US/NATO proxy war prolonged by Western intervention; sett
+      - frontline_freeze_settlement                   # ukraine_peace_negotiations, 131 titles -- End the killing through frozen line of contact + Ukrainian neutrality,
+      - europe_us_western_disunity                    # europe_us_theater, 121 titles -- The transatlantic split exposes Western hypocrisy and the arrival of a
+      - defence_unreliable_america                    # europe_us_defence_dependence, 100 titles -- A wavering America is an unreliable protector, forcing an alarmed Euro
+      - turkey_two_faced_opportunist                  # turkey_mediator_role, 91 titles -- Erdogan plays every side for influence without delivering
+      - turkey_unreliable_ally_warning                # turkey_theater, 88 titles -- Erdogan's Turkey is a hostile or unreliable NATO partner
+      - autonomy_european_awakening                   # eu_strategic_autonomy, 62 titles -- Europe is finally awakening to strategic autonomy and must build its o
+      - autonomy_multipolar_welcome                   # eu_strategic_autonomy, 30 titles -- European autonomy means the end of US hegemony and a welcome multipola
+      - us_russia_theater_western_alarm               # us_russia_theater, 30 titles -- Accommodation is being granted without reciprocity, over the heads of 
+      - somaliland_transactional_scramble             # somaliland_recognition_contest, 24 titles -- Statehood traded for bases and minerals
+      - usca_bloc_fracture                            # us_canada_trade_coercion, 12 titles -- The Western bloc turning on itself
+      - us_china_summit_multipolar_framing            # us_china_summit_diplomacy, 10 titles -- Washington cannot dictate terms to Beijing
+      - us_russia_washington_bad_faith                # us_russia_bilateral_channel, 10 titles -- Washington talks while acting in bad faith and refusing to treat Russi
+      - china_threat_fabricated                       # china_threat_assessment, 7 titles -- The "China threat" is a fabricated narrative used to justify Australia
+      - pacific_china_cooperation                     # pacific_island_contest, 5 titles -- Chinese engagement in the Pacific is ordinary development cooperation 
+      - ven_essequibo_guyana_sovereignty              # essequibo_dispute, 3 titles -- Venezuela's claim is an oil-driven threat to Guyana
+
+  # A11 -- plural_world_order, stance sign +1 -- 18 narratives, 1,042 titles
+  A11:
+    meta: plural_world_order
+    stance_sign: 1
+    approved: false
+    members:
+      - turkey_independent_middle_power               # turkey_theater, 243 titles -- Turkey has earned regional stature through balanced diplomacy
+      - us_russia_theater_kremlin_vindication         # us_russia_theater, 180 titles -- The West's containment strategy has failed and Russia is being dealt w
+      - turkey_legitimate_broker                      # turkey_mediator_role, 179 titles -- Erdogan's mediation across Gaza, Iran, Ukraine is indispensable
+      - serbia_sovereignty_defense                    # serbia_government_legitimacy, 97 titles -- Belgrade's resistance to Western pressure defends Serbia's sovereign r
+      - dprk_russia_comradeship                       # north_korea_russia_alignment, 65 titles -- A lawful partnership between states under the same sanctions
+      - horn_new_partnerships                         # horn_africa_theater, 55 titles -- New partnerships remaking the Horn
+      - china_dprk_friendship                         # north_korea_china_patronage, 50 titles -- Traditional friendship restored, to the benefit of regional stability
+      - caucasus_western_consensus                    # caucasus_theater, 43 titles -- The South Caucasus is realigning westward -- peace, connectivity and a
+      - international_engagement_pragmatic            # syria_recognition_and_normalisation, 41 titles -- Arab, Western, and Russia/Ukraine engagement with Damascus is pragmati
+      - us_russia_washington_realism                  # us_russia_bilateral_channel, 41 titles -- Washington is returning to realism and accepting a multipolar order
+      - cuba_theater_pressure_consensus               # cuba_theater, 20 titles -- The government, not the blockade, is what has to change
+      - mercosur_market_opportunity                   # latam_eu_market_access, 13 titles -- The agreement opens a large market
+      - sahel_sovereigntist_self_reliance             # sahel_junta_consolidation, 8 titles -- Reclaiming sovereignty after decades of external tutelage
+      - drc_accords_are_working                       # drc_peace_process, 5 titles -- The accords are the route out of the war
+      - colombia_theater_hard_turn                    # colombia_theater, 1 titles -- The electorate chose confrontation
+      - uscat_us_leverage_case                        # us_canada_theater, 1 titles -- A relationship being put on fairer terms
+      - autonomy_illusion                             # eu_strategic_autonomy, 0 titles -- European strategic autonomy is a costly fantasy that only weakens NATO
+      - multipolar_systemic_alternative               # iran_theater, 0 titles -- Multipolar sovereignty backing for Iran
+
+  # A12 -- liberal_international_order, stance sign +1 -- 17 narratives, 2,433 titles
+  A12:
+    meta: liberal_international_order
+    stance_sign: 1
+    approved: false
+    members:
+      - usdom_epstein_accountability                  # us_epstein_elite_network, 743 titles -- The files are forcing accountability on a protected elite
+      - tighten_and_seize                             # russia_sanctions_regime, 603 titles -- Sanctions must be tightened, evasion closed, and frozen Russian assets
+      - eu_cohesion_hold                              # eu_cohesion_theater, 276 titles -- European cohesion and the rule of law must hold against centrifugal fo
+      - usdom_courts_checks_hold                      # us_judicial_constraint, 195 titles -- The courts are still binding the executive
+      - afd_democratic_defense                        # afd_and_german_polarisation, 177 titles -- The AfD is a threat to the democratic order that must be contained
+      - airspace_violation_deterrence                 # russia_airspace_incursions, 120 titles -- Russia deliberately probes NATO airspace to intimidate; NATO must enfo
+      - somali_state_rebuilding                       # somalia_state_security, 101 titles -- A state rebuilding with regional partners
+      - usdom_loyalty_prerogative                     # us_executive_loyalty, 47 titles -- A president is entitled to a team that executes his agenda
+      - myanmar_beijing_backed_normalisation          # myanmar_civil_conflict, 46 titles -- Legitimate transition, backed by Beijing
+      - usdom_electoral_integrity_case                # us_electoral_legitimacy, 43 titles -- Tightening the rules is protecting the integrity of the vote
+      - hungary_eu_standards                          # hungary_rule_of_law, 35 titles -- Rule of law and EU standards must be upheld in Hungary
+      - latam_theater_western_terms_hold              # latam_hemispheric_theater, 19 titles -- The Western offer still sets the terms
+      - drc_sanctions_as_enforcement                  # drc_peace_process, 14 titles -- Designations as the only real leverage
+      - migration_solidarity_rights                   # eu_migration_burden_sharing, 8 titles -- Migration requires European solidarity and respect for rights and law
+      - awp_european_choice                           # armenia_western_pivot, 3 titles -- Armenia's turn to Europe is a sovereign, democratic escape from Russia
+      - nato_solidarity_territorial_defense           # turkey_iran_war_spillover, 3 titles -- Patriot redeployment and missile interception are legitimate alliance 
+      - ggd_european_aspiration                       # georgia_geopolitical_drift, 0 titles -- Georgians want a European future their government is betraying
+
+  # A13 -- global_justice, stance sign -1 -- 16 narratives, 4,771 titles
+  A13:
+    meta: global_justice
+    stance_sign: -1
+    approved: false
+    members:
+      - palestine_genocide_framing                    # israel_theater, 2145 titles -- Pan-Arab / pro-Palestinian: Israel commits systemic violence against P
+      - gaza_humanitarian_catastrophe                 # gaza_war, 904 titles -- Pan-Arab / pro-Palestinian: Israel's Gaza campaign is humanitarian cat
+      - west_bank_apartheid_framing                   # west_bank_settlements, 335 titles -- Palestinian / international human rights: occupation, settler impunity
+      - sudan_humanitarian_catastrophe                # sudan_civil_war, 294 titles -- Both sides commit atrocities; RSF violence in Darfur amounts to genoci
+      - greenland_western_hypocrisy                   # greenland_control, 289 titles -- US imperialism over Greenland exposes Western hypocrisy and disunity
+      - usdom_ice_due_process                         # us_interior_immigration_enforcement, 222 titles -- Enforcement is outrunning due process and harming residents
+      - south_asia_international_rights               # south_asia_theater, 167 titles -- Across every front the cost falls on civilians and dissenters
+      - balkan_theater_accountability_deficit         # balkan_theater, 128 titles -- From a collapsed canopy to a privatised coastline, political elites ar
+      - serbia_protest_accountability                 # serbia_government_legitimacy, 81 titles -- Systemic corruption and negligence behind the Novi Sad canopy collapse
+      - balkan_sovereignty_environmental_rejection    # balkan_foreign_capital, 67 titles -- 'Albania is not for sale': a protected coastline is being privatised f
+      - cuba_reform_under_siege                       # cuba_regime_survival, 37 titles -- A real opening is under way but external pressure is throttling it
+      - south_asia_pakistani_grievance                # south_asia_theater, 30 titles -- India is the coercive party: occupier, water aggressor and fabricator 
+      - cuba_lifelines_solidarity                     # cuba_external_lifelines, 27 titles -- Solidarity with a besieged island against an illegal siege
+      - cuba_sovereign_resistance                     # cuba_regime_survival, 20 titles -- A sovereign people is resisting an externally engineered regime change
+      - kashmir_disputed_territory                    # kashmir_dispute, 17 titles -- Kashmir's status is unresolved and its people are owed self-determinat
+      - kashmir_rights_and_restrictions               # kashmir_dispute, 8 titles -- Both administrations face unrest and answer it with force
+
+  # A14 -- information_order, stance sign -1 -- 7 narratives, 539 titles
+  A14:
+    meta: information_order
+    stance_sign: -1
+    approved: false
+    members:
+      - usdom_press_suppression                       # us_press_freedom, 250 titles -- State leverage is being used against critical coverage
+      - tech_digital_sovereignty                      # europe_us_tech_sovereignty, 120 titles -- Europe must rein in US Big Tech and reclaim its digital sovereignty
+      - eu_fracture_rift_exploitation                 # eu_cohesion_theater, 65 titles -- Brussels overreach vindicates a Europe of sovereign nations
+      - afd_persecution_kremlin                       # afd_and_german_polarisation, 47 titles -- Germany persecutes its opposition and silences dissent
+      - mercosur_farm_protection                      # latam_eu_market_access, 33 titles -- The deal undercuts European farmers
+      - afd_exclusion_undemocratic                    # afd_and_german_polarisation, 24 titles -- Excluding a party millions vote for is itself undemocratic
+      - tech_digital_colonialism                      # europe_us_tech_sovereignty, 0 titles -- US tech dominance is a digital colonialism Europe is only now waking u
+
+  # A15 -- planetary_governance, stance sign -1 -- 6 narratives, 351 titles
+  A15:
+    meta: planetary_governance
+    stance_sign: -1
+    approved: false
+    members:
+      - ven_transition_imperial_puppet                # venezuela_political_transition, 231 titles -- The transition is a US-installed puppet regime
+      - ven_theater_western_critical                  # venezuela_theater, 86 titles -- The means were lawless and the transition is hollow
+      - usdom_violence_climate                        # us_political_violence, 16 titles -- Violence is becoming a recurring feature of political life
+      - us_russia_theater_kremlin_grievance           # us_russia_theater, 10 titles -- Washington cannot be trusted to keep its side of any bargain
+      - arctic_drilling_environmental_alarm           # arctic_resources_competition, 6 titles -- Arctic warming and resource extraction are an environmental and climat
+      - mercosur_environmental_critique               # latam_eu_market_access, 2 titles -- The deal rewards forest clearance
+
+  # A16 -- global_justice, stance sign +1 -- 4 narratives, 105 titles
+  A16:
+    meta: global_justice
+    stance_sign: 1
+    approved: false
+    members:
+      - somaliland_statehood_earned                   # somaliland_recognition_contest, 55 titles -- Recognition of an earned statehood
+      - ven_transition_stabilization                  # venezuela_political_transition, 36 titles -- The interim government is stabilising Venezuela
+      - resource_south_south_partnership              # latam_resource_access, 9 titles -- Cooperation brings development
+      - memory_political_leverage                     # japan_china_memory_wars, 5 titles -- Historical grievances are raised as political leverage in a deteriorat
+
+  # A17 -- information_order, stance sign +1 -- 3 narratives, 67 titles
+  A17:
+    meta: information_order
+    stance_sign: 1
+    approved: false
+    members:
+      - united_front_subversion                       # taiwan_political_warfare, 37 titles -- Beijing's united front work, infiltration and disinformation are subve
+      - usdom_press_accountability                    # us_press_freedom, 16 titles -- Broadcasters are being held to obligations that come with a licence
+      - cuba_repression_documented                    # cuba_regime_survival, 14 titles -- One-party rule holds by arresting those who protest
+
+  # A18 -- plural_world_order, stance sign +0 -- 2 narratives, 6 titles
+  A18:
+    meta: plural_world_order
+    stance_sign: 0
+    approved: false
+    members:
+      - thaicam_great_power_mediation                 # thailand_cambodia_border, 6 titles -- Outside powers and ASEAN broker the ceasefire and urge both sides to d
+      - eu_diplomatic_preservation_norm               # iran_theater, 0 titles -- EU/E3 diplomatic engagement on Iran
+
+  # A19 -- economic_order, stance sign +0 -- 2 narratives, 0 titles
+  A19:
+    meta: economic_order
+    stance_sign: 0
+    approved: false
+    members:
+      - eu_two_state_pathway                          # israel_theater, 0 titles -- EU/E3 two-state framework: condemn excesses on both sides, preserve th
+      - turkey_eu_engagement_pragmatic                # turkey_theater, 0 titles -- Engage Turkey on shared interests while flagging democratic concerns
+
+  # A20 -- security_order, stance sign +0 -- 2 narratives, 50 titles
+  A20:
+    meta: security_order
+    stance_sign: 0
+    approved: false
+    members:
+      - coalition_counter_isis_necessary              # syria_counter_terror, 50 titles -- Coalition counter-ISIS operations are necessary until ISIS threat is c
+      - western_pragmatic_navigation                  # yemen_red_sea_theater, 0 titles -- Houthi problem is a freedom-of-navigation problem; Gaza ceasefire remo
+
+  # A21 -- planetary_governance, stance sign +1 -- 2 narratives, 408 titles
+  A21:
+    meta: planetary_governance
+    stance_sign: 1
+    approved: false
+    members:
+      - syria_legitimate_transition                   # syria_theater, 214 titles -- New Syrian government is a legitimate post-Assad transition
+      - ven_theater_western_consensus                 # venezuela_theater, 194 titles -- Removing Maduro opened a stabilising, pragmatic path for Venezuela
+
+  # A22 -- global_justice, stance sign +0 -- 1 narratives, 7 titles
+  A22:
+    meta: global_justice
+    stance_sign: 0
+    approved: false
+    members:
+      - greenland_self_determination                  # greenland_control, 7 titles -- Greenland's future is for Greenlanders to decide -- not Washington or 
+
+# Per-narrative exceptions. Wins over the archetype. narrative_id: meta_id
+overrides:
+  {}
+
+# Secondary metas (spec 3.A2). DG-0 #4: POPULATED NOW, not deferred.
+# These are the narratives whose top two metas scored within the
+# calibrated margin -- i.e. the scorer says both genuinely apply.
+# A hand-edited entry here is preserved across regeneration.
+# narrative_id: [meta_id, ...]
+secondary:
+  west_iran_regime_change_doctrine:             ["security_order"]  # 2746 titles -- Western coalition: the Iranian regime is illegitimate an
+  ukraine_resistance_solidarity:                ["sovereign_resistance"]  # 1585 titles -- Ukraine's war of national defense deserves full Western 
+  russia_special_military_operation:            ["sovereign_resistance"]  # 1461 titles -- Russia's special military operation defends Russian-spea
+  usdom_theater_liberal_alarm:                  ["sovereign_resistance"]  # 1111 titles -- Checks and balances under sustained strain
+  europe_us_transatlantic_rupture:              ["plural_world_order"]  # 775 titles -- A vital alliance is rupturing, forcing an alarmed Europe
+  us_china_western_competition_consensus:       ["economic_order"]  # 754 titles -- Managed competition: hold the technology lead, reduce de
+  usdom_epstein_accountability:                 ["global_justice"]  # 743 titles -- The files are forcing accountability on a protected elit
+  russia_europe_kremlin_counter:                ["information_order"]  # 737 titles -- Western Russophobia, NATO encirclement and self-defeatin
+  tighten_and_seize:                            ["global_justice"]  # 603 titles -- Sanctions must be tightened, evasion closed, and frozen 
+  ukrainian_defense_and_deep_strikes:           ["sovereign_resistance"]  # 516 titles -- Ukraine-aligned: defending the front, liberating territo
+  ukrainian_maximalist_peace:                   ["security_order"]  # 498 titles -- Just peace requires full Russian withdrawal to 1991 bord
+  ven_theater_anti_imperial:                    ["global_justice"]  # 365 titles -- A US imperial operation to seize a sovereign nation's oi
+  infrastructure_war_economy_strikes:           ["great_power_competition"]  # 364 titles -- Ukraine-aligned: precision degradation of Russia's war e
+  taiwan_strait_western_consensus:              ["security_order"]  # 297 titles -- Taiwan is a democracy under escalating Chinese coercion 
+  usdom_theater_decline:                        ["sovereign_resistance"]  # 292 titles -- American decline and the collapse of its claim to model 
+  jc_theater_japanese_western_consensus:        ["great_power_competition"]  # 265 titles -- China's pressure on Japan is coercion that hardens Japan
+  uscat_canadian_consensus:                     ["plural_world_order"]  # 262 titles -- An ally treated as a target
+  us_china_export_control_necessity:            ["great_power_competition"]  # 250 titles -- Restricting advanced chip access is necessary to hold a 
+  sudan_proxy_war_critique:                     ["plural_world_order"]  # 240 titles -- Sudan war is sustained by UAE arms to RSF; Egypt/Saudi b
+  russian_maximalist_peace:                     ["global_justice"]  # 227 titles -- Settlement must complete all SMO objectives: denazificat
+  syria_legitimate_transition:                  ["global_justice"]  # 214 titles -- New Syrian government is a legitimate post-Assad transit
+  taiwan_coercion_deterrence:                   ["great_power_competition"]  # 203 titles -- Chinese military and coast guard pressure around Taiwan 
+  kurdish_self_administration:                  ["security_order"]  # 199 titles -- Kurdish self-administration is a legitimate democratic e
+  cuba_theater_anti_imperial:                   ["global_justice"]  # 193 titles -- A siege to break a sovereign nation that refuses to subm
+  south_asia_international_rights:              ["liberal_international_order"]  # 167 titles -- Across every front the cost falls on civilians and disse
+  west_gulf_aggression_response:                ["security_order"]  # 153 titles -- US-Israel-Saudi-UAE: Iranian and Houthi strikes are stat
+  usdom_courts_deference:                       ["sovereign_resistance"]  # 151 titles -- The bench is expanding executive discretion rather than 
+  usdom_epstein_western_impunity:               ["sovereign_resistance"]  # 134 titles -- A Western elite protecting itself, exposed by its own sc
+  frontline_freeze_settlement:                  ["liberal_international_order"]  # 131 titles -- End the killing through frozen line of contact + Ukraini
+  balkan_theater_accountability_deficit:        ["sovereign_resistance"]  # 128 titles -- From a collapsed canopy to a privatised coastline, polit
+  pakafg_afghan_sovereignty_violation:          ["sovereign_resistance"]  # 128 titles -- Pakistani strikes on Afghan territory are aggression aga
+  arctic_nato_deterrence:                       ["great_power_competition"]  # 122 titles -- NATO must reinforce the Arctic to deter a growing Russia
+  korea_sanctioned_bloc:                        ["plural_world_order"]  # 122 titles -- A bloc of sanctioned states drawing closer around Pyongy
+  jc_taiwan_japan_security_stake:               ["liberal_international_order"]  # 119 titles -- A Taiwan contingency directly threatens Japan's security
+  aid_as_escalation_and_proxy:                  ["security_order"]  # 115 titles -- Western aid prolongs proxy war, wastes taxpayer money, e
+  ven_coercion_anti_imperial:                   ["global_justice"]  # 107 titles -- US gunboat imperialism against a sovereign nation
+  horn_regional_stabilisers:                    ["economic_order"]  # 101 titles -- Regional partners rebuilding state capacity
+  somali_state_rebuilding:                      ["security_order"]  # 101 titles -- A state rebuilding with regional partners
+  defence_unreliable_america:                   ["great_power_competition"]  # 100 titles -- A wavering America is an unreliable protector, forcing a
+  sahel_democratic_closure:                     ["sovereign_resistance"]  # 100 titles -- Military rule is closing the last civic space
+  jde_militarism_revival:                       ["plural_world_order"]  # 96 titles -- Japan is hollowing out its pacifist constitution and rev
+  us_russia_sanctions_illegitimate:             ["plural_world_order"]  # 89 titles -- Unilateral sanctions have failed and Washington has been
+  turkey_unreliable_ally_warning:               ["sovereign_resistance"]  # 88 titles -- Erdogan's Turkey is a hostile or unreliable NATO partner
+  arctic_western_sovereignty_stewardship:       ["planetary_governance"]  # 87 titles -- Coercion and reckless exploitation of the Arctic must be
+  dprk_russia_blood_for_technology:             ["great_power_competition"]  # 86 titles -- Troops and shells for cash and missile technology
+  serbia_protest_accountability:                ["sovereign_resistance"]  # 81 titles -- Systemic corruption and negligence behind the Novi Sad c
+  us_russia_buyer_autonomy:                     ["economic_order"]  # 79 titles -- Sovereign buyers never accepted that US permission was r
+  us_russia_theater_buyer_autonomy:             ["plural_world_order"]  # 79 titles -- Third countries treat the rivalry as something to naviga
+  trade_western_vassalage:                      ["plural_world_order"]  # 78 titles -- US tariffs expose how Washington milks its European "vas
+  zelensky_regime_corruption:                   ["security_order"]  # 72 titles -- Zelensky inner circle is systemically corrupt; Western a
+  balkan_sovereignty_environmental_rejection:   ["liberal_international_order"]  # 67 titles -- 'Albania is not for sale': a protected coastline is bein
+  eu_fracture_rift_exploitation:                ["sovereign_resistance"]  # 65 titles -- Brussels overreach vindicates a Europe of sovereign nati
+  caucasus_russia_china_counter:                ["great_power_competition"]  # 61 titles -- The West is destabilizing Russia's neighbourhood and dra
+  us_china_trade_unilateralism:                 ["plural_world_order"]  # 59 titles -- US tariffs are unilateral coercion that damages the glob
+  taiwan_international_space:                   ["liberal_international_order"]  # 55 titles -- Taiwan's international participation is legitimate and B
+  us_russia_theater_engagement_case:            ["sovereign_resistance"]  # 49 titles -- Managed engagement is the responsible way to handle a nu
+  usdom_violence_protective_response:           ["information_order"]  # 49 titles -- The protective response worked and the perpetrators face
+  myanmar_beijing_backed_normalisation:         ["sovereign_resistance"]  # 46 titles -- Legitimate transition, backed by Beijing
+  france_republican_defense:                    ["liberal_international_order"]  # 44 titles -- The rule of law and republican norms must apply to the R
+  us_commitment_doubted:                        ["planetary_governance"]  # 44 titles -- Washington's commitment is wavering and Taiwan risks bei
+  jde_deterrence_response:                      ["great_power_competition"]  # 43 titles -- Japan's defense build-up is a proportionate response to 
+  korea_allied_dual_track:                      ["great_power_competition"]  # 43 titles -- Hold the line, keep the door open: deterrence alongside 
+  international_engagement_pragmatic:           ["liberal_international_order"]  # 41 titles -- Arab, Western, and Russia/Ukraine engagement with Damasc
+  alliance_autonomy_strain:                     ["sovereign_resistance"]  # 40 titles -- Seoul is pushing for autonomy and the alliance terms are
+  baloch_pakistan_internal_failure:             ["sovereign_resistance"]  # 39 titles -- The insurgency is Pakistan's own governance failure, not
+  great_lakes_proxy_war_and_its_costs:          ["plural_world_order"]  # 39 titles -- A cross-border war paid for by civilians
+  us_china_ai_suppression:                      ["great_power_competition"]  # 38 titles -- Chinese AI succeeds on merit and Washington answers with
+  us_china_summit_weak_hand:                    ["economic_order"]  # 30 titles -- Washington left the summit with little to show for it
+  us_russia_theater_western_alarm:              ["security_order"]  # 30 titles -- Accommodation is being granted without reciprocity, over
+  pacific_western_partnership:                  ["plural_world_order"]  # 29 titles -- Pacific island states are choosing Australia and its par
+  us_china_tech_containment:                    ["great_power_competition"]  # 29 titles -- Export controls are containment dressed as security, and
+  great_lakes_engagement_working:               ["plural_world_order"]  # 28 titles -- Outside engagement is starting to bite
+  usdom_courts_politicised:                     ["sovereign_resistance"]  # 28 titles -- A judiciary treated as an instrument of factional power
+  memory_historical_accountability:             ["liberal_international_order"]  # 27 titles -- Japan has never reckoned with its wartime aggression and
+  recognition_legitimises_jihadists:            ["liberal_international_order"]  # 27 titles -- International recognition whitewashes a former al-Qaeda 
+  sahel_theater_partnership_frame:              ["plural_world_order"]  # 27 titles -- A sovereign realignment that is finally fighting the rea
+  senkaku_japanese_administration:              ["security_order"]  # 27 titles -- The Senkakus are Japanese-administered territory and Chi
+  us_russia_relief_rewards_moscow:              ["liberal_international_order"]  # 25 titles -- Easing sanctions hands Moscow a windfall and squanders t
+  afd_exclusion_undemocratic:                   ["liberal_international_order"]  # 24 titles -- Excluding a party millions vote for is itself undemocrat
+  somaliland_transactional_scramble:            ["great_power_competition"]  # 24 titles -- Statehood traded for bases and minerals
+  thaicam_thai_sovereignty_defence:             ["sovereign_resistance"]  # 24 titles -- The border and Koh Kood are Thai territory; Cambodia bre
+  us_china_summit_engagement_works:             ["great_power_competition"]  # 22 titles -- Leader-level engagement is putting a floor under a dange
+  latam_theater_regional_agency:                ["sovereign_resistance"]  # 21 titles -- Courted by all sides, committed to none
+  inter_korean_engagement:                      ["great_power_competition"]  # 20 titles -- Engagement can lower tension and reopen the inter-Korean
+  usdom_loyalty_court_politics:                 ["liberal_international_order"]  # 20 titles -- Court politics inside a distracted superpower
+  m23_civilian_toll:                            ["sovereign_resistance"]  # 19 titles -- The population pays for every advance
+  sahel_rupture_deepens_isolation:              ["sovereign_resistance"]  # 19 titles -- The break leaves the Sahel with fewer options, not more
+  usdom_violence_instability:                   ["liberal_international_order"]  # 18 titles -- A superpower unable to secure its own political life
+  usdom_fed_dollar_decline:                     ["plural_world_order"]  # 17 titles -- Politicised money and the erosion of the dollar order
+  western_systemic_alarm:                       ["global_justice"]  # 17 titles -- Western alarm: high-level corruption threatens Ukraine c
+  senkaku_chinese_rights_protection:            ["security_order"]  # 16 titles -- Diaoyu Dao is inherent Chinese territory and coast guard
+  usdom_press_accountability:                   ["economic_order"]  # 16 titles -- Broadcasters are being held to obligations that come wit
+  arctic_resource_development:                  ["global_justice"]  # 14 titles -- Arctic energy and minerals are a legitimate sovereign de
+  cuba_repression_documented:                   ["sovereign_resistance"]  # 14 titles -- One-party rule holds by arresting those who protest
+  drc_sanctions_as_enforcement:                 ["security_order"]  # 14 titles -- Designations as the only real leverage
+  latam_theater_coercion_critique:              ["plural_world_order"]  # 14 titles -- Washington coerces, Beijing is punished
+  defence_nato_racket:                          ["sovereign_resistance"]  # 13 titles -- NATO is a crumbling Cold-War racket through which the US
+  sahel_patron_model_failing:                   ["sovereign_resistance"]  # 13 titles -- The replacement security model is buckling
+  usca_bloc_fracture:                           ["liberal_international_order"]  # 12 titles -- The Western bloc turning on itself
+  beijing_shields_pyongyang:                    ["great_power_competition"]  # 11 titles -- Beijing's lifeline is what keeps the pressure regime fro
+  colombia_transition_institutional_concern:    ["liberal_international_order"]  # 11 titles -- The result strains the guardrails
+  drc_minerals_human_cost:                      ["global_justice"]  # 11 titles -- The price is paid at the pit
+  cartel_narco_state_critique:                  ["global_justice"]  # 10 titles -- Militarisation is failing and the state is compromised: 
+  europe_us_america_first:                      ["economic_order"]  # 10 titles -- America First: a freeloading, over-regulating Europe mus
+  us_russia_washington_bad_faith:               ["great_power_competition"]  # 10 titles -- Washington talks while acting in bad faith and refusing 
+  usdom_press_hypocrisy:                        ["information_order"]  # 10 titles -- Press-freedom advocacy abroad, licence pressure at home
+  ven_coercion_western_critical:                ["sovereign_resistance"]  # 10 titles -- The intervention is lawless regime change
+  zc_sovereignty_threat:                        ["security_order"]  # 10 titles -- The corridor is an extraterritorial threat to Armenian s
+  cuba_force_unlawful:                          ["liberal_international_order"]  # 9 titles -- Threatening to take an island is unlawful and reckless
+  latam_theater_eastern_partnership:            ["plural_world_order"]  # 9 titles -- A second partner on offer
+  resource_south_south_partnership:             ["plural_world_order"]  # 9 titles -- Cooperation brings development
+  kashmir_rights_and_restrictions:              ["sovereign_resistance"]  # 8 titles -- Both administrations face unrest and answer it with forc
+  sahel_sovereigntist_self_reliance:            ["sovereign_resistance"]  # 8 titles -- Reclaiming sovereignty after decades of external tutelag
+  balkan_investment_development:                ["economic_order"]  # 7 titles -- Foreign investment brings jobs, tourism and internationa
+  china_threat_fabricated:                      ["great_power_competition"]  # 7 titles -- The "China threat" is a fabricated narrative used to jus
+  ven_essequibo_venezuelan_claim:               ["great_power_competition"]  # 7 titles -- Essequibo is historically Venezuelan territory
+  sahel_russian_partnership_delivers:           ["liberal_international_order"]  # 6 titles -- The new partnership delivers what the old one did not
+  drc_accords_stalling:                         ["liberal_international_order"]  # 5 titles -- Signed, stalled, and unenforced
+  kurdish_political_rights_critique:            ["security_order"]  # 5 titles -- Turkey collapses Kurdish political rights into terror de
+  memory_political_leverage:                    ["sovereign_resistance"]  # 5 titles -- Historical grievances are raised as political leverage i
+  militancy_indian_pretext:                     ["sovereign_resistance"]  # 5 titles -- India weaponises unproven allegations to justify pressur
+  pacific_china_cooperation:                    ["great_power_competition"]  # 5 titles -- Chinese engagement in the Pacific is ordinary developmen
+  turkey_wrong_side_on_iran:                    ["sovereign_resistance"]  # 5 titles -- Erdogan shields the Iranian regime from accountability
+  aas_contested_settlement:                     ["sovereign_resistance"]  # 4 titles -- The settlement is a contested, externally shaped arrange
+  defence_europe_must_pay:                      ["economic_order"]  # 4 titles -- Europe has freeloaded on US protection for decades and m
+  france_decline_kremlin:                       ["great_power_competition"]  # 4 titles -- France's model is failing amid chaos and instability
+  great_lakes_scepticism_of_outside_fixes:      ["security_order"]  # 4 titles -- African scepticism about externally designed fixes
+  leverage_justified:                           ["security_order"]  # 4 titles -- Tariff and border pressure are legitimate leverage that 
+  pyongyang_closed_the_door:                    ["security_order"]  # 4 titles -- Pyongyang has formally closed the inter-Korean track
+  drc_minerals_as_resource_capture:             ["security_order"]  # 2 titles -- A takeover of an established position
+  colombia_peace_negotiation_defense:           ["sovereign_resistance"]  # 1 titles -- Talks are how the war ends
+  colombia_theater_hard_turn:                   ["security_order"]  # 1 titles -- The electorate chose confrontation
+  militarisation_overreach:                     ["plural_world_order"]  # 1 titles -- Threat inflation and war-economy drift are a costly over
+  russia_europe_critical_restraint:             ["planetary_governance"]  # 1 titles -- Threat inflation, militarisation and escalation risk: a 
+  escalation_risk_restraint:                    ["great_power_competition"]  # 0 titles -- Shoot-down authority and forward posture risk uncontroll
+  eu_two_state_pathway:                         ["security_order"]  # 0 titles -- EU/E3 two-state framework: condemn excesses on both side
+  tech_digital_colonialism:                     ["global_justice"]  # 0 titles -- US tech dominance is a digital colonialism Europe is onl
+  tech_eu_overreach:                            ["information_order"]  # 0 titles -- EU tech rules are protectionist harassment of successful
+  turkey_eu_engagement_pragmatic:               ["liberal_international_order"]  # 0 titles -- Engage Turkey on shared interests while flagging democra
+  western_pragmatic_navigation:                 ["sovereign_resistance"]  # 0 titles -- Houthi problem is a freedom-of-navigation problem; Gaza 
+
+# Coalition is DERIVED, not authored -- resolved from each narrative's
+# publisher bloc via db/registry/coalitions.yaml. It is listed here
+# only so a wrong resolution can be pinned. Empty means: trust the
+# derivation. narrative_id: coalition_id
+coalition_overrides:
+  {}

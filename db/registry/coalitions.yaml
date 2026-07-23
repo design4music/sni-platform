@@ -1,0 +1,204 @@
+# Coalitions -- named groups of countries that speak with one voice
+#
+# A coalition is NOT a new taxonomy. It is a named set of ISO country codes,
+# assembled from the countries already present in `centroids_v3.iso_codes` and
+# `feeds.country_code`. Two consumers resolve into it:
+#
+#   narratives_v2  -- via publishers[] -> feeds.country_code  (MEASURED: who
+#                     actually carries the frame)
+#   official_sources -- via actor_centroid -> centroids_v3.iso_codes
+#
+# WHY ISO CODES AND NOT CENTROIDS. Several centroids bundle countries that
+# disagree with each other -- EUROPE-BALKANS is Serbia + Croatia + Kosovo,
+# ASIA-SOUTHEAST is 11 states. Keying coalitions on centroids would force
+# Serbia and Kosovo into one voice. ISO codes keep them separable; a centroid
+# resolves to a coalition only when all its iso_codes agree.
+#
+# WHY NOT narratives_v2.actor_centroids. That field lists who the dispute is
+# ABOUT, not who is SPEAKING. Measured over the corpus: of 263 opposing
+# narrative pairs on the same friction node, 25% have IDENTICAL
+# actor_centroids and 59% overlap -- e.g. the American and the Chinese framing
+# of `us_china_ai_primacy` both carry [AMERICAS-USA, ASIA-CHINA]. Deriving
+# coalition from it would merge every dispute's two sides.
+#
+# STATUS: DRAFT -- this is DG-0 #2 and nothing may be written to the database
+# until it is approved.
+#   The first six slugs (ru, ua, west_us, west_eu, iran, multilateral) are NOT
+#   invented here: they are already in use in
+#   db/registry/official_sources_statements.yaml. The rest are the minimum
+#   additions needed to cover the countries that actually appear in the
+#   narrative publisher blocs. Weights in the comments are
+#   narrative-publisher pair counts over the 411 active narratives.
+#
+# OPEN CALLS FOR REVIEW -- flagged, not silently decided. See the notes on
+# eu_baltic, west_uk, arab_gulf and asia_pacific_allies below.
+
+version: 1
+status: draft
+generated_from: feeds.country_code weights over active narratives_v2 publishers
+
+# Parent coalitions. A narrative resolves to the most SPECIFIC coalition that
+# holds a majority of its publishers; when no single one does but its parent
+# does, it resolves to the parent. This is what lets the same registry serve
+# both granularities: on europe_us_theater the US and EU press are opposed and
+# resolve separately, while on us_china nodes they speak as one and roll up to
+# `west`. Only the Western bloc is split today, so only it needs a parent.
+parents:
+  - id: west
+    label_en: Western and Allied States
+    label_de: Westliche und verbuendete Staaten
+
+coalitions:
+
+  - id: west_us
+    parent: west
+    label_en: United States
+    label_de: Vereinigte Staaten
+    iso_codes: [US]
+    note: 1683 pairs -- the single largest bloc. Kept separate from west_eu
+      because transatlantic friction nodes (europe_us_theater, tariffs,
+      Greenland) put US and European outlets on opposite sides.
+
+  - id: west_eu
+    parent: west
+    label_en: European Union
+    label_de: Europaeische Union
+    iso_codes: [DE, FR, IT, ES, AT, NL, BE, PT, IE, GR, CY, MT, DK, FI, SE, EU]
+    note: 2100+ pairs combined. EU as a code covers Euronews/EUobserver-style
+      pan-European outlets that carry no single national flag.
+
+  - id: west_uk
+    parent: west
+    label_en: United Kingdom
+    label_de: Vereinigtes Koenigreich
+    iso_codes: [GB]
+    note: >-
+      842 pairs. OPEN CALL: given its own slug rather than folded into
+      west_eu, because post-Brexit the UK press is on the other side of
+      several EU friction nodes. Fold into west_eu if that distinction is
+      not worth a slug.
+
+  - id: west_ca
+    parent: west
+    label_en: Canada
+    label_de: Kanada
+    iso_codes: [CA]
+    note: 120 pairs. Separate because us_canada_theater is an active dyad --
+      folding CA into west_us would merge both sides of it.
+
+  - id: eu_baltic
+    parent: west
+    label_en: Baltic States
+    label_de: Baltische Staaten
+    iso_codes: [EE, LT, LV]
+    note: >-
+      82 pairs. OPEN CALL: split from west_eu because Baltic outlets are
+      consistently more hawkish on Russia than the EU core, which is a real
+      narrative difference on russia_europe_theater. This is the same problem
+      you raised about Visegrad -- if you want that split too, PL/CZ/HU need
+      their own slug (they carry almost no volume in the current corpus:
+      CZ 26 pairs, PL and HU none).
+
+  - id: eu_nordic
+    parent: west
+    label_en: Nordic Countries
+    label_de: Nordische Laender
+    iso_codes: [NO, IS]
+    note: Low volume. DK/FI/SE sit in west_eu; NO and IS are outside the EU
+      and matter mainly on arctic_theater.
+
+  - id: ru
+    label_en: Russia
+    label_de: Russland
+    iso_codes: [RU, BY]
+    note: 872 pairs. Belarus included -- its state outlets carry the same
+      frames and never diverge in this corpus.
+
+  - id: ua
+    label_en: Ukraine
+    label_de: Ukraine
+    iso_codes: [UA]
+    note: 31 pairs. Already in use in official_sources_statements.yaml.
+
+  - id: china
+    label_en: China
+    label_de: China
+    iso_codes: [CN]
+    note: 403 pairs. Cleanly separates the Chinese framing on every us_china
+      and taiwan node, where actor_centroids cannot.
+
+  - id: iran
+    label_en: Iran
+    label_de: Iran
+    iso_codes: [IR]
+    note: 140 pairs. Already in use in official_sources_statements.yaml.
+
+  - id: israel
+    label_en: Israel
+    label_de: Israel
+    iso_codes: [IL]
+    note: 216 pairs. Required to separate Israeli from Arab framings on
+      israel_theater and gaza nodes.
+
+  - id: turkey
+    label_en: Turkey
+    label_de: Tuerkei
+    iso_codes: [TR]
+    note: 219 pairs. Own voice on turkey_theater, syria and the Caucasus.
+
+  - id: arab_gulf
+    label_en: Gulf and Arab States
+    label_de: Golf- und arabische Staaten
+    iso_codes: [QA, SA, AE, EG, KW, BH, OM, JO, LB, IQ]
+    note: >-
+      302 pairs. OPEN CALL: this lumps Qatar (Al Jazeera) with Saudi and
+      Emirati outlets, which diverge sharply on Gaza, the Muslim Brotherhood
+      and Yemen. Splitting qatar out is defensible; it carries 122 of the 302
+      on its own.
+
+  - id: india
+    label_en: India
+    label_de: Indien
+    iso_codes: [IN]
+    note: 282 pairs. Large enough to stand alone, and south_asia_theater puts
+      it opposite Pakistan.
+
+  - id: asia_pacific_allies
+    parent: west
+    label_en: Indo-Pacific US Allies
+    label_de: Indopazifische US-Verbuendete
+    iso_codes: [JP, KR, AU, NZ, PH, TW]
+    note: >-
+      513 pairs. OPEN CALL: grouped because they align on China-facing nodes,
+      but japan_china_theater and korea_theater may need JP and KR split out.
+      Check before approving.
+
+  - id: asean
+    label_en: Southeast Asia
+    label_de: Suedostasien
+    iso_codes: [SG, TH, MY, VN, ID, KH, MM, LA, BN]
+    note: 246 pairs, dominated by Singapore (182). Non-aligned voice on SCS
+      and Thailand-Cambodia nodes.
+
+  - id: global_south
+    label_en: Global South
+    label_de: Globaler Sueden
+    iso_codes: [BR, ZA, NG, KE, AR, MX, PK, BD, LK, ET, GH, SN, TZ, UG, CO, CL, PE, VE, CU, BO]
+    note: >-
+      450+ pairs. Deliberately broad. The corpus does not yet support finer
+      splits -- most of these carry under 100 pairs each. Split later if a
+      Latin America or Africa theater grows enough to need it.
+
+  - id: multilateral
+    label_en: Multilateral Institutions
+    label_de: Multilaterale Institutionen
+    iso_codes: [UN]
+    note: 25 pairs. Already in use in official_sources_statements.yaml. UN
+      organs, and the landing point for NON-STATE-UN sources.
+
+# Countries seen in the corpus but deliberately unassigned:
+#   CH (34 pairs) -- Swiss outlets, neutral by design; assigning them to
+#   west_eu would be a claim the corpus does not support.
+#   KZ (2), RS (2), ME (2), AL (4) -- too little volume to place honestly.
+# Narratives whose publishers resolve to no coalition are reported as
+# `unresolved` rather than being forced into one.
