@@ -908,6 +908,7 @@ class PipelineDaemon:
         bootstrap — this is what keeps it current as news flows.
         """
         from scripts.bootstrap_friction_node import refresh_all_active
+        from scripts.build_event_positions import rebuild_event_positions
         from scripts.compute_fn_asset_evidence import rebuild_evidence
 
         conn = self.get_connection()
@@ -923,6 +924,14 @@ class PipelineDaemon:
                     summary["titles"],
                     summary["skipped_events"],
                 )
+            )
+            # Derived event<->position links, rebuilt from the fresh title
+            # attribution (SPEC v2 §5.4). Reconciles against effective_counts;
+            # raises (and writes nothing) if the derivation drifts.
+            ep = rebuild_event_positions(conn)
+            print(
+                "event_positions: %d rows, %d positions, %d events"
+                % (ep["rows"], ep["positions"], ep["events"])
             )
             n_links = rebuild_evidence(conn)
             print("fn_asset_evidence: %d links" % n_links)
