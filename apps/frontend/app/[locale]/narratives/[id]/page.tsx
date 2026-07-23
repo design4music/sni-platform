@@ -34,17 +34,9 @@ function formatDate(dateStr: string, locale: string = 'en-US'): string {
   return date.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function stanceDot(sign: number): string {
-  if (sign > 0) return 'bg-emerald-500';
-  if (sign < 0) return 'bg-rose-500';
-  return 'bg-slate-500';
-}
-
-function cardTone(stance: number): string {
-  if (stance > 0) return 'border-l-emerald-500/60';
-  if (stance < 0) return 'border-l-rose-500/60';
-  return 'border-l-slate-500/60';
-}
+// No stance coloring on the position page: a position has one orientation, so
+// its cards do not "fight" here. Pro/con red/green lives on the FN page, where
+// rival narratives contest the same subject on a fixed -2..+2 axis.
 
 export default async function PositionDetailPage({ params }: Props) {
   const { locale, id } = await params;
@@ -129,7 +121,7 @@ export default async function PositionDetailPage({ params }: Props) {
           <div className="space-y-2">
             {detail.siblings.map(s => (
               <Link key={s.id} href={`/narratives/${s.id}`} className="flex items-start gap-2 group">
-                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${stanceDot(s.stance_sign)}`} />
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-dashboard-text-muted/40" />
                 <span className="text-sm text-dashboard-text-muted group-hover:text-blue-400 transition">
                   {s.name}
                   <span className="ml-1 text-[10px] opacity-60">· {s.shared_fns} {t('sharedNodes')}</span>
@@ -150,11 +142,13 @@ export default async function PositionDetailPage({ params }: Props) {
     ]),
   ];
 
+  // One row per friction node this position appears on. Stance shows as the
+  // descriptive label (informative), never as a pro/con color bucket.
   const renderCard = (c: PositionCardRow) => (
     <Link
       key={c.id}
       href={`/friction-nodes/${c.fn_id}`}
-      className={`flex flex-col gap-1 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border border-l-2 ${cardTone(c.stance)} hover:border-blue-500/40 transition`}
+      className="flex flex-col gap-1 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border hover:border-blue-500/40 transition"
     >
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm font-medium text-dashboard-text">{c.fn_name}</span>
@@ -168,19 +162,12 @@ export default async function PositionDetailPage({ params }: Props) {
     </Link>
   );
 
-  const supporting = detail.cards.filter(c => c.stance > 0);
-  const critical = detail.cards.filter(c => c.stance < 0);
-  const neutral = detail.cards.filter(c => c.stance === 0);
-
   return (
     <DashboardLayout sidebar={sidebar} breadcrumb={breadcrumb}>
       <JsonLd data={jsonLd} />
       {/* Header */}
       <div className="mb-8 pb-8 border-b border-dashboard-border">
-        <div className="flex items-start gap-3 mb-4">
-          <span className={`mt-2 h-3 w-3 shrink-0 rounded-full ${stanceDot(p.stance_sign)}`} />
-          <h1 className="text-3xl md:text-4xl font-bold">{p.name}</h1>
-        </div>
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">{p.name}</h1>
         {p.claim && (
           <div className="mb-4">
             <h2 className="text-sm font-semibold text-dashboard-text-muted uppercase tracking-wider mb-1">{t('claim')}</h2>
@@ -213,26 +200,18 @@ export default async function PositionDetailPage({ params }: Props) {
         </div>
       )}
 
-      {/* Where this position appears -- two columns */}
+      {/* Where this position appears -- flat list, one row per friction node.
+          No pro/con split: a position has one orientation, so its own cards do
+          not oppose each other (that split belongs on the FN page). */}
       {detail.cards.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-3 text-dashboard-text-muted">{t('appearsOn')}</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-emerald-400/80">{t('supporting')} · {supporting.length}</h3>
-              {supporting.map(renderCard)}
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-rose-400/80">{t('critical')} · {critical.length}</h3>
-              {critical.map(renderCard)}
-            </div>
+          <h2 className="text-lg font-semibold mb-1 text-dashboard-text-muted">{t('appearsOn')}</h2>
+          <p className="text-xs text-dashboard-text-muted mb-3">
+            {detail.cards.length} {t('positionsLabel')}
+          </p>
+          <div className="grid gap-2 md:grid-cols-2 items-start">
+            {detail.cards.map(renderCard)}
           </div>
-          {neutral.length > 0 && (
-            <div className="mt-4 space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400/80">{t('neutralBand')} · {neutral.length}</h3>
-              <div className="grid gap-2 md:grid-cols-2">{neutral.map(renderCard)}</div>
-            </div>
-          )}
         </div>
       )}
 

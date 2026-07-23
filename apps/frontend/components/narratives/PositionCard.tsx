@@ -8,13 +8,6 @@ interface Props {
   labels: { events: string; owner: string; nodes: string };
 }
 
-// stance_sign: -1 critical (rose), +1 supporting (emerald), 0 neutral (slate)
-function stanceColor(sign: number): string {
-  if (sign > 0) return 'bg-emerald-500';
-  if (sign < 0) return 'bg-rose-500';
-  return 'bg-slate-500';
-}
-
 export default function PositionCard({ position: p, sparkline, labels }: Props) {
   const owners = p.owner_centroids.slice(0, 3).map(o => o.label).join(', ');
   const extraOwners = p.owner_centroids.length > 3 ? ` +${p.owner_centroids.length - 3}` : '';
@@ -24,7 +17,6 @@ export default function PositionCard({ position: p, sparkline, labels }: Props) 
       href={`/narratives/${p.id}`}
       className="group flex gap-3 px-4 py-3 rounded-lg bg-dashboard-surface border border-dashboard-border hover:border-blue-500/40 transition"
     >
-      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${stanceColor(p.stance_sign)}`} />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-dashboard-text group-hover:text-blue-400 transition">
           {p.name}
