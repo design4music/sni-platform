@@ -1,4 +1,4 @@
-import { getNarrativesForCentroid, getNarrativeSparklines, getAllMetaNarratives } from '@/lib/queries';
+import { getNarrativesForCentroid, getPositionsLanding } from '@/lib/queries';
 import { getTranslations } from 'next-intl/server';
 import NarrativeCard from './NarrativeCard';
 
@@ -9,11 +9,12 @@ interface Props {
 
 export default async function CentroidNarrativeSection({ centroidId, locale }: Props) {
   const t = await getTranslations('narratives');
-  const [narratives, sparklines, metaNarratives] = await Promise.all([
+  const [narratives, landing] = await Promise.all([
     getNarrativesForCentroid(centroidId, locale),
-    getNarrativeSparklines(),
-    getAllMetaNarratives(locale),
+    getPositionsLanding(locale),
   ]);
+  const sparklines = landing?.sparklines ?? {};
+  const metaNarratives = landing?.meta_narratives ?? [];
 
   // Group by meta-narrative (may be empty)
   const metaMap = new Map(metaNarratives.map(m => [m.id, m.name]));

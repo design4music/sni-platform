@@ -2040,30 +2040,6 @@ export async function getPositionById(id: string, locale?: string): Promise<Posi
   });
 }
 
-// Top narrative per event (for trending cards: one badge per event, from its own centroid)
-export async function getTopNarrativePerEvent(eventIds: string[]): Promise<Record<string, EventNarrativeLink>> {
-  if (eventIds.length === 0) return {};
-  return cached(`top_narrative_per_event:${eventIds.sort().join(',')}`, 1800, async () => {
-    const rows = await query<EventNarrativeLink & { event_id: string }>(
-      `SELECT DISTINCT ON (ep.event_id)
-              ep.event_id::text as event_id,
-              ep.position_id AS narrative_id, p.name_en as narrative_name,
-              p.owner_centroids[1] AS actor_centroid, c.label as actor_label,
-              1.0 AS confidence
-       FROM event_positions ep
-       JOIN positions p ON p.id = ep.position_id AND p.is_active
-       LEFT JOIN centroids_v3 c ON c.id = p.owner_centroids[1]
-       WHERE ep.event_id = ANY($1::uuid[])
-       ORDER BY ep.event_id, ep.title_count DESC`,
-      [eventIds]
-    );
-    const map: Record<string, EventNarrativeLink> = {};
-    for (const r of rows) {
-      map[r.event_id] = r;
-    }
-    return map;
-  });
-}
 
 // Narratives for an epic's events, grouped by centroid
 export async function getNarrativesForEpic(epicId: string, locale?: string): Promise<{
@@ -2194,6 +2170,10 @@ export async function getCalendarMonthView(
 
 // Top strategic narratives active in a centroid+month (by event count).
 // Surfaces the 260-narrative curated layer into the centroid sidebar.
+// Position model: positions active on THIS centroid's terrain this month --
+// i.e. positions whose cards attributed titles to events filed under this
+// centroid+month (via ctm.centroid_id), regardless of who owns the position.
+// Distinct from getNarrativesForCentroid (positions this centroid OWNS).
 export async function getActiveNarrativesForCentroid(
   centroidId: string,
   month: string,
@@ -2202,33 +2182,34 @@ export async function getActiveNarrativesForCentroid(
 ): Promise<Array<{ id: string; name: string; actor_centroid: string | null; meta_narrative_id: string | null; event_count: number }>> {
   const monthStart = month.length === 7 ? `${month}-01` : month;
   return cached(
-    `centroid_narratives:${centroidId}:${monthStart}:${locale || 'en'}`,
+    `centroid_positions_active:${centroidId}:${monthStart}:${locale || 'en'}`,
     900,
     async () => {
       const rows = await query<{
         id: string;
-        name: string;
+        name_en: string;
         name_de: string | null;
         actor_centroid: string | null;
         meta_narrative_id: string | null;
         event_count: number;
       }>(
-        `SELECT sn.id, sn.name, sn.name_de, sn.actor_centroid, sn.meta_narrative_id,
-                COUNT(DISTINCT e.id)::int AS event_count
-           FROM event_strategic_narratives esn
-           JOIN events_v3 e ON e.id = esn.event_id
+        `SELECT p.id, p.name_en, p.name_de, p.owner_centroids[1] AS actor_centroid,
+                p.meta_narrative_id,
+                COUNT(DISTINCT ep.event_id)::int AS event_count
+           FROM event_positions ep
+           JOIN events_v3 e ON e.id = ep.event_id
            JOIN ctm c ON c.id = e.ctm_id
-           JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+           JOIN positions p ON p.id = ep.position_id AND p.is_active
           WHERE c.centroid_id = $1 AND c.month = $2
             AND e.merged_into IS NULL
-          GROUP BY sn.id, sn.name, sn.name_de, sn.actor_centroid, sn.meta_narrative_id
-          ORDER BY event_count DESC, sn.name
+          GROUP BY p.id, p.name_en, p.name_de, p.owner_centroids, p.meta_narrative_id
+          ORDER BY event_count DESC, p.name_en
           LIMIT $3`,
         [centroidId, monthStart, limit]
       );
       return rows.map(r => ({
         id: r.id,
-        name: locale === 'de' && r.name_de ? r.name_de : r.name,
+        name: locale === 'de' && r.name_de ? r.name_de : r.name_en,
         actor_centroid: r.actor_centroid,
         meta_narrative_id: r.meta_narrative_id,
         event_count: r.event_count,

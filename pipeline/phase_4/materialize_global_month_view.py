@@ -237,31 +237,36 @@ def fetch_nav(cur, month):
 
 
 def fetch_active_narratives(cur, month, locale):
-    """Top N strategic narratives by event count for this month."""
+    """Top N positions by event count for this month (SPEC v2 position model).
+
+    Sourced from event_positions (P2, derived from title attribution), not the
+    retired strategic_narratives table. actor_centroid here is the position's
+    first owner_centroid -- display-only, same convention as the other
+    positions-> EventNarrativeLink shims in lib/queries.ts.
+    """
     cur.execute(
-        """SELECT sn.id, sn.name, sn.name_de, sn.claim, sn.claim_de,
-                  sn.actor_centroid,
-                  COUNT(DISTINCT e.id)::int AS event_count
-             FROM event_strategic_narratives esn
-             JOIN events_v3 e ON e.id = esn.event_id
+        """SELECT p.id, p.name_en, p.name_de, p.claim_en, p.claim_de,
+                  p.owner_centroids[1] AS actor_centroid,
+                  COUNT(DISTINCT ep.event_id)::int AS event_count
+             FROM event_positions ep
+             JOIN events_v3 e ON e.id = ep.event_id
              JOIN ctm c ON c.id = e.ctm_id
-             JOIN strategic_narratives sn ON sn.id = esn.narrative_id
+             JOIN positions p ON p.id = ep.position_id AND p.is_active
             WHERE c.month = %s
               AND e.merged_into IS NULL
-              AND sn.is_active = true
-            GROUP BY sn.id, sn.name, sn.name_de, sn.claim, sn.claim_de, sn.actor_centroid
-            ORDER BY event_count DESC, sn.name
+            GROUP BY p.id, p.name_en, p.name_de, p.claim_en, p.claim_de, p.owner_centroids
+            ORDER BY event_count DESC, p.name_en
             LIMIT %s""",
         (month, NARRATIVES_LIMIT),
     )
     out = []
     for r in cur.fetchall():
-        nid, name, name_de, claim, claim_de, actor, count = r
+        pid, name_en, name_de, claim_en, claim_de, actor, count = r
         out.append(
             {
-                "id": nid,
-                "name": name_de if (locale == "de" and name_de) else name,
-                "claim": claim_de if (locale == "de" and claim_de) else claim,
+                "id": pid,
+                "name": name_de if (locale == "de" and name_de) else name_en,
+                "claim": claim_de if (locale == "de" and claim_de) else claim_en,
                 "actor_centroid": actor,
                 "event_count": int(count),
             }
