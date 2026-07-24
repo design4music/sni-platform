@@ -512,7 +512,9 @@ positions:
     stance_sign: -1
     meta: security_order
     meta_secondary: []
-    owner_centroids: [EUROPE-UK]
+    # owner audit: EUROPE-UK was a publisher-volume artifact (BBC Africa coverage),
+    # no genuine UK stake in DRC minerals; reassigned to the terrain's own centroid
+    owner_centroids: [AFRICA-DRC]
     cards:
       - drc_minerals_as_resource_capture              # drc_minerals_competition, stance -2
       - drc_minerals_human_cost                       # drc_minerals_competition, stance -1
@@ -740,7 +742,9 @@ positions:
     stance_sign: 1
     meta: security_order
     meta_secondary: []
-    owner_centroids: [AMERICAS-USA]
+    # owner audit: Colombia's own claim about its own peace process, not a US
+    # talking point; Colombia has no dedicated centroid, AMERICAS-ANDEAN is its proxy
+    owner_centroids: [AMERICAS-ANDEAN]
     cards:
       - colombia_peace_negotiation_defense            # colombia_armed_groups_peace, stance +1
       - colombia_transition_mandate                   # colombia_political_transition, stance +2
@@ -836,7 +840,9 @@ positions:
     stance_sign: -1
     meta: global_justice
     meta_secondary: []
-    owner_centroids: [MIDEAST-TURKEY]
+    # owner audit: the actual Palestinian voice was missing entirely; Turkey kept
+    # as a genuine vocal amplifier, not the sole claimant
+    owner_centroids: [MIDEAST-PALESTINE, MIDEAST-TURKEY]
     cards:
       - gaza_humanitarian_catastrophe                 # gaza_war, stance -2
       - multipolar_anti_israel_alignment              # israel_theater, stance -1
@@ -1003,7 +1009,8 @@ positions:
     stance_sign: 1
     meta: security_order
     meta_secondary: []
-    owner_centroids: [ASIA-PAKISTAN, AFRICA-NIGERIA]
+    # owner audit: AFRICA-NIGERIA had no plausible link, dropped
+    owner_centroids: [ASIA-PAKISTAN]
     cards:
       - baloch_foreign_backed_insurgency              # balochistan_insurgency, stance +2
       - pakafg_counterterror_necessity                # pakistan_afghanistan_border, stance +2
@@ -1048,7 +1055,9 @@ positions:
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
-    owner_centroids: [EUROPE-UK]
+    # owner audit: EUROPE-UK was a publisher-volume artifact (BBC Africa coverage);
+    # reassigned to the terrain's own centroid
+    owner_centroids: [AFRICA-HORN]
     cards:
       - ethiopia_renewed_war_alarm                    # ethiopia_regional_confrontation, stance -1
       - horn_western_alarm                            # horn_africa_theater, stance -1
@@ -1204,7 +1213,9 @@ positions:
     stance_sign: -1
     meta: plural_world_order
     meta_secondary: [great_power_competition]
-    owner_centroids: [EUROPE-UK]
+    # owner audit: EUROPE-UK was a publisher-volume artifact (BBC/Guardian Africa
+    # coverage); reassigned to the terrain's own centroid
+    owner_centroids: [MIDEAST-SUDAN]
     cards:
       - sudan_humanitarian_catastrophe                # sudan_civil_war, stance -1
       - sudan_proxy_war_critique                      # sudan_civil_war, stance -2
@@ -1389,7 +1400,9 @@ positions:
     stance_sign: -1
     meta: sovereign_resistance
     meta_secondary: []
-    owner_centroids: [AMERICAS-MEXICO, AMERICAS-SOUTHERNCONE]
+    # owner audit: Colombia's own debate, not Mexico/Southern Cone's; Colombia has
+    # no dedicated centroid, AMERICAS-ANDEAN is its proxy
+    owner_centroids: [AMERICAS-ANDEAN]
     cards:
       - colombia_peace_process_failure                # colombia_armed_groups_peace, stance -1
 
@@ -1402,7 +1415,9 @@ positions:
     stance_sign: 1
     meta: plural_world_order
     meta_secondary: [security_order]
-    owner_centroids: [AMERICAS-MEXICO, AMERICAS-SOUTHERNCONE]
+    # owner audit: Colombia's own debate, not Mexico/Southern Cone's; Colombia has
+    # no dedicated centroid, AMERICAS-ANDEAN is its proxy
+    owner_centroids: [AMERICAS-ANDEAN]
     cards:
       - colombia_theater_hard_turn                    # colombia_theater, stance +2
 
@@ -1546,7 +1561,9 @@ positions:
     stance_sign: -1
     meta: information_order
     meta_secondary: []
-    owner_centroids: [AMERICAS-USA]
+    # owner audit: INVERSION -- the claim argues against US tech dominance; the US
+    # was the claim's target, not its asserter. Reassigned to the EU institutional voice.
+    owner_centroids: [NON-STATE-EU]
     cards:
       - tech_digital_sovereignty                      # europe_us_tech_sovereignty, stance -1
 
@@ -1585,7 +1602,9 @@ positions:
     stance_sign: -1
     meta: liberal_international_order
     meta_secondary: []
-    owner_centroids: [ASIA-SOUTHEAST, AMERICAS-USA, MIDEAST-GULF]
+    # owner audit: USA/Gulf had no plausible link to a Thai-Cambodian border dispute;
+    # dropped, kept the region's own centroid (no dedicated Cambodia centroid exists)
+    owner_centroids: [ASIA-SOUTHEAST]
     cards:
       - thaicam_cambodian_territorial_claim           # thailand_cambodia_border, stance -2
 
